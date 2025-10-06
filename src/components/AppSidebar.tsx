@@ -1,0 +1,62 @@
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const items = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Tasks", url: "/tasks", icon: CheckSquare },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
+  { title: "Time Tracking", url: "/time-tracking", icon: Clock },
+];
+
+export function AppSidebar() {
+  const { open } = useSidebar();
+
+  return (
+    <Sidebar collapsible="icon">
+      <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
+        {open && <h2 className="text-lg font-semibold text-sidebar-foreground">TaskFlow</h2>}
+        <SidebarTrigger className="ml-auto" />
+      </div>
+      
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
