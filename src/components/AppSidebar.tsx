@@ -1,4 +1,5 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -22,11 +23,19 @@ const items = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
+  const { signOut, userRole } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
-        {open && <h2 className="text-lg font-semibold text-sidebar-foreground">TaskFlow</h2>}
+        {open && (
+          <div>
+            <h2 className="text-lg font-semibold text-sidebar-foreground">TaskFlow</h2>
+            {userRole && (
+              <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
+            )}
+          </div>
+        )}
         <SidebarTrigger className="ml-auto" />
       </div>
       
@@ -53,6 +62,19 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

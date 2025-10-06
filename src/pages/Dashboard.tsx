@@ -1,71 +1,72 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { CheckSquare, Clock, AlertCircle, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Clock, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
-  const stats = [
-    {
-      title: "Active Tasks",
-      value: "24",
-      icon: CheckSquare,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      title: "In Progress",
-      value: "8",
-      icon: Clock,
-      color: "text-warning",
-      bgColor: "bg-warning/10",
-    },
-    {
-      title: "Pending Approval",
-      value: "3",
-      icon: AlertCircle,
-      color: "text-pending",
-      bgColor: "bg-pending/10",
-    },
-    {
-      title: "Completed",
-      value: "156",
-      icon: TrendingUp,
-      color: "text-success",
-      bgColor: "bg-success/10",
-    },
-  ];
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    today: 0,
+    overdue: 0,
+    inProgress: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
 
-  const recentTasks = [
-    {
-      id: 1,
-      title: "Update website homepage",
-      assignee: "Sarah Chen",
-      status: "In Progress",
-      priority: "High",
-      dueDate: "Today",
-    },
-    {
-      id: 2,
-      title: "Review Q4 budget proposal",
-      assignee: "Mike Johnson",
-      status: "Pending Approval",
-      priority: "High",
-      dueDate: "Tomorrow",
-    },
-    {
-      id: 3,
-      title: "Design new feature mockups",
-      assignee: "Emma Davis",
-      status: "In Progress",
-      priority: "Medium",
-      dueDate: "Dec 28",
-    },
-    {
-      id: 4,
-      title: "Update documentation",
-      assignee: "Alex Kim",
-      status: "To Do",
-      priority: "Low",
-      dueDate: "Dec 30",
-    },
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchDashboardData = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const { data: todayTasks } = await supabase
+        .from("tasks")
+        .select("*")
+        .gte("due_at", today.toISOString())
+        .lt("due_at", tomorrow.toISOString())
+        .neq("status", "Completed");
+
+      const { data: overdueTasks } = await supabase
+        .from("tasks")
+        .select("*")
+        .lt("due_at", today.toISOString())
+        .neq("status", "Completed");
+
+      const { data: inProgressTasks } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("status", "In Progress");
+
+      const { data: recent } = await supabase
+        .from("tasks")
+        .select(`
+          *,
+          profiles:created_by(name),
+          assignee:assignee_id(name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      setStats({
+        today: todayTasks?.length || 0,
+        overdue: overdueTasks?.length || 0,
+        inProgress: inProgressTasks?.length || 0,
+      });
+
+      setRecentTasks(recent || []);
+    };
+
+    fetchDashboardData();
+  }, [user]);
+
+  const statsDisplay = [
+    { title: "Due Today", value: stats.today.toString(), icon: Clock, color: "text-warning", bgColor: "bg-warning/10" },
+    { title: "In Progress", value: stats.inProgress.toString(), icon: TrendingUp, color: "text-primary", bgColor: "bg-primary/10" },
+    { title: "Overdue", value: stats.overdue.toString(), icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10" },
   ];
 
   return (
@@ -75,8 +76,8 @@ export default function Dashboard() {
         <p className="text-muted-foreground">Welcome back! Here's your team's progress</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {statsDisplay.map((stat) => (
           <Card key={stat.title} className="p-6 transition-all hover:shadow-medium">
             <div className="flex items-center justify-between">
               <div>
@@ -94,44 +95,54 @@ export default function Dashboard() {
       <Card className="p-6">
         <h2 className="text-xl font-semibold text-foreground mb-4">Recent Tasks</h2>
         <div className="space-y-3">
-          {recentTasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all"
-            >
-              <div className="flex-1">
-                <h3 className="font-medium text-foreground mb-1">{task.title}</h3>
-                <p className="text-sm text-muted-foreground">Assigned to {task.assignee}</p>
+          {recentTasks.length > 0 ? (
+            recentTasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all"
+              >
+                <div className="flex-1">
+                  <h3 className="font-medium text-foreground mb-1">{task.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Assigned to {task.assignee?.name || "Unassigned"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge
+                    variant="outline"
+                    className={
+                      task.status === "In Progress"
+                        ? "bg-warning/10 text-warning border-warning/20"
+                        : task.status === "Pending Approval"
+                        ? "bg-pending/10 text-pending border-pending/20"
+                        : "bg-muted text-muted-foreground border-border"
+                    }
+                  >
+                    {task.status}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={
+                      task.priority === "High"
+                        ? "bg-destructive/10 text-destructive border-destructive/20"
+                        : task.priority === "Medium"
+                        ? "bg-warning/10 text-warning border-warning/20"
+                        : "bg-muted text-muted-foreground border-border"
+                    }
+                  >
+                    {task.priority}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                    {task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    task.status === "In Progress"
-                      ? "bg-warning/10 text-warning"
-                      : task.status === "Pending Approval"
-                      ? "bg-pending/10 text-pending"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {task.status}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    task.priority === "High"
-                      ? "bg-destructive/10 text-destructive"
-                      : task.priority === "Medium"
-                      ? "bg-warning/10 text-warning"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {task.priority}
-                </span>
-                <span className="text-sm text-muted-foreground min-w-[80px] text-right">
-                  {task.dueDate}
-                </span>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No tasks yet. Create your first task!
             </div>
-          ))}
+          )}
         </div>
       </Card>
     </div>
