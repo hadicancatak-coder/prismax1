@@ -12,4 +12,3 @@ const Index = () => {
 };
 
 export default Index;
-UPDATE user_roles SET role = 'admin' WHERE user_id = auth.uid();
