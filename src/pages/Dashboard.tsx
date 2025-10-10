@@ -70,15 +70,19 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's your team's progress</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {statsDisplay.map((stat) => (
-          <Card key={stat.title} className="p-6 transition-all hover:shadow-medium">
+        {statsDisplay.map((stat, index) => (
+          <Card 
+            key={stat.title} 
+            className="p-6 transition-all hover:shadow-medium hover:-translate-y-1 animate-scale-in"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>

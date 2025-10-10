@@ -116,13 +116,13 @@ export default function Tasks() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-8 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Tasks</h1>
           <p className="text-muted-foreground">Manage and track your team's tasks</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2 bg-gradient-primary hover:shadow-glow transition-all">
           <Plus className="h-4 w-4" />
           New Task
         </Button>
@@ -147,10 +147,12 @@ export default function Tasks() {
       </Card>
 
       <Tabs defaultValue="today" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="today">Today</TabsTrigger>
           <TabsTrigger value="weekly">This Week</TabsTrigger>
           <TabsTrigger value="monthly">This Month</TabsTrigger>
+          <TabsTrigger value="blockers">Blockers</TabsTrigger>
+          <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
 
         <TabsContent value="today" className="mt-6 space-y-4">
@@ -223,6 +225,18 @@ export default function Tasks() {
               <p className="text-muted-foreground">No tasks due this month</p>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="blockers" className="mt-6">
+          <Card className="p-6">
+            <p className="text-center text-muted-foreground">Blockers management coming soon</p>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="projects" className="mt-6">
+          <Card className="p-6">
+            <p className="text-center text-muted-foreground">Projects management coming soon</p>
+          </Card>
         </TabsContent>
       </Tabs>
 

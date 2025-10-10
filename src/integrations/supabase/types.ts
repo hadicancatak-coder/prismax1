@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      blockers: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          resolved: boolean | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          resolved?: boolean | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          resolved?: boolean | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blockers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           author_id: string
@@ -97,6 +135,33 @@ export type Database = {
           id?: string
           name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -185,6 +250,7 @@ export type Database = {
           order_index: number | null
           pending_approval: boolean | null
           priority: Database["public"]["Enums"]["task_priority"]
+          project_id: string | null
           project_key: string | null
           recurrence_rrule: string | null
           source: Database["public"]["Enums"]["task_source"]
@@ -204,6 +270,7 @@ export type Database = {
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           project_key?: string | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
@@ -223,6 +290,7 @@ export type Database = {
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           project_key?: string | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
@@ -231,7 +299,15 @@ export type Database = {
           updated_at?: string
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       time_entries: {
         Row: {
