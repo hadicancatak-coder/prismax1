@@ -149,9 +149,9 @@ export default function AdminPanel() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Admin Panel</h1>
-        <p className="text-muted-foreground">Manage approvals and monitor team performance</p>
+      <div className="bg-gradient-primary p-4 rounded-lg mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">🛡️ Admin Panel</h1>
+        <p className="text-white/90">Manage approvals and monitor team performance</p>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
