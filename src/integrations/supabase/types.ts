@@ -52,6 +52,35 @@ export type Database = {
           },
         ]
       }
+      comment_mentions: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          mentioned_user_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_mentions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           author_id: string
@@ -118,6 +147,9 @@ export type Database = {
           email: string
           id: string
           name: string
+          phone_number: string | null
+          tagline: string | null
+          title: string | null
           user_id: string
         }
         Insert: {
@@ -126,6 +158,9 @@ export type Database = {
           email: string
           id?: string
           name: string
+          phone_number?: string | null
+          tagline?: string | null
+          title?: string | null
           user_id: string
         }
         Update: {
@@ -134,6 +169,9 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          phone_number?: string | null
+          tagline?: string | null
+          title?: string | null
           user_id?: string
         }
         Relationships: []
@@ -161,6 +199,36 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string
+          title?: string
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -247,6 +315,7 @@ export type Database = {
           due_at: string | null
           id: string
           jira_key: string | null
+          jira_link: string | null
           order_index: number | null
           pending_approval: boolean | null
           priority: Database["public"]["Enums"]["task_priority"]
@@ -267,6 +336,7 @@ export type Database = {
           due_at?: string | null
           id?: string
           jira_key?: string | null
+          jira_link?: string | null
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -287,6 +357,7 @@ export type Database = {
           due_at?: string | null
           id?: string
           jira_key?: string | null
+          jira_link?: string | null
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
