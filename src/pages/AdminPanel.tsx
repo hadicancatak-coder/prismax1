@@ -9,6 +9,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TaskDialog } from "@/components/TaskDialog";
+import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminPanel() {
   const { userRole } = useAuth();
@@ -20,6 +38,9 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
   useEffect(() => {
     // Only redirect if we've confirmed user is NOT an admin
@@ -149,6 +170,72 @@ export default function AdminPanel() {
     });
     
     // Immediately refetch to show changes
+    await fetchData();
+  };
+
+  const handleRoleChange = async (userId: string, newRole: "admin" | "member") => {
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: newRole })
+      .eq("user_id", userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Role Updated",
+      description: `User role has been updated to ${newRole}`,
+    });
+
+    await fetchData();
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+
+    // Delete user role
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", memberToRemove);
+
+    if (roleError) {
+      toast({
+        title: "Error",
+        description: roleError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Delete profile
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("user_id", memberToRemove);
+
+    if (profileError) {
+      toast({
+        title: "Error",
+        description: profileError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Member Removed",
+      description: "User has been removed from the system",
+    });
+
+    setMemberToRemove(null);
+    setRemoveDialogOpen(false);
     await fetchData();
   };
 
@@ -370,6 +457,30 @@ export default function AdminPanel() {
                       </div>
                     )}
                   </div>
+                  <div className="flex gap-2 mt-4">
+                    <Select
+                      value={member.role}
+                      onValueChange={(value: "admin" | "member") => handleRoleChange(member.user_id, value)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="member">Member</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setMemberToRemove(member.user_id);
+                        setRemoveDialogOpen(true);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -382,11 +493,19 @@ export default function AdminPanel() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Button className="w-full justify-start gap-2" variant="outline">
+              <Button
+                className="w-full justify-start gap-2"
+                variant="outline"
+                onClick={() => setCreateTaskDialogOpen(true)}
+              >
                 <CheckSquare className="h-4 w-4" />
                 Create Task
               </Button>
-              <Button className="w-full justify-start gap-2" variant="outline">
+              <Button
+                className="w-full justify-start gap-2"
+                variant="outline"
+                onClick={() => navigate("/admin-panel")}
+              >
                 <User className="h-4 w-4" />
                 Manage Users
               </Button>
@@ -428,6 +547,26 @@ export default function AdminPanel() {
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
       )}
+
+      <CreateTaskDialog 
+        open={createTaskDialogOpen} 
+        onOpenChange={setCreateTaskDialogOpen}
+      />
+
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this member? This will delete their profile and role permanently.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveMember}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

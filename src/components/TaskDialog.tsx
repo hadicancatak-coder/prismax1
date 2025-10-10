@@ -498,6 +498,41 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 )}
               </div>
             </div>
+
+            <div>
+              <Label className="mb-2 block">Recurring Task</Label>
+              <Select 
+                value={task.recurrence_rrule || "none"} 
+                onValueChange={async (value) => {
+                  const recurrence = value === "none" ? null : value;
+                  const { error } = await supabase
+                    .from("tasks")
+                    .update({ recurrence_rrule: recurrence })
+                    .eq("id", taskId);
+                  if (error) {
+                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: "Success", description: "Recurring task settings updated" });
+                    fetchTask();
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not Recurring</SelectItem>
+                  <SelectItem value="FREQ=DAILY">Daily</SelectItem>
+                  <SelectItem value="FREQ=WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="FREQ=MONTHLY">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+              {task.recurrence_rrule && task.recurrence_rrule !== "none" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  This task will automatically recur based on the selected frequency
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Comments Section - Messaging Style */}

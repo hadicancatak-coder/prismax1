@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -69,21 +69,38 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
               {userRole === "admin" && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/admin-panel"
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span>Admin Panel</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/backlog"
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <ListTodo className="h-4 w-4" />
+                        <span>Backlog</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/admin-panel"
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
               )}
             </SidebarMenu>
           </SidebarGroupContent>

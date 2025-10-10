@@ -16,6 +16,7 @@ import Notifications from "./pages/Notifications";
 import ProjectsPage from "./pages/ProjectsPage";
 import BlockersPage from "./pages/BlockersPage";
 import AdsPage from "./pages/AdsPage";
+import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/blockers" element={<BlockersPage />} />
+            <Route path="/backlog" element={<Backlog />} />
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
