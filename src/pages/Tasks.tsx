@@ -62,51 +62,56 @@ export default function Tasks() {
 
     const { data: allTasks } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        profiles:created_by(name),
-        assignee:assignee_id(name)
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
 
     const { data: todayTasks } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        profiles:created_by(name),
-        assignee:assignee_id(name)
-      `)
+      .select("*")
       .gte("due_at", today.toISOString())
       .lt("due_at", tomorrow.toISOString())
       .order("due_at");
 
     const { data: weeklyTasks } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        profiles:created_by(name),
-        assignee:assignee_id(name)
-      `)
+      .select("*")
       .gte("due_at", tomorrow.toISOString())
       .lt("due_at", nextWeek.toISOString())
       .order("due_at");
 
     const { data: monthlyTasks } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        profiles:created_by(name),
-        assignee:assignee_id(name)
-      `)
+      .select("*")
       .gte("due_at", nextWeek.toISOString())
       .lt("due_at", nextMonth.toISOString())
       .order("due_at");
 
+    // Fetch profiles separately
+    const allUserIds = new Set<string>();
+    [...(allTasks || []), ...(todayTasks || []), ...(weeklyTasks || []), ...(monthlyTasks || [])].forEach(task => {
+      if (task.created_by) allUserIds.add(task.created_by);
+      if (task.assignee_id) allUserIds.add(task.assignee_id);
+    });
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, name")
+      .in("user_id", Array.from(allUserIds));
+
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
+
+    // Attach profile names to tasks
+    const enrichTask = (task: any) => ({
+      ...task,
+      creator_name: profileMap.get(task.created_by),
+      assignee_name: profileMap.get(task.assignee_id)
+    });
+
     setTasks({
-      all: allTasks || [],
-      today: todayTasks || [],
-      weekly: weeklyTasks || [],
-      monthly: monthlyTasks || [],
+      all: allTasks?.map(enrichTask) || [],
+      today: todayTasks?.map(enrichTask) || [],
+      weekly: weeklyTasks?.map(enrichTask) || [],
+      monthly: monthlyTasks?.map(enrichTask) || [],
     });
   };
 
@@ -183,7 +188,7 @@ export default function Tasks() {
                   id: task.id,
                   title: task.title,
                   description: task.description || "",
-                  assignee: task.assignee?.name || "Unassigned",
+                  assignee: task.assignee_name || "Unassigned",
                   status: task.status,
                   priority: task.priority,
                   dueDate: task.due_at,
@@ -207,7 +212,7 @@ export default function Tasks() {
                   id: task.id,
                   title: task.title,
                   description: task.description || "",
-                  assignee: task.assignee?.name || "Unassigned",
+                  assignee: task.assignee_name || "Unassigned",
                   status: task.status,
                   priority: task.priority,
                   dueDate: task.due_at,
@@ -231,7 +236,7 @@ export default function Tasks() {
                   id: task.id,
                   title: task.title,
                   description: task.description || "",
-                  assignee: task.assignee?.name || "Unassigned",
+                  assignee: task.assignee_name || "Unassigned",
                   status: task.status,
                   priority: task.priority,
                   dueDate: task.due_at,
