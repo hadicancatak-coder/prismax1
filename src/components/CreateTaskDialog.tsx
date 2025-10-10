@@ -34,6 +34,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [status, setStatus] = useState<"Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived">("In Progress");
+  const [jiraLink, setJiraLink] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +76,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         priority,
         status: (userRole === "member" ? "Pending Approval" : status) as "Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived",
         due_at: date?.toISOString(),
+        jira_link: jiraLink.trim() || null,
         created_by: user.id,
         visibility: "global" as "global" | "pool" | "private",
       };
@@ -94,6 +96,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setDescription("");
       setPriority("Medium");
       setStatus("In Progress");
+      setJiraLink("");
       setDate(undefined);
       onOpenChange(false);
     } catch (error: any) {
@@ -194,6 +197,17 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="jiraLink">Jira Link (optional)</Label>
+            <Input
+              id="jiraLink"
+              type="url"
+              placeholder="https://jira.company.com/browse/TASK-123"
+              value={jiraLink}
+              onChange={(e) => setJiraLink(e.target.value)}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -19,6 +19,8 @@ const items = [
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Time Tracking", url: "/time-tracking", icon: Clock },
+  { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Profile", url: "/profile", icon: User },
 ];
 
 export function AppSidebar() {

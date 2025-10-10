@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, User, MoreVertical } from "lucide-react";
+import { TaskDialog } from "./TaskDialog";
 
 interface Task {
   id: number;
@@ -15,6 +17,8 @@ interface Task {
 }
 
 export const TaskCard = ({ task }: { task: Task }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
   const statusColors = {
     "In Progress": "bg-warning/10 text-warning border-warning/20",
     "Pending Approval": "bg-pending/10 text-pending border-pending/20",
@@ -29,8 +33,9 @@ export const TaskCard = ({ task }: { task: Task }) => {
   };
 
   return (
-    <Card className="p-6 transition-all hover:shadow-medium">
-      <div className="flex items-start justify-between mb-4">
+    <>
+      <Card className="p-6 transition-all hover:shadow-medium cursor-pointer" onClick={() => setDialogOpen(true)}>
+        <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
           <p className="text-sm text-muted-foreground">{task.description}</p>
@@ -69,5 +74,7 @@ export const TaskCard = ({ task }: { task: Task }) => {
         <span className="font-medium">Due: {new Date(task.dueDate).toLocaleDateString()}</span>
       </div>
     </Card>
+    <TaskDialog open={dialogOpen} onOpenChange={setDialogOpen} taskId={task.id.toString()} />
+    </>
   );
 };

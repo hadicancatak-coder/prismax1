@@ -10,6 +10,8 @@ import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
 import TimeTracking from "./pages/TimeTracking";
 import AdminPanel from "./pages/AdminPanel";
+import Reports from "./pages/Reports";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/time-tracking" element={<TimeTracking />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/profile/:userId?" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
