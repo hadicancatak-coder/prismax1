@@ -411,11 +411,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               <div>
                 <Label className="mb-2 block">Project</Label>
                 <Select 
-                  value={task.project_id || ""} 
+                  value={task.project_id || "none"} 
                   onValueChange={async (value) => {
+                    const projectId = value === "none" ? null : value;
                     const { error } = await supabase
                       .from("tasks")
-                      .update({ project_id: value || null })
+                      .update({ project_id: projectId })
                       .eq("id", taskId);
                     if (error) {
                       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -428,7 +429,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Project</SelectItem>
+                    <SelectItem value="none">No Project</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
