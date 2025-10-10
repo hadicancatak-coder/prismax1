@@ -27,14 +27,46 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Validate taskId
+  if (!taskId || taskId === "undefined") {
+    return null;
+  }
+
   useEffect(() => {
-    if (open && taskId) {
+    if (open && taskId && taskId !== "undefined") {
+      setLoading(true);
       fetchTask();
       fetchComments();
       fetchProfiles();
     }
+  }, [open, taskId]);
+
+  // Set up real-time subscription for comments
+  useEffect(() => {
+    if (!open || !taskId || taskId === "undefined") return;
+
+    const channel = supabase
+      .channel(`comments-${taskId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `task_id=eq.${taskId}`
+        },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [open, taskId]);
 
   useEffect(() => {
@@ -44,21 +76,76 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   }, [comments, showComments]);
 
   const fetchTask = async () => {
-    const { data } = await supabase
-      .from("tasks")
-      .select("*, profiles:created_by(name, avatar_url), assignee:assignee_id(name, avatar_url)")
-      .eq("id", taskId)
-      .single();
-    setTask(data);
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("id", taskId)
+        .single();
+
+      if (error) throw error;
+
+      // Fetch creator and assignee profiles separately
+      let creatorProfile = null;
+      let assigneeProfile = null;
+
+      if (data.created_by) {
+        const { data: creator } = await supabase
+          .from("profiles")
+          .select("name, avatar_url")
+          .eq("user_id", data.created_by)
+          .single();
+        creatorProfile = creator;
+      }
+
+      if (data.assignee_id) {
+        const { data: assignee } = await supabase
+          .from("profiles")
+          .select("name, avatar_url")
+          .eq("user_id", data.assignee_id)
+          .single();
+        assigneeProfile = assignee;
+      }
+
+      setTask({
+        ...data,
+        profiles: creatorProfile,
+        assignee: assigneeProfile
+      });
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      toast({ title: "Error", description: "Failed to load task details", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchComments = async () => {
-    const { data } = await supabase
-      .from("comments")
-      .select("*, profiles:author_id(name, avatar_url)")
-      .eq("task_id", taskId)
-      .order("created_at");
-    setComments(data || []);
+    try {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("task_id", taskId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      // Fetch author profiles for each comment
+      const commentsWithProfiles = await Promise.all(
+        (data || []).map(async (comment) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name, avatar_url")
+            .eq("user_id", comment.author_id)
+            .single();
+          return { ...comment, profiles: profile };
+        })
+      );
+
+      setComments(commentsWithProfiles);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
   };
 
   const fetchProfiles = async () => {
@@ -82,44 +169,52 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   };
 
   const handleCommentSubmit = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !user) return;
 
-    const mentions = newComment.match(/@(\w+)/g) || [];
-    const { data: comment, error } = await supabase
-      .from("comments")
-      .insert({
-        task_id: taskId,
-        author_id: user?.id,
-        body: newComment,
-      })
-      .select()
-      .single();
+    try {
+      const { data: comment, error } = await supabase
+        .from("comments")
+        .insert({
+          task_id: taskId,
+          author_id: user.id,
+          body: newComment.trim(),
+        })
+        .select()
+        .single();
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
+      if (error) throw error;
 
-    for (const mention of mentions) {
-      const username = mention.substring(1);
-      const mentionedProfile = profiles.find((p) => p.name.toLowerCase() === username.toLowerCase());
+      // Parse @mentions
+      const mentions = newComment.match(/@(\w+)/g) || [];
+      
+      for (const mention of mentions) {
+        const username = mention.substring(1);
+        const mentionedProfile = profiles.find((p) => p.name?.toLowerCase() === username.toLowerCase());
 
-      if (mentionedProfile) {
-        await supabase.from("comment_mentions").insert({
-          comment_id: comment.id,
-          mentioned_user_id: mentionedProfile.user_id,
-        });
+        if (mentionedProfile) {
+          try {
+            await supabase.from("comment_mentions").insert({
+              comment_id: comment.id,
+              mentioned_user_id: mentionedProfile.user_id,
+            });
 
-        await supabase.from("notifications").insert({
-          user_id: mentionedProfile.user_id,
-          type: "mention",
-          payload_json: { task_id: taskId, comment_id: comment.id, message: newComment },
-        });
+            await supabase.from("notifications").insert({
+              user_id: mentionedProfile.user_id,
+              type: "mention",
+              payload_json: { task_id: taskId, comment_id: comment.id, message: newComment.trim() },
+            });
+          } catch (notifError) {
+            console.error("Error creating notification:", notifError);
+          }
+        }
       }
-    }
 
-    setNewComment("");
-    fetchComments();
+      setNewComment("");
+      toast({ title: "Comment posted", description: "Your comment has been added" });
+    } catch (error: any) {
+      console.error("Error posting comment:", error);
+      toast({ title: "Error", description: error.message || "Failed to post comment", variant: "destructive" });
+    }
   };
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
@@ -127,7 +222,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
     setShowEmojiPicker(false);
   };
 
-  if (!task) return null;
+  if (loading || !task) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
