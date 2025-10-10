@@ -22,12 +22,24 @@ export default function Reports() {
     if (!user) return;
     fetchReports();
 
+    // Real-time subscription
     const channel = supabase
       .channel("reports-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => {
-        fetchReports();
-      })
-      .subscribe();
+      .on(
+        "postgres_changes",
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "reports" 
+        },
+        (payload) => {
+          console.log("Report change detected:", payload);
+          fetchReports();
+        }
+      )
+      .subscribe((status) => {
+        console.log("Reports subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -35,8 +47,17 @@ export default function Reports() {
   }, [user]);
 
   const fetchReports = async () => {
-    const { data } = await supabase.from("reports").select("*, profiles:created_by(name)").order("created_at", { ascending: false });
-    setReports(data || []);
+    const { data, error } = await supabase
+      .from("reports")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching reports:", error);
+    } else {
+      console.log("Fetched reports:", data);
+      setReports(data || []);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -60,11 +60,14 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           table: 'comments',
           filter: `task_id=eq.${taskId}`
         },
-        () => {
+        (payload) => {
+          console.log("Comment change detected:", payload);
           fetchComments();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Comments subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

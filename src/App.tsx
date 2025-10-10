@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/time-tracking" element={<TimeTracking />} />
-            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin-panel" element={<AdminPanel />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
