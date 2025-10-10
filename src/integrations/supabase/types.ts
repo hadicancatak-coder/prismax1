@@ -356,6 +356,8 @@ export type Database = {
           blocker_reason: string | null
           created_at: string
           created_by: string | null
+          delete_requested_at: string | null
+          delete_requested_by: string | null
           description: string | null
           due_at: string | null
           entity: string | null
@@ -379,6 +381,8 @@ export type Database = {
           blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
+          delete_requested_at?: string | null
+          delete_requested_by?: string | null
           description?: string | null
           due_at?: string | null
           entity?: string | null
@@ -402,6 +406,8 @@ export type Database = {
           blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
+          delete_requested_at?: string | null
+          delete_requested_by?: string | null
           description?: string | null
           due_at?: string | null
           entity?: string | null

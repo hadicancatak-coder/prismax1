@@ -12,9 +12,10 @@ import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 export default function Tasks() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -31,6 +32,7 @@ export default function Tasks() {
     thisMonth: any[];
     nextMonth: any[];
     past: any[];
+    backlog: any[];
   }>({
     all: [],
     yesterday: [],
@@ -41,6 +43,7 @@ export default function Tasks() {
     thisMonth: [],
     nextMonth: [],
     past: [],
+    backlog: [],
   });
 
   useEffect(() => {
@@ -92,14 +95,17 @@ export default function Tasks() {
     const nextMonthEnd = new Date(monthEnd);
     nextMonthEnd.setMonth(nextMonthEnd.getMonth() + 1);
 
-    const { data: allTasks } = await supabase
-      .from("tasks")
-      .select("*")
+    // Base query - hide delete-requested tasks from members
+    const baseQuery = supabase.from("tasks").select("*");
+    
+    const { data: allTasks } = await baseQuery
+      .is("delete_requested_by", null)
       .order("created_at", { ascending: false });
 
     const { data: yesterdayTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", yesterday.toISOString())
       .lt("due_at", today.toISOString())
       .order("due_at");
@@ -107,6 +113,7 @@ export default function Tasks() {
     const { data: todayTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", tomorrow.toISOString())
       .order("due_at");
@@ -114,6 +121,7 @@ export default function Tasks() {
     const { data: tomorrowTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", tomorrow.toISOString())
       .lt("due_at", weekStart.toISOString())
       .order("due_at");
@@ -121,6 +129,7 @@ export default function Tasks() {
     const { data: thisWeekTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", weekEnd.toISOString())
       .order("due_at");
@@ -128,6 +137,7 @@ export default function Tasks() {
     const { data: nextWeekTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", weekEnd.toISOString())
       .lt("due_at", nextWeekEnd.toISOString())
       .order("due_at");
@@ -135,6 +145,7 @@ export default function Tasks() {
     const { data: thisMonthTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", monthEnd.toISOString())
       .order("due_at");
@@ -142,6 +153,7 @@ export default function Tasks() {
     const { data: nextMonthTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .gte("due_at", monthEnd.toISOString())
       .lt("due_at", nextMonthEnd.toISOString())
       .order("due_at");
@@ -149,16 +161,25 @@ export default function Tasks() {
     const { data: pastTasks } = await supabase
       .from("tasks")
       .select("*")
+      .is("delete_requested_by", null)
       .eq("status", "Completed")
       .order("updated_at", { ascending: false });
+
+    // Backlog - only for admins (tasks with delete requests)
+    const { data: backlogTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .not("delete_requested_by", "is", null)
+      .order("delete_requested_at", { ascending: false });
 
     // Fetch profiles separately
     const allUserIds = new Set<string>();
     [...(allTasks || []), ...(yesterdayTasks || []), ...(todayTasks || []), ...(tomorrowTasks || []), 
      ...(thisWeekTasks || []), ...(nextWeekTasks || []), ...(thisMonthTasks || []), 
-     ...(nextMonthTasks || []), ...(pastTasks || [])].forEach(task => {
+     ...(nextMonthTasks || []), ...(pastTasks || []), ...(backlogTasks || [])].forEach(task => {
       if (task.created_by) allUserIds.add(task.created_by);
       if (task.assignee_id) allUserIds.add(task.assignee_id);
+      if (task.delete_requested_by) allUserIds.add(task.delete_requested_by);
     });
 
     const { data: profiles } = await supabase
@@ -172,7 +193,8 @@ export default function Tasks() {
     const enrichTask = (task: any) => ({
       ...task,
       creator_name: profileMap.get(task.created_by),
-      assignee_name: profileMap.get(task.assignee_id)
+      assignee_name: profileMap.get(task.assignee_id),
+      delete_requester_name: profileMap.get(task.delete_requested_by)
     });
 
     setTasks({
@@ -185,6 +207,7 @@ export default function Tasks() {
       thisMonth: thisMonthTasks?.map(enrichTask) || [],
       nextMonth: nextMonthTasks?.map(enrichTask) || [],
       past: pastTasks?.map(enrichTask) || [],
+      backlog: backlogTasks?.map(enrichTask) || [],
     });
   };
 
@@ -218,6 +241,7 @@ export default function Tasks() {
     thisMonth: applyFilters(tasks.thisMonth),
     nextMonth: applyFilters(tasks.nextMonth),
     past: applyFilters(tasks.past),
+    backlog: applyFilters(tasks.backlog),
   };
 
   return (
@@ -304,7 +328,7 @@ export default function Tasks() {
       </Card>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
           <TabsTrigger value="today">Today</TabsTrigger>
@@ -314,6 +338,7 @@ export default function Tasks() {
           <TabsTrigger value="thisMonth">This Month</TabsTrigger>
           <TabsTrigger value="nextMonth">Next Month</TabsTrigger>
           <TabsTrigger value="past">Past</TabsTrigger>
+          {userRole === "admin" && <TabsTrigger value="backlog">Backlog</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="all" className="mt-6 space-y-4">
@@ -532,16 +557,64 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="blockers" className="mt-6">
-          <Card className="p-6">
-            <p className="text-center text-muted-foreground">Blockers management coming soon</p>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="projects" className="mt-6">
-          <Card className="p-6">
-            <p className="text-center text-muted-foreground">Projects management coming soon</p>
-          </Card>
+        <TabsContent value="backlog" className="mt-6 space-y-4">
+          {userRole === "admin" ? (
+            filteredTasks.backlog.length > 0 ? (
+              filteredTasks.backlog.map((task) => (
+                <Card key={task.id} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold">{task.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                      <p className="text-xs text-warning mt-2">
+                        Delete requested by {task.delete_requester_name} on{" "}
+                        {new Date(task.delete_requested_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from("tasks")
+                            .update({ delete_requested_by: null, delete_requested_at: null })
+                            .eq("id", task.id);
+                          if (!error) {
+                            toast({ title: "Request rejected" });
+                            fetchTasks();
+                          }
+                        }}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          const { error } = await supabase.from("tasks").delete().eq("id", task.id);
+                          if (!error) {
+                            toast({ title: "Task deleted" });
+                            fetchTasks();
+                          }
+                        }}
+                      >
+                        Approve Delete
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No pending delete requests</p>
+              </Card>
+            )
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Admin access required</p>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
