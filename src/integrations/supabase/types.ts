@@ -179,6 +179,44 @@ export type Database = {
         }
         Relationships: []
       }
+      project_timelines: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          phase_name: string
+          project_id: string | null
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          phase_name: string
+          project_id?: string | null
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          phase_name?: string
+          project_id?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_timelines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           created_at: string

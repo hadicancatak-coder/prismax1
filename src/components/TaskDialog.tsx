@@ -27,9 +27,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Validate taskId
@@ -43,6 +46,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       fetchTask();
       fetchComments();
       fetchProfiles();
+      fetchProjects();
     }
   }, [open, taskId]);
 
@@ -158,6 +162,11 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
     setProfiles(data || []);
   };
 
+  const fetchProjects = async () => {
+    const { data } = await supabase.from("projects").select("id, name");
+    setProjects(data || []);
+  };
+
   const handlePostpone = async () => {
     const { error } = await supabase.from("task_change_requests").insert({
       task_id: taskId,
@@ -246,7 +255,22 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       <DialogContent className={`max-h-[90vh] overflow-hidden transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center justify-between">
-            <span>{task.title}</span>
+            {editingTitle ? (
+              <Input
+                value={task.title}
+                onChange={(e) => setTask({ ...task, title: e.target.value })}
+                onBlur={async () => {
+                  setEditingTitle(false);
+                  const { error } = await supabase.from("tasks").update({ title: task.title }).eq("id", taskId);
+                  if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                }}
+                onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
+                autoFocus
+                className="font-semibold text-lg"
+              />
+            ) : (
+              <span onClick={() => setEditingTitle(true)} className="cursor-pointer hover:text-primary">{task.title}</span>
+            )}
             {!showComments && (
               <Button
                 variant="ghost"
@@ -267,7 +291,26 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           <div className={`space-y-6 overflow-y-auto pr-4 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
             <div>
               <Label>Description</Label>
-              <p className="text-sm text-muted-foreground mt-1">{task.description || "No description"}</p>
+              {editingDescription ? (
+                <Textarea
+                  value={task.description || ""}
+                  onChange={(e) => setTask({ ...task, description: e.target.value })}
+                  onBlur={async () => {
+                    setEditingDescription(false);
+                    const { error } = await supabase.from("tasks").update({ description: task.description }).eq("id", taskId);
+                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                  }}
+                  autoFocus
+                  className="mt-1"
+                />
+              ) : (
+                <p
+                  onClick={() => setEditingDescription(true)}
+                  className="text-sm text-muted-foreground mt-1 cursor-pointer hover:text-foreground min-h-[40px] p-2 rounded border border-transparent hover:border-border"
+                >
+                  {task.description || "Click to add description"}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -326,42 +369,74 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             </div>
 
-            <div>
-              <Label className="mb-2 block">Entity</Label>
-              <Select 
-                value={task.entity || ""} 
-                onValueChange={async (value) => {
-                  const { error } = await supabase
-                    .from("tasks")
-                    .update({ entity: value })
-                    .eq("id", taskId);
-                  if (error) {
-                    toast({ title: "Error", description: error.message, variant: "destructive" });
-                  } else {
-                    fetchTask();
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Jordan">Jordan</SelectItem>
-                  <SelectItem value="Lebanon">Lebanon</SelectItem>
-                  <SelectItem value="Kuwait">Kuwait</SelectItem>
-                  <SelectItem value="UAE">UAE</SelectItem>
-                  <SelectItem value="South Africa">South Africa</SelectItem>
-                  <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
-                  <SelectItem value="UK">UK</SelectItem>
-                  <SelectItem value="Latin America">Latin America</SelectItem>
-                  <SelectItem value="Seychelles">Seychelles</SelectItem>
-                  <SelectItem value="Palestine">Palestine</SelectItem>
-                  <SelectItem value="Bahrain">Bahrain</SelectItem>
-                  <SelectItem value="Qatar">Qatar</SelectItem>
-                  <SelectItem value="International">International</SelectItem>
-                  <SelectItem value="Global Management">Global Management</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-2 block">Entity</Label>
+                <Select 
+                  value={task.entity || ""} 
+                  onValueChange={async (value) => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ entity: value })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select entity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Jordan">Jordan</SelectItem>
+                    <SelectItem value="Lebanon">Lebanon</SelectItem>
+                    <SelectItem value="Kuwait">Kuwait</SelectItem>
+                    <SelectItem value="UAE">UAE</SelectItem>
+                    <SelectItem value="South Africa">South Africa</SelectItem>
+                    <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
+                    <SelectItem value="UK">UK</SelectItem>
+                    <SelectItem value="Latin America">Latin America</SelectItem>
+                    <SelectItem value="Seychelles">Seychelles</SelectItem>
+                    <SelectItem value="Palestine">Palestine</SelectItem>
+                    <SelectItem value="Bahrain">Bahrain</SelectItem>
+                    <SelectItem value="Qatar">Qatar</SelectItem>
+                    <SelectItem value="International">International</SelectItem>
+                    <SelectItem value="Global Management">Global Management</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Project</Label>
+                <Select 
+                  value={task.project_id || ""} 
+                  onValueChange={async (value) => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ project_id: value || null })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Project</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {task.status === "Blocked" && (
