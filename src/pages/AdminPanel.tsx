@@ -127,26 +127,29 @@ export default function AdminPanel() {
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      // Send notification to task creator
-      if (approved && task?.created_by) {
-        await supabase.from("notifications").insert({
-          user_id: task.created_by,
-          type: "task_updated",
-          payload_json: { 
-            task_id: taskId, 
-            task_title: task.title,
-            message: "Your task has been approved and is now In Progress"
-          }
-        });
-      }
-
-      toast({
-        title: approved ? "Task Approved" : "Task Rejected",
-        description: `Task has been ${approved ? "approved and moved to In Progress" : "rejected"}.`,
-      });
-      // Real-time will handle the update automatically
+      return;
     }
+
+    // Send notification to task creator
+    if (approved && task?.created_by) {
+      await supabase.from("notifications").insert({
+        user_id: task.created_by,
+        type: "task_updated",
+        payload_json: { 
+          task_id: taskId, 
+          task_title: task.title,
+          message: "Your task has been approved and is now In Progress"
+        }
+      });
+    }
+
+    toast({
+      title: approved ? "Task Approved" : "Task Rejected",
+      description: `Task has been ${approved ? "approved and moved to In Progress" : "rejected"}.`,
+    });
+    
+    // Immediately refetch to show changes
+    await fetchData();
   };
 
   // Show loading while checking permissions

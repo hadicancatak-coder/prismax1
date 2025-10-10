@@ -225,7 +225,9 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
       setNewComment("");
       toast({ title: "Comment posted", description: "Your comment has been added" });
-      // Real-time will handle the update automatically
+      
+      // Immediately refetch comments to show the new one
+      await fetchComments();
     } catch (error: any) {
       console.error("Error posting comment:", error);
       toast({ title: "Error", description: error.message || "Failed to post comment", variant: "destructive" });

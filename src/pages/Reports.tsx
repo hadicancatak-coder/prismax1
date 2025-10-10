@@ -66,24 +66,31 @@ export default function Reports() {
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Report link added successfully" });
-      setDialogOpen(false);
-      setTitle("");
-      setLink("");
-      setType("sheet");
-      // Real-time will handle the update automatically
+      return;
     }
+    
+    toast({ title: "Success", description: "Report link added successfully" });
+    setDialogOpen(false);
+    setTitle("");
+    setLink("");
+    setType("sheet");
+    
+    // Immediately refetch to show the new report
+    await fetchReports();
   };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("reports").delete().eq("id", id);
+    
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Report deleted" });
-      // Real-time will handle the update automatically
+      return;
     }
+    
+    toast({ title: "Success", description: "Report deleted" });
+    
+    // Immediately refetch to show the deletion
+    await fetchReports();
   };
 
   return (
