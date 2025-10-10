@@ -22,10 +22,20 @@ export default function AdminPanel() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
+    // Only redirect if we've confirmed user is NOT an admin
+    // Don't redirect while still loading the role
+    if (userRole === null) return; // Still loading
+    
     if (userRole !== "admin") {
+      toast({
+        title: "Access Denied",
+        description: "You need admin privileges to access this page",
+        variant: "destructive",
+      });
       navigate("/");
       return;
     }
+    
     fetchData();
 
     // Real-time subscription for instant updates
@@ -139,12 +149,18 @@ export default function AdminPanel() {
     }
   };
 
-  if (loading) {
+  // Show loading while checking permissions
+  if (userRole === null || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">Loading Admin Panel...</div>
       </div>
     );
+  }
+  
+  // Don't render if not admin (though useEffect should redirect)
+  if (userRole !== "admin") {
+    return null;
   }
 
   return (
