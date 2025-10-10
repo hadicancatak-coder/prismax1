@@ -253,12 +253,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Status</Label>
-                <Badge className="mt-1">{task.status}</Badge>
+                <Label className="mb-2 block">Status</Label>
+                <Badge variant="outline">{task.status}</Badge>
               </div>
               <div>
-                <Label>Priority</Label>
-                <Badge className="mt-1">{task.priority}</Badge>
+                <Label className="mb-2 block">Priority</Label>
+                <Badge variant="outline">{task.priority}</Badge>
               </div>
             </div>
 

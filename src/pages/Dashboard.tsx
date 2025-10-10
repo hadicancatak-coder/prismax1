@@ -5,6 +5,7 @@ import { Clock, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TaskDialog } from "@/components/TaskDialog";
+import { TaskListDialog } from "@/components/TaskListDialog";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -16,6 +17,8 @@ export default function Dashboard() {
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [statDialogOpen, setStatDialogOpen] = useState(false);
+  const [statTasks, setStatTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -66,10 +69,31 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user]);
 
+  const handleStatClick = async (type: 'today' | 'overdue' | 'inProgress') => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let query = supabase.from("tasks").select("*");
+
+    if (type === 'today') {
+      query = query.gte("due_at", today.toISOString()).lt("due_at", tomorrow.toISOString()).neq("status", "Completed");
+    } else if (type === 'overdue') {
+      query = query.lt("due_at", today.toISOString()).neq("status", "Completed");
+    } else if (type === 'inProgress') {
+      query = query.eq("status", "In Progress");
+    }
+
+    const { data } = await query.order("created_at", { ascending: false });
+    setStatTasks(data || []);
+    setStatDialogOpen(true);
+  };
+
   const statsDisplay = [
-    { title: "Due Today", value: stats.today.toString(), icon: Clock, color: "text-warning", bgColor: "bg-warning/10" },
-    { title: "In Progress", value: stats.inProgress.toString(), icon: TrendingUp, color: "text-primary", bgColor: "bg-primary/10" },
-    { title: "Overdue", value: stats.overdue.toString(), icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10" },
+    { title: "Due Today", value: stats.today.toString(), icon: Clock, color: "text-warning", bgColor: "bg-warning/10", type: 'today' as const },
+    { title: "In Progress", value: stats.inProgress.toString(), icon: TrendingUp, color: "text-primary", bgColor: "bg-primary/10", type: 'inProgress' as const },
+    { title: "Overdue", value: stats.overdue.toString(), icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10", type: 'overdue' as const },
   ];
 
   return (
@@ -83,8 +107,9 @@ export default function Dashboard() {
         {statsDisplay.map((stat, index) => (
           <Card 
             key={stat.title} 
-            className="p-6 transition-all hover:shadow-medium hover:-translate-y-1 animate-scale-in"
+            className="p-6 transition-all hover:shadow-medium hover:-translate-y-1 animate-scale-in cursor-pointer"
             style={{ animationDelay: `${index * 100}ms` }}
+            onClick={() => handleStatClick(stat.type)}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -160,6 +185,13 @@ export default function Dashboard() {
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
       )}
+
+      <TaskListDialog
+        open={statDialogOpen}
+        onOpenChange={setStatDialogOpen}
+        tasks={statTasks}
+        title={statsDisplay.find(s => s.value === statTasks.length.toString())?.title || "Tasks"}
+      />
     </div>
   );
 }

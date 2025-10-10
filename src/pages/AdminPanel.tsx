@@ -8,14 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function AdminPanel() {
   const { userRole } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
+  const [allTasks, setAllTasks] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
     if (userRole !== "admin") {
@@ -28,6 +32,12 @@ export default function AdminPanel() {
   const fetchData = async () => {
     setLoading(true);
     
+    // Fetch all tasks
+    const { data: all } = await supabase
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     // Fetch pending approval tasks
     const { data: pending } = await supabase
       .from("tasks")
@@ -48,6 +58,7 @@ export default function AdminPanel() {
         tasks_assigned:tasks!assignee_id(id, status)
       `);
 
+    setAllTasks(all || []);
     setPendingTasks(pending || []);
     setMembers(profiles || []);
     setLoading(false);
@@ -92,8 +103,9 @@ export default function AdminPanel() {
         <p className="text-muted-foreground">Manage approvals and monitor team performance</p>
       </div>
 
-      <Tabs defaultValue="approvals" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs defaultValue="tasks" className="w-full">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsTrigger value="tasks">All Tasks</TabsTrigger>
           <TabsTrigger value="approvals">
             Pending Approvals
             {pendingTasks.length > 0 && (
@@ -102,6 +114,77 @@ export default function AdminPanel() {
           </TabsTrigger>
           <TabsTrigger value="team">Team Overview</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tasks" className="mt-6">
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50 border-b">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Title</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Priority</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Assignee</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {allTasks.map((task) => (
+                    <tr
+                      key={task.id}
+                      className="hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedTaskId(task.id);
+                        setTaskDialogOpen(true);
+                      }}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-foreground">{task.title}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-1">{task.description || "No description"}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            task.status === "In Progress"
+                              ? "bg-warning/10 text-warning border-warning/20"
+                              : task.status === "Pending Approval"
+                              ? "bg-pending/10 text-pending border-pending/20"
+                              : task.status === "Completed"
+                              ? "bg-success/10 text-success border-success/20"
+                              : "bg-muted text-muted-foreground border-border"
+                          }
+                        >
+                          {task.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            task.priority === "High"
+                              ? "bg-destructive/10 text-destructive border-destructive/20"
+                              : task.priority === "Medium"
+                              ? "bg-warning/10 text-warning border-warning/20"
+                              : "bg-muted text-muted-foreground border-border"
+                          }
+                        >
+                          {task.priority}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {task.assignee_id ? "Assigned" : "Unassigned"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="approvals" className="mt-6 space-y-4">
           {pendingTasks.length > 0 ? (
@@ -201,6 +284,10 @@ export default function AdminPanel() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {selectedTaskId && (
+        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+      )}
     </div>
   );
 }

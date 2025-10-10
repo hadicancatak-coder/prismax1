@@ -4,9 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function CalendarView() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   const tasksForDay = [
     {
@@ -70,7 +73,11 @@ export default function CalendarView() {
             {tasksForDay.map((task) => (
               <div
                 key={task.id}
-                className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-all"
+                className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-all cursor-pointer"
+                onClick={() => {
+                  setSelectedTaskId(task.id.toString());
+                  setTaskDialogOpen(true);
+                }}
               >
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-medium text-foreground">{task.title}</h3>
@@ -105,6 +112,10 @@ export default function CalendarView() {
           </div>
         </Card>
       </div>
+
+      {selectedTaskId && (
+        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+      )}
     </div>
   );
 }

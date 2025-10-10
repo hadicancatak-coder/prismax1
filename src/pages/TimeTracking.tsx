@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function TimeTracking() {
   const { user } = useAuth();
@@ -22,6 +23,8 @@ export default function TimeTracking() {
     week: "0h 0m",
     average: "0h 0m"
   });
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [viewTaskId, setViewTaskId] = useState<string | null>(null);
 
   // Fetch tasks
   useEffect(() => {
@@ -302,7 +305,13 @@ export default function TimeTracking() {
             timeEntries.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all"
+                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all cursor-pointer"
+                onClick={() => {
+                  if (entry.task_id) {
+                    setViewTaskId(entry.task_id);
+                    setTaskDialogOpen(true);
+                  }
+                }}
               >
                 <div className="flex-1">
                   <h3 className="font-medium text-foreground mb-1">{entry.tasks?.title || "Unknown Task"}</h3>
@@ -329,6 +338,10 @@ export default function TimeTracking() {
           )}
         </div>
       </Card>
+
+      {viewTaskId && (
+        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={viewTaskId} />
+      )}
     </div>
   );
 }
