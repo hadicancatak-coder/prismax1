@@ -12,6 +12,7 @@ import TimeTracking from "./pages/TimeTracking";
 import AdminPanel from "./pages/AdminPanel";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/time-tracking" element={<TimeTracking />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />

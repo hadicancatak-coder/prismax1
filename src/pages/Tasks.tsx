@@ -3,16 +3,24 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, Search, Filter, CalendarIcon } from "lucide-react";
 import { TaskCard } from "@/components/TaskCard";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
 
 export default function Tasks() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [showFilters, setShowFilters] = useState(false);
   const [tasks, setTasks] = useState<{
     all: any[];
     today: any[];
@@ -115,27 +123,31 @@ export default function Tasks() {
     });
   };
 
+  const applyFilters = (taskList: any[]) => {
+    return taskList.filter((task) => {
+      const matchesSearch = 
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || task.status === statusFilter;
+      
+      let matchesDateRange = true;
+      if (startDate && task.due_at) {
+        matchesDateRange = new Date(task.due_at) >= startDate;
+      }
+      if (endDate && task.due_at) {
+        matchesDateRange = matchesDateRange && new Date(task.due_at) <= endDate;
+      }
+      
+      return matchesSearch && matchesStatus && matchesDateRange;
+    });
+  };
+
   const filteredTasks = {
-    all: tasks.all.filter(
-      (task) =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    today: tasks.today.filter(
-      (task) =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    weekly: tasks.weekly.filter(
-      (task) =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    monthly: tasks.monthly.filter(
-      (task) =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
+    all: applyFilters(tasks.all),
+    today: applyFilters(tasks.today),
+    weekly: applyFilters(tasks.weekly),
+    monthly: applyFilters(tasks.monthly),
   };
 
   return (
@@ -151,7 +163,7 @@ export default function Tasks() {
         </Button>
       </div>
 
-      <Card className="p-4">
+      <Card className="p-4 space-y-4">
         <div className="flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -162,11 +174,63 @@ export default function Tasks() {
               className="pl-10"
             />
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="h-4 w-4" />
             Filter
           </Button>
         </div>
+
+        {showFilters && (
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Start Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">End Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
       </Card>
 
       <Tabs defaultValue="all" className="w-full">

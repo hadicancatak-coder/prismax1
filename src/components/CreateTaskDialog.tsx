@@ -20,6 +20,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+const ENTITIES = [
+  "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
+  "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
+  "International", "Global Management"
+];
+
 interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +42,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [status, setStatus] = useState<"Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived">("In Progress");
   const [jiraLink, setJiraLink] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("unassigned");
+  const [entity, setEntity] = useState<string>("");
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -93,6 +100,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         created_by: user.id,
         assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
         visibility: "global" as "global" | "pool" | "private",
+        entity: entity || null,
       };
 
       console.log("Creating task:", taskData);
@@ -104,6 +112,18 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       }
 
       console.log("Task created successfully:", data);
+
+      // Send notification if task is assigned to someone
+      if (taskData.assignee_id && taskData.assignee_id !== user.id && userRole === "admin") {
+        await supabase.from("notifications").insert({
+          user_id: taskData.assignee_id,
+          type: "task_assigned",
+          payload_json: { 
+            task_id: data[0].id,
+            task_title: taskData.title,
+          },
+        });
+      }
 
       toast({
         title: userRole === "member" ? "Task submitted for approval" : "Task created",
@@ -118,6 +138,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setStatus("In Progress");
       setJiraLink("");
       setAssigneeId("unassigned");
+      setEntity("");
       setDate(undefined);
       onOpenChange(false);
     } catch (error: any) {
@@ -229,6 +250,22 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               value={jiraLink}
               onChange={(e) => setJiraLink(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Entity</Label>
+            <Select value={entity} onValueChange={setEntity}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select entity" />
+              </SelectTrigger>
+              <SelectContent>
+                {ENTITIES.map((ent) => (
+                  <SelectItem key={ent} value={ent}>
+                    {ent}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {userRole === "admin" && (

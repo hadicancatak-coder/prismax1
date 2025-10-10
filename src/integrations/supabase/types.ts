@@ -309,10 +309,12 @@ export type Database = {
       tasks: {
         Row: {
           assignee_id: string | null
+          blocker_reason: string | null
           created_at: string
           created_by: string | null
           description: string | null
           due_at: string | null
+          entity: string | null
           id: string
           jira_key: string | null
           jira_link: string | null
@@ -330,10 +332,12 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_at?: string | null
+          entity?: string | null
           id?: string
           jira_key?: string | null
           jira_link?: string | null
@@ -351,10 +355,12 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_at?: string | null
+          entity?: string | null
           id?: string
           jira_key?: string | null
           jira_link?: string | null
@@ -466,6 +472,7 @@ export type Database = {
         | "Blocked"
         | "Completed"
         | "Archived"
+        | "Failed"
       task_visibility: "global" | "pool" | "private"
     }
     CompositeTypes: {
@@ -603,6 +610,7 @@ export const Constants = {
         "Blocked",
         "Completed",
         "Archived",
+        "Failed",
       ],
       task_visibility: ["global", "pool", "private"],
     },

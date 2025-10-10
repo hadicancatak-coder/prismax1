@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, XCircle, User, Clock } from "lucide-react";
+import { CheckCircle, XCircle, User, Clock, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -103,17 +103,19 @@ export default function AdminPanel() {
         <p className="text-muted-foreground">Manage approvals and monitor team performance</p>
       </div>
 
-      <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="tasks">All Tasks</TabsTrigger>
-          <TabsTrigger value="approvals">
-            Pending Approvals
-            {pendingTasks.length > 0 && (
-              <Badge className="ml-2 bg-gradient-primary">{pendingTasks.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="team">Team Overview</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2">
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="tasks">All Tasks</TabsTrigger>
+              <TabsTrigger value="approvals">
+                Pending Approvals
+                {pendingTasks.length > 0 && (
+                  <Badge className="ml-2 bg-gradient-primary">{pendingTasks.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="team">Team Overview</TabsTrigger>
+            </TabsList>
 
         <TabsContent value="tasks" className="mt-6">
           <Card className="overflow-hidden">
@@ -283,7 +285,55 @@ export default function AdminPanel() {
             })}
           </div>
         </TabsContent>
-      </Tabs>
+          </Tabs>
+        </div>
+
+        <div>
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Button className="w-full justify-start gap-2" variant="outline">
+                <CheckSquare className="h-4 w-4" />
+                Create Task
+              </Button>
+              <Button className="w-full justify-start gap-2" variant="outline">
+                <User className="h-4 w-4" />
+                Manage Users
+              </Button>
+            </div>
+          </Card>
+
+          {pendingTasks.length > 0 && (
+            <Card className="p-6 mt-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Approvals Needed ({pendingTasks.length})
+              </h3>
+              <div className="space-y-2">
+                {pendingTasks.slice(0, 3).map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-3 bg-muted/30 rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => {
+                      setSelectedTaskId(task.id);
+                      setTaskDialogOpen(true);
+                    }}
+                  >
+                    <p className="font-medium text-foreground line-clamp-1">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      by {task.profiles?.name}
+                    </p>
+                  </div>
+                ))}
+                {pendingTasks.length > 3 && (
+                  <p className="text-xs text-center text-muted-foreground pt-2">
+                    +{pendingTasks.length - 3} more
+                  </p>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
 
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />

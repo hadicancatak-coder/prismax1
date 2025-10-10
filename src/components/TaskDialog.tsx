@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -227,18 +229,20 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`max-h-[90vh] overflow-hidden transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
-        <DialogHeader>
+        <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center justify-between">
             <span>{task.title}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
-              className="gap-2"
-            >
-              <MessageCircle className="h-4 w-4" />
-              {showComments ? "Hide" : "Show"} Comments ({comments.length})
-            </Button>
+            {!showComments && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowComments(true)}
+                className="gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Show Comments ({comments.length})
+              </Button>
+            )}
           </DialogTitle>
           <DialogDescription>Task details and team discussion</DialogDescription>
         </DialogHeader>
@@ -254,13 +258,117 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">Status</Label>
-                <Badge variant="outline">{task.status}</Badge>
+                <Select 
+                  value={task.status} 
+                  onValueChange={async (value: any) => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ status: value })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Blocked">Blocked</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="mb-2 block">Priority</Label>
-                <Badge variant="outline">{task.priority}</Badge>
+                <Select 
+                  value={task.priority} 
+                  onValueChange={async (value: any) => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ priority: value })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
+            <div>
+              <Label className="mb-2 block">Entity</Label>
+              <Select 
+                value={task.entity || ""} 
+                onValueChange={async (value) => {
+                  const { error } = await supabase
+                    .from("tasks")
+                    .update({ entity: value })
+                    .eq("id", taskId);
+                  if (error) {
+                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                  } else {
+                    fetchTask();
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select entity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Jordan">Jordan</SelectItem>
+                  <SelectItem value="Lebanon">Lebanon</SelectItem>
+                  <SelectItem value="Kuwait">Kuwait</SelectItem>
+                  <SelectItem value="UAE">UAE</SelectItem>
+                  <SelectItem value="South Africa">South Africa</SelectItem>
+                  <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
+                  <SelectItem value="UK">UK</SelectItem>
+                  <SelectItem value="Latin America">Latin America</SelectItem>
+                  <SelectItem value="Seychelles">Seychelles</SelectItem>
+                  <SelectItem value="Palestine">Palestine</SelectItem>
+                  <SelectItem value="Bahrain">Bahrain</SelectItem>
+                  <SelectItem value="Qatar">Qatar</SelectItem>
+                  <SelectItem value="International">International</SelectItem>
+                  <SelectItem value="Global Management">Global Management</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {task.status === "Blocked" && (
+              <div>
+                <Label className="mb-2 block">Blocker Reason</Label>
+                <Textarea
+                  value={task.blocker_reason || ""}
+                  onChange={(e) => setTask({ ...task, blocker_reason: e.target.value })}
+                  onBlur={async () => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ blocker_reason: task.blocker_reason })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    }
+                  }}
+                  placeholder="Describe the reason for blocking this task..."
+                  className="min-h-[100px]"
+                />
+              </div>
+            )}
 
             <div>
               <Label>Assigned To</Label>
@@ -306,6 +414,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <>
               <Separator orientation="vertical" className="h-auto" />
               <div className="w-1/2 flex flex-col h-[600px]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Comments ({comments.length})</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowComments(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
                 <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
                   {comments.length > 0 ? (
                     comments.map((comment) => (

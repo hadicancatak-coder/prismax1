@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -20,6 +20,7 @@ const items = [
   { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Time Tracking", url: "/time-tracking", icon: Clock },
   { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Profile", url: "/profile", icon: User },
 ];
 
