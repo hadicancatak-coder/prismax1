@@ -27,6 +27,18 @@ export default function AdminPanel() {
       return;
     }
     fetchData();
+
+    // Real-time subscription for instant updates
+    const channel = supabase
+      .channel("admin-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userRole, navigate]);
 
   const fetchData = async () => {
@@ -41,35 +53,61 @@ export default function AdminPanel() {
     // Fetch pending approval tasks
     const { data: pending } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        profiles:created_by(name),
-        assignee:assignee_id(name)
-      `)
+      .select("*")
       .eq("status", "Pending Approval")
       .order("created_at", { ascending: false });
 
-    // Fetch all members with their task counts
+    // Fetch all members with their tasks
     const { data: profiles } = await supabase
       .from("profiles")
-      .select(`
-        *,
-        user_roles!inner(role),
-        tasks_assigned:tasks!assignee_id(id, status)
-      `);
+      .select("user_id, name, email, username");
+
+    // Fetch all user roles
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
+
+    // Fetch all tasks to calculate per-member stats
+    const { data: allTasksData } = await supabase
+      .from("tasks")
+      .select("id, assignee_id, status, blocker_reason");
+
+    // Build member statistics
+    const memberStats = (profiles || []).map(profile => {
+      const userRole = roles?.find(r => r.user_id === profile.user_id)?.role || 'member';
+      const memberTasks = (allTasksData || []).filter(t => t.assignee_id === profile.user_id);
+      const totalTasks = memberTasks.length;
+      const completedTasks = memberTasks.filter(t => t.status === "Completed").length;
+      const inProgressTasks = memberTasks.filter(t => t.status === "In Progress").length;
+      const blockedTasks = memberTasks.filter(t => t.status === "Blocked");
+      const pendingTasks = memberTasks.filter(t => t.status === "Pending Approval").length;
+      
+      return {
+        ...profile,
+        role: userRole,
+        totalTasks,
+        completedTasks,
+        inProgressTasks,
+        blockedTasks: blockedTasks.length,
+        pendingTasks,
+        blockerDetails: blockedTasks
+      };
+    });
 
     setAllTasks(all || []);
     setPendingTasks(pending || []);
-    setMembers(profiles || []);
+    setMembers(memberStats);
     setLoading(false);
   };
 
   const handleApproval = async (taskId: string, approved: boolean) => {
+    const task = pendingTasks.find(t => t.id === taskId);
+    
     const { error } = await supabase
       .from("tasks")
       .update({ 
-        status: approved ? "In Progress" : "Archived",
-        pending_approval: !approved
+        status: approved ? "In Progress" : "Failed",
+        pending_approval: false
       })
       .eq("id", taskId);
 
@@ -80,11 +118,24 @@ export default function AdminPanel() {
         variant: "destructive",
       });
     } else {
+      // Send notification to task creator
+      if (approved && task?.created_by) {
+        await supabase.from("notifications").insert({
+          user_id: task.created_by,
+          type: "task_updated",
+          payload_json: { 
+            task_id: taskId, 
+            task_title: task.title,
+            message: "Your task has been approved and is now In Progress"
+          }
+        });
+      }
+
       toast({
         title: approved ? "Task Approved" : "Task Rejected",
-        description: `Task has been ${approved ? "approved and moved to In Progress" : "rejected and archived"}.`,
+        description: `Task has been ${approved ? "approved and moved to In Progress" : "rejected"}.`,
       });
-      fetchData();
+      // Real-time will handle the update automatically
     }
   };
 
@@ -248,41 +299,61 @@ export default function AdminPanel() {
 
         <TabsContent value="team" className="mt-6 space-y-4">
           <div className="grid gap-4">
-            {members.map((member) => {
-              const completedTasks = member.tasks_assigned?.filter((t: any) => t.status === "Completed").length || 0;
-              const inProgressTasks = member.tasks_assigned?.filter((t: any) => t.status === "In Progress").length || 0;
-              const totalTasks = member.tasks_assigned?.length || 0;
-
-              return (
-                <Card key={member.id} className="p-6 transition-all hover:shadow-medium animate-slide-up">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                          {member.user_roles[0]?.role || "member"}
+            {members.map((member) => (
+              <Card key={member.user_id} className="p-6 transition-all hover:shadow-medium animate-slide-up">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                        {member.role}
+                      </Badge>
+                      {member.username && (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">
+                          @{member.username}
                         </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">{member.email}</p>
+                    <div className="grid grid-cols-5 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Total</p>
+                        <p className="text-2xl font-bold text-foreground">{member.totalTasks}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-4">{member.email}</p>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Total Tasks</p>
-                          <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">In Progress</p>
-                          <p className="text-2xl font-bold text-warning">{inProgressTasks}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Completed</p>
-                          <p className="text-2xl font-bold text-success">{completedTasks}</p>
-                        </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">In Progress</p>
+                        <p className="text-2xl font-bold text-warning">{member.inProgressTasks}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Pending</p>
+                        <p className="text-2xl font-bold text-pending">{member.pendingTasks}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Blocked</p>
+                        <p className="text-2xl font-bold text-destructive">{member.blockedTasks}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Completed</p>
+                        <p className="text-2xl font-bold text-success">{member.completedTasks}</p>
                       </div>
                     </div>
+                    {member.blockerDetails && member.blockerDetails.length > 0 && (
+                      <div className="mt-4 p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
+                        <p className="text-xs font-semibold text-destructive mb-2">Active Blockers:</p>
+                        {member.blockerDetails.slice(0, 2).map((blockedTask: any) => (
+                          <div key={blockedTask.id} className="text-xs text-muted-foreground mb-1">
+                            • {blockedTask.blocker_reason || "No reason provided"}
+                          </div>
+                        ))}
+                        {member.blockerDetails.length > 2 && (
+                          <p className="text-xs text-muted-foreground">+{member.blockerDetails.length - 2} more</p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </Card>
-              );
-            })}
+                </div>
+              </Card>
+            ))}
           </div>
         </TabsContent>
           </Tabs>

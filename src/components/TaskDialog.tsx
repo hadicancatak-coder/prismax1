@@ -151,7 +151,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   };
 
   const fetchProfiles = async () => {
-    const { data } = await supabase.from("profiles").select("user_id, name");
+    const { data } = await supabase.from("profiles").select("user_id, name, username");
     setProfiles(data || []);
   };
 
@@ -186,12 +186,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
       if (error) throw error;
 
-      // Parse @mentions
+      // Parse @mentions (support both @name and @username)
       const mentions = newComment.match(/@(\w+)/g) || [];
       
       for (const mention of mentions) {
         const username = mention.substring(1);
-        const mentionedProfile = profiles.find((p) => p.name?.toLowerCase() === username.toLowerCase());
+        const mentionedProfile = profiles.find(
+          (p) => 
+            p.name?.toLowerCase() === username.toLowerCase() ||
+            p.username?.toLowerCase() === username.toLowerCase()
+        );
 
         if (mentionedProfile) {
           try {
@@ -203,7 +207,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             await supabase.from("notifications").insert({
               user_id: mentionedProfile.user_id,
               type: "mention",
-              payload_json: { task_id: taskId, comment_id: comment.id, message: newComment.trim() },
+              payload_json: { 
+                task_id: taskId, 
+                comment_id: comment.id, 
+                message: newComment.trim(),
+                task_title: task.title
+              },
             });
           } catch (notifError) {
             console.error("Error creating notification:", notifError);
@@ -213,6 +222,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
       setNewComment("");
       toast({ title: "Comment posted", description: "Your comment has been added" });
+      // Real-time will handle the update automatically
     } catch (error: any) {
       console.error("Error posting comment:", error);
       toast({ title: "Error", description: error.message || "Failed to post comment", variant: "destructive" });
@@ -442,7 +452,23 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                               })}
                             </span>
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">{comment.body}</p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {comment.body.split(/(@\w+)/g).map((part: string, i: number) => {
+                              if (part.startsWith('@')) {
+                                const username = part.substring(1);
+                                const mentioned = profiles.find(
+                                  p => p.name?.toLowerCase() === username.toLowerCase() ||
+                                       p.username?.toLowerCase() === username.toLowerCase()
+                                );
+                                return mentioned ? (
+                                  <span key={i} className="text-primary font-semibold cursor-pointer hover:underline">
+                                    {part}
+                                  </span>
+                                ) : part;
+                              }
+                              return part;
+                            })}
+                          </p>
                         </div>
                       </div>
                     ))
@@ -457,7 +483,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   <div className="flex items-end gap-2">
                     <div className="flex-1 relative">
                       <Input
-                        placeholder="Type a message... Use @ to mention"
+                        placeholder="Type a message... Use @username to mention"
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         onKeyDown={(e) => {

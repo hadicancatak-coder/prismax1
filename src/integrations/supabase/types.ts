@@ -151,6 +151,7 @@ export type Database = {
           tagline: string | null
           title: string | null
           user_id: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -162,6 +163,7 @@ export type Database = {
           tagline?: string | null
           title?: string | null
           user_id: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           tagline?: string | null
           title?: string | null
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }

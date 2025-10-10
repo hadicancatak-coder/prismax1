@@ -90,9 +90,9 @@ export default function Notifications() {
       case "task_assigned":
         return `You have been assigned a new task: ${payload.task_title}`;
       case "mention":
-        return `You were mentioned in a comment: "${payload.message}"`;
+        return `You were mentioned in "${payload.task_title}"`;
       case "task_updated":
-        return `A task you're watching was updated: ${payload.task_title}`;
+        return payload.message || `Task "${payload.task_title}" was updated`;
       default:
         return "You have a new notification";
     }

@@ -51,6 +51,7 @@ export default function Reports() {
       setTitle("");
       setLink("");
       setType("sheet");
+      // Real-time will handle the update automatically
     }
   };
 
@@ -60,6 +61,7 @@ export default function Reports() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Report deleted" });
+      // Real-time will handle the update automatically
     }
   };
 
