@@ -14,10 +14,12 @@ export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [tasks, setTasks] = useState<{
+    all: any[];
     today: any[];
     weekly: any[];
     monthly: any[];
   }>({
+    all: [],
     today: [],
     weekly: [],
     monthly: [],
@@ -58,6 +60,15 @@ export default function Tasks() {
     const nextMonth = new Date(today);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
 
+    const { data: allTasks } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        profiles:created_by(name),
+        assignee:assignee_id(name)
+      `)
+      .order("created_at", { ascending: false });
+
     const { data: todayTasks } = await supabase
       .from("tasks")
       .select(`
@@ -92,6 +103,7 @@ export default function Tasks() {
       .order("due_at");
 
     setTasks({
+      all: allTasks || [],
       today: todayTasks || [],
       weekly: weeklyTasks || [],
       monthly: monthlyTasks || [],
@@ -99,6 +111,11 @@ export default function Tasks() {
   };
 
   const filteredTasks = {
+    all: tasks.all.filter(
+      (task) =>
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
     today: tasks.today.filter(
       (task) =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -147,14 +164,39 @@ export default function Tasks() {
         </div>
       </Card>
 
-      <Tabs defaultValue="today" className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full max-w-3xl grid-cols-6">
+          <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="today">Today</TabsTrigger>
           <TabsTrigger value="weekly">This Week</TabsTrigger>
           <TabsTrigger value="monthly">This Month</TabsTrigger>
           <TabsTrigger value="blockers">Blockers</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="all" className="mt-6 space-y-4">
+          {filteredTasks.all.length > 0 ? (
+            filteredTasks.all.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee?.name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks found</p>
+            </Card>
+          )}
+        </TabsContent>
 
         <TabsContent value="today" className="mt-6 space-y-4">
           {filteredTasks.today.length > 0 ? (
