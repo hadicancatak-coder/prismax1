@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Sparkles } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Copy, Sparkles, ExternalLink } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdsPage() {
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
@@ -44,15 +44,32 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
     toast({ title: "All content copied to clipboard" });
   };
 
+  const getRandomItems = <T,>(arr: T[], count: number): T[] => {
+    const filtered = arr.filter((item) => {
+      if (typeof item === "string") return item.trim();
+      if (typeof item === "object" && item !== null && "title" in item) {
+        return (item as { title: string }).title.trim();
+      }
+      return false;
+    });
+    const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, filtered.length));
+  };
+
+  const previewHeadlines = getRandomItems(headlines, 3);
+  const previewDescriptions = getRandomItems(descriptions, 2);
+  const previewSitelinks = getRandomItems(sitelinks, 4);
+  const previewCallouts = getRandomItems(callouts, 4);
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Sparkles className="h-8 w-8" />
-            Google Ads Planner
+            Google Ads Planner - Search
           </h1>
-          <p className="text-muted-foreground mt-1">Plan your Google Ads campaigns following best practices</p>
+          <p className="text-muted-foreground mt-1">Plan your Google Search Ads campaigns following best practices</p>
         </div>
         <Button onClick={handleCopyAll} variant="outline">
           <Copy className="h-4 w-4 mr-2" />
@@ -60,16 +77,10 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
         </Button>
       </div>
 
-      <Tabs defaultValue="headlines" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="headlines">Headlines</TabsTrigger>
-          <TabsTrigger value="descriptions">Descriptions</TabsTrigger>
-          <TabsTrigger value="landing">Landing Page</TabsTrigger>
-          <TabsTrigger value="sitelinks">Sitelinks</TabsTrigger>
-          <TabsTrigger value="callouts">Callouts</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="headlines">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Section */}
+        <div className="space-y-6">
+          {/* Headlines */}
           <Card>
             <CardHeader>
               <CardTitle>Headlines (15 Required)</CardTitle>
@@ -104,9 +115,8 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               ))}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="descriptions">
+          {/* Descriptions */}
           <Card>
             <CardHeader>
               <CardTitle>Descriptions (4 Required)</CardTitle>
@@ -142,9 +152,8 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               ))}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="landing">
+          {/* Landing Page */}
           <Card>
             <CardHeader>
               <CardTitle>Landing Page URL</CardTitle>
@@ -164,9 +173,8 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="sitelinks">
+          {/* Sitelinks */}
           <Card>
             <CardHeader>
               <CardTitle>Sitelinks (4 Recommended)</CardTitle>
@@ -207,9 +215,8 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               ))}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="callouts">
+          {/* Callouts */}
           <Card>
             <CardHeader>
               <CardTitle>Callouts (4 Recommended)</CardTitle>
@@ -244,8 +251,88 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               ))}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Preview Section */}
+        <div>
+          <Card className="sticky top-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Ad Preview
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <CardDescription>Live preview of your Google Search Ad</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Ad Preview Box */}
+              <div className="border rounded-lg p-4 bg-background space-y-3">
+                {/* Ad Label */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold px-2 py-0.5 border border-foreground/20 rounded">Ad</span>
+                  <span className="text-xs text-muted-foreground truncate">{landingPage || "yourdomain.com"}</span>
+                </div>
+
+                {/* Headlines */}
+                <div className="space-y-1">
+                  <h3 className="text-xl text-primary font-normal leading-tight">
+                    {previewHeadlines.length > 0 
+                      ? previewHeadlines.join(" • ") 
+                      : "Your headline will appear here • Add headlines to see preview"}
+                  </h3>
+                </div>
+
+                {/* Display URL */}
+                <div className="text-sm text-foreground/80">
+                  {landingPage ? new URL(landingPage).hostname : "www.yourdomain.com"} {landingPage && <span className="text-foreground/60">› page</span>}
+                </div>
+
+                {/* Descriptions */}
+                <div className="text-sm text-foreground/70 leading-relaxed">
+                  {previewDescriptions.length > 0
+                    ? previewDescriptions.join(" ")
+                    : "Your descriptions will appear here. Add up to 4 descriptions to see how they look."}
+                </div>
+
+                {/* Sitelinks */}
+                {previewSitelinks.length > 0 && (
+                  <>
+                    <Separator className="my-3" />
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {previewSitelinks.map((link, index) => (
+                        <div key={index}>
+                          <div className="text-sm text-primary font-normal">{link.title}</div>
+                          <div className="text-xs text-foreground/60 line-clamp-1">{link.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Callouts */}
+                {previewCallouts.length > 0 && (
+                  <>
+                    <Separator className="my-3" />
+                    <div className="flex flex-wrap gap-2">
+                      {previewCallouts.map((callout, index) => (
+                        <span key={index} className="text-xs text-foreground/70">
+                          {callout}
+                          {index < previewCallouts.length - 1 && " • "}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• Preview shows random selection of your inputs</p>
+                <p>• Google may show different combinations</p>
+                <p>• Actual ad appearance may vary</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

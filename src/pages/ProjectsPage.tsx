@@ -8,13 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, Edit, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Calendar, Edit, Trash2, Users } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ProjectsPage() {
   const { user, userRole } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [timelines, setTimelines] = useState<{ [key: string]: any[] }>({});
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   // Timeline form
   const [phaseName, setPhaseName] = useState("");
@@ -34,6 +37,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     fetchProjects();
+    fetchUsers();
 
     const channel = supabase
       .channel('projects-changes')
@@ -43,6 +47,14 @@ export default function ProjectsPage() {
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, name, email")
+      .order("name");
+    setAllUsers(data || []);
+  };
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -84,7 +96,8 @@ export default function ProjectsPage() {
       description: description.trim(),
       start_date: startDate || null,
       end_date: endDate || null,
-      created_by: user?.id
+      created_by: user?.id,
+      members: selectedMembers
     });
 
     if (error) {
@@ -96,6 +109,7 @@ export default function ProjectsPage() {
       setDescription("");
       setStartDate("");
       setEndDate("");
+      setSelectedMembers([]);
       await fetchProjects();
     }
   };
@@ -163,6 +177,46 @@ export default function ProjectsPage() {
                   <Label>Description</Label>
                   <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Project description" />
                 </div>
+                <div>
+                  <Label>Project Members</Label>
+                  <Select 
+                    onValueChange={(value) => {
+                      if (!selectedMembers.includes(value)) {
+                        setSelectedMembers([...selectedMembers, value]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add team members" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allUsers.map((u) => (
+                        <SelectItem key={u.user_id} value={u.user_id}>
+                          {u.name || u.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedMembers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedMembers.map((memberId) => {
+                        const member = allUsers.find(u => u.user_id === memberId);
+                        return (
+                          <div key={memberId} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md text-sm">
+                            <Users className="h-3 w-3" />
+                            {member?.name || member?.email}
+                            <button
+                              onClick={() => setSelectedMembers(selectedMembers.filter(id => id !== memberId))}
+                              className="ml-1 text-muted-foreground hover:text-foreground"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Start Date</Label>
@@ -192,6 +246,12 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       {format(new Date(project.start_date), "MMM dd, yyyy")} - {project.end_date ? format(new Date(project.end_date), "MMM dd, yyyy") : "Ongoing"}
+                    </div>
+                  )}
+                  {project.members && project.members.length > 0 && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      {project.members.length} member{project.members.length > 1 ? 's' : ''}
                     </div>
                   )}
                 </div>

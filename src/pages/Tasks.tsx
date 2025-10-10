@@ -23,14 +23,24 @@ export default function Tasks() {
   const [showFilters, setShowFilters] = useState(false);
   const [tasks, setTasks] = useState<{
     all: any[];
+    yesterday: any[];
     today: any[];
-    weekly: any[];
-    monthly: any[];
+    tomorrow: any[];
+    thisWeek: any[];
+    nextWeek: any[];
+    thisMonth: any[];
+    nextMonth: any[];
+    past: any[];
   }>({
     all: [],
+    yesterday: [],
     today: [],
-    weekly: [],
-    monthly: [],
+    tomorrow: [],
+    thisWeek: [],
+    nextWeek: [],
+    thisMonth: [],
+    nextMonth: [],
+    past: [],
   });
 
   useEffect(() => {
@@ -59,19 +69,40 @@ export default function Tasks() {
   }, [user]);
 
   const fetchTasks = async () => {
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now);
     today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const nextWeek = new Date(today);
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextMonth = new Date(today);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    
+    const weekStart = new Date(today);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    
+    const nextWeekEnd = new Date(weekEnd);
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+    
+    const monthEnd = new Date(today);
+    monthEnd.setMonth(monthEnd.getMonth() + 1);
+    
+    const nextMonthEnd = new Date(monthEnd);
+    nextMonthEnd.setMonth(nextMonthEnd.getMonth() + 1);
 
     const { data: allTasks } = await supabase
       .from("tasks")
       .select("*")
       .order("created_at", { ascending: false });
+
+    const { data: yesterdayTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .gte("due_at", yesterday.toISOString())
+      .lt("due_at", today.toISOString())
+      .order("due_at");
 
     const { data: todayTasks } = await supabase
       .from("tasks")
@@ -80,23 +111,52 @@ export default function Tasks() {
       .lt("due_at", tomorrow.toISOString())
       .order("due_at");
 
-    const { data: weeklyTasks } = await supabase
+    const { data: tomorrowTasks } = await supabase
       .from("tasks")
       .select("*")
       .gte("due_at", tomorrow.toISOString())
-      .lt("due_at", nextWeek.toISOString())
+      .lt("due_at", weekStart.toISOString())
       .order("due_at");
 
-    const { data: monthlyTasks } = await supabase
+    const { data: thisWeekTasks } = await supabase
       .from("tasks")
       .select("*")
-      .gte("due_at", nextWeek.toISOString())
-      .lt("due_at", nextMonth.toISOString())
+      .gte("due_at", today.toISOString())
+      .lt("due_at", weekEnd.toISOString())
       .order("due_at");
+
+    const { data: nextWeekTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .gte("due_at", weekEnd.toISOString())
+      .lt("due_at", nextWeekEnd.toISOString())
+      .order("due_at");
+
+    const { data: thisMonthTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .gte("due_at", today.toISOString())
+      .lt("due_at", monthEnd.toISOString())
+      .order("due_at");
+
+    const { data: nextMonthTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .gte("due_at", monthEnd.toISOString())
+      .lt("due_at", nextMonthEnd.toISOString())
+      .order("due_at");
+
+    const { data: pastTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("status", "Completed")
+      .order("updated_at", { ascending: false });
 
     // Fetch profiles separately
     const allUserIds = new Set<string>();
-    [...(allTasks || []), ...(todayTasks || []), ...(weeklyTasks || []), ...(monthlyTasks || [])].forEach(task => {
+    [...(allTasks || []), ...(yesterdayTasks || []), ...(todayTasks || []), ...(tomorrowTasks || []), 
+     ...(thisWeekTasks || []), ...(nextWeekTasks || []), ...(thisMonthTasks || []), 
+     ...(nextMonthTasks || []), ...(pastTasks || [])].forEach(task => {
       if (task.created_by) allUserIds.add(task.created_by);
       if (task.assignee_id) allUserIds.add(task.assignee_id);
     });
@@ -117,9 +177,14 @@ export default function Tasks() {
 
     setTasks({
       all: allTasks?.map(enrichTask) || [],
+      yesterday: yesterdayTasks?.map(enrichTask) || [],
       today: todayTasks?.map(enrichTask) || [],
-      weekly: weeklyTasks?.map(enrichTask) || [],
-      monthly: monthlyTasks?.map(enrichTask) || [],
+      tomorrow: tomorrowTasks?.map(enrichTask) || [],
+      thisWeek: thisWeekTasks?.map(enrichTask) || [],
+      nextWeek: nextWeekTasks?.map(enrichTask) || [],
+      thisMonth: thisMonthTasks?.map(enrichTask) || [],
+      nextMonth: nextMonthTasks?.map(enrichTask) || [],
+      past: pastTasks?.map(enrichTask) || [],
     });
   };
 
@@ -145,9 +210,14 @@ export default function Tasks() {
 
   const filteredTasks = {
     all: applyFilters(tasks.all),
+    yesterday: applyFilters(tasks.yesterday),
     today: applyFilters(tasks.today),
-    weekly: applyFilters(tasks.weekly),
-    monthly: applyFilters(tasks.monthly),
+    tomorrow: applyFilters(tasks.tomorrow),
+    thisWeek: applyFilters(tasks.thisWeek),
+    nextWeek: applyFilters(tasks.nextWeek),
+    thisMonth: applyFilters(tasks.thisMonth),
+    nextMonth: applyFilters(tasks.nextMonth),
+    past: applyFilters(tasks.past),
   };
 
   return (
@@ -234,13 +304,16 @@ export default function Tasks() {
       </Card>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
           <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
           <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="weekly">This Week</TabsTrigger>
-          <TabsTrigger value="monthly">This Month</TabsTrigger>
-          <TabsTrigger value="blockers">Blockers</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+          <TabsTrigger value="thisWeek">This Week</TabsTrigger>
+          <TabsTrigger value="nextWeek">Next Week</TabsTrigger>
+          <TabsTrigger value="thisMonth">This Month</TabsTrigger>
+          <TabsTrigger value="nextMonth">Next Month</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-6 space-y-4">
@@ -291,9 +364,57 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="weekly" className="mt-6 space-y-4">
-          {filteredTasks.weekly.length > 0 ? (
-            filteredTasks.weekly.map((task) => (
+        <TabsContent value="yesterday" className="mt-6 space-y-4">
+          {filteredTasks.yesterday.length > 0 ? (
+            filteredTasks.yesterday.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee_name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks from yesterday</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="tomorrow" className="mt-6 space-y-4">
+          {filteredTasks.tomorrow.length > 0 ? (
+            filteredTasks.tomorrow.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee_name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks for tomorrow</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="thisWeek" className="mt-6 space-y-4">
+          {filteredTasks.thisWeek.length > 0 ? (
+            filteredTasks.thisWeek.map((task) => (
               <TaskCard
                 key={task.id}
                 task={{
@@ -315,9 +436,81 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="monthly" className="mt-6 space-y-4">
-          {filteredTasks.monthly.length > 0 ? (
-            filteredTasks.monthly.map((task) => (
+        <TabsContent value="nextWeek" className="mt-6 space-y-4">
+          {filteredTasks.nextWeek.length > 0 ? (
+            filteredTasks.nextWeek.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee_name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks for next week</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="thisMonth" className="mt-6 space-y-4">
+          {filteredTasks.thisMonth.length > 0 ? (
+            filteredTasks.thisMonth.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee_name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks for this month</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="nextMonth" className="mt-6 space-y-4">
+          {filteredTasks.nextMonth.length > 0 ? (
+            filteredTasks.nextMonth.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee_name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No tasks for next month</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="past" className="mt-6 space-y-4">
+          {filteredTasks.past.length > 0 ? (
+            filteredTasks.past.map((task) => (
               <TaskCard
                 key={task.id}
                 task={{
