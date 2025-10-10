@@ -190,11 +190,13 @@ export default function ProjectsPage() {
                       <SelectValue placeholder="Add team members" />
                     </SelectTrigger>
                     <SelectContent>
-                      {allUsers.map((u) => (
-                        <SelectItem key={u.user_id} value={u.user_id}>
-                          {u.name || u.email}
-                        </SelectItem>
-                      ))}
+                      {allUsers
+                        .filter(u => u.user_id && u.user_id.trim() !== '')
+                        .map((u) => (
+                          <SelectItem key={u.user_id} value={u.user_id}>
+                            {u.name || u.email}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   {selectedMembers.length > 0 && (
