@@ -45,7 +45,7 @@ export const useAuth = () => {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     if (data) {
       setUserRole(data.role as "admin" | "member");

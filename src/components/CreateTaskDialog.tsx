@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,19 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [status, setStatus] = useState<"Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived">("In Progress");
   const [jiraLink, setJiraLink] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (open && userRole === "admin") {
+      fetchUsers();
+    }
+  }, [open, userRole]);
+
+  const fetchUsers = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, name");
+    setUsers(data || []);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +91,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         due_at: date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
+        assignee_id: userRole === "admin" ? (assigneeId || null) : user.id,
         visibility: "global" as "global" | "pool" | "private",
       };
 
@@ -97,6 +111,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setPriority("Medium");
       setStatus("In Progress");
       setJiraLink("");
+      setAssigneeId("");
       setDate(undefined);
       onOpenChange(false);
     } catch (error: any) {
@@ -209,6 +224,25 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               onChange={(e) => setJiraLink(e.target.value)}
             />
           </div>
+
+          {userRole === "admin" && (
+            <div className="space-y-2">
+              <Label htmlFor="assignee">Assign To</Label>
+              <Select value={assigneeId} onValueChange={setAssigneeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Unassigned</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem key={user.user_id} value={user.user_id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
