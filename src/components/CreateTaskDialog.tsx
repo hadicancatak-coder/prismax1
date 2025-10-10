@@ -39,11 +39,39 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
     e.preventDefault();
     if (!user) return;
 
+    // Client-side validation
+    if (!title.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (title.trim().length > 200) {
+      toast({
+        title: "Error",
+        description: "Task title must not exceed 200 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (description && description.length > 5000) {
+      toast({
+        title: "Error",
+        description: "Task description must not exceed 5000 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const taskData = {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim() || null,
         priority,
         status: (userRole === "member" ? "Pending Approval" : status) as "Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived",
         due_at: date?.toISOString(),

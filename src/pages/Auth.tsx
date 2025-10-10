@@ -8,9 +8,16 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 const authSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  email: z.string()
+    .email("Invalid email address")
+    .regex(/@cfi\.trade$/, "Only @cfi.trade email addresses are allowed"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password must not exceed 100 characters"),
+  name: z.string()
+    .min(1, "Name is required")
+    .max(100, "Name must not exceed 100 characters")
+    .optional(),
 });
 
 export default function Auth() {
