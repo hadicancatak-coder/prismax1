@@ -253,9 +253,9 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           </Card>
         </div>
 
-        {/* Preview Section */}
-        <div>
-          <Card className="sticky top-8">
+        {/* Preview Section - Sticky */}
+        <div className="lg:sticky lg:top-8 lg:self-start">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 Ad Preview

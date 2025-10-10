@@ -36,7 +36,7 @@ export function AppSidebar() {
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
         {open && (
           <div>
-            <h2 className="text-lg font-semibold text-sidebar-foreground">TaskFlow</h2>
+            <h2 className="text-lg font-semibold text-sidebar-foreground">Prisma</h2>
             {userRole && (
               <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
             )}

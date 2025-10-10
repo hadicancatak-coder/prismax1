@@ -251,9 +251,41 @@ export default function ProjectsPage() {
                     </div>
                   )}
                   {project.members && project.members.length > 0 && (
-                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      {project.members.length} member{project.members.length > 1 ? 's' : ''}
+                    <div className="mt-2">
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        Team Members
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {project.members.map((memberId: string) => {
+                          const member = allUsers.find(u => u.user_id === memberId);
+                          return (
+                            <div key={memberId} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md text-xs">
+                              {member?.name || member?.email || 'Unknown'}
+                              {userRole === "admin" && (
+                                <button
+                                  onClick={async () => {
+                                    const newMembers = project.members.filter((id: string) => id !== memberId);
+                                    const { error } = await supabase
+                                      .from("projects")
+                                      .update({ members: newMembers })
+                                      .eq("id", project.id);
+                                    if (error) {
+                                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                                    } else {
+                                      toast({ title: "Success", description: "Member removed" });
+                                      await fetchProjects();
+                                    }
+                                  }}
+                                  className="ml-1 text-muted-foreground hover:text-destructive"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

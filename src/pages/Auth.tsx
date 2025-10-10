@@ -112,7 +112,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">TaskFlow</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Prisma</h1>
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
           </p>
