@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle } from "lucide-react";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 interface TaskDialogProps {
   open: boolean;
@@ -25,6 +25,9 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [showComments, setShowComments] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open && taskId) {
@@ -34,13 +37,27 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
     }
   }, [open, taskId]);
 
+  useEffect(() => {
+    if (showComments) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [comments, showComments]);
+
   const fetchTask = async () => {
-    const { data } = await supabase.from("tasks").select("*, profiles:created_by(name), assignee:assignee_id(name, avatar_url)").eq("id", taskId).single();
+    const { data } = await supabase
+      .from("tasks")
+      .select("*, profiles:created_by(name, avatar_url), assignee:assignee_id(name, avatar_url)")
+      .eq("id", taskId)
+      .single();
     setTask(data);
   };
 
   const fetchComments = async () => {
-    const { data } = await supabase.from("comments").select("*, profiles:author_id(name, avatar_url)").eq("task_id", taskId).order("created_at");
+    const { data } = await supabase
+      .from("comments")
+      .select("*, profiles:author_id(name, avatar_url)")
+      .eq("task_id", taskId)
+      .order("created_at");
     setComments(data || []);
   };
 
@@ -68,22 +85,25 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
     if (!newComment.trim()) return;
 
     const mentions = newComment.match(/@(\w+)/g) || [];
-    const { data: comment, error } = await supabase.from("comments").insert({
-      task_id: taskId,
-      author_id: user?.id,
-      body: newComment,
-    }).select().single();
+    const { data: comment, error } = await supabase
+      .from("comments")
+      .insert({
+        task_id: taskId,
+        author_id: user?.id,
+        body: newComment,
+      })
+      .select()
+      .single();
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
 
-    // Handle mentions
     for (const mention of mentions) {
       const username = mention.substring(1);
-      const mentionedProfile = profiles.find(p => p.name.toLowerCase() === username.toLowerCase());
-      
+      const mentionedProfile = profiles.find((p) => p.name.toLowerCase() === username.toLowerCase());
+
       if (mentionedProfile) {
         await supabase.from("comment_mentions").insert({
           comment_id: comment.id,
@@ -100,91 +120,169 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
     setNewComment("");
     fetchComments();
-    toast({ title: "Success", description: "Comment posted" });
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setNewComment((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
   };
 
   if (!task) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`max-h-[90vh] overflow-hidden transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
         <DialogHeader>
-          <DialogTitle>{task.title}</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>{task.title}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowComments(!showComments)}
+              className="gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              {showComments ? "Hide" : "Show"} Comments ({comments.length})
+            </Button>
+          </DialogTitle>
+          <DialogDescription>Task details and team discussion</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div>
-            <Label>Description</Label>
-            <p className="text-sm text-muted-foreground mt-1">{task.description || "No description"}</p>
+        <div className="flex gap-4 overflow-hidden">
+          {/* Task Details Section */}
+          <div className={`space-y-6 overflow-y-auto pr-4 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
+            <div>
+              <Label>Description</Label>
+              <p className="text-sm text-muted-foreground mt-1">{task.description || "No description"}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Status</Label>
+                <Badge className="mt-1">{task.status}</Badge>
+              </div>
+              <div>
+                <Label>Priority</Label>
+                <Badge className="mt-1">{task.priority}</Badge>
+              </div>
+            </div>
+
+            <div>
+              <Label>Assigned To</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={task.assignee?.avatar_url} />
+                  <AvatarFallback>{task.assignee?.name?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{task.assignee?.name || "Unassigned"}</span>
+              </div>
+            </div>
+
+            {task.jira_link && (
+              <div>
+                <Label>Jira Link</Label>
+                <a
+                  href={task.jira_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline block mt-1"
+                >
+                  {task.jira_link}
+                </a>
+              </div>
+            )}
+
+            <div>
+              <Label>Due Date</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">{task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}</span>
+                {userRole !== "admin" && (
+                  <Button size="sm" variant="outline" onClick={handlePostpone}>
+                    Request Postpone
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Status</Label>
-              <Badge className="mt-1">{task.status}</Badge>
-            </div>
-            <div>
-              <Label>Priority</Label>
-              <Badge className="mt-1">{task.priority}</Badge>
-            </div>
-          </div>
-
-          {task.jira_link && (
-            <div>
-              <Label>Jira Link</Label>
-              <a href={task.jira_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block mt-1">
-                {task.jira_link}
-              </a>
-            </div>
-          )}
-
-          <div>
-            <Label>Due Date</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">{task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}</span>
-              {userRole !== "admin" && (
-                <Button size="sm" variant="outline" onClick={handlePostpone}>Request Postpone</Button>
-              )}
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <Label className="mb-4 block">Comments</Label>
-            <div className="space-y-4 mb-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.profiles?.avatar_url} />
-                    <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm">{comment.profiles?.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(comment.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm">{comment.body}</p>
-                  </div>
+          {/* Comments Section - Messaging Style */}
+          {showComments && (
+            <>
+              <Separator orientation="vertical" className="h-auto" />
+              <div className="w-1/2 flex flex-col h-[600px]">
+                <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3 animate-fade-in">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarImage src={comment.profiles?.avatar_url} />
+                          <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 bg-muted rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{comment.profiles?.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(comment.created_at).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{comment.body}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">No comments yet. Start the conversation!</div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-              ))}
-            </div>
 
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Add a comment... Use @ to mention teammates"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="flex-1"
-              />
-              <Button onClick={handleCommentSubmit} size="sm">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+                {/* Message Input */}
+                <div className="border-t pt-4">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 relative">
+                      <Input
+                        placeholder="Type a message... Use @ to mention"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleCommentSubmit();
+                          }
+                        }}
+                        className="pr-10"
+                      />
+                      <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                          >
+                            <Smile className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 border-0" align="end">
+                          <EmojiPicker onEmojiClick={onEmojiClick} width={350} height={400} />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <Button onClick={handleCommentSubmit} size="sm" disabled={!newComment.trim()} className="gap-2">
+                      <Send className="h-4 w-4" />
+                      Send
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Press Enter to send, Shift+Enter for new line. Use @username to mention teammates.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

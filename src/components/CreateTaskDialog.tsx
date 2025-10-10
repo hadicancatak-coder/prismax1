@@ -95,9 +95,15 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         visibility: "global" as "global" | "pool" | "private",
       };
 
-      const { error } = await supabase.from("tasks").insert([taskData]);
+      console.log("Creating task:", taskData);
+      const { data, error } = await supabase.from("tasks").insert([taskData]).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Task creation error:", error);
+        throw error;
+      }
+
+      console.log("Task created successfully:", data);
 
       toast({
         title: userRole === "member" ? "Task submitted for approval" : "Task created",

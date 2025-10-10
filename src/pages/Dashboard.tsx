@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -13,6 +14,8 @@ export default function Dashboard() {
     inProgress: 0,
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -103,7 +106,11 @@ export default function Dashboard() {
             recentTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all"
+                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all cursor-pointer"
+                onClick={() => {
+                  setSelectedTaskId(task.id);
+                  setTaskDialogOpen(true);
+                }}
               >
                 <div className="flex-1">
                   <h3 className="font-medium text-foreground mb-1">{task.title}</h3>
@@ -149,6 +156,10 @@ export default function Dashboard() {
           )}
         </div>
       </Card>
+
+      {selectedTaskId && (
+        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+      )}
     </div>
   );
 }

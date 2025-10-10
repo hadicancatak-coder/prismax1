@@ -37,6 +37,7 @@ export default function Tasks() {
           table: "tasks",
         },
         () => {
+          console.log("Task changed, refetching...");
           fetchTasks();
         }
       )

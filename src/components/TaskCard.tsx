@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, User, MoreVertical } from "lucide-react";
+import { Clock, User, MoreVertical, MessageCircle } from "lucide-react";
 import { TaskDialog } from "./TaskDialog";
 
 interface Task {
@@ -36,14 +36,19 @@ export const TaskCard = ({ task }: { task: Task }) => {
     <>
       <Card className="p-6 transition-all hover:shadow-medium cursor-pointer" onClick={() => setDialogOpen(true)}>
         <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
-          <p className="text-sm text-muted-foreground">{task.description}</p>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
+            <p className="text-sm text-muted-foreground">{task.description}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <Button variant="ghost" size="icon">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </div>
 
       <div className="flex items-center gap-3 mb-4">
         <Badge
