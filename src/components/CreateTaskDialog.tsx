@@ -35,7 +35,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [status, setStatus] = useState<"Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived">("In Progress");
   const [jiraLink, setJiraLink] = useState("");
-  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [assigneeId, setAssigneeId] = useState<string>("unassigned");
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         due_at: date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
-        assignee_id: userRole === "admin" ? (assigneeId || null) : user.id,
+        assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
         visibility: "global" as "global" | "pool" | "private",
       };
 
@@ -111,7 +111,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setPriority("Medium");
       setStatus("In Progress");
       setJiraLink("");
-      setAssigneeId("");
+      setAssigneeId("unassigned");
       setDate(undefined);
       onOpenChange(false);
     } catch (error: any) {
@@ -233,7 +233,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   <SelectValue placeholder="Select user" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {users.map((user) => (
                     <SelectItem key={user.user_id} value={user.user_id}>
                       {user.name}
