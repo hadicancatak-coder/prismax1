@@ -3,13 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, XCircle, User, Clock, CheckSquare } from "lucide-react";
+import { CheckCircle, XCircle, User, Clock, CheckSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -199,44 +200,28 @@ export default function AdminPanel() {
   const confirmRemoveMember = async () => {
     if (!memberToRemove) return;
 
-    // Delete user role
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", memberToRemove);
+    try {
+      // Delete from user_roles
+      await supabase.from("user_roles").delete().eq("user_id", memberToRemove);
+      
+      // Delete from profiles
+      await supabase.from("profiles").delete().eq("user_id", memberToRemove);
 
-    if (roleError) {
+      toast({
+        title: "Member Removed",
+        description: "User has been removed successfully",
+      });
+
+      setMemberToRemove(null);
+      setRemoveDialogOpen(false);
+      await fetchData();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: roleError.message,
+        description: error.message || "Failed to remove member",
         variant: "destructive",
       });
-      return;
     }
-
-    // Delete profile
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("user_id", memberToRemove);
-
-    if (profileError) {
-      toast({
-        title: "Error",
-        description: profileError.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Member Removed",
-      description: "User has been removed from the system",
-    });
-
-    setMemberToRemove(null);
-    setRemoveDialogOpen(false);
-    await fetchData();
   };
 
   // Show loading while checking permissions
@@ -410,7 +395,14 @@ export default function AdminPanel() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
+                      <Avatar>
+                        <AvatarImage src={member.avatar_url || ""} />
+                        <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
+                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                      </div>
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                         {member.role}
                       </Badge>
@@ -420,8 +412,7 @@ export default function AdminPanel() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">{member.email}</p>
-                    <div className="grid grid-cols-5 gap-4">
+                    <div className="grid grid-cols-5 gap-4 mt-4">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Total</p>
                         <p className="text-2xl font-bold text-foreground">{member.totalTasks}</p>
@@ -452,16 +443,13 @@ export default function AdminPanel() {
                           </div>
                         ))}
                         {member.blockerDetails.length > 2 && (
-                          <p className="text-xs text-muted-foreground">+{member.blockerDetails.length - 2} more</p>
+                          <p className="text-xs text-muted-foreground mt-1">+{member.blockerDetails.length - 2} more</p>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <Select
-                      value={member.role}
-                      onValueChange={(value: "admin" | "member") => handleRoleChange(member.user_id, value)}
-                    >
+                  <div className="flex items-center gap-2 ml-4">
+                    <Select value={member.role} onValueChange={(value) => handleRoleChange(member.user_id, value as "admin" | "member")}>
                       <SelectTrigger className="w-32">
                         <SelectValue />
                       </SelectTrigger>
@@ -471,14 +459,14 @@ export default function AdminPanel() {
                       </SelectContent>
                     </Select>
                     <Button
-                      variant="destructive"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         setMemberToRemove(member.user_id);
                         setRemoveDialogOpen(true);
                       }}
                     >
-                      Remove
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </div>

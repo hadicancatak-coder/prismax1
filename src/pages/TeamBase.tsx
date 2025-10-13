@@ -258,7 +258,9 @@ export default function TeamBase() {
         <TabsContent value="blockers" className="mt-6 space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-foreground">Active Blockers</h2>
-            <Button onClick={() => setBlockerDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Blocker</Button>
+            {userRole === "admin" && (
+              <Button onClick={() => setBlockerDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Blocker</Button>
+            )}
           </div>
           <div className="space-y-4">
             {activeBlockers.length > 0 ? (
@@ -268,13 +270,24 @@ export default function TeamBase() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <AlertCircle className="h-5 w-5 text-destructive" />
-                        <h3 className="font-semibold text-foreground">{blocker.task?.title || "Unknown Task"}</h3>
+                        <h3 className="font-semibold text-foreground">{blocker.title || blocker.task?.title || "Unknown Task"}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">{blocker.description}</p>
+                      {blocker.stuck_reason && (
+                        <div className="text-sm mb-2">
+                          <span className="font-medium">Why stuck:</span> {blocker.stuck_reason}
+                        </div>
+                      )}
+                      {blocker.fix_process && (
+                        <div className="text-sm mb-2">
+                          <span className="font-medium">Fix process:</span> {blocker.fix_process}
+                        </div>
+                      )}
                       <div className="flex gap-4 text-xs text-muted-foreground">
                         <span>Assignee: {blocker.task?.assignee?.name || "Unassigned"}</span>
                         <span>Created: {new Date(blocker.created_at).toLocaleDateString()}</span>
-                        <span>By: {blocker.creator?.name || "Unknown"}</span>
+                        {blocker.due_date && <span>Due: {new Date(blocker.due_date).toLocaleDateString()}</span>}
+                        {blocker.timeline && <span>Timeline: {blocker.timeline}</span>}
                       </div>
                     </div>
                     {userRole === "admin" && (
@@ -532,6 +545,10 @@ export default function TeamBase() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} onSuccess={fetchBlockers} />
+      <ProjectDialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen} onSuccess={fetchProjects} />
+      <ReportDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen} onSuccess={fetchReports} />
     </div>
   );
 }
