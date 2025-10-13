@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [statTasks, setStatTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const fetchDashboardData = async () => {
       const today = new Date();
@@ -29,45 +29,52 @@ export default function Dashboard() {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const { data: todayTasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .gte("due_at", today.toISOString())
-        .lt("due_at", tomorrow.toISOString())
-        .neq("status", "Completed");
-
-      const { data: overdueTasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .lt("due_at", today.toISOString())
-        .neq("status", "Completed");
-
-      const { data: inProgressTasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("status", "Ongoing");
-
-      const { data: recent } = await supabase
-        .from("tasks")
-        .select(`
-          *,
-          profiles:created_by(name),
-          assignee:assignee_id(name)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const [todayRes, overdueRes, inProgressRes, recentRes] = await Promise.all([
+        supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .gte("due_at", today.toISOString())
+          .lt("due_at", tomorrow.toISOString())
+          .neq("status", "Completed"),
+        
+        supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .lt("due_at", today.toISOString())
+          .neq("status", "Completed"),
+        
+        supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "Ongoing"),
+        
+        supabase
+          .from("tasks")
+          .select(`
+            id,
+            title,
+            status,
+            priority,
+            due_at,
+            created_at,
+            profiles:created_by(name),
+            assignee:assignee_id(name)
+          `)
+          .order("created_at", { ascending: false })
+          .limit(5)
+      ]);
 
       setStats({
-        today: todayTasks?.length || 0,
-        overdue: overdueTasks?.length || 0,
-        inProgress: inProgressTasks?.length || 0,
+        today: todayRes.count || 0,
+        overdue: overdueRes.count || 0,
+        inProgress: inProgressRes.count || 0,
       });
 
-      setRecentTasks(recent || []);
+      setRecentTasks(recentRes.data || []);
     };
 
     fetchDashboardData();
-  }, [user]);
+  }, [user?.id]);
 
   const handleStatClick = async (type: 'today' | 'overdue' | 'inProgress') => {
     const today = new Date();

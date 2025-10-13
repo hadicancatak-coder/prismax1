@@ -13,74 +13,51 @@ export const useAuth = () => {
   useEffect(() => {
     let mounted = true;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserRole(session.user.id);
-        } else {
-          setUserRole(null);
-        }
-      }
-    );
-
-    // Set a timeout to prevent infinite loading (reduced to 3 seconds)
-    const timeoutId = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("Auth timeout - forcing loading to false");
-        setLoading(false);
-      }
-    }, 3000);
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Get initial session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchUserRole(session.user.id);
+        fetchUserRole(session.user.id);
       }
       
       setLoading(false);
-      clearTimeout(timeoutId);
-    }).catch((error) => {
-      console.error("Auth error:", error);
-      if (mounted) {
-        setLoading(false);
-        clearTimeout(timeoutId);
-      }
     });
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
+      }
+    );
 
     return () => {
       mounted = false;
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return;
-      }
-
-      if (data) {
-        setUserRole(data.role as "admin" | "member");
-      }
-    } catch (error) {
-      console.error("Exception fetching user role:", error);
+    if (data) {
+      setUserRole(data.role as "admin" | "member");
     }
   };
 

@@ -28,9 +28,10 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     fetchProfile();
     fetchTasks();
-  }, [userId, user]);
+  }, [userId, user?.id]);
 
   const fetchProfile = async () => {
     const targetUserId = userId || user?.id;
