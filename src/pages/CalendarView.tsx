@@ -48,11 +48,11 @@ export default function CalendarView() {
       .not("due_at", "is", null);
 
     // Filter by user if admin has selected a specific user
-    if (userRole === "admin" && selectedUserId !== "all") {
+    if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
       query = query.eq("assignee_id", selectedUserId);
-    } else if (userRole !== "admin") {
+    } else if (userRole !== "admin" && user?.id) {
       // Members only see their own tasks
-      query = query.eq("assignee_id", user?.id);
+      query = query.eq("assignee_id", user.id);
     }
 
     const { data, error } = await query.order("due_at", { ascending: true });

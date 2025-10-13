@@ -218,6 +218,8 @@ export default function Profile() {
                     priority: task.priority,
                     dueDate: task.due_at,
                     timeTracked: "0h 00m",
+                    entity: task.entity || undefined,
+                    recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none',
                   }}
                 />
               ))
