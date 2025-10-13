@@ -215,6 +215,27 @@ export type Database = {
           },
         ]
       }
+      notification_rate_limit: {
+        Row: {
+          created_at: string
+          id: string
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -485,6 +506,8 @@ export type Database = {
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string | null
           project_key: string | null
+          recurrence_day_of_month: number | null
+          recurrence_day_of_week: number | null
           recurrence_rrule: string | null
           source: Database["public"]["Enums"]["task_source"]
           status: Database["public"]["Enums"]["task_status"]
@@ -512,6 +535,8 @@ export type Database = {
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
           status?: Database["public"]["Enums"]["task_status"]
@@ -539,6 +564,8 @@ export type Database = {
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
           status?: Database["public"]["Enums"]["task_status"]
@@ -624,7 +651,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          name: string | null
+          tagline: string | null
+          title: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          name?: string | null
+          tagline?: string | null
+          title?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          name?: string | null
+          tagline?: string | null
+          title?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {

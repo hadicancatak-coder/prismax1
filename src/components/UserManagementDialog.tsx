@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { workingDaysSchema, userRoleSchema } from "@/lib/validationSchemas";
+import { z } from "zod";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,55 +65,58 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   };
 
   const handleRoleChange = async (userId: string, newRole: "admin" | "member") => {
-    const { error } = await supabase
-      .from("user_roles")
-      .update({ role: newRole })
-      .eq("user_id", userId);
+    try {
+      // Validate role with zod
+      userRoleSchema.parse(newRole);
+      
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: newRole })
+        .eq("user_id", userId);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Role Updated",
+        description: `User role has been updated to ${newRole}`,
+      });
+
+      await fetchMembers();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof z.ZodError ? error.errors[0].message : error.message,
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Role Updated",
-      description: `User role has been updated to ${newRole}`,
-    });
-
-    await fetchMembers();
   };
 
   const handleWorkingDaysChange = async (userId: string, workingDays: string) => {
-    console.log('Updating working days:', { userId, workingDays });
-    
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({ working_days: workingDays })
-      .eq("user_id", userId)
-      .select();
+    try {
+      // Validate working days with zod
+      workingDaysSchema.parse(workingDays);
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ working_days: workingDays })
+        .eq("user_id", userId)
+        .select();
 
-    console.log('Update result:', { data, error });
+      if (error) throw error;
 
-    if (error) {
-      console.error('Working days update error:', error);
+      toast({
+        title: "Working Days Updated",
+        description: `Working days set to ${workingDays === 'mon-fri' ? 'Mon-Fri' : 'Sun-Thu'}`,
+      });
+
+      await fetchMembers();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof z.ZodError ? error.errors[0].message : error.message,
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Working Days Updated",
-      description: `Working days set to ${workingDays === 'mon-fri' ? 'Mon-Fri' : 'Sun-Thu'}`,
-    });
-
-    await fetchMembers();
   };
 
   const confirmRemoveMember = async () => {

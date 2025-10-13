@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { taskSchema } from "@/lib/validationSchemas";
+import { z } from "zod";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -45,6 +47,9 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [entity, setEntity] = useState<string>("");
   const [users, setUsers] = useState<any[]>([]);
   const [recurrence, setRecurrence] = useState<string>("none");
+  const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number | null>(null);
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open && userRole === "admin") {
@@ -61,71 +66,75 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
     e.preventDefault();
     if (!user) return;
 
-    // Client-side validation
-    if (!title.trim()) {
-      toast({
-        title: "Error",
-        description: "Task title is required",
-        variant: "destructive",
-      });
-      return;
+    setValidationErrors({});
+
+    // Generate recurrence rule based on selection
+    let recurrenceRule = "";
+    if (recurrence === "daily") {
+      recurrenceRule = "FREQ=DAILY";
+    } else if (recurrence === "weekly" && recurrenceDayOfWeek !== null) {
+      const days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+      recurrenceRule = `FREQ=WEEKLY;BYDAY=${days[recurrenceDayOfWeek]}`;
+    } else if (recurrence === "monthly" && recurrenceDayOfMonth !== null) {
+      recurrenceRule = `FREQ=MONTHLY;BYMONTHDAY=${recurrenceDayOfMonth}`;
     }
 
-    if (title.trim().length > 200) {
-      toast({
-        title: "Error",
-        description: "Task title must not exceed 200 characters",
-        variant: "destructive",
+    // Validate with zod
+    try {
+      taskSchema.parse({
+        title: title.trim(),
+        description: description || "",
+        jira_link: jiraLink || "",
+        jira_key: "",
+        entity: entity || undefined,
+        priority: recurrence !== "none" ? "High" : priority,
+        status: (userRole === "member" ? "Pending" : status),
+        recurrence_rrule: recurrenceRule || "",
+        recurrence_day_of_week: recurrenceDayOfWeek,
+        recurrence_day_of_month: recurrenceDayOfMonth,
+        assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
+        project_id: null,
+        due_at: recurrence !== "none" ? null : (date ? date.toISOString() : null),
       });
-      return;
-    }
-
-    if (description && description.length > 5000) {
-      toast({
-        title: "Error",
-        description: "Task description must not exceed 5000 characters",
-        variant: "destructive",
-      });
-      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+        toast({
+          title: "Validation Error",
+          description: "Please fix the errors in the form",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      // Generate recurrence rule if needed
-      let recurrenceRule = null;
-      if (recurrence !== "none") {
-        if (recurrence === "daily") {
-          recurrenceRule = "FREQ=DAILY";
-        } else if (recurrence === "weekly") {
-          recurrenceRule = "FREQ=WEEKLY";
-        } else if (recurrence === "monthly") {
-          recurrenceRule = "FREQ=MONTHLY";
-        }
-      }
-
       const taskData = {
         title: title.trim(),
         description: description.trim() || null,
-        priority: recurrence !== "none" ? "High" : priority, // Recurring tasks always high priority
+        priority: recurrence !== "none" ? "High" : priority,
         status: (userRole === "member" ? "Pending" : status) as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
-        due_at: recurrence !== "none" ? null : date?.toISOString(), // No due date for recurring tasks
+        due_at: recurrence !== "none" ? null : date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
         assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
         visibility: "global" as "global" | "pool" | "private",
         entity: entity || null,
-        recurrence_rrule: recurrenceRule,
+        recurrence_rrule: recurrenceRule || null,
+        recurrence_day_of_week: recurrenceDayOfWeek,
+        recurrence_day_of_month: recurrenceDayOfMonth,
       };
 
-      console.log("Creating task:", taskData);
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
 
-      if (error) {
-        console.error("Task creation error:", error);
-        throw error;
-      }
-
-      console.log("Task created successfully:", data);
+      if (error) throw error;
 
       // Send notification if task is assigned to someone
       if (taskData.assignee_id && taskData.assignee_id !== user.id && userRole === "admin") {
@@ -155,6 +164,9 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setEntity("");
       setDate(undefined);
       setRecurrence("none");
+      setRecurrenceDayOfWeek(null);
+      setRecurrenceDayOfMonth(null);
+      setValidationErrors({});
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -181,8 +193,12 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               placeholder="Enter task title" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              className={validationErrors.title ? "border-destructive" : ""}
               required 
             />
+            {validationErrors.title && (
+              <p className="text-sm text-destructive">{validationErrors.title}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -190,10 +206,13 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
             <Textarea
               id="description"
               placeholder="Enter task description"
-              className="min-h-[100px]"
+              className={cn("min-h-[100px]", validationErrors.description && "border-destructive")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            {validationErrors.description && (
+              <p className="text-sm text-destructive">{validationErrors.description}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -267,7 +286,11 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               placeholder="https://jira.company.com/browse/TASK-123"
               value={jiraLink}
               onChange={(e) => setJiraLink(e.target.value)}
+              className={validationErrors.jira_link ? "border-destructive" : ""}
             />
+            {validationErrors.jira_link && (
+              <p className="text-sm text-destructive">{validationErrors.jira_link}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -293,9 +316,14 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                 value={recurrence} 
                 onValueChange={(value) => {
                   setRecurrence(value);
-                  // Clear due date when selecting recurrence
                   if (value !== "none") {
                     setDate(undefined);
+                  }
+                  if (value !== "weekly") {
+                    setRecurrenceDayOfWeek(null);
+                  }
+                  if (value !== "monthly") {
+                    setRecurrenceDayOfMonth(null);
                   }
                 }}
               >
@@ -311,6 +339,48 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               </Select>
             </div>
           </div>
+
+          {recurrence === "weekly" && (
+            <div className="space-y-2">
+              <Label>Day of Week</Label>
+              <Select 
+                value={recurrenceDayOfWeek?.toString() || ""} 
+                onValueChange={(val) => setRecurrenceDayOfWeek(parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select day" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Sunday</SelectItem>
+                  <SelectItem value="1">Monday</SelectItem>
+                  <SelectItem value="2">Tuesday</SelectItem>
+                  <SelectItem value="3">Wednesday</SelectItem>
+                  <SelectItem value="4">Thursday</SelectItem>
+                  <SelectItem value="5">Friday</SelectItem>
+                  <SelectItem value="6">Saturday</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {recurrence === "monthly" && (
+            <div className="space-y-2">
+              <Label>Day of Month (Deadline Day)</Label>
+              <Select 
+                value={recurrenceDayOfMonth?.toString() || ""} 
+                onValueChange={(val) => setRecurrenceDayOfMonth(parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select day (1-31)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                    <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {userRole === "admin" && (
             <div className="space-y-2">

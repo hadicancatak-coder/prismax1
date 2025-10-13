@@ -14,15 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-
-const blockerSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  description: z.string().trim().max(2000, "Description must be less than 2000 characters").optional(),
-  stuckReason: z.string().trim().max(1000, "Reason must be less than 1000 characters").optional(),
-  fixProcess: z.string().trim().max(1000, "Fix process must be less than 1000 characters").optional(),
-  timeline: z.string().trim().max(100, "Timeline must be less than 100 characters").optional(),
-  selectedTaskId: z.string().uuid("Please select a valid task"),
-});
+import { blockerSchema } from "@/lib/validationSchemas";
 
 interface BlockerDialogProps {
   open: boolean;
@@ -66,23 +58,24 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
     try {
       const validated = blockerSchema.parse({
         title,
-        description: description || undefined,
-        stuckReason: stuckReason || undefined,
-        fixProcess: fixProcess || undefined,
-        timeline: timeline || undefined,
-        selectedTaskId,
+        description: description || "",
+        stuck_reason: stuckReason || "",
+        fix_process: fixProcess || "",
+        timeline: timeline || "",
+        task_id: selectedTaskId,
+        due_date: dueDate ? dueDate.toISOString() : null,
       });
 
       setLoading(true);
 
       const { error: blockerError } = await supabase.from("blockers").insert({
-        task_id: validated.selectedTaskId,
+        task_id: validated.task_id,
         title: validated.title,
-        description: validated.description || "",
-        stuck_reason: validated.stuckReason || "",
-        fix_process: validated.fixProcess || "",
-        due_date: dueDate?.toISOString(),
-        timeline: validated.timeline || "",
+        description: validated.description,
+        stuck_reason: validated.stuck_reason,
+        fix_process: validated.fix_process,
+        due_date: validated.due_date,
+        timeline: validated.timeline,
         created_by: user?.id,
         resolved: false
       });
@@ -92,7 +85,7 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
       const { error: taskError } = await supabase
         .from("tasks")
         .update({ status: "Blocked" })
-        .eq("id", validated.selectedTaskId);
+        .eq("id", validated.task_id);
 
       if (taskError) throw taskError;
 
