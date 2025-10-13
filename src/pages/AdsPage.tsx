@@ -31,6 +31,8 @@ export default function AdsPage() {
   const [callouts, setCallouts] = useState<string[]>(Array(4).fill(""));
   const [savedAds, setSavedAds] = useState<any[]>([]);
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
+  const [entityFilter, setEntityFilter] = useState<string>("all");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchSavedAds();
@@ -176,6 +178,16 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
   const previewDescriptions = getRandomItems(descriptions, 2);
   const previewSitelinks = getRandomItems(sitelinks, 4);
   const previewCallouts = getRandomItems(callouts, 4);
+
+  const filteredSavedAds = savedAds.filter((ad) => {
+    const entityMatch = entityFilter === "all" || ad.entity === entityFilter;
+    const monthMatch = monthFilter === "all" || format(new Date(ad.created_at), "yyyy-MM") === monthFilter;
+    return entityMatch && monthMatch;
+  });
+
+  const availableMonths = Array.from(
+    new Set(savedAds.map((ad) => format(new Date(ad.created_at), "yyyy-MM")))
+  ).sort().reverse();
 
   return (
     <div className="p-8 space-y-6">
@@ -487,13 +499,41 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
+          <div className="flex gap-4 mb-6">
+            <Select value={entityFilter} onValueChange={setEntityFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Entity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Entities</SelectItem>
+                {ENTITIES.map((ent) => (
+                  <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {availableMonths.map((month) => (
+                  <SelectItem key={month} value={month}>
+                    {format(new Date(month + "-01"), "MMMM yyyy")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid gap-4">
-            {savedAds.length === 0 ? (
+            {filteredSavedAds.length === 0 ? (
               <Card className="p-12 text-center">
                 <p className="text-muted-foreground">No saved ads yet</p>
               </Card>
             ) : (
-              savedAds.map((ad) => (
+              filteredSavedAds.map((ad) => (
                 <Card key={ad.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
