@@ -25,8 +25,9 @@ export const taskSchema = z.object({
     .or(z.literal('')),
   
   entity: z.enum([
-    "Jordan", "Lebanon", "Morocco", "Egypt", "Oman", "Iraq", 
-    "Saudi Arabia", "Bahrain", "Qatar", "Kuwait", "UAE", "Global"
+    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
+    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
+    "Global Management"
   ]).optional(),
   
   priority: z.enum(["Low", "Medium", "High"]),
@@ -165,8 +166,9 @@ export const campaignSchema = z.object({
     .or(z.literal('')),
   
   entity: z.enum([
-    "Jordan", "Lebanon", "Morocco", "Egypt", "Oman", "Iraq",
-    "Saudi Arabia", "Bahrain", "Qatar", "Kuwait", "UAE", "Global"
+    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
+    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
+    "Global Management"
   ]).optional(),
   
   start_date: z.string().datetime(),
@@ -193,7 +195,8 @@ export const adSchema = z.object({
     .or(z.literal('')),
   
   entity: z.enum([
-    "Jordan", "Lebanon", "Morocco", "Egypt", "Oman", "Iraq",
-    "Saudi Arabia", "Bahrain", "Qatar", "Kuwait", "UAE", "Global"
+    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
+    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
+    "Global Management"
   ]).optional(),
 });

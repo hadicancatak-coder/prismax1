@@ -20,7 +20,7 @@ import { CampaignCard } from "@/components/CampaignCard";
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
   "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
-  "International", "Global Management"
+  "Global Management"
 ];
 
 export default function Campaigns() {
