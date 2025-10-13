@@ -105,9 +105,10 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
           }
         });
         setValidationErrors(errors);
+        console.error("Validation errors:", errors);
         toast({
           title: "Validation Error",
-          description: "Please fix the errors in the form",
+          description: Object.values(errors)[0] || "Please fix the errors in the form",
           variant: "destructive",
         });
         return;
