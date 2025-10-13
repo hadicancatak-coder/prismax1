@@ -58,7 +58,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   }, [open, userRole]);
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("user_id, name");
+    const { data } = await supabase.from("public_profiles").select("user_id, name");
     setUsers(data || []);
   };
 
