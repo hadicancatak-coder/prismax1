@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/TaskCard";
-import { Upload } from "lucide-react";
+import { Upload, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const TEAMS = ["SocialUA", "PPC", "PerMar"];
 
 export default function Profile() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isOwnProfile = !userId || userId === user?.id;
   
@@ -24,6 +29,8 @@ export default function Profile() {
   const [title, setTitle] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [tagline, setTagline] = useState("");
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any>({ completed: [], pending: [], blocked: [], failed: [] });
   const [uploading, setUploading] = useState(false);
 
@@ -31,6 +38,7 @@ export default function Profile() {
     if (!user) return;
     fetchProfile();
     fetchTasks();
+    fetchTeamMembers();
   }, [userId, user?.id]);
 
   const fetchProfile = async () => {
@@ -43,6 +51,25 @@ export default function Profile() {
       setTitle(data.title || "");
       setPhoneNumber(data.phone_number || "");
       setTagline(data.tagline || "");
+      setSelectedTeams((data.teams as string[]) || []);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    const targetUserId = userId || user?.id;
+    const { data: currentProfile } = await supabase
+      .from("profiles")
+      .select("teams")
+      .eq("user_id", targetUserId)
+      .single();
+
+    if (currentProfile?.teams && currentProfile.teams.length > 0) {
+      const { data } = await supabase
+        .from("public_profiles")
+        .select("user_id, name, username, avatar_url, title")
+        .contains("teams", currentProfile.teams);
+
+      setTeamMembers(data || []);
     }
   };
 
@@ -120,7 +147,13 @@ export default function Profile() {
   const handleSave = async () => {
     const { error } = await supabase
       .from("profiles")
-      .update({ name, title, phone_number: phoneNumber, tagline })
+      .update({ 
+        name, 
+        title, 
+        phone_number: phoneNumber, 
+        tagline,
+        teams: selectedTeams as any
+      })
       .eq("user_id", user?.id);
 
     if (error) {
@@ -129,7 +162,23 @@ export default function Profile() {
       toast({ title: "Success", description: "Profile updated" });
       setEditing(false);
       fetchProfile();
+      fetchTeamMembers();
     }
+  };
+
+  const toggleTeam = (team: string) => {
+    setSelectedTeams((prev) =>
+      prev.includes(team) ? prev.filter((t) => t !== team) : [...prev, team]
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   if (!profile) return <div className="p-8">Loading...</div>;
@@ -175,6 +224,23 @@ export default function Profile() {
                   <Label>Tagline</Label>
                   <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." />
                 </div>
+                <div>
+                  <Label className="mb-3 block">Teams</Label>
+                  <div className="space-y-2">
+                    {TEAMS.map((team) => (
+                      <div key={team} className="flex items-center gap-2">
+                        <Checkbox
+                          id={team}
+                          checked={selectedTeams.includes(team)}
+                          onCheckedChange={() => toggleTeam(team)}
+                        />
+                        <Label htmlFor={team} className="cursor-pointer">
+                          {team}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleSave}>Save</Button>
                   <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
@@ -187,6 +253,17 @@ export default function Profile() {
                 {profile.tagline && <p className="text-sm">{profile.tagline}</p>}
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
+                
+                {profile.teams && profile.teams.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {profile.teams.map((team: string) => (
+                      <Badge key={team} variant="secondary">
+                        {team}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
                 {isOwnProfile && (
                   <Button onClick={() => setEditing(true)} variant="outline">Edit Profile</Button>
                 )}
@@ -195,6 +272,45 @@ export default function Profile() {
           </div>
         </div>
       </Card>
+
+      {/* Team Members */}
+      {teamMembers.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5" />
+            Team Members ({teamMembers.length})
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teamMembers.map((member) => (
+              <Card
+                key={member.user_id}
+                className="p-4 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => navigate(`/profile/${member.user_id}`)}
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={member.avatar_url} />
+                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{member.name}</h3>
+                    {member.username && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        @{member.username}
+                      </p>
+                    )}
+                    {member.title && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {member.title}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Tabs defaultValue="completed" className="w-full">
         <TabsList className="grid w-full max-w-2xl grid-cols-4">
