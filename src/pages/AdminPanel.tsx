@@ -92,7 +92,7 @@ export default function AdminPanel() {
     // Fetch all members with their tasks
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, name, email, username");
+      .select("user_id, name, email, username, avatar_url");
 
     // Fetch all user roles
     const { data: roles } = await supabase
