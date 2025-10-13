@@ -11,44 +11,74 @@ export const useAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
+          await fetchUserRole(session.user.id);
         } else {
           setUserRole(null);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (mounted) {
+        setLoading(false);
+      }
+    }, 5000);
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id);
       }
       
       setLoading(false);
+      clearTimeout(timeoutId);
+    }).catch(() => {
+      if (mounted) {
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (data) {
-      setUserRole(data.role as "admin" | "member");
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return;
+      }
+
+      if (data) {
+        setUserRole(data.role as "admin" | "member");
+      }
+    } catch (error) {
+      console.error("Exception fetching user role:", error);
     }
   };
 
