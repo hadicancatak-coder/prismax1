@@ -21,8 +21,10 @@ export default function CalendarView() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [view, setView] = useState<"daily" | "weekly" | "monthly">("monthly");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [userWorkingDays, setUserWorkingDays] = useState<string>("mon-fri");
 
   useEffect(() => {
+    fetchUserWorkingDays();
     fetchTasks();
     if (userRole === "admin") {
       fetchUsers();
@@ -35,6 +37,20 @@ export default function CalendarView() {
 
     return () => { supabase.removeChannel(channel); };
   }, [selectedUserId, userRole]);
+
+  const fetchUserWorkingDays = async () => {
+    if (!user?.id) return;
+    
+    const { data } = await supabase
+      .from("profiles")
+      .select("working_days")
+      .eq("user_id", user.id)
+      .single();
+    
+    if (data?.working_days) {
+      setUserWorkingDays(data.working_days);
+    }
+  };
 
   const fetchUsers = async () => {
     const { data } = await supabase.from("profiles").select("user_id, name, email");
@@ -76,6 +92,18 @@ export default function CalendarView() {
       toast({ title: "Success", description: "Task moved" });
       await fetchTasks();
     }
+  };
+
+  const isWorkingDay = (date: Date): boolean => {
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    if (userWorkingDays === 'mon-fri') {
+      return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+    } else if (userWorkingDays === 'sun-thu') {
+      return dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4); // Sunday to Thursday
+    }
+    
+    return true; // fallback, show all days
   };
 
   const getTasksForDate = (date: Date) => {
@@ -172,11 +200,12 @@ export default function CalendarView() {
           {days.map(day => {
             const dayTasks = getTasksForDate(day);
             const isToday = isSameDay(day, new Date());
+            const isWorking = isWorkingDay(day);
 
             return (
               <Card 
                 key={day.toISOString()} 
-                className={`p-4 cursor-pointer transition-all ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+                className={`p-4 cursor-pointer transition-all ${!isWorking ? "opacity-30 bg-muted/30" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
                 onClick={() => setSelectedDate(day)}
               >
                 <div className="mb-3">
@@ -257,14 +286,18 @@ export default function CalendarView() {
             const dayTasks = getTasksForDate(day);
             const isCurrentMonth = day.getMonth() === currentDate.getMonth();
             const isToday = isSameDay(day, new Date());
+            const isWorking = isWorkingDay(day);
 
             return (
               <Card
                 key={day.toISOString()}
-                className={`p-2 min-h-[100px] cursor-pointer transition-all ${!isCurrentMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+                className={`p-2 min-h-[100px] cursor-pointer transition-all ${!isCurrentMonth ? "opacity-40" : ""} ${!isWorking ? "opacity-50 bg-muted/30" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
                 onClick={() => setSelectedDate(day)}
               >
-                <div className="text-sm font-semibold mb-1">{format(day, "d")}</div>
+                <div className="text-sm font-semibold mb-1 flex items-center justify-between">
+                  <span>{format(day, "d")}</span>
+                  {!isWorking && <span className="text-xs text-muted-foreground">Off</span>}
+                </div>
                 <div className="space-y-1">
                   {dayTasks.slice(0, 2).map(task => (
                     <div

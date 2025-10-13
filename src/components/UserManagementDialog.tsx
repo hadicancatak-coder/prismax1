@@ -86,12 +86,18 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   };
 
   const handleWorkingDaysChange = async (userId: string, workingDays: string) => {
-    const { error } = await supabase
+    console.log('Updating working days:', { userId, workingDays });
+    
+    const { data, error } = await supabase
       .from("profiles")
       .update({ working_days: workingDays })
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .select();
+
+    console.log('Update result:', { data, error });
 
     if (error) {
+      console.error('Working days update error:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -102,7 +108,7 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
 
     toast({
       title: "Working Days Updated",
-      description: "Working days have been updated",
+      description: `Working days set to ${workingDays === 'mon-fri' ? 'Mon-Fri' : 'Sun-Thu'}`,
     });
 
     await fetchMembers();
