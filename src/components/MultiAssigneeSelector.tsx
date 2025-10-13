@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function MultiAssigneeSelector({
   onAssigneesChange,
   disabled = false,
 }: MultiAssigneeSelectorProps) {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -161,7 +163,12 @@ export function MultiAssigneeSelector({
               {getInitials(assignee.name)}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs">{assignee.username || assignee.name}</span>
+          <span 
+            className="text-xs cursor-pointer hover:underline" 
+            onClick={() => navigate(`/profile/${assignee.user_id}`)}
+          >
+            {assignee.username || assignee.name}
+          </span>
           {!disabled && (
             <button
               onClick={() => handleUnassign(assignee.user_id)}
