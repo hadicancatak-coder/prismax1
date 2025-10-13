@@ -196,7 +196,9 @@ export default function Tasks() {
       ...task,
       creator_name: profileMap.get(task.created_by),
       assignee_name: profileMap.get(task.assignee_id),
-      delete_requester_name: profileMap.get(task.delete_requested_by)
+      delete_requester_name: profileMap.get(task.delete_requested_by),
+      entity: task.entity,
+      recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none'
     });
 
     setTasks({
@@ -381,6 +383,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -405,6 +409,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))

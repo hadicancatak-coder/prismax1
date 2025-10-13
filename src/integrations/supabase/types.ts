@@ -644,14 +644,7 @@ export type Database = {
       app_role: "admin" | "member"
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
-      task_status:
-        | "Pending Approval"
-        | "In Progress"
-        | "Blocked"
-        | "Completed"
-        | "Archived"
-        | "Failed"
-        | "Pending"
+      task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
       task_visibility: "global" | "pool" | "private"
     }
     CompositeTypes: {
@@ -783,15 +776,7 @@ export const Constants = {
       app_role: ["admin", "member"],
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],
-      task_status: [
-        "Pending Approval",
-        "In Progress",
-        "Blocked",
-        "Completed",
-        "Archived",
-        "Failed",
-        "Pending",
-      ],
+      task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
       task_visibility: ["global", "pool", "private"],
     },
   },

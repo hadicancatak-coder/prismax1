@@ -56,9 +56,9 @@ export default function Profile() {
     if (allTasks) {
       setTasks({
         completed: allTasks.filter(t => t.status === "Completed"),
-        pending: allTasks.filter(t => t.status === "In Progress" || t.status === "Pending Approval"),
+        pending: allTasks.filter(t => t.status === "Ongoing" || t.status === "Pending"),
         blocked: allTasks.filter(t => t.status === "Blocked"),
-        failed: allTasks.filter(t => t.status === "Archived"),
+        failed: allTasks.filter(t => t.status === "Failed"),
       });
     }
   };

@@ -71,7 +71,7 @@ export default function BlockersPage() {
 
     const { error: taskError } = await supabase
       .from("tasks")
-      .update({ status: "In Progress", blocker_reason: null })
+      .update({ status: "Ongoing", blocker_reason: null })
       .eq("id", taskId);
 
     if (blockerError || taskError) {

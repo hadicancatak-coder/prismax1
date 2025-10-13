@@ -129,7 +129,7 @@ export default function TeamBase() {
 
     const { error: taskError } = await supabase
       .from("tasks")
-      .update({ status: "In Progress" })
+      .update({ status: "Ongoing" })
       .eq("id", taskId);
 
     if (blockerError || taskError) {

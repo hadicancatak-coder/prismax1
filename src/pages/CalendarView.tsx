@@ -5,12 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskDialog } from "@/components/TaskDialog";
+import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function CalendarView() {
+  const { user, userRole } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -19,6 +24,9 @@ export default function CalendarView() {
 
   useEffect(() => {
     fetchTasks();
+    if (userRole === "admin") {
+      fetchUsers();
+    }
 
     const channel = supabase
       .channel('tasks-calendar')
@@ -26,14 +34,28 @@ export default function CalendarView() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [selectedUserId, userRole]);
+
+  const fetchUsers = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, name, email");
+    setAllUsers(data || []);
+  };
 
   const fetchTasks = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("tasks")
       .select("*")
-      .not("due_at", "is", null)
-      .order("due_at", { ascending: true });
+      .not("due_at", "is", null);
+
+    // Filter by user if admin has selected a specific user
+    if (userRole === "admin" && selectedUserId !== "all") {
+      query = query.eq("assignee_id", selectedUserId);
+    } else if (userRole !== "admin") {
+      // Members only see their own tasks
+      query = query.eq("assignee_id", user?.id);
+    }
+
+    const { data, error } = await query.order("due_at", { ascending: true });
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -272,7 +294,24 @@ export default function CalendarView() {
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Agenda</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Agenda</h1>
+          {userRole === "admin" && (
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="w-[250px] mt-2">
+                <SelectValue placeholder="Filter by member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Members</SelectItem>
+                {allUsers.map((u) => (
+                  <SelectItem key={u.user_id} value={u.user_id}>
+                    {u.name || u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
         <Tabs value={view} onValueChange={(v) => setView(v as any)}>
           <TabsList>
             <TabsTrigger value="daily">Daily</TabsTrigger>

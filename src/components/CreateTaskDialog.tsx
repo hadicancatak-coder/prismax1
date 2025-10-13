@@ -39,7 +39,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
-  const [status, setStatus] = useState<"Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived">("In Progress");
+  const [status, setStatus] = useState<"Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed">("Ongoing");
   const [jiraLink, setJiraLink] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("unassigned");
   const [entity, setEntity] = useState<string>("");
@@ -107,7 +107,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         title: title.trim(),
         description: description.trim() || null,
         priority: recurrence !== "none" ? "High" : priority, // Recurring tasks always high priority
-        status: (userRole === "member" ? "Pending Approval" : status) as "Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived",
+        status: (userRole === "member" ? "Pending" : status) as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
         due_at: recurrence !== "none" ? null : date?.toISOString(), // No due date for recurring tasks
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
@@ -149,7 +149,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setTitle("");
       setDescription("");
       setPriority("Medium");
-      setStatus("In Progress");
+      setStatus("Ongoing");
       setJiraLink("");
       setAssigneeId("unassigned");
       setEntity("");
@@ -219,9 +219,11 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing</SelectItem>
                     <SelectItem value="Blocked">Blocked</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -88,7 +88,7 @@ export default function AdminPanel() {
     const { data: pending } = await supabase
       .from("tasks")
       .select("*")
-      .eq("status", "Pending Approval")
+      .eq("status", "Pending")
       .order("created_at", { ascending: false });
 
     // Fetch all members with their tasks
@@ -112,9 +112,9 @@ export default function AdminPanel() {
       const memberTasks = (allTasksData || []).filter(t => t.assignee_id === profile.user_id);
       const totalTasks = memberTasks.length;
       const completedTasks = memberTasks.filter(t => t.status === "Completed").length;
-      const inProgressTasks = memberTasks.filter(t => t.status === "In Progress").length;
+      const inProgressTasks = memberTasks.filter(t => t.status === "Ongoing").length;
       const blockedTasks = memberTasks.filter(t => t.status === "Blocked");
-      const pendingTasks = memberTasks.filter(t => t.status === "Pending Approval").length;
+      const pendingTasks = memberTasks.filter(t => t.status === "Pending").length;
       
       return {
         ...profile,
@@ -140,7 +140,7 @@ export default function AdminPanel() {
     const { error } = await supabase
       .from("tasks")
       .update({ 
-        status: approved ? "In Progress" : "Failed",
+        status: approved ? "Ongoing" : "Failed",
         pending_approval: false
       })
       .eq("id", taskId);
@@ -292,12 +292,14 @@ export default function AdminPanel() {
                         <Badge
                           variant="outline"
                           className={
-                            task.status === "In Progress"
+                            task.status === "Ongoing"
                               ? "bg-warning/10 text-warning border-warning/20"
-                              : task.status === "Pending Approval"
+                              : task.status === "Pending"
                               ? "bg-pending/10 text-pending border-pending/20"
                               : task.status === "Completed"
                               ? "bg-success/10 text-success border-success/20"
+                              : task.status === "Failed"
+                              ? "bg-destructive/10 text-destructive border-destructive/20"
                               : "bg-muted text-muted-foreground border-border"
                           }
                         >

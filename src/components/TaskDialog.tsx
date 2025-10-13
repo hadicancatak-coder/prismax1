@@ -358,8 +358,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing</SelectItem>
                     <SelectItem value="Blocked">Blocked</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Failed">Failed</SelectItem>
@@ -393,6 +393,39 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 </Select>
               </div>
             </div>
+
+            {userRole === "admin" && (
+              <div>
+                <Label className="mb-2 block">Assignee</Label>
+                <Select 
+                  value={task.assignee_id || "unassigned"} 
+                  onValueChange={async (value) => {
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ assignee_id: value === "unassigned" ? null : value })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Success", description: "Assignee updated" });
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select assignee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.user_id} value={profile.user_id}>
+                        {profile.name || profile.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {task.status === "Blocked" && (
               <div>

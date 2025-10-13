@@ -45,7 +45,7 @@ export default function Dashboard() {
       const { data: inProgressTasks } = await supabase
         .from("tasks")
         .select("*")
-        .eq("status", "In Progress");
+        .eq("status", "Ongoing");
 
       const { data: recent } = await supabase
         .from("tasks")
@@ -82,7 +82,7 @@ export default function Dashboard() {
     } else if (type === 'overdue') {
       query = query.lt("due_at", today.toISOString()).neq("status", "Completed");
     } else if (type === 'inProgress') {
-      query = query.eq("status", "In Progress");
+      query = query.eq("status", "Ongoing");
     }
 
     const { data } = await query.order("created_at", { ascending: false });
@@ -147,10 +147,12 @@ export default function Dashboard() {
                   <Badge
                     variant="outline"
                     className={
-                      task.status === "In Progress"
+                      task.status === "Ongoing"
                         ? "bg-warning/10 text-warning border-warning/20"
-                        : task.status === "Pending Approval"
+                        : task.status === "Pending"
                         ? "bg-pending/10 text-pending border-pending/20"
+                        : task.status === "Completed"
+                        ? "bg-success/10 text-success border-success/20"
                         : "bg-muted text-muted-foreground border-border"
                     }
                   >

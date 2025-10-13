@@ -19,6 +19,8 @@ interface Task {
   priority: string;
   dueDate: string;
   timeTracked: string;
+  entity?: string;
+  recurrence?: string;
 }
 
 export const TaskCard = ({ task }: { task: Task }) => {
@@ -55,10 +57,11 @@ export const TaskCard = ({ task }: { task: Task }) => {
   };
   
   const statusColors = {
-    "In Progress": "bg-warning/10 text-warning border-warning/20",
-    "Pending Approval": "bg-pending/10 text-pending border-pending/20",
-    "To Do": "bg-muted text-muted-foreground border-border",
-    Completed: "bg-success/10 text-success border-success/20",
+    "Ongoing": "bg-warning/10 text-warning border-warning/20",
+    "Pending": "bg-pending/10 text-pending border-pending/20",
+    "Blocked": "bg-destructive/10 text-destructive border-destructive/20",
+    "Completed": "bg-success/10 text-success border-success/20",
+    "Failed": "bg-muted text-muted-foreground border-border",
   };
 
   const priorityColors = {
@@ -69,20 +72,20 @@ export const TaskCard = ({ task }: { task: Task }) => {
 
   return (
     <>
-      <Card className="p-6 transition-all hover:shadow-medium cursor-pointer" onClick={() => setDialogOpen(true)}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
-            <p className="text-sm text-muted-foreground">{task.description}</p>
+      <Card className="p-4 transition-all hover:shadow-medium cursor-pointer" onClick={() => setDialogOpen(true)}>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-foreground mb-1 truncate">{task.title}</h3>
+            <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
-              <MessageCircle className="h-4 w-4" />
+          <div className="flex gap-1 ml-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
+              <MessageCircle className="h-3.5 w-3.5" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                  <MoreVertical className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -101,10 +104,10 @@ export const TaskCard = ({ task }: { task: Task }) => {
           </div>
         </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <Badge
           variant="outline"
-          className={statusColors[task.status as keyof typeof statusColors]}
+          className={statusColors[task.status as keyof typeof statusColors] || "bg-muted text-muted-foreground border-border"}
         >
           {task.status}
         </Badge>
@@ -116,18 +119,24 @@ export const TaskCard = ({ task }: { task: Task }) => {
         </Badge>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4" />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <User className="h-3 w-3" />
             <span>{task.assignee}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>{task.timeTracked}</span>
-          </div>
+          {task.entity && (
+            <Badge variant="outline" className="text-xs h-5">
+              {task.entity}
+            </Badge>
+          )}
+          {task.recurrence && task.recurrence !== "none" && (
+            <Badge variant="outline" className="text-xs h-5">
+              {task.recurrence}
+            </Badge>
+          )}
         </div>
-        <span className="font-medium">Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+        {task.dueDate && <span className="font-medium">Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
       </div>
     </Card>
     
