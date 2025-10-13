@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -80,6 +80,21 @@ export function AppSidebar() {
                       >
                         <ListTodo className="h-4 w-4" />
                         <span>Backlog</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/activity-log"
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
+                        }
+                      >
+                        <Activity className="h-4 w-4" />
+                        <span>Activity Log</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
