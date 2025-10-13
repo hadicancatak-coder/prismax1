@@ -19,6 +19,9 @@ export default function Backlog() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for userRole to load before checking
+    if (userRole === null) return;
+    
     if (userRole !== "admin") {
       toast({
         title: "Access Denied",
@@ -95,12 +98,16 @@ export default function Backlog() {
     await fetchBacklogTasks();
   };
 
-  if (loading || userRole !== "admin") {
+  if (loading || userRole === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-muted-foreground">Loading Backlog...</div>
       </div>
     );
+  }
+
+  if (userRole !== "admin") {
+    return null;
   }
 
   return (

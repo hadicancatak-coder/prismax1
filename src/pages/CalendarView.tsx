@@ -14,7 +14,8 @@ export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [view, setView] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const [view, setView] = useState<"daily" | "weekly" | "monthly">("monthly");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -233,15 +234,17 @@ export default function CalendarView() {
             return (
               <Card
                 key={day.toISOString()}
-                className={`p-2 min-h-[100px] ${!isCurrentMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""}`}
+                className={`p-2 min-h-[100px] cursor-pointer transition-all ${!isCurrentMonth ? "opacity-40" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+                onClick={() => setSelectedDate(day)}
               >
                 <div className="text-sm font-semibold mb-1">{format(day, "d")}</div>
                 <div className="space-y-1">
                   {dayTasks.slice(0, 2).map(task => (
                     <div
                       key={task.id}
-                      className="text-xs p-1 bg-muted rounded truncate cursor-pointer hover:bg-muted/70"
-                      onClick={() => {
+                      className="text-xs p-1 bg-muted rounded truncate hover:bg-muted/70"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedTaskId(task.id);
                         setTaskDialogOpen(true);
                       }}
@@ -277,6 +280,74 @@ export default function CalendarView() {
       {view === "daily" && renderDailyView()}
       {view === "weekly" && renderWeeklyView()}
       {view === "monthly" && renderMonthlyView()}
+
+      {selectedDate && view === "monthly" && (
+        <Card className="p-6 mt-6 animate-fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">
+              Tasks for {format(selectedDate, "EEEE, MMMM dd, yyyy")}
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedDate(null)}>
+              Close
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {getTasksForDate(selectedDate).length > 0 ? (
+              getTasksForDate(selectedDate).map(task => (
+                <div
+                  key={task.id}
+                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors flex items-center justify-between"
+                  onClick={() => {
+                    setSelectedTaskId(task.id);
+                    setTaskDialogOpen(true);
+                  }}
+                >
+                  <div className="flex-1">
+                    <div className="font-medium">{task.title}</div>
+                    {task.description && (
+                      <div className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                        {task.description}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={
+                        task.status === "In Progress"
+                          ? "bg-warning/10 text-warning border-warning/20"
+                          : task.status === "Completed"
+                          ? "bg-success/10 text-success border-success/20"
+                          : task.status === "Blocked"
+                          ? "bg-destructive/10 text-destructive border-destructive/20"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    >
+                      {task.status}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={
+                        task.priority === "High"
+                          ? "bg-destructive/10 text-destructive border-destructive/20"
+                          : task.priority === "Medium"
+                          ? "bg-warning/10 text-warning border-warning/20"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    >
+                      {task.priority}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                No tasks scheduled for this date
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />

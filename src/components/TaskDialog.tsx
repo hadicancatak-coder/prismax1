@@ -409,6 +409,37 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
 
               <div>
+                <Label className="mb-2 block">Recurring Task</Label>
+                <Select 
+                  value={task.recurrence_rrule || "none"} 
+                  onValueChange={async (value) => {
+                    const rrule = value === "none" ? null : value;
+                    const { error } = await supabase
+                      .from("tasks")
+                      .update({ recurrence_rrule: rrule })
+                      .eq("id", taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      fetchTask();
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="No recurrence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Recurrence</SelectItem>
+                    <SelectItem value="FREQ=DAILY">Daily</SelectItem>
+                    <SelectItem value="FREQ=WEEKLY">Weekly</SelectItem>
+                    <SelectItem value="FREQ=MONTHLY">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label className="mb-2 block">Project</Label>
                 <Select 
                   value={task.project_id || "none"} 
@@ -437,6 +468,13 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div>
+                <Label className="mb-2 block">Linked Blocker</Label>
+                <div className="text-sm text-muted-foreground pt-2">
+                  {task.status === "Blocked" ? "Blocker created" : "No blocker"}
+                </div>
               </div>
             </div>
 

@@ -261,7 +261,7 @@ export default function AdminPanel() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+        <div className="col-span-2 space-y-6">
           <Tabs defaultValue="tasks" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="tasks">All Tasks</TabsTrigger>
@@ -489,58 +489,60 @@ export default function AdminPanel() {
           </Tabs>
         </div>
 
-        <div>
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <Button
-                className="w-full justify-start gap-2"
-                variant="outline"
-                onClick={() => setCreateTaskDialogOpen(true)}
-              >
-                <CheckSquare className="h-4 w-4" />
-                Create Task
-              </Button>
-              <Button
-                className="w-full justify-start gap-2"
-                variant="outline"
-                onClick={() => navigate("/admin-panel")}
-              >
-                <User className="h-4 w-4" />
-                Manage Users
-              </Button>
-            </div>
-          </Card>
-
-          {pendingTasks.length > 0 && (
-            <Card className="p-6 mt-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Approvals Needed ({pendingTasks.length})
-              </h3>
-              <div className="space-y-2">
-                {pendingTasks.slice(0, 3).map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-3 bg-muted/30 rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => {
-                      setSelectedTaskId(task.id);
-                      setTaskDialogOpen(true);
-                    }}
-                  >
-                    <p className="font-medium text-foreground line-clamp-1">{task.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      by {task.profiles?.name}
-                    </p>
-                  </div>
-                ))}
-                {pendingTasks.length > 3 && (
-                  <p className="text-xs text-center text-muted-foreground pt-2">
-                    +{pendingTasks.length - 3} more
-                  </p>
-                )}
+        <div className="col-span-1">
+          <div className="sticky top-24">
+            <Card className="p-6 max-h-[calc(100vh-12rem)] overflow-y-auto bg-card/50 backdrop-blur border-2">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <Button
+                  className="w-full justify-start gap-2"
+                  variant="outline"
+                  onClick={() => setCreateTaskDialogOpen(true)}
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  Create Task
+                </Button>
+                <Button
+                  className="w-full justify-start gap-2"
+                  variant="outline"
+                  onClick={() => navigate("/admin-panel")}
+                >
+                  <User className="h-4 w-4" />
+                  Manage Users
+                </Button>
               </div>
+
+              {pendingTasks.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Approvals Needed ({pendingTasks.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {pendingTasks.slice(0, 3).map((task) => (
+                      <div
+                        key={task.id}
+                        className="p-3 bg-muted/30 rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setSelectedTaskId(task.id);
+                          setTaskDialogOpen(true);
+                        }}
+                      >
+                        <p className="font-medium text-foreground line-clamp-1">{task.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          by {task.profiles?.name}
+                        </p>
+                      </div>
+                    ))}
+                    {pendingTasks.length > 3 && (
+                      <p className="text-xs text-center text-muted-foreground pt-2">
+                        +{pendingTasks.length - 3} more
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </Card>
-          )}
+          </div>
         </div>
       </div>
 

@@ -8,13 +8,10 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
-import TimeTracking from "./pages/TimeTracking";
 import AdminPanel from "./pages/AdminPanel";
-import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
-import ProjectsPage from "./pages/ProjectsPage";
-import BlockersPage from "./pages/BlockersPage";
+import TeamBase from "./pages/TeamBase";
 import AdsPage from "./pages/AdsPage";
 import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
@@ -34,11 +31,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/time-tracking" element={<TimeTracking />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/blockers" element={<BlockersPage />} />
+            <Route path="/team-base" element={<TeamBase />} />
             <Route path="/backlog" element={<Backlog />} />
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/notifications" element={<Notifications />} />
