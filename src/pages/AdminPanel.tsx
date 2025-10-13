@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { UserManagementDialog } from "@/components/UserManagementDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
@@ -40,6 +41,7 @@ export default function AdminPanel() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
+  const [userManagementOpen, setUserManagementOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
@@ -499,7 +501,7 @@ export default function AdminPanel() {
                 <Button
                   className="w-full justify-start gap-2"
                   variant="outline"
-                  onClick={() => navigate("/admin-panel")}
+                  onClick={() => setUserManagementOpen(true)}
                 >
                   <User className="h-4 w-4" />
                   Manage Users
@@ -547,6 +549,11 @@ export default function AdminPanel() {
       <CreateTaskDialog 
         open={createTaskDialogOpen} 
         onOpenChange={setCreateTaskDialogOpen}
+      />
+
+      <UserManagementDialog
+        open={userManagementOpen}
+        onOpenChange={setUserManagementOpen}
       />
 
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
