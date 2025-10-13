@@ -33,20 +33,31 @@ export default function AdsPage() {
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSavedAds();
   }, []);
 
   const fetchSavedAds = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("ads")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      console.error("Error fetching ads:", error);
+      toast({ 
+        title: "Error loading ads", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } else if (data) {
+      console.log("Fetched ads:", data);
       setSavedAds(data);
     }
+    setLoading(false);
   };
 
   const handleCopy = (text: string) => {
@@ -528,9 +539,17 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           </div>
 
           <div className="grid gap-4">
-            {filteredSavedAds.length === 0 ? (
+            {loading ? (
               <Card className="p-12 text-center">
-                <p className="text-muted-foreground">No saved ads yet</p>
+                <p className="text-muted-foreground">Loading ads...</p>
+              </Card>
+            ) : filteredSavedAds.length === 0 ? (
+              <Card className="p-12 text-center">
+                <p className="text-muted-foreground">
+                  {savedAds.length === 0 
+                    ? "No saved ads yet. Create your first ad in the 'Create Ad' tab." 
+                    : "No ads match your current filters."}
+                </p>
               </Card>
             ) : (
               filteredSavedAds.map((ad) => (
