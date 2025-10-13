@@ -7,12 +7,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function Notifications() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -84,12 +87,27 @@ export default function Notifications() {
     }
   };
 
+  const handleNotificationClick = async (notification: any) => {
+    const payload = notification.payload_json;
+    
+    // Mark as read
+    if (!notification.read_at) {
+      await markAsRead(notification.id);
+    }
+    
+    // Open task dialog if task_id exists
+    if (payload.task_id) {
+      setSelectedTaskId(payload.task_id);
+      setTaskDialogOpen(true);
+    }
+  };
+
   const getNotificationMessage = (notification: any) => {
     const payload = notification.payload_json;
     switch (notification.type) {
       case "task_assigned":
         return `You have been assigned a new task: ${payload.task_title}`;
-      case "mention":
+      case "comment_mention":
         return `You were mentioned in "${payload.task_title}"`;
       case "task_updated":
         return payload.message || `Task "${payload.task_title}" was updated`;
@@ -121,9 +139,10 @@ export default function Notifications() {
           notifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`p-4 transition-all hover:shadow-medium ${
+              className={`p-4 transition-all hover:shadow-medium cursor-pointer ${
                 notification.read_at ? "bg-background" : "bg-muted/50 border-primary/20"
               }`}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -137,7 +156,7 @@ export default function Notifications() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   {!notification.read_at && (
                     <Button
                       size="sm"
@@ -168,6 +187,14 @@ export default function Notifications() {
           </Card>
         )}
       </div>
+
+      {selectedTaskId && (
+        <TaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          taskId={selectedTaskId}
+        />
+      )}
     </div>
   );
 }
