@@ -14,6 +14,13 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { CampaignDetailDialog } from "@/components/CampaignDetailDialog";
+
+const ENTITIES = [
+  "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
+  "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
+  "International", "Global Management"
+];
 
 export default function Campaigns() {
   const { userRole } = useAuth();
@@ -37,6 +44,8 @@ export default function Campaigns() {
   const [endDate, setEndDate] = useState<Date>();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -147,11 +156,8 @@ export default function Campaigns() {
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("campaigns")
-          .getPublicUrl(safeFileName);
-
-        imageUrl = publicUrl;
+        // Store just the filename, not the full URL (for private buckets)
+        imageUrl = safeFileName;
       }
 
       const { error } = await supabase.from("campaigns").insert({
@@ -195,7 +201,7 @@ export default function Campaigns() {
     }
   };
 
-  const uniqueEntities = Array.from(new Set(campaigns.map(c => c.entity).filter(Boolean)));
+  // Use ENTITIES constant for filter dropdown
   const months = [
     { value: "0", label: "January" },
     { value: "1", label: "February" },
@@ -280,11 +286,18 @@ export default function Campaigns() {
 
                 <div>
                   <Label htmlFor="entity">Entity</Label>
-                  <Input
-                    id="entity"
-                    value={entity}
-                    onChange={(e) => setEntity(e.target.value)}
-                  />
+                  <Select value={entity} onValueChange={setEntity}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select entity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ENTITIES.map((ent) => (
+                        <SelectItem key={ent} value={ent}>
+                          {ent}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -347,7 +360,7 @@ export default function Campaigns() {
                   </div>
 
                   <div>
-                    <Label>End Date *</Label>
+                    <Label>End Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -401,7 +414,7 @@ export default function Campaigns() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Entities</SelectItem>
-                {uniqueEntities.map((entity) => (
+                {ENTITIES.map((entity) => (
                   <SelectItem key={entity} value={entity}>
                     {entity}
                   </SelectItem>
@@ -430,69 +443,94 @@ export default function Campaigns() {
 
       {/* Campaign Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCampaigns.map((campaign) => (
-          <Card key={campaign.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            {campaign.image_url && (
-              <img
-                src={campaign.image_url}
-                alt={campaign.title}
-                className="w-full h-48 object-cover"
-              />
-            )}
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {campaign.title}
-              </h3>
-              {campaign.description && (
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {campaign.description}
-                </p>
+        {filteredCampaigns.map((campaign) => {
+          const [imageUrl, setImageUrl] = useState<string>("");
+
+          // Get signed URL for image preview
+          useEffect(() => {
+            if (campaign.image_url) {
+              const fileName = campaign.image_url.includes('/') 
+                ? campaign.image_url.split('/').pop() 
+                : campaign.image_url;
+              
+              supabase.storage
+                .from("campaigns")
+                .createSignedUrl(fileName, 3600)
+                .then(({ data }) => {
+                  if (data) setImageUrl(data.signedUrl);
+                });
+            }
+          }, [campaign.image_url]);
+
+          return (
+            <Card 
+              key={campaign.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => {
+                setSelectedCampaignId(campaign.id);
+                setDetailDialogOpen(true);
+              }}
+            >
+              {imageUrl && (
+                <img
+                  src={imageUrl}
+                  alt={campaign.title}
+                  className="w-full h-48 object-cover"
+                />
               )}
-              <div className="space-y-2 text-sm">
-                {campaign.entity && (
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {campaign.title}
+                </h3>
+                {campaign.description && (
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                    {campaign.description}
+                  </p>
+                )}
+                <div className="space-y-2 text-sm">
+                  {campaign.entity && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Entity:</span>
+                      <span className="font-medium">{campaign.entity}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Entity:</span>
-                    <span className="font-medium">{campaign.entity}</span>
+                    <span className="text-muted-foreground">Target:</span>
+                    <span className="font-medium">{campaign.target}</span>
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Target:</span>
-                  <span className="font-medium">{campaign.target}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Start:</span>
-                  <span className="font-medium">
-                    {format(new Date(campaign.start_date), "MMM dd, yyyy")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">End:</span>
-                  <span className="font-medium">
-                    {format(new Date(campaign.end_date), "MMM dd, yyyy")}
-                  </span>
-                </div>
-                {campaign.lp_link && (
-                  <div className="pt-2">
-                    <a
-                      href={campaign.lp_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline text-sm"
-                    >
-                      View Landing Page →
-                    </a>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Start:</span>
+                    <span className="font-medium">
+                      {format(new Date(campaign.start_date), "MMM dd, yyyy")}
+                    </span>
                   </div>
-                )}
+                  {campaign.end_date && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">End:</span>
+                      <span className="font-medium">
+                        {format(new Date(campaign.end_date), "MMM dd, yyyy")}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
 
       {filteredCampaigns.length === 0 && (
         <Card className="p-12 text-center">
           <p className="text-muted-foreground">No campaigns found</p>
         </Card>
+      )}
+
+      {selectedCampaignId && (
+        <CampaignDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          campaignId={selectedCampaignId}
+        />
       )}
     </div>
   );

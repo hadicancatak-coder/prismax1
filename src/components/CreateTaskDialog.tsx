@@ -44,6 +44,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [assigneeId, setAssigneeId] = useState<string>("unassigned");
   const [entity, setEntity] = useState<string>("");
   const [users, setUsers] = useState<any[]>([]);
+  const [recurrence, setRecurrence] = useState<string>("none");
 
   useEffect(() => {
     if (open && userRole === "admin") {
@@ -90,10 +91,22 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setLoading(true);
     try {
+      // Generate recurrence rule if needed
+      let recurrenceRule = null;
+      if (recurrence !== "none" && date) {
+        if (recurrence === "daily") {
+          recurrenceRule = "FREQ=DAILY";
+        } else if (recurrence === "weekly") {
+          recurrenceRule = "FREQ=WEEKLY";
+        } else if (recurrence === "monthly") {
+          recurrenceRule = "FREQ=MONTHLY";
+        }
+      }
+
       const taskData = {
         title: title.trim(),
         description: description.trim() || null,
-        priority,
+        priority: recurrence !== "none" ? "High" : priority, // Recurring tasks always high priority
         status: (userRole === "member" ? "Pending Approval" : status) as "Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived",
         due_at: date?.toISOString(),
         jira_link: jiraLink.trim() || null,
@@ -101,6 +114,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
         visibility: "global" as "global" | "pool" | "private",
         entity: entity || null,
+        recurrence_rrule: recurrenceRule,
       };
 
       console.log("Creating task:", taskData);
@@ -140,6 +154,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setAssigneeId("unassigned");
       setEntity("");
       setDate(undefined);
+      setRecurrence("none");
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -252,20 +267,37 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Entity</Label>
-            <Select value={entity} onValueChange={setEntity}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select entity" />
-              </SelectTrigger>
-              <SelectContent>
-                {ENTITIES.map((ent) => (
-                  <SelectItem key={ent} value={ent}>
-                    {ent}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Entity</Label>
+              <Select value={entity} onValueChange={setEntity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select entity" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENTITIES.map((ent) => (
+                    <SelectItem key={ent} value={ent}>
+                      {ent}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Recurrence</Label>
+              <Select value={recurrence} onValueChange={setRecurrence}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select recurrence" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Recurrence</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {userRole === "admin" && (

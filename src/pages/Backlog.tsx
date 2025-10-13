@@ -50,12 +50,14 @@ export default function Backlog() {
   const fetchBacklogTasks = async () => {
     setLoading(true);
 
+    // Sort by priority (recurring tasks will be High), then by created_at
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .is("due_at", null)
-      .order("created_at", { ascending: false});
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false });
 
     if (error) {
       toast({

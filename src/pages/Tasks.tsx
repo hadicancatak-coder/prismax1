@@ -98,8 +98,10 @@ export default function Tasks() {
     // Base query - hide delete-requested tasks from members
     const baseQuery = supabase.from("tasks").select("*");
     
+    // Sort: recurring tasks first (by priority High), then by priority, then by date
     const { data: allTasks } = await baseQuery
       .is("delete_requested_by", null)
+      .order("priority", { ascending: false })
       .order("created_at", { ascending: false });
 
     const { data: yesterdayTasks } = await supabase
