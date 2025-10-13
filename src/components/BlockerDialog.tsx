@@ -13,6 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
+
+const blockerSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  description: z.string().trim().max(2000, "Description must be less than 2000 characters").optional(),
+  stuckReason: z.string().trim().max(1000, "Reason must be less than 1000 characters").optional(),
+  fixProcess: z.string().trim().max(1000, "Fix process must be less than 1000 characters").optional(),
+  timeline: z.string().trim().max(100, "Timeline must be less than 100 characters").optional(),
+  selectedTaskId: z.string().uuid("Please select a valid task"),
+});
 
 interface BlockerDialogProps {
   open: boolean;
@@ -53,32 +63,36 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !selectedTaskId) {
-      toast({ title: "Error", description: "Title and task are required", variant: "destructive" });
-      return;
-    }
-
-    setLoading(true);
     try {
+      const validated = blockerSchema.parse({
+        title,
+        description: description || undefined,
+        stuckReason: stuckReason || undefined,
+        fixProcess: fixProcess || undefined,
+        timeline: timeline || undefined,
+        selectedTaskId,
+      });
+
+      setLoading(true);
+
       const { error: blockerError } = await supabase.from("blockers").insert({
-        task_id: selectedTaskId,
-        title: title.trim(),
-        description: description.trim(),
-        stuck_reason: stuckReason.trim(),
-        fix_process: fixProcess.trim(),
+        task_id: validated.selectedTaskId,
+        title: validated.title,
+        description: validated.description || "",
+        stuck_reason: validated.stuckReason || "",
+        fix_process: validated.fixProcess || "",
         due_date: dueDate?.toISOString(),
-        timeline: timeline.trim(),
+        timeline: validated.timeline || "",
         created_by: user?.id,
         resolved: false
       });
 
       if (blockerError) throw blockerError;
 
-      // Update task status to Blocked
       const { error: taskError } = await supabase
         .from("tasks")
         .update({ status: "Blocked" })
-        .eq("id", selectedTaskId);
+        .eq("id", validated.selectedTaskId);
 
       if (taskError) throw taskError;
 
@@ -87,7 +101,11 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to add blocker", variant: "destructive" });
+      if (error instanceof z.ZodError) {
+        toast({ title: "Validation Error", description: error.errors[0].message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to add blocker", variant: "destructive" });
+      }
     } finally {
       setLoading(false);
     }

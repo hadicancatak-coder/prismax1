@@ -593,6 +593,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_comment_author: {
+        Args: { _comment_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "member"

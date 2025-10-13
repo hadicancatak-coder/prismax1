@@ -14,6 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
+
+const projectSchema = z.object({
+  name: z.string().trim().min(1, "Project name is required").max(200, "Project name must be less than 200 characters"),
+  description: z.string().trim().max(2000, "Description must be less than 2000 characters").optional(),
+  requiredTime: z.number().min(0, "Required time must be positive").optional(),
+});
 
 interface ProjectDialogProps {
   open: boolean;
@@ -58,41 +65,46 @@ export function ProjectDialog({ open, onOpenChange, onSuccess }: ProjectDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      toast({ title: "Error", description: "Project name is required", variant: "destructive" });
-      return;
-    }
+    try {
+      const validated = projectSchema.parse({
+        name,
+        description: description || undefined,
+        requiredTime: requiredTime ? parseInt(requiredTime) : undefined,
+      });
 
-    const { data: project, error } = await supabase.from("projects").insert({
-      name: name.trim(),
-      description: description.trim(),
-      due_date: dueDate?.toISOString(),
-      required_time: requiredTime ? parseInt(requiredTime) : null,
-      created_by: user?.id,
-      members: selectedMembers
-    }).select().single();
+      const { data: project, error } = await supabase.from("projects").insert({
+        name: validated.name,
+        description: validated.description || "",
+        due_date: dueDate?.toISOString(),
+        required_time: validated.requiredTime || null,
+        created_by: user?.id,
+        members: selectedMembers
+      }).select().single();
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
+      if (error) throw error;
 
-    // Update related tasks with project_id
-    if (relatedTasks.length > 0 && project) {
-      const { error: taskError } = await supabase
-        .from("tasks")
-        .update({ project_id: project.id })
-        .in("id", relatedTasks);
+      if (relatedTasks.length > 0 && project) {
+        const { error: taskError } = await supabase
+          .from("tasks")
+          .update({ project_id: project.id })
+          .in("id", relatedTasks);
 
-      if (taskError) {
-        console.error("Error updating tasks:", taskError);
+        if (taskError) {
+          console.error("Error updating tasks:", taskError);
+        }
+      }
+
+      toast({ title: "Success", description: "Project created successfully" });
+      resetForm();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast({ title: "Validation Error", description: error.errors[0].message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to create project", variant: "destructive" });
       }
     }
-
-    toast({ title: "Success", description: "Project created successfully" });
-    resetForm();
-    onOpenChange(false);
-    onSuccess?.();
   };
 
   const resetForm = () => {

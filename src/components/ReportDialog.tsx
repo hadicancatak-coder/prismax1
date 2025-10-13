@@ -7,6 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const reportSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  link: z.string().trim().url("Please enter a valid URL").max(500, "URL must be less than 500 characters"),
+});
 
 interface ReportDialogProps {
   open: boolean;
@@ -23,28 +29,33 @@ export function ReportDialog({ open, onOpenChange, onSuccess }: ReportDialogProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !link.trim()) {
-      toast({ title: "Error", description: "Title and link are required", variant: "destructive" });
-      return;
+    try {
+      const validated = reportSchema.parse({
+        title,
+        link,
+      });
+
+      const { error } = await supabase.from("reports").insert({
+        title: validated.title,
+        link: validated.link,
+        update_frequency: updateFrequency,
+        type: "sheet",
+        created_by: user?.id
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Report created successfully" });
+      resetForm();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast({ title: "Validation Error", description: error.errors[0].message, variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to create report", variant: "destructive" });
+      }
     }
-
-    const { error } = await supabase.from("reports").insert({
-      title: title.trim(),
-      link: link.trim(),
-      update_frequency: updateFrequency,
-      type: "sheet",
-      created_by: user?.id
-    });
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Success", description: "Report created successfully" });
-    resetForm();
-    onOpenChange(false);
-    onSuccess?.();
   };
 
   const resetForm = () => {
