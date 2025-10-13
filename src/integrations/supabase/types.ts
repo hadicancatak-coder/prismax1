@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          callouts: Json
+          created_at: string
+          created_by: string
+          descriptions: Json
+          entity: string | null
+          headlines: Json
+          id: string
+          landing_page: string | null
+          name: string
+          sitelinks: Json
+          updated_at: string
+        }
+        Insert: {
+          callouts?: Json
+          created_at?: string
+          created_by: string
+          descriptions?: Json
+          entity?: string | null
+          headlines?: Json
+          id?: string
+          landing_page?: string | null
+          name: string
+          sitelinks?: Json
+          updated_at?: string
+        }
+        Update: {
+          callouts?: Json
+          created_at?: string
+          created_by?: string
+          descriptions?: Json
+          entity?: string | null
+          headlines?: Json
+          id?: string
+          landing_page?: string | null
+          name?: string
+          sitelinks?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blockers: {
         Row: {
           created_at: string
