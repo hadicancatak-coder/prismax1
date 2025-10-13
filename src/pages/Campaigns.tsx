@@ -97,7 +97,7 @@ export default function Campaigns() {
       return;
     }
 
-    // Validate file size (5MB max)
+    // Validate file size (5MB max - already correct)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({

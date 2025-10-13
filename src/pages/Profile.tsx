@@ -67,9 +67,35 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    // Validate file type (only PNG)
+    if (file.type !== 'image/png') {
+      toast({
+        title: "Invalid file type",
+        description: "Only PNG images are allowed",
+        variant: "destructive"
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    // Validate file size (2MB max)
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Avatar must be under 2MB",
+        variant: "destructive"
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+
     setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+
+    // Generate cryptographically safe filename
+    const timestamp = Date.now();
+    const randomStr = crypto.randomUUID();
+    const filePath = `${user.id}/avatar_${timestamp}_${randomStr}.png`;
 
     const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file);
 
@@ -124,7 +150,7 @@ export default function Profile() {
                     {uploading ? "Uploading..." : "Upload Photo"}
                   </span>
                 </Button>
-                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                <input type="file" accept="image/png" onChange={handleAvatarUpload} className="hidden" />
               </label>
             )}
           </div>

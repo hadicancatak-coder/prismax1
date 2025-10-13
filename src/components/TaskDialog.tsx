@@ -198,6 +198,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const handleCommentSubmit = async () => {
     if (!newComment.trim() || !user) return;
 
+    // Validate comment length (100 characters max)
+    if (newComment.trim().length > 100) {
+      toast({
+        title: "Comment too long",
+        description: "Comments must be 100 characters or less",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { data: comment, error } = await supabase
         .from("comments")
@@ -662,8 +672,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                             handleCommentSubmit();
                           }
                         }}
+                        maxLength={100}
                         className="pr-10"
                       />
+                      <span className={`absolute left-2 -top-5 text-xs ${newComment.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {newComment.length}/100
+                      </span>
                       <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                         <PopoverTrigger asChild>
                           <Button
