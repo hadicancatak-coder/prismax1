@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Pencil, Trash2, Save, X } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -30,6 +30,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const [landingPage, setLandingPage] = useState("");
   const [sitelinks, setSitelinks] = useState<{ title: string; description: string }[]>([]);
   const [callouts, setCallouts] = useState<string[]>([]);
+  const [combinationIndex, setCombinationIndex] = useState(0);
 
   useState(() => {
     if (ad) {
@@ -85,8 +86,26 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const activeSitelinks = sitelinks.filter((s) => s.title.trim());
   const activeCallouts = callouts.filter((c) => c.trim());
 
-  const previewHeadlines = activeHeadlines.slice(0, 3);
-  const previewDescriptions = activeDescriptions.slice(0, 2);
+  const getItemsForCombination = <T,>(items: T[], count: number, seed: number): T[] => {
+    if (items.length <= count) return items;
+    const result: T[] = [];
+    const available = [...items];
+    let currentSeed = seed;
+    
+    for (let i = 0; i < count && available.length > 0; i++) {
+      currentSeed = (currentSeed * 9301 + 49297) % 233280;
+      const index = currentSeed % available.length;
+      result.push(available[index]);
+      available.splice(index, 1);
+    }
+    
+    return result;
+  };
+
+  const previewHeadlines = getItemsForCombination(activeHeadlines, 3, combinationIndex);
+  const previewDescriptions = getItemsForCombination(activeDescriptions, 2, combinationIndex + 1);
+  const previewSitelinks = getItemsForCombination(activeSitelinks, 4, combinationIndex + 2);
+  const previewCallouts = getItemsForCombination(activeCallouts, 4, combinationIndex + 3);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +130,28 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
 
         {/* Ad Preview */}
         <Card className="p-6 bg-background">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCombinationIndex(Math.max(0, combinationIndex - 1))}
+                disabled={combinationIndex === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Preview {combinationIndex + 1}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCombinationIndex(combinationIndex + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-semibold px-2 py-0.5 border border-foreground/20 rounded">
               Ad
@@ -139,11 +180,11 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
               : "No descriptions"}
           </div>
 
-          {activeSitelinks.length > 0 && (
+          {previewSitelinks.length > 0 && (
             <>
               <Separator className="my-3" />
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                {activeSitelinks.slice(0, 4).map((link, index) => (
+                {previewSitelinks.map((link, index) => (
                   <div key={index}>
                     <div className="text-sm text-primary font-normal">{link.title}</div>
                     <div className="text-xs text-foreground/60 line-clamp-1">
@@ -155,14 +196,14 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </>
           )}
 
-          {activeCallouts.length > 0 && (
+          {previewCallouts.length > 0 && (
             <>
               <Separator className="my-3" />
               <div className="flex flex-wrap gap-2">
-                {activeCallouts.slice(0, 4).map((callout, index) => (
+                {previewCallouts.map((callout, index) => (
                   <span key={index} className="text-xs text-foreground/70">
                     {callout}
-                    {index < Math.min(activeCallouts.length, 4) - 1 && " • "}
+                    {index < previewCallouts.length - 1 && " • "}
                   </span>
                 ))}
               </div>
