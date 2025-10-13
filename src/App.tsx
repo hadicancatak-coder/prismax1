@@ -5,30 +5,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { lazy, Suspense } from "react";
+import Dashboard from "./pages/Dashboard";
+import Tasks from "./pages/Tasks";
+import CalendarView from "./pages/CalendarView";
+import AdminPanel from "./pages/AdminPanel";
+import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
+import TeamBase from "./pages/TeamBase";
+import AdsPage from "./pages/AdsPage";
+import Backlog from "./pages/Backlog";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import Campaigns from "./pages/Campaigns";
+import ActivityLog from "./pages/ActivityLog";
 
-// Lazy load pages for better performance
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Tasks = lazy(() => import("./pages/Tasks"));
-const CalendarView = lazy(() => import("./pages/CalendarView"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const TeamBase = lazy(() => import("./pages/TeamBase"));
-const AdsPage = lazy(() => import("./pages/AdsPage"));
-const Backlog = lazy(() => import("./pages/Backlog"));
-const Auth = lazy(() => import("./pages/Auth"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Campaigns = lazy(() => import("./pages/Campaigns"));
-const ActivityLog = lazy(() => import("./pages/ActivityLog"));
-
-const queryClient = new QueryClient();
-
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-muted-foreground">Loading...</div>
-  </div>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,25 +35,23 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/calendar" element={<CalendarView />} />
-              <Route path="/admin-panel" element={<AdminPanel />} />
-              <Route path="/team-base" element={<TeamBase />} />
-              <Route path="/backlog" element={<Backlog />} />
-              <Route path="/ads" element={<AdsPage />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/profile/:userId?" element={<Profile />} />
-              <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/activity-log" element={<ActivityLog />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/calendar" element={<CalendarView />} />
+            <Route path="/admin-panel" element={<AdminPanel />} />
+            <Route path="/team-base" element={<TeamBase />} />
+            <Route path="/backlog" element={<Backlog />} />
+            <Route path="/ads" element={<AdsPage />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/profile/:userId?" element={<Profile />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/activity-log" element={<ActivityLog />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

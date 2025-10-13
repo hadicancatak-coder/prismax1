@@ -28,12 +28,13 @@ export const useAuth = () => {
       }
     );
 
-    // Set a timeout to prevent infinite loading
+    // Set a timeout to prevent infinite loading (reduced to 3 seconds)
     const timeoutId = setTimeout(() => {
-      if (mounted) {
+      if (mounted && loading) {
+        console.warn("Auth timeout - forcing loading to false");
         setLoading(false);
       }
-    }, 5000);
+    }, 3000);
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
@@ -47,7 +48,8 @@ export const useAuth = () => {
       
       setLoading(false);
       clearTimeout(timeoutId);
-    }).catch(() => {
+    }).catch((error) => {
+      console.error("Auth error:", error);
       if (mounted) {
         setLoading(false);
         clearTimeout(timeoutId);
