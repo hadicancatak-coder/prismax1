@@ -254,6 +254,7 @@ export type Database = {
           title: string | null
           user_id: string
           username: string | null
+          working_days: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -266,6 +267,7 @@ export type Database = {
           title?: string | null
           user_id: string
           username?: string | null
+          working_days?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -278,6 +280,7 @@ export type Database = {
           title?: string | null
           user_id?: string
           username?: string | null
+          working_days?: string | null
         }
         Relationships: []
       }
@@ -638,6 +641,10 @@ export type Database = {
       is_comment_author: {
         Args: { _comment_id: string; _user_id: string }
         Returns: boolean
+      }
+      reschedule_overdue_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

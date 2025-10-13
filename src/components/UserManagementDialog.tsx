@@ -42,7 +42,7 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
     // Fetch all members
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, name, email, username, avatar_url");
+      .select("user_id, name, email, username, avatar_url, working_days");
 
     // Fetch all user roles
     const { data: roles } = await supabase
@@ -80,6 +80,29 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
     toast({
       title: "Role Updated",
       description: `User role has been updated to ${newRole}`,
+    });
+
+    await fetchMembers();
+  };
+
+  const handleWorkingDaysChange = async (userId: string, workingDays: string) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ working_days: workingDays })
+      .eq("user_id", userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Working Days Updated",
+      description: "Working days have been updated",
     });
 
     await fetchMembers();
@@ -168,6 +191,20 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
+                    <Select
+                      value={member.working_days || 'mon-fri'}
+                      onValueChange={(value) =>
+                        handleWorkingDaysChange(member.user_id, value)
+                      }
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mon-fri">Mon-Fri</SelectItem>
+                        <SelectItem value="sun-thu">Sun-Thu</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Select
                       value={member.role}
                       onValueChange={(value) =>

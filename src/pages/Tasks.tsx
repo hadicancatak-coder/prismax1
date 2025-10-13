@@ -6,13 +6,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Search, Filter, CalendarIcon } from "lucide-react";
+import { Plus, Search, Filter, CalendarIcon, ChevronDown } from "lucide-react";
 import { TaskCard } from "@/components/TaskCard";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Tasks() {
   const { user, userRole } = useAuth();
@@ -22,28 +28,31 @@ export default function Tasks() {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const [tasks, setTasks] = useState<{
     all: any[];
-    yesterday: any[];
     today: any[];
     tomorrow: any[];
+    backlog: any[];
     thisWeek: any[];
-    nextWeek: any[];
+    lastWeek: any[];
     thisMonth: any[];
     nextMonth: any[];
-    past: any[];
-    backlog: any[];
+    completed: any[];
+    failed: any[];
+    blocked: any[];
   }>({
     all: [],
-    yesterday: [],
     today: [],
     tomorrow: [],
+    backlog: [],
     thisWeek: [],
-    nextWeek: [],
+    lastWeek: [],
     thisMonth: [],
     nextMonth: [],
-    past: [],
-    backlog: [],
+    completed: [],
+    failed: [],
+    blocked: [],
   });
 
   useEffect(() => {
@@ -76,18 +85,17 @@ export default function Tasks() {
     const today = new Date(now);
     today.setHours(0, 0, 0, 0);
     
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
     
     const weekStart = new Date(today);
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
     
-    const nextWeekEnd = new Date(weekEnd);
-    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+    const lastWeekStart = new Date(today);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
     
     const monthEnd = new Date(today);
     monthEnd.setMonth(monthEnd.getMonth() + 1);
@@ -95,90 +103,114 @@ export default function Tasks() {
     const nextMonthEnd = new Date(monthEnd);
     nextMonthEnd.setMonth(nextMonthEnd.getMonth() + 1);
 
-    // Base query - hide delete-requested tasks from members
-    const baseQuery = supabase.from("tasks").select("*");
-    
-    // Sort: recurring tasks first (by priority High), then by priority, then by date
-    const { data: allTasks } = await baseQuery
+    // All tasks - sorted by priority
+    const { data: allTasks } = await supabase
+      .from("tasks")
+      .select("*")
       .is("delete_requested_by", null)
       .order("priority", { ascending: false })
       .order("created_at", { ascending: false });
 
-    const { data: yesterdayTasks } = await supabase
-      .from("tasks")
-      .select("*")
-      .is("delete_requested_by", null)
-      .gte("due_at", yesterday.toISOString())
-      .lt("due_at", today.toISOString())
-      .order("due_at");
-
+    // Today's tasks
     const { data: todayTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", tomorrow.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
+    // Tomorrow's tasks
     const { data: tomorrowTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .gte("due_at", tomorrow.toISOString())
-      .lt("due_at", weekStart.toISOString())
+      .lt("due_at", dayAfterTomorrow.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
+    // Backlog - tasks from the past that are not completed/failed/blocked
+    const { data: backlogTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .is("delete_requested_by", null)
+      .lt("due_at", today.toISOString())
+      .not("status", "in", '("Completed","Failed","Blocked")')
+      .order("priority", { ascending: false })
+      .order("due_at");
+
+    // This week's tasks
     const { data: thisWeekTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", weekEnd.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
-    const { data: nextWeekTasks } = await supabase
+    // Last week's tasks
+    const { data: lastWeekTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
-      .gte("due_at", weekEnd.toISOString())
-      .lt("due_at", nextWeekEnd.toISOString())
+      .gte("due_at", lastWeekStart.toISOString())
+      .lt("due_at", today.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
+    // This month's tasks
     const { data: thisMonthTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .gte("due_at", today.toISOString())
       .lt("due_at", monthEnd.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
+    // Next month's tasks
     const { data: nextMonthTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .gte("due_at", monthEnd.toISOString())
       .lt("due_at", nextMonthEnd.toISOString())
+      .order("priority", { ascending: false })
       .order("due_at");
 
-    const { data: pastTasks } = await supabase
+    // Completed tasks
+    const { data: completedTasks } = await supabase
       .from("tasks")
       .select("*")
       .is("delete_requested_by", null)
       .eq("status", "Completed")
       .order("updated_at", { ascending: false });
 
-    // Backlog - only for admins (tasks with delete requests)
-    const { data: backlogTasks } = await supabase
+    // Failed tasks
+    const { data: failedTasks } = await supabase
       .from("tasks")
       .select("*")
-      .not("delete_requested_by", "is", null)
-      .order("delete_requested_at", { ascending: false });
+      .is("delete_requested_by", null)
+      .eq("status", "Failed")
+      .order("updated_at", { ascending: false });
+
+    // Blocked tasks
+    const { data: blockedTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .is("delete_requested_by", null)
+      .eq("status", "Blocked")
+      .order("updated_at", { ascending: false});
 
     // Fetch profiles separately
     const allUserIds = new Set<string>();
-    [...(allTasks || []), ...(yesterdayTasks || []), ...(todayTasks || []), ...(tomorrowTasks || []), 
-     ...(thisWeekTasks || []), ...(nextWeekTasks || []), ...(thisMonthTasks || []), 
-     ...(nextMonthTasks || []), ...(pastTasks || []), ...(backlogTasks || [])].forEach(task => {
+    [...(allTasks || []), ...(todayTasks || []), ...(tomorrowTasks || []), 
+     ...(backlogTasks || []), ...(thisWeekTasks || []), ...(lastWeekTasks || []),
+     ...(thisMonthTasks || []), ...(nextMonthTasks || []), ...(completedTasks || []),
+     ...(failedTasks || []), ...(blockedTasks || [])].forEach(task => {
       if (task.created_by) allUserIds.add(task.created_by);
       if (task.assignee_id) allUserIds.add(task.assignee_id);
       if (task.delete_requested_by) allUserIds.add(task.delete_requested_by);
@@ -203,15 +235,16 @@ export default function Tasks() {
 
     setTasks({
       all: allTasks?.map(enrichTask) || [],
-      yesterday: yesterdayTasks?.map(enrichTask) || [],
       today: todayTasks?.map(enrichTask) || [],
       tomorrow: tomorrowTasks?.map(enrichTask) || [],
+      backlog: backlogTasks?.map(enrichTask) || [],
       thisWeek: thisWeekTasks?.map(enrichTask) || [],
-      nextWeek: nextWeekTasks?.map(enrichTask) || [],
+      lastWeek: lastWeekTasks?.map(enrichTask) || [],
       thisMonth: thisMonthTasks?.map(enrichTask) || [],
       nextMonth: nextMonthTasks?.map(enrichTask) || [],
-      past: pastTasks?.map(enrichTask) || [],
-      backlog: backlogTasks?.map(enrichTask) || [],
+      completed: completedTasks?.map(enrichTask) || [],
+      failed: failedTasks?.map(enrichTask) || [],
+      blocked: blockedTasks?.map(enrichTask) || [],
     });
   };
 
@@ -237,15 +270,16 @@ export default function Tasks() {
 
   const filteredTasks = {
     all: applyFilters(tasks.all),
-    yesterday: applyFilters(tasks.yesterday),
     today: applyFilters(tasks.today),
     tomorrow: applyFilters(tasks.tomorrow),
+    backlog: applyFilters(tasks.backlog),
     thisWeek: applyFilters(tasks.thisWeek),
-    nextWeek: applyFilters(tasks.nextWeek),
+    lastWeek: applyFilters(tasks.lastWeek),
     thisMonth: applyFilters(tasks.thisMonth),
     nextMonth: applyFilters(tasks.nextMonth),
-    past: applyFilters(tasks.past),
-    backlog: applyFilters(tasks.backlog),
+    completed: applyFilters(tasks.completed),
+    failed: applyFilters(tasks.failed),
+    blocked: applyFilters(tasks.blocked),
   };
 
   return (
@@ -332,19 +366,31 @@ export default function Tasks() {
         )}
       </Card>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-          <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
-          <TabsTrigger value="thisWeek">This Week</TabsTrigger>
-          <TabsTrigger value="nextWeek">Next Week</TabsTrigger>
-          <TabsTrigger value="thisMonth">This Month</TabsTrigger>
-          <TabsTrigger value="nextMonth">Next Month</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-          {userRole === "admin" && <TabsTrigger value="backlog">Backlog</TabsTrigger>}
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center gap-2">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+            <TabsTrigger value="backlog">Backlog</TabsTrigger>
+            <TabsTrigger value="thisWeek">This Week</TabsTrigger>
+          </TabsList>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                More <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setActiveTab("lastWeek")}>Last Week</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("thisMonth")}>This Month</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("nextMonth")}>Next Month</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("completed")}>Completed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("failed")}>Failed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("blocked")}>Blocked</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <TabsContent value="all" className="mt-6 space-y-4">
           {filteredTasks.all.length > 0 ? (
@@ -398,9 +444,9 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="yesterday" className="mt-6 space-y-4">
-          {filteredTasks.yesterday.length > 0 ? (
-            filteredTasks.yesterday.map((task) => (
+        <TabsContent value="backlog" className="mt-6 space-y-4">
+          {filteredTasks.backlog.length > 0 ? (
+            filteredTasks.backlog.map((task) => (
               <TaskCard
                 key={task.id}
                 task={{
@@ -419,7 +465,7 @@ export default function Tasks() {
             ))
           ) : (
             <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No tasks from yesterday</p>
+              <p className="text-muted-foreground">No overdue tasks</p>
             </Card>
           )}
         </TabsContent>
@@ -476,9 +522,9 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="nextWeek" className="mt-6 space-y-4">
-          {filteredTasks.nextWeek.length > 0 ? (
-            filteredTasks.nextWeek.map((task) => (
+        <TabsContent value="lastWeek" className="mt-6 space-y-4">
+          {filteredTasks.lastWeek.length > 0 ? (
+            filteredTasks.lastWeek.map((task) => (
               <TaskCard
                 key={task.id}
                 task={{
@@ -497,7 +543,7 @@ export default function Tasks() {
             ))
           ) : (
             <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No tasks for next week</p>
+              <p className="text-muted-foreground">No tasks from last week</p>
             </Card>
           )}
         </TabsContent>
@@ -554,9 +600,9 @@ export default function Tasks() {
           )}
         </TabsContent>
 
-        <TabsContent value="past" className="mt-6 space-y-4">
-          {filteredTasks.past.length > 0 ? (
-            filteredTasks.past.map((task) => (
+        <TabsContent value="completed" className="mt-6 space-y-4">
+          {filteredTasks.completed.length > 0 ? (
+            filteredTasks.completed.map((task) => (
               <TaskCard
                 key={task.id}
                 task={{
@@ -575,12 +621,65 @@ export default function Tasks() {
             ))
           ) : (
             <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No tasks due this month</p>
+              <p className="text-muted-foreground">No completed tasks</p>
             </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="backlog" className="mt-6 space-y-4">
+        <TabsContent value="failed" className="mt-6 space-y-4">
+          {filteredTasks.failed.length > 0 ? (
+            filteredTasks.failed.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee?.name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No failed tasks</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="blocked" className="mt-6 space-y-4">
+          {filteredTasks.blocked.length > 0 ? (
+            filteredTasks.blocked.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || "",
+                  assignee: task.assignee?.name || "Unassigned",
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.due_at,
+                  timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
+                }}
+              />
+            ))
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No blocked tasks</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Backlog tab removed - it now shows overdue tasks in the main backlog tab */}
+        <TabsContent value="backlog2" className="mt-6 space-y-4">
           {userRole === "admin" ? (
             filteredTasks.backlog.length > 0 ? (
               filteredTasks.backlog.map((task) => (
