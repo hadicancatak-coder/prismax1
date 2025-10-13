@@ -389,29 +389,34 @@ export default function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="team" className="mt-6 space-y-4">
-          <div className="grid gap-4">
-            {members.map((member) => (
-              <Card key={member.user_id} className="p-6 transition-all hover:shadow-medium animate-slide-up">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar>
-                        <AvatarImage src={member.avatar_url || ""} />
-                        <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
-                      </div>
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        {member.role}
-                      </Badge>
-                      {member.username && (
-                        <Badge variant="outline" className="bg-muted text-muted-foreground">
-                          @{member.username}
+          {members.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No team members found</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {members.map((member) => (
+                <Card key={member.user_id} className="p-6 transition-all hover:shadow-medium animate-slide-up">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Avatar>
+                          <AvatarImage src={member.avatar_url || ""} />
+                          <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                          {member.role}
                         </Badge>
-                      )}
-                    </div>
+                        {member.username && (
+                          <Badge variant="outline" className="bg-muted text-muted-foreground">
+                            @{member.username}
+                          </Badge>
+                        )}
+                      </div>
                     <div className="grid grid-cols-5 gap-4 mt-4">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Total</p>
@@ -471,8 +476,9 @@ export default function AdminPanel() {
                   </div>
                 </div>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
           </Tabs>
         </div>

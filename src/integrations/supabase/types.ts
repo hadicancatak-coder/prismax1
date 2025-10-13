@@ -67,6 +67,51 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          entity: string | null
+          id: string
+          image_url: string | null
+          lp_link: string | null
+          start_date: string
+          target: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          entity?: string | null
+          id?: string
+          image_url?: string | null
+          lp_link?: string | null
+          start_date: string
+          target: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          entity?: string | null
+          id?: string
+          image_url?: string | null
+          lp_link?: string | null
+          start_date?: string
+          target?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comment_mentions: {
         Row: {
           comment_id: string | null
