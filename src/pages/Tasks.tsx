@@ -290,13 +290,14 @@ export default function Tasks() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Blocked">Blocked</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Failed">Failed</SelectItem>
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                    <SelectItem value="Blocked">Blocked</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
             <div>
@@ -359,6 +360,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -435,6 +438,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -459,6 +464,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -483,6 +490,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -507,6 +516,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -531,6 +542,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
@@ -555,6 +568,8 @@ export default function Tasks() {
                   priority: task.priority,
                   dueDate: task.due_at,
                   timeTracked: "0h 00m",
+                  entity: task.entity,
+                  recurrence: task.recurrence,
                 }}
               />
             ))
