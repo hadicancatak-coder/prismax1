@@ -40,24 +40,31 @@ export default function AdsPage() {
   }, []);
 
   const fetchSavedAds = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("ads")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("ads")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching ads:", error);
-      toast({ 
-        title: "Error loading ads", 
-        description: error.message, 
-        variant: "destructive" 
-      });
-    } else if (data) {
-      console.log("Fetched ads:", data);
-      setSavedAds(data);
+      if (error) {
+        console.error("Error fetching ads:", error);
+        toast({ 
+          title: "Error loading ads", 
+          description: error.message, 
+          variant: "destructive" 
+        });
+        setSavedAds([]);
+      } else {
+        console.log("Fetched ads:", data);
+        setSavedAds(data || []);
+      }
+    } catch (err) {
+      console.error("Exception fetching ads:", err);
+      setSavedAds([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCopy = (text: string) => {
