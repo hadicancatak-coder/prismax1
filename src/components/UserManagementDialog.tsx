@@ -41,10 +41,18 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   const fetchMembers = async () => {
     setLoading(true);
     
-    // Fetch all members
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, name, email, username, avatar_url, working_days");
+    // Use admin-only RPC function to get all user profiles with email
+    const { data: profiles, error } = await supabase.rpc('get_all_users_admin');
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch users. Admin access required.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     // Fetch all user roles
     const { data: roles } = await supabase

@@ -48,8 +48,8 @@ export function ProjectDialog({ open, onOpenChange, onSuccess }: ProjectDialogPr
 
   const fetchUsers = async () => {
     const { data } = await supabase
-      .from("profiles")
-      .select("user_id, name, email")
+      .from("public_profiles")
+      .select("user_id, name, username")
       .order("name");
     setAllUsers(data || []);
   };
@@ -182,7 +182,7 @@ export function ProjectDialog({ open, onOpenChange, onSuccess }: ProjectDialogPr
               <SelectContent>
                 {allUsers.filter(u => u.user_id).map((u) => (
                   <SelectItem key={u.user_id} value={u.user_id}>
-                    {u.name || u.email}
+                    {u.name || u.username}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -193,7 +193,7 @@ export function ProjectDialog({ open, onOpenChange, onSuccess }: ProjectDialogPr
                   const member = allUsers.find(u => u.user_id === id);
                   return (
                     <Badge key={id} variant="secondary" className="flex items-center gap-1">
-                      {member?.name || member?.email}
+                      {member?.name || member?.username}
                       <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedMembers(selectedMembers.filter(m => m !== id))} />
                     </Badge>
                   );

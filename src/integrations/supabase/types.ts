@@ -680,6 +680,19 @@ export type Database = {
       }
     }
     Functions: {
+      get_all_users_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          email: string
+          name: string
+          phone_number: string
+          title: string
+          user_id: string
+          username: string
+          working_days: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

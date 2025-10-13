@@ -77,7 +77,7 @@ export default function CalendarView() {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("user_id, name, email");
+    const { data } = await supabase.from("public_profiles").select("user_id, name, username");
     setAllUsers(data || []);
   };
 
@@ -364,7 +364,7 @@ export default function CalendarView() {
                 <SelectItem value="all">All Members</SelectItem>
                 {allUsers.map((u) => (
                   <SelectItem key={u.user_id} value={u.user_id}>
-                    {u.name || u.email}
+                    {u.name || u.username}
                   </SelectItem>
                 ))}
               </SelectContent>

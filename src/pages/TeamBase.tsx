@@ -115,8 +115,8 @@ export default function TeamBase() {
 
   const fetchUsers = async () => {
     const { data } = await supabase
-      .from("profiles")
-      .select("user_id, name, email")
+      .from("public_profiles")
+      .select("user_id, name, username")
       .order("name");
     setAllUsers(data || []);
   };
@@ -364,7 +364,7 @@ export default function TeamBase() {
                         <SelectContent>
                           {allUsers.filter(u => u.user_id).map((u) => (
                             <SelectItem key={u.user_id} value={u.user_id}>
-                              {u.name || u.email}
+                              {u.name || u.username}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -375,7 +375,7 @@ export default function TeamBase() {
                             const member = allUsers.find(u => u.user_id === id);
                             return (
                               <div key={id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md text-sm">
-                                {member?.name || member?.email}
+                                {member?.name || member?.username}
                                 <button onClick={() => setSelectedMembers(selectedMembers.filter(m => m !== id))}>×</button>
                               </div>
                             );
@@ -404,7 +404,7 @@ export default function TeamBase() {
                           {project.members.map((id: string) => {
                             const member = allUsers.find(u => u.user_id === id);
                             return (
-                              <Badge key={id} variant="outline">{member?.name || member?.email}</Badge>
+                              <Badge key={id} variant="outline">{member?.name || member?.username}</Badge>
                             );
                           })}
                         </div>
