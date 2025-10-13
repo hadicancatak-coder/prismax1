@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          field_name: string | null
+          id: string
+          metadata: Json | null
+          new_value: string | null
+          old_value: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
           callouts: Json
@@ -27,6 +66,7 @@ export type Database = {
           name: string
           sitelinks: Json
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           callouts?: Json
@@ -40,6 +80,7 @@ export type Database = {
           name: string
           sitelinks?: Json
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           callouts?: Json
@@ -53,8 +94,41 @@ export type Database = {
           name?: string
           sitelinks?: Json
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
+      }
+      blocker_assignees: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          blocker_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          blocker_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          blocker_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocker_assignees_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "blockers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blockers: {
         Row: {
@@ -70,6 +144,7 @@ export type Database = {
           timeline: string | null
           title: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -84,6 +159,7 @@ export type Database = {
           timeline?: string | null
           title?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -98,6 +174,7 @@ export type Database = {
           timeline?: string | null
           title?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -105,6 +182,38 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_assignees: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          campaign_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          campaign_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          campaign_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_assignees_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -123,6 +232,7 @@ export type Database = {
           target: string
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -137,6 +247,7 @@ export type Database = {
           target: string
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -151,6 +262,7 @@ export type Database = {
           target?: string
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -272,6 +384,7 @@ export type Database = {
           name: string
           phone_number: string | null
           tagline: string | null
+          teams: Database["public"]["Enums"]["team"][] | null
           title: string | null
           user_id: string
           username: string | null
@@ -285,6 +398,7 @@ export type Database = {
           name: string
           phone_number?: string | null
           tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id: string
           username?: string | null
@@ -298,12 +412,45 @@ export type Database = {
           name?: string
           phone_number?: string | null
           tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string
           username?: string | null
           working_days?: string | null
         }
         Relationships: []
+      }
+      project_assignees: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_assignees_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_timelines: {
         Row: {
@@ -354,6 +501,7 @@ export type Database = {
           name: string
           required_time: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -365,6 +513,7 @@ export type Database = {
           name: string
           required_time?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -376,6 +525,7 @@ export type Database = {
           name?: string
           required_time?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -411,6 +561,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      task_assignees: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_change_requests: {
         Row: {
@@ -513,6 +695,7 @@ export type Database = {
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
+          updated_by: string | null
           visibility: Database["public"]["Enums"]["task_visibility"]
         }
         Insert: {
@@ -542,6 +725,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
+          updated_by?: string | null
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
         Update: {
@@ -571,6 +755,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
+          updated_by?: string | null
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
         Relationships: [
@@ -708,6 +893,19 @@ export type Database = {
         Args: { _comment_id: string; _user_id: string }
         Returns: boolean
       }
+      log_activity: {
+        Args: {
+          p_action: string
+          p_entity_id: string
+          p_entity_type: string
+          p_field_name?: string
+          p_metadata?: Json
+          p_new_value?: string
+          p_old_value?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       reschedule_overdue_tasks: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -719,6 +917,7 @@ export type Database = {
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
       task_visibility: "global" | "pool" | "private"
+      team: "SocialUA" | "PPC" | "PerMar"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -851,6 +1050,7 @@ export const Constants = {
       task_source: ["native", "jira"],
       task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
       task_visibility: ["global", "pool", "private"],
+      team: ["SocialUA", "PPC", "PerMar"],
     },
   },
 } as const
