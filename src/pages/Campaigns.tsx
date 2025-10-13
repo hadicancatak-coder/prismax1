@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignDetailDialog } from "@/components/CampaignDetailDialog";
+import { CampaignCard } from "@/components/CampaignCard";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -443,80 +444,16 @@ export default function Campaigns() {
 
       {/* Campaign Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCampaigns.map((campaign) => {
-          const [imageUrl, setImageUrl] = useState<string>("");
-
-          // Get signed URL for image preview
-          useEffect(() => {
-            if (campaign.image_url) {
-              const fileName = campaign.image_url.includes('/') 
-                ? campaign.image_url.split('/').pop() 
-                : campaign.image_url;
-              
-              supabase.storage
-                .from("campaigns")
-                .createSignedUrl(fileName, 3600)
-                .then(({ data }) => {
-                  if (data) setImageUrl(data.signedUrl);
-                });
-            }
-          }, [campaign.image_url]);
-
-          return (
-            <Card 
-              key={campaign.id} 
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => {
-                setSelectedCampaignId(campaign.id);
-                setDetailDialogOpen(true);
-              }}
-            >
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt={campaign.title}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {campaign.title}
-                </h3>
-                {campaign.description && (
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {campaign.description}
-                  </p>
-                )}
-                <div className="space-y-2 text-sm">
-                  {campaign.entity && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Entity:</span>
-                      <span className="font-medium">{campaign.entity}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Target:</span>
-                    <span className="font-medium">{campaign.target}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Start:</span>
-                    <span className="font-medium">
-                      {format(new Date(campaign.start_date), "MMM dd, yyyy")}
-                    </span>
-                  </div>
-                  {campaign.end_date && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">End:</span>
-                      <span className="font-medium">
-                        {format(new Date(campaign.end_date), "MMM dd, yyyy")}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+        {filteredCampaigns.map((campaign) => (
+          <CampaignCard
+            key={campaign.id}
+            campaign={campaign}
+            onClick={() => {
+              setSelectedCampaignId(campaign.id);
+              setDetailDialogOpen(true);
+            }}
+          />
+        ))}
       </div>
 
       {filteredCampaigns.length === 0 && (
