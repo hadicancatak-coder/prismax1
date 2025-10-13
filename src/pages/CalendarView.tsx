@@ -30,25 +30,49 @@ export default function CalendarView() {
       fetchUsers();
     }
 
-    const channel = supabase
+    const tasksChannel = supabase
       .channel('tasks-calendar')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchTasks())
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedUserId, userRole]);
+    // Subscribe to profile changes to update working days in real-time
+    const profilesChannel = supabase
+      .channel('profiles-calendar')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles',
+        filter: `user_id=eq.${user?.id}`
+      }, (payload) => {
+        console.log('Profile updated:', payload);
+        if (payload.new.working_days) {
+          setUserWorkingDays(payload.new.working_days);
+        }
+      })
+      .subscribe();
+
+    return () => { 
+      supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(profilesChannel);
+    };
+  }, [selectedUserId, userRole, user?.id]);
 
   const fetchUserWorkingDays = async () => {
     if (!user?.id) return;
     
-    const { data } = await supabase
+    console.log('Fetching working days for user:', user.id);
+    
+    const { data, error } = await supabase
       .from("profiles")
       .select("working_days")
       .eq("user_id", user.id)
       .single();
     
+    console.log('Working days data:', data, error);
+    
     if (data?.working_days) {
       setUserWorkingDays(data.working_days);
+      console.log('Set working days to:', data.working_days);
     }
   };
 
@@ -96,6 +120,8 @@ export default function CalendarView() {
 
   const isWorkingDay = (date: Date): boolean => {
     const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    console.log('Checking if working day:', { date, dayOfWeek, userWorkingDays });
     
     if (userWorkingDays === 'mon-fri') {
       return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
