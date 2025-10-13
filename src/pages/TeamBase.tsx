@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { BlockerDialog } from "@/components/BlockerDialog";
+import { ProjectDialog } from "@/components/ProjectDialog";
+import { ReportDialog } from "@/components/ReportDialog";
 
 export default function TeamBase() {
   const { user, userRole } = useAuth();
@@ -31,6 +34,7 @@ export default function TeamBase() {
   // Reports state
   const [reports, setReports] = useState<any[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
   
   // Project form
   const [projectName, setProjectName] = useState("");
@@ -252,8 +256,11 @@ export default function TeamBase() {
         </TabsList>
 
         <TabsContent value="blockers" className="mt-6 space-y-4">
-          <div className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-foreground">Active Blockers</h2>
+            <Button onClick={() => setBlockerDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Blocker</Button>
+          </div>
+          <div className="space-y-4">
             {activeBlockers.length > 0 ? (
               activeBlockers.map((blocker) => (
                 <Card key={blocker.id} className="p-6 border-l-4 border-l-destructive">

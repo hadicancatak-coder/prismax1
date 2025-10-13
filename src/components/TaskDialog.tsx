@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus } from "lucide-react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { BlockerDialog } from "./BlockerDialog";
 
 interface TaskDialogProps {
   open: boolean;
@@ -33,6 +34,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [loading, setLoading] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [blockers, setBlockers] = useState<any[]>([]);
+  const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Validate taskId
@@ -47,6 +50,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       fetchComments();
       fetchProfiles();
       fetchProjects();
+      fetchBlockers();
     }
   }, [open, taskId]);
 
@@ -165,6 +169,15 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const fetchProjects = async () => {
     const { data } = await supabase.from("projects").select("id, name");
     setProjects(data || []);
+  };
+
+  const fetchBlockers = async () => {
+    const { data } = await supabase
+      .from("blockers")
+      .select("id, title")
+      .eq("resolved", false)
+      .order("created_at", { ascending: false });
+    setBlockers(data || []);
   };
 
   const handlePostpone = async () => {
@@ -326,6 +339,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     if (error) {
                       toast({ title: "Error", description: error.message, variant: "destructive" });
                     } else {
+                      setTask({ ...task, status: value });
                       fetchTask();
                     }
                   }}
@@ -335,6 +349,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Blocked">Blocked</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Failed">Failed</SelectItem>
@@ -368,6 +383,42 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 </Select>
               </div>
             </div>
+
+            {task.status === "Blocked" && (
+              <div>
+                <Label className="mb-2 block">Blocker</Label>
+                <div className="flex gap-2">
+                  <Select value={task.blocker_id || ""} onValueChange={async (value) => {
+                    const { error } = await supabase.from("tasks").update({ blocker_id: value }).eq("id", taskId);
+                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                    else fetchTask();
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Select blocker" /></SelectTrigger>
+                    <SelectContent>
+                      {blockers.map(b => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={() => setBlockerDialogOpen(true)}><Plus className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            )}
+
+            {task.status === "Failed" && (
+              <div>
+                <Label htmlFor="failureReason">Failure Reason</Label>
+                <Textarea
+                  id="failureReason"
+                  value={task.failure_reason || ""}
+                  onChange={(e) => setTask({ ...task, failure_reason: e.target.value })}
+                  onBlur={async () => {
+                    const { error } = await supabase.from("tasks").update({ failure_reason: task.failure_reason }).eq("id", taskId);
+                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                  }}
+                  placeholder="Why did this task fail?"
+                  rows={2}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>

@@ -18,28 +18,43 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
-          description: string
+          description: string | null
+          due_date: string | null
+          fix_process: string | null
           id: string
           resolved: boolean | null
+          stuck_reason: string | null
           task_id: string
+          timeline: string | null
+          title: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
-          description: string
+          description?: string | null
+          due_date?: string | null
+          fix_process?: string | null
           id?: string
           resolved?: boolean | null
+          stuck_reason?: string | null
           task_id: string
+          timeline?: string | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
-          description?: string
+          description?: string | null
+          due_date?: string | null
+          fix_process?: string | null
           id?: string
           resolved?: boolean | null
+          stuck_reason?: string | null
           task_id?: string
+          timeline?: string | null
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -222,27 +237,33 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          due_date: string | null
           id: string
           members: string[] | null
           name: string
+          required_time: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           members?: string[] | null
           name: string
+          required_time?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           members?: string[] | null
           name?: string
+          required_time?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -255,6 +276,7 @@ export type Database = {
           link: string
           title: string
           type: string
+          update_frequency: string | null
           updated_at: string
         }
         Insert: {
@@ -264,6 +286,7 @@ export type Database = {
           link: string
           title: string
           type: string
+          update_frequency?: string | null
           updated_at?: string
         }
         Update: {
@@ -273,6 +296,7 @@ export type Database = {
           link?: string
           title?: string
           type?: string
+          update_frequency?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -353,6 +377,7 @@ export type Database = {
       tasks: {
         Row: {
           assignee_id: string | null
+          blocker_id: string | null
           blocker_reason: string | null
           created_at: string
           created_by: string | null
@@ -361,6 +386,7 @@ export type Database = {
           description: string | null
           due_at: string | null
           entity: string | null
+          failure_reason: string | null
           id: string
           jira_key: string | null
           jira_link: string | null
@@ -378,6 +404,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          blocker_id?: string | null
           blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
@@ -386,6 +413,7 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           entity?: string | null
+          failure_reason?: string | null
           id?: string
           jira_key?: string | null
           jira_link?: string | null
@@ -403,6 +431,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          blocker_id?: string | null
           blocker_reason?: string | null
           created_at?: string
           created_by?: string | null
@@ -411,6 +440,7 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           entity?: string | null
+          failure_reason?: string | null
           id?: string
           jira_key?: string | null
           jira_link?: string | null
@@ -427,6 +457,13 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "blockers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
@@ -523,6 +560,7 @@ export type Database = {
         | "Completed"
         | "Archived"
         | "Failed"
+        | "Pending"
       task_visibility: "global" | "pool" | "private"
     }
     CompositeTypes: {
@@ -661,6 +699,7 @@ export const Constants = {
         "Completed",
         "Archived",
         "Failed",
+        "Pending",
       ],
       task_visibility: ["global", "pool", "private"],
     },

@@ -152,7 +152,11 @@ export default function CalendarView() {
             const isToday = isSameDay(day, new Date());
 
             return (
-              <Card key={day.toISOString()} className={`p-4 ${isToday ? "ring-2 ring-primary" : ""}`}>
+              <Card 
+                key={day.toISOString()} 
+                className={`p-4 cursor-pointer transition-all ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+                onClick={() => setSelectedDate(day)}
+              >
                 <div className="mb-3">
                   <div className="font-semibold">{format(day, "EEE")}</div>
                   <div className="text-2xl font-bold">{format(day, "dd")}</div>
@@ -170,7 +174,8 @@ export default function CalendarView() {
                         if (taskId !== task.id) moveTask(taskId, day);
                       }}
                       className="p-2 bg-muted rounded text-xs cursor-move hover:bg-muted/70 transition-colors"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedTaskId(task.id);
                         setTaskDialogOpen(true);
                       }}
@@ -267,7 +272,7 @@ export default function CalendarView() {
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Calendar</h1>
+        <h1 className="text-3xl font-bold">Agenda</h1>
         <Tabs value={view} onValueChange={(v) => setView(v as any)}>
           <TabsList>
             <TabsTrigger value="daily">Daily</TabsTrigger>
@@ -281,7 +286,7 @@ export default function CalendarView() {
       {view === "weekly" && renderWeeklyView()}
       {view === "monthly" && renderMonthlyView()}
 
-      {selectedDate && view === "monthly" && (
+      {selectedDate && (
         <Card className="p-6 mt-6 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">

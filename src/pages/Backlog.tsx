@@ -52,15 +52,10 @@ export default function Backlog() {
 
     const { data, error } = await supabase
       .from("tasks")
-      .select(`
-        *,
-        delete_requester:delete_requested_by(name),
-        assignee:assignee_id(name),
-        creator:created_by(name)
-      `)
+      .select("*")
       .is("delete_requested_by", null)
       .is("due_at", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false});
 
     if (error) {
       toast({
@@ -69,7 +64,34 @@ export default function Backlog() {
         variant: "destructive",
       });
     } else {
-      setBacklogTasks(data || []);
+      // Fetch assignee and creator profiles for each task
+      const tasksWithProfiles = await Promise.all(
+        (data || []).map(async (task) => {
+          let assignee = null;
+          let creator = null;
+
+          if (task.assignee_id) {
+            const { data: assigneeData } = await supabase
+              .from("profiles")
+              .select("name")
+              .eq("user_id", task.assignee_id)
+              .maybeSingle();
+            assignee = assigneeData;
+          }
+
+          if (task.created_by) {
+            const { data: creatorData } = await supabase
+              .from("profiles")
+              .select("name")
+              .eq("user_id", task.created_by)
+              .maybeSingle();
+            creator = creatorData;
+          }
+
+          return { ...task, assignee, creator };
+        })
+      );
+      setBacklogTasks(tasksWithProfiles);
     }
 
     setLoading(false);
