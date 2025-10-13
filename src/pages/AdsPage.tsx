@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { SavedAdDialog } from "@/components/SavedAdDialog";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -33,6 +34,8 @@ export default function AdsPage() {
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [selectedAd, setSelectedAd] = useState<any>(null);
+  const [adDialogOpen, setAdDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -560,7 +563,14 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </Card>
             ) : (
               filteredSavedAds.map((ad) => (
-                <Card key={ad.id} className="hover:shadow-md transition-shadow">
+                <Card 
+                  key={ad.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    setSelectedAd(ad);
+                    setAdDialogOpen(true);
+                  }}
+                >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -574,14 +584,6 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                           <p>Descriptions: {JSON.parse(ad.descriptions).filter((d: string) => d).length}/4</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button onClick={() => handleLoadAd(ad)} variant="outline" size="sm">
-                          Edit
-                        </Button>
-                        <Button onClick={() => handleDeleteAd(ad.id)} variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -590,6 +592,18 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           </div>
         </TabsContent>
       </Tabs>
+
+      {selectedAd && (
+        <SavedAdDialog
+          open={adDialogOpen}
+          onOpenChange={setAdDialogOpen}
+          ad={selectedAd}
+          onUpdate={() => {
+            fetchSavedAds();
+            setSelectedAd(null);
+          }}
+        />
+      )}
     </div>
   );
 }
