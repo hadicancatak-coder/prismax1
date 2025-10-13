@@ -30,22 +30,22 @@ export function AppSidebar() {
   const { signOut, userRole } = useAuth();
 
   return (
-    <Sidebar collapsible="icon">
-      <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
+    <Sidebar collapsible="icon" className="bg-sidebar-background border-r border-sidebar-border" style={{ background: 'var(--gradient-sidebar)' }}>
+      <div className="p-4 flex items-center justify-between border-b border-sidebar-border/50">
         {open && (
           <div>
-            <h2 className="text-lg font-semibold text-sidebar-foreground">Prisma</h2>
+            <h2 className="text-xl font-bold text-sidebar-foreground tracking-tight">Prisma</h2>
             {userRole && (
-              <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
+              <span className="text-xs text-sidebar-foreground/60 capitalize font-medium">{userRole}</span>
             )}
           </div>
         )}
-        <SidebarTrigger className="ml-auto" />
+        <SidebarTrigger className="ml-auto text-sidebar-foreground hover:text-sidebar-primary transition-colors" />
       </div>
       
-      <SidebarContent>
+      <SidebarContent className="bg-transparent">
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs font-semibold tracking-wider uppercase">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -56,8 +56,8 @@ export function AppSidebar() {
                       end
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
                       }
                     >
                       <item.icon className="h-4 w-4" />
@@ -74,8 +74,8 @@ export function AppSidebar() {
                         to="/backlog"
                         className={({ isActive }) =>
                           isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "hover:bg-sidebar-accent/50"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
                         }
                       >
                         <ListTodo className="h-4 w-4" />
@@ -89,8 +89,8 @@ export function AppSidebar() {
                         to="/admin-panel"
                         className={({ isActive }) =>
                           isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "hover:bg-sidebar-accent/50"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
                         }
                       >
                         <Shield className="h-4 w-4" />
@@ -104,11 +104,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarGroup>
+        <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={signOut}>
+                <SidebarMenuButton 
+                  onClick={signOut}
+                  className="text-sidebar-foreground/80 hover:bg-destructive hover:text-destructive-foreground rounded-lg transition-all duration-300"
+                >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
                 </SidebarMenuButton>
