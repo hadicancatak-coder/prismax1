@@ -83,14 +83,38 @@ export default function Campaigns() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only JPEG, PNG, WebP, and GIF images are allowed",
+        variant: "destructive",
+      });
+      e.target.value = ''; // Reset input
+      return;
     }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 5MB",
+        variant: "destructive",
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,17 +126,30 @@ export default function Campaigns() {
 
       // Upload image if provided
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        // Generate safe filename using timestamp and MIME type
+        const timestamp = Date.now();
+        const mimeToExt: Record<string, string> = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/webp': 'webp',
+          'image/gif': 'gif',
+        };
+        const safeExt = mimeToExt[imageFile.type];
+        const randomStr = Math.random().toString(36).substring(7);
+        const safeFileName = `campaign_${timestamp}_${randomStr}.${safeExt}`;
+
         const { error: uploadError } = await supabase.storage
           .from("campaigns")
-          .upload(fileName, imageFile);
+          .upload(safeFileName, imageFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from("campaigns")
-          .getPublicUrl(fileName);
+          .getPublicUrl(safeFileName);
 
         imageUrl = publicUrl;
       }
@@ -270,8 +307,16 @@ export default function Campaigns() {
                     id="lpLink"
                     type="url"
                     value={lpLink}
-                    onChange={(e) => setLpLink(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Validate URL to prevent javascript: and data: URIs
+                      if (value && !value.match(/^https?:\/\//i)) {
+                        return; // Only allow http/https URLs
+                      }
+                      setLpLink(value);
+                    }}
                     placeholder="https://..."
+                    maxLength={2048}
                   />
                 </div>
 

@@ -89,10 +89,20 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
     if (!memberToRemove) return;
 
     try {
-      // Delete user via Supabase Auth Admin API
-      const { error } = await supabase.auth.admin.deleteUser(memberToRemove);
+      // Get the current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      // Call the secure Edge Function to delete user
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: memberToRemove },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: "Member Removed",
