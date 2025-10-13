@@ -179,18 +179,22 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             {isEditing ? (
               <div className="space-y-2">
                 {headlines.map((h, i) => (
-                  <Input
-                    key={i}
-                    value={h}
-                    onChange={(e) => {
-                      const newHeadlines = [...headlines];
-                      newHeadlines[i] = e.target.value.slice(0, 30);
-                      setHeadlines(newHeadlines);
-                    }}
-                    placeholder={`Headline ${i + 1}`}
-                    maxLength={30}
-                    className="text-sm"
-                  />
+                  <div key={i} className="space-y-1">
+                    <Input
+                      value={h}
+                      onChange={(e) => {
+                        const newHeadlines = [...headlines];
+                        newHeadlines[i] = e.target.value.slice(0, 30);
+                        setHeadlines(newHeadlines);
+                      }}
+                      placeholder={`Headline ${i + 1}`}
+                      maxLength={30}
+                      className="text-sm"
+                    />
+                    <div className="text-xs text-muted-foreground text-right">
+                      {h.length}/30 characters
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -211,19 +215,23 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             {isEditing ? (
               <div className="space-y-2">
                 {descriptions.map((d, i) => (
-                  <Textarea
-                    key={i}
-                    value={d}
-                    onChange={(e) => {
-                      const newDescs = [...descriptions];
-                      newDescs[i] = e.target.value.slice(0, 90);
-                      setDescriptions(newDescs);
-                    }}
-                    placeholder={`Description ${i + 1}`}
-                    maxLength={90}
-                    rows={2}
-                    className="text-sm"
-                  />
+                  <div key={i} className="space-y-1">
+                    <Textarea
+                      value={d}
+                      onChange={(e) => {
+                        const newDescs = [...descriptions];
+                        newDescs[i] = e.target.value.slice(0, 90);
+                        setDescriptions(newDescs);
+                      }}
+                      placeholder={`Description ${i + 1}`}
+                      maxLength={90}
+                      rows={2}
+                      className="text-sm"
+                    />
+                    <div className="text-xs text-muted-foreground text-right">
+                      {d.length}/90 characters
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -268,32 +276,42 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
                 <div className="space-y-3">
                   {sitelinks.map((link, i) => (
                     <div key={i} className="space-y-2 p-3 border rounded">
-                      <Input
-                        value={link.title}
-                        onChange={(e) => {
-                          const newLinks = [...sitelinks];
-                          newLinks[i] = {
-                            ...newLinks[i],
-                            title: e.target.value.slice(0, 25),
-                          };
-                          setSitelinks(newLinks);
-                        }}
-                        placeholder={`Sitelink ${i + 1} Title`}
-                        maxLength={25}
-                      />
-                      <Input
-                        value={link.description}
-                        onChange={(e) => {
-                          const newLinks = [...sitelinks];
-                          newLinks[i] = {
-                            ...newLinks[i],
-                            description: e.target.value.slice(0, 35),
-                          };
-                          setSitelinks(newLinks);
-                        }}
-                        placeholder="Description"
-                        maxLength={35}
-                      />
+                      <div className="space-y-1">
+                        <Input
+                          value={link.title}
+                          onChange={(e) => {
+                            const newLinks = [...sitelinks];
+                            newLinks[i] = {
+                              ...newLinks[i],
+                              title: e.target.value.slice(0, 25),
+                            };
+                            setSitelinks(newLinks);
+                          }}
+                          placeholder={`Sitelink ${i + 1} Title`}
+                          maxLength={25}
+                        />
+                        <div className="text-xs text-muted-foreground text-right">
+                          {link.title.length}/25 characters
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          value={link.description}
+                          onChange={(e) => {
+                            const newLinks = [...sitelinks];
+                            newLinks[i] = {
+                              ...newLinks[i],
+                              description: e.target.value.slice(0, 35),
+                            };
+                            setSitelinks(newLinks);
+                          }}
+                          placeholder="Description"
+                          maxLength={35}
+                        />
+                        <div className="text-xs text-muted-foreground text-right">
+                          {link.description.length}/35 characters
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -315,17 +333,21 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
               {isEditing ? (
                 <div className="space-y-2">
                   {callouts.map((c, i) => (
-                    <Input
-                      key={i}
-                      value={c}
-                      onChange={(e) => {
-                        const newCallouts = [...callouts];
-                        newCallouts[i] = e.target.value.slice(0, 25);
-                        setCallouts(newCallouts);
-                      }}
-                      placeholder={`Callout ${i + 1}`}
-                      maxLength={25}
-                    />
+                    <div key={i} className="space-y-1">
+                      <Input
+                        value={c}
+                        onChange={(e) => {
+                          const newCallouts = [...callouts];
+                          newCallouts[i] = e.target.value.slice(0, 25);
+                          setCallouts(newCallouts);
+                        }}
+                        placeholder={`Callout ${i + 1}`}
+                        maxLength={25}
+                      />
+                      <div className="text-xs text-muted-foreground text-right">
+                        {c.length}/25 characters
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
