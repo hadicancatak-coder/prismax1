@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Sparkles, ExternalLink, Save, Trash2 } from "lucide-react";
+import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,7 @@ export default function AdsPage() {
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [adDialogOpen, setAdDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [combinationIndex, setCombinationIndex] = useState(0);
 
   useEffect(() => {
     fetchSavedAds();
@@ -183,7 +184,7 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
     setEditingAdId(null);
   };
 
-  const getRandomItems = <T,>(arr: T[], count: number): T[] => {
+  const getItemsForCombination = <T,>(arr: T[], count: number, seed: number): T[] => {
     const filtered = arr.filter((item) => {
       if (typeof item === "string") return item.trim();
       if (typeof item === "object" && item !== null && "title" in item) {
@@ -191,14 +192,32 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
       }
       return false;
     });
-    const shuffled = [...filtered].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, Math.min(count, filtered.length));
+    
+    if (filtered.length === 0) return [];
+    
+    // Use seed to get deterministic "random" selection
+    const result: T[] = [];
+    for (let i = 0; i < Math.min(count, filtered.length); i++) {
+      const index = (seed + i * 7) % filtered.length;
+      if (!result.includes(filtered[index])) {
+        result.push(filtered[index]);
+      }
+    }
+    return result;
   };
 
-  const previewHeadlines = getRandomItems(headlines, 3);
-  const previewDescriptions = getRandomItems(descriptions, 2);
-  const previewSitelinks = getRandomItems(sitelinks, 4);
-  const previewCallouts = getRandomItems(callouts, 4);
+  const previewHeadlines = getItemsForCombination(headlines, 3, combinationIndex);
+  const previewDescriptions = getItemsForCombination(descriptions, 2, combinationIndex);
+  const previewSitelinks = getItemsForCombination(sitelinks, 4, combinationIndex);
+  const previewCallouts = getItemsForCombination(callouts, 4, combinationIndex);
+
+  const handleNextCombination = () => {
+    setCombinationIndex((prev) => prev + 1);
+  };
+
+  const handlePrevCombination = () => {
+    setCombinationIndex((prev) => Math.max(0, prev - 1));
+  };
 
   const filteredSavedAds = savedAds.filter((ad) => {
     const entityMatch = entityFilter === "all" || ad.entity === entityFilter;
@@ -441,11 +460,34 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
             <div className="lg:sticky lg:top-8 lg:self-start">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Ad Preview
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </CardTitle>
-                  <CardDescription>Live preview of your Google Search Ad</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        Ad Preview
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </CardTitle>
+                      <CardDescription>Live preview of your Google Search Ad</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handlePrevCombination}
+                        disabled={combinationIndex === 0}
+                        className="h-7 w-7"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleNextCombination}
+                        className="h-7 w-7"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Ad Preview Box */}
@@ -509,7 +551,7 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                   </div>
 
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>• Preview shows random selection of your inputs</p>
+                    <p>• Use arrows to see different combinations</p>
                     <p>• Google may show different combinations</p>
                     <p>• Actual ad appearance may vary</p>
                   </div>
