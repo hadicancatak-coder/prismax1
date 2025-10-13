@@ -93,7 +93,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
     try {
       // Generate recurrence rule if needed
       let recurrenceRule = null;
-      if (recurrence !== "none" && date) {
+      if (recurrence !== "none") {
         if (recurrence === "daily") {
           recurrenceRule = "FREQ=DAILY";
         } else if (recurrence === "weekly") {
@@ -108,7 +108,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         description: description.trim() || null,
         priority: recurrence !== "none" ? "High" : priority, // Recurring tasks always high priority
         status: (userRole === "member" ? "Pending Approval" : status) as "Pending Approval" | "In Progress" | "Blocked" | "Completed" | "Archived",
-        due_at: date?.toISOString(),
+        due_at: recurrence !== "none" ? null : date?.toISOString(), // No due date for recurring tasks
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
         assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
@@ -235,13 +235,14 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={recurrence !== "none"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : "Pick a date"}
+                  {recurrence !== "none" ? "N/A (Recurring)" : date ? format(date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -286,7 +287,16 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
             <div className="space-y-2">
               <Label>Recurrence</Label>
-              <Select value={recurrence} onValueChange={setRecurrence}>
+              <Select 
+                value={recurrence} 
+                onValueChange={(value) => {
+                  setRecurrence(value);
+                  // Clear due date when selecting recurrence
+                  if (value !== "none") {
+                    setDate(undefined);
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select recurrence" />
                 </SelectTrigger>

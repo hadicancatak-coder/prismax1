@@ -475,9 +475,15 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   value={task.recurrence_rrule || "none"} 
                   onValueChange={async (value) => {
                     const rrule = value === "none" ? null : value;
+                    // Clear due date when setting recurrence
+                    const updateData: any = { recurrence_rrule: rrule };
+                    if (value !== "none") {
+                      updateData.due_at = null;
+                    }
+                    
                     const { error } = await supabase
                       .from("tasks")
-                      .update({ recurrence_rrule: rrule })
+                      .update(updateData)
                       .eq("id", taskId);
                     if (error) {
                       toast({ title: "Error", description: error.message, variant: "destructive" });
