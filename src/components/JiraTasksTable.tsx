@@ -27,9 +27,8 @@ export function JiraTasksTable({ tasks, compact = true, onTaskUpdate }: JiraTask
   const { toast } = useToast();
 
   const statusConfig = {
-    "To Do": { color: "bg-muted text-muted-foreground", emoji: "📋" },
-    "In Progress": { color: "bg-warning/10 text-warning border-warning/20", emoji: "🔄" },
-    "Pending Approval": { color: "bg-pending/10 text-pending border-pending/20", emoji: "⏳" },
+    "Pending": { color: "bg-muted text-muted-foreground", emoji: "📋" },
+    "Ongoing": { color: "bg-warning/10 text-warning border-warning/20", emoji: "🔄" },
     "Completed": { color: "bg-success/10 text-success border-success/20", emoji: "✅" },
     "Failed": { color: "bg-destructive/10 text-destructive border-destructive/20", emoji: "❌" },
     "Blocked": { color: "bg-destructive/10 text-destructive border-destructive/20", emoji: "🚫" },
