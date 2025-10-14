@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { BlockerDialog } from "@/components/BlockerDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { ReportDialog } from "@/components/ReportDialog";
+import Team from "./Team";
 
 export default function TeamBase() {
   const { user, userRole } = useAuth();
@@ -255,6 +256,10 @@ export default function TeamBase() {
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="team" className="mt-6">
+          <Team />
+        </TabsContent>
 
         <TabsContent value="blockers" className="mt-6 space-y-4">
           <div className="flex justify-between items-center mb-4">

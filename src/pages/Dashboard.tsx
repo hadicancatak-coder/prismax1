@@ -8,6 +8,7 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WhatsNext } from "@/components/dashboard/WhatsNext";
 import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
 import { getDashboardStats } from "@/lib/dashboardQueries";
+import { NewsTicker } from "@/components/NewsTicker";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -61,6 +62,8 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's your team's progress</p>
       </div>
+
+      <NewsTicker />
 
       <StatsCards stats={stats} onStatClick={handleStatClick} />
 

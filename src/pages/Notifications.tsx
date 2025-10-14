@@ -8,6 +8,7 @@ import { Bell, Check, Trash2, Clock, Users, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
 import { formatDistanceToNow } from "date-fns";
+import { AnnouncementsSection } from "@/components/AnnouncementsSection";
 
 export default function Notifications() {
   const { user } = useAuth();
@@ -103,6 +104,10 @@ export default function Notifications() {
         return `You were mentioned in "${payload.task_title}"`;
       case "task_updated":
         return payload.message || `Task "${payload.task_title}" was updated`;
+      case "announcement":
+        return `${payload.title}: ${payload.message}`;
+      case "campaign_converted_to_task":
+        return payload.message || `Campaign converted to task`;
       default:
         return "You have a new notification";
     }
@@ -125,6 +130,8 @@ export default function Notifications() {
         </div>
         <Bell className="h-8 w-8 text-muted-foreground" />
       </div>
+
+      <AnnouncementsSection />
 
       <div className="space-y-4">
         {notifications.length > 0 ? (

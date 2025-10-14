@@ -80,7 +80,7 @@ export default function LaunchPad() {
           campaign_id: campaign.id,
           status: 'Pending',
           priority: 'High',
-          entity: campaign.teams?.[0] || 'Marketing',
+          entity: campaign.teams && campaign.teams.length > 0 ? campaign.teams : [],
           due_at: campaign.launch_month ? new Date(campaign.launch_month).toISOString() : null,
           created_by: user?.id
         })

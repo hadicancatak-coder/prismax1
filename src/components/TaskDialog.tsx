@@ -21,6 +21,9 @@ import { BlockerDialog } from "./BlockerDialog";
 import { TaskDependenciesSection } from "./TaskDependenciesSection";
 import { TaskChecklistSection } from "./TaskChecklistSection";
 import { TaskTimeTrackingSection } from "./TaskTimeTrackingSection";
+import { MultiAssigneeSelector } from "./MultiAssigneeSelector";
+import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -46,7 +49,13 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
   const [editingAssignee, setEditingAssignee] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [editingEntities, setEditingEntities] = useState(false);
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
+  
+  const ENTITIES = ["Marketing", "Social UA", "PPC", "Growth", "Product", "Design", "Engineering"];
 
   // Validate taskId
   if (!taskId || taskId === "undefined") {
@@ -135,6 +144,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         profiles: creatorProfile,
         assignee: assigneeProfile
       });
+      
+      setSelectedEntities(data.entity || []);
     } catch (error) {
       console.error("Error fetching task:", error);
       toast({ title: "Error", description: "Failed to load task details", variant: "destructive" });
@@ -483,105 +494,13 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             </div>
 
             <div>
-              <Label className="mb-2 block">Assignee</Label>
-              {!editingAssignee ? (
-                <div 
-                  className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
-                  onClick={() => setEditingAssignee(true)}
-                >
-                  <div className="flex items-center gap-2">
-                    {task.assignee ? (
-                      <>
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={task.assignee.avatar_url} />
-                          <AvatarFallback>
-                            {task.assignee.name?.substring(0, 2).toUpperCase() || "??"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{task.assignee.name || "Unknown"}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Unassigned</span>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm">Edit</Button>
-                </div>
-              ) : (
-                <div className="space-y-2 p-3 border rounded-md bg-background">
-                  <Input
-                    placeholder="Search users..."
-                    value={assigneeSearch}
-                    onChange={(e) => setAssigneeSearch(e.target.value)}
-                    autoFocus
-                  />
-                  <div className="max-h-48 overflow-y-auto space-y-1">
-                    <div
-                      className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
-                      onClick={async () => {
-                        const { error } = await supabase
-                          .from("tasks")
-                          .update({ assignee_id: null })
-                          .eq("id", taskId);
-                        if (!error) {
-                          toast({ title: "Success", description: "Assignee cleared" });
-                          await fetchTask();
-                          setEditingAssignee(false);
-                          setAssigneeSearch("");
-                        }
-                      }}
-                    >
-                      <span className="text-sm text-muted-foreground">Unassigned</span>
-                    </div>
-                    {profiles
-                      .filter(p => 
-                        !assigneeSearch || 
-                        p.name?.toLowerCase().includes(assigneeSearch.toLowerCase())
-                      )
-                      .map(profile => (
-                        <div
-                          key={profile.user_id}
-                          className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
-                          onClick={async () => {
-                            const { error } = await supabase
-                              .from("tasks")
-                              .update({ assignee_id: profile.user_id })
-                              .eq("id", taskId);
-                            if (!error) {
-                              toast({ title: "Success", description: "Assignee updated" });
-                              await fetchTask();
-                              setEditingAssignee(false);
-                              setAssigneeSearch("");
-                            } else {
-                              toast({ 
-                                title: "Error", 
-                                description: error.message, 
-                                variant: "destructive" 
-                              });
-                            }
-                          }}
-                        >
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback>
-                              {profile.name?.substring(0, 2).toUpperCase() || "??"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{profile.name}</span>
-                        </div>
-                      ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setEditingAssignee(false);
-                      setAssigneeSearch("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
+              <Label className="mb-2 block">Assignees</Label>
+              <MultiAssigneeSelector
+                entityType="task"
+                entityId={taskId}
+                assignees={assignees}
+                onAssigneesChange={refetchAssignees}
+              />
             </div>
 
             {task.status === "Blocked" && (
@@ -620,25 +539,71 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">Countries (Entity)</Label>
-                {task.entity && task.entity.length > 0 ? (
+            <div>
+              <Label className="mb-2 block">Countries (Entity)</Label>
+              {!editingEntities ? (
+                <div 
+                  className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
+                  onClick={() => setEditingEntities(true)}
+                >
                   <div className="flex flex-wrap gap-1">
-                    {task.entity.map((ent: string) => (
-                      <Badge key={ent} variant="secondary">
-                        {ent}
-                      </Badge>
-                    ))}
+                    {selectedEntities.length > 0 ? (
+                      selectedEntities.map((ent: string) => (
+                        <Badge key={ent} variant="secondary">{ent}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No countries assigned</span>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No countries assigned</p>
-                )}
-              </div>
-              <div>
-                <Label className="mb-2 block">Entity</Label>
-                <p className="text-sm">{task.entity && task.entity.length > 0 ? task.entity.join(', ') : 'None'}</p>
-              </div>
+                  <Button variant="ghost" size="sm">Edit</Button>
+                </div>
+              ) : (
+                <Popover open={editingEntities} onOpenChange={setEditingEntities}>
+                  <PopoverContent className="w-full p-4">
+                    <div className="space-y-3">
+                      <Label>Select Countries</Label>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {ENTITIES.map((entity) => (
+                          <div key={entity} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`entity-${entity}`}
+                              checked={selectedEntities.includes(entity)}
+                              onCheckedChange={async (checked) => {
+                                const newEntities = checked
+                                  ? [...selectedEntities, entity]
+                                  : selectedEntities.filter((e) => e !== entity);
+                                setSelectedEntities(newEntities);
+                                
+                                const { error } = await supabase
+                                  .from("tasks")
+                                  .update({ entity: newEntities })
+                                  .eq("id", taskId);
+                                  
+                                if (error) {
+                                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                                } else {
+                                  await fetchTask();
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`entity-${entity}`} className="cursor-pointer">
+                              {entity}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setEditingEntities(false)}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -739,16 +704,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             )}
 
-            <div>
-              <Label>Assigned To</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={task.assignee?.avatar_url} />
-                  <AvatarFallback>{task.assignee?.name?.[0] || "U"}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm">{task.assignee?.name || "Unassigned"}</span>
-              </div>
-            </div>
 
             {task.jira_link && (
               <div>
