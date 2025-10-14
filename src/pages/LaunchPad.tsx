@@ -58,13 +58,104 @@ export default function LaunchPad() {
 
   const handleLaunch = async (id: string) => {
     try {
-      const { error } = await supabase
+      const campaign = campaigns.find(c => c.id === id);
+      if (!campaign) return;
+
+      // Build task description
+      let desc = `## 🚀 Campaign Launch Mission\n\n`;
+      desc += `**Mission:** ${campaign.title}\n\n`;
+      
+      if (campaign.description) {
+        desc += `**Mission Brief:**\n${campaign.description}\n\n`;
+      }
+      
+      if (campaign.teams?.length > 0) {
+        desc += `**Launch Teams:** ${campaign.teams.join(', ')}\n`;
+      }
+      
+      if (campaign.entity?.length > 0) {
+        desc += `**Target Countries:** ${campaign.entity.join(', ')}\n`;
+      }
+      
+      if (campaign.launch_date) {
+        desc += `**Launch Date:** ${format(new Date(campaign.launch_date), 'MMMM dd, yyyy')}\n`;
+      }
+      
+      desc += `\n---\n\n`;
+      
+      if (campaign.lp_url) {
+        desc += `**Landing Page:** ${campaign.lp_url}\n`;
+      }
+      
+      if (campaign.creatives_link) {
+        desc += `**Creative Assets:** ${campaign.creatives_link}\n`;
+      }
+      
+      if (campaign.captions) {
+        desc += `\n**Ad Copy & Captions:**\n${campaign.captions}\n`;
+      }
+
+      // Create task with full campaign details
+      const { data: newTask, error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          title: `🚀 ${campaign.title}`,
+          description: desc,
+          task_type: 'campaign_launch',
+          campaign_id: campaign.id,
+          status: 'Pending',
+          priority: 'High',
+          entity: campaign.entity || [],
+          due_at: campaign.launch_date || null,
+          created_by: user?.id,
+          labels: ['campaign', ...(campaign.teams || [])]
+        })
+        .select()
+        .single();
+
+      if (taskError) throw taskError;
+
+      // Assign to all campaign assignees
+      if (campaign.launch_campaign_assignees?.length > 0) {
+        const assignments = campaign.launch_campaign_assignees.map((assignee: any) => ({
+          task_id: newTask.id,
+          user_id: assignee.user_id,
+          assigned_by: user?.id
+        }));
+        
+        await supabase.from('task_assignees').insert(assignments);
+        
+        // Notify all assignees
+        const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
+          user_id: assignee.user_id,
+          type: 'task_assigned',
+          payload_json: {
+            task_id: newTask.id,
+            task_title: newTask.title,
+            assigned_by: user?.id,
+            campaign_id: campaign.id,
+            message: `Mission "${campaign.title}" has been launched and assigned to you`
+          }
+        }));
+        
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      // Update campaign to live and mark as converted
+      await supabase
         .from('launch_pad_campaigns')
-        .update({ status: 'live', launched_at: new Date().toISOString() })
+        .update({ 
+          status: 'live', 
+          launched_at: new Date().toISOString(),
+          converted_to_task: true,
+          task_id: newTask.id
+        })
         .eq('id', id);
 
-      if (error) throw error;
-      toast({ title: "🚀 Mission launched successfully", description: "Mission is now live in orbit" });
+      toast({ 
+        title: "🚀 Mission launched successfully", 
+        description: `Task created and ${campaign.launch_campaign_assignees?.length || 0} team member(s) notified`
+      });
     } catch (error: any) {
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
     }
@@ -108,119 +199,6 @@ export default function LaunchPad() {
     }
   };
 
-  const buildTaskDescription = (campaign: any) => {
-    let desc = `## 🚀 Campaign Launch Mission\n\n`;
-    desc += `**Mission:** ${campaign.title}\n\n`;
-    
-    if (campaign.description) {
-      desc += `**Mission Brief:**\n${campaign.description}\n\n`;
-    }
-    
-    if (campaign.teams?.length > 0) {
-      desc += `**Launch Teams:** ${campaign.teams.join(', ')}\n`;
-    }
-    
-    if (campaign.entity?.length > 0) {
-      desc += `**Target Countries:** ${campaign.entity.join(', ')}\n`;
-    }
-    
-    if (campaign.launch_date) {
-      desc += `**Launch Date:** ${format(new Date(campaign.launch_date), 'MMMM dd, yyyy')}\n`;
-    }
-    
-    desc += `\n---\n\n`;
-    
-    if (campaign.lp_url) {
-      desc += `**Landing Page:** ${campaign.lp_url}\n`;
-    }
-    
-    if (campaign.creatives_link) {
-      desc += `**Creative Assets:** ${campaign.creatives_link}\n`;
-    }
-    
-    if (campaign.captions) {
-      desc += `\n**Ad Copy & Captions:**\n${campaign.captions}\n`;
-    }
-    
-    return desc;
-  };
-
-  const handleConvertToTask = async (campaign: any) => {
-    try {
-      const confirmed = confirm(
-        `Convert "${campaign.title}" to a task?\n\n` +
-        `This will create a task and assign it to ${campaign.launch_campaign_assignees?.length || 0} team member(s). ` +
-        `The mission status will be set to Live.`
-      );
-      if (!confirmed) return;
-
-      // Create task with full campaign details
-      const { data: newTask, error: taskError } = await supabase
-        .from('tasks')
-        .insert({
-          title: `🚀 ${campaign.title}`,
-          description: buildTaskDescription(campaign),
-          task_type: 'campaign_launch',
-          campaign_id: campaign.id,
-          status: 'Pending',
-          priority: 'High',
-          entity: campaign.entity || [],
-          due_at: campaign.launch_date || null,
-          created_by: user?.id,
-          labels: ['campaign', ...(campaign.teams || [])]
-        })
-        .select()
-        .single();
-
-      if (taskError) throw taskError;
-
-      // Assign to all campaign assignees
-      if (campaign.launch_campaign_assignees?.length > 0) {
-        const assignments = campaign.launch_campaign_assignees.map((assignee: any) => ({
-          task_id: newTask.id,
-          user_id: assignee.user_id,
-          assigned_by: user?.id
-        }));
-        
-        await supabase.from('task_assignees').insert(assignments);
-        
-        // Notify all assignees
-        const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
-          user_id: assignee.user_id,
-          type: 'task_assigned',
-          payload_json: {
-            task_id: newTask.id,
-            task_title: newTask.title,
-            assigned_by: user?.id,
-            campaign_id: campaign.id,
-            message: `Mission "${campaign.title}" has been converted to a task`
-          }
-        }));
-        
-        await supabase.from('notifications').insert(notifications);
-      }
-
-      // Mark campaign as converted AND set to live
-      await supabase
-        .from('launch_pad_campaigns')
-        .update({ 
-          converted_to_task: true,
-          task_id: newTask.id,
-          status: 'live',
-          launched_at: new Date().toISOString()
-        })
-        .eq('id', campaign.id);
-
-      toast({ 
-        title: "Mission converted to task successfully", 
-        description: `Task created and ${campaign.launch_campaign_assignees?.length || 0} crew member(s) notified`,
-      });
-      
-      fetchCampaigns();
-    } catch (error: any) {
-      toast({ title: "Conversion failed", description: error.message, variant: "destructive" });
-    }
-  };
 
   const socialUACampaigns = campaigns.filter(c => c.teams?.includes('Social UA'));
   const ppcCampaigns = campaigns.filter(c => c.teams?.includes('PPC'));
@@ -297,7 +275,6 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
-                onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
                 onCardClick={(id) => {
                   setSelectedCampaignId(id);
@@ -322,7 +299,6 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
-                onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
                 onCardClick={(id) => {
                   setSelectedCampaignId(id);
@@ -349,7 +325,6 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
-                onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
                 showLaunchButton
                 onCardClick={(id) => {
@@ -378,7 +353,6 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
-                onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
                 onCardClick={(id) => {
                   setSelectedCampaignId(id);

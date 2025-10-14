@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Rocket, ExternalLink, MoreVertical, ListTodo, Trash2, Calendar, ImageIcon } from "lucide-react";
+import { Rocket, ExternalLink, MoreVertical, Trash2, Calendar, ImageIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,12 +16,11 @@ interface LaunchCampaignCardProps {
   campaign: any;
   onLaunch: (id: string) => void;
   showLaunchButton?: boolean;
-  onConvertToTask?: (campaign: any) => void;
   onDelete?: (id: string) => void;
   onCardClick?: (id: string) => void;
 }
 
-export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onConvertToTask, onDelete, onCardClick }: LaunchCampaignCardProps) {
+export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onDelete, onCardClick }: LaunchCampaignCardProps) {
   const statusConfig = {
     live: { label: "🛰️ Live", className: "bg-success/10 text-success border-success/20" },
     pending: { label: "🚧 Prep", className: "bg-warning/10 text-warning border-warning/20" },
@@ -163,13 +162,6 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onCon
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation();
-                onConvertToTask?.(campaign);
-              }}>
-                <ListTodo className="mr-2 h-4 w-4" />
-                Convert to Task
-              </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
