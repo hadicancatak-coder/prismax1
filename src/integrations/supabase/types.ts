@@ -809,6 +809,93 @@ export type Database = {
           },
         ]
       }
+      task_dependencies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dependency_type: string
+          depends_on_task_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dependency_type?: string
+          depends_on_task_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dependency_type?: string
+          depends_on_task_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_templates: {
+        Row: {
+          checklist_items: Json | null
+          created_at: string
+          created_by: string | null
+          default_assignee_id: string | null
+          default_priority: Database["public"]["Enums"]["task_priority"] | null
+          description: string | null
+          entity: string | null
+          estimated_hours: number | null
+          id: string
+          is_public: boolean | null
+          labels: string[] | null
+          name: string
+        }
+        Insert: {
+          checklist_items?: Json | null
+          created_at?: string
+          created_by?: string | null
+          default_assignee_id?: string | null
+          default_priority?: Database["public"]["Enums"]["task_priority"] | null
+          description?: string | null
+          entity?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_public?: boolean | null
+          labels?: string[] | null
+          name: string
+        }
+        Update: {
+          checklist_items?: Json | null
+          created_at?: string
+          created_by?: string | null
+          default_assignee_id?: string | null
+          default_priority?: Database["public"]["Enums"]["task_priority"] | null
+          description?: string | null
+          entity?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_public?: boolean | null
+          labels?: string[] | null
+          name?: string
+        }
+        Relationships: []
+      }
       task_watchers: {
         Row: {
           created_at: string
@@ -840,12 +927,14 @@ export type Database = {
       }
       tasks: {
         Row: {
+          actual_hours: number | null
           approval_requested_at: string | null
           approval_requested_by: string | null
           assignee_id: string | null
           blocker_id: string | null
           blocker_reason: string | null
           campaign_id: string | null
+          checklist: Json | null
           created_at: string
           created_by: string | null
           delete_requested_at: string | null
@@ -853,6 +942,7 @@ export type Database = {
           description: string | null
           due_at: string | null
           entity: string | null
+          estimated_hours: number | null
           failure_reason: string | null
           id: string
           jira_key: string | null
@@ -877,12 +967,14 @@ export type Database = {
           visibility: Database["public"]["Enums"]["task_visibility"]
         }
         Insert: {
+          actual_hours?: number | null
           approval_requested_at?: string | null
           approval_requested_by?: string | null
           assignee_id?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null
+          checklist?: Json | null
           created_at?: string
           created_by?: string | null
           delete_requested_at?: string | null
@@ -890,6 +982,7 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           entity?: string | null
+          estimated_hours?: number | null
           failure_reason?: string | null
           id?: string
           jira_key?: string | null
@@ -914,12 +1007,14 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
         Update: {
+          actual_hours?: number | null
           approval_requested_at?: string | null
           approval_requested_by?: string | null
           assignee_id?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null
+          checklist?: Json | null
           created_at?: string
           created_by?: string | null
           delete_requested_at?: string | null
@@ -927,6 +1022,7 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           entity?: string | null
+          estimated_hours?: number | null
           failure_reason?: string | null
           id?: string
           jira_key?: string | null
@@ -1107,6 +1203,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_actual_hours: {
+        Args: { task_uuid: string }
+        Returns: number
+      }
       get_all_users_admin: {
         Args: Record<PropertyKey, never>
         Returns: {

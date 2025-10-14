@@ -6,10 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TaskDialog } from "@/components/TaskDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function CalendarView() {
   const { user, userRole } = useAuth();
@@ -19,9 +21,11 @@ export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [view, setView] = useState<"daily" | "weekly" | "monthly">("monthly");
+  const [view, setView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [userWorkingDays, setUserWorkingDays] = useState<string>("mon-fri");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchUserWorkingDays();
@@ -35,7 +39,6 @@ export default function CalendarView() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchTasks())
       .subscribe();
 
-    // Subscribe to profile changes to update working days in real-time
     const profilesChannel = supabase
       .channel('profiles-calendar')
       .on('postgres_changes', { 
@@ -44,7 +47,6 @@ export default function CalendarView() {
         table: 'profiles',
         filter: `user_id=eq.${user?.id}`
       }, (payload) => {
-        console.log('Profile updated:', payload);
         if (payload.new.working_days) {
           setUserWorkingDays(payload.new.working_days);
         }
@@ -60,19 +62,14 @@ export default function CalendarView() {
   const fetchUserWorkingDays = async () => {
     if (!user?.id) return;
     
-    console.log('Fetching working days for user:', user.id);
-    
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("working_days")
       .eq("user_id", user.id)
       .single();
     
-    console.log('Working days data:', data, error);
-    
     if (data?.working_days) {
       setUserWorkingDays(data.working_days);
-      console.log('Set working days to:', data.working_days);
     }
   };
 
@@ -87,11 +84,9 @@ export default function CalendarView() {
       .select("*")
       .not("due_at", "is", null);
 
-    // Filter by user if admin has selected a specific user
     if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
       query = query.eq("assignee_id", selectedUserId);
     } else if (userRole !== "admin" && user?.id) {
-      // Members only see their own tasks
       query = query.eq("assignee_id", user.id);
     }
 
@@ -118,22 +113,44 @@ export default function CalendarView() {
     }
   };
 
+  const handleStatusChange = async (taskId: string, newStatus: "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked") => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: newStatus })
+      .eq("id", taskId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Status updated", description: `Task marked as ${newStatus}` });
+      await fetchTasks();
+    }
+  };
+
   const isWorkingDay = (date: Date): boolean => {
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-    
-    console.log('Checking if working day:', { date, dayOfWeek, userWorkingDays });
+    const dayOfWeek = date.getDay();
     
     if (userWorkingDays === 'mon-fri') {
-      return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+      return dayOfWeek >= 1 && dayOfWeek <= 5;
     } else if (userWorkingDays === 'sun-thu') {
-      return dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4); // Sunday to Thursday
+      return dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4);
     }
     
-    return true; // fallback, show all days
+    return true;
   };
 
   const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => task.due_at && isSameDay(parseISO(task.due_at), date));
+    let filtered = tasks.filter(task => task.due_at && isSameDay(parseISO(task.due_at), date));
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(t => t.status === statusFilter);
+    }
+    
+    if (priorityFilter !== "all") {
+      filtered = filtered.filter(t => t.priority === priorityFilter);
+    }
+    
+    return filtered;
   };
 
   const navigateDate = (direction: "prev" | "next") => {
@@ -148,55 +165,208 @@ export default function CalendarView() {
     }
   };
 
+  // Task Card Component
+  const TaskCard = ({ task, compact = false, completed = false }: any) => {
+    return (
+      <div
+        className={cn(
+          "group p-4 border rounded-lg hover:shadow-md transition-all",
+          completed && "opacity-60"
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 mt-0.5"
+            onClick={() => handleStatusChange(task.id, task.status === 'Completed' ? 'Ongoing' : 'Completed')}
+          >
+            {task.status === 'Completed' ? (
+              <CheckCircle className="h-5 w-5 text-success fill-success" />
+            ) : (
+              <Circle className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
+
+          <div className="flex-1 min-w-0">
+            <div
+              className="cursor-pointer"
+              onClick={() => {
+                setSelectedTaskId(task.id);
+                setTaskDialogOpen(true);
+              }}
+            >
+              <h4 className={cn("font-medium mb-1", completed && "line-through")}>
+                {task.title}
+              </h4>
+              {!compact && task.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                  {task.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-2">
+              <Badge
+                variant="outline"
+                className={
+                  task.priority === "High"
+                    ? "bg-destructive/10 text-destructive border-destructive/20"
+                    : task.priority === "Medium"
+                    ? "bg-warning/10 text-warning border-warning/20"
+                    : "bg-muted text-muted-foreground"
+                }
+              >
+                {task.priority}
+              </Badge>
+              <Badge variant="outline">{task.status}</Badge>
+              {task.entity && <Badge variant="secondary">{task.entity}</Badge>}
+            </div>
+          </div>
+
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'Ongoing')}>
+                  Start Task
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const newDate = addDays(new Date(task.due_at), 1);
+                  moveTask(task.id, newDate);
+                }}>
+                  Postpone to Tomorrow
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setSelectedTaskId(task.id);
+                  setTaskDialogOpen(true);
+                }}>
+                  View Details
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderDailyView = () => {
     const dayTasks = getTasksForDate(currentDate);
+    const isToday = isSameDay(currentDate, new Date());
+    
+    const overdueTasks = dayTasks.filter(t => t.status !== 'Completed' && new Date(t.due_at) < new Date());
+    const highPriorityTasks = dayTasks.filter(t => t.priority === 'High' && t.status !== 'Completed');
+    const inProgressTasks = dayTasks.filter(t => t.status === 'Ongoing');
+    const pendingTasks = dayTasks.filter(t => t.status === 'Pending');
+    const completedTasks = dayTasks.filter(t => t.status === 'Completed');
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{format(currentDate, "EEEE, MMMM dd, yyyy")}</h2>
+          <div>
+            <h2 className="text-3xl font-bold">
+              {isToday ? "Today's Agenda" : format(currentDate, "EEEE, MMMM dd, yyyy")}
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              {dayTasks.length} tasks • {completedTasks.length} completed • {inProgressTasks.length} in progress
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={() => navigateDate("prev")}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" onClick={() => setCurrentDate(new Date())}>Today</Button>
+            <Button variant="default" onClick={() => setCurrentDate(new Date())}>
+              {isToday ? "Refresh" : "Go to Today"}
+            </Button>
             <Button variant="outline" size="icon" onClick={() => navigateDate("next")}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">{dayTasks.length} Tasks</h3>
-          <div className="space-y-2">
-            {dayTasks.length > 0 ? (
-              dayTasks.map(task => (
-                <div
-                  key={task.id}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setSelectedTaskId(task.id);
-                    setTaskDialogOpen(true);
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{task.title}</h4>
-                      {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant={task.priority === "High" ? "destructive" : task.priority === "Medium" ? "default" : "secondary"}>
-                        {task.priority}
-                      </Badge>
-                      <Badge variant="outline">{task.status}</Badge>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-center py-8">No tasks for this day</p>
-            )}
-          </div>
-        </Card>
+
+        {isToday && highPriorityTasks.length > 0 && (
+          <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-primary">Today's Focus</Badge>
+              <span className="text-sm text-muted-foreground">
+                {highPriorityTasks.length} high-priority {highPriorityTasks.length === 1 ? 'task' : 'tasks'}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {highPriorityTasks.slice(0, 3).map(task => (
+                <TaskCard key={task.id} task={task} compact />
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {overdueTasks.length > 0 && (
+          <Card className="p-4 bg-destructive/10 border-destructive/20">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <p className="font-semibold text-destructive">
+                {overdueTasks.length} overdue {overdueTasks.length === 1 ? 'task' : 'tasks'} from previous days
+              </p>
+            </div>
+          </Card>
+        )}
+
+        <div className="grid gap-6">
+          {inProgressTasks.length > 0 && (
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+                <h3 className="font-semibold text-lg">In Progress ({inProgressTasks.length})</h3>
+              </div>
+              <div className="space-y-3">
+                {inProgressTasks.map(task => (
+                  <TaskCard key={task.id} task={task} />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {pendingTasks.length > 0 && (
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-4">To Do ({pendingTasks.length})</h3>
+              <div className="space-y-3">
+                {pendingTasks.map(task => (
+                  <TaskCard key={task.id} task={task} />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {completedTasks.length > 0 && (
+            <Card className="p-6 opacity-60">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-success" />
+                Completed ({completedTasks.length})
+              </h3>
+              <div className="space-y-3">
+                {completedTasks.map(task => (
+                  <TaskCard key={task.id} task={task} completed />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {dayTasks.length === 0 && (
+            <Card className="p-12 text-center">
+              <p className="text-muted-foreground text-lg">
+                {isToday ? "No tasks scheduled for today! 🎉" : "No tasks scheduled for this day"}
+              </p>
+              <Button variant="outline" className="mt-4" onClick={() => setCurrentDate(new Date())}>
+                Go to Today
+              </Button>
+            </Card>
+          )}
+        </div>
       </div>
     );
   };
@@ -206,11 +376,15 @@ export default function CalendarView() {
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+    const weekTasks = days.flatMap(day => getTasksForDate(day));
+    const completedCount = weekTasks.filter(t => t.status === 'Completed').length;
+    const highPriorityCount = weekTasks.filter(t => t.priority === 'High').length;
+
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-            {format(weekStart, "MMM dd")} - {format(weekEnd, "MMM dd, yyyy")}
+            Week of {format(weekStart, "MMM dd")} - {format(weekEnd, "MMM dd, yyyy")}
           </h2>
           <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={() => navigateDate("prev")}>
@@ -222,35 +396,65 @@ export default function CalendarView() {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-4">
+
+        <Card className="p-4">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-primary">{weekTasks.length}</p>
+              <p className="text-sm text-muted-foreground">Total Tasks</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-success">{completedCount}</p>
+              <p className="text-sm text-muted-foreground">Completed</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-warning">{highPriorityCount}</p>
+              <p className="text-sm text-muted-foreground">High Priority</p>
+            </div>
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-7 gap-3">
           {days.map(day => {
             const dayTasks = getTasksForDate(day);
             const isToday = isSameDay(day, new Date());
             const isWorking = isWorkingDay(day);
+            const completedCount = dayTasks.filter(t => t.status === 'Completed').length;
 
             return (
-              <Card 
-                key={day.toISOString()} 
-                className={`p-4 cursor-pointer transition-all ${!isWorking ? "opacity-30 bg-muted/30" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+              <Card
+                key={day.toISOString()}
+                className={cn(
+                  "p-3 cursor-pointer transition-all min-h-[180px]",
+                  !isWorking && "opacity-30 bg-muted/30",
+                  isToday && "ring-2 ring-primary shadow-lg",
+                  selectedDate && isSameDay(day, selectedDate) && "ring-2 ring-accent"
+                )}
                 onClick={() => setSelectedDate(day)}
               >
-                <div className="mb-3">
-                  <div className="font-semibold">{format(day, "EEE")}</div>
+                <div className="mb-3 pb-2 border-b">
+                  <div className="font-semibold text-sm">{format(day, "EEE")}</div>
                   <div className="text-2xl font-bold">{format(day, "dd")}</div>
+                  {dayTasks.length > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {completedCount}/{dayTasks.length}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  {dayTasks.map(task => (
+
+                <div className="space-y-2 max-h-[120px] overflow-y-auto">
+                  {dayTasks.slice(0, 4).map(task => (
                     <div
                       key={task.id}
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("taskId", task.id)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const taskId = e.dataTransfer.getData("taskId");
-                        if (taskId !== task.id) moveTask(taskId, day);
-                      }}
-                      className="p-2 bg-muted rounded text-xs cursor-move hover:bg-muted/70 transition-colors"
+                      className={cn(
+                        "p-2 rounded text-xs cursor-move transition-all",
+                        task.status === 'Completed' && "opacity-50 line-through",
+                        task.priority === 'High' && "bg-destructive/10 border border-destructive/20",
+                        task.priority === 'Medium' && "bg-warning/10 border border-warning/20",
+                        task.priority === 'Low' && "bg-muted"
+                      )}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedTaskId(task.id);
@@ -258,21 +462,24 @@ export default function CalendarView() {
                       }}
                     >
                       <div className="font-medium truncate">{task.title}</div>
-                      <Badge variant="outline" className="mt-1 text-xs">
-                        {task.priority}
-                      </Badge>
                     </div>
                   ))}
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const taskId = e.dataTransfer.getData("taskId");
-                      moveTask(taskId, day);
-                    }}
-                    className="h-8 border-2 border-dashed border-transparent hover:border-muted-foreground/20 rounded transition-colors"
-                  />
+                  {dayTasks.length > 4 && (
+                    <div className="text-xs text-muted-foreground text-center">
+                      +{dayTasks.length - 4} more
+                    </div>
+                  )}
                 </div>
+
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const taskId = e.dataTransfer.getData("taskId");
+                    moveTask(taskId, day);
+                  }}
+                  className="mt-2 h-6 border-2 border-dashed border-transparent hover:border-primary/20 rounded transition-colors"
+                />
               </Card>
             );
           })}
@@ -317,7 +524,13 @@ export default function CalendarView() {
             return (
               <Card
                 key={day.toISOString()}
-                className={`p-2 min-h-[100px] cursor-pointer transition-all ${!isCurrentMonth ? "opacity-40" : ""} ${!isWorking ? "opacity-50 bg-muted/30" : ""} ${isToday ? "ring-2 ring-primary" : ""} ${selectedDate && isSameDay(day, selectedDate) ? "ring-2 ring-accent" : ""} hover:shadow-md`}
+                className={cn(
+                  "p-2 min-h-[100px] cursor-pointer transition-all",
+                  !isCurrentMonth && "opacity-40",
+                  !isWorking && "opacity-50 bg-muted/30",
+                  isToday && "ring-2 ring-primary",
+                  selectedDate && isSameDay(day, selectedDate) && "ring-2 ring-accent"
+                )}
                 onClick={() => setSelectedDate(day)}
               >
                 <div className="text-sm font-semibold mb-1 flex items-center justify-between">
@@ -380,11 +593,40 @@ export default function CalendarView() {
         </Tabs>
       </div>
 
+      {view === "daily" && (
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Ongoing">In Progress</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Blocked">Blocked</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="Low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {view === "daily" && renderDailyView()}
       {view === "weekly" && renderWeeklyView()}
       {view === "monthly" && renderMonthlyView()}
 
-      {selectedDate && (
+      {selectedDate && view !== "daily" && (
         <Card className="p-6 mt-6 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">
@@ -397,63 +639,21 @@ export default function CalendarView() {
           <div className="space-y-2">
             {getTasksForDate(selectedDate).length > 0 ? (
               getTasksForDate(selectedDate).map(task => (
-                <div
-                  key={task.id}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors flex items-center justify-between"
-                  onClick={() => {
-                    setSelectedTaskId(task.id);
-                    setTaskDialogOpen(true);
-                  }}
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{task.title}</div>
-                    {task.description && (
-                      <div className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                        {task.description}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={
-                        task.status === "In Progress"
-                          ? "bg-warning/10 text-warning border-warning/20"
-                          : task.status === "Completed"
-                          ? "bg-success/10 text-success border-success/20"
-                          : task.status === "Blocked"
-                          ? "bg-destructive/10 text-destructive border-destructive/20"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {task.status}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={
-                        task.priority === "High"
-                          ? "bg-destructive/10 text-destructive border-destructive/20"
-                          : task.priority === "Medium"
-                          ? "bg-warning/10 text-warning border-warning/20"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {task.priority}
-                    </Badge>
-                  </div>
-                </div>
+                <TaskCard key={task.id} task={task} />
               ))
             ) : (
-              <div className="text-center text-muted-foreground py-8">
-                No tasks scheduled for this date
-              </div>
+              <p className="text-muted-foreground text-center py-8">No tasks for this day</p>
             )}
           </div>
         </Card>
       )}
 
       {selectedTaskId && (
-        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+        <TaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          taskId={selectedTaskId}
+        />
       )}
     </div>
   );

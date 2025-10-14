@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function AdminPanel() {
-  const { userRole, loading: authLoading } = useAuth();
+  const { userRole, loading: authLoading, roleLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
@@ -46,7 +46,13 @@ export default function AdminPanel() {
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
+    // Wait for BOTH auth AND role to load
+    if (authLoading || roleLoading) {
+      console.log('⏳ Loading...', { authLoading, roleLoading, userRole });
+      return;
+    }
+    
+    console.log('✅ Loaded, checking role:', { userRole });
     
     if (userRole !== 'admin') {
       toast({
@@ -70,7 +76,7 @@ export default function AdminPanel() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authLoading, userRole, navigate]);
+  }, [authLoading, roleLoading, userRole, navigate]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -256,10 +262,10 @@ export default function AdminPanel() {
   };
 
   // Show loading while checking permissions
-  if (userRole === null || loading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading Admin Panel...</div>
+        <div className="text-muted-foreground">Loading admin panel...</div>
       </div>
     );
   }

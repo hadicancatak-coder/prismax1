@@ -9,12 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon } from "lucide-react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { BlockerDialog } from "./BlockerDialog";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface TaskDialogProps {
   open: boolean;
@@ -441,38 +444,36 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             </div>
 
-            {userRole === "admin" && (
-              <div>
-                <Label className="mb-2 block">Assignee</Label>
-                <Select 
-                  value={task.assignee_id || "unassigned"} 
-                  onValueChange={async (value) => {
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ assignee_id: value === "unassigned" ? null : value })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      toast({ title: "Success", description: "Assignee updated" });
-                      fetchTask();
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select assignee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {profiles.map((profile) => (
-                      <SelectItem key={profile.user_id} value={profile.user_id}>
-                        {profile.name || profile.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <Label className="mb-2 block">Assignee</Label>
+              <Select 
+                value={task.assignee_id || "unassigned"} 
+                onValueChange={async (value) => {
+                  const { error } = await supabase
+                    .from("tasks")
+                    .update({ assignee_id: value === "unassigned" ? null : value })
+                    .eq("id", taskId);
+                  if (error) {
+                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: "Success", description: "Assignee updated" });
+                    fetchTask();
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.user_id} value={profile.user_id}>
+                      {profile.name || profile.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {task.status === "Blocked" && (
               <div>
@@ -673,11 +674,58 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div>
               <Label>Due Date</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">{task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}</span>
+              <div className="flex gap-2 mt-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !task.due_at && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {task.due_at ? format(new Date(task.due_at), "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={task.due_at ? new Date(task.due_at) : undefined}
+                      onSelect={async (date) => {
+                        if (!date) return;
+                        
+                        const { error } = await supabase
+                          .from("tasks")
+                          .update({ due_at: date.toISOString() })
+                          .eq("id", taskId);
+                        
+                        if (error) {
+                          toast({
+                            title: "Error",
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                        } else {
+                          toast({
+                            title: "Due date updated",
+                            description: "Task due date has been changed",
+                          });
+                          fetchTask();
+                        }
+                      }}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
                 {userRole !== "admin" && (
-                  <Button size="sm" variant="outline" onClick={handlePostpone}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePostpone}
+                  >
                     Request Postpone
                   </Button>
                 )}

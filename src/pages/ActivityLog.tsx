@@ -48,7 +48,7 @@ const ACTION_COLORS = {
 };
 
 export default function ActivityLog() {
-  const { userRole, loading: authLoading } = useAuth();
+  const { userRole, loading: authLoading, roleLoading } = useAuth();
   const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -56,11 +56,17 @@ export default function ActivityLog() {
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
 
-  if (authLoading) {
-    return null;
+  // Wait for BOTH auth AND role to load
+  if (authLoading || roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading activity log...</div>
+      </div>
+    );
   }
 
   if (userRole !== 'admin') {
+    console.warn('❌ Access denied - not admin');
     return <Navigate to="/" replace />;
   }
 
