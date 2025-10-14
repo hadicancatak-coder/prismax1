@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ENTITIES } from "./constants";
 
 // Task validation schema
 export const taskSchema = z.object({
@@ -24,11 +25,7 @@ export const taskSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  entity: z.enum([
-    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
-    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
-    "Global Management"
-  ]).optional(),
+  entity: z.enum(ENTITIES as [string, ...string[]]).optional(),
   
   priority: z.enum(["Low", "Medium", "High"]),
   
@@ -165,11 +162,7 @@ export const campaignSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  entity: z.enum([
-    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
-    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
-    "Global Management"
-  ]).optional(),
+  entity: z.enum(ENTITIES as [string, ...string[]]).optional(),
   
   start_date: z.string().datetime(),
   end_date: z.string().datetime(),
@@ -194,9 +187,5 @@ export const adSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  entity: z.enum([
-    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan",
-    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar",
-    "Global Management"
-  ]).optional(),
+  entity: z.enum(ENTITIES as [string, ...string[]]).optional(),
 });

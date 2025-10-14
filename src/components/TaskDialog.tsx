@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ENTITIES } from "@/lib/constants";
 
 interface TaskDialogProps {
   open: boolean;
@@ -55,12 +56,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
-  
-  const ENTITIES = [
-    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
-    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
-    "Global Management"
-  ];
 
   // Validate taskId
   if (!taskId || taskId === "undefined") {

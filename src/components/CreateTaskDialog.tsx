@@ -24,12 +24,7 @@ import { taskSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-const ENTITIES = [
-  "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
-  "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
-  "Global Management"
-];
+import { ENTITIES } from "@/lib/constants";
 
 interface CreateTaskDialogProps {
   open: boolean;

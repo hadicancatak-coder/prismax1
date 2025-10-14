@@ -15,13 +15,7 @@ import { format } from "date-fns";
 import { SavedAdDialog } from "@/components/SavedAdDialog";
 import { AdApprovalSection } from "@/components/AdApprovalSection";
 import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
-
-
-const ENTITIES = [
-  "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
-  "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
-  "Global Management"
-];
+import { ENTITIES } from "@/lib/constants";
 
 export default function AdsPage() {
   const { user } = useAuth();

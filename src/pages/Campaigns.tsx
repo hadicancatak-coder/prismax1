@@ -17,12 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignDetailDialog } from "@/components/CampaignDetailDialog";
 import { CampaignCard } from "@/components/CampaignCard";
-
-const ENTITIES = [
-  "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
-  "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
-  "Global Management"
-];
+import { ENTITIES } from "@/lib/constants";
 
 export default function Campaigns() {
   const { userRole } = useAuth();
