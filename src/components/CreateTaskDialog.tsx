@@ -150,13 +150,24 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
       if (error) throw error;
 
+      const createdTask = data[0];
+
+      // Insert into task_assignees table for multi-assignee support
+      if (taskData.assignee_id) {
+        await supabase.from("task_assignees").insert({
+          task_id: createdTask.id,
+          user_id: taskData.assignee_id,
+          assigned_by: user.id,
+        });
+      }
+
       // Send notification if task is assigned to someone
       if (taskData.assignee_id && taskData.assignee_id !== user.id && userRole === "admin") {
         await supabase.from("notifications").insert({
           user_id: taskData.assignee_id,
           type: "task_assigned",
           payload_json: { 
-            task_id: data[0].id,
+            task_id: createdTask.id,
             task_title: taskData.title,
           },
         });

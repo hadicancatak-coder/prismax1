@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TaskDialog } from "@/components/TaskDialog";
+import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle, Rocket } from "lucide-react";
@@ -23,7 +24,9 @@ export default function CalendarView() {
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
   const [view, setView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [userWorkingDays, setUserWorkingDays] = useState<string>("mon-fri");
@@ -346,7 +349,13 @@ export default function CalendarView() {
   // Campaign Card Component
   const CampaignCard = ({ campaign, compact = false }: any) => {
     return (
-      <div className="group p-4 border border-primary/30 rounded-lg hover:shadow-md transition-all bg-primary/5">
+      <div 
+        className="group p-4 border border-primary/30 rounded-lg hover:shadow-md transition-all bg-primary/5 cursor-pointer"
+        onClick={() => {
+          setSelectedCampaignId(campaign.id);
+          setCampaignDialogOpen(true);
+        }}
+      >
         <div className="flex items-start gap-3">
           <Rocket className="h-5 w-5 text-primary mt-0.5" />
           
@@ -824,6 +833,15 @@ export default function CalendarView() {
           open={taskDialogOpen}
           onOpenChange={setTaskDialogOpen}
           taskId={selectedTaskId}
+        />
+      )}
+
+      {selectedCampaignId && (
+        <LaunchCampaignDetailDialog
+          open={campaignDialogOpen}
+          onOpenChange={setCampaignDialogOpen}
+          campaignId={selectedCampaignId}
+          onUpdate={fetchCampaigns}
         />
       )}
     </div>
