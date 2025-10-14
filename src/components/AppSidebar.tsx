@@ -17,9 +17,8 @@ import {
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
-  { title: "Calendar", url: "/calendar", icon: Calendar },
-  { title: "Team Base", url: "/team-base", icon: FolderKanban },
-  { title: "Team Directory", url: "/team", icon: Users },
+  { title: "Agenda", url: "/calendar", icon: Calendar },
+  { title: "Base", url: "/team-base", icon: FolderKanban },
   { title: "Ads Planner", url: "/ads", icon: Megaphone },
   { title: "Campaigns", url: "/campaigns", icon: Target },
   { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
@@ -71,21 +70,6 @@ export function AppSidebar() {
               ))}
               {userRole === "admin" && (
                 <>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to="/backlog"
-                        className={({ isActive }) =>
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
-                        }
-                      >
-                        <ListTodo className="h-4 w-4" />
-                        <span>Backlog</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
                       <NavLink

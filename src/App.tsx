@@ -46,14 +46,12 @@ const App = () => (
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
             <Route path="/team-base" element={<TeamBase />} />
-            <Route path="/backlog" element={<Backlog />} />
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/launch-pad" element={<LaunchPad />} />
-            <Route path="/team" element={<Team />} />
             
           </Route>
           <Route path="*" element={<NotFound />} />

@@ -343,6 +343,39 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          message: string
+          priority: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          priority?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          priority?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       blocker_assignees: {
         Row: {
           assigned_at: string
@@ -483,7 +516,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           end_date: string
-          entity: string | null
+          entity: string[] | null
           id: string
           image_url: string | null
           lp_link: string | null
@@ -498,7 +531,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date: string
-          entity?: string | null
+          entity?: string[] | null
           id?: string
           image_url?: string | null
           lp_link?: string | null
@@ -513,7 +546,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date?: string
-          entity?: string | null
+          entity?: string[] | null
           id?: string
           image_url?: string | null
           lp_link?: string | null
@@ -1151,7 +1184,7 @@ export type Database = {
           delete_requested_by: string | null
           description: string | null
           due_at: string | null
-          entity: string | null
+          entity: string[] | null
           estimated_hours: number | null
           failure_reason: string | null
           id: string
@@ -1191,7 +1224,7 @@ export type Database = {
           delete_requested_by?: string | null
           description?: string | null
           due_at?: string | null
-          entity?: string | null
+          entity?: string[] | null
           estimated_hours?: number | null
           failure_reason?: string | null
           id?: string
@@ -1231,7 +1264,7 @@ export type Database = {
           delete_requested_by?: string | null
           description?: string | null
           due_at?: string | null
-          entity?: string | null
+          entity?: string[] | null
           estimated_hours?: number | null
           failure_reason?: string | null
           id?: string

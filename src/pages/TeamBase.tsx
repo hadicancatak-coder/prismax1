@@ -239,12 +239,13 @@ export default function TeamBase() {
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="bg-gradient-primary p-4 rounded-lg mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">🏢 Team Base</h1>
-        <p className="text-white/90">Manage blockers, projects, and shared resources</p>
+        <h1 className="text-3xl font-bold text-white mb-2">🏢 Base</h1>
+        <p className="text-white/90">Manage blockers, projects, team directory, and shared resources</p>
       </div>
 
-      <Tabs defaultValue="blockers" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="team" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="team">Team Directory</TabsTrigger>
           <TabsTrigger value="blockers">
             Blockers
             {activeBlockers.length > 0 && (

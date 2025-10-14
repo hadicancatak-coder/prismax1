@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCirc
 import { cn } from "@/lib/utils";
 
 export default function CalendarView() {
+  document.title = "Agenda - Prisma";
   const { user, userRole } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
