@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,7 +39,7 @@ export default function Campaigns() {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [entity, setEntity] = useState("");
+  const [entities, setEntities] = useState<string[]>([]);
   const [target, setTarget] = useState("");
   const [lpLink, setLpLink] = useState("");
   const [startDate, setStartDate] = useState<Date>();
@@ -78,7 +79,7 @@ export default function Campaigns() {
     let filtered = [...campaigns];
 
     if (filterEntity !== "all") {
-      filtered = filtered.filter(c => c.entity === filterEntity);
+      filtered = filtered.filter(c => c.entity && c.entity.includes(filterEntity));
     }
 
     if (filterMonth !== "all") {
@@ -164,7 +165,7 @@ export default function Campaigns() {
       const { error } = await supabase.from("campaigns").insert({
         title,
         description,
-        entity,
+        entity: entities.length > 0 ? entities : [],
         target,
         lp_link: lpLink,
         image_url: imageUrl,
@@ -182,7 +183,7 @@ export default function Campaigns() {
       // Reset form
       setTitle("");
       setDescription("");
-      setEntity("");
+      setEntities([]);
       setTarget("");
       setLpLink("");
       setStartDate(undefined);
@@ -286,19 +287,51 @@ export default function Campaigns() {
                 </div>
 
                 <div>
-                  <Label htmlFor="entity">Entity</Label>
-                  <Select value={entity} onValueChange={setEntity}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select entity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ENTITIES.map((ent) => (
-                        <SelectItem key={ent} value={ent}>
+                  <Label htmlFor="entity">Countries (Entity)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="w-full justify-start">
+                        {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 max-h-[300px] overflow-y-auto">
+                      <div className="space-y-2">
+                        {ENTITIES.map((ent) => (
+                          <div key={ent} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={entities.includes(ent)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEntities([...entities, ent]);
+                                } else {
+                                  setEntities(entities.filter(c => c !== ent));
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-gray-300"
+                            />
+                            <label className="text-sm">{ent}</label>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {entities.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {entities.map((ent) => (
+                        <Badge key={ent} variant="secondary" className="text-xs">
                           {ent}
-                        </SelectItem>
+                          <button
+                            type="button"
+                            onClick={() => setEntities(entities.filter(c => c !== ent))}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </Badge>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
                 </div>
 
                 <div>

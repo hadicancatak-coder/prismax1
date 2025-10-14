@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -44,7 +45,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [status, setStatus] = useState<"Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed">("Ongoing");
   const [jiraLink, setJiraLink] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("unassigned");
-  const [entity, setEntity] = useState<string>("");
+  const [entities, setEntities] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [recurrence, setRecurrence] = useState<string>("none");
   const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number | null>(null);
@@ -86,7 +87,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         description: description || "",
         jira_link: jiraLink || "",
         jira_key: "",
-        entity: entity || undefined,
+        entity: entities.length > 0 ? entities : undefined,
         priority: recurrence !== "none" ? "High" : priority,
         status: (userRole === "member" ? "Pending" : status),
         recurrence_rrule: recurrenceRule || "",
@@ -127,7 +128,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         created_by: user.id,
         assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
         visibility: "global" as "global" | "pool" | "private",
-        entity: entity || null,
+        entity: entities.length > 0 ? entities : [],
         recurrence_rrule: recurrenceRule || null,
         recurrence_day_of_week: recurrenceDayOfWeek,
         recurrence_day_of_month: recurrenceDayOfMonth,
@@ -162,7 +163,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setStatus("Ongoing");
       setJiraLink("");
       setAssigneeId("unassigned");
-      setEntity("");
+      setEntities([]);
       setDate(undefined);
       setRecurrence("none");
       setRecurrenceDayOfWeek(null);
@@ -296,19 +297,51 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Entity</Label>
-              <Select value={entity} onValueChange={setEntity}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ENTITIES.map((ent) => (
-                    <SelectItem key={ent} value={ent}>
+              <Label>Countries (Entity)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-2">
+                    {ENTITIES.map((ent) => (
+                      <div key={ent} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={entities.includes(ent)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEntities([...entities, ent]);
+                            } else {
+                              setEntities(entities.filter(c => c !== ent));
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <label className="text-sm">{ent}</label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {entities.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {entities.map((ent) => (
+                    <Badge key={ent} variant="secondary" className="text-xs">
                       {ent}
-                    </SelectItem>
+                      <button
+                        type="button"
+                        onClick={() => setEntities(entities.filter(c => c !== ent))}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

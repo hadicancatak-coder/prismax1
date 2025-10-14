@@ -622,43 +622,26 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="mb-2 block">Entity</Label>
-                <Select 
-                  value={task.entity || ""} 
-                  onValueChange={async (value) => {
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ entity: value })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      fetchTask();
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select entity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Jordan">Jordan</SelectItem>
-                    <SelectItem value="Lebanon">Lebanon</SelectItem>
-                    <SelectItem value="Kuwait">Kuwait</SelectItem>
-                    <SelectItem value="UAE">UAE</SelectItem>
-                    <SelectItem value="South Africa">South Africa</SelectItem>
-                    <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
-                    <SelectItem value="UK">UK</SelectItem>
-                    <SelectItem value="Latin America">Latin America</SelectItem>
-                    <SelectItem value="Seychelles">Seychelles</SelectItem>
-                    <SelectItem value="Palestine">Palestine</SelectItem>
-                    <SelectItem value="Bahrain">Bahrain</SelectItem>
-                    <SelectItem value="Qatar">Qatar</SelectItem>
-                    <SelectItem value="International">International</SelectItem>
-                    <SelectItem value="Global Management">Global Management</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="mb-2 block">Countries (Entity)</Label>
+                {task.entity && task.entity.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {task.entity.map((ent: string) => (
+                      <Badge key={ent} variant="secondary">
+                        {ent}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No countries assigned</p>
+                )}
               </div>
+              <div>
+                <Label className="mb-2 block">Entity</Label>
+                <p className="text-sm">{task.entity && task.entity.length > 0 ? task.entity.join(', ') : 'None'}</p>
+              </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">Recurring Task</Label>
                 <Select 
