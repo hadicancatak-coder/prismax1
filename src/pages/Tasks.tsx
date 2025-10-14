@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { JiraTasksTable } from "@/components/JiraTasksTable";
+import { TasksTable } from "@/components/TasksTable";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { Button } from "@/components/ui/button";
@@ -90,7 +90,7 @@ export default function Tasks() {
       {loading ? (
         <div className="text-center py-12">Loading tasks...</div>
       ) : (
-        <JiraTasksTable tasks={filteredTasks} onTaskUpdate={fetchTasks} />
+        <TasksTable tasks={filteredTasks} onTaskUpdate={fetchTasks} />
       )}
 
       <CreateTaskDialog
