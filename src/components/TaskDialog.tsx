@@ -55,7 +55,11 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
   
-  const ENTITIES = ["Marketing", "Social UA", "PPC", "Growth", "Product", "Design", "Engineering"];
+  const ENTITIES = [
+    "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
+    "UK", "Latin America", "Seychelles", "Palestine", "Bahrain", "Qatar", 
+    "Global Management"
+  ];
 
   // Validate taskId
   if (!taskId || taskId === "undefined") {
