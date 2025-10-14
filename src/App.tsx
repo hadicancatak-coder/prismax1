@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
 import LaunchPad from "./pages/LaunchPad";
+import Team from "./pages/Team";
 
 
 const queryClient = new QueryClient({
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/launch-pad" element={<LaunchPad />} />
+            <Route path="/team" element={<Team />} />
             
           </Route>
           <Route path="*" element={<NotFound />} />

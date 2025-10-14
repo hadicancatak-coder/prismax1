@@ -41,14 +41,19 @@ export const getDashboardStats = async (userId: string) => {
 };
 
 export const getRecentActivity = async (limit = 10) => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("activity_logs")
     .select(`
       *,
-      user:profiles!activity_logs_user_id_fkey(name, avatar_url)
+      user:user_id(name, avatar_url)
     `)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (error) {
+    console.error("Error fetching activity:", error);
+    return [];
+  }
 
   return data || [];
 };

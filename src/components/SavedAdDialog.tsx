@@ -14,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { AdStrengthIndicator } from "./AdStrengthIndicator";
+import { AdComplianceChecker } from "./AdComplianceChecker";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -210,6 +212,25 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </>
           )}
         </Card>
+
+        <Separator className="my-4" />
+
+        {/* Quality Score */}
+        <AdStrengthIndicator
+          headlines={activeHeadlines}
+          descriptions={activeDescriptions}
+          sitelinks={activeSitelinks.map(s => s.title)}
+          callouts={activeCallouts}
+        />
+
+        {/* Compliance Check */}
+        <AdComplianceChecker
+          headlines={activeHeadlines}
+          descriptions={activeDescriptions}
+          sitelinks={activeSitelinks.map(s => s.title)}
+          callouts={activeCallouts}
+          entity={ad.entity}
+        />
 
         <Separator className="my-4" />
 
