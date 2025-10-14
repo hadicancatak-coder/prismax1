@@ -70,12 +70,13 @@ export function JiraTasksTable({ tasks, compact = true, onTaskUpdate }: JiraTask
               <TableHead className="w-24 font-semibold text-foreground">Key</TableHead>
               <TableHead className="font-semibold text-foreground">Title</TableHead>
               <TableHead className="w-32 font-semibold text-foreground">Status</TableHead>
-              <TableHead className="w-16 font-semibold text-foreground text-center">💬</TableHead>
-              <TableHead className="w-24 font-semibold text-foreground">Sprint</TableHead>
+              <TableHead className="w-24 font-semibold text-foreground">Priority</TableHead>
               <TableHead className="w-32 font-semibold text-foreground">Assignee</TableHead>
               <TableHead className="w-28 font-semibold text-foreground">Due Date</TableHead>
-              <TableHead className="w-24 font-semibold text-foreground">Priority</TableHead>
+              <TableHead className="w-24 font-semibold text-foreground">Entity</TableHead>
+              <TableHead className="w-24 font-semibold text-foreground">Sprint</TableHead>
               <TableHead className="w-32 font-semibold text-foreground">Labels</TableHead>
+              <TableHead className="w-16 font-semibold text-foreground text-center">💬</TableHead>
               <TableHead className="w-28 font-semibold text-foreground">Created</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -105,16 +106,10 @@ export function JiraTasksTable({ tasks, compact = true, onTaskUpdate }: JiraTask
                       {status?.emoji} {task.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center">
-                    {task.comments_count > 0 && (
-                      <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {task.comments_count}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {task.sprint || "-"}
+                  <TableCell>
+                    <Badge variant="outline" className={`text-xs ${priority?.color}`}>
+                      {priority?.emoji} {task.priority}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {task.assignee ? (
@@ -136,10 +131,11 @@ export function JiraTasksTable({ tasks, compact = true, onTaskUpdate }: JiraTask
                   <TableCell className="text-xs">
                     {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`text-xs ${priority?.color}`}>
-                      {priority?.emoji} {task.priority}
-                    </Badge>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {task.entity || "-"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {task.sprint || "-"}
                   </TableCell>
                   <TableCell>
                     {task.labels && task.labels.length > 0 ? (
@@ -157,6 +153,14 @@ export function JiraTasksTable({ tasks, compact = true, onTaskUpdate }: JiraTask
                       </div>
                     ) : (
                       "-"
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {task.comments_count > 0 && (
+                      <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {task.comments_count}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">

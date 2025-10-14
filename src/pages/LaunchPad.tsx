@@ -36,7 +36,7 @@ export default function LaunchPad() {
           *,
           launch_campaign_assignees(
             user_id,
-            profiles:user_id(name, avatar_url)
+            profiles!launch_campaign_assignees_user_id_fkey(name, avatar_url)
           )
         `)
         .order('created_at', { ascending: false });

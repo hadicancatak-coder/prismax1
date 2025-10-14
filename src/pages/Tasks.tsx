@@ -36,7 +36,7 @@ export default function Tasks() {
         .from("tasks")
         .select(`
           *,
-          assignee:assignee_id(name, avatar_url)
+          assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
         `)
         .order("created_at", { ascending: false });
 

@@ -57,8 +57,8 @@ export default function Dashboard() {
             priority,
             due_at,
             created_at,
-            profiles:created_by(name),
-            assignee:assignee_id(name)
+            creator:profiles!tasks_created_by_fkey(name),
+            assignee:profiles!tasks_assignee_id_fkey(name)
           `)
           .order("created_at", { ascending: false })
           .limit(5)
