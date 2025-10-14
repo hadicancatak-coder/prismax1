@@ -506,7 +506,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   }
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-2 border-primary/20">
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
