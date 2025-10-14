@@ -24,10 +24,18 @@ interface QAReport {
 }
 
 export default function QAConsole() {
-  const { userRole } = useAuth();
+  const { userRole, loading } = useAuth();
   const [running, setRunning] = useState(false);
   const [report, setReport] = useState<QAReport | null>(null);
   const { toast } = useToast();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 flex items-center justify-center">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (userRole !== 'admin') {
     return <Navigate to="/" replace />;
