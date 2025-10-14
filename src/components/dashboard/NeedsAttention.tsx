@@ -1,0 +1,85 @@
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Lock, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getNeedsAttention } from "@/lib/dashboardQueries";
+
+export function NeedsAttention() {
+  const [data, setData] = useState<any>({ overdueTasks: [], blockers: [], pendingApprovals: [] });
+
+  useEffect(() => {
+    fetchNeedsAttention();
+  }, []);
+
+  const fetchNeedsAttention = async () => {
+    const result = await getNeedsAttention();
+    setData(result);
+  };
+
+  const totalItems = data.overdueTasks.length + data.blockers.length + data.pendingApprovals.length;
+
+  if (totalItems === 0) return null;
+
+  return (
+    <Card className="p-6 bg-destructive/5 border-destructive/20">
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle className="h-5 w-5 text-destructive" />
+        <h2 className="text-xl font-semibold text-foreground">Needs Attention</h2>
+        <Badge variant="destructive">{totalItems}</Badge>
+      </div>
+      
+      <div className="space-y-3">
+        {data.overdueTasks.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-foreground">Overdue Tasks</span>
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                {data.overdueTasks.length}
+              </Badge>
+            </div>
+            {data.overdueTasks.slice(0, 3).map((task: any) => (
+              <p key={task.id} className="text-sm text-muted-foreground ml-6 mb-1">
+                • {task.title}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {data.blockers.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-foreground">Active Blockers</span>
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                {data.blockers.length}
+              </Badge>
+            </div>
+            {data.blockers.slice(0, 3).map((blocker: any) => (
+              <p key={blocker.id} className="text-sm text-muted-foreground ml-6 mb-1">
+                • {blocker.title}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {data.pendingApprovals.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="h-4 w-4 text-warning" />
+              <span className="text-sm font-medium text-foreground">Pending Approvals</span>
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                {data.pendingApprovals.length}
+              </Badge>
+            </div>
+            {data.pendingApprovals.slice(0, 3).map((task: any) => (
+              <p key={task.id} className="text-sm text-muted-foreground ml-6 mb-1">
+                • {task.title}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}

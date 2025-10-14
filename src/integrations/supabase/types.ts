@@ -1417,6 +1417,10 @@ export type Database = {
         Args: { task_uuid: string }
         Returns: number
       }
+      cleanup_rate_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_all_users_admin: {
         Args: Record<PropertyKey, never>
         Returns: {

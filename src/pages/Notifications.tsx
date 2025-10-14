@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Bell, Check, Trash2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Bell, Check, Trash2, Clock, Users, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Notifications() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -51,10 +51,7 @@ export default function Notifications() {
       .eq("user_id", user?.id)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching notifications:", error);
-      toast({ title: "Error", description: "Failed to load notifications", variant: "destructive" });
-    } else {
+    if (!error) {
       setNotifications(data || []);
     }
     setLoading(false);
@@ -66,9 +63,7 @@ export default function Notifications() {
       .update({ read_at: new Date().toISOString() })
       .eq("id", notificationId);
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to mark as read", variant: "destructive" });
-    } else {
+    if (!error) {
       fetchNotifications();
     }
   };
@@ -79,10 +74,7 @@ export default function Notifications() {
       .delete()
       .eq("id", notificationId);
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to delete notification", variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Notification deleted" });
+    if (!error) {
       fetchNotifications();
     }
   };

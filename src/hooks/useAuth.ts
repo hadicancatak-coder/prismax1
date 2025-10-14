@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -10,11 +10,11 @@ export const useAuth = () => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
   const navigate = useNavigate();
+  const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
   useEffect(() => {
     let mounted = true;
     
-    // Get initial session immediately
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
@@ -29,7 +29,6 @@ export const useAuth = () => {
       setLoading(false);
     });
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
@@ -54,17 +53,22 @@ export const useAuth = () => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    console.log('🔍 Fetching role for:', userId);
+    if (roleCache.current.has(userId)) {
+      setUserRole(roleCache.current.get(userId) || null);
+      setRoleLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-
-    console.log('✅ Role result:', { data, error });
     
     if (data) {
-      setUserRole(data.role as "admin" | "member");
+      const role = data.role as "admin" | "member";
+      setUserRole(role);
+      roleCache.current.set(userId, role);
     } else {
       setUserRole(null);
     }

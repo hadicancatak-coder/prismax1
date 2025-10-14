@@ -452,7 +452,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               <Select 
                 value={task.assignee_id || "unassigned"} 
                 onValueChange={async (value) => {
-                  console.log("🔄 Updating assignee to:", value);
                   const newAssigneeId = value === "unassigned" ? null : value;
                   
                   const { error } = await supabase
@@ -461,14 +460,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     .eq("id", taskId);
                     
                   if (error) {
-                    console.error("❌ Assignee update error:", error);
                     toast({ 
                       title: "Error updating assignee", 
                       description: error.message, 
                       variant: "destructive" 
                     });
                   } else {
-                    console.log("✅ Assignee updated successfully");
                     toast({ 
                       title: "Success", 
                       description: "Assignee updated successfully" 
