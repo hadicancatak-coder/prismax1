@@ -35,7 +35,7 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onCon
       className="p-4 hover:shadow-lg transition-all border-l-4 border-l-primary/30 cursor-pointer"
       onClick={() => onCardClick?.(campaign.id)}
     >
-      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="space-y-3">
         {/* Header: Title + Status */}
         <div className="flex items-start justify-between gap-2">
           <Tooltip>
@@ -140,24 +140,41 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onCon
         {/* Actions */}
         <div className="flex items-center gap-2">
           {showLaunchButton && campaign.status === 'pending' && (
-            <Button size="sm" className="flex-1" onClick={() => onLaunch(campaign.id)}>
+            <Button 
+              size="sm" 
+              className="flex-1" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onLaunch(campaign.id);
+              }}
+            >
               <Rocket className="mr-2 h-3 w-3" />
               Launch Mission
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onConvertToTask?.(campaign)}>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                onConvertToTask?.(campaign);
+              }}>
                 <ListTodo className="mr-2 h-4 w-4" />
                 Convert to Task
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => onDelete?.(campaign.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(campaign.id);
+                }}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
