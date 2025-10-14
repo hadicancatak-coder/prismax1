@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target, Activity } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target, Activity, Rocket } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -21,6 +21,7 @@ const items = [
   { title: "Team Base", url: "/team-base", icon: FolderKanban },
   { title: "Ads Planner", url: "/ads", icon: Megaphone },
   { title: "Campaigns", url: "/campaigns", icon: Target },
+  { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Profile", url: "/profile", icon: User },
 ];

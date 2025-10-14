@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
+import LaunchPad from "./pages/LaunchPad";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/profile/:userId?" element={<Profile />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
+            <Route path="/launch-pad" element={<LaunchPad />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

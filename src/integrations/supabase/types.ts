@@ -53,8 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_comments: {
+        Row: {
+          ad_id: string
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          ad_id: string
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          ad_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_comments_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
+          approval_status: string | null
           callouts: Json
           created_at: string
           created_by: string
@@ -69,6 +102,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          approval_status?: string | null
           callouts?: Json
           created_at?: string
           created_by: string
@@ -83,6 +117,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          approval_status?: string | null
           callouts?: Json
           created_at?: string
           created_by?: string
@@ -326,6 +361,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      launch_campaign_assignees: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          campaign_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          campaign_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          campaign_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "launch_pad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      launch_pad_campaigns: {
+        Row: {
+          captions: string | null
+          created_at: string
+          created_by: string
+          creatives_link: string | null
+          id: string
+          launch_month: string | null
+          launched_at: string | null
+          lp_url: string | null
+          status: string | null
+          teams: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          captions?: string | null
+          created_at?: string
+          created_by: string
+          creatives_link?: string | null
+          id?: string
+          launch_month?: string | null
+          launched_at?: string | null
+          lp_url?: string | null
+          status?: string | null
+          teams?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          captions?: string | null
+          created_at?: string
+          created_by?: string
+          creatives_link?: string | null
+          id?: string
+          launch_month?: string | null
+          launched_at?: string | null
+          lp_url?: string | null
+          status?: string | null
+          teams?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       notification_rate_limit: {
         Row: {
@@ -683,6 +798,7 @@ export type Database = {
           id: string
           jira_key: string | null
           jira_link: string | null
+          labels: string[] | null
           order_index: number | null
           pending_approval: boolean | null
           priority: Database["public"]["Enums"]["task_priority"]
@@ -692,6 +808,7 @@ export type Database = {
           recurrence_day_of_week: number | null
           recurrence_rrule: string | null
           source: Database["public"]["Enums"]["task_source"]
+          sprint: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
@@ -713,6 +830,7 @@ export type Database = {
           id?: string
           jira_key?: string | null
           jira_link?: string | null
+          labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -722,6 +840,7 @@ export type Database = {
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
+          sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
@@ -743,6 +862,7 @@ export type Database = {
           id?: string
           jira_key?: string | null
           jira_link?: string | null
+          labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -752,6 +872,7 @@ export type Database = {
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
           source?: Database["public"]["Enums"]["task_source"]
+          sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
