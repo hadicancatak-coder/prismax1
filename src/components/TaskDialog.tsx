@@ -281,7 +281,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`max-h-[90vh] overflow-hidden transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
+      <DialogContent className={`max-h-[90vh] flex flex-col transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center justify-between">
             {editingTitle ? (
@@ -315,9 +315,9 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           <DialogDescription>Task details and team discussion</DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-4 overflow-hidden">
+        <div className="flex gap-4 flex-1 min-h-0">
           {/* Task Details Section */}
-          <div className={`space-y-6 overflow-y-auto pr-4 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
+          <div className={`space-y-6 overflow-y-auto pr-4 flex-1 min-h-0 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
             <div>
               <Label>Description</Label>
               {editingDescription ? (
@@ -452,15 +452,28 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               <Select 
                 value={task.assignee_id || "unassigned"} 
                 onValueChange={async (value) => {
+                  console.log("🔄 Updating assignee to:", value);
+                  const newAssigneeId = value === "unassigned" ? null : value;
+                  
                   const { error } = await supabase
                     .from("tasks")
-                    .update({ assignee_id: value === "unassigned" ? null : value })
+                    .update({ assignee_id: newAssigneeId })
                     .eq("id", taskId);
+                    
                   if (error) {
-                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                    console.error("❌ Assignee update error:", error);
+                    toast({ 
+                      title: "Error updating assignee", 
+                      description: error.message, 
+                      variant: "destructive" 
+                    });
                   } else {
-                    toast({ title: "Success", description: "Assignee updated" });
-                    fetchTask();
+                    console.log("✅ Assignee updated successfully");
+                    toast({ 
+                      title: "Success", 
+                      description: "Assignee updated successfully" 
+                    });
+                    await fetchTask();
                   }
                 }}
               >
