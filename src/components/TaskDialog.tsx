@@ -16,6 +16,9 @@ import { toast } from "@/hooks/use-toast";
 import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon } from "lucide-react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { BlockerDialog } from "./BlockerDialog";
+import { TaskDependenciesSection } from "./TaskDependenciesSection";
+import { TaskChecklistSection } from "./TaskChecklistSection";
+import { TaskTimeTrackingSection } from "./TaskTimeTrackingSection";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -731,6 +734,31 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 )}
               </div>
             </div>
+
+            {/* Time Tracking Section */}
+            <TaskTimeTrackingSection
+              taskId={taskId}
+              estimatedHours={task.estimated_hours}
+              actualHours={task.actual_hours}
+              onUpdate={fetchTask}
+            />
+
+            <Separator />
+
+            {/* Dependencies Section */}
+            <TaskDependenciesSection
+              taskId={taskId}
+              currentStatus={task.status}
+            />
+
+            <Separator />
+
+            {/* Checklist Section */}
+            <TaskChecklistSection
+              taskId={taskId}
+              initialChecklist={task.checklist || []}
+              onUpdate={fetchTask}
+            />
           </div>
 
           {/* Comments Section - Messaging Style */}

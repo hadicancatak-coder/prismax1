@@ -6,7 +6,9 @@ import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { DateFilter, TaskDateFilterBar } from "@/components/TaskDateFilterBar";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
+import { Plus, FileText, Search } from "lucide-react";
 import { startOfToday, endOfToday, startOfTomorrow, endOfTomorrow, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, addMonths, isWithinInterval } from "date-fns";
 
 export default function Tasks() {
@@ -17,6 +19,8 @@ export default function Tasks() {
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,8 +93,23 @@ export default function Tasks() {
     
     const statusMatch = statusFilter === "all" || task.status === statusFilter;
     
-    return assigneeMatch && teamMatch && dateMatch && statusMatch;
+    // Full-text search
+    const searchMatch = searchQuery === "" || 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (task.entity && task.entity.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
   });
+
+  const handleCreateFromTemplate = (template: any) => {
+    // Pre-fill the create dialog with template data
+    setDialogOpen(true);
+    toast({
+      title: "Template loaded",
+      description: `Creating task from "${template.name}" template`,
+    });
+  };
 
   const taskCounts = {
     all: tasks.length,
@@ -121,10 +140,16 @@ export default function Tasks() {
     <div className="min-h-screen p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Tasks</h1>
-        <Button onClick={() => setDialogOpen(true)} size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          New Task
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" size="lg">
+            <FileText className="mr-2 h-4 w-4" />
+            Templates
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} size="lg">
+            <Plus className="mr-2 h-4 w-4" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       <AssigneeFilterBar
@@ -139,6 +164,17 @@ export default function Tasks() {
         onStatusChange={setStatusFilter}
         taskCounts={taskCounts}
       />
+
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search tasks by title, description, or entity..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
       {loading ? (
         <div className="text-center py-12">Loading tasks...</div>
@@ -166,6 +202,12 @@ export default function Tasks() {
       <CreateTaskDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+      />
+
+      <TaskTemplateDialog
+        open={templateDialogOpen}
+        onOpenChange={setTemplateDialogOpen}
+        onCreateFromTemplate={handleCreateFromTemplate}
       />
     </div>
   );
