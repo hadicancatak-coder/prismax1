@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target, Activity, Rocket } from "lucide-react";
+import { Home, CheckSquare, Calendar, Clock, LayoutDashboard, LogOut, Shield, FileText, User, Bell, FolderKanban, AlertCircle, Megaphone, ListTodo, Target, Activity, Rocket, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -97,6 +97,21 @@ export function AppSidebar() {
                       >
                         <Activity className="h-4 w-4" />
                         <span>Activity Log</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/qa-console"
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-300 shadow-md shadow-sidebar-accent/20"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-sidebar-accent/10 rounded-lg transition-all duration-300"
+                        }
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>QA Console</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

@@ -97,6 +97,7 @@ export type Database = {
           id: string
           landing_page: string | null
           name: string
+          qa_tag: boolean | null
           sitelinks: Json
           updated_at: string
           updated_by: string | null
@@ -112,6 +113,7 @@ export type Database = {
           id?: string
           landing_page?: string | null
           name: string
+          qa_tag?: boolean | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           id?: string
           landing_page?: string | null
           name?: string
+          qa_tag?: boolean | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
@@ -432,6 +435,7 @@ export type Database = {
           launch_month: string | null
           launched_at: string | null
           lp_url: string | null
+          qa_tag: boolean | null
           status: string | null
           teams: string[]
           title: string
@@ -447,6 +451,7 @@ export type Database = {
           launch_month?: string | null
           launched_at?: string | null
           lp_url?: string | null
+          qa_tag?: boolean | null
           status?: string | null
           teams?: string[]
           title: string
@@ -462,6 +467,7 @@ export type Database = {
           launch_month?: string | null
           launched_at?: string | null
           lp_url?: string | null
+          qa_tag?: boolean | null
           status?: string | null
           teams?: string[]
           title?: string
@@ -846,6 +852,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string | null
           project_key: string | null
+          qa_tag: boolean | null
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
           recurrence_rrule: string | null
@@ -878,6 +885,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null
+          qa_tag?: boolean | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
@@ -910,6 +918,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null
+          qa_tag?: boolean | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
@@ -1063,6 +1072,10 @@ export type Database = {
           working_days: string
         }[]
       }
+      get_foreign_keys_info: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1091,9 +1104,17 @@ export type Database = {
         }
         Returns: string
       }
+      purge_qa_test_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       reschedule_overdue_tasks: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      seed_qa_test_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
     }
     Enums: {
