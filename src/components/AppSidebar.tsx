@@ -18,12 +18,11 @@ const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Agenda", url: "/calendar", icon: Calendar },
-  { title: "Base", url: "/team-base", icon: FolderKanban },
   { title: "Ads Planner", url: "/ads", icon: Megaphone },
   { title: "Campaigns", url: "/campaigns", icon: Target },
   { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
-  
   { title: "Notifications", url: "/notifications", icon: Bell },
+  { title: "Base", url: "/team-base", icon: FolderKanban },
   { title: "Profile", url: "/profile", icon: User },
 ];
 
