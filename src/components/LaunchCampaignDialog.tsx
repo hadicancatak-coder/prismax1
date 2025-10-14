@@ -53,15 +53,40 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
     return text.match(urlRegex) || [];
   };
 
-  const handlePasteDetection = (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const pastedText = e.clipboardData.getData('text');
-    const foundLinks = extractAtlassianLinks(pastedText);
+  const handleSmartPaste = (e: React.ClipboardEvent<HTMLInputElement>, field: 'lp' | 'creatives' | 'jira') => {
+    const pastedText = e.clipboardData.getData('text').trim();
     
-    if (foundLinks.length > 0) {
-      setJiraLinks(prev => [...new Set([...prev, ...foundLinks])]);
+    // Auto-detect and route Jira links
+    const foundJiraLinks = extractAtlassianLinks(pastedText);
+    if (foundJiraLinks.length > 0) {
+      e.preventDefault();
+      setJiraLinks(prev => [...new Set([...prev, ...foundJiraLinks])]);
       toast({
-        title: "Jira links detected",
-        description: `Found ${foundLinks.length} Atlassian link(s)`,
+        title: "✓ Jira link added",
+        description: `${foundJiraLinks.length} link(s) detected and saved`,
+      });
+      return;
+    }
+
+    // For non-Jira links, apply to the correct field
+    if (field === 'lp' && pastedText.startsWith('http')) {
+      setLpUrl(pastedText);
+      toast({
+        title: "✓ Landing page link added",
+        description: "URL saved successfully"
+      });
+    } else if (field === 'creatives' && pastedText.startsWith('http')) {
+      setCreativesLink(pastedText);
+      toast({
+        title: "✓ Creative assets link added", 
+        description: "URL saved successfully"
+      });
+    } else if (field === 'jira' && pastedText.startsWith('http')) {
+      setJiraLinks(prev => [...new Set([...prev, pastedText])]);
+      setNewJiraLink("");
+      toast({
+        title: "✓ Link added",
+        description: "Link saved to Jira links"
       });
     }
   };
@@ -278,28 +303,101 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="lpUrl">Landing Page URL</Label>
-            <Input 
-              id="lpUrl" 
-              type="url"
-              value={lpUrl} 
-              onChange={(e) => setLpUrl(e.target.value)}
-              onPaste={handlePasteDetection}
-              placeholder="https://..." 
-            />
-          </div>
+          {/* Consolidated Links & Resources Section */}
+          <div className="space-y-3 p-4 border rounded-lg bg-accent/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Label className="text-base font-semibold">🔗 Links & Resources</Label>
+              <Badge variant="secondary" className="text-xs">Smart paste enabled</Badge>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lpUrl" className="text-sm font-medium">Landing Page</Label>
+                <Input 
+                  id="lpUrl" 
+                  type="url"
+                  value={lpUrl} 
+                  onChange={(e) => setLpUrl(e.target.value)}
+                  onPaste={(e) => handleSmartPaste(e, 'lp')}
+                  placeholder="Paste landing page URL here..."
+                  className="font-mono text-sm"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="creatives">Creative Assets Link</Label>
-            <Input 
-              id="creatives" 
-              type="url"
-              value={creativesLink} 
-              onChange={(e) => setCreativesLink(e.target.value)}
-              onPaste={handlePasteDetection}
-              placeholder="https://..." 
-            />
+              <div className="space-y-1.5">
+                <Label htmlFor="creatives" className="text-sm font-medium">Creative Assets</Label>
+                <Input 
+                  id="creatives" 
+                  type="url"
+                  value={creativesLink} 
+                  onChange={(e) => setCreativesLink(e.target.value)}
+                  onPaste={(e) => handleSmartPaste(e, 'creatives')}
+                  placeholder="Paste creative assets URL here..."
+                  className="font-mono text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Jira / Atlassian Links</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste any Jira or Atlassian link..."
+                    value={newJiraLink}
+                    onChange={(e) => setNewJiraLink(e.target.value)}
+                    onPaste={(e) => handleSmartPaste(e, 'jira')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newJiraLink.trim().startsWith('http')) {
+                          setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                          setNewJiraLink("");
+                        }
+                      }
+                    }}
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (newJiraLink.trim().startsWith('http')) {
+                        setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                        setNewJiraLink("");
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {jiraLinks.length > 0 && (
+                  <div className="space-y-1 mt-2">
+                    {jiraLinks.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-background border rounded text-xs">
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline truncate flex-1 font-mono"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {link}
+                        </a>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setJiraLinks(jiraLinks.filter((_, i) => i !== idx))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -308,70 +406,9 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
               id="captions" 
               value={captions} 
               onChange={(e) => setCaptions(e.target.value)}
-              onPaste={handlePasteDetection}
               placeholder="Enter ad captions and copy" 
               rows={3} 
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Jira Links</Label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Paste Atlassian/Jira link..."
-                  value={newJiraLink}
-                  onChange={(e) => setNewJiraLink(e.target.value)}
-                  onPaste={handlePasteDetection}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
-                        setJiraLinks([...jiraLinks, newJiraLink.trim()]);
-                        setNewJiraLink("");
-                      }
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
-                      setJiraLinks([...jiraLinks, newJiraLink.trim()]);
-                      setNewJiraLink("");
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-              {jiraLinks.length > 0 && (
-                <div className="space-y-1">
-                  {jiraLinks.map((link, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline truncate flex-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {link}
-                      </a>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setJiraLinks(jiraLinks.filter((_, i) => i !== idx))}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
