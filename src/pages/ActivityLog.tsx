@@ -91,33 +91,51 @@ export default function ActivityLog() {
     const from = (pageNum - 1) * LOGS_PER_PAGE;
     const to = from + LOGS_PER_PAGE - 1;
     
+    // Query 1: Fetch activity logs
     const { data, error, count } = await supabase
       .from("activity_logs")
-      .select(`
-        *,
-        user:profiles!activity_logs_user_id_fkey(name, username)
-      `, { count: 'exact' })
+      .select("*", { count: 'exact' })
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {
       console.error("Error fetching activity logs:", error);
       toast.error("Failed to load activity logs");
-    } else if (data) {
-      const logsWithUserInfo = data.map((log: any) => ({
-        ...log,
-        user_name: log.user?.name,
-        user_username: log.user?.username,
-      }));
-      
-      if (pageNum === 1) {
-        setLogs(logsWithUserInfo);
-      } else {
-        setLogs(prev => [...prev, ...logsWithUserInfo]);
-      }
-      
-      setHasMore(data.length === LOGS_PER_PAGE);
+      setLoading(false);
+      return;
     }
+
+    if (!data || data.length === 0) {
+      setLogs([]);
+      setHasMore(false);
+      setLoading(false);
+      return;
+    }
+
+    // Query 2: Fetch user profiles
+    const userIds = [...new Set(data.map(log => log.user_id).filter(Boolean))];
+    
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, name, username")
+      .in("user_id", userIds);
+
+    // Join in memory
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+    
+    const logsWithUserInfo = data.map((log: any) => ({
+      ...log,
+      user_name: profileMap.get(log.user_id)?.name,
+      user_username: profileMap.get(log.user_id)?.username,
+    }));
+    
+    if (pageNum === 1) {
+      setLogs(logsWithUserInfo);
+    } else {
+      setLogs(prev => [...prev, ...logsWithUserInfo]);
+    }
+    
+    setHasMore(data.length === LOGS_PER_PAGE);
     setLoading(false);
   };
 

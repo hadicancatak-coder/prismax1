@@ -288,20 +288,6 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Mission Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">🚧 Prep</SelectItem>
-                <SelectItem value="live">🛰️ Live</SelectItem>
-                <SelectItem value="stopped">☄️ Paused</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

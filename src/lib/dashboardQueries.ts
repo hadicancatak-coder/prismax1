@@ -72,18 +72,35 @@ export const getRecentActivity = async (limit = 10) => {
 };
 
 export const getUpcomingTasks = async (limit = 5) => {
-  const { data } = await supabase
+  // Fetch tasks first
+  const { data: tasks } = await supabase
     .from("tasks")
-    .select(`
-      *,
-      assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
-    `)
+    .select("*")
     .neq("status", "Completed")
     .not("due_at", "is", null)
     .order("due_at", { ascending: true })
     .limit(limit);
 
-  return data || [];
+  if (!tasks || tasks.length === 0) return [];
+
+  // Get unique assignee IDs
+  const assigneeIds = [...new Set(tasks.map(t => t.assignee_id).filter(Boolean))];
+  
+  if (assigneeIds.length === 0) return tasks;
+
+  // Fetch assignee profiles
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, name, avatar_url")
+    .in("user_id", assigneeIds);
+
+  // Join in memory
+  const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+  
+  return tasks.map(task => ({
+    ...task,
+    assignee: task.assignee_id ? profileMap.get(task.assignee_id) : null
+  }));
 };
 
 export const getNeedsAttention = async () => {

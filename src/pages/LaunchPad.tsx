@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Rocket, Satellite, PauseCircle, Building, Radio, Users } from "lucide-react";
 import { LaunchCampaignDialog } from "@/components/LaunchCampaignDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
@@ -108,6 +109,7 @@ export default function LaunchPad() {
           entity: campaign.entity || [],
           due_at: campaign.launch_date || null,
           created_by: user?.id,
+          assignee_id: campaign.launch_campaign_assignees?.[0]?.user_id || null,
           labels: ['campaign', ...(campaign.teams || [])]
         })
         .select()
@@ -200,9 +202,10 @@ export default function LaunchPad() {
   };
 
 
-  const socialUACampaigns = campaigns.filter(c => c.teams?.includes('Social UA'));
-  const ppcCampaigns = campaigns.filter(c => c.teams?.includes('PPC'));
   const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
+  const socialUACampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('Social UA'));
+  const ppcCampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('PPC'));
+  const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
   const inOrbitCampaigns = campaigns.filter(c => c.status === 'live');
 
   return (
@@ -340,28 +343,29 @@ export default function LaunchPad() {
         </Card>
 
         {/* In Orbit Column */}
-        <Card className="border-success/50 bg-success/5">
+        <Card className="border-primary/50 bg-primary/5">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Satellite className="h-4 w-4" />
-              🛰️ In Orbit
+              🌍 In Orbit
+              <Badge variant="outline">{orbitCampaigns.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {inOrbitCampaigns.map(campaign => (
+            {orbitCampaigns.map(campaign => (
               <LaunchCampaignCard 
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
                 onDelete={handleDelete}
+                showLaunchButton={false}
                 onCardClick={(id) => {
                   setSelectedCampaignId(id);
                   setDetailDialogOpen(true);
                 }}
               />
             ))}
-            {inOrbitCampaigns.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No missions currently in orbit</p>
+            {orbitCampaigns.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">No completed missions yet</p>
             )}
           </CardContent>
         </Card>

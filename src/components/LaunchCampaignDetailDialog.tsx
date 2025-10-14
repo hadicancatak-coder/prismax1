@@ -304,6 +304,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                   <SelectContent>
                     <SelectItem value="pending">🚧 In Prep</SelectItem>
                     <SelectItem value="live">🛰️ Live</SelectItem>
+                    <SelectItem value="orbit">🌍 In Orbit</SelectItem>
                     <SelectItem value="paused">☄️ Paused</SelectItem>
                     <SelectItem value="stopped">🔴 Stopped</SelectItem>
                   </SelectContent>
@@ -375,11 +376,14 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                     <Badge variant="outline" className={
                       campaign.status === 'live' 
                         ? "bg-success/10 text-success border-success/20"
+                        : campaign.status === 'orbit'
+                        ? "bg-primary/10 text-primary border-primary/20"
                         : campaign.status === 'pending'
                         ? "bg-warning/10 text-warning border-warning/20"
                         : "bg-muted"
                     }>
                       {campaign.status === 'live' ? '🛰️ Live' : 
+                       campaign.status === 'orbit' ? '🌍 In Orbit' :
                        campaign.status === 'pending' ? '🚧 In Prep' :
                        campaign.status === 'paused' ? '☄️ Paused' : '🔴 Stopped'}
                     </Badge>

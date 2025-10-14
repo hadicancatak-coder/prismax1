@@ -4,19 +4,28 @@
  */
 
 export const ENTITIES = [
+  "Global Management",
   "Jordan",
+  "UAE",
   "Lebanon",
   "Kuwait",
-  "UAE",
-  "South Africa",
-  "Azerbaijan",
+  "Oman",
+  "Iraq",
   "UK",
-  "Latin America",
-  "Seychelles",
-  "Palestine",
-  "Bahrain",
+  "Nigeria",
   "Qatar",
-  "Global Management"
+  "India",
+  "South Africa",
+  "Egypt",
+  "Malaysia",
+  "Chile",
+  "Vietnam",
+  "Bahrain",
+  "Palestine",
+  "Azerbaijan",
+  "Seychelles",
+  "Mauritius",
+  "Vanuatu"
 ];
 
 export const TEAMS = ["Social UA", "PPC"];

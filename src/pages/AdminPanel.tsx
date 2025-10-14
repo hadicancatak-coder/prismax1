@@ -83,28 +83,24 @@ export default function AdminPanel() {
     
     // Parallel queries for better performance
     const [
-      { data: allTasks },
-      { data: pendingTasks },
+      { data: allTasksData },
+      { data: pendingTasksData },
       { data: profilesWithRoles }
     ] = await Promise.all([
-      // Query 1: All tasks
+      // Query 1: All tasks with FULL fields
       supabase
         .from("tasks")
-        .select("id, assignee_id, status, blocker_reason, created_at")
+        .select("*")
         .order("created_at", { ascending: false }),
       
-      // Query 2: Pending approval tasks with joins
+      // Query 2: Pending approval tasks (full data)
       supabase
         .from("tasks")
-        .select(`
-          *,
-          requester:profiles!tasks_approval_requested_by_fkey(name, avatar_url),
-          assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
-        `)
+        .select("*")
         .eq("pending_approval", true)
         .order("approval_requested_at", { ascending: false }),
       
-      // Query 3: Profiles with roles in ONE query
+      // Query 3: Profiles with roles
       supabase
         .from("profiles")
         .select(`
@@ -117,9 +113,37 @@ export default function AdminPanel() {
         `)
     ]);
 
-    // Build member statistics in memory (faster than multiple DB queries)
+    // Query 4: Fetch profiles for task assignees and requesters
+    const allUserIds = [
+      ...new Set([
+        ...(allTasksData || []).map(t => t.assignee_id).filter(Boolean),
+        ...(pendingTasksData || []).map(t => t.assignee_id).filter(Boolean),
+        ...(pendingTasksData || []).map(t => t.approval_requested_by).filter(Boolean),
+      ])
+    ];
+
+    const { data: taskProfiles } = await supabase
+      .from("profiles")
+      .select("user_id, name, avatar_url")
+      .in("user_id", allUserIds);
+
+    const profileMap = new Map(taskProfiles?.map(p => [p.user_id, p]) || []);
+
+    // Enrich tasks with assignee data
+    const enrichedAllTasks = (allTasksData || []).map(task => ({
+      ...task,
+      assignee: task.assignee_id ? profileMap.get(task.assignee_id) : null,
+    }));
+
+    const enrichedPendingTasks = (pendingTasksData || []).map(task => ({
+      ...task,
+      requester: task.approval_requested_by ? profileMap.get(task.approval_requested_by) : null,
+      assignee: task.assignee_id ? profileMap.get(task.assignee_id) : null,
+    }));
+
+    // Build member statistics in memory
     const memberStats = (profilesWithRoles || []).map(profile => {
-      const memberTasks = (allTasks || []).filter(t => t.assignee_id === profile.user_id);
+      const memberTasks = enrichedAllTasks.filter(t => t.assignee_id === profile.user_id);
       const totalTasks = memberTasks.length;
       const completedTasks = memberTasks.filter(t => t.status === "Completed").length;
       const inProgressTasks = memberTasks.filter(t => t.status === "Ongoing").length;
@@ -142,8 +166,8 @@ export default function AdminPanel() {
       };
     });
 
-    setAllTasks(allTasks || []);
-    setPendingTasks(pendingTasks || []);
+    setAllTasks(enrichedAllTasks);
+    setPendingTasks(enrichedPendingTasks);
     setMembers(memberStats);
     setLoading(false);
   };
@@ -292,7 +316,7 @@ export default function AdminPanel() {
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="tasks">All Tasks</TabsTrigger>
               <TabsTrigger value="approvals">
                 Pending Approvals
@@ -300,7 +324,6 @@ export default function AdminPanel() {
                   <Badge className="ml-2 bg-gradient-primary">{pendingTasks.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="team">Team Overview</TabsTrigger>
             </TabsList>
 
         <TabsContent value="tasks" className="mt-6">
@@ -362,8 +385,22 @@ export default function AdminPanel() {
                           {task.priority}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {task.assignee_id ? "Assigned" : "Unassigned"}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {task.assignee ? (
+                            <>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={task.assignee.avatar_url || ""} />
+                                <AvatarFallback className="text-xs">
+                                  {task.assignee.name?.[0] || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm text-foreground">{task.assignee.name}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Unassigned</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {task.due_at ? new Date(task.due_at).toLocaleDateString() : "No due date"}
@@ -433,100 +470,7 @@ export default function AdminPanel() {
             </Card>
           )}
         </TabsContent>
-
-        <TabsContent value="team" className="mt-6 space-y-4">
-          {members.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No team members found</p>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {members.map((member) => (
-                <Card key={member.user_id} className="p-6 transition-all hover:shadow-medium animate-slide-up">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Avatar>
-                          <AvatarImage src={member.avatar_url || ""} />
-                          <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
-                        </div>
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                          {member.role}
-                        </Badge>
-                        {member.username && (
-                          <Badge variant="outline" className="bg-muted text-muted-foreground">
-                            @{member.username}
-                          </Badge>
-                        )}
-                      </div>
-                    <div className="grid grid-cols-5 gap-4 mt-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Total</p>
-                        <p className="text-2xl font-bold text-foreground">{member.totalTasks}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">In Progress</p>
-                        <p className="text-2xl font-bold text-warning">{member.inProgressTasks}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Pending</p>
-                        <p className="text-2xl font-bold text-pending">{member.pendingTasks}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Blocked</p>
-                        <p className="text-2xl font-bold text-destructive">{member.blockedTasks}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Completed</p>
-                        <p className="text-2xl font-bold text-success">{member.completedTasks}</p>
-                      </div>
-                    </div>
-                    {member.blockerDetails && member.blockerDetails.length > 0 && (
-                      <div className="mt-4 p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
-                        <p className="text-xs font-semibold text-destructive mb-2">Active Blockers:</p>
-                        {member.blockerDetails.slice(0, 2).map((blockedTask: any) => (
-                          <div key={blockedTask.id} className="text-xs text-muted-foreground mb-1">
-                            • {blockedTask.blocker_reason || "No reason provided"}
-                          </div>
-                        ))}
-                        {member.blockerDetails.length > 2 && (
-                          <p className="text-xs text-muted-foreground mt-1">+{member.blockerDetails.length - 2} more</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <Select value={member.role} onValueChange={(value) => handleRoleChange(member.user_id, value as "admin" | "member")}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setMemberToRemove(member.user_id);
-                        setRemoveDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-          </Tabs>
+      </Tabs>
         </div>
 
         <div className="col-span-1">
