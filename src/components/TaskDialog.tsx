@@ -16,6 +16,7 @@ import { toast } from "@/hooks/use-toast";
 import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon } from "lucide-react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { MentionAutocomplete } from "@/components/MentionAutocomplete";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { BlockerDialog } from "./BlockerDialog";
 import { TaskDependenciesSection } from "./TaskDependenciesSection";
 import { TaskChecklistSection } from "./TaskChecklistSection";
@@ -481,14 +482,17 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div>
               <Label className="mb-2 block">Assignee</Label>
-              <Select 
-                value={task.assignee_id || "unassigned"} 
-                onValueChange={async (value) => {
-                  const newAssigneeId = value === "unassigned" ? null : value;
-                  
+              <AssigneeSelector
+                users={profiles.map(p => ({
+                  user_id: p.user_id,
+                  name: p.name || p.email,
+                  email: p.email
+                }))}
+                selectedUserId={task.assignee_id}
+                onSelectUser={async (userId) => {
                   const { error } = await supabase
                     .from("tasks")
-                    .update({ assignee_id: newAssigneeId })
+                    .update({ assignee_id: userId })
                     .eq("id", taskId);
                     
                   if (error) {
@@ -505,19 +509,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     await fetchTask();
                   }
                 }}
-              >
-                <SelectTrigger className="border-2 border-primary/20">
-                  <SelectValue placeholder="Select assignee" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.user_id} value={profile.user_id}>
-                      {profile.name || profile.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             {task.status === "Blocked" && (
