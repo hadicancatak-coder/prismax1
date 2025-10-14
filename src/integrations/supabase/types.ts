@@ -672,7 +672,10 @@ export type Database = {
           created_at: string
           created_by: string
           creatives_link: string | null
+          description: string | null
+          entity: string[] | null
           id: string
+          launch_date: string | null
           launch_month: string | null
           launched_at: string | null
           lp_url: string | null
@@ -689,7 +692,10 @@ export type Database = {
           created_at?: string
           created_by: string
           creatives_link?: string | null
+          description?: string | null
+          entity?: string[] | null
           id?: string
+          launch_date?: string | null
           launch_month?: string | null
           launched_at?: string | null
           lp_url?: string | null
@@ -706,7 +712,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           creatives_link?: string | null
+          description?: string | null
+          entity?: string[] | null
           id?: string
+          launch_date?: string | null
           launch_month?: string | null
           launched_at?: string | null
           lp_url?: string | null

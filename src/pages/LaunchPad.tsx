@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Rocket, Satellite, PauseCircle } from "lucide-react";
 import { LaunchCampaignDialog } from "@/components/LaunchCampaignDialog";
 import { LaunchCampaignCard } from "@/components/LaunchCampaignCard";
+import { format } from "date-fns";
 
 export default function LaunchPad() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -60,68 +61,158 @@ export default function LaunchPad() {
         .eq('id', id);
 
       if (error) throw error;
-      toast({ title: "🚀 Campaign Launched!", description: "Mission is now in orbit" });
+      toast({ title: "🚀 Mission launched successfully", description: "Mission is now live in orbit" });
     } catch (error: any) {
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
     }
   };
 
-  const handleConvertToTask = async (campaign: any) => {
+  const handleDelete = async (id: string) => {
     try {
-      const confirmed = confirm(`Convert "${campaign.title}" to a task?`);
+      const campaign = campaigns.find(c => c.id === id);
+      const confirmed = confirm(
+        `Delete "${campaign?.title}"?\n\n` +
+        `This will permanently remove the mission and cannot be undone.`
+      );
       if (!confirmed) return;
 
+      // Delete assignees first (foreign key constraint)
+      await supabase
+        .from('launch_campaign_assignees')
+        .delete()
+        .eq('campaign_id', id);
+
+      // Delete campaign
+      const { error } = await supabase
+        .from('launch_pad_campaigns')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({ 
+        title: "Mission deleted", 
+        description: "Campaign has been removed from Launch Pad" 
+      });
+      
+      fetchCampaigns();
+    } catch (error: any) {
+      toast({ 
+        title: "Delete failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const buildTaskDescription = (campaign: any) => {
+    let desc = `## 🚀 Campaign Launch Mission\n\n`;
+    desc += `**Mission:** ${campaign.title}\n\n`;
+    
+    if (campaign.description) {
+      desc += `**Mission Brief:**\n${campaign.description}\n\n`;
+    }
+    
+    if (campaign.teams?.length > 0) {
+      desc += `**Launch Teams:** ${campaign.teams.join(', ')}\n`;
+    }
+    
+    if (campaign.entity?.length > 0) {
+      desc += `**Target Countries:** ${campaign.entity.join(', ')}\n`;
+    }
+    
+    if (campaign.launch_date) {
+      desc += `**Launch Date:** ${format(new Date(campaign.launch_date), 'MMMM dd, yyyy')}\n`;
+    }
+    
+    desc += `\n---\n\n`;
+    
+    if (campaign.lp_url) {
+      desc += `**Landing Page:** ${campaign.lp_url}\n`;
+    }
+    
+    if (campaign.creatives_link) {
+      desc += `**Creative Assets:** ${campaign.creatives_link}\n`;
+    }
+    
+    if (campaign.captions) {
+      desc += `\n**Ad Copy & Captions:**\n${campaign.captions}\n`;
+    }
+    
+    return desc;
+  };
+
+  const handleConvertToTask = async (campaign: any) => {
+    try {
+      const confirmed = confirm(
+        `Convert "${campaign.title}" to a task?\n\n` +
+        `This will create a task and assign it to ${campaign.launch_campaign_assignees?.length || 0} team member(s). ` +
+        `The mission status will be set to Live.`
+      );
+      if (!confirmed) return;
+
+      // Create task with full campaign details
       const { data: newTask, error: taskError } = await supabase
         .from('tasks')
         .insert({
-          title: campaign.title,
-          description: `Campaign Launch: ${campaign.title}\n\nLaunch Month: ${campaign.launch_month}\nTeams: ${campaign.teams?.join(', ') || 'N/A'}`,
+          title: `🚀 ${campaign.title}`,
+          description: buildTaskDescription(campaign),
           task_type: 'campaign_launch',
           campaign_id: campaign.id,
           status: 'Pending',
           priority: 'High',
-          entity: campaign.teams && campaign.teams.length > 0 ? campaign.teams : [],
-          due_at: campaign.launch_month ? new Date(campaign.launch_month).toISOString() : null,
-          created_by: user?.id
+          entity: campaign.entity || [],
+          due_at: campaign.launch_date || null,
+          created_by: user?.id,
+          labels: ['campaign', ...(campaign.teams || [])]
         })
         .select()
         .single();
 
       if (taskError) throw taskError;
 
+      // Assign to all campaign assignees
       if (campaign.launch_campaign_assignees?.length > 0) {
         const assignments = campaign.launch_campaign_assignees.map((assignee: any) => ({
           task_id: newTask.id,
           user_id: assignee.user_id,
           assigned_by: user?.id
         }));
-
+        
         await supabase.from('task_assignees').insert(assignments);
-
+        
+        // Notify all assignees
         const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
           user_id: assignee.user_id,
-          type: 'campaign_converted_to_task',
+          type: 'task_assigned',
           payload_json: {
             task_id: newTask.id,
             task_title: newTask.title,
+            assigned_by: user?.id,
             campaign_id: campaign.id,
-            campaign_title: campaign.title,
-            message: `Campaign "${campaign.title}" has been converted to a task and assigned to you`
+            message: `Mission "${campaign.title}" has been converted to a task`
           }
         }));
-
+        
         await supabase.from('notifications').insert(notifications);
       }
 
+      // Mark campaign as converted AND set to live
       await supabase
         .from('launch_pad_campaigns')
         .update({ 
           converted_to_task: true,
-          task_id: newTask.id
+          task_id: newTask.id,
+          status: 'live',
+          launched_at: new Date().toISOString()
         })
         .eq('id', campaign.id);
 
-      toast({ title: "✅ Converted to Task", description: `"${campaign.title}" is now a task` });
+      toast({ 
+        title: "Mission converted to task successfully", 
+        description: `Task created and ${campaign.launch_campaign_assignees?.length || 0} crew member(s) notified`,
+      });
+      
       fetchCampaigns();
     } catch (error: any) {
       toast({ title: "Conversion failed", description: error.message, variant: "destructive" });
@@ -139,14 +230,36 @@ export default function LaunchPad() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
-            Launch Pad
+            Campaign Launch Pad
           </h1>
-          <p className="text-muted-foreground mt-1">Mission control for campaign launches</p>
+          <p className="text-muted-foreground mt-1">Mission control for creating, tracking, and launching campaigns</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Campaign
+        <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Mission
         </Button>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">Total Missions</div>
+          <div className="text-2xl font-bold">{campaigns.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">🚧 In Prep</div>
+          <div className="text-2xl font-bold">{pendingCampaigns.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">🛰️ Live</div>
+          <div className="text-2xl font-bold">{inOrbitCampaigns.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">Crew Members</div>
+          <div className="text-2xl font-bold">
+            {new Set(campaigns.flatMap(c => c.launch_campaign_assignees?.map((a: any) => a.user_id) || [])).size}
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -162,10 +275,11 @@ export default function LaunchPad() {
                 campaign={campaign} 
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
+                onDelete={handleDelete}
               />
             ))}
             {socialUACampaigns.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No campaigns yet</p>
+              <p className="text-sm text-muted-foreground text-center py-8">No missions in this phase</p>
             )}
           </CardContent>
         </Card>
@@ -182,10 +296,11 @@ export default function LaunchPad() {
                 campaign={campaign} 
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
+                onDelete={handleDelete}
               />
             ))}
             {ppcCampaigns.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No campaigns yet</p>
+              <p className="text-sm text-muted-foreground text-center py-8">No missions in this phase</p>
             )}
           </CardContent>
         </Card>
@@ -204,11 +319,12 @@ export default function LaunchPad() {
                 campaign={campaign} 
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
+                onDelete={handleDelete}
                 showLaunchButton
               />
             ))}
             {pendingCampaigns.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">🚀 Ready for Liftoff</p>
+              <p className="text-sm text-muted-foreground text-center py-8">All missions cleared for launch</p>
             )}
           </CardContent>
         </Card>
@@ -228,10 +344,11 @@ export default function LaunchPad() {
                 campaign={campaign} 
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
+                onDelete={handleDelete}
               />
             ))}
             {inOrbitCampaigns.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No active missions</p>
+              <p className="text-sm text-muted-foreground text-center py-8">No missions currently in orbit</p>
             )}
           </CardContent>
         </Card>

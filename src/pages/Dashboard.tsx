@@ -7,6 +7,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WhatsNext } from "@/components/dashboard/WhatsNext";
 import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
+import { UpcomingCampaigns } from "@/components/dashboard/UpcomingCampaigns";
 import { getDashboardStats } from "@/lib/dashboardQueries";
 import { NewsTicker } from "@/components/NewsTicker";
 
@@ -66,6 +67,8 @@ export default function Dashboard() {
       <NewsTicker />
 
       <StatsCards stats={stats} onStatClick={handleStatClick} />
+
+      <UpcomingCampaigns />
 
       <NeedsAttention />
 
