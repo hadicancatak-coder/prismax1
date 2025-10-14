@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { Activity, User, FileText, Briefcase, Flag, AlertCircle } from "lucide-react";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -46,12 +48,21 @@ const ACTION_COLORS = {
 };
 
 export default function ActivityLog() {
+  const { userRole, loading: authLoading } = useAuth();
   const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
+
+  if (authLoading) {
+    return null;
+  }
+
+  if (userRole !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
 
   useEffect(() => {
     fetchLogs();

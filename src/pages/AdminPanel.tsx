@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function AdminPanel() {
-  const { userRole } = useAuth();
+  const { userRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
@@ -44,6 +44,13 @@ export default function AdminPanel() {
   const [userManagementOpen, setUserManagementOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+
+  // Redirect non-admins
+  useEffect(() => {
+    if (!authLoading && userRole !== 'admin') {
+      navigate('/');
+    }
+  }, [authLoading, userRole, navigate]);
 
   useEffect(() => {
     // Only redirect if we've confirmed user is NOT an admin
