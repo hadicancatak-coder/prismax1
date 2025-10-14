@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, Users, Search } from "lucide-react";
 
 export default function Team() {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,11 @@ export default function Team() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProfiles.map((profile) => (
-          <Card key={profile.user_id} className="p-6 hover:shadow-lg transition-shadow">
+          <Card 
+            key={profile.user_id} 
+            className="p-6 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02]"
+            onClick={() => navigate(`/profile/${profile.user_id}`)}
+          >
             <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={profile.avatar_url} />
@@ -110,6 +116,7 @@ export default function Team() {
                       <a 
                         href={`mailto:${profile.email}`}
                         className="hover:text-primary hover:underline truncate"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {profile.email}
                       </a>
@@ -122,6 +129,7 @@ export default function Team() {
                       <a 
                         href={`tel:${profile.phone_number}`}
                         className="hover:text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {profile.phone_number}
                       </a>
