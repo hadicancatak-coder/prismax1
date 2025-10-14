@@ -227,7 +227,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                       onTaskUpdate();
                     }}
                   >
-                    <SelectTrigger className="w-full border-0 shadow-none hover:bg-accent">
+                    <SelectTrigger className="w-full h-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                       <SelectValue>
                         {task.assignee ? (
                           <div className="flex items-center gap-2">
@@ -244,7 +244,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                         )}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[200] bg-background border-2 border-border shadow-2xl max-h-[300px]" align="start" sideOffset={5}>
                       <SelectItem value="unassigned">
                         <span className="text-muted-foreground">Unassigned</span>
                       </SelectItem>
