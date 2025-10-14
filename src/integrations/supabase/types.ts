@@ -425,6 +425,7 @@ export type Database = {
       launch_pad_campaigns: {
         Row: {
           captions: string | null
+          converted_to_task: boolean | null
           created_at: string
           created_by: string
           creatives_link: string | null
@@ -433,6 +434,7 @@ export type Database = {
           launched_at: string | null
           lp_url: string | null
           status: string | null
+          task_id: string | null
           teams: string[]
           title: string
           updated_at: string
@@ -440,6 +442,7 @@ export type Database = {
         }
         Insert: {
           captions?: string | null
+          converted_to_task?: boolean | null
           created_at?: string
           created_by: string
           creatives_link?: string | null
@@ -448,6 +451,7 @@ export type Database = {
           launched_at?: string | null
           lp_url?: string | null
           status?: string | null
+          task_id?: string | null
           teams?: string[]
           title: string
           updated_at?: string
@@ -455,6 +459,7 @@ export type Database = {
         }
         Update: {
           captions?: string | null
+          converted_to_task?: boolean | null
           created_at?: string
           created_by?: string
           creatives_link?: string | null
@@ -463,12 +468,21 @@ export type Database = {
           launched_at?: string | null
           lp_url?: string | null
           status?: string | null
+          task_id?: string | null
           teams?: string[]
           title?: string
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "launch_pad_campaigns_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_rate_limit: {
         Row: {
@@ -826,9 +840,12 @@ export type Database = {
       }
       tasks: {
         Row: {
+          approval_requested_at: string | null
+          approval_requested_by: string | null
           assignee_id: string | null
           blocker_id: string | null
           blocker_reason: string | null
+          campaign_id: string | null
           created_at: string
           created_by: string | null
           delete_requested_at: string | null
@@ -849,18 +866,23 @@ export type Database = {
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
           recurrence_rrule: string | null
+          requested_status: Database["public"]["Enums"]["task_status"] | null
           source: Database["public"]["Enums"]["task_source"]
           sprint: string | null
           status: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"] | null
           title: string
           updated_at: string
           updated_by: string | null
           visibility: Database["public"]["Enums"]["task_visibility"]
         }
         Insert: {
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
           assignee_id?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
+          campaign_id?: string | null
           created_at?: string
           created_by?: string | null
           delete_requested_at?: string | null
@@ -881,18 +903,23 @@ export type Database = {
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
+          requested_status?: Database["public"]["Enums"]["task_status"] | null
           source?: Database["public"]["Enums"]["task_source"]
           sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          task_type?: Database["public"]["Enums"]["task_type"] | null
           title: string
           updated_at?: string
           updated_by?: string | null
           visibility?: Database["public"]["Enums"]["task_visibility"]
         }
         Update: {
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
           assignee_id?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
+          campaign_id?: string | null
           created_at?: string
           created_by?: string | null
           delete_requested_at?: string | null
@@ -913,9 +940,11 @@ export type Database = {
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
           recurrence_rrule?: string | null
+          requested_status?: Database["public"]["Enums"]["task_status"] | null
           source?: Database["public"]["Enums"]["task_source"]
           sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          task_type?: Database["public"]["Enums"]["task_type"] | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -923,10 +952,38 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "tasks_approval_requested_by_fkey"
+            columns: ["approval_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_approval_requested_by_fkey"
+            columns: ["approval_requested_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "tasks_blocker_id_fkey"
             columns: ["blocker_id"]
             isOneToOne: false
             referencedRelation: "blockers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "launch_campaigns_with_assignees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "launch_pad_campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -1101,6 +1158,7 @@ export type Database = {
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
+      task_type: "task" | "campaign_launch"
       task_visibility: "global" | "pool" | "private"
       team: "SocialUA" | "PPC" | "PerMar"
     }
@@ -1234,6 +1292,7 @@ export const Constants = {
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],
       task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
+      task_type: ["task", "campaign_launch"],
       task_visibility: ["global", "pool", "private"],
       team: ["SocialUA", "PPC", "PerMar"],
     },

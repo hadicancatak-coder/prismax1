@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Rocket, Satellite, PauseCircle } from "lucide-react";
@@ -12,6 +13,7 @@ export default function LaunchPad() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchCampaigns();
@@ -64,6 +66,68 @@ export default function LaunchPad() {
     }
   };
 
+  const handleConvertToTask = async (campaign: any) => {
+    try {
+      const confirmed = confirm(`Convert "${campaign.title}" to a task?`);
+      if (!confirmed) return;
+
+      const { data: newTask, error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          title: campaign.title,
+          description: `Campaign Launch: ${campaign.title}\n\nLaunch Month: ${campaign.launch_month}\nTeams: ${campaign.teams?.join(', ') || 'N/A'}`,
+          task_type: 'campaign_launch',
+          campaign_id: campaign.id,
+          status: 'Pending',
+          priority: 'High',
+          entity: campaign.teams?.[0] || 'Marketing',
+          due_at: campaign.launch_month ? new Date(campaign.launch_month).toISOString() : null,
+          created_by: user?.id
+        })
+        .select()
+        .single();
+
+      if (taskError) throw taskError;
+
+      if (campaign.launch_campaign_assignees?.length > 0) {
+        const assignments = campaign.launch_campaign_assignees.map((assignee: any) => ({
+          task_id: newTask.id,
+          user_id: assignee.user_id,
+          assigned_by: user?.id
+        }));
+
+        await supabase.from('task_assignees').insert(assignments);
+
+        const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
+          user_id: assignee.user_id,
+          type: 'campaign_converted_to_task',
+          payload_json: {
+            task_id: newTask.id,
+            task_title: newTask.title,
+            campaign_id: campaign.id,
+            campaign_title: campaign.title,
+            message: `Campaign "${campaign.title}" has been converted to a task and assigned to you`
+          }
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      await supabase
+        .from('launch_pad_campaigns')
+        .update({ 
+          converted_to_task: true,
+          task_id: newTask.id
+        })
+        .eq('id', campaign.id);
+
+      toast({ title: "✅ Converted to Task", description: `"${campaign.title}" is now a task` });
+      fetchCampaigns();
+    } catch (error: any) {
+      toast({ title: "Conversion failed", description: error.message, variant: "destructive" });
+    }
+  };
+
   const socialUACampaigns = campaigns.filter(c => c.teams?.includes('Social UA'));
   const ppcCampaigns = campaigns.filter(c => c.teams?.includes('PPC'));
   const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
@@ -97,6 +161,7 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
+                onConvertToTask={handleConvertToTask}
               />
             ))}
             {socialUACampaigns.length === 0 && (
@@ -116,6 +181,7 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
+                onConvertToTask={handleConvertToTask}
               />
             ))}
             {ppcCampaigns.length === 0 && (
@@ -137,6 +203,7 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
+                onConvertToTask={handleConvertToTask}
                 showLaunchButton
               />
             ))}
@@ -160,6 +227,7 @@ export default function LaunchPad() {
                 key={campaign.id} 
                 campaign={campaign} 
                 onLaunch={handleLaunch}
+                onConvertToTask={handleConvertToTask}
               />
             ))}
             {inOrbitCampaigns.length === 0 && (

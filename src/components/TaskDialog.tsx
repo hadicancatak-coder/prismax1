@@ -342,15 +342,56 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 <Select 
                   value={task.status} 
                   onValueChange={async (value: any) => {
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ status: value })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    if (userRole === 'admin') {
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ status: value })
+                        .eq("id", taskId);
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        setTask({ ...task, status: value });
+                        fetchTask();
+                      }
+                      return;
+                    }
+
+                    const requiresApproval = ['Completed', 'Failed', 'Blocked'].includes(value);
+                    
+                    if (requiresApproval) {
+                      const confirmed = confirm(`Request admin approval to mark this task as ${value}?`);
+                      if (!confirmed) return;
+                      
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ 
+                          pending_approval: true,
+                          approval_requested_at: new Date().toISOString(),
+                          approval_requested_by: user?.id,
+                          requested_status: value
+                        })
+                        .eq("id", taskId);
+                        
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        toast({ 
+                          title: "Approval Requested", 
+                          description: "Admin will review your request" 
+                        });
+                        fetchTask();
+                      }
                     } else {
-                      setTask({ ...task, status: value });
-                      fetchTask();
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ status: value })
+                        .eq("id", taskId);
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        setTask({ ...task, status: value });
+                        fetchTask();
+                      }
                     }
                   }}
                 >
@@ -365,6 +406,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     <SelectItem value="Failed">Failed</SelectItem>
                   </SelectContent>
                 </Select>
+                
+                {task.pending_approval && (
+                  <Badge variant="outline" className="mt-2 bg-blue-500/10 text-blue-500">
+                    ⏳ Awaiting Admin Approval for: {task.requested_status}
+                  </Badge>
+                )}
               </div>
               <div>
                 <Label className="mb-2 block">Priority</Label>
@@ -656,12 +703,49 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
                   {comments.length > 0 ? (
                     comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3 animate-fade-in">
+                      <div key={comment.id} className="flex gap-3 animate-fade-in group">
                         <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage src={comment.profiles?.avatar_url} />
                           <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 bg-muted rounded-lg p-3">
+                        <div className="flex-1 bg-muted rounded-lg p-3 relative">
+                          {comment.author_id === user?.id && (
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                                onClick={async () => {
+                                  const newBody = prompt("Edit comment:", comment.body);
+                                  if (newBody && newBody.trim()) {
+                                    await supabase
+                                      .from('comments')
+                                      .update({ body: newBody.trim() })
+                                      .eq('id', comment.id);
+                                    fetchComments();
+                                    toast({ title: "Comment updated" });
+                                  }
+                                }}
+                              >
+                                ✏️
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-destructive"
+                                onClick={async () => {
+                                  if (confirm("Delete this comment?")) {
+                                    await supabase.from('comments').delete().eq('id', comment.id);
+                                    fetchComments();
+                                    toast({ title: "Comment deleted" });
+                                  }
+                                }}
+                              >
+                                🗑️
+                              </Button>
+                            </div>
+                          )}
+                          
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-sm">{comment.profiles?.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -671,7 +755,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                               })}
                             </span>
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">
+                          <p className="text-sm whitespace-pre-wrap break-words">
                             {comment.body.split(/(@\w+)/g).map((part: string, i: number) => {
                               if (part.startsWith('@')) {
                                 const username = part.substring(1);
@@ -711,11 +795,11 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                             handleCommentSubmit();
                           }
                         }}
-                        maxLength={100}
+                        maxLength={500}
                         className="pr-10"
                       />
-                      <span className={`absolute left-2 -top-5 text-xs ${newComment.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {newComment.length}/100
+                      <span className={`absolute left-2 -top-5 text-xs ${newComment.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {newComment.length}/500
                       </span>
                       <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                         <PopoverTrigger asChild>

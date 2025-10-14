@@ -2,15 +2,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Rocket, ExternalLink } from "lucide-react";
+import { Rocket, ExternalLink, MoreVertical, ListTodo } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface LaunchCampaignCardProps {
   campaign: any;
   onLaunch: (id: string) => void;
   showLaunchButton?: boolean;
+  onConvertToTask?: (campaign: any) => void;
 }
 
-export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton }: LaunchCampaignCardProps) {
+export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onConvertToTask }: LaunchCampaignCardProps) {
   const statusConfig = {
     live: { label: "🛰️ In Orbit", className: "bg-success/10 text-success border-success/20" },
     pending: { label: "🚀 Ready for Liftoff", className: "bg-warning/10 text-warning border-warning/20" },
@@ -73,16 +80,32 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton }: Lau
           </div>
         )}
 
-        {showLaunchButton && campaign.status === 'pending' && (
-          <Button 
-            size="sm" 
-            className="w-full mt-2" 
-            onClick={() => onLaunch(campaign.id)}
-          >
-            <Rocket className="mr-2 h-3 w-3" />
-            Launch
-          </Button>
-        )}
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onConvertToTask?.(campaign)}>
+                <ListTodo className="mr-2 h-4 w-4" />
+                Convert to Task
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {showLaunchButton && campaign.status === 'pending' && (
+            <Button 
+              size="sm" 
+              className="flex-1" 
+              onClick={() => onLaunch(campaign.id)}
+            >
+              <Rocket className="mr-2 h-3 w-3" />
+              Launch
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );

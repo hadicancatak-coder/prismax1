@@ -45,31 +45,21 @@ export default function AdminPanel() {
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
-  // Redirect non-admins
   useEffect(() => {
-    if (!authLoading && userRole !== 'admin') {
-      navigate('/');
-    }
-  }, [authLoading, userRole, navigate]);
-
-  useEffect(() => {
-    // Only redirect if we've confirmed user is NOT an admin
-    // Don't redirect while still loading the role
-    if (userRole === null) return; // Still loading
+    if (authLoading) return;
     
-    if (userRole !== "admin") {
+    if (userRole !== 'admin') {
       toast({
         title: "Access Denied",
         description: "You need admin privileges to access this page",
         variant: "destructive",
       });
-      navigate("/");
+      navigate('/');
       return;
     }
     
     fetchData();
 
-    // Real-time subscription for instant updates
     const channel = supabase
       .channel("admin-updates")
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
@@ -80,7 +70,7 @@ export default function AdminPanel() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userRole, navigate]);
+  }, [authLoading, userRole, navigate]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,9 +84,13 @@ export default function AdminPanel() {
     // Fetch pending approval tasks
     const { data: pending } = await supabase
       .from("tasks")
-      .select("*")
-      .eq("status", "Pending")
-      .order("created_at", { ascending: false });
+      .select(`
+        *,
+        requester:profiles!tasks_approval_requested_by_fkey(name, avatar_url),
+        assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
+      `)
+      .eq("pending_approval", true)
+      .order("approval_requested_at", { ascending: false });
 
     // Fetch all members with their tasks
     const { data: profiles } = await supabase
@@ -143,43 +137,71 @@ export default function AdminPanel() {
 
   const handleApproval = async (taskId: string, approved: boolean) => {
     const task = pendingTasks.find(t => t.id === taskId);
+    if (!task) return;
     
-    const { error } = await supabase
-      .from("tasks")
-      .update({ 
-        status: approved ? "Ongoing" : "Failed",
-        pending_approval: false
-      })
-      .eq("id", taskId);
+    if (approved) {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ 
+          status: task.requested_status,
+          pending_approval: false,
+          approval_requested_at: null,
+          approval_requested_by: null,
+          requested_status: null
+        })
+        .eq("id", taskId);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      if (task.approval_requested_by) {
+        await supabase.from("notifications").insert({
+          user_id: task.approval_requested_by,
+          type: "status_change_approved",
+          payload_json: { 
+            task_id: taskId, 
+            task_title: task.title,
+            new_status: task.requested_status,
+            message: `Your request to mark "${task.title}" as ${task.requested_status} has been approved`
+          }
+        });
+      }
+
+      toast({ title: "✅ Approved", description: `Task marked as ${task.requested_status}` });
+    } else {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ 
+          pending_approval: false,
+          approval_requested_at: null,
+          approval_requested_by: null,
+          requested_status: null
+        })
+        .eq("id", taskId);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      if (task.approval_requested_by) {
+        await supabase.from("notifications").insert({
+          user_id: task.approval_requested_by,
+          type: "status_change_rejected",
+          payload_json: { 
+            task_id: taskId, 
+            task_title: task.title,
+            requested_status: task.requested_status,
+            message: `Your request to mark "${task.title}" as ${task.requested_status} was rejected`
+          }
+        });
+      }
+
+      toast({ title: "❌ Rejected", description: "Status change request rejected" });
     }
-
-    // Send notification to task creator
-    if (approved && task?.created_by) {
-      await supabase.from("notifications").insert({
-        user_id: task.created_by,
-        type: "task_updated",
-        payload_json: { 
-          task_id: taskId, 
-          task_title: task.title,
-          message: "Your task has been approved and is now In Progress"
-        }
-      });
-    }
-
-    toast({
-      title: approved ? "Task Approved" : "Task Rejected",
-      description: `Task has been ${approved ? "approved and moved to In Progress" : "rejected"}.`,
-    });
     
-    // Immediately refetch to show changes
     await fetchData();
   };
 
