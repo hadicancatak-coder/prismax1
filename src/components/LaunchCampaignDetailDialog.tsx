@@ -38,6 +38,8 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
   const [creativesLink, setCreativesLink] = useState("");
   const [captions, setCaptions] = useState("");
   const [status, setStatus] = useState("pending");
+  const [jiraLinks, setJiraLinks] = useState<string[]>([]);
+  const [newJiraLink, setNewJiraLink] = useState("");
 
   useEffect(() => {
     if (open && campaignId) {
@@ -72,6 +74,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
       setCreativesLink(data.creatives_link || "");
       setCaptions(data.captions || "");
       setStatus(data.status || "pending");
+      setJiraLinks(Array.isArray(data.jira_links) ? data.jira_links.filter((l): l is string => typeof l === 'string') : []);
     }
     setLoading(false);
   };
@@ -103,6 +106,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
         lp_url: lpUrl.trim() || null,
         creatives_link: creativesLink.trim() || null,
         captions: captions.trim() || null,
+        jira_links: jiraLinks,
         status
       })
       .eq("id", campaignId);
@@ -296,6 +300,65 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
               </div>
 
               <div className="space-y-2">
+                <Label>Jira Links</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Paste Atlassian/Jira link..."
+                      value={newJiraLink}
+                      onChange={(e) => setNewJiraLink(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
+                            setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                            setNewJiraLink("");
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
+                          setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                          setNewJiraLink("");
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {jiraLinks.length > 0 && (
+                    <div className="space-y-1">
+                      {jiraLinks.map((link, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <a
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline truncate flex-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {link}
+                          </a>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setJiraLinks(jiraLinks.filter((_, i) => i !== idx))}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="status">Mission Status</Label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger>
@@ -429,6 +492,26 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                 <div className="border-t pt-4">
                   <Label className="text-muted-foreground">Ad Copy & Captions</Label>
                   <p className="text-sm mt-2 whitespace-pre-wrap">{campaign.captions}</p>
+                </div>
+              )}
+
+              {campaign.jira_links && campaign.jira_links.length > 0 && (
+                <div className="border-t pt-4">
+                  <Label className="text-muted-foreground">Jira Links</Label>
+                  <div className="space-y-1 mt-2">
+                    {campaign.jira_links.map((link: string, idx: number) => (
+                      <a
+                        key={idx}
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline block"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {link}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
 

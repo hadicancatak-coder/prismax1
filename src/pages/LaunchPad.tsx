@@ -96,6 +96,14 @@ export default function LaunchPad() {
         desc += `\n**Ad Copy & Captions:**\n${campaign.captions}\n`;
       }
 
+      // Add Jira Links section
+      if (campaign.jira_links && campaign.jira_links.length > 0) {
+        desc += `\n**Jira Tickets:**\n`;
+        campaign.jira_links.forEach((link: string) => {
+          desc += `- ${link}\n`;
+        });
+      }
+
       // Create task with full campaign details
       const { data: newTask, error: taskError } = await supabase
         .from('tasks')
@@ -110,7 +118,9 @@ export default function LaunchPad() {
           due_at: campaign.launch_date || null,
           created_by: user?.id,
           assignee_id: campaign.launch_campaign_assignees?.[0]?.user_id || null,
-          labels: ['campaign', ...(campaign.teams || [])]
+          labels: ['campaign', ...(campaign.teams || [])],
+          jira_link: campaign.jira_links?.[0] || null,
+          jira_links: campaign.jira_links || []
         })
         .select()
         .single();

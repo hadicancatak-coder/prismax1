@@ -675,6 +675,7 @@ export type Database = {
           description: string | null
           entity: string[] | null
           id: string
+          jira_links: Json | null
           launch_date: string | null
           launch_month: string | null
           launched_at: string | null
@@ -695,6 +696,7 @@ export type Database = {
           description?: string | null
           entity?: string[] | null
           id?: string
+          jira_links?: Json | null
           launch_date?: string | null
           launch_month?: string | null
           launched_at?: string | null
@@ -715,6 +717,7 @@ export type Database = {
           description?: string | null
           entity?: string[] | null
           id?: string
+          jira_links?: Json | null
           launch_date?: string | null
           launch_month?: string | null
           launched_at?: string | null
@@ -1199,6 +1202,7 @@ export type Database = {
           id: string
           jira_key: string | null
           jira_link: string | null
+          jira_links: Json | null
           labels: string[] | null
           order_index: number | null
           pending_approval: boolean | null
@@ -1239,6 +1243,7 @@ export type Database = {
           id?: string
           jira_key?: string | null
           jira_link?: string | null
+          jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null
@@ -1279,6 +1284,7 @@ export type Database = {
           id?: string
           jira_key?: string | null
           jira_link?: string | null
+          jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null

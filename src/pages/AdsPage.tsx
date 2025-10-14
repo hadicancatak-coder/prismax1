@@ -631,7 +631,14 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </Card>
             ) : (
               filteredSavedAds.map((ad) => (
-                <Card key={ad.id} className="hover:shadow-md transition-shadow">
+                <Card 
+                  key={ad.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    setSelectedAd(ad);
+                    setAdDialogOpen(true);
+                  }}
+                >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -653,7 +660,8 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedAd(ad);
                           setAdDialogOpen(true);
                         }}
@@ -662,11 +670,13 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                       </Button>
                     </div>
                     <Separator className="my-4" />
-                    <AdApprovalSection 
-                      adId={ad.id} 
-                      currentStatus={ad.approval_status || 'pending'}
-                      onStatusChange={fetchSavedAds}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <AdApprovalSection 
+                        adId={ad.id} 
+                        currentStatus={ad.approval_status || 'pending'}
+                        onStatusChange={fetchSavedAds}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               ))

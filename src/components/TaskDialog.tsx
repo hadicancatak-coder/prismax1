@@ -53,6 +53,9 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [editingEntities, setEditingEntities] = useState(false);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [jiraLinks, setJiraLinks] = useState<string[]>([]);
+  const [newJiraLink, setNewJiraLink] = useState("");
+  const [showJiraInput, setShowJiraInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
@@ -146,6 +149,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       });
       
       setSelectedEntities(data.entity || []);
+      setJiraLinks(Array.isArray(data.jira_links) ? data.jira_links.filter((l): l is string => typeof l === 'string') : []);
     } catch (error) {
       console.error("Error fetching task:", error);
       toast({ title: "Error", description: "Failed to load task details", variant: "destructive" });
@@ -715,19 +719,97 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             )}
 
 
-            {task.jira_link && (
-              <div>
-                <Label>Jira Link</Label>
-                <a
-                  href={task.jira_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline block mt-1"
+            {/* Jira Links Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Jira Links</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowJiraInput(!showJiraInput)}
                 >
-                  {task.jira_link}
-                </a>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Link
+                </Button>
               </div>
-            )}
+              
+              {jiraLinks.length > 0 ? (
+                <div className="space-y-1">
+                  {jiraLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded group">
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline truncate flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {link}
+                      </a>
+                      {(userRole === 'admin' || task.created_by === user?.id) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100"
+                          onClick={async () => {
+                            const updated = jiraLinks.filter((_, i) => i !== idx);
+                            setJiraLinks(updated);
+                            await supabase
+                              .from('tasks')
+                              .update({ jira_links: updated })
+                              .eq('id', taskId);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No Jira links added</p>
+              )}
+              
+              {showJiraInput && (
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    placeholder="Paste Atlassian/Jira link..."
+                    value={newJiraLink}
+                    onChange={(e) => setNewJiraLink(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && newJiraLink.trim().includes('atlassian')) {
+                        e.preventDefault();
+                        const updated = [...jiraLinks, newJiraLink.trim()];
+                        setJiraLinks(updated);
+                        setNewJiraLink("");
+                        setShowJiraInput(false);
+                        await supabase
+                          .from('tasks')
+                          .update({ jira_links: updated })
+                          .eq('id', taskId);
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (newJiraLink.trim().includes('atlassian')) {
+                        const updated = [...jiraLinks, newJiraLink.trim()];
+                        setJiraLinks(updated);
+                        setNewJiraLink("");
+                        setShowJiraInput(false);
+                        await supabase
+                          .from('tasks')
+                          .update({ jira_links: updated })
+                          .eq('id', taskId);
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <div>
               <Label>Due Date</Label>

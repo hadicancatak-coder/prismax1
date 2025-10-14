@@ -4,8 +4,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { useEffect, useState } from "react";
 import { getUpcomingTasks } from "@/lib/dashboardQueries";
+import { useNavigate } from "react-router-dom";
 
 export function WhatsNext() {
+  const navigate = useNavigate();
   const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
 
   useEffect(() => {
@@ -34,7 +36,8 @@ export function WhatsNext() {
             upcomingTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-all"
+                onClick={() => navigate('/tasks')}
+                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-all cursor-pointer"
               >
                 <div className="flex-1">
                   <h3 className="font-medium text-foreground text-sm mb-1">{task.title}</h3>

@@ -49,6 +49,21 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    const atlassianLinks = pastedText.match(/https?:\/\/[^\s]+atlassian[^\s]*/gi);
+    
+    if (atlassianLinks && atlassianLinks.length > 0) {
+      setJiraLink(atlassianLinks[0]);
+      if (atlassianLinks.length > 1) {
+        toast({
+          title: "Multiple Jira links detected",
+          description: "Using first link. You can add more after creating the task.",
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     if (open && userRole === "admin") {
       fetchUsers();
@@ -285,6 +300,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               placeholder="https://jira.company.com/browse/TASK-123"
               value={jiraLink}
               onChange={(e) => setJiraLink(e.target.value)}
+              onPaste={handleJiraLinkPaste}
               className={validationErrors.jira_link ? "border-destructive" : ""}
             />
             {validationErrors.jira_link && (

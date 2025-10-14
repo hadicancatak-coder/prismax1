@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,8 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
   const [status, setStatus] = useState("pending");
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [jiraLinks, setJiraLinks] = useState<string[]>([]);
+  const [newJiraLink, setNewJiraLink] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,6 +46,24 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
   const fetchUsers = async () => {
     const { data } = await supabase.from('profiles').select('user_id, name, teams');
     setUsers(data || []);
+  };
+
+  const extractAtlassianLinks = (text: string): string[] => {
+    const urlRegex = /https?:\/\/[^\s]+atlassian[^\s]*/gi;
+    return text.match(urlRegex) || [];
+  };
+
+  const handlePasteDetection = (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    const foundLinks = extractAtlassianLinks(pastedText);
+    
+    if (foundLinks.length > 0) {
+      setJiraLinks(prev => [...new Set([...prev, ...foundLinks])]);
+      toast({
+        title: "Jira links detected",
+        description: `Found ${foundLinks.length} Atlassian link(s)`,
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -68,6 +88,7 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
           creatives_link: creativesLink.trim() || null,
           captions: captions.trim() || null,
           lp_url: lpUrl.trim() || null,
+          jira_links: jiraLinks,
           status,
           created_by: userId
         })
@@ -109,6 +130,8 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
     setCreativesLink("");
     setCaptions("");
     setLpUrl("");
+    setJiraLinks([]);
+    setNewJiraLink("");
     setStatus("pending");
   };
 
@@ -261,7 +284,8 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
               id="lpUrl" 
               type="url"
               value={lpUrl} 
-              onChange={(e) => setLpUrl(e.target.value)} 
+              onChange={(e) => setLpUrl(e.target.value)}
+              onPaste={handlePasteDetection}
               placeholder="https://..." 
             />
           </div>
@@ -272,7 +296,8 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
               id="creatives" 
               type="url"
               value={creativesLink} 
-              onChange={(e) => setCreativesLink(e.target.value)} 
+              onChange={(e) => setCreativesLink(e.target.value)}
+              onPaste={handlePasteDetection}
               placeholder="https://..." 
             />
           </div>
@@ -282,10 +307,71 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
             <Textarea 
               id="captions" 
               value={captions} 
-              onChange={(e) => setCaptions(e.target.value)} 
+              onChange={(e) => setCaptions(e.target.value)}
+              onPaste={handlePasteDetection}
               placeholder="Enter ad captions and copy" 
               rows={3} 
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Jira Links</Label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Paste Atlassian/Jira link..."
+                  value={newJiraLink}
+                  onChange={(e) => setNewJiraLink(e.target.value)}
+                  onPaste={handlePasteDetection}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
+                        setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                        setNewJiraLink("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (newJiraLink.trim() && newJiraLink.includes('atlassian')) {
+                      setJiraLinks([...jiraLinks, newJiraLink.trim()]);
+                      setNewJiraLink("");
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              {jiraLinks.length > 0 && (
+                <div className="space-y-1">
+                  {jiraLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline truncate flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {link}
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setJiraLinks(jiraLinks.filter((_, i) => i !== idx))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
