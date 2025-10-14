@@ -56,6 +56,13 @@ export default function ActivityLog() {
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
 
+  // Move useEffect BEFORE early returns to follow Rules of Hooks
+  useEffect(() => {
+    if (!authLoading && !roleLoading && userRole === 'admin') {
+      fetchLogs();
+    }
+  }, [authLoading, roleLoading, userRole]);
+
   // Wait for BOTH auth AND role to load
   if (authLoading || roleLoading) {
     return (
@@ -69,10 +76,6 @@ export default function ActivityLog() {
     console.warn('❌ Access denied - not admin');
     return <Navigate to="/" replace />;
   }
-
-  useEffect(() => {
-    fetchLogs();
-  }, []);
 
   const fetchLogs = async () => {
     setLoading(true);
