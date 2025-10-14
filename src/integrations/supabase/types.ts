@@ -163,6 +163,13 @@ export type Database = {
             referencedRelation: "blockers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "blocker_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       blockers: {
@@ -249,6 +256,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -389,7 +403,21 @@ export type Database = {
             foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
+            referencedRelation: "launch_campaigns_with_assignees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
             referencedRelation: "launch_pad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "launch_campaign_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -565,6 +593,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       project_timelines: {
@@ -705,6 +740,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -957,11 +999,31 @@ export type Database = {
       }
     }
     Views: {
+      launch_campaigns_with_assignees: {
+        Row: {
+          assignees: Json | null
+          captions: string | null
+          created_at: string | null
+          created_by: string | null
+          creatives_link: string | null
+          id: string | null
+          launch_month: string | null
+          launched_at: string | null
+          lp_url: string | null
+          status: string | null
+          teams: string[] | null
+          title: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
           name: string | null
           tagline: string | null
+          teams: Database["public"]["Enums"]["team"][] | null
           title: string | null
           user_id: string | null
           username: string | null
@@ -970,6 +1032,7 @@ export type Database = {
           avatar_url?: string | null
           name?: string | null
           tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string | null
           username?: string | null
@@ -978,6 +1041,7 @@ export type Database = {
           avatar_url?: string | null
           name?: string | null
           tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string | null
           username?: string | null
