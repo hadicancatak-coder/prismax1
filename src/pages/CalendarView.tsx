@@ -10,13 +10,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { TaskDialog } from "@/components/TaskDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle, Rocket } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
   const { user, userRole } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -31,6 +33,7 @@ export default function CalendarView() {
   useEffect(() => {
     fetchUserWorkingDays();
     fetchTasks();
+    fetchCampaigns();
     if (userRole === "admin") {
       fetchUsers();
     }
@@ -38,6 +41,11 @@ export default function CalendarView() {
     const tasksChannel = supabase
       .channel('tasks-calendar')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchTasks())
+      .subscribe();
+
+    const campaignsChannel = supabase
+      .channel('campaigns-calendar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'launch_pad_campaigns' }, () => fetchCampaigns())
       .subscribe();
 
     const profilesChannel = supabase
@@ -56,6 +64,7 @@ export default function CalendarView() {
 
     return () => { 
       supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(campaignsChannel);
       supabase.removeChannel(profilesChannel);
     };
   }, [selectedUserId, userRole, user?.id]);
@@ -98,6 +107,40 @@ export default function CalendarView() {
     } else {
       setTasks(data || []);
     }
+  };
+
+  const fetchCampaigns = async () => {
+    let query = supabase
+      .from("launch_pad_campaigns")
+      .select(`
+        *,
+        launch_campaign_assignees(
+          user_id,
+          profiles(name, avatar_url)
+        )
+      `)
+      .not("launch_date", "is", null);
+
+    if (userRole !== "admin" && user?.id) {
+      const { data: assignedCampaigns } = await supabase
+        .from("launch_campaign_assignees")
+        .select("campaign_id")
+        .eq("user_id", user.id);
+      
+      const campaignIds = assignedCampaigns?.map(a => a.campaign_id) || [];
+      query = query.in("id", campaignIds.length > 0 ? campaignIds : ['']);
+    } else if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
+      const { data: assignedCampaigns } = await supabase
+        .from("launch_campaign_assignees")
+        .select("campaign_id")
+        .eq("user_id", selectedUserId);
+      
+      const campaignIds = assignedCampaigns?.map(a => a.campaign_id) || [];
+      query = query.in("id", campaignIds.length > 0 ? campaignIds : ['']);
+    }
+
+    const { data } = await query;
+    setCampaigns(data || []);
   };
 
   const moveTask = async (taskId: string, newDate: Date) => {
@@ -152,6 +195,12 @@ export default function CalendarView() {
     }
     
     return filtered;
+  };
+
+  const getCampaignsForDate = (date: Date) => {
+    return campaigns.filter(campaign => 
+      campaign.launch_date && isSameDay(parseISO(campaign.launch_date), date)
+    );
   };
 
   const navigateDate = (direction: "prev" | "next") => {
@@ -256,8 +305,75 @@ export default function CalendarView() {
     );
   };
 
+  // Campaign Card Component
+  const CampaignCard = ({ campaign, compact = false }: any) => {
+    return (
+      <div className="group p-4 border border-primary/30 rounded-lg hover:shadow-md transition-all bg-primary/5">
+        <div className="flex items-start gap-3">
+          <Rocket className="h-5 w-5 text-primary mt-0.5" />
+          
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium mb-1 flex items-center gap-2">
+              {campaign.title}
+              <Badge variant="outline" className="text-xs">
+                🚀 Campaign
+              </Badge>
+            </h4>
+            {!compact && campaign.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                {campaign.description}
+              </p>
+            )}
+
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {campaign.teams?.map((team: string) => (
+                <Badge key={team} variant="secondary" className="text-xs">
+                  {team}
+                </Badge>
+              ))}
+              {campaign.entity?.slice(0, 2).map((country: string) => (
+                <Badge key={country} variant="outline" className="text-xs">
+                  🌍 {country}
+                </Badge>
+              ))}
+              <Badge 
+                variant="outline" 
+                className={
+                  campaign.status === 'live' 
+                    ? "bg-success/10 text-success border-success/20"
+                    : "bg-warning/10 text-warning border-warning/20"
+                }
+              >
+                {campaign.status === 'live' ? '🛰️ Live' : '🚧 Prep'}
+              </Badge>
+            </div>
+
+            {campaign.launch_campaign_assignees?.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex -space-x-2">
+                  {campaign.launch_campaign_assignees.slice(0, 3).map((assignee: any) => (
+                    <Avatar key={assignee.user_id} className="h-6 w-6 border-2 border-background">
+                      <AvatarImage src={assignee.profiles?.avatar_url} />
+                      <AvatarFallback className="text-xs">
+                        {assignee.profiles?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {campaign.launch_campaign_assignees.length} assigned
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderDailyView = () => {
     const dayTasks = getTasksForDate(currentDate);
+    const dayCampaigns = getCampaignsForDate(currentDate);
     const isToday = isSameDay(currentDate, new Date());
     
     const overdueTasks = dayTasks.filter(t => t.status !== 'Completed' && new Date(t.due_at) < new Date());
@@ -274,7 +390,7 @@ export default function CalendarView() {
               {isToday ? "Today's Agenda" : format(currentDate, "EEEE, MMMM dd, yyyy")}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {dayTasks.length} tasks • {completedTasks.length} completed • {inProgressTasks.length} in progress
+              {dayTasks.length} tasks • {dayCampaigns.length} campaigns • {completedTasks.length} completed
             </p>
           </div>
           <div className="flex gap-2">
@@ -357,10 +473,26 @@ export default function CalendarView() {
             </Card>
           )}
 
-          {dayTasks.length === 0 && (
+          {dayCampaigns.length > 0 && (
+            <Card className="p-6 border-primary/20 bg-primary/5">
+              <div className="flex items-center gap-2 mb-4">
+                <Rocket className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-lg">
+                  Campaign Launches ({dayCampaigns.length})
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {dayCampaigns.map(campaign => (
+                  <CampaignCard key={campaign.id} campaign={campaign} />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {dayTasks.length === 0 && dayCampaigns.length === 0 && (
             <Card className="p-12 text-center">
               <p className="text-muted-foreground text-lg">
-                {isToday ? "No tasks scheduled for today! 🎉" : "No tasks scheduled for this day"}
+                {isToday ? "No tasks or campaigns scheduled for today! 🎉" : "No tasks or campaigns scheduled for this day"}
               </p>
               <Button variant="outline" className="mt-4" onClick={() => setCurrentDate(new Date())}>
                 Go to Today

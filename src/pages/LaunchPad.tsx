@@ -4,8 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Rocket, Satellite, PauseCircle } from "lucide-react";
+import { Plus, Rocket, Satellite, PauseCircle, Building, Radio, Users } from "lucide-react";
 import { LaunchCampaignDialog } from "@/components/LaunchCampaignDialog";
+import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { LaunchCampaignCard } from "@/components/LaunchCampaignCard";
 import { format } from "date-fns";
 
@@ -13,6 +14,8 @@ export default function LaunchPad() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -241,28 +244,48 @@ export default function LaunchPad() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Total Missions</div>
-          <div className="text-2xl font-bold">{campaigns.length}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">🚧 In Prep</div>
-          <div className="text-2xl font-bold">{pendingCampaigns.length}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">🛰️ Live</div>
-          <div className="text-2xl font-bold">{inOrbitCampaigns.length}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Crew Members</div>
-          <div className="text-2xl font-bold">
-            {new Set(campaigns.flatMap(c => c.launch_campaign_assignees?.map((a: any) => a.user_id) || [])).size}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <Card className="p-6 border-l-4 border-l-primary">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">Total Missions</p>
+            <p className="text-3xl font-bold">{campaigns.length}</p>
           </div>
-        </Card>
-      </div>
+          <Rocket className="h-10 w-10 text-primary/20" />
+        </div>
+      </Card>
+      <Card className="p-6 border-l-4 border-l-warning">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">🚧 In Prep</p>
+            <p className="text-3xl font-bold">{pendingCampaigns.length}</p>
+          </div>
+          <Building className="h-10 w-10 text-warning/20" />
+        </div>
+      </Card>
+      <Card className="p-6 border-l-4 border-l-success">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">🛰️ Live</p>
+            <p className="text-3xl font-bold">{inOrbitCampaigns.length}</p>
+          </div>
+          <Radio className="h-10 w-10 text-success/20" />
+        </div>
+      </Card>
+      <Card className="p-6 border-l-4 border-l-accent">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">Crew Members</p>
+            <p className="text-3xl font-bold">
+              {new Set(campaigns.flatMap(c => c.launch_campaign_assignees?.map((a: any) => a.user_id) || [])).size}
+            </p>
+          </div>
+          <Users className="h-10 w-10 text-accent/20" />
+        </div>
+      </Card>
+    </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Social UA Column */}
         <Card>
           <CardHeader className="pb-3">
@@ -276,6 +299,10 @@ export default function LaunchPad() {
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
+                onCardClick={(id) => {
+                  setSelectedCampaignId(id);
+                  setDetailDialogOpen(true);
+                }}
               />
             ))}
             {socialUACampaigns.length === 0 && (
@@ -297,6 +324,10 @@ export default function LaunchPad() {
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
+                onCardClick={(id) => {
+                  setSelectedCampaignId(id);
+                  setDetailDialogOpen(true);
+                }}
               />
             ))}
             {ppcCampaigns.length === 0 && (
@@ -321,6 +352,10 @@ export default function LaunchPad() {
                 onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
                 showLaunchButton
+                onCardClick={(id) => {
+                  setSelectedCampaignId(id);
+                  setDetailDialogOpen(true);
+                }}
               />
             ))}
             {pendingCampaigns.length === 0 && (
@@ -345,6 +380,10 @@ export default function LaunchPad() {
                 onLaunch={handleLaunch}
                 onConvertToTask={handleConvertToTask}
                 onDelete={handleDelete}
+                onCardClick={(id) => {
+                  setSelectedCampaignId(id);
+                  setDetailDialogOpen(true);
+                }}
               />
             ))}
             {inOrbitCampaigns.length === 0 && (
@@ -358,6 +397,13 @@ export default function LaunchPad() {
         open={dialogOpen} 
         onOpenChange={setDialogOpen}
         onSuccess={fetchCampaigns}
+      />
+
+      <LaunchCampaignDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        campaignId={selectedCampaignId}
+        onUpdate={fetchCampaigns}
       />
     </div>
   );

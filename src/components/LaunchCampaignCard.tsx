@@ -18,9 +18,10 @@ interface LaunchCampaignCardProps {
   showLaunchButton?: boolean;
   onConvertToTask?: (campaign: any) => void;
   onDelete?: (id: string) => void;
+  onCardClick?: (id: string) => void;
 }
 
-export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onConvertToTask, onDelete }: LaunchCampaignCardProps) {
+export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onConvertToTask, onDelete, onCardClick }: LaunchCampaignCardProps) {
   const statusConfig = {
     live: { label: "🛰️ Live", className: "bg-success/10 text-success border-success/20" },
     pending: { label: "🚧 Prep", className: "bg-warning/10 text-warning border-warning/20" },
@@ -30,8 +31,11 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onCon
   const config = statusConfig[campaign.status as keyof typeof statusConfig];
 
   return (
-    <Card className="p-4 hover:shadow-lg transition-all border-l-4 border-l-primary/30">
-      <div className="space-y-3">
+    <Card 
+      className="p-4 hover:shadow-lg transition-all border-l-4 border-l-primary/30 cursor-pointer"
+      onClick={() => onCardClick?.(campaign.id)}
+    >
+      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
         {/* Header: Title + Status */}
         <div className="flex items-start justify-between gap-2">
           <Tooltip>
