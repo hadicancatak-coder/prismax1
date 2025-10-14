@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { TEAMS, ENTITIES } from "@/lib/constants";
+import { TEAMS, ENTITIES, TEAM_LABELS } from "@/lib/constants";
 
 interface LaunchCampaignDialogProps {
   open: boolean;
@@ -206,7 +206,7 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
                     onCheckedChange={() => toggleTeam(team)}
                   />
                   <Label htmlFor={`team-${team}`} className="text-sm font-normal cursor-pointer">
-                    {team}
+                    {TEAM_LABELS[team] || team}
                   </Label>
                 </div>
               ))}

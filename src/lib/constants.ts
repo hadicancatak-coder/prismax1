@@ -28,7 +28,14 @@ export const ENTITIES = [
   "Vanuatu"
 ];
 
-export const TEAMS = ["Social UA", "PPC"];
+export const TEAMS = ["SocialUA", "PPC", "PerMar"];
+
+// Display labels for teams (for UI)
+export const TEAM_LABELS: Record<string, string> = {
+  "SocialUA": "Social UA",
+  "PPC": "PPC",
+  "PerMar": "Performance Marketing"
+};
 
 export const MONTHS = [
   "January",

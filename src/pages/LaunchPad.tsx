@@ -138,7 +138,7 @@ export default function LaunchPad() {
 
 
   const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
-  const socialUACampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('Social UA'));
+  const socialUACampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('SocialUA'));
   const ppcCampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('PPC'));
   const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
   const inOrbitCampaigns = campaigns.filter(c => c.status === 'live');

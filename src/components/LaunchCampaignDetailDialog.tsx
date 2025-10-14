@@ -196,7 +196,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
               <div className="space-y-2">
                 <Label>Launch Teams *</Label>
                 <div className="flex gap-4">
-                  {["Social UA", "PPC"].map((team) => (
+                {["SocialUA", "PPC", "PerMar"].map((team) => (
                     <div key={team} className="flex items-center gap-2">
                       <Checkbox
                         id={team}
@@ -204,7 +204,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                         onCheckedChange={() => toggleTeam(team)}
                       />
                       <Label htmlFor={team} className="cursor-pointer font-normal">
-                        {team}
+                        {team === "SocialUA" ? "Social UA" : team === "PerMar" ? "Performance Marketing" : team}
                       </Label>
                     </div>
                   ))}
