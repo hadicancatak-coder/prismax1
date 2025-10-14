@@ -541,69 +541,78 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div>
               <Label className="mb-2 block">Countries (Entity)</Label>
-              {!editingEntities ? (
-                <div 
-                  className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
-                  onClick={() => setEditingEntities(true)}
-                >
-                  <div className="flex flex-wrap gap-1">
-                    {selectedEntities.length > 0 ? (
-                      selectedEntities.map((ent: string) => (
-                        <Badge key={ent} variant="secondary">{ent}</Badge>
-                      ))
-                    ) : (
-                      <span className="text-sm text-muted-foreground">No countries assigned</span>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm">Edit</Button>
-                </div>
-              ) : (
-                <Popover open={editingEntities} onOpenChange={setEditingEntities}>
-                  <PopoverContent className="w-full p-4">
-                    <div className="space-y-3">
-                      <Label>Select Countries</Label>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {ENTITIES.map((entity) => (
-                          <div key={entity} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`entity-${entity}`}
-                              checked={selectedEntities.includes(entity)}
-                              onCheckedChange={async (checked) => {
-                                const newEntities = checked
-                                  ? [...selectedEntities, entity]
-                                  : selectedEntities.filter((e) => e !== entity);
-                                setSelectedEntities(newEntities);
-                                
-                                const { error } = await supabase
-                                  .from("tasks")
-                                  .update({ entity: newEntities })
-                                  .eq("id", taskId);
-                                  
-                                if (error) {
-                                  toast({ title: "Error", description: error.message, variant: "destructive" });
-                                } else {
-                                  await fetchTask();
-                                }
-                              }}
-                            />
-                            <Label htmlFor={`entity-${entity}`} className="cursor-pointer">
-                              {entity}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setEditingEntities(false)}
-                      >
-                        Done
-                      </Button>
+              <Popover open={editingEntities} onOpenChange={setEditingEntities}>
+                <PopoverTrigger asChild>
+                  <div 
+                    className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
+                  >
+                    <div className="flex flex-wrap gap-1">
+                      {selectedEntities.length > 0 ? (
+                        selectedEntities.map((ent: string) => (
+                          <Badge key={ent} variant="secondary">{ent}</Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No countries assigned</span>
+                      )}
                     </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+                    <Button variant="ghost" size="sm" type="button">Edit</Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-full p-4"
+                  onInteractOutside={(e) => {
+                    const target = e.target as Element;
+                    if (target.closest('[role="checkbox"]') || target.closest('label')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <div className="space-y-3">
+                    <Label>Select Countries</Label>
+                    <div 
+                      className="space-y-2 max-h-64 overflow-y-auto"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {ENTITIES.map((entity) => (
+                        <div key={entity} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`entity-${entity}`}
+                            checked={selectedEntities.includes(entity)}
+                            onCheckedChange={async (checked) => {
+                              const newEntities = checked
+                                ? [...selectedEntities, entity]
+                                : selectedEntities.filter((e) => e !== entity);
+                              setSelectedEntities(newEntities);
+                              
+                              const { error } = await supabase
+                                .from("tasks")
+                                .update({ entity: newEntities })
+                                .eq("id", taskId);
+                                
+                              if (error) {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              } else {
+                                await fetchTask();
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`entity-${entity}`} className="cursor-pointer">
+                            {entity}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setEditingEntities(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { taskSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -304,23 +305,36 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 max-h-[300px] overflow-y-auto">
+                <PopoverContent 
+                  className="w-80 max-h-[300px] overflow-y-auto"
+                  onInteractOutside={(e) => {
+                    const target = e.target as Element;
+                    if (target.closest('[role="checkbox"]') || target.closest('label')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <div className="space-y-2">
                     {ENTITIES.map((ent) => (
-                      <div key={ent} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
+                      <div 
+                        key={ent} 
+                        className="flex items-center space-x-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          id={`entity-${ent}`}
                           checked={entities.includes(ent)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
+                          onCheckedChange={(checked) => {
+                            if (checked) {
                               setEntities([...entities, ent]);
                             } else {
                               setEntities(entities.filter(c => c !== ent));
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300"
                         />
-                        <label className="text-sm">{ent}</label>
+                        <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer">
+                          {ent}
+                        </Label>
                       </div>
                     ))}
                   </div>

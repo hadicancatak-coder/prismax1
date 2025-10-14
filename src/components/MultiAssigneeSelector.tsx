@@ -192,7 +192,7 @@ export function MultiAssigneeSelector({
               Add
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-2 bg-background z-50" align="start">
+          <PopoverContent className="w-64 p-2 bg-background" align="start">
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {availableUsers.length > 0 ? (
                 availableUsers.map((user) => (
@@ -200,7 +200,6 @@ export function MultiAssigneeSelector({
                     key={user.user_id}
                     onClick={() => {
                       handleAssign(user.user_id);
-                      setOpen(false);
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-accent transition-colors"
                   >
@@ -218,6 +217,16 @@ export function MultiAssigneeSelector({
                 </div>
               )}
             </div>
+            {availableUsers.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2"
+                onClick={() => setOpen(false)}
+              >
+                Done
+              </Button>
+            )}
           </PopoverContent>
         </Popover>
       )}
