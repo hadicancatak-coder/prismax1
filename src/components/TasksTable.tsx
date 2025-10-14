@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "./TaskDialog";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoreVertical, Trash2, CheckCircle, Copy } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,11 +32,21 @@ interface TasksTableProps {
 
 export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   const { toast } = useToast();
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [profiles, setProfiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const fetchProfiles = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, name, avatar_url");
+    setProfiles(data || []);
+  };
 
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
@@ -179,20 +190,79 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                     {task.priority}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {task.assignee ? (
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={task.assignee.avatar_url} />
-                        <AvatarFallback>
-                          {task.assignee.name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{task.assignee.name}</span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Unassigned</span>
-                  )}
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={task.assignee_id || "unassigned"}
+                    onValueChange={async (value) => {
+                      const newAssigneeId = value === "unassigned" ? null : value;
+                      
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ assignee_id: newAssigneeId })
+                        .eq("id", task.id);
+                      
+                      if (error) {
+                        toast({ 
+                          title: "Error", 
+                          description: error.message, 
+                          variant: "destructive" 
+                        });
+                        return;
+                      }
+
+                      // Send notification to new assignee
+                      if (newAssigneeId && newAssigneeId !== user?.id) {
+                        await supabase.from("notifications").insert({
+                          user_id: newAssigneeId,
+                          type: "task_assigned",
+                          payload_json: {
+                            task_id: task.id,
+                            task_title: task.title,
+                            assigned_by: user?.id
+                          }
+                        });
+                      }
+
+                      toast({ title: "Success", description: "Assignee updated" });
+                      onTaskUpdate();
+                    }}
+                  >
+                    <SelectTrigger className="w-full border-0 shadow-none hover:bg-accent">
+                      <SelectValue>
+                        {task.assignee ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={task.assignee.avatar_url} />
+                              <AvatarFallback>
+                                {task.assignee.name?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{task.assignee.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Unassigned</span>
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">
+                        <span className="text-muted-foreground">Unassigned</span>
+                      </SelectItem>
+                      {profiles.map((profile) => (
+                        <SelectItem key={profile.user_id} value={profile.user_id}>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={profile.avatar_url} />
+                              <AvatarFallback>
+                                {profile.name?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{profile.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="text-sm">
                   {task.due_at ? format(new Date(task.due_at), "MMM dd, yyyy") : "-"}
