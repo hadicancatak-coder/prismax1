@@ -44,6 +44,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [editingDescription, setEditingDescription] = useState(false);
   const [blockers, setBlockers] = useState<any[]>([]);
   const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
+  const [editingAssignee, setEditingAssignee] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Validate taskId
@@ -482,34 +484,104 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div>
               <Label className="mb-2 block">Assignee</Label>
-              <AssigneeSelector
-                users={profiles.map(p => ({
-                  user_id: p.user_id,
-                  name: p.name || p.email,
-                  email: p.email
-                }))}
-                selectedUserId={task.assignee_id}
-                onSelectUser={async (userId) => {
-                  const { error } = await supabase
-                    .from("tasks")
-                    .update({ assignee_id: userId })
-                    .eq("id", taskId);
-                    
-                  if (error) {
-                    toast({ 
-                      title: "Error updating assignee", 
-                      description: error.message, 
-                      variant: "destructive" 
-                    });
-                  } else {
-                    toast({ 
-                      title: "Success", 
-                      description: "Assignee updated successfully" 
-                    });
-                    await fetchTask();
-                  }
-                }}
-              />
+              {!editingAssignee ? (
+                <div 
+                  className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
+                  onClick={() => setEditingAssignee(true)}
+                >
+                  <div className="flex items-center gap-2">
+                    {task.assignee ? (
+                      <>
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={task.assignee.avatar_url} />
+                          <AvatarFallback>
+                            {task.assignee.name?.substring(0, 2).toUpperCase() || "??"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{task.assignee.name || "Unknown"}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Unassigned</span>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm">Edit</Button>
+                </div>
+              ) : (
+                <div className="space-y-2 p-3 border rounded-md bg-background">
+                  <Input
+                    placeholder="Search users..."
+                    value={assigneeSearch}
+                    onChange={(e) => setAssigneeSearch(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    <div
+                      className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
+                      onClick={async () => {
+                        const { error } = await supabase
+                          .from("tasks")
+                          .update({ assignee_id: null })
+                          .eq("id", taskId);
+                        if (!error) {
+                          toast({ title: "Success", description: "Assignee cleared" });
+                          await fetchTask();
+                          setEditingAssignee(false);
+                          setAssigneeSearch("");
+                        }
+                      }}
+                    >
+                      <span className="text-sm text-muted-foreground">Unassigned</span>
+                    </div>
+                    {profiles
+                      .filter(p => 
+                        !assigneeSearch || 
+                        p.name?.toLowerCase().includes(assigneeSearch.toLowerCase())
+                      )
+                      .map(profile => (
+                        <div
+                          key={profile.user_id}
+                          className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from("tasks")
+                              .update({ assignee_id: profile.user_id })
+                              .eq("id", taskId);
+                            if (!error) {
+                              toast({ title: "Success", description: "Assignee updated" });
+                              await fetchTask();
+                              setEditingAssignee(false);
+                              setAssigneeSearch("");
+                            } else {
+                              toast({ 
+                                title: "Error", 
+                                description: error.message, 
+                                variant: "destructive" 
+                              });
+                            }
+                          }}
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback>
+                              {profile.name?.substring(0, 2).toUpperCase() || "??"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{profile.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setEditingAssignee(false);
+                      setAssigneeSearch("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
 
             {task.status === "Blocked" && (

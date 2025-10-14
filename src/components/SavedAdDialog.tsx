@@ -111,7 +111,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? (
@@ -130,8 +130,10 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </DialogDescription>
         </DialogHeader>
 
-        {/* Ad Preview */}
-        <Card className="p-6 bg-background">
+        <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+
+          {/* Ad Preview */}
+          <Card className="p-4 bg-background">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Button
@@ -211,31 +213,27 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
               </div>
             </>
           )}
-        </Card>
+          </Card>
 
-        <Separator className="my-4" />
+          {/* Quality & Compliance Side-by-Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AdStrengthIndicator
+              headlines={activeHeadlines}
+              descriptions={activeDescriptions}
+              sitelinks={activeSitelinks.map(s => s.title)}
+              callouts={activeCallouts}
+            />
+            <AdComplianceChecker
+              headlines={activeHeadlines}
+              descriptions={activeDescriptions}
+              sitelinks={activeSitelinks.map(s => s.title)}
+              callouts={activeCallouts}
+              entity={ad.entity}
+            />
+          </div>
 
-        {/* Quality Score */}
-        <AdStrengthIndicator
-          headlines={activeHeadlines}
-          descriptions={activeDescriptions}
-          sitelinks={activeSitelinks.map(s => s.title)}
-          callouts={activeCallouts}
-        />
-
-        {/* Compliance Check */}
-        <AdComplianceChecker
-          headlines={activeHeadlines}
-          descriptions={activeDescriptions}
-          sitelinks={activeSitelinks.map(s => s.title)}
-          callouts={activeCallouts}
-          entity={ad.entity}
-        />
-
-        <Separator className="my-4" />
-
-        {/* Content Details */}
-        <div className="space-y-4">
+          {/* Content Details */}
+          <div className="space-y-4">
           <div>
             <h4 className="font-semibold mb-2">Headlines ({activeHeadlines.length})</h4>
             {isEditing ? (
@@ -423,10 +421,11 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
               )}
             </div>
           )}
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t">
+        {/* Actions - Fixed Footer */}
+        <div className="flex gap-2 p-6 border-t bg-background">
           {isEditing ? (
             <>
               <Button onClick={handleSave} className="flex-1">
