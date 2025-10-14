@@ -40,7 +40,7 @@ export default function Tasks() {
         .from("tasks")
         .select(`
           *,
-          assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
+          assignee:profiles(name, avatar_url)
         `)
         .order("created_at", { ascending: false });
 
@@ -54,6 +54,8 @@ export default function Tasks() {
         return { ...task, comments_count: count || 0 };
       }));
       
+      console.log('Fetched tasks:', tasksWithComments);
+      console.log('Task count:', tasksWithComments.length);
       setTasks(tasksWithComments);
     } catch (error: any) {
       toast({
@@ -140,6 +142,23 @@ export default function Tasks() {
 
       {loading ? (
         <div className="text-center py-12">Loading tasks...</div>
+      ) : tasks.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground text-lg mb-4">No tasks found</p>
+          <p className="text-sm text-muted-foreground">Click "New Task" to create your first task</p>
+        </div>
+      ) : filteredTasks.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground text-lg mb-4">No tasks match your filters</p>
+          <Button variant="outline" onClick={() => {
+            setSelectedAssignees([]);
+            setSelectedTeams([]);
+            setDateFilter(null);
+            setStatusFilter("all");
+          }}>
+            Clear All Filters
+          </Button>
+        </div>
       ) : (
         <TasksTable tasks={filteredTasks} onTaskUpdate={fetchTasks} />
       )}

@@ -198,11 +198,11 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const handleCommentSubmit = async () => {
     if (!newComment.trim() || !user) return;
 
-    // Validate comment length (100 characters max)
-    if (newComment.trim().length > 100) {
+    // Validate comment length (500 characters max)
+    if (newComment.trim().length > 500) {
       toast({
         title: "Comment too long",
-        description: "Comments must be 100 characters or less",
+        description: "Comments must be 500 characters or less",
         variant: "destructive"
       });
       return;

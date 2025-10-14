@@ -610,11 +610,19 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </Card>
             ) : filteredSavedAds.length === 0 ? (
               <Card className="p-12 text-center">
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-lg mb-4">
                   {savedAds.length === 0 
-                    ? "No saved ads yet. Create your first ad in the 'Create Ad' tab." 
-                    : "No ads match your current filters."}
+                    ? "No saved ads yet" 
+                    : "No ads match your filters"}
                 </p>
+                {savedAds.length > 0 && (
+                  <Button variant="outline" onClick={() => {
+                    setEntityFilter("all");
+                    setMonthFilter("all");
+                  }}>
+                    Clear Filters
+                  </Button>
+                )}
               </Card>
             ) : (
               filteredSavedAds.map((ad) => (
