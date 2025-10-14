@@ -89,23 +89,61 @@ export default function CalendarView() {
   };
 
   const fetchTasks = async () => {
-    let query = supabase
-      .from("tasks")
-      .select("*")
-      .not("due_at", "is", null);
-
     if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
-      query = query.eq("assignee_id", selectedUserId);
+      // Admin viewing specific user - use task_assignees table
+      const { data: assignedTaskIds } = await supabase
+        .from("task_assignees")
+        .select("task_id")
+        .eq("user_id", selectedUserId);
+      
+      const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
+      
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .not("due_at", "is", null)
+        .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000'])
+        .order("due_at", { ascending: true });
+      
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setTasks(data || []);
+      }
     } else if (userRole !== "admin" && user?.id) {
-      query = query.eq("assignee_id", user.id);
-    }
-
-    const { data, error } = await query.order("due_at", { ascending: true });
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      // Regular user viewing their own tasks - use task_assignees table
+      const { data: assignedTaskIds } = await supabase
+        .from("task_assignees")
+        .select("task_id")
+        .eq("user_id", user.id);
+      
+      const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
+      
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .not("due_at", "is", null)
+        .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000'])
+        .order("due_at", { ascending: true });
+      
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setTasks(data || []);
+      }
     } else {
-      setTasks(data || []);
+      // Admin viewing all tasks
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .not("due_at", "is", null)
+        .order("due_at", { ascending: true });
+      
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setTasks(data || []);
+      }
     }
   };
 

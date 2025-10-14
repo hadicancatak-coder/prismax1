@@ -62,111 +62,36 @@ export default function LaunchPad() {
       const campaign = campaigns.find(c => c.id === id);
       if (!campaign) return;
 
-      // Build task description
-      let desc = `## 🚀 Campaign Launch Mission\n\n`;
-      desc += `**Mission:** ${campaign.title}\n\n`;
-      
-      if (campaign.description) {
-        desc += `**Mission Brief:**\n${campaign.description}\n\n`;
-      }
-      
-      if (campaign.teams?.length > 0) {
-        desc += `**Launch Teams:** ${campaign.teams.join(', ')}\n`;
-      }
-      
-      if (campaign.entity?.length > 0) {
-        desc += `**Target Countries:** ${campaign.entity.join(', ')}\n`;
-      }
-      
-      if (campaign.launch_date) {
-        desc += `**Launch Date:** ${format(new Date(campaign.launch_date), 'MMMM dd, yyyy')}\n`;
-      }
-      
-      desc += `\n---\n\n`;
-      
-      if (campaign.lp_url) {
-        desc += `**Landing Page:** ${campaign.lp_url}\n`;
-      }
-      
-      if (campaign.creatives_link) {
-        desc += `**Creative Assets:** ${campaign.creatives_link}\n`;
-      }
-      
-      if (campaign.captions) {
-        desc += `\n**Ad Copy & Captions:**\n${campaign.captions}\n`;
-      }
-
-      // Add Jira Links section
-      if (campaign.jira_links && campaign.jira_links.length > 0) {
-        desc += `\n**Jira Tickets:**\n`;
-        campaign.jira_links.forEach((link: string) => {
-          desc += `- ${link}\n`;
-        });
-      }
-
-      // Create task with full campaign details
-      const { data: newTask, error: taskError } = await supabase
-        .from('tasks')
-        .insert({
-          title: `🚀 ${campaign.title}`,
-          description: desc,
-          task_type: 'campaign_launch',
-          campaign_id: campaign.id,
-          status: 'Pending',
-          priority: 'High',
-          entity: campaign.entity || [],
-          due_at: campaign.launch_date || null,
-          created_by: user?.id,
-          assignee_id: campaign.launch_campaign_assignees?.[0]?.user_id || null,
-          labels: ['campaign', ...(campaign.teams || [])],
-          jira_link: campaign.jira_links?.[0] || null,
-          jira_links: campaign.jira_links || []
-        })
-        .select()
-        .single();
-
-      if (taskError) throw taskError;
-
-      // Assign to all campaign assignees
+      // Notify all assignees about the launch
       if (campaign.launch_campaign_assignees?.length > 0) {
-        const assignments = campaign.launch_campaign_assignees.map((assignee: any) => ({
-          task_id: newTask.id,
-          user_id: assignee.user_id,
-          assigned_by: user?.id
-        }));
-        
-        await supabase.from('task_assignees').insert(assignments);
-        
-        // Notify all assignees
         const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
           user_id: assignee.user_id,
           type: 'task_assigned',
           payload_json: {
-            task_id: newTask.id,
-            task_title: newTask.title,
-            assigned_by: user?.id,
             campaign_id: campaign.id,
-            message: `Mission "${campaign.title}" has been launched and assigned to you`
+            campaign_title: campaign.title,
+            assigned_by: user?.id,
+            message: `Campaign "${campaign.title}" is now live! Check your agenda for details.`
           }
         }));
         
         await supabase.from('notifications').insert(notifications);
       }
 
-      // Update campaign to live and mark as converted
-      await supabase
+      // Update campaign to live
+      const { error } = await supabase
         .from('launch_pad_campaigns')
         .update({ 
           status: 'live', 
-          launched_at: new Date().toISOString(),
-          converted_to_task: true,
-          task_id: newTask.id
+          launched_at: new Date().toISOString()
         })
         .eq('id', id);
 
+      if (error) throw error;
+
       toast({ 
-        title: "🚀 Mission launched successfully", 
-        description: `Task created and ${campaign.launch_campaign_assignees?.length || 0} team member(s) notified`
+        title: "🚀 Campaign launched successfully", 
+        description: `${campaign.launch_campaign_assignees?.length || 0} team member(s) notified. Campaign is now visible in their agendas.`
       });
     } catch (error: any) {
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
