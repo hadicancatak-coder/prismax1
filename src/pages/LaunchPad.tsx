@@ -202,10 +202,10 @@ export default function LaunchPad() {
     </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Social UA Column */}
+        {/* SocialUA Column */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">🧩 Social UA</CardTitle>
+            <CardTitle className="text-sm font-medium">🧩 SocialUA</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {socialUACampaigns.map(campaign => (

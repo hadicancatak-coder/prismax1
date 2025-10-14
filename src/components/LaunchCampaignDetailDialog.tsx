@@ -204,7 +204,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                         onCheckedChange={() => toggleTeam(team)}
                       />
                       <Label htmlFor={team} className="cursor-pointer font-normal">
-                        {team === "SocialUA" ? "Social UA" : team === "PerMar" ? "Performance Marketing" : team}
+                        {team === "SocialUA" ? "SocialUA" : team}
                       </Label>
                     </div>
                   ))}
@@ -333,12 +333,12 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                   {jiraLinks.length > 0 && (
                     <div className="space-y-1">
                       {jiraLinks.map((link, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded">
                           <a
                             href={link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline truncate flex-1"
+                            className="text-sm text-primary hover:underline truncate flex-1 min-w-0 font-mono"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {link}
@@ -347,6 +347,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                             type="button"
                             variant="ghost"
                             size="sm"
+                            className="shrink-0"
                             onClick={() => setJiraLinks(jiraLinks.filter((_, i) => i !== idx))}
                           >
                             <X className="h-4 w-4" />
@@ -465,7 +466,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                           href={campaign.lp_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline break-all"
+                          className="text-sm text-primary hover:underline truncate block font-mono"
                         >
                           {campaign.lp_url}
                         </a>
@@ -478,7 +479,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                           href={campaign.creatives_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline break-all"
+                          className="text-sm text-primary hover:underline truncate block font-mono"
                         >
                           {campaign.creatives_link}
                         </a>
@@ -505,7 +506,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline block"
+                        className="text-sm text-primary hover:underline block truncate font-mono"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {link}
