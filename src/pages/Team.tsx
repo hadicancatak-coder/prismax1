@@ -4,16 +4,26 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Phone, Users, Search } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Mail, Phone, Users, Search, Edit } from "lucide-react";
+import { TEAMS } from "@/lib/constants";
 
 export default function Team() {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProfiles();
@@ -54,6 +64,46 @@ export default function Team() {
     }
   };
 
+  const handleEditTeams = (profile: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedProfile(profile);
+    setSelectedTeams(profile.teams || []);
+    setEditDialogOpen(true);
+  };
+
+  const toggleTeam = (team: string) => {
+    setSelectedTeams(prev =>
+      prev.includes(team) ? prev.filter(t => t !== team) : [...prev, team]
+    );
+  };
+
+  const handleSaveTeams = async () => {
+    if (!selectedProfile) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ teams: selectedTeams as any })
+        .eq("user_id", selectedProfile.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Teams updated successfully",
+      });
+
+      setEditDialogOpen(false);
+      fetchProfiles();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -83,9 +133,19 @@ export default function Team() {
         {filteredProfiles.map((profile) => (
           <Card 
             key={profile.user_id} 
-            className="p-6 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02]"
+            className="p-6 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] relative"
             onClick={() => navigate(`/profile/${profile.user_id}`)}
           >
+            {userRole === 'admin' && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute top-2 right-2"
+                onClick={(e) => handleEditTeams(profile, e)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
             <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={profile.avatar_url} />
@@ -166,6 +226,44 @@ export default function Team() {
           </p>
         </Card>
       )}
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Teams</DialogTitle>
+            <DialogDescription>
+              Assign teams to {selectedProfile?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              {TEAMS.map((team) => (
+                <div key={team} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`team-${team}`}
+                    checked={selectedTeams.includes(team)}
+                    onCheckedChange={() => toggleTeam(team)}
+                  />
+                  <Label 
+                    htmlFor={`team-${team}`} 
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {team}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveTeams}>
+                Save Teams
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
