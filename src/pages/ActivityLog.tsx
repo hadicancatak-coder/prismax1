@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
-import { Activity, User, FileText, Briefcase, Flag, AlertCircle } from "lucide-react";
+import { Activity, User, FileText, Briefcase, Flag, AlertCircle, CheckSquare, FolderKanban, Megaphone, Rocket } from "lucide-react";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ActivityLogEntry {
   id: string;
@@ -33,10 +35,12 @@ interface ActivityLogEntry {
 }
 
 const ENTITY_ICONS = {
-  task: FileText,
-  project: Briefcase,
-  campaign: Flag,
+  task: CheckSquare,
+  project: FolderKanban,
+  campaign: Megaphone,
   blocker: AlertCircle,
+  launch_campaign: Rocket,
+  ad: Megaphone,
 };
 
 const ACTION_COLORS = {
@@ -45,6 +49,7 @@ const ACTION_COLORS = {
   deleted: "bg-red-500/10 text-red-500",
   assigned: "bg-purple-500/10 text-purple-500",
   unassigned: "bg-orange-500/10 text-orange-500",
+  commented: "bg-cyan-500/10 text-cyan-500",
 };
 
 export default function ActivityLog() {
@@ -55,6 +60,10 @@ export default function ActivityLog() {
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"member" | "admin">("member");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const LOGS_PER_PAGE = 50;
 
   // Move useEffect BEFORE early returns to follow Rules of Hooks
   useEffect(() => {
@@ -77,24 +86,37 @@ export default function ActivityLog() {
     return <Navigate to="/" replace />;
   }
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (pageNum = 1) => {
     setLoading(true);
-    const { data, error } = await supabase
+    const from = (pageNum - 1) * LOGS_PER_PAGE;
+    const to = from + LOGS_PER_PAGE - 1;
+    
+    const { data, error, count } = await supabase
       .from("activity_logs")
       .select(`
         *,
         user:profiles!activity_logs_user_id_fkey(name, username)
-      `)
+      `, { count: 'exact' })
       .order("created_at", { ascending: false })
-      .limit(200);
+      .range(from, to);
 
-    if (!error && data) {
+    if (error) {
+      console.error("Error fetching activity logs:", error);
+      toast.error("Failed to load activity logs");
+    } else if (data) {
       const logsWithUserInfo = data.map((log: any) => ({
         ...log,
         user_name: log.user?.name,
         user_username: log.user?.username,
       }));
-      setLogs(logsWithUserInfo);
+      
+      if (pageNum === 1) {
+        setLogs(logsWithUserInfo);
+      } else {
+        setLogs(prev => [...prev, ...logsWithUserInfo]);
+      }
+      
+      setHasMore(data.length === LOGS_PER_PAGE);
     }
     setLoading(false);
   };
@@ -103,6 +125,17 @@ export default function ActivityLog() {
     const userMatch = selectedAssignees.length === 0 || selectedAssignees.includes(log.user_id);
     const entityMatch = entityFilter === "all" || log.entity_type === entityFilter;
     const actionMatch = actionFilter === "all" || log.action === actionFilter;
+    
+    // Member view filter: only show relevant actions
+    if (viewMode === "member") {
+      const memberRelevantActions = ["created", "commented", "assigned", "unassigned"];
+      const isStatusUpdate = log.action === "updated" && (log.field_name === "status" || log.field_name === "approval_status");
+      
+      if (!memberRelevantActions.includes(log.action) && !isStatusUpdate) {
+        return false;
+      }
+    }
+    
     return userMatch && entityMatch && actionMatch;
   });
 
@@ -115,11 +148,29 @@ export default function ActivityLog() {
       .slice(0, 2);
   };
 
+  const getStatusEmoji = (status: string) => {
+    const emojiMap: Record<string, string> = {
+      'Pending': '⏳',
+      'Ongoing': '🔄',
+      'Completed': '✅',
+      'Failed': '❌',
+      'Blocked': '🚫',
+      'pending': '⏳',
+      'approved': '✅',
+      'rejected': '❌',
+    };
+    return emojiMap[status] || '';
+  };
+
   const formatLogMessage = (log: ActivityLogEntry) => {
     const entityName = log.entity_type.charAt(0).toUpperCase() + log.entity_type.slice(1);
     
     if (log.action === "created") {
       return `Created ${entityName.toLowerCase()}`;
+    }
+    if (log.action === "commented") {
+      const preview = log.new_value ? `"${log.new_value}"` : '';
+      return `Commented on ${entityName.toLowerCase()} ${preview}`;
     }
     if (log.action === "assigned") {
       return `Assigned user to ${entityName.toLowerCase()}`;
@@ -128,6 +179,11 @@ export default function ActivityLog() {
       return `Unassigned user from ${entityName.toLowerCase()}`;
     }
     if (log.action === "updated" && log.field_name) {
+      if (log.field_name === "status" || log.field_name === "approval_status") {
+        const oldEmoji = getStatusEmoji(log.old_value || "");
+        const newEmoji = getStatusEmoji(log.new_value || "");
+        return `Changed status ${oldEmoji} ${log.old_value || "none"} → ${newEmoji} ${log.new_value || "none"}`;
+      }
       return `Updated ${log.field_name} from "${log.old_value}" to "${log.new_value}"`;
     }
     return `${log.action} ${entityName.toLowerCase()}`;
@@ -148,7 +204,18 @@ export default function ActivityLog() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Filters</CardTitle>
+            <Select value={viewMode} onValueChange={(v) => setViewMode(v as "member" | "admin")}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member">👥 Member View</SelectItem>
+                <SelectItem value="admin">🔧 Admin View (All)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <AssigneeFilterBar
@@ -171,6 +238,8 @@ export default function ActivityLog() {
                   <SelectItem value="project">Projects</SelectItem>
                   <SelectItem value="campaign">Campaigns</SelectItem>
                   <SelectItem value="blocker">Blockers</SelectItem>
+                  <SelectItem value="launch_campaign">Launch Campaigns</SelectItem>
+                  <SelectItem value="ad">Ads</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -187,6 +256,7 @@ export default function ActivityLog() {
                   <SelectItem value="updated">Updated</SelectItem>
                   <SelectItem value="assigned">Assigned</SelectItem>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="commented">Commented</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -251,6 +321,21 @@ export default function ActivityLog() {
                   </div>
                 );
               })}
+              
+              {hasMore && !loading && (
+                <div className="flex justify-center mt-6">
+                  <Button
+                    onClick={() => {
+                      const nextPage = page + 1;
+                      setPage(nextPage);
+                      fetchLogs(nextPage);
+                    }}
+                    variant="outline"
+                  >
+                    Load More ({logs.length} loaded)
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

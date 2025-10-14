@@ -53,6 +53,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_campaigns: {
+        Row: {
+          budget_monthly: number | null
+          created_at: string | null
+          created_by: string | null
+          entity: string | null
+          google_campaign_id: string | null
+          google_campaign_url: string | null
+          id: string
+          name: string
+          objective: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_monthly?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          entity?: string | null
+          google_campaign_id?: string | null
+          google_campaign_url?: string | null
+          id?: string
+          name: string
+          objective?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_monthly?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          entity?: string | null
+          google_campaign_id?: string | null
+          google_campaign_url?: string | null
+          id?: string
+          name?: string
+          objective?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ad_comments: {
         Row: {
           ad_id: string
@@ -85,14 +127,162 @@ export type Database = {
           },
         ]
       }
+      ad_groups: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          keywords: Json | null
+          match_types: Json | null
+          max_cpc: number | null
+          name: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          keywords?: Json | null
+          match_types?: Json | null
+          max_cpc?: number | null
+          name: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          keywords?: Json | null
+          match_types?: Json | null
+          max_cpc?: number | null
+          name?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_groups_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_performance_snapshots: {
+        Row: {
+          ad_id: string
+          clicks: number | null
+          conversions: number | null
+          cost: number | null
+          cpc: number | null
+          created_at: string | null
+          ctr: number | null
+          id: string
+          impressions: number | null
+          snapshot_date: string | null
+        }
+        Insert: {
+          ad_id: string
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          snapshot_date?: string | null
+        }
+        Update: {
+          ad_id?: string
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          snapshot_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_performance_snapshots_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_templates: {
+        Row: {
+          callouts: Json | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          descriptions: Json | null
+          entity: string | null
+          headlines: Json | null
+          id: string
+          is_public: boolean | null
+          landing_page: string | null
+          name: string
+          sitelinks: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          callouts?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          descriptions?: Json | null
+          entity?: string | null
+          headlines?: Json | null
+          id?: string
+          is_public?: boolean | null
+          landing_page?: string | null
+          name: string
+          sitelinks?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          callouts?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          descriptions?: Json | null
+          entity?: string | null
+          headlines?: Json | null
+          id?: string
+          is_public?: boolean | null
+          landing_page?: string | null
+          name?: string
+          sitelinks?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
+          ad_group_id: string | null
+          ad_strength: number | null
           approval_status: string | null
           callouts: Json
+          compliance_issues: Json | null
           created_at: string
           created_by: string
+          date_launched: string | null
+          date_paused: string | null
           descriptions: Json
           entity: string | null
+          google_ad_id: string | null
           headlines: Json
           id: string
           landing_page: string | null
@@ -102,12 +292,18 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          ad_group_id?: string | null
+          ad_strength?: number | null
           approval_status?: string | null
           callouts?: Json
+          compliance_issues?: Json | null
           created_at?: string
           created_by: string
+          date_launched?: string | null
+          date_paused?: string | null
           descriptions?: Json
           entity?: string | null
+          google_ad_id?: string | null
           headlines?: Json
           id?: string
           landing_page?: string | null
@@ -117,12 +313,18 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          ad_group_id?: string | null
+          ad_strength?: number | null
           approval_status?: string | null
           callouts?: Json
+          compliance_issues?: Json | null
           created_at?: string
           created_by?: string
+          date_launched?: string | null
+          date_paused?: string | null
           descriptions?: Json
           entity?: string | null
+          google_ad_id?: string | null
           headlines?: Json
           id?: string
           landing_page?: string | null
@@ -131,7 +333,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_ad_group_id_fkey"
+            columns: ["ad_group_id"]
+            isOneToOne: false
+            referencedRelation: "ad_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blocker_assignees: {
         Row: {

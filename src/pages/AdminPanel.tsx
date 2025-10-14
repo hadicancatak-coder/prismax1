@@ -81,42 +81,45 @@ export default function AdminPanel() {
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch all tasks
-    const { data: all } = await supabase
-      .from("tasks")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // Parallel queries for better performance
+    const [
+      { data: allTasks },
+      { data: pendingTasks },
+      { data: profilesWithRoles }
+    ] = await Promise.all([
+      // Query 1: All tasks
+      supabase
+        .from("tasks")
+        .select("id, assignee_id, status, blocker_reason, created_at")
+        .order("created_at", { ascending: false }),
+      
+      // Query 2: Pending approval tasks with joins
+      supabase
+        .from("tasks")
+        .select(`
+          *,
+          requester:profiles!tasks_approval_requested_by_fkey(name, avatar_url),
+          assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
+        `)
+        .eq("pending_approval", true)
+        .order("approval_requested_at", { ascending: false }),
+      
+      // Query 3: Profiles with roles in ONE query
+      supabase
+        .from("profiles")
+        .select(`
+          user_id, 
+          name, 
+          email, 
+          username, 
+          avatar_url,
+          user_roles!inner(role)
+        `)
+    ]);
 
-    // Fetch pending approval tasks
-    const { data: pending } = await supabase
-      .from("tasks")
-      .select(`
-        *,
-        requester:profiles!tasks_approval_requested_by_fkey(name, avatar_url),
-        assignee:profiles!tasks_assignee_id_fkey(name, avatar_url)
-      `)
-      .eq("pending_approval", true)
-      .order("approval_requested_at", { ascending: false });
-
-    // Fetch all members with their tasks
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, name, email, username, avatar_url");
-
-    // Fetch all user roles
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("user_id, role");
-
-    // Fetch all tasks to calculate per-member stats
-    const { data: allTasksData } = await supabase
-      .from("tasks")
-      .select("id, assignee_id, status, blocker_reason");
-
-    // Build member statistics
-    const memberStats = (profiles || []).map(profile => {
-      const userRole = roles?.find(r => r.user_id === profile.user_id)?.role || 'member';
-      const memberTasks = (allTasksData || []).filter(t => t.assignee_id === profile.user_id);
+    // Build member statistics in memory (faster than multiple DB queries)
+    const memberStats = (profilesWithRoles || []).map(profile => {
+      const memberTasks = (allTasks || []).filter(t => t.assignee_id === profile.user_id);
       const totalTasks = memberTasks.length;
       const completedTasks = memberTasks.filter(t => t.status === "Completed").length;
       const inProgressTasks = memberTasks.filter(t => t.status === "Ongoing").length;
@@ -124,8 +127,12 @@ export default function AdminPanel() {
       const pendingTasks = memberTasks.filter(t => t.status === "Pending").length;
       
       return {
-        ...profile,
-        role: userRole,
+        user_id: profile.user_id,
+        name: profile.name,
+        email: profile.email,
+        username: profile.username,
+        avatar_url: profile.avatar_url,
+        role: (profile as any).user_roles?.[0]?.role || 'member',
         totalTasks,
         completedTasks,
         inProgressTasks,
@@ -135,8 +142,8 @@ export default function AdminPanel() {
       };
     });
 
-    setAllTasks(all || []);
-    setPendingTasks(pending || []);
+    setAllTasks(allTasks || []);
+    setPendingTasks(pendingTasks || []);
     setMembers(memberStats);
     setLoading(false);
   };

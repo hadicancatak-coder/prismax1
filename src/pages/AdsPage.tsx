@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { SavedAdDialog } from "@/components/SavedAdDialog";
 import { AdApprovalSection } from "@/components/AdApprovalSection";
+import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
+import { AdComplianceChecker } from "@/components/AdComplianceChecker";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -470,7 +472,24 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
             </div>
 
             {/* Preview Section - Sticky */}
-            <div className="lg:sticky lg:top-8 lg:self-start">
+            <div className="lg:sticky lg:top-8 lg:self-start space-y-4">
+              {/* Ad Quality Score */}
+              <AdStrengthIndicator
+                headlines={headlines.filter(h => h.trim())}
+                descriptions={descriptions.filter(d => d.trim())}
+                sitelinks={sitelinks.map(s => s.title).filter(t => t.trim())}
+                callouts={callouts.filter(c => c.trim())}
+              />
+              
+              {/* Compliance Check */}
+              <AdComplianceChecker
+                headlines={headlines.filter(h => h.trim())}
+                descriptions={descriptions.filter(d => d.trim())}
+                sitelinks={sitelinks.map(s => s.title).filter(t => t.trim())}
+                callouts={callouts.filter(c => c.trim())}
+                entity={adEntity}
+              />
+              
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
