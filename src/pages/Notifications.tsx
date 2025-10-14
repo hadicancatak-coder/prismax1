@@ -4,19 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Bell, Check, Trash2, Clock, Users, AlertTriangle } from "lucide-react";
+import { Bell, Check, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
 import { formatDistanceToNow } from "date-fns";
 import { AnnouncementsSection } from "@/components/AnnouncementsSection";
+import { NotificationDetailDialog } from "@/components/NotificationDetailDialog";
 
 export default function Notifications() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -81,12 +84,10 @@ export default function Notifications() {
   };
 
   const handleNotificationClick = async (notification: any) => {
-    const payload = notification.payload_json;
+    setSelectedNotification(notification);
+    setDetailDialogOpen(true);
     
-    // Mark as read
-    if (!notification.read_at) {
-      await markAsRead(notification.id);
-    }
+    const payload = notification.payload_json;
     
     // Open task dialog if task_id exists
     if (payload.task_id) {
@@ -167,14 +168,16 @@ export default function Notifications() {
                       Mark Read
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteNotification(notification.id)}
-                    className="gap-2 hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {(userRole === "admin" || notification.user_id === user?.id) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteNotification(notification.id)}
+                      className="gap-2 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -192,6 +195,16 @@ export default function Notifications() {
           open={taskDialogOpen}
           onOpenChange={setTaskDialogOpen}
           taskId={selectedTaskId}
+        />
+      )}
+
+      {selectedNotification && (
+        <NotificationDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          notification={selectedNotification}
+          onDelete={fetchNotifications}
+          onMarkRead={fetchNotifications}
         />
       )}
     </div>
