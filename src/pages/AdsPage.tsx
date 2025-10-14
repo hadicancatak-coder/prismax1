@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { SavedAdDialog } from "@/components/SavedAdDialog";
+import { AdApprovalSection } from "@/components/AdApprovalSection";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -41,6 +43,17 @@ export default function AdsPage() {
 
   useEffect(() => {
     fetchSavedAds();
+    
+    const channel = supabase
+      .channel('ads-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ads' }, () => {
+        fetchSavedAds();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSavedAds = async () => {
@@ -605,19 +618,17 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </Card>
             ) : (
               filteredSavedAds.map((ad) => (
-                <Card 
-                  key={ad.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => {
-                    setSelectedAd(ad);
-                    setAdDialogOpen(true);
-                  }}
-                >
+                <Card key={ad.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{ad.name}</h3>
-                        <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {ad.approval_status === 'approved' && (
+                            <CheckCircle className="h-4 w-4 text-success" />
+                          )}
+                          <h3 className="font-semibold text-lg">{ad.name}</h3>
+                        </div>
+                        <div className="flex gap-4 text-sm text-muted-foreground">
                           {ad.entity && <span>Entity: {ad.entity}</span>}
                           <span>Created: {format(new Date(ad.created_at), "MMM dd, yyyy")}</span>
                         </div>
@@ -626,7 +637,23 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                           <p>Descriptions: {JSON.parse(ad.descriptions).filter((d: string) => d).length}/4</p>
                         </div>
                       </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAd(ad);
+                          setAdDialogOpen(true);
+                        }}
+                      >
+                        Preview
+                      </Button>
                     </div>
+                    <Separator className="my-4" />
+                    <AdApprovalSection 
+                      adId={ad.id} 
+                      currentStatus={ad.approval_status || 'pending'}
+                      onStatusChange={fetchSavedAds}
+                    />
                   </CardContent>
                 </Card>
               ))
