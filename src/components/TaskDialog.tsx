@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon } from "lucide-react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { MentionAutocomplete } from "@/components/MentionAutocomplete";
 import { BlockerDialog } from "./BlockerDialog";
 import { TaskDependenciesSection } from "./TaskDependenciesSection";
 import { TaskChecklistSection } from "./TaskChecklistSection";
@@ -317,20 +318,51 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
         <div className="flex gap-4 flex-1 min-h-0">
           {/* Task Details Section */}
-          <div className={`space-y-6 overflow-y-auto pr-4 flex-1 min-h-0 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
+          <div className={`space-y-6 overflow-y-auto overflow-x-visible pr-4 flex-1 min-h-0 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
             <div>
               <Label>Description</Label>
               {editingDescription ? (
-                <Textarea
+                <MentionAutocomplete
                   value={task.description || ""}
-                  onChange={(e) => setTask({ ...task, description: e.target.value })}
+                  onChange={(value) => setTask({ ...task, description: value })}
+                  users={profiles.map(p => ({
+                    user_id: p.user_id,
+                    name: p.name || p.email,
+                    username: p.username
+                  }))}
                   onBlur={async () => {
                     setEditingDescription(false);
                     const { error } = await supabase.from("tasks").update({ description: task.description }).eq("id", taskId);
-                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                      return;
+                    }
+                    
+                    // Process @mentions in description
+                    const mentions = (task.description || '').match(/@(\w+)/g) || [];
+                    for (const mention of mentions) {
+                      const username = mention.substring(1);
+                      const mentionedProfile = profiles.find(
+                        p => p.name?.toLowerCase() === username.toLowerCase() ||
+                             p.username?.toLowerCase() === username.toLowerCase()
+                      );
+                      
+                      if (mentionedProfile && mentionedProfile.user_id !== user?.id) {
+                        await supabase.from("notifications").insert({
+                          user_id: mentionedProfile.user_id,
+                          type: "mention",
+                          payload_json: { 
+                            task_id: taskId, 
+                            message: `mentioned you in task description`,
+                            task_title: task.title
+                          },
+                        });
+                      }
+                    }
                   }}
-                  autoFocus
+                  as="textarea"
                   className="mt-1"
+                  placeholder="Add task description..."
                 />
               ) : (
                 <p
@@ -871,17 +903,22 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 <div className="border-t pt-4">
                   <div className="flex items-end gap-2">
                     <div className="flex-1 relative">
-                      <Input
-                        placeholder="Type a message... Use @username to mention"
+                      <MentionAutocomplete
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        onChange={setNewComment}
+                        users={profiles.map(p => ({
+                          user_id: p.user_id,
+                          name: p.name || p.email,
+                          username: p.username
+                        }))}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
                             handleCommentSubmit();
                           }
                         }}
-                        maxLength={500}
+                        placeholder="Type a message... Use @username to mention"
+                        as="input"
                         className="pr-10"
                       />
                       <span className={`absolute left-2 -top-5 text-xs ${newComment.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
