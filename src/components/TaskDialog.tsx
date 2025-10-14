@@ -26,6 +26,7 @@ import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TaskDialogProps {
   open: boolean;
@@ -573,42 +574,43 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 >
                   <div className="space-y-3">
                     <Label>Select Countries</Label>
-                    <div 
-                      className="space-y-2 max-h-64 overflow-y-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {ENTITIES.map((entity) => (
-                        <div key={entity} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`entity-${entity}`}
-                            checked={selectedEntities.includes(entity)}
-                            onCheckedChange={async (checked) => {
-                              const newEntities = checked
-                                ? [...selectedEntities, entity]
-                                : selectedEntities.filter((e) => e !== entity);
-                              setSelectedEntities(newEntities);
-                              
-                              const { error } = await supabase
-                                .from("tasks")
-                                .update({ entity: newEntities })
-                                .eq("id", taskId);
+                    <ScrollArea className="max-h-[300px]">
+                      <div 
+                        className="space-y-2 pr-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {ENTITIES.map((entity) => (
+                          <div key={entity} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`entity-${entity}`}
+                              checked={selectedEntities.includes(entity)}
+                              onCheckedChange={async (checked) => {
+                                const newEntities = checked
+                                  ? [...selectedEntities, entity]
+                                  : selectedEntities.filter((e) => e !== entity);
+                                setSelectedEntities(newEntities);
                                 
-                              if (error) {
-                                toast({ title: "Error", description: error.message, variant: "destructive" });
-                              } else {
-                                await fetchTask();
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`entity-${entity}`} className="cursor-pointer">
-                            {entity}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                                const { error } = await supabase
+                                  .from("tasks")
+                                  .update({ entity: newEntities })
+                                  .eq("id", taskId);
+                                  
+                                if (error) {
+                                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                                } else {
+                                  await fetchTask();
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <Label htmlFor={`entity-${entity}`} className="text-sm cursor-pointer">{entity}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       className="w-full"
                       onClick={() => setEditingEntities(false)}
                     >

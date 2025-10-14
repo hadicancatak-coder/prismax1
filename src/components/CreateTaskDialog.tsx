@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { taskSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ENTITIES = [
   "Jordan", "Lebanon", "Kuwait", "UAE", "South Africa", "Azerbaijan", 
@@ -306,7 +307,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-80 max-h-[300px] overflow-y-auto"
+                  className="w-80"
                   onInteractOutside={(e) => {
                     const target = e.target as Element;
                     if (target.closest('[role="checkbox"]') || target.closest('label')) {
@@ -314,30 +315,32 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     }
                   }}
                 >
-                  <div className="space-y-2">
-                    {ENTITIES.map((ent) => (
-                      <div 
-                        key={ent} 
-                        className="flex items-center space-x-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          id={`entity-${ent}`}
-                          checked={entities.includes(ent)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setEntities([...entities, ent]);
-                            } else {
-                              setEntities(entities.filter(c => c !== ent));
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer">
-                          {ent}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                  <ScrollArea className="max-h-[300px]">
+                    <div className="space-y-2 pr-4">
+                      {ENTITIES.map((ent) => (
+                        <div 
+                          key={ent} 
+                          className="flex items-center space-x-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            id={`entity-${ent}`}
+                            checked={entities.includes(ent)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setEntities([...entities, ent]);
+                              } else {
+                                setEntities(entities.filter(c => c !== ent));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer">
+                            {ent}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </PopoverContent>
               </Popover>
               {entities.length > 0 && (

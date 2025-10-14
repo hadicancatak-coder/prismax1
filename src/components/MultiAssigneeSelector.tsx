@@ -11,6 +11,7 @@ import {
 import { UserPlus, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface User {
   user_id: string;
@@ -193,30 +194,32 @@ export function MultiAssigneeSelector({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-2 bg-background" align="start">
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {availableUsers.length > 0 ? (
-                availableUsers.map((user) => (
-                  <button
-                    key={user.user_id}
-                    onClick={() => {
-                      handleAssign(user.user_id);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-accent transition-colors"
-                  >
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-[10px]">
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{user.name}</span>
-                  </button>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground p-3 text-center">
-                  All users assigned
-                </div>
-              )}
-            </div>
+            <ScrollArea className="max-h-64">
+              <div className="space-y-1 pr-3">
+                {availableUsers.length > 0 ? (
+                  availableUsers.map((user) => (
+                    <button
+                      key={user.user_id}
+                      onClick={() => {
+                        handleAssign(user.user_id);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-accent transition-colors"
+                    >
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-[10px]">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{user.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground p-3 text-center">
+                    All users assigned
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
             {availableUsers.length > 0 && (
               <Button
                 variant="outline"
