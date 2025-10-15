@@ -3,16 +3,21 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Lock, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getNeedsAttention } from "@/lib/dashboardQueries";
+import { useAuth } from "@/hooks/useAuth";
 
 export function NeedsAttention() {
+  const { user } = useAuth();
   const [data, setData] = useState<any>({ overdueTasks: [], blockers: [], pendingApprovals: [] });
 
   useEffect(() => {
-    fetchNeedsAttention();
-  }, []);
+    if (user?.id) {
+      fetchNeedsAttention();
+    }
+  }, [user?.id]);
 
   const fetchNeedsAttention = async () => {
-    const result = await getNeedsAttention();
+    if (!user?.id) return;
+    const result = await getNeedsAttention(user.id);
     setData(result);
   };
 

@@ -5,17 +5,22 @@ import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { useEffect, useState } from "react";
 import { getUpcomingTasks } from "@/lib/dashboardQueries";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export function WhatsNext() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchUpcomingTasks();
-  }, []);
+    if (user?.id) {
+      fetchUpcomingTasks();
+    }
+  }, [user?.id]);
 
   const fetchUpcomingTasks = async () => {
-    const data = await getUpcomingTasks(5);
+    if (!user?.id) return;
+    const data = await getUpcomingTasks(user.id, 5);
     setUpcomingTasks(data);
   };
 
@@ -42,7 +47,9 @@ export function WhatsNext() {
                 <div className="flex-1">
                   <h3 className="font-medium text-foreground text-sm mb-1">{task.title}</h3>
                   <p className="text-xs text-muted-foreground">
-                    {task.assignee?.name || "Unassigned"}
+                    {task.assignees && task.assignees.length > 0 
+                      ? task.assignees.map((a: any) => a.name).join(", ")
+                      : "Unassigned"}
                   </p>
                 </div>
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">

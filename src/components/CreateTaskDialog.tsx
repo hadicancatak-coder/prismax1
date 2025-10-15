@@ -71,7 +71,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   }, [open, userRole]);
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("public_profiles").select("user_id, name");
+    const { data } = await supabase.from("profiles").select("id, user_id, name");
     setUsers(data || []);
   };
 
@@ -130,8 +130,19 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setLoading(true);
     try {
+      // Get current user's profile.id for member users
+      let currentUserProfileId = null;
+      if (userRole === "member") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+        currentUserProfileId = profile?.id;
+      }
+
       const assigneesToUse = userRole === "member" 
-        ? [user.id] 
+        ? (currentUserProfileId ? [currentUserProfileId] : [])
         : selectedAssignees.length > 0 
           ? selectedAssignees 
           : [];
@@ -158,15 +169,32 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
       const createdTask = data[0];
 
+      // Get creator's profile.id for assigned_by
+      const { data: creatorProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
       // Insert multiple assignees into task_assignees table
-      if (assigneesToUse.length > 0) {
-        const assigneeInserts = assigneesToUse.map(assigneeId => ({
+      // assigneesToUse already contains profiles.id values
+      if (assigneesToUse.length > 0 && creatorProfile) {
+        const assigneeInserts = assigneesToUse.map(profileId => ({
           task_id: createdTask.id,
-          user_id: assigneeId,
-          assigned_by: user.id,
+          user_id: profileId,  // This is profiles.id
+          assigned_by: creatorProfile.id,  // This is also profiles.id
         }));
 
-        await supabase.from("task_assignees").insert(assigneeInserts);
+        const { error: assignError } = await supabase.from("task_assignees").insert(assigneeInserts);
+        
+        if (assignError) {
+          console.error("Error assigning tasks:", assignError);
+          toast({
+            title: "Warning",
+            description: "Task created but assignment failed",
+            variant: "destructive",
+          });
+        }
       }
 
       toast({
@@ -475,22 +503,22 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     <div className="space-y-2 pr-4">
                       {users.map((usr) => (
                         <div 
-                          key={usr.user_id} 
+                          key={usr.id} 
                           className="flex items-center space-x-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Checkbox
-                            id={`assignee-${usr.user_id}`}
-                            checked={selectedAssignees.includes(usr.user_id)}
+                            id={`assignee-${usr.id}`}
+                            checked={selectedAssignees.includes(usr.id)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setSelectedAssignees([...selectedAssignees, usr.user_id]);
+                                setSelectedAssignees([...selectedAssignees, usr.id]);
                               } else {
-                                setSelectedAssignees(selectedAssignees.filter(id => id !== usr.user_id));
+                                setSelectedAssignees(selectedAssignees.filter(id => id !== usr.id));
                               }
                             }}
                           />
-                          <Label htmlFor={`assignee-${usr.user_id}`} className="text-sm cursor-pointer">
+                          <Label htmlFor={`assignee-${usr.id}`} className="text-sm cursor-pointer">
                             {usr.name}
                           </Label>
                         </div>
@@ -502,7 +530,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               {selectedAssignees.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {selectedAssignees.map((assigneeId) => {
-                    const assignee = users.find(u => u.user_id === assigneeId);
+                    const assignee = users.find(u => u.id === assigneeId);
                     return assignee ? (
                       <Badge key={assigneeId} variant="secondary" className="text-xs">
                         {assignee.name}

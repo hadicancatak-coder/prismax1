@@ -92,33 +92,33 @@ export default function CalendarView() {
   };
 
   const fetchTasks = async () => {
+    // Get the profile.id for the user being viewed
+    let profileId: string | null = null;
+    
     if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
-      // Admin viewing specific user - use task_assignees table
-      const { data: assignedTaskIds } = await supabase
-        .from("task_assignees")
-        .select("task_id")
-        .eq("user_id", selectedUserId);
-      
-      const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
-      
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .not("due_at", "is", null)
-        .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000'])
-        .order("due_at", { ascending: true });
-      
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
-        setTasks(data || []);
-      }
+      // Admin viewing specific user - get that user's profile.id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", selectedUserId)
+        .single();
+      profileId = profile?.id || null;
     } else if (userRole !== "admin" && user?.id) {
-      // Regular user viewing their own tasks - use task_assignees table
+      // Regular user viewing their own tasks - get their profile.id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      profileId = profile?.id || null;
+    }
+
+    if (profileId) {
+      // Fetch tasks assigned to this specific user
       const { data: assignedTaskIds } = await supabase
         .from("task_assignees")
         .select("task_id")
-        .eq("user_id", user.id);
+        .eq("user_id", profileId);
       
       const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
       
@@ -151,6 +151,27 @@ export default function CalendarView() {
   };
 
   const fetchCampaigns = async () => {
+    // Get the profile.id for the user being viewed
+    let profileId: string | null = null;
+    
+    if (userRole !== "admin" && user?.id) {
+      // Regular user - get their profile.id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      profileId = profile?.id || null;
+    } else if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
+      // Admin viewing specific user - get that user's profile.id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", selectedUserId)
+        .single();
+      profileId = profile?.id || null;
+    }
+
     let query = supabase
       .from("launch_pad_campaigns")
       .select(`
@@ -162,22 +183,15 @@ export default function CalendarView() {
       `)
       .not("launch_date", "is", null);
 
-    if (userRole !== "admin" && user?.id) {
+    if (profileId) {
+      // Filter to only campaigns assigned to this user
       const { data: assignedCampaigns } = await supabase
         .from("launch_campaign_assignees")
         .select("campaign_id")
-        .eq("user_id", user.id);
+        .eq("user_id", profileId);
       
       const campaignIds = assignedCampaigns?.map(a => a.campaign_id) || [];
-      query = query.in("id", campaignIds.length > 0 ? campaignIds : ['']);
-    } else if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
-      const { data: assignedCampaigns } = await supabase
-        .from("launch_campaign_assignees")
-        .select("campaign_id")
-        .eq("user_id", selectedUserId);
-      
-      const campaignIds = assignedCampaigns?.map(a => a.campaign_id) || [];
-      query = query.in("id", campaignIds.length > 0 ? campaignIds : ['']);
+      query = query.in("id", campaignIds.length > 0 ? campaignIds : ['00000000-0000-0000-0000-000000000000']);
     }
 
     const { data } = await query;

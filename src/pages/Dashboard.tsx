@@ -37,12 +37,37 @@ export default function Dashboard() {
   }, [user?.id]);
 
   const handleStatClick = async (type: 'today' | 'overdue' | 'inProgress') => {
+    if (!user?.id) return;
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    let query = supabase.from("tasks").select("*");
+    // Get user's profile.id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profile) return;
+
+    // Get task IDs assigned to this user
+    const { data: assignedTasks } = await supabase
+      .from("task_assignees")
+      .select("task_id")
+      .eq("user_id", profile.id);
+
+    const taskIds = assignedTasks?.map(a => a.task_id) || [];
+
+    if (taskIds.length === 0) {
+      setStatTasks([]);
+      setStatDialogOpen(true);
+      return;
+    }
+
+    let query = supabase.from("tasks").select("*").in("id", taskIds);
 
     if (type === 'today') {
       query = query.gte("due_at", today.toISOString()).lt("due_at", tomorrow.toISOString()).neq("status", "Completed");
