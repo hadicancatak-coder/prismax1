@@ -400,6 +400,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "blocker_assignees_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "blocker_assignees_blocker_id_fkey"
             columns: ["blocker_id"]
             isOneToOne: false
@@ -642,6 +649,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "launch_campaign_assignees_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
             columns: ["campaign_id"]
@@ -1005,6 +1019,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "task_assignees_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "task_assignees_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -1016,14 +1037,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "task_assignees_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["user_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
