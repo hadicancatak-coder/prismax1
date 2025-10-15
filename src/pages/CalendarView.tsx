@@ -101,6 +101,12 @@ export default function CalendarView() {
   };
 
   const fetchTasks = async () => {
+    // 🛡️ GUARD: Don't run if role is not loaded yet
+    if (roleLoading) {
+      console.log("⏳ fetchTasks: Role still loading, skipping...");
+      return;
+    }
+    
     console.log("🔍 fetchTasks called with:", { userRole, selectedUserId });
     
     // ✅ EXPLICIT CHECK: Admin viewing all members
@@ -174,6 +180,12 @@ export default function CalendarView() {
   };
 
   const fetchCampaigns = async () => {
+    // 🛡️ GUARD: Don't run if role is not loaded yet
+    if (roleLoading) {
+      console.log("⏳ fetchCampaigns: Role still loading, skipping...");
+      return;
+    }
+    
     console.log("🔍 fetchCampaigns called with:", { userRole, selectedUserId });
     
     // ✅ EXPLICIT CHECK: Admin viewing all members

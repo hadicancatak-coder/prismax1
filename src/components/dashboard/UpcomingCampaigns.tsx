@@ -27,6 +27,17 @@ export function UpcomingCampaigns() {
   }, [user?.id]);
 
   const fetchMyCampaigns = async () => {
+    if (!user?.id) return;
+    
+    // Get user's profile.id from auth user_id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profile) return;
+
     const { data } = await supabase
       .from('launch_campaign_assignees')
       .select(`
@@ -41,8 +52,7 @@ export function UpcomingCampaigns() {
           lp_url
         )
       `)
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
+      .eq('user_id', profile.id);
 
     const activeCampaigns = data
       ?.map(d => d.launch_pad_campaigns)
