@@ -101,17 +101,22 @@ export function MultiAssigneeSelector({
     }
 
     if (error) {
+      console.error('Assignment error:', error);
       toast({
         title: "Error",
-        description: "Failed to assign user",
+        description: error.message || "Failed to assign user",
         variant: "destructive",
       });
     } else {
+      toast({
+        title: "Success",
+        description: "User assigned successfully",
+      });
       onAssigneesChange();
     }
   };
 
-  const handleUnassign = async (userId: string) => {
+  const handleUnassign = async (profileId: string) => {
     let error: any = null;
 
     if (entityType === "task") {
@@ -119,44 +124,49 @@ export function MultiAssigneeSelector({
         .from("task_assignees")
         .delete()
         .eq("task_id", entityId)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       error = err;
     } else if (entityType === "project") {
       const { error: err } = await supabase
         .from("project_assignees")
         .delete()
         .eq("project_id", entityId)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       error = err;
     } else if (entityType === "campaign") {
       const { error: err } = await supabase
         .from("campaign_assignees")
         .delete()
         .eq("campaign_id", entityId)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       error = err;
     } else if (entityType === "blocker") {
       const { error: err } = await supabase
         .from("blocker_assignees")
         .delete()
         .eq("blocker_id", entityId)
-        .eq("user_id", userId);
+        .eq("user_id", profileId);
       error = err;
     }
 
     if (error) {
+      console.error('Unassignment error:', error);
       toast({
         title: "Error",
-        description: "Failed to unassign user",
+        description: error.message || "Failed to unassign user",
         variant: "destructive",
       });
     } else {
+      toast({
+        title: "Success",
+        description: "User unassigned successfully",
+      });
       onAssigneesChange();
     }
   };
 
   const availableUsers = users.filter(
-    (u) => !assignees.find((a) => a.user_id === u.user_id)
+    (u) => !assignees.find((a) => a.id === u.id)
   );
 
   const getInitials = (name: string) => {
@@ -172,7 +182,7 @@ export function MultiAssigneeSelector({
     <div className="flex flex-wrap items-center gap-1.5">
       {assignees.map((assignee) => (
         <Badge
-          key={assignee.user_id}
+          key={assignee.id}
           variant="secondary"
           className="gap-1 pr-1 pl-2 py-1"
         >
@@ -189,7 +199,7 @@ export function MultiAssigneeSelector({
           </span>
           {!disabled && (
             <button
-              onClick={() => handleUnassign(assignee.user_id)}
+              onClick={() => handleUnassign(assignee.id)}
               className="hover:bg-background/50 rounded-full p-0.5 ml-0.5"
             >
               <X className="h-3 w-3" />
