@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TaskDialog } from "@/components/TaskDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
-  const { user, userRole } = useAuth();
+  const { user, userRole, roleLoading } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
@@ -34,6 +35,14 @@ export default function CalendarView() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
   useEffect(() => {
+    // 🛡️ GUARD: Don't fetch until role is loaded
+    if (roleLoading) {
+      console.log("⏳ Calendar: Waiting for role to load...");
+      return;
+    }
+    
+    console.log("✅ Calendar: Role loaded, fetching data...", { userRole, selectedUserId });
+    
     fetchUserWorkingDays();
     fetchTasks();
     fetchCampaigns();
@@ -70,7 +79,7 @@ export default function CalendarView() {
       supabase.removeChannel(campaignsChannel);
       supabase.removeChannel(profilesChannel);
     };
-  }, [selectedUserId, userRole, user?.id]);
+  }, [selectedUserId, userRole, roleLoading, user?.id]);
 
   const fetchUserWorkingDays = async () => {
     if (!user?.id) return;
@@ -92,10 +101,32 @@ export default function CalendarView() {
   };
 
   const fetchTasks = async () => {
+    console.log("🔍 fetchTasks called with:", { userRole, selectedUserId });
+    
+    // ✅ EXPLICIT CHECK: Admin viewing all members
+    if (userRole === "admin" && selectedUserId === "all") {
+      console.log("👥 Fetching ALL tasks (admin mode)");
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .not("due_at", "is", null)
+        .order("due_at", { ascending: true });
+      
+      if (error) {
+        console.error("❌ Error fetching all tasks:", error);
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        console.log(`✅ Fetched ${data?.length || 0} total tasks`);
+        setTasks(data || []);
+      }
+      return; // Early return
+    }
+    
     // Get the profile.id for the user being viewed
     let profileId: string | null = null;
     
     if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
+      console.log("👤 Admin viewing specific user:", selectedUserId);
       // Admin viewing specific user - get that user's profile.id
       const { data: profile } = await supabase
         .from("profiles")
@@ -104,6 +135,7 @@ export default function CalendarView() {
         .single();
       profileId = profile?.id || null;
     } else if (userRole !== "admin" && user?.id) {
+      console.log("👤 Regular user viewing own tasks");
       // Regular user viewing their own tasks - get their profile.id
       const { data: profile } = await supabase
         .from("profiles")
@@ -114,6 +146,7 @@ export default function CalendarView() {
     }
 
     if (profileId) {
+      console.log("🔍 Fetching tasks for profileId:", profileId);
       // Fetch tasks assigned to this specific user
       const { data: assignedTaskIds } = await supabase
         .from("task_assignees")
@@ -121,6 +154,7 @@ export default function CalendarView() {
         .eq("user_id", profileId);
       
       const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
+      console.log(`📋 Found ${taskIds.length} assigned task IDs`);
       
       const { data, error } = await supabase
         .from("tasks")
@@ -130,31 +164,43 @@ export default function CalendarView() {
         .order("due_at", { ascending: true });
       
       if (error) {
+        console.error("❌ Error fetching user tasks:", error);
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        setTasks(data || []);
-      }
-    } else {
-      // Admin viewing all tasks
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .not("due_at", "is", null)
-        .order("due_at", { ascending: true });
-      
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
+        console.log(`✅ Fetched ${data?.length || 0} tasks for user`);
         setTasks(data || []);
       }
     }
   };
 
   const fetchCampaigns = async () => {
+    console.log("🔍 fetchCampaigns called with:", { userRole, selectedUserId });
+    
+    // ✅ EXPLICIT CHECK: Admin viewing all members
+    if (userRole === "admin" && selectedUserId === "all") {
+      console.log("👥 Fetching ALL campaigns (admin mode)");
+      const { data } = await supabase
+        .from("launch_pad_campaigns")
+        .select(`
+          *,
+          launch_campaign_assignees(
+            user_id,
+            profiles!launch_campaign_assignees_user_id_fkey(name, avatar_url)
+          )
+        `)
+        .not("launch_date", "is", null)
+        .in("status", ["live", "orbit"]);
+      
+      console.log(`✅ Fetched ${data?.length || 0} total campaigns`);
+      setCampaigns(data || []);
+      return; // Early return
+    }
+    
     // Get the profile.id for the user being viewed
     let profileId: string | null = null;
     
     if (userRole !== "admin" && user?.id) {
+      console.log("👤 Regular user viewing own campaigns");
       // Regular user - get their profile.id
       const { data: profile } = await supabase
         .from("profiles")
@@ -163,6 +209,7 @@ export default function CalendarView() {
         .single();
       profileId = profile?.id || null;
     } else if (userRole === "admin" && selectedUserId && selectedUserId !== "all") {
+      console.log("👤 Admin viewing specific user:", selectedUserId);
       // Admin viewing specific user - get that user's profile.id
       const { data: profile } = await supabase
         .from("profiles")
@@ -185,6 +232,7 @@ export default function CalendarView() {
       .in("status", ["live", "orbit"]);
 
     if (profileId) {
+      console.log("🔍 Fetching campaigns for profileId:", profileId);
       // Filter to only campaigns assigned to this user
       const { data: assignedCampaigns } = await supabase
         .from("launch_campaign_assignees")
@@ -192,10 +240,12 @@ export default function CalendarView() {
         .eq("user_id", profileId);
       
       const campaignIds = assignedCampaigns?.map(a => a.campaign_id) || [];
+      console.log(`📋 Found ${campaignIds.length} assigned campaign IDs`);
       query = query.in("id", campaignIds.length > 0 ? campaignIds : ['00000000-0000-0000-0000-000000000000']);
     }
 
     const { data } = await query;
+    console.log(`✅ Fetched ${data?.length || 0} campaigns`);
     setCampaigns(data || []);
   };
 
@@ -468,34 +518,36 @@ export default function CalendarView() {
           </div>
         </div>
 
-        {isToday && highPriorityTasks.length > 0 && (
-          <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
-            <div className="flex items-center gap-2 mb-4">
-              <Badge className="bg-primary">Today's Focus</Badge>
-              <span className="text-sm text-muted-foreground">
-                {highPriorityTasks.length} high-priority {highPriorityTasks.length === 1 ? 'task' : 'tasks'}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {highPriorityTasks.slice(0, 3).map(task => (
-                <TaskCard key={task.id} task={task} compact />
-              ))}
-            </div>
-          </Card>
-        )}
+        <ScrollArea className="h-[calc(100vh-320px)] pr-4">
+          <div className="space-y-6">
+            {isToday && highPriorityTasks.length > 0 && (
+              <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <Badge className="bg-primary">Today's Focus</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {highPriorityTasks.length} high-priority {highPriorityTasks.length === 1 ? 'task' : 'tasks'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {highPriorityTasks.slice(0, 3).map(task => (
+                    <TaskCard key={task.id} task={task} compact />
+                  ))}
+                </div>
+              </Card>
+            )}
 
-        {overdueTasks.length > 0 && (
-          <Card className="p-4 bg-destructive/10 border-destructive/20">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <p className="font-semibold text-destructive">
-                {overdueTasks.length} overdue {overdueTasks.length === 1 ? 'task' : 'tasks'} from previous days
-              </p>
-            </div>
-          </Card>
-        )}
+            {overdueTasks.length > 0 && (
+              <Card className="p-4 bg-destructive/10 border-destructive/20">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <p className="font-semibold text-destructive">
+                    {overdueTasks.length} overdue {overdueTasks.length === 1 ? 'task' : 'tasks'} from previous days
+                  </p>
+                </div>
+              </Card>
+            )}
 
-        <div className="grid gap-6">
+            <div className="grid gap-6">
           {inProgressTasks.length > 0 && (
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -551,17 +603,19 @@ export default function CalendarView() {
             </Card>
           )}
 
-          {dayTasks.length === 0 && dayCampaigns.length === 0 && (
-            <Card className="p-12 text-center">
-              <p className="text-muted-foreground text-lg">
-                {isToday ? "No tasks or campaigns scheduled for today! 🎉" : "No tasks or campaigns scheduled for this day"}
-              </p>
-              <Button variant="outline" className="mt-4" onClick={() => setCurrentDate(new Date())}>
-                Go to Today
-              </Button>
-            </Card>
-          )}
-        </div>
+            {dayTasks.length === 0 && dayCampaigns.length === 0 && (
+              <Card className="p-12 text-center">
+                <p className="text-muted-foreground text-lg">
+                  {isToday ? "No tasks or campaigns scheduled for today! 🎉" : "No tasks or campaigns scheduled for this day"}
+                </p>
+                <Button variant="outline" className="mt-4" onClick={() => setCurrentDate(new Date())}>
+                  Go to Today
+                </Button>
+              </Card>
+            )}
+            </div>
+          </div>
+        </ScrollArea>
       </div>
     );
   };
