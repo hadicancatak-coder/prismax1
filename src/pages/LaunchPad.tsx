@@ -138,10 +138,9 @@ export default function LaunchPad() {
 
 
   const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
-  const socialUACampaigns = campaigns.filter(c => c.status === 'orbit' && c.teams?.includes('SocialUA'));
-  const ppcCampaigns = campaigns.filter(c => c.status === 'orbit' && c.teams?.includes('PPC'));
+  const socialUACampaigns = campaigns.filter(c => (c.status === 'live' || c.status === 'orbit') && c.teams?.includes('SocialUA'));
+  const ppcCampaigns = campaigns.filter(c => (c.status === 'live' || c.status === 'orbit') && c.teams?.includes('PPC'));
   const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
-  const inOrbitCampaigns = campaigns.filter(c => c.status === 'orbit');
 
   return (
     <div className="min-h-screen p-6 space-y-6">
@@ -183,7 +182,7 @@ export default function LaunchPad() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">🛰️ Live</p>
-            <p className="text-3xl font-bold">{inOrbitCampaigns.length}</p>
+            <p className="text-3xl font-bold">{orbitCampaigns.length}</p>
           </div>
           <Radio className="h-10 w-10 text-success/20" />
         </div>
