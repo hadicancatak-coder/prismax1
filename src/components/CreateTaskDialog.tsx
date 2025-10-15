@@ -353,7 +353,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-80"
+                  className="w-80 z-50"
                   onInteractOutside={(e) => {
                     const target = e.target as Element;
                     if (target.closest('[role="checkbox"]') || target.closest('label')) {
@@ -361,8 +361,8 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     }
                   }}
                 >
-                  <ScrollArea className="max-h-[300px]">
-                    <div className="space-y-2 pr-4">
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-2">
                       {ENTITIES.map((ent) => (
                         <div 
                           key={ent} 
