@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface User {
+  id: string;
   user_id: string;
   name: string;
   username?: string;
@@ -44,11 +45,11 @@ export function useRealtimeAssignees(
     }
 
     if (data && data.length > 0) {
-      const userIds = data.map((d: any) => d.user_id);
+      const profileIds = data.map((d: any) => d.user_id);
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, name, username")
-        .in("user_id", userIds);
+        .select("id, user_id, name, username")
+        .in("id", profileIds);
 
       setAssignees(profiles || []);
     } else {

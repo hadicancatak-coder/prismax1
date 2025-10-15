@@ -394,10 +394,30 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="mb-2 block">Status</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Status</Label>
+                  {task.recurrence_rrule && task.recurrence_rrule !== 'none' && (
+                    <Badge variant="outline" className="text-xs">
+                      Recurring Task
+                    </Badge>
+                  )}
+                </div>
                 <Select 
                   value={task.status} 
                   onValueChange={async (value: any) => {
+                    // Check if this is a recurring task
+                    const isRecurringTask = task.recurrence_rrule && task.recurrence_rrule !== 'none';
+                    
+                    // If trying to complete a recurring task, only allow admins
+                    if (isRecurringTask && value === 'Completed' && userRole !== 'admin') {
+                      toast({
+                        title: "Permission Denied",
+                        description: "Only admins can mark recurring tasks as completed",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
                     if (userRole === 'admin') {
                       const { error } = await supabase
                         .from("tasks")
@@ -833,6 +853,36 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                       selected={task.due_at ? new Date(task.due_at) : undefined}
                       onSelect={async (date) => {
                         if (!date) return;
+                        
+                        // Get all assignees for this task
+                        const { data: taskAssignees } = await supabase
+                          .from("task_assignees")
+                          .select("profiles:user_id(id, name, working_days)")
+                          .eq("task_id", taskId);
+                        
+                        const dayOfWeek = date.getDay();
+                        const invalidAssignees: string[] = [];
+                        
+                        taskAssignees?.forEach((ta: any) => {
+                          const profile = ta.profiles;
+                          const isValidDay = (
+                            (profile.working_days === 'mon-fri' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+                            (profile.working_days === 'sun-thu' && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4)))
+                          );
+                          
+                          if (!isValidDay) {
+                            invalidAssignees.push(profile.name);
+                          }
+                        });
+                        
+                        if (invalidAssignees.length > 0) {
+                          toast({
+                            title: "Working Day Conflict",
+                            description: `This date is outside working days for: ${invalidAssignees.join(', ')}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
                         
                         const { error } = await supabase
                           .from("tasks")

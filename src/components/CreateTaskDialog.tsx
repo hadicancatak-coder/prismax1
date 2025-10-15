@@ -81,6 +81,39 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setValidationErrors({});
 
+    // Validate due date against assignee working days
+    if (date && selectedAssignees.length > 0 && recurrence === "none") {
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      // Fetch selected assignees' working days
+      const { data: assigneeProfiles } = await supabase
+        .from("profiles")
+        .select("id, name, working_days")
+        .in("id", selectedAssignees);
+      
+      const invalidAssignees: string[] = [];
+      
+      assigneeProfiles?.forEach(profile => {
+        const isValidDay = (
+          (profile.working_days === 'mon-fri' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+          (profile.working_days === 'sun-thu' && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4)))
+        );
+        
+        if (!isValidDay) {
+          invalidAssignees.push(profile.name);
+        }
+      });
+      
+      if (invalidAssignees.length > 0) {
+        toast({
+          title: "Working Day Conflict",
+          description: `The selected date falls outside working days for: ${invalidAssignees.join(', ')}. They work ${assigneeProfiles[0]?.working_days || 'different days'}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Generate recurrence rule based on selection
     let recurrenceRule = "";
     if (recurrence === "daily") {

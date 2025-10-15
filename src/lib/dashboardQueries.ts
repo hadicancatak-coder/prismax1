@@ -103,10 +103,10 @@ export const getUpcomingTasks = async (userId: string, limit = 5) => {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Get user's profile.id from auth user_id
+  // Get user's profile with working days
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, working_days")
     .eq("user_id", userId)
     .single();
 
@@ -119,21 +119,63 @@ export const getUpcomingTasks = async (userId: string, limit = 5) => {
     .eq("user_id", profile.id);
 
   const taskIds = assignedTasks?.map(a => a.task_id) || [];
-
   if (taskIds.length === 0) return [];
 
-  // Fetch tasks due TODAY or OVERDUE (exclude Completed, Failed, Blocked)
+  // Fetch ALL tasks (recurring and non-recurring)
   const { data: tasks } = await supabase
     .from("tasks")
     .select("*")
     .in("id", taskIds)
-    .not("due_at", "is", null)
-    .lte("due_at", tomorrow.toISOString())
-    .not("status", "in", '("Completed","Failed","Blocked")')
-    .order("due_at", { ascending: true })
-    .limit(limit);
+    .not("status", "in", '("Completed","Failed","Blocked")');
 
   if (!tasks || tasks.length === 0) return [];
+
+  // Filter tasks based on recurrence and due date
+  const todayDayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+  const todayDayOfMonth = today.getDate();
+  
+  // Check if today is a working day for this user
+  const isWorkingDay = (profile.working_days === 'mon-fri' && todayDayOfWeek >= 1 && todayDayOfWeek <= 5) ||
+                       (profile.working_days === 'sun-thu' && (todayDayOfWeek === 0 || (todayDayOfWeek >= 1 && todayDayOfWeek <= 4)));
+
+  const relevantTasks = tasks.filter(task => {
+    // If task has recurrence rule
+    if (task.recurrence_rrule) {
+      // Only show recurring tasks on working days
+      if (!isWorkingDay) return false;
+      
+      if (task.recurrence_rrule.includes('FREQ=DAILY')) {
+        return true; // Show daily tasks every working day
+      }
+      if (task.recurrence_rrule.includes('FREQ=WEEKLY') && task.recurrence_day_of_week !== null) {
+        return todayDayOfWeek === task.recurrence_day_of_week && isWorkingDay;
+      }
+      if (task.recurrence_rrule.includes('FREQ=MONTHLY') && task.recurrence_day_of_month !== null) {
+        return todayDayOfMonth === task.recurrence_day_of_month && isWorkingDay;
+      }
+      return false;
+    }
+    
+    // Non-recurring tasks: show if due today or overdue
+    if (task.due_at) {
+      const dueDate = new Date(task.due_at);
+      return dueDate <= tomorrow;
+    }
+    
+    return false;
+  });
+
+  // Sort: overdue first, then by priority
+  const sortedTasks = relevantTasks.sort((a, b) => {
+    if (a.due_at && b.due_at) {
+      return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+    }
+    if (a.due_at && !b.due_at) return -1;
+    if (!a.due_at && b.due_at) return 1;
+    
+    const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+    return (priorityOrder[a.priority as keyof typeof priorityOrder] || 1) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 1);
+  }).slice(0, limit);
 
   // Get task assignees with profiles
   const { data: taskAssignees } = await supabase
@@ -146,18 +188,18 @@ export const getUpcomingTasks = async (userId: string, limit = 5) => {
         avatar_url
       )
     `)
-    .in("task_id", tasks.map(t => t.id));
+    .in("task_id", sortedTasks.map(t => t.id));
 
   // Map assignees to tasks
   const assigneeMap = new Map();
-  taskAssignees?.forEach(ta => {
+  taskAssignees?.forEach((ta: any) => {
     if (!assigneeMap.has(ta.task_id)) {
       assigneeMap.set(ta.task_id, []);
     }
     assigneeMap.get(ta.task_id).push(ta.profiles);
   });
   
-  return tasks.map(task => ({
+  return sortedTasks.map(task => ({
     ...task,
     assignees: assigneeMap.get(task.id) || []
   }));

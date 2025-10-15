@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface User {
+  id: string;        // profiles.id
   user_id: string;
   name: string;
   username?: string;
@@ -44,41 +45,57 @@ export function MultiAssigneeSelector({
 
   const fetchUsers = async () => {
     const { data } = await supabase
-      .from("public_profiles")
-      .select("user_id, name, username");
+      .from("profiles")
+      .select("id, user_id, name, username");
     setUsers(data || []);
   };
 
-  const handleAssign = async (userId: string) => {
-    const currentUser = (await supabase.auth.getUser()).data.user?.id;
+  const handleAssign = async (profileId: string) => {
+    // Get current user's profile.id (not auth.uid)
+    const { data: currentUserData } = await supabase.auth.getUser();
+    const { data: currentUserProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", currentUserData?.user?.id)
+      .single();
+
+    if (!currentUserProfile) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to assign",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let error: any = null;
 
     if (entityType === "task") {
       const { error: err } = await supabase.from("task_assignees").insert({
         task_id: entityId,
-        user_id: userId,
-        assigned_by: currentUser,
+        user_id: profileId,
+        assigned_by: currentUserProfile.id,
       });
       error = err;
     } else if (entityType === "project") {
       const { error: err } = await supabase.from("project_assignees").insert({
         project_id: entityId,
-        user_id: userId,
-        assigned_by: currentUser,
+        user_id: profileId,
+        assigned_by: currentUserProfile.id,
       });
       error = err;
     } else if (entityType === "campaign") {
       const { error: err } = await supabase.from("campaign_assignees").insert({
         campaign_id: entityId,
-        user_id: userId,
-        assigned_by: currentUser,
+        user_id: profileId,
+        assigned_by: currentUserProfile.id,
       });
       error = err;
     } else if (entityType === "blocker") {
       const { error: err } = await supabase.from("blocker_assignees").insert({
         blocker_id: entityId,
-        user_id: userId,
-        assigned_by: currentUser,
+        user_id: profileId,
+        assigned_by: currentUserProfile.id,
       });
       error = err;
     }
@@ -201,7 +218,7 @@ export function MultiAssigneeSelector({
                     <button
                       key={user.user_id}
                       onClick={() => {
-                        handleAssign(user.user_id);
+                        handleAssign(user.id);
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-accent transition-colors"
                     >
