@@ -191,75 +191,25 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                   </Badge>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="w-full h-9 justify-start gap-2 border border-input hover:bg-accent">
-                        {task.assignee ? (
-                          <>
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={task.assignee.avatar_url} />
-                              <AvatarFallback>{task.assignee.name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{task.assignee.name}</span>
-                          </>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Unassigned</span>
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      <DropdownMenuItem onClick={async () => {
-                        const { error } = await supabase
-                          .from("tasks")
-                          .update({ assignee_id: null })
-                          .eq("id", task.id);
-                        
-                        if (!error) {
-                          toast({ title: "Success", description: "Assignee updated" });
-                          onTaskUpdate();
-                        }
-                      }}>
-                        <span className="text-muted-foreground">Unassigned</span>
-                      </DropdownMenuItem>
-                      {profiles.map((profile) => (
-                        <DropdownMenuItem key={profile.user_id} onClick={async () => {
-                          const { error } = await supabase
-                            .from("tasks")
-                            .update({ assignee_id: profile.user_id })
-                            .eq("id", task.id);
-                          
-                          if (error) {
-                            toast({ title: "Error", description: error.message, variant: "destructive" });
-                            return;
-                          }
-
-                          // Send notification to new assignee
-                          if (profile.user_id !== user?.id) {
-                            await supabase.from("notifications").insert({
-                              user_id: profile.user_id,
-                              type: "task_assigned",
-                              payload_json: {
-                                task_id: task.id,
-                                task_title: task.title,
-                                assigned_by: user?.id
-                              }
-                            });
-                          }
-
-                          toast({ title: "Success", description: "Assignee updated" });
-                          onTaskUpdate();
-                        }}>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={profile.avatar_url} />
-                              <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span>{profile.name}</span>
-                          </div>
-                        </DropdownMenuItem>
+                  {task.assignees && task.assignees.length > 0 ? (
+                    <div className="flex items-center gap-1">
+                      {task.assignees.slice(0, 3).map((assignee: any) => (
+                        <Avatar key={assignee.id} className="h-6 w-6 border-2 border-background">
+                          <AvatarImage src={assignee.avatar_url} />
+                          <AvatarFallback className="text-xs">
+                            {assignee.name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
                       ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      {task.assignees.length > 3 && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          +{task.assignees.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Unassigned</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm">
                   {task.due_at ? format(new Date(task.due_at), "MMM dd, yyyy") : "-"}
