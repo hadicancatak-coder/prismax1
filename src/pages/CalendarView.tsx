@@ -178,7 +178,7 @@ export default function CalendarView() {
         *,
         launch_campaign_assignees(
           user_id,
-          profiles(name, avatar_url)
+          profiles!launch_campaign_assignees_user_id_fkey(name, avatar_url)
         )
       `)
       .not("launch_date", "is", null);

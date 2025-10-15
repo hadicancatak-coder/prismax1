@@ -57,7 +57,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
         *,
         launch_campaign_assignees(
           user_id,
-          profiles(name, avatar_url, username)
+          profiles!launch_campaign_assignees_user_id_fkey(name, avatar_url, username)
         )
       `)
       .eq("id", campaignId)
