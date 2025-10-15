@@ -98,6 +98,11 @@ export const getRecentActivity = async (limit = 10) => {
 };
 
 export const getUpcomingTasks = async (userId: string, limit = 5) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   // Get user's profile.id from auth user_id
   const { data: profile } = await supabase
     .from("profiles")
@@ -117,13 +122,14 @@ export const getUpcomingTasks = async (userId: string, limit = 5) => {
 
   if (taskIds.length === 0) return [];
 
-  // Fetch tasks
+  // Fetch tasks due TODAY or OVERDUE (exclude Completed, Failed, Blocked)
   const { data: tasks } = await supabase
     .from("tasks")
     .select("*")
     .in("id", taskIds)
-    .neq("status", "Completed")
     .not("due_at", "is", null)
+    .lte("due_at", tomorrow.toISOString())
+    .not("status", "in", '("Completed","Failed","Blocked")')
     .order("due_at", { ascending: true })
     .limit(limit);
 
