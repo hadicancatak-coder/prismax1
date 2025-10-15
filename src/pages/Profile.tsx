@@ -76,10 +76,28 @@ export default function Profile() {
   const fetchTasks = async () => {
     const targetUserId = userId || user?.id;
     
+    // Get the profile.id for the target user
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", targetUserId)
+      .single();
+    
+    if (!profile) return;
+    
+    // Get task IDs assigned to this user
+    const { data: assignedTaskIds } = await supabase
+      .from("task_assignees")
+      .select("task_id")
+      .eq("user_id", profile.id);
+    
+    const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
+    
+    // Fetch full task details
     const { data: allTasks } = await supabase
       .from("tasks")
-      .select("*, profiles:created_by(name), assignee:assignee_id(name)")
-      .or(`created_by.eq.${targetUserId},assignee_id.eq.${targetUserId}`);
+      .select("*, profiles:created_by(name)")
+      .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000']);
 
     if (allTasks) {
       setTasks({
@@ -330,7 +348,7 @@ export default function Profile() {
                     id: task.id,
                     title: task.title,
                     description: task.description || "",
-                    assignee: task.assignee?.name || "Unassigned",
+                    assignee: "Multi-assignee",
                     status: task.status,
                     priority: task.priority,
                     dueDate: task.due_at,

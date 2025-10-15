@@ -43,24 +43,36 @@ export default function Tasks() {
       const { data, error } = await supabase
         .from("tasks")
         .select(`
-          *,
-          assignee:profiles(name, avatar_url)
+          *
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      const tasksWithComments = await Promise.all((data || []).map(async (task) => {
+      // Fetch assignees for each task from task_assignees table
+      const tasksWithAssignees = await Promise.all((data || []).map(async (task) => {
+        const { data: assigneeData } = await supabase
+          .from('task_assignees')
+          .select(`
+            profiles:user_id(id, user_id, name, avatar_url)
+          `)
+          .eq('task_id', task.id);
+        
         const { count } = await supabase
           .from('comments')
           .select('*', { count: 'exact', head: true })
           .eq('task_id', task.id);
-        return { ...task, comments_count: count || 0 };
+        
+        return { 
+          ...task, 
+          assignees: assigneeData?.map(a => a.profiles).filter(Boolean) || [],
+          comments_count: count || 0 
+        };
       }));
       
-      console.log('Fetched tasks:', tasksWithComments);
-      console.log('Task count:', tasksWithComments.length);
-      setTasks(tasksWithComments);
+      console.log('Fetched tasks:', tasksWithAssignees);
+      console.log('Task count:', tasksWithAssignees.length);
+      setTasks(tasksWithAssignees);
     } catch (error: any) {
       toast({
         title: "Error fetching tasks",
@@ -73,7 +85,10 @@ export default function Tasks() {
   };
 
   const filteredTasks = tasks.filter(task => {
-    const assigneeMatch = selectedAssignees.length === 0 || selectedAssignees.includes(task.assignee_id);
+    // Check if any of the task's assignees match the selected assignees
+    const assigneeMatch = selectedAssignees.length === 0 || 
+      task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.id));
+    
     const teamMatch = selectedTeams.length === 0;
     
     let dateMatch = true;
