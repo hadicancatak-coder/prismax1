@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -117,6 +119,14 @@ export default function Auth() {
             {isLogin ? "Welcome back" : "Create your account"}
           </p>
         </div>
+
+        <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="text-sm text-muted-foreground ml-2">
+            <strong>Security Notice:</strong> Do not use similar passwords across different platforms. 
+            Avoid adding any sensitive or personal information.
+          </AlertDescription>
+        </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
