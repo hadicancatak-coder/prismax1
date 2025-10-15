@@ -44,7 +44,7 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
   }, [open]);
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from('profiles').select('user_id, name, teams');
+    const { data } = await supabase.from('profiles').select('id, user_id, name, teams');
     setUsers(data || []);
   };
 
@@ -122,13 +122,24 @@ export function LaunchCampaignDialog({ open, onOpenChange, onSuccess }: LaunchCa
 
       if (error) throw error;
 
-      // Auto-assign team members
+      // Auto-assign team members  
+      // Get the creator's profile id for assigned_by field
+      const { data: creatorProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
       const assignees = users
-        .filter(u => selectedTeams.some(team => u.teams?.includes(team)))
+        .filter(u => {
+          if (!u.teams || !Array.isArray(u.teams) || u.teams.length === 0) return false;
+          // Check if user's teams overlap with selected campaign teams
+          return u.teams.some((userTeam: string) => selectedTeams.includes(userTeam));
+        })
         .map(u => ({
           campaign_id: campaign.id,
-          user_id: u.user_id,
-          assigned_by: userId
+          user_id: u.id, // Use profiles.id, not user_id
+          assigned_by: creatorProfile?.id || u.id
         }));
 
       if (assignees.length > 0) {
