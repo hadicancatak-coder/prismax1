@@ -181,7 +181,8 @@ export default function CalendarView() {
           profiles!launch_campaign_assignees_user_id_fkey(name, avatar_url)
         )
       `)
-      .not("launch_date", "is", null);
+      .not("launch_date", "is", null)
+      .in("status", ["live", "orbit"]);
 
     if (profileId) {
       // Filter to only campaigns assigned to this user

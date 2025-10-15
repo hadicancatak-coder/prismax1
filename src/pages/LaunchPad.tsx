@@ -78,11 +78,11 @@ export default function LaunchPad() {
         await supabase.from('notifications').insert(notifications);
       }
 
-      // Update campaign to live
+      // Update campaign to orbit (launched and active)
       const { error } = await supabase
         .from('launch_pad_campaigns')
         .update({ 
-          status: 'live', 
+          status: 'orbit', 
           launched_at: new Date().toISOString()
         })
         .eq('id', id);
@@ -138,10 +138,10 @@ export default function LaunchPad() {
 
 
   const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
-  const socialUACampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('SocialUA'));
-  const ppcCampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('PPC'));
+  const socialUACampaigns = campaigns.filter(c => c.status === 'orbit' && c.teams?.includes('SocialUA'));
+  const ppcCampaigns = campaigns.filter(c => c.status === 'orbit' && c.teams?.includes('PPC'));
   const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
-  const inOrbitCampaigns = campaigns.filter(c => c.status === 'live');
+  const inOrbitCampaigns = campaigns.filter(c => c.status === 'orbit');
 
   return (
     <div className="min-h-screen p-6 space-y-6">

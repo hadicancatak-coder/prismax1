@@ -46,7 +46,7 @@ export function UpcomingCampaigns() {
 
     const activeCampaigns = data
       ?.map(d => d.launch_pad_campaigns)
-      .filter(c => c && c.status !== 'stopped')
+      .filter(c => c && (c.status === 'live' || c.status === 'orbit'))
       .slice(0, 5) || [];
 
     setCampaigns(activeCampaigns);
