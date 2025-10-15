@@ -19,7 +19,7 @@ interface Task {
   priority: string;
   dueDate: string;
   timeTracked: string;
-  entity?: string;
+  entity?: string | string[];
   recurrence?: string;
 }
 
@@ -126,9 +126,26 @@ export const TaskCard = ({ task }: { task: Task }) => {
             <span>{task.assignee}</span>
           </div>
           {task.entity && (
-            <Badge variant="outline" className="text-xs h-5">
-              {task.entity}
-            </Badge>
+            <>
+              {Array.isArray(task.entity) ? (
+                <>
+                  {task.entity.slice(0, 2).map((e: string) => (
+                    <Badge key={e} variant="outline" className="text-xs h-5">
+                      {e}
+                    </Badge>
+                  ))}
+                  {task.entity.length > 2 && (
+                    <Badge variant="outline" className="text-xs h-5">
+                      +{task.entity.length - 2}
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <Badge variant="outline" className="text-xs h-5">
+                  {task.entity}
+                </Badge>
+              )}
+            </>
           )}
           {task.recurrence && task.recurrence !== "none" && (
             <Badge variant="outline" className="text-xs h-5">

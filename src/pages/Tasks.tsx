@@ -97,7 +97,11 @@ export default function Tasks() {
     const searchMatch = searchQuery === "" || 
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (task.entity && task.entity.toLowerCase().includes(searchQuery.toLowerCase()));
+      (task.entity && (
+        Array.isArray(task.entity) 
+          ? task.entity.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()))
+          : task.entity.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
     
     return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
   });
