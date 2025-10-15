@@ -41,7 +41,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [status, setStatus] = useState<"Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed">("Ongoing");
   const [jiraLink, setJiraLink] = useState("");
-  const [assigneeId, setAssigneeId] = useState<string>("unassigned");
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [entities, setEntities] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [recurrence, setRecurrence] = useState<string>("none");
@@ -105,7 +105,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_rrule: recurrenceRule || "",
         recurrence_day_of_week: recurrenceDayOfWeek,
         recurrence_day_of_month: recurrenceDayOfMonth,
-        assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
+        assignee_id: null,
         project_id: null,
         due_at: recurrence !== "none" ? null : (date ? date.toISOString() : null),
       });
@@ -130,6 +130,12 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setLoading(true);
     try {
+      const assigneesToUse = userRole === "member" 
+        ? [user.id] 
+        : selectedAssignees.length > 0 
+          ? selectedAssignees 
+          : [];
+
       const taskData = {
         title: title.trim(),
         description: description.trim() || null,
@@ -138,7 +144,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         due_at: recurrence !== "none" ? null : date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
-        assignee_id: userRole === "admin" ? (assigneeId === "unassigned" ? null : assigneeId) : user.id,
+        assignee_id: null,
         visibility: "global" as "global" | "pool" | "private",
         entity: entities.length > 0 ? entities : [],
         recurrence_rrule: recurrenceRule || null,
@@ -152,25 +158,15 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
       const createdTask = data[0];
 
-      // Insert into task_assignees table for multi-assignee support
-      if (taskData.assignee_id) {
-        await supabase.from("task_assignees").insert({
+      // Insert multiple assignees into task_assignees table
+      if (assigneesToUse.length > 0) {
+        const assigneeInserts = assigneesToUse.map(assigneeId => ({
           task_id: createdTask.id,
-          user_id: taskData.assignee_id,
+          user_id: assigneeId,
           assigned_by: user.id,
-        });
-      }
+        }));
 
-      // Send notification if task is assigned to someone
-      if (taskData.assignee_id && taskData.assignee_id !== user.id && userRole === "admin") {
-        await supabase.from("notifications").insert({
-          user_id: taskData.assignee_id,
-          type: "task_assigned",
-          payload_json: { 
-            task_id: createdTask.id,
-            task_title: taskData.title,
-          },
-        });
+        await supabase.from("task_assignees").insert(assigneeInserts);
       }
 
       toast({
@@ -185,7 +181,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setPriority("Medium");
       setStatus("Ongoing");
       setJiraLink("");
-      setAssigneeId("unassigned");
+      setSelectedAssignees([]);
       setEntities([]);
       setDate(undefined);
       setRecurrence("none");
@@ -457,20 +453,71 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
           {userRole === "admin" && (
             <div className="space-y-2">
-              <Label htmlFor="assignee">Assign To</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select user" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {users.map((user) => (
-                    <SelectItem key={user.user_id} value={user.user_id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Assignees</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    {selectedAssignees.length > 0 
+                      ? `${selectedAssignees.length} assignee${selectedAssignees.length > 1 ? 's' : ''} selected` 
+                      : "Select assignees"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-80"
+                  onInteractOutside={(e) => {
+                    const target = e.target as Element;
+                    if (target.closest('[role="checkbox"]') || target.closest('label')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <ScrollArea className="max-h-[300px]">
+                    <div className="space-y-2 pr-4">
+                      {users.map((usr) => (
+                        <div 
+                          key={usr.user_id} 
+                          className="flex items-center space-x-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            id={`assignee-${usr.user_id}`}
+                            checked={selectedAssignees.includes(usr.user_id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedAssignees([...selectedAssignees, usr.user_id]);
+                              } else {
+                                setSelectedAssignees(selectedAssignees.filter(id => id !== usr.user_id));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`assignee-${usr.user_id}`} className="text-sm cursor-pointer">
+                            {usr.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+              {selectedAssignees.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {selectedAssignees.map((assigneeId) => {
+                    const assignee = users.find(u => u.user_id === assigneeId);
+                    return assignee ? (
+                      <Badge key={assigneeId} variant="secondary" className="text-xs">
+                        {assignee.name}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAssignees(selectedAssignees.filter(id => id !== assigneeId))}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
             </div>
           )}
 

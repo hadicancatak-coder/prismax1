@@ -53,6 +53,8 @@ export function NotificationBell() {
     switch (notification.type) {
       case "task_assigned":
         return `New task: ${payload.task_title}`;
+      case "campaign_assigned":
+        return `Assigned to campaign: ${payload.campaign_title}`;
       case "mention":
         return `Mentioned in "${payload.task_title}"`;
       case "task_updated":
