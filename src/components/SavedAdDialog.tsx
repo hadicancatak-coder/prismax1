@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const [callouts, setCallouts] = useState<string[]>([]);
   const [combinationIndex, setCombinationIndex] = useState(0);
 
-  useState(() => {
+  useEffect(() => {
     if (ad) {
       setName(ad.name);
       setHeadlines(JSON.parse(ad.headlines || "[]"));
@@ -42,8 +42,9 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
       setLandingPage(ad.landing_page || "");
       setSitelinks(JSON.parse(ad.sitelinks || "[]"));
       setCallouts(JSON.parse(ad.callouts || "[]"));
+      setCombinationIndex(0);
     }
-  });
+  }, [ad]);
 
   const handleSave = async () => {
     const { error } = await supabase
