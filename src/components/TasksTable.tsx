@@ -120,13 +120,13 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
               <TableRow
                 key={task.id}
                 className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                  task.pending_approval ? 'border-l-4 border-l-blue-500 bg-blue-500/5' : ''
+                  task.pending_approval ? 'border-l-4 border-l-blue-500' : ''
                 } ${
-                  isOverdue(task.due_at, task.status) ? 'border-l-4 border-l-red-500 bg-destructive/5' : ''
+                  isOverdue(task.due_at, task.status) ? 'border-l-4 border-l-red-500' : ''
                 } ${
-                  isDueToday(task.due_at) ? 'border-l-4 border-l-yellow-500 bg-warning/5' : ''
+                  isDueToday(task.due_at) ? 'border-l-4 border-l-yellow-500' : ''
                 } ${
-                  isDueTomorrow(task.due_at) ? 'border-l-4 border-l-orange-500 bg-orange-500/5' : ''
+                  isDueTomorrow(task.due_at) ? 'border-l-4 border-l-orange-500' : ''
                 }`}
                 onClick={() => handleRowClick(task.id)}
               >
