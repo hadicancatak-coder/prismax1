@@ -95,108 +95,109 @@ export function TaskDateFilterBar({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        
-        <Button
-          variant={selectedFilter === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleFilterClick("all")}
-        >
-          All Tasks
-          {taskCounts && <Badge variant="secondary" className="ml-2">{taskCounts.all}</Badge>}
-        </Button>
-
-        <Button
-          variant={selectedFilter === "today" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleFilterClick("today")}
-        >
-          Today
-          {taskCounts && <Badge variant="secondary" className="ml-2">{taskCounts.today}</Badge>}
-        </Button>
-
-        <Button
-          variant={selectedFilter === "tomorrow" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleFilterClick("tomorrow")}
-        >
-          Tomorrow
-          {taskCounts && <Badge variant="secondary" className="ml-2">{taskCounts.tomorrow}</Badge>}
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              More <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleFilterClick("thisWeek")}>
-              This Week {taskCounts && `(${taskCounts.thisWeek})`}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleFilterClick("nextWeek")}>
-              Next Week {taskCounts && `(${taskCounts.nextWeek})`}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleFilterClick("thisMonth")}>
-              This Month {taskCounts && `(${taskCounts.thisMonth})`}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleFilterClick("nextMonth")}>
-              Next Month {taskCounts && `(${taskCounts.nextMonth})`}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleFilterClick("backlog")}>
-              📋 Backlog {taskCounts && `(${taskCounts.backlog})`}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <span className="text-sm text-muted-foreground font-medium">When:</span>
       </div>
+      
+      <Button
+        variant={selectedFilter === "all" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleFilterClick("all")}
+      >
+        All
+        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.all}</Badge>}
+      </Button>
 
-      <div className="flex items-center gap-2 pl-8 border-l-2">
-        <Label className="text-sm text-muted-foreground">Status:</Label>
-        <Button
-          variant={selectedStatus === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("all")}
-        >
-          All
-        </Button>
-        <Button
-          variant={selectedStatus === "Pending" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("Pending")}
-        >
-          Pending
-        </Button>
-        <Button
-          variant={selectedStatus === "Ongoing" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("Ongoing")}
-        >
-          Ongoing
-        </Button>
-        <Button
-          variant={selectedStatus === "Completed" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("Completed")}
-        >
-          Completed
-        </Button>
-        <Button
-          variant={selectedStatus === "Failed" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("Failed")}
-        >
-          Failed
-        </Button>
-        <Button
-          variant={selectedStatus === "Blocked" ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleStatusClick("Blocked")}
-        >
-          Blocked
-        </Button>
-      </div>
+      <Button
+        variant={selectedFilter === "today" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleFilterClick("today")}
+      >
+        Today
+        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.today}</Badge>}
+      </Button>
+
+      <Button
+        variant={selectedFilter === "tomorrow" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleFilterClick("tomorrow")}
+      >
+        Tomorrow
+        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.tomorrow}</Badge>}
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            More <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-background">
+          <DropdownMenuItem onClick={() => handleFilterClick("thisWeek")}>
+            This Week {taskCounts && `(${taskCounts.thisWeek})`}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("nextWeek")}>
+            Next Week {taskCounts && `(${taskCounts.nextWeek})`}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("thisMonth")}>
+            This Month {taskCounts && `(${taskCounts.thisMonth})`}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("nextMonth")}>
+            Next Month {taskCounts && `(${taskCounts.nextMonth})`}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("backlog")}>
+            Backlog {taskCounts && `(${taskCounts.backlog})`}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <div className="h-6 w-px bg-border mx-2" />
+
+      <span className="text-sm text-muted-foreground font-medium">Status:</span>
+      <Button
+        variant={selectedStatus === "all" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("all")}
+      >
+        All
+      </Button>
+      <Button
+        variant={selectedStatus === "Pending" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("Pending")}
+      >
+        Pending
+      </Button>
+      <Button
+        variant={selectedStatus === "Ongoing" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("Ongoing")}
+      >
+        Ongoing
+      </Button>
+      <Button
+        variant={selectedStatus === "Completed" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("Completed")}
+      >
+        Completed
+      </Button>
+      <Button
+        variant={selectedStatus === "Failed" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("Failed")}
+      >
+        Failed
+      </Button>
+      <Button
+        variant={selectedStatus === "Blocked" ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleStatusClick("Blocked")}
+      >
+        Blocked
+      </Button>
     </div>
   );
 }

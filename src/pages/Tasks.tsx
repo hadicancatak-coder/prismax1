@@ -168,42 +168,45 @@ export default function Tasks() {
   };
 
   return (
-    <div className="min-h-screen p-6 space-y-6">
+    <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Tasks</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" size="lg">
+        <h1 className="text-2xl font-bold">Tasks</h1>
+        <div className="flex gap-3">
+          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline">
             <FileText className="mr-2 h-4 w-4" />
             Templates
           </Button>
-          <Button onClick={() => setDialogOpen(true)} size="lg">
+          <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New Task
           </Button>
         </div>
       </div>
 
-      <AssigneeFilterBar
-        selectedAssignees={selectedAssignees}
-        selectedTeams={selectedTeams}
-        onAssigneesChange={setSelectedAssignees}
-        onTeamsChange={setSelectedTeams}
-      />
-      
-      <TaskDateFilterBar 
-        onFilterChange={setDateFilter}
-        onStatusChange={setStatusFilter}
-        taskCounts={taskCounts}
-      />
-
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search tasks by title, description, or entity..."
+          placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 max-w-md"
+        />
+      </div>
+
+      {/* Consolidated Filters */}
+      <div className="space-y-6">
+        <AssigneeFilterBar
+          selectedAssignees={selectedAssignees}
+          selectedTeams={selectedTeams}
+          onAssigneesChange={setSelectedAssignees}
+          onTeamsChange={setSelectedTeams}
+        />
+        
+        <TaskDateFilterBar 
+          onFilterChange={setDateFilter}
+          onStatusChange={setStatusFilter}
+          taskCounts={taskCounts}
         />
       </div>
 
