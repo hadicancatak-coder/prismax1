@@ -139,7 +139,24 @@ export function useIncrementElementUsage() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc('increment_element_usage', { element_id: id });
+      // Get current element
+      const { data: element } = await supabase
+        .from('ad_elements')
+        .select('use_count')
+        .eq('id', id)
+        .single();
+      
+      if (!element) return;
+
+      // Increment use_count and update last_used_at
+      const { error } = await supabase
+        .from('ad_elements')
+        .update({ 
+          use_count: (element.use_count || 0) + 1,
+          last_used_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+      
       if (error) throw error;
     },
     onSuccess: () => {

@@ -127,6 +127,57 @@ export type Database = {
           },
         ]
       }
+      ad_elements: {
+        Row: {
+          content: Json
+          created_at: string | null
+          created_by: string
+          element_type: string
+          entity: string[] | null
+          google_status: string | null
+          google_status_date: string | null
+          google_status_notes: string | null
+          id: string
+          is_favorite: boolean | null
+          last_used_at: string | null
+          tags: string[] | null
+          updated_at: string | null
+          use_count: number | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          created_by: string
+          element_type: string
+          entity?: string[] | null
+          google_status?: string | null
+          google_status_date?: string | null
+          google_status_notes?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          created_by?: string
+          element_type?: string
+          entity?: string[] | null
+          google_status?: string | null
+          google_status_date?: string | null
+          google_status_notes?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+        }
+        Relationships: []
+      }
       ad_groups: {
         Row: {
           campaign_id: string
@@ -223,9 +274,12 @@ export type Database = {
       }
       ad_templates: {
         Row: {
+          ad_type: string | null
+          business_name: string | null
           callouts: Json | null
           created_at: string | null
           created_by: string | null
+          cta_text: string | null
           description: string | null
           descriptions: Json | null
           entity: string | null
@@ -233,14 +287,18 @@ export type Database = {
           id: string
           is_public: boolean | null
           landing_page: string | null
+          long_headline: string | null
           name: string
           sitelinks: Json | null
           updated_at: string | null
         }
         Insert: {
+          ad_type?: string | null
+          business_name?: string | null
           callouts?: Json | null
           created_at?: string | null
           created_by?: string | null
+          cta_text?: string | null
           description?: string | null
           descriptions?: Json | null
           entity?: string | null
@@ -248,14 +306,18 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           landing_page?: string | null
+          long_headline?: string | null
           name: string
           sitelinks?: Json | null
           updated_at?: string | null
         }
         Update: {
+          ad_type?: string | null
+          business_name?: string | null
           callouts?: Json | null
           created_at?: string | null
           created_by?: string | null
+          cta_text?: string | null
           description?: string | null
           descriptions?: Json | null
           entity?: string | null
@@ -263,11 +325,50 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           landing_page?: string | null
+          long_headline?: string | null
           name?: string
           sitelinks?: Json | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ad_versions: {
+        Row: {
+          ad_id: string
+          changed_fields: string[] | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Insert: {
+          ad_id: string
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Update: {
+          ad_id?: string
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_versions_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ads: {
         Row: {
