@@ -1242,6 +1242,7 @@ export type Database = {
           blocker_id: string | null
           blocker_reason: string | null
           campaign_id: string | null
+          change_requested_fields: string[] | null
           checklist: Json | null
           created_at: string
           created_by: string | null
@@ -1259,6 +1260,7 @@ export type Database = {
           labels: string[] | null
           order_index: number | null
           pending_approval: boolean | null
+          pending_changes: Json | null
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string | null
           project_key: string | null
@@ -1283,6 +1285,7 @@ export type Database = {
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null
+          change_requested_fields?: string[] | null
           checklist?: Json | null
           created_at?: string
           created_by?: string | null
@@ -1300,6 +1303,7 @@ export type Database = {
           labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null
+          pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null
@@ -1324,6 +1328,7 @@ export type Database = {
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null
+          change_requested_fields?: string[] | null
           checklist?: Json | null
           created_at?: string
           created_by?: string | null
@@ -1341,6 +1346,7 @@ export type Database = {
           labels?: string[] | null
           order_index?: number | null
           pending_approval?: boolean | null
+          pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
           project_key?: string | null

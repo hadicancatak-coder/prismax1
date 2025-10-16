@@ -302,6 +302,9 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
   const handleSave = async () => {
     try {
+      // Define fields requiring approval
+      const APPROVAL_REQUIRED_FIELDS = ['status', 'assignee_id', 'due_at', 'recurrence_rrule', 'recurrence_day_of_week', 'recurrence_day_of_month'];
+      
       // Validate recurring task working days if changed
       if (editedTask.recurrence_rrule?.includes('WEEKLY') && assignees.length > 0) {
         const { data: assigneeProfiles } = await supabase
@@ -334,32 +337,82 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         }
       }
 
-      // Save to database
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          title: editedTask.title,
-          description: editedTask.description,
-          status: editedTask.status,
-          priority: editedTask.priority,
-          entity: editedTask.entity,
-          project_id: editedTask.project_id,
-          due_at: editedTask.due_at,
-          jira_links: editedTask.jira_links,
-          recurrence_rrule: editedTask.recurrence_rrule,
-          recurrence_day_of_week: editedTask.recurrence_day_of_week,
-          recurrence_day_of_month: editedTask.recurrence_day_of_month,
-          blocker_reason: editedTask.blocker_reason,
-          failure_reason: editedTask.failure_reason,
-        })
-        .eq("id", taskId);
-      
-      if (error) throw error;
-      
-      toast({ title: "Success", description: "Task updated successfully" });
-      setEditMode(false);
-      setEditedTask(null);
-      fetchTask();
+      // Members: Check if changes require approval
+      if (userRole === 'member') {
+        const changedFields = Object.keys(editedTask).filter(key => 
+          editedTask[key] !== task[key]
+        );
+        
+        const requiresApproval = changedFields.some(field => 
+          APPROVAL_REQUIRED_FIELDS.includes(field) || 
+          (field === 'status' && editedTask.status === 'Completed')
+        );
+        
+        if (requiresApproval) {
+          // Submit for approval
+          const { error } = await supabase.from('tasks').update({
+            pending_approval: true,
+            approval_requested_by: user?.id,
+            approval_requested_at: new Date().toISOString(),
+            pending_changes: editedTask,
+            change_requested_fields: changedFields.filter(f => APPROVAL_REQUIRED_FIELDS.includes(f))
+          }).eq('id', taskId);
+          
+          if (error) throw error;
+          
+          toast({ 
+            title: "Submitted for Approval", 
+            description: "Your changes will be reviewed by an admin" 
+          });
+          setEditMode(false);
+          setEditedTask(null);
+          fetchTask();
+        } else {
+          // Direct save for non-sensitive fields
+          const { error } = await supabase.from('tasks').update({
+            title: editedTask.title,
+            description: editedTask.description,
+            priority: editedTask.priority,
+            entity: editedTask.entity,
+            jira_links: editedTask.jira_links,
+            checklist: editedTask.checklist
+          }).eq('id', taskId);
+          
+          if (error) throw error;
+          
+          toast({ title: "Success", description: "Task updated successfully" });
+          setEditMode(false);
+          setEditedTask(null);
+          fetchTask();
+        }
+      } else {
+        // Admin: Save directly
+        const { error } = await supabase
+          .from("tasks")
+          .update({
+            title: editedTask.title,
+            description: editedTask.description,
+            status: editedTask.status,
+            priority: editedTask.priority,
+            entity: editedTask.entity,
+            project_id: editedTask.project_id,
+            due_at: editedTask.due_at,
+            jira_links: editedTask.jira_links,
+            recurrence_rrule: editedTask.recurrence_rrule,
+            recurrence_day_of_week: editedTask.recurrence_day_of_week,
+            recurrence_day_of_month: editedTask.recurrence_day_of_month,
+            blocker_reason: editedTask.blocker_reason,
+            failure_reason: editedTask.failure_reason,
+          })
+          .eq("id", taskId);
+        
+        if (error) throw error;
+        
+        toast({ title: "Success", description: "Task updated successfully" });
+        setEditMode(false);
+        setEditedTask(null);
+        fetchTask();
+      }
       
     } catch (error: any) {
       toast({
@@ -416,7 +469,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               )}
             </DialogTitle>
             <div className="flex items-center gap-2">
-              {!editMode && !showComments && userRole === 'admin' && (
+              {!editMode && !showComments && (
                 <Button variant="outline" size="sm" onClick={() => {
                   setEditMode(true);
                   setEditedTask({...task});

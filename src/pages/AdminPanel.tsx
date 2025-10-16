@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { realtimeService } from "@/lib/realtimeService";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { UserManagementDialog } from "@/components/UserManagementDialog";
@@ -66,16 +67,12 @@ export default function AdminPanel() {
     
     fetchData();
 
-    const channel = supabase
-      .channel("admin-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
-        fetchData();
-      })
-      .subscribe();
+    // Use centralized realtime service (reduces channel costs)
+    const unsubscribe = realtimeService.subscribe("tasks", () => {
+      fetchData();
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return unsubscribe;
   }, [authLoading, roleLoading, userRole, navigate]);
 
   const fetchData = async () => {
@@ -174,18 +171,27 @@ export default function AdminPanel() {
 
   const handleApproval = async (taskId: string, approved: boolean) => {
     const task = pendingTasks.find(t => t.id === taskId);
-    if (!task) return;
+    if (!task || !task.pending_changes) return;
     
     if (approved) {
+      // Apply ALL pending changes
+      const updateData: any = {
+        ...task.pending_changes,
+        pending_approval: false,
+        approval_requested_at: null,
+        approval_requested_by: null,
+        pending_changes: null,
+        change_requested_fields: null
+      };
+      
+      // Clean up old fields if they exist
+      if (task.requested_status) {
+        updateData.requested_status = null;
+      }
+      
       const { error } = await supabase
         .from("tasks")
-        .update({ 
-          status: task.requested_status,
-          pending_approval: false,
-          approval_requested_at: null,
-          approval_requested_by: null,
-          requested_status: null
-        })
+        .update(updateData)
         .eq("id", taskId);
 
       if (error) {
@@ -194,24 +200,31 @@ export default function AdminPanel() {
       }
 
       if (task.approval_requested_by) {
+        const changedFields = task.change_requested_fields || [];
         await supabase.from("notifications").insert({
           user_id: task.approval_requested_by,
-          type: "status_change_approved",
+          type: "changes_approved",
           payload_json: { 
             task_id: taskId, 
             task_title: task.title,
-            new_status: task.requested_status,
-            message: `Your request to mark "${task.title}" as ${task.requested_status} has been approved`
+            changed_fields: changedFields,
+            message: `Your changes to "${task.title}" have been approved`
           }
         });
       }
 
-      toast({ title: "✅ Approved", description: `Task marked as ${task.requested_status}` });
+      toast({ 
+        title: "✅ Changes Approved", 
+        description: `All requested changes applied to "${task.title}"` 
+      });
     } else {
+      // Reject: Clear all pending changes
       const { error } = await supabase
         .from("tasks")
         .update({ 
           pending_approval: false,
+          pending_changes: null,
+          change_requested_fields: null,
           approval_requested_at: null,
           approval_requested_by: null,
           requested_status: null
@@ -226,17 +239,16 @@ export default function AdminPanel() {
       if (task.approval_requested_by) {
         await supabase.from("notifications").insert({
           user_id: task.approval_requested_by,
-          type: "status_change_rejected",
+          type: "changes_rejected",
           payload_json: { 
             task_id: taskId, 
             task_title: task.title,
-            requested_status: task.requested_status,
-            message: `Your request to mark "${task.title}" as ${task.requested_status} was rejected`
+            message: `Your changes to "${task.title}" were rejected`
           }
         });
       }
 
-      toast({ title: "❌ Rejected", description: "Status change request rejected" });
+      toast({ title: "❌ Changes Rejected", description: "Requested changes were rejected" });
     }
     
     await fetchData();
@@ -415,55 +427,84 @@ export default function AdminPanel() {
 
         <TabsContent value="approvals" className="mt-6 space-y-4">
           {pendingTasks.length > 0 ? (
-            pendingTasks.map((task) => (
-              <Card key={task.id} className="p-6 transition-all hover:shadow-medium animate-scale-in">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
-                    <div className="flex gap-3 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>Created by {task.profiles?.name || "Unknown"}</span>
+            pendingTasks.map((task) => {
+              const changedFields = task.change_requested_fields || [];
+              const pendingChanges = task.pending_changes || {};
+              
+              return (
+                <Card key={task.id} className="p-6 transition-all hover:shadow-medium animate-scale-in">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground mb-2">{task.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
+                      
+                      {/* Show requested changes diff */}
+                      {changedFields.length > 0 && (
+                        <div className="bg-muted/30 p-4 rounded-lg mb-4 space-y-2">
+                          <h4 className="text-sm font-semibold text-foreground mb-2">Requested Changes:</h4>
+                          {changedFields.map((field: string) => (
+                            <div key={field} className="flex items-center gap-2 text-sm">
+                              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                                {field.replace(/_/g, ' ')}
+                              </Badge>
+                              <span className="text-muted-foreground">
+                                {task[field] !== undefined && (
+                                  <>
+                                    <span className="line-through opacity-50">{String(task[field])}</span>
+                                    {' → '}
+                                  </>
+                                )}
+                                <span className="text-foreground font-medium">{String(pendingChanges[field])}</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Requested by {task.requester?.name || "Unknown"}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{task.approval_requested_at ? new Date(task.approval_requested_at).toLocaleDateString() : ""}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                      <div className="flex gap-2 mt-3">
+                        <Badge variant="outline" className={
+                          task.priority === "High" ? "bg-destructive/10 text-destructive border-destructive/20" :
+                          task.priority === "Medium" ? "bg-warning/10 text-warning border-warning/20" :
+                          "bg-muted text-muted-foreground"
+                        }>
+                          {task.priority}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-3">
-                      <Badge variant="outline" className={
-                        task.priority === "High" ? "bg-destructive/10 text-destructive border-destructive/20" :
-                        task.priority === "Medium" ? "bg-warning/10 text-warning border-warning/20" :
-                        "bg-muted text-muted-foreground"
-                      }>
-                        {task.priority}
-                      </Badge>
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 hover:bg-success/10 hover:text-success hover:border-success/20"
+                        onClick={() => handleApproval(task.id, true)}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
+                        onClick={() => handleApproval(task.id, false)}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2 hover:bg-success/10 hover:text-success hover:border-success/20"
-                      onClick={() => handleApproval(task.id, true)}
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
-                      onClick={() => handleApproval(task.id, false)}
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              );
+            })
           ) : (
             <Card className="p-8 text-center">
               <p className="text-muted-foreground">No pending approvals</p>
