@@ -67,7 +67,6 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
                   <SelectValue placeholder="All entities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All entities</SelectItem>
                   <SelectItem value="FBK">FBK</SelectItem>
                   <SelectItem value="FBC">FBC</SelectItem>
                   <SelectItem value="CFI">CFI</SelectItem>
@@ -83,7 +82,6 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="limited">Limited</SelectItem>
