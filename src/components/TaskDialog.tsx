@@ -470,90 +470,29 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     </Badge>
                   )}
                 </div>
-                <Select 
-                  value={editMode ? editedTask?.status : task.status} 
-                  onValueChange={async (value: any) => {
-                    if (editMode) {
+                {editMode ? (
+                  <Select 
+                    value={editedTask?.status} 
+                    onValueChange={(value: any) => {
                       setEditedTask({ ...editedTask, status: value });
-                      return;
-                    }
-                    // Check if this is a recurring task
-                    const isRecurringTask = task.recurrence_rrule && task.recurrence_rrule !== 'none';
-                    
-                    // If trying to complete a recurring task, only allow admins
-                    if (isRecurringTask && value === 'Completed' && userRole !== 'admin') {
-                      toast({
-                        title: "Permission Denied",
-                        description: "Only admins can mark recurring tasks as completed",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-
-                    if (userRole === 'admin') {
-                      const { error } = await supabase
-                        .from("tasks")
-                        .update({ status: value })
-                        .eq("id", taskId);
-                      if (error) {
-                        toast({ title: "Error", description: error.message, variant: "destructive" });
-                      } else {
-                        setTask({ ...task, status: value });
-                        fetchTask();
-                      }
-                      return;
-                    }
-
-                    const requiresApproval = ['Completed', 'Failed', 'Blocked'].includes(value);
-                    
-                    if (requiresApproval) {
-                      const confirmed = confirm(`Request admin approval to mark this task as ${value}?`);
-                      if (!confirmed) return;
-                      
-                      const { error } = await supabase
-                        .from("tasks")
-                        .update({ 
-                          pending_approval: true,
-                          approval_requested_at: new Date().toISOString(),
-                          approval_requested_by: user?.id,
-                          requested_status: value
-                        })
-                        .eq("id", taskId);
-                        
-                      if (error) {
-                        toast({ title: "Error", description: error.message, variant: "destructive" });
-                      } else {
-                        toast({ 
-                          title: "Approval Requested", 
-                          description: "Admin will review your request" 
-                        });
-                        fetchTask();
-                      }
-                    } else {
-                      const { error } = await supabase
-                        .from("tasks")
-                        .update({ status: value })
-                        .eq("id", taskId);
-                      if (error) {
-                        toast({ title: "Error", description: error.message, variant: "destructive" });
-                      } else {
-                        setTask({ ...task, status: value });
-                        fetchTask();
-                      }
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Ongoing">Ongoing</SelectItem>
-                    <SelectItem value="Blocked">Blocked</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Ongoing">Ongoing</SelectItem>
+                      <SelectItem value="Blocked">Blocked</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="outline" className="text-sm py-2 px-3 w-full justify-start">
+                    {task.status}
+                  </Badge>
+                )}
                 
                 {task.pending_approval && (
                   <Badge variant="outline" className="mt-2 bg-blue-500/10 text-blue-500">
@@ -563,33 +502,27 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
               <div>
                 <Label className="mb-2 block">Priority</Label>
-                <Select 
-                  value={editMode ? editedTask?.priority : task.priority} 
-                  onValueChange={async (value: any) => {
-                    if (editMode) {
+                {editMode ? (
+                  <Select 
+                    value={editedTask?.priority} 
+                    onValueChange={(value: any) => {
                       setEditedTask({ ...editedTask, priority: value });
-                      return;
-                    }
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ priority: value })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      fetchTask();
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                  </SelectContent>
-                </Select>
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="outline" className="text-sm py-2 px-3 w-full justify-start">
+                    {task.priority}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -603,15 +536,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               />
             </div>
 
-            {task.status === "Blocked" && (
+            {task.status === "Blocked" && editMode && (
               <div>
                 <Label className="mb-2 block">Blocker</Label>
                 <div className="flex gap-2">
-                  <Select value={task.blocker_id || ""} onValueChange={async (value) => {
-                    const { error } = await supabase.from("tasks").update({ blocker_id: value }).eq("id", taskId);
-                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-                    else fetchTask();
-                  }}>
+                  <Select 
+                    value={editedTask?.blocker_id || ""} 
+                    onValueChange={(value) => {
+                      setEditedTask({ ...editedTask, blocker_id: value });
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Select blocker" /></SelectTrigger>
                     <SelectContent>
                       {blockers.map(b => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}
@@ -622,17 +556,13 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             )}
 
-            {task.status === "Failed" && (
+            {task.status === "Failed" && editMode && (
               <div>
                 <Label htmlFor="failureReason">Failure Reason</Label>
                 <Textarea
                   id="failureReason"
-                  value={task.failure_reason || ""}
-                  onChange={(e) => setTask({ ...task, failure_reason: e.target.value })}
-                  onBlur={async () => {
-                    const { error } = await supabase.from("tasks").update({ failure_reason: task.failure_reason }).eq("id", taskId);
-                    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-                  }}
+                  value={editedTask?.failure_reason || ""}
+                  onChange={(e) => setEditedTask({ ...editedTask, failure_reason: e.target.value })}
                   placeholder="Why did this task fail?"
                   rows={2}
                 />
@@ -641,84 +571,83 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             <div>
               <Label className="mb-2 block">Countries (Entity)</Label>
-              <Popover open={editingEntities} onOpenChange={setEditingEntities}>
-                <PopoverTrigger asChild>
-                  <div 
-                    className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
-                  >
-                    <div className="flex flex-wrap gap-1">
-                      {(editMode ? (editedTask?.entity || []) : selectedEntities).length > 0 ? (
-                        (editMode ? (editedTask?.entity || []) : selectedEntities).map((ent: string) => (
-                          <Badge key={ent} variant="secondary">{ent}</Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-muted-foreground">No countries assigned</span>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="sm" type="button">Edit</Button>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-full p-4"
-                  onInteractOutside={(e) => {
-                    const target = e.target as Element;
-                    if (target.closest('[role="checkbox"]') || target.closest('label')) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <div className="space-y-3">
-                    <Label>Select Countries</Label>
-                    <ScrollArea className="max-h-[300px]">
-                      <div 
-                        className="space-y-2 pr-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {ENTITIES.map((entity) => (
-                          <div key={entity} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`entity-${entity}`}
-                              checked={(editMode ? (editedTask?.entity || []) : selectedEntities).includes(entity)}
-                              onCheckedChange={async (checked) => {
-                                const currentEntities = editMode ? (editedTask?.entity || []) : selectedEntities;
-                                const newEntities = checked
-                                  ? [...currentEntities, entity]
-                                  : currentEntities.filter((e) => e !== entity);
-                                
-                                if (editMode) {
-                                  setEditedTask({ ...editedTask, entity: newEntities });
-                                } else {
-                                  setSelectedEntities(newEntities);
-                                  const { error } = await supabase
-                                    .from("tasks")
-                                    .update({ entity: newEntities })
-                                    .eq("id", taskId);
-                                    
-                                  if (error) {
-                                    toast({ title: "Error", description: error.message, variant: "destructive" });
-                                  } else {
-                                    await fetchTask();
-                                  }
-                                }
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <Label htmlFor={`entity-${entity}`} className="text-sm cursor-pointer">{entity}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => setEditingEntities(false)}
+              {editMode ? (
+                <Popover open={editingEntities} onOpenChange={setEditingEntities}>
+                  <PopoverTrigger asChild>
+                    <div 
+                      className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
                     >
-                      Done
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                      <div className="flex flex-wrap gap-1">
+                        {(editedTask?.entity || []).length > 0 ? (
+                          (editedTask?.entity || []).map((ent: string) => (
+                            <Badge key={ent} variant="secondary">{ent}</Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No countries assigned</span>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="sm" type="button">Edit</Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-full p-4"
+                    onInteractOutside={(e) => {
+                      const target = e.target as Element;
+                      if (target.closest('[role="checkbox"]') || target.closest('label')) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <Label>Select Countries</Label>
+                      <ScrollArea className="max-h-[300px]">
+                        <div 
+                          className="space-y-2 pr-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {ENTITIES.map((entity) => (
+                            <div key={entity} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`entity-${entity}`}
+                                checked={(editedTask?.entity || []).includes(entity)}
+                                onCheckedChange={(checked) => {
+                                  const currentEntities = editedTask?.entity || [];
+                                  const newEntities = checked
+                                    ? [...currentEntities, entity]
+                                    : currentEntities.filter((e) => e !== entity);
+                                  setEditedTask({ ...editedTask, entity: newEntities });
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <Label htmlFor={`entity-${entity}`} className="text-sm cursor-pointer">{entity}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => setEditingEntities(false)}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-[42px]">
+                  {selectedEntities.length > 0 ? (
+                    selectedEntities.map((entity: string) => (
+                      <Badge key={entity} variant="secondary">
+                        {entity}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No countries selected</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -821,37 +750,33 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">Project</Label>
-                <Select 
-                  value={(editMode ? editedTask?.project_id : task.project_id) || "none"} 
-                  onValueChange={async (value) => {
-                    if (editMode) {
+                {editMode ? (
+                  <Select 
+                    value={editedTask?.project_id || "none"} 
+                    onValueChange={(value) => {
                       setEditedTask({ ...editedTask, project_id: value === "none" ? null : value });
-                      return;
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Project</SelectItem>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="outline" className="text-sm py-2 px-3 w-full justify-start">
+                    {task.project_id 
+                      ? projects.find(p => p.id === task.project_id)?.name || "Unknown Project"
+                      : "No Project"
                     }
-                    const projectId = value === "none" ? null : value;
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ project_id: projectId })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      fetchTask();
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Project</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  </Badge>
+                )}
               </div>
               
               <div>
@@ -865,21 +790,18 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             {task.status === "Blocked" && (
               <div>
                 <Label className="mb-2 block">Blocker Reason</Label>
-                <Textarea
-                  value={task.blocker_reason || ""}
-                  onChange={(e) => setTask({ ...task, blocker_reason: e.target.value })}
-                  onBlur={async () => {
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update({ blocker_reason: task.blocker_reason })
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    }
-                  }}
-                  placeholder="Describe the reason for blocking this task..."
-                  className="min-h-[100px]"
-                />
+                {editMode ? (
+                  <Textarea
+                    value={editedTask?.blocker_reason || ""}
+                    onChange={(e) => setEditedTask({ ...editedTask, blocker_reason: e.target.value })}
+                    placeholder="Describe the reason for blocking this task..."
+                    className="min-h-[100px]"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[100px]">
+                    {task.blocker_reason || "No reason provided"}
+                  </p>
+                )}
               </div>
             )}
 
@@ -888,14 +810,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Jira Links</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowJiraInput(!showJiraInput)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Link
-                </Button>
+                {editMode && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowJiraInput(!showJiraInput)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Link
+                  </Button>
+                )}
               </div>
               
               {jiraLinks.length > 0 ? (
@@ -911,18 +835,17 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                       >
                         {link}
                       </a>
-                      {(userRole === 'admin' || task.created_by === user?.id) && (
+                      {editMode && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="opacity-0 group-hover:opacity-100"
-                          onClick={async () => {
+                          onClick={() => {
                             const updated = jiraLinks.filter((_, i) => i !== idx);
                             setJiraLinks(updated);
-                            await supabase
-                              .from('tasks')
-                              .update({ jira_links: updated })
-                              .eq('id', taskId);
+                            if (editMode) {
+                              setEditedTask({ ...editedTask, jira_links: updated });
+                            }
                           }}
                         >
                           <X className="h-4 w-4" />
