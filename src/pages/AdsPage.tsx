@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, BookOpen, Library } from "lucide-react";
+import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, BookOpen, Library, BookmarkPlus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ import { AdvancedFilters } from "@/components/ads/AdvancedFilters";
 import { BulkActionsBar } from "@/components/ads/BulkActionsBar";
 import { useIncrementElementUsage } from "@/hooks/useAdElements";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CreateElementDialog } from "@/components/ads/CreateElementDialog";
 
 export default function AdsPage() {
   const { user } = useAuth();
@@ -55,6 +56,11 @@ export default function AdsPage() {
   const [longHeadline, setLongHeadline] = useState("");
   const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(""));
   const [ctaText, setCtaText] = useState("");
+  
+  // State for saving elements
+  const [saveElementDialogOpen, setSaveElementDialogOpen] = useState(false);
+  const [saveElementType, setSaveElementType] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
+  const [saveElementContent, setSaveElementContent] = useState('');
   
   const incrementUsage = useIncrementElementUsage();
 
@@ -304,9 +310,9 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Sparkles className="h-8 w-8" />
-            Google Ads Planner - Search
+            PPC Planner
           </h1>
-          <p className="text-muted-foreground mt-1">Plan your Google Search Ads campaigns following best practices</p>
+          <p className="text-muted-foreground mt-1">Create and manage PPC campaigns across platforms</p>
         </div>
       </div>
 
@@ -388,6 +394,20 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         }}
                       />
                       <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setSaveElementType('headline');
+                          setSaveElementContent(headline);
+                          setSaveElementDialogOpen(true);
+                        }}
+                        disabled={!headline}
+                        title="Save as element"
+                      >
+                        <BookmarkPlus className="h-4 w-4" />
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
@@ -424,23 +444,39 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         />
                         <span className="text-xs text-muted-foreground">{desc.length}/90</span>
                       </div>
-                      <ElementQuickInsert
-                        elementType="description"
-                        onInsert={(content) => {
-                          const newDescs = [...descriptions];
-                          newDescs[index] = content.slice(0, 90);
-                          setDescriptions(newDescs);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleCopy(desc)}
-                        disabled={!desc}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <ElementQuickInsert
+                          elementType="description"
+                          onInsert={(content) => {
+                            const newDescs = [...descriptions];
+                            newDescs[index] = content.slice(0, 90);
+                            setDescriptions(newDescs);
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setSaveElementType('description');
+                            setSaveElementContent(desc);
+                            setSaveElementDialogOpen(true);
+                          }}
+                          disabled={!desc}
+                          title="Save as element"
+                        >
+                          <BookmarkPlus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(desc)}
+                          disabled={!desc}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -857,6 +893,13 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
         open={templateSelectorOpen}
         onOpenChange={setTemplateSelectorOpen}
         onSelect={handleTemplateSelect}
+      />
+      
+      <CreateElementDialog
+        open={saveElementDialogOpen}
+        onOpenChange={setSaveElementDialogOpen}
+        elementType={saveElementType}
+        initialContent={saveElementContent}
       />
     </div>
   );
