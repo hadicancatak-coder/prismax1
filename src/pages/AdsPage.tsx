@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, BookOpen, Library } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,14 @@ import { SavedAdDialog } from "@/components/SavedAdDialog";
 import { AdApprovalSection } from "@/components/AdApprovalSection";
 import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
 import { ENTITIES } from "@/lib/constants";
+import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
+import { TemplateSelector } from "@/components/ads/TemplateSelector";
+import { ElementQuickInsert } from "@/components/ads/ElementQuickInsert";
+import { DisplayAdCreator } from "@/components/ads/DisplayAdCreator";
+import { AdvancedFilters } from "@/components/ads/AdvancedFilters";
+import { BulkActionsBar } from "@/components/ads/BulkActionsBar";
+import { useIncrementElementUsage } from "@/hooks/useAdElements";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function AdsPage() {
   const { user } = useAuth();
@@ -36,6 +44,19 @@ export default function AdsPage() {
   const [adDialogOpen, setAdDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [combinationIndex, setCombinationIndex] = useState(0);
+  const [quickInsertType, setQuickInsertType] = useState<'headline' | 'description'>('headline');
+  const [quickInsertIndex, setQuickInsertIndex] = useState(0);
+  const [selectedAdIds, setSelectedAdIds] = useState<string[]>([]);
+  const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+  
+  // Display ad states
+  const [businessName, setBusinessName] = useState("");
+  const [longHeadline, setLongHeadline] = useState("");
+  const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(""));
+  const [ctaText, setCtaText] = useState("");
+  
+  const incrementUsage = useIncrementElementUsage();
 
   useEffect(() => {
     fetchSavedAds();
@@ -228,10 +249,49 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
     setCombinationIndex((prev) => Math.max(0, prev - 1));
   };
 
+  const handleQuickInsert = (content: string) => {
+    if (quickInsertType === 'headline') {
+      const newHeadlines = [...headlines];
+      newHeadlines[quickInsertIndex] = content.slice(0, 30);
+      setHeadlines(newHeadlines);
+    } else {
+      const newDescriptions = [...descriptions];
+      newDescriptions[quickInsertIndex] = content.slice(0, 90);
+      setDescriptions(newDescriptions);
+    }
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    setAdName(template.name || "");
+    setAdEntity(template.entity || "");
+    setHeadlines(template.headlines || Array(15).fill(""));
+    setDescriptions(template.descriptions || Array(4).fill(""));
+    setLandingPage(template.landing_page || "");
+    setSitelinks(template.sitelinks || Array(4).fill({ title: "", description: "" }));
+    setCallouts(template.callouts || Array(4).fill(""));
+    setTemplateSelectorOpen(false);
+    toast({ title: "Template loaded" });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedAdIds.length} ads?`)) return;
+    
+    const { error } = await supabase.from('ads').delete().in('id', selectedAdIds);
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `${selectedAdIds.length} ads deleted` });
+      setSelectedAdIds([]);
+      fetchSavedAds();
+    }
+  };
+
   const filteredSavedAds = savedAds.filter((ad) => {
     const entityMatch = entityFilter === "all" || ad.entity === entityFilter;
     const monthMatch = monthFilter === "all" || format(new Date(ad.created_at), "yyyy-MM") === monthFilter;
-    return entityMatch && monthMatch;
+    const statusMatch = !advancedFilters.googleStatus || ad.approval_status === advancedFilters.googleStatus;
+    return entityMatch && monthMatch && statusMatch;
   });
 
   const availableMonths = Array.from(
@@ -252,11 +312,26 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
 
       <Tabs defaultValue="create" className="w-full">
         <TabsList>
-          <TabsTrigger value="create">Create Ad</TabsTrigger>
+          <TabsTrigger value="create">Create Ads</TabsTrigger>
           <TabsTrigger value="saved">Saved Ads ({savedAds.length})</TabsTrigger>
+          <TabsTrigger value="elements">
+            <Library className="h-4 w-4 mr-2" />
+            Saved Elements
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Templates
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="create" className="mt-6">
+          <Tabs defaultValue="search" className="w-full">
+            <TabsList>
+              <TabsTrigger value="search">Search Ads</TabsTrigger>
+              <TabsTrigger value="display">Display Ads</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="search" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Input Section */}
             <div className="space-y-4">
@@ -304,6 +379,14 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         className="text-sm"
                       />
                       <span className="text-xs text-muted-foreground w-12">{headline.length}/30</span>
+                      <ElementQuickInsert
+                        elementType="headline"
+                        onInsert={(content) => {
+                          const newHeadlines = [...headlines];
+                          newHeadlines[index] = content.slice(0, 30);
+                          setHeadlines(newHeadlines);
+                        }}
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -341,6 +424,14 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         />
                         <span className="text-xs text-muted-foreground">{desc.length}/90</span>
                       </div>
+                      <ElementQuickInsert
+                        elementType="description"
+                        onInsert={(content) => {
+                          const newDescs = [...descriptions];
+                          newDescs[index] = content.slice(0, 90);
+                          setDescriptions(newDescs);
+                        }}
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -452,6 +543,10 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                 <Button onClick={handleSaveAd} className="flex-1">
                   <Save className="h-4 w-4 mr-2" />
                   {editingAdId ? "Update Ad" : "Save Ad"}
+                </Button>
+                <Button onClick={() => setTemplateSelectorOpen(true)} variant="outline" className="flex-1">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Load Template
                 </Button>
                 <Button onClick={handleCopyAll} variant="outline" className="flex-1">
                   <Copy className="h-4 w-4 mr-2" />
@@ -577,10 +672,29 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               </Card>
             </div>
           </div>
+          </TabsContent>
+
+          <TabsContent value="display" className="mt-6">
+            <DisplayAdCreator
+              businessName={businessName}
+              setBusinessName={setBusinessName}
+              longHeadline={longHeadline}
+              setLongHeadline={setLongHeadline}
+              shortHeadlines={shortHeadlines}
+              setShortHeadlines={setShortHeadlines}
+              descriptions={descriptions}
+              setDescriptions={setDescriptions}
+              ctaText={ctaText}
+              setCtaText={setCtaText}
+              landingPage={landingPage}
+              setLandingPage={setLandingPage}
+            />
+          </TabsContent>
+        </Tabs>
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
-          <div className="flex gap-4 mb-6">
+          <div className="mb-6 flex gap-4">
             <Select value={entityFilter} onValueChange={setEntityFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Filter by Entity" />
@@ -606,6 +720,10 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                 ))}
               </SelectContent>
             </Select>
+
+            <AdvancedFilters
+              onFiltersChange={(filters) => setAdvancedFilters(filters)}
+            />
           </div>
 
           <div className="grid gap-4">
@@ -642,7 +760,18 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Checkbox
+                            checked={selectedAdIds.includes(ad.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedAdIds([...selectedAdIds, ad.id]);
+                              } else {
+                                setSelectedAdIds(selectedAdIds.filter(id => id !== ad.id));
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
                           {ad.approval_status === 'approved' && (
                             <CheckCircle className="h-4 w-4 text-success" />
                           )}
@@ -682,6 +811,33 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               ))
             )}
           </div>
+
+          {selectedAdIds.length > 0 && (
+            <BulkActionsBar
+              selectedIds={selectedAdIds}
+              onDelete={handleBulkDelete}
+              onClearSelection={() => setSelectedAdIds([])}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="elements" className="mt-6">
+          <SavedElementsLibrary />
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Ad Templates</h2>
+              <p className="text-muted-foreground mb-6">
+                Browse and load pre-made ad templates to quickly create new ads.
+              </p>
+              <Button onClick={() => setTemplateSelectorOpen(true)}>
+                <BookOpen className="h-4 w-4 mr-2" />
+                Browse Templates
+              </Button>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -696,6 +852,12 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           }}
         />
       )}
+
+      <TemplateSelector
+        open={templateSelectorOpen}
+        onOpenChange={setTemplateSelectorOpen}
+        onSelect={handleTemplateSelect}
+      />
     </div>
   );
 }

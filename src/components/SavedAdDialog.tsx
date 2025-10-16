@@ -11,11 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight, MessageSquare, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AdStrengthIndicator } from "./AdStrengthIndicator";
 import { AdComplianceChecker } from "./AdComplianceChecker";
+import { AdVersionHistory } from "./ads/AdVersionHistory";
+import { AdComments } from "./ads/AdComments";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -131,8 +134,20 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+        <Tabs defaultValue="preview" className="flex-1 flex flex-col">
+          <TabsList className="mx-6 mt-2">
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              Version History
+            </TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Comments
+            </TabsTrigger>
+          </TabsList>
 
+          <TabsContent value="preview" className="flex-1 overflow-y-auto px-6 pb-4 space-y-4 mt-4">
           {/* Ad Preview */}
           <Card className="p-4 bg-background">
           <div className="flex items-center justify-between mb-3">
@@ -423,7 +438,16 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </div>
           )}
           </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="flex-1 overflow-y-auto px-6 pb-4">
+            <AdVersionHistory adId={ad.id} />
+          </TabsContent>
+
+          <TabsContent value="comments" className="flex-1 overflow-y-auto px-6 pb-4">
+            <AdComments adId={ad.id} />
+          </TabsContent>
+        </Tabs>
 
         {/* Actions - Fixed Footer */}
         <div className="flex gap-2 p-6 border-t bg-background">
