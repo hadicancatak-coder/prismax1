@@ -63,7 +63,7 @@ export default function Tasks() {
         const { data: assigneeData } = await supabase
           .from('task_assignees')
           .select(`
-            profiles:user_id(id, user_id, name, avatar_url)
+            profiles:user_id(id, user_id, name, avatar_url, teams)
           `)
           .eq('task_id', task.id);
         
@@ -96,9 +96,12 @@ export default function Tasks() {
   const filteredTasks = tasks.filter(task => {
     // Check if any of the task's assignees match the selected assignees
     const assigneeMatch = selectedAssignees.length === 0 || 
-      task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.id));
+      task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
     
-    const teamMatch = selectedTeams.length === 0;
+    const teamMatch = selectedTeams.length === 0 || 
+      task.assignees?.some((assignee: any) => 
+        assignee.teams?.some((team: string) => selectedTeams.includes(team))
+      );
     
     let dateMatch = true;
     if (dateFilter) {

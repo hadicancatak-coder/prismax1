@@ -69,17 +69,17 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   };
 
   const statusColors = {
-    Pending: "bg-muted text-muted-foreground",
-    Ongoing: "bg-warning/10 text-warning border-warning/20",
-    Completed: "bg-success/10 text-success border-success/20",
-    Failed: "bg-destructive/10 text-destructive border-destructive/20",
-    Blocked: "bg-destructive/10 text-destructive border-destructive/20",
+    Pending: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400",
+    Ongoing: "bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400",
+    Completed: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
+    Failed: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
+    Blocked: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400",
   };
 
   const priorityColors = {
-    High: "bg-destructive/10 text-destructive border-destructive/20",
-    Medium: "bg-warning/10 text-warning border-warning/20",
-    Low: "bg-success/10 text-success border-success/20",
+    High: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
+    Medium: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
+    Low: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
   };
 
   const handleRowClick = (taskId: string) => {
