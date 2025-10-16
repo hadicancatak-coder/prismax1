@@ -748,61 +748,68 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
-          <div className="mb-6 flex gap-4">
-            <Select value={entityFilter} onValueChange={setEntityFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by Entity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Entities</SelectItem>
-                {ENTITIES.map((ent) => (
-                  <SelectItem key={ent} value={ent}>{ent}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Tabs defaultValue="search" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="search">Search Ads</TabsTrigger>
+              <TabsTrigger value="display">Display Ads</TabsTrigger>
+            </TabsList>
 
-            <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by Month" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Months</SelectItem>
-                {availableMonths.map((month) => (
-                  <SelectItem key={month} value={month}>
-                    {format(new Date(month + "-01"), "MMMM yyyy")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TabsContent value="search" className="mt-6">
+              <div className="mb-6 flex gap-4">
+                <Select value={entityFilter} onValueChange={setEntityFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by Entity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Entities</SelectItem>
+                    {ENTITIES.map((ent) => (
+                      <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            <AdvancedFilters
-              onFiltersChange={(filters) => setAdvancedFilters(filters)}
-            />
-          </div>
+                <Select value={monthFilter} onValueChange={setMonthFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {availableMonths.map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {format(new Date(month + "-01"), "MMMM yyyy")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-          <div className="grid gap-4">
-            {loading ? (
-              <Card className="p-12 text-center">
-                <p className="text-muted-foreground">Loading ads...</p>
-              </Card>
-            ) : filteredSavedAds.length === 0 ? (
-              <Card className="p-12 text-center">
-                <p className="text-muted-foreground text-lg mb-4">
-                  {savedAds.length === 0 
-                    ? "No saved ads yet" 
-                    : "No ads match your filters"}
-                </p>
-                {savedAds.length > 0 && (
-                  <Button variant="outline" onClick={() => {
-                    setEntityFilter("all");
-                    setMonthFilter("all");
-                  }}>
-                    Clear Filters
-                  </Button>
-                )}
-              </Card>
-            ) : (
-              filteredSavedAds.map((ad) => (
+                <AdvancedFilters
+                  onFiltersChange={(filters) => setAdvancedFilters(filters)}
+                />
+              </div>
+
+              <div className="grid gap-4">
+                {loading ? (
+                  <Card className="p-12 text-center">
+                    <p className="text-muted-foreground">Loading ads...</p>
+                  </Card>
+                ) : filteredSavedAds.filter(ad => !ad.ad_type || ad.ad_type === 'search').length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <p className="text-muted-foreground text-lg mb-4">
+                      {savedAds.filter(ad => !ad.ad_type || ad.ad_type === 'search').length === 0 
+                        ? "No saved search ads yet" 
+                        : "No search ads match your filters"}
+                    </p>
+                    {savedAds.filter(ad => !ad.ad_type || ad.ad_type === 'search').length > 0 && (
+                      <Button variant="outline" onClick={() => {
+                        setEntityFilter("all");
+                        setMonthFilter("all");
+                      }}>
+                        Clear Filters
+                      </Button>
+                    )}
+                  </Card>
+                ) : (
+                  filteredSavedAds.filter(ad => !ad.ad_type || ad.ad_type === 'search').map((ad) => (
                 <Card 
                   key={ad.id} 
                   className="hover:shadow-md transition-shadow cursor-pointer"
@@ -862,17 +869,148 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            )}
-          </div>
+                  ))
+                )}
+              </div>
 
-          {selectedAdIds.length > 0 && (
-            <BulkActionsBar
-              selectedIds={selectedAdIds}
-              onDelete={handleBulkDelete}
-              onClearSelection={() => setSelectedAdIds([])}
-            />
-          )}
+              {selectedAdIds.length > 0 && (
+                <BulkActionsBar
+                  selectedIds={selectedAdIds}
+                  onDelete={handleBulkDelete}
+                  onClearSelection={() => setSelectedAdIds([])}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="display" className="mt-6">
+              <div className="mb-6 flex gap-4">
+                <Select value={entityFilter} onValueChange={setEntityFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by Entity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Entities</SelectItem>
+                    {ENTITIES.map((ent) => (
+                      <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={monthFilter} onValueChange={setMonthFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {availableMonths.map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {format(new Date(month + "-01"), "MMMM yyyy")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <AdvancedFilters
+                  onFiltersChange={(filters) => setAdvancedFilters(filters)}
+                />
+              </div>
+
+              <div className="grid gap-4">
+                {loading ? (
+                  <Card className="p-12 text-center">
+                    <p className="text-muted-foreground">Loading ads...</p>
+                  </Card>
+                ) : filteredSavedAds.filter(ad => ad.ad_type === 'display').length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <p className="text-muted-foreground text-lg mb-4">
+                      {savedAds.filter(ad => ad.ad_type === 'display').length === 0 
+                        ? "No saved display ads yet" 
+                        : "No display ads match your filters"}
+                    </p>
+                    {savedAds.filter(ad => ad.ad_type === 'display').length > 0 && (
+                      <Button variant="outline" onClick={() => {
+                        setEntityFilter("all");
+                        setMonthFilter("all");
+                      }}>
+                        Clear Filters
+                      </Button>
+                    )}
+                  </Card>
+                ) : (
+                  filteredSavedAds.filter(ad => ad.ad_type === 'display').map((ad) => (
+                    <Card 
+                      key={ad.id} 
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => {
+                        setSelectedAd(ad);
+                        setAdDialogOpen(true);
+                      }}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Checkbox
+                                checked={selectedAdIds.includes(ad.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedAdIds([...selectedAdIds, ad.id]);
+                                  } else {
+                                    setSelectedAdIds(selectedAdIds.filter(id => id !== ad.id));
+                                  }
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              {ad.approval_status === 'approved' && (
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              )}
+                              <h3 className="font-semibold text-lg">{ad.name}</h3>
+                            </div>
+                            <div className="flex gap-4 text-sm text-muted-foreground">
+                              {ad.entity && <span>Entity: {ad.entity}</span>}
+                              <span>Created: {format(new Date(ad.created_at), "MMM dd, yyyy")}</span>
+                            </div>
+                            <div className="mt-3 text-sm space-y-1">
+                              <p>Business Name: {ad.business_name || 'N/A'}</p>
+                              <p>Long Headline: {ad.long_headline ? `${ad.long_headline.substring(0, 40)}...` : 'N/A'}</p>
+                              <p>CTA: {ad.cta_text || 'N/A'}</p>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAd(ad);
+                              setAdDialogOpen(true);
+                            }}
+                          >
+                            Preview
+                          </Button>
+                        </div>
+                        <Separator className="my-4" />
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <AdApprovalSection 
+                            adId={ad.id} 
+                            currentStatus={ad.approval_status || 'pending'}
+                            onStatusChange={fetchSavedAds}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+
+              {selectedAdIds.length > 0 && (
+                <BulkActionsBar
+                  selectedIds={selectedAdIds}
+                  onDelete={handleBulkDelete}
+                  onClearSelection={() => setSelectedAdIds([])}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="elements" className="mt-6">

@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface AdElement {
   id: string;
   created_by: string;
-  element_type: 'headline' | 'description' | 'sitelink' | 'callout';
+  element_type: 'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta';
   content: any;
   entity: string[];
   google_status: 'pending' | 'approved' | 'limited' | 'rejected';

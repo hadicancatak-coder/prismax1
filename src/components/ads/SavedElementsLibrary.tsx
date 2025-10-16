@@ -11,7 +11,7 @@ import { AdvancedFilters } from './AdvancedFilters';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export function SavedElementsLibrary() {
-  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
+  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta'>('headline');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<any>({});
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -57,14 +57,17 @@ export function SavedElementsLibrary() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="headline">Headlines</TabsTrigger>
           <TabsTrigger value="description">Descriptions</TabsTrigger>
           <TabsTrigger value="sitelink">Sitelinks</TabsTrigger>
           <TabsTrigger value="callout">Callouts</TabsTrigger>
+          <TabsTrigger value="business_name">Business Names</TabsTrigger>
+          <TabsTrigger value="long_headline">Long Headlines</TabsTrigger>
+          <TabsTrigger value="cta">CTAs</TabsTrigger>
         </TabsList>
 
-        {['headline', 'description', 'sitelink', 'callout'].map((type) => (
+        {['headline', 'description', 'sitelink', 'callout', 'business_name', 'long_headline', 'cta'].map((type) => (
           <TabsContent key={type} value={type} className="space-y-4 mt-4">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>

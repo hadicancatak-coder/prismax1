@@ -8,7 +8,7 @@ import { useAdElements } from '@/hooks/useAdElements';
 import { Badge } from '@/components/ui/badge';
 
 interface ElementQuickInsertProps {
-  elementType: 'headline' | 'description' | 'sitelink' | 'callout';
+  elementType: 'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta';
   onInsert: (content: string) => void;
 }
 

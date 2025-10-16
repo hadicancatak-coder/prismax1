@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 interface BulkImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  elementType: 'headline' | 'description' | 'sitelink' | 'callout';
+  elementType: 'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta';
 }
 
 export function BulkImportDialog({ open, onOpenChange, elementType }: BulkImportDialogProps) {

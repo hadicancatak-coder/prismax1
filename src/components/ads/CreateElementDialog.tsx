@@ -11,7 +11,7 @@ import { ENTITIES } from '@/lib/constants';
 interface CreateElementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  elementType: 'headline' | 'description' | 'sitelink' | 'callout';
+  elementType: 'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta';
   initialContent?: string;
   initialEntity?: string;
   initialTags?: string;
@@ -44,6 +44,28 @@ export function CreateElementDialog({
       setTags('');
     }
   }, [open, initialContent, initialEntity, initialTags]);
+
+  const getCharacterLimit = () => {
+    switch (elementType) {
+      case 'business_name': return 25;
+      case 'headline': return 30;
+      case 'long_headline': return 90;
+      case 'description': return 90;
+      case 'sitelink': return 25;
+      case 'callout': return 25;
+      case 'cta': return 25;
+      default: return 100;
+    }
+  };
+
+  const getElementLabel = () => {
+    switch (elementType) {
+      case 'business_name': return 'Business Name';
+      case 'long_headline': return 'Long Headline';
+      case 'cta': return 'CTA';
+      default: return elementType.charAt(0).toUpperCase() + elementType.slice(1);
+    }
+  };
 
   const handleSave = () => {
     if (elementId) {
@@ -78,30 +100,40 @@ export function CreateElementDialog({
     }
   };
 
+  const charLimit = getCharacterLimit();
+  const isOverLimit = content.length > charLimit;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{elementId ? 'Edit' : 'Add'} {elementType.charAt(0).toUpperCase() + elementType.slice(1)}</DialogTitle>
+          <DialogTitle>{elementId ? 'Edit' : 'Add'} {getElementLabel()}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="content">Content</Label>
-            {elementType === 'description' ? (
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="content">Content</Label>
+              <span className={`text-xs ${isOverLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {content.length}/{charLimit}
+              </span>
+            </div>
+            {elementType === 'description' || elementType === 'long_headline' ? (
               <Textarea
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder={`Enter ${elementType} content...`}
+                placeholder={`Enter ${getElementLabel().toLowerCase()} content...`}
                 rows={3}
+                maxLength={charLimit}
               />
             ) : (
               <Input
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder={`Enter ${elementType} content...`}
+                placeholder={`Enter ${getElementLabel().toLowerCase()} content...`}
+                maxLength={charLimit}
               />
             )}
           </div>
@@ -133,7 +165,7 @@ export function CreateElementDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={!content}>Save</Button>
+          <Button onClick={handleSave} disabled={!content || isOverLimit}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
