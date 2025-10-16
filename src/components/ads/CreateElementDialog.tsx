@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateAdElement } from '@/hooks/useAdElements';
+import { useCreateAdElement, useUpdateAdElement } from '@/hooks/useAdElements';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ENTITIES } from '@/lib/constants';
 
@@ -13,43 +13,76 @@ interface CreateElementDialogProps {
   onOpenChange: (open: boolean) => void;
   elementType: 'headline' | 'description' | 'sitelink' | 'callout';
   initialContent?: string;
+  initialEntity?: string;
+  initialTags?: string;
+  elementId?: string;
 }
 
-export function CreateElementDialog({ open, onOpenChange, elementType, initialContent }: CreateElementDialogProps) {
+export function CreateElementDialog({ 
+  open, 
+  onOpenChange, 
+  elementType, 
+  initialContent,
+  initialEntity,
+  initialTags,
+  elementId 
+}: CreateElementDialogProps) {
   const [content, setContent] = useState('');
   const [entity, setEntity] = useState('');
   const [tags, setTags] = useState('');
   const createElement = useCreateAdElement();
+  const updateElement = useUpdateAdElement();
   
   useEffect(() => {
-    if (open && initialContent) {
-      setContent(initialContent);
+    if (open) {
+      setContent(initialContent || '');
+      setEntity(initialEntity || '');
+      setTags(initialTags || '');
+    } else if (!open) {
+      setContent('');
+      setEntity('');
+      setTags('');
     }
-  }, [open, initialContent]);
+  }, [open, initialContent, initialEntity, initialTags]);
 
   const handleSave = () => {
-    createElement.mutate({
-      element_type: elementType,
-      content,
-      entity: entity ? [entity] : [],
-      tags: tags ? tags.split(',').map(t => t.trim()) : [],
-      google_status: 'pending',
-      is_favorite: false,
-    }, {
-      onSuccess: () => {
-        setContent('');
-        setEntity('');
-        setTags('');
-        onOpenChange(false);
-      }
-    });
+    if (elementId) {
+      updateElement.mutate({
+        id: elementId,
+        updates: {
+          content,
+          entity: entity ? [entity] : [],
+          tags: tags ? tags.split(',').map(t => t.trim()) : [],
+        },
+      }, {
+        onSuccess: () => {
+          onOpenChange(false);
+        }
+      });
+    } else {
+      createElement.mutate({
+        element_type: elementType,
+        content,
+        entity: entity ? [entity] : [],
+        tags: tags ? tags.split(',').map(t => t.trim()) : [],
+        google_status: 'pending',
+        is_favorite: false,
+      }, {
+        onSuccess: () => {
+          setContent('');
+          setEntity('');
+          setTags('');
+          onOpenChange(false);
+        }
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add {elementType.charAt(0).toUpperCase() + elementType.slice(1)}</DialogTitle>
+          <DialogTitle>{elementId ? 'Edit' : 'Add'} {elementType.charAt(0).toUpperCase() + elementType.slice(1)}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

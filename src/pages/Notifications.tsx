@@ -109,6 +109,12 @@ export default function Notifications() {
         return `${payload.title}: ${payload.message}`;
       case "campaign_converted_to_task":
         return payload.message || `Campaign converted to task`;
+      case "ad_status_changed":
+        return `Ad "${payload.ad_name}" status changed from ${payload.old_status} to ${payload.new_status}`;
+      case "ad_pending_review":
+        return `New ${payload.ad_type} ad "${payload.ad_name}" pending review`;
+      case "campaign_assigned":
+        return `You were assigned to campaign: ${payload.campaign_title}`;
       default:
         return "You have a new notification";
     }

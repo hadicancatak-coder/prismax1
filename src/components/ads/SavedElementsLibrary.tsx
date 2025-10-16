@@ -28,7 +28,7 @@ export function SavedElementsLibrary() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Saved Elements Library</h2>
+        <h2 className="text-2xl font-semibold">Elements</h2>
         <div className="flex gap-2">
           <Button onClick={() => setShowBulkImport(true)} variant="outline">
             <Upload className="w-4 h-4 mr-2" />

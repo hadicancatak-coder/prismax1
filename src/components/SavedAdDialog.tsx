@@ -19,6 +19,7 @@ import { AdStrengthIndicator } from "./AdStrengthIndicator";
 import { AdComplianceChecker } from "./AdComplianceChecker";
 import { AdVersionHistory } from "./ads/AdVersionHistory";
 import { AdComments } from "./ads/AdComments";
+import { DisplayAdPreview } from "./ads/DisplayAdPreview";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -149,6 +150,16 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
 
           <TabsContent value="preview" className="flex-1 overflow-y-auto px-6 pb-4 space-y-3 mt-4 min-h-0">
           {/* Ad Preview */}
+          {ad.ad_type === 'display' ? (
+            <DisplayAdPreview
+              businessName={ad.business_name || ''}
+              longHeadline={ad.long_headline || ''}
+              shortHeadline={(ad.short_headlines?.[0]) || ''}
+              description={(ad.descriptions?.[0]) || ''}
+              ctaText={ad.cta_text || ''}
+              landingPage={ad.landing_page || ''}
+            />
+          ) : (
           <Card className="p-4 bg-background">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -230,6 +241,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </>
           )}
           </Card>
+          )}
 
           {/* Quality & Compliance Side-by-Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

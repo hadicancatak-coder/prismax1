@@ -6,6 +6,8 @@ import { Copy, Edit, Trash2, Star } from 'lucide-react';
 import { useUpdateAdElement, useDeleteAdElement, AdElement } from '@/hooks/useAdElements';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
+import { ElementDetailDialog } from './ElementDetailDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface ElementCardProps {
   element: AdElement;
@@ -13,24 +15,28 @@ interface ElementCardProps {
 
 export function ElementCard({ element }: ElementCardProps) {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
   const { toast } = useToast();
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const text = typeof element.content === 'string' ? element.content : JSON.stringify(element.content);
     navigator.clipboard.writeText(text);
     toast({ title: 'Copied to clipboard' });
   };
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
     updateElement.mutate({ id: element.id, updates: { is_favorite: !element.is_favorite } });
   };
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this element?')) {
-      deleteElement.mutate(element.id);
-    }
+    deleteElement.mutate(element.id, {
+      onSuccess: () => setShowDeleteDialog(false)
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -46,7 +52,7 @@ export function ElementCard({ element }: ElementCardProps) {
 
   return (
     <>
-      <Card className="p-4 hover:shadow-md transition-shadow">
+      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowDetailDialog(true)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <p className="text-sm font-medium line-clamp-2">{content}</p>
@@ -88,17 +94,38 @@ export function ElementCard({ element }: ElementCardProps) {
             <Copy className="w-3 h-3 mr-1" />
             Copy
           </Button>
-          <Button size="sm" variant="ghost" onClick={handleDelete}>
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}>
             <Trash2 className="w-3 h-3" />
           </Button>
         </div>
       </Card>
+
+      <ElementDetailDialog
+        element={element}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+      />
 
       <UpdateGoogleStatusDialog
         open={showStatusDialog}
         onOpenChange={setShowStatusDialog}
         element={element}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Element?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this element. {element.use_count > 0 && `It has been used ${element.use_count} times.`} This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

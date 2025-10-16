@@ -374,11 +374,14 @@ export type Database = {
         Row: {
           ad_group_id: string | null
           ad_strength: number | null
+          ad_type: string | null
           approval_status: string | null
+          business_name: string | null
           callouts: Json
           compliance_issues: Json | null
           created_at: string
           created_by: string
+          cta_text: string | null
           date_launched: string | null
           date_paused: string | null
           descriptions: Json
@@ -387,7 +390,9 @@ export type Database = {
           headlines: Json
           id: string
           landing_page: string | null
+          long_headline: string | null
           name: string
+          short_headlines: Json | null
           sitelinks: Json
           updated_at: string
           updated_by: string | null
@@ -395,11 +400,14 @@ export type Database = {
         Insert: {
           ad_group_id?: string | null
           ad_strength?: number | null
+          ad_type?: string | null
           approval_status?: string | null
+          business_name?: string | null
           callouts?: Json
           compliance_issues?: Json | null
           created_at?: string
           created_by: string
+          cta_text?: string | null
           date_launched?: string | null
           date_paused?: string | null
           descriptions?: Json
@@ -408,7 +416,9 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          long_headline?: string | null
           name: string
+          short_headlines?: Json | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
@@ -416,11 +426,14 @@ export type Database = {
         Update: {
           ad_group_id?: string | null
           ad_strength?: number | null
+          ad_type?: string | null
           approval_status?: string | null
+          business_name?: string | null
           callouts?: Json
           compliance_issues?: Json | null
           created_at?: string
           created_by?: string
+          cta_text?: string | null
           date_launched?: string | null
           date_paused?: string | null
           descriptions?: Json
@@ -429,7 +442,9 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          long_headline?: string | null
           name?: string
+          short_headlines?: Json | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
