@@ -115,8 +115,8 @@ export default function CalendarView() {
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
-        .not("due_at", "is", null)
-        .order("due_at", { ascending: true });
+        .or("due_at.not.is.null,recurrence_rrule.not.is.null")
+        .order("due_at", { ascending: true, nullsFirst: false });
       
       if (error) {
         console.error("❌ Error fetching all tasks:", error);
@@ -165,9 +165,9 @@ export default function CalendarView() {
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
-        .not("due_at", "is", null)
+        .or("due_at.not.is.null,recurrence_rrule.not.is.null")
         .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000'])
-        .order("due_at", { ascending: true });
+        .order("due_at", { ascending: true, nullsFirst: false });
       
       if (error) {
         console.error("❌ Error fetching user tasks:", error);
@@ -333,7 +333,11 @@ export default function CalendarView() {
     filtered.push(...oneTimeTasks);
     
     // 2. Add recurring tasks if they match this date
-    const recurringTasks = tasks.filter(task => task.recurrence_rrule && task.recurrence_rrule !== 'none');
+    const recurringTasks = tasks.filter(task => 
+      task.recurrence_rrule && 
+      task.recurrence_rrule !== 'none' && 
+      task.recurrence_rrule !== ''
+    );
     
     recurringTasks.forEach(task => {
       let shouldInclude = false;

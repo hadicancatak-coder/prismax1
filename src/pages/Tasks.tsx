@@ -26,15 +26,24 @@ export default function Tasks() {
   useEffect(() => {
     fetchTasks();
     
-    const channel = supabase
+    const tasksChannel = supabase
       .channel('tasks-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
         fetchTasks();
       })
       .subscribe();
 
+    const assigneesChannel = supabase
+      .channel('task-assignees-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, () => {
+        console.log('Assignment changed, refetching tasks...');
+        fetchTasks();
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(assigneesChannel);
     };
   }, []);
 
