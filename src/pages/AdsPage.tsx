@@ -20,6 +20,7 @@ import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
 import { TemplateSelector } from "@/components/ads/TemplateSelector";
 import { ElementQuickInsert } from "@/components/ads/ElementQuickInsert";
 import { DisplayAdCreator } from "@/components/ads/DisplayAdCreator";
+import { DisplayAdPreview } from "@/components/ads/DisplayAdPreview";
 import { AdvancedFilters } from "@/components/ads/AdvancedFilters";
 import { BulkActionsBar } from "@/components/ads/BulkActionsBar";
 import { useIncrementElementUsage } from "@/hooks/useAdElements";
@@ -711,20 +712,37 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           </TabsContent>
 
           <TabsContent value="display" className="mt-6">
-            <DisplayAdCreator
-              businessName={businessName}
-              setBusinessName={setBusinessName}
-              longHeadline={longHeadline}
-              setLongHeadline={setLongHeadline}
-              shortHeadlines={shortHeadlines}
-              setShortHeadlines={setShortHeadlines}
-              descriptions={descriptions}
-              setDescriptions={setDescriptions}
-              ctaText={ctaText}
-              setCtaText={setCtaText}
-              landingPage={landingPage}
-              setLandingPage={setLandingPage}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Input Fields */}
+              <div className="space-y-4">
+                <DisplayAdCreator
+                  businessName={businessName}
+                  setBusinessName={setBusinessName}
+                  longHeadline={longHeadline}
+                  setLongHeadline={setLongHeadline}
+                  shortHeadlines={shortHeadlines}
+                  setShortHeadlines={setShortHeadlines}
+                  descriptions={descriptions}
+                  setDescriptions={setDescriptions}
+                  ctaText={ctaText}
+                  setCtaText={setCtaText}
+                  landingPage={landingPage}
+                  setLandingPage={setLandingPage}
+                />
+              </div>
+
+              {/* Right Column - Live Preview */}
+              <div className="lg:sticky lg:top-8 lg:self-start">
+                <DisplayAdPreview
+                  businessName={businessName}
+                  longHeadline={longHeadline}
+                  shortHeadline={shortHeadlines[0] || ''}
+                  description={descriptions[0] || ''}
+                  ctaText={ctaText}
+                  landingPage={landingPage}
+                />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
         </TabsContent>
