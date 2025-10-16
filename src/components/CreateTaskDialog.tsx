@@ -81,7 +81,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setValidationErrors({});
 
-    // Validate due date against assignee working days
+    // Validate due date against assignee working days (for one-time tasks)
     if (date && selectedAssignees.length > 0 && recurrence === "none") {
       const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
       
@@ -108,6 +108,37 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         toast({
           title: "Working Day Conflict",
           description: `The selected date falls outside working days for: ${invalidAssignees.join(', ')}. They work ${assigneeProfiles[0]?.working_days || 'different days'}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validate recurring task day against assignee working days
+    if (recurrence === "weekly" && recurrenceDayOfWeek !== null && selectedAssignees.length > 0) {
+      const { data: assigneeProfiles } = await supabase
+        .from("profiles")
+        .select("id, name, working_days")
+        .in("id", selectedAssignees);
+      
+      const invalidAssignees: string[] = [];
+      
+      assigneeProfiles?.forEach(profile => {
+        const isValidDay = (
+          (profile.working_days === 'mon-fri' && recurrenceDayOfWeek >= 1 && recurrenceDayOfWeek <= 5) ||
+          (profile.working_days === 'sun-thu' && (recurrenceDayOfWeek === 0 || (recurrenceDayOfWeek >= 1 && recurrenceDayOfWeek <= 4)))
+        );
+        
+        if (!isValidDay) {
+          invalidAssignees.push(profile.name);
+        }
+      });
+      
+      if (invalidAssignees.length > 0) {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        toast({
+          title: "Working Day Conflict",
+          description: `${days[recurrenceDayOfWeek]} falls outside working days for: ${invalidAssignees.join(', ')}`,
           variant: "destructive",
         });
         return;

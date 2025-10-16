@@ -275,17 +275,36 @@ export default function CalendarView() {
     }
   };
 
-  const handleStatusChange = async (taskId: string, newStatus: "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked") => {
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status: newStatus })
-      .eq("id", taskId);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+  const handleStatusChange = async (taskId: string, newStatus: "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked", taskDate?: Date) => {
+    const task = tasks.find(t => t.id === taskId);
+    
+    // Handle recurring task instances separately
+    if (task?.is_recurring_instance && newStatus === 'Completed' && taskDate) {
+      const { error } = await supabase.from("recurring_task_completions").insert({
+        task_id: taskId,
+        completed_date: taskDate.toISOString().split('T')[0],
+        completed_by: user?.id
+      });
+      
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Instance completed", description: "This occurrence marked as done" });
+        await fetchTasks();
+      }
     } else {
-      toast({ title: "Status updated", description: `Task marked as ${newStatus}` });
-      await fetchTasks();
+      // Regular task status update
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: newStatus })
+        .eq("id", taskId);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Status updated", description: `Task marked as ${newStatus}` });
+        await fetchTasks();
+      }
     }
   };
 
@@ -302,8 +321,48 @@ export default function CalendarView() {
   };
 
   const getTasksForDate = (date: Date) => {
-    let filtered = tasks.filter(task => task.due_at && isSameDay(parseISO(task.due_at), date));
+    let filtered: any[] = [];
     
+    // 1. Add one-time tasks with due_at matching the date
+    const oneTimeTasks = tasks.filter(task => 
+      task.due_at && 
+      !task.recurrence_rrule && 
+      isSameDay(parseISO(task.due_at), date)
+    );
+    
+    filtered.push(...oneTimeTasks);
+    
+    // 2. Add recurring tasks if they match this date
+    const recurringTasks = tasks.filter(task => task.recurrence_rrule && task.recurrence_rrule !== 'none');
+    
+    recurringTasks.forEach(task => {
+      let shouldInclude = false;
+      
+      if (task.recurrence_rrule.includes('FREQ=DAILY')) {
+        // Daily tasks appear every working day
+        shouldInclude = isWorkingDay(date);
+      }
+      
+      if (task.recurrence_rrule.includes('FREQ=WEEKLY')) {
+        // Weekly tasks appear on specific day of week
+        shouldInclude = date.getDay() === task.recurrence_day_of_week;
+      }
+      
+      if (task.recurrence_rrule.includes('FREQ=MONTHLY')) {
+        // Monthly tasks appear on specific day of month
+        shouldInclude = date.getDate() === task.recurrence_day_of_month;
+      }
+      
+      if (shouldInclude) {
+        filtered.push({
+          ...task,
+          virtual_due_at: date.toISOString(),
+          is_recurring_instance: true
+        });
+      }
+    });
+    
+    // Apply status and priority filters
     if (statusFilter !== "all") {
       filtered = filtered.filter(t => t.status === statusFilter);
     }

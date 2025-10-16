@@ -643,37 +643,29 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">Recurring Task</Label>
-                <Select 
-                  value={task.recurrence_rrule || "none"} 
-                  onValueChange={async (value) => {
-                    const rrule = value === "none" ? null : value;
-                    // Clear due date when setting recurrence
-                    const updateData: any = { recurrence_rrule: rrule };
-                    if (value !== "none") {
-                      updateData.due_at = null;
-                    }
-                    
-                    const { error } = await supabase
-                      .from("tasks")
-                      .update(updateData)
-                      .eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      fetchTask();
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="No recurrence" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Recurrence</SelectItem>
-                    <SelectItem value="FREQ=DAILY">Daily</SelectItem>
-                    <SelectItem value="FREQ=WEEKLY">Weekly</SelectItem>
-                    <SelectItem value="FREQ=MONTHLY">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-sm py-2 px-3">
+                    {(() => {
+                      if (!task.recurrence_rrule || task.recurrence_rrule === 'none') return 'No Recurrence';
+                      
+                      if (task.recurrence_rrule.includes('DAILY')) return 'Daily';
+                      
+                      if (task.recurrence_rrule.includes('WEEKLY')) {
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        const dayName = days[task.recurrence_day_of_week || 0];
+                        return `Weekly on ${dayName}`;
+                      }
+                      
+                      if (task.recurrence_rrule.includes('MONTHLY')) {
+                        const day = task.recurrence_day_of_month || 1;
+                        const suffix = day > 3 && day < 21 ? 'th' : ['th', 'st', 'nd', 'rd'][day % 10] || 'th';
+                        return `Monthly on ${day}${suffix}`;
+                      }
+                      
+                      return 'Unknown';
+                    })()}
+                  </Badge>
+                </div>
               </div>
             </div>
 
