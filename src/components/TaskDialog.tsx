@@ -13,7 +13,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { MentionAutocomplete } from "@/components/MentionAutocomplete";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
@@ -56,6 +58,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [jiraLinks, setJiraLinks] = useState<string[]>([]);
   const [newJiraLink, setNewJiraLink] = useState("");
   const [showJiraInput, setShowJiraInput] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedTask, setEditedTask] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
@@ -296,41 +300,144 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
     setShowEmojiPicker(false);
   };
 
+  const handleSave = async () => {
+    try {
+      // Validate recurring task working days if changed
+      if (editedTask.recurrence_rrule?.includes('WEEKLY') && assignees.length > 0) {
+        const { data: assigneeProfiles } = await supabase
+          .from("profiles")
+          .select("id, name, working_days")
+          .in("id", assignees.map((a: any) => a.id));
+        
+        const invalidAssignees: string[] = [];
+        const dayOfWeek = editedTask.recurrence_day_of_week;
+        
+        assigneeProfiles?.forEach(profile => {
+          const isValidDay = (
+            (profile.working_days === 'mon-fri' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+            (profile.working_days === 'sun-thu' && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4)))
+          );
+          
+          if (!isValidDay) {
+            invalidAssignees.push(profile.name);
+          }
+        });
+        
+        if (invalidAssignees.length > 0) {
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          toast({
+            title: "Working Day Conflict",
+            description: `${days[dayOfWeek]} falls outside working days for: ${invalidAssignees.join(', ')}`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Save to database
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          title: editedTask.title,
+          description: editedTask.description,
+          status: editedTask.status,
+          priority: editedTask.priority,
+          entity: editedTask.entity,
+          project_id: editedTask.project_id,
+          due_at: editedTask.due_at,
+          jira_links: editedTask.jira_links,
+          recurrence_rrule: editedTask.recurrence_rrule,
+          recurrence_day_of_week: editedTask.recurrence_day_of_week,
+          recurrence_day_of_month: editedTask.recurrence_day_of_month,
+          blocker_reason: editedTask.blocker_reason,
+          failure_reason: editedTask.failure_reason,
+        })
+        .eq("id", taskId);
+      
+      if (error) throw error;
+      
+      toast({ title: "Success", description: "Task updated successfully" });
+      setEditMode(false);
+      setEditedTask(null);
+      fetchTask();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save changes",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDiscard = () => {
+    setEditMode(false);
+    setEditedTask(null);
+    fetchTask();
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+      
+      if (error) throw error;
+      
+      toast({ title: "Success", description: "Task deleted successfully" });
+      onOpenChange(false);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete task",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading || !task) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`max-h-[90vh] flex flex-col transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
         <DialogHeader className="pr-8">
-          <DialogTitle className="flex items-center justify-between">
-            {editingTitle ? (
-              <Input
-                value={task.title}
-                onChange={(e) => setTask({ ...task, title: e.target.value })}
-                onBlur={async () => {
-                  setEditingTitle(false);
-                  const { error } = await supabase.from("tasks").update({ title: task.title }).eq("id", taskId);
-                  if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-                }}
-                onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
-                autoFocus
-                className="font-semibold text-lg"
-              />
-            ) : (
-              <span onClick={() => setEditingTitle(true)} className="cursor-pointer hover:text-primary">{task.title}</span>
-            )}
-            {!showComments && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowComments(true)}
-                className="gap-2"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Show Comments ({comments.length})
-              </Button>
-            )}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <DialogTitle className="flex-1">
+              {editMode ? (
+                <Input
+                  value={editedTask?.title || ""}
+                  onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                  className="font-semibold text-lg"
+                />
+              ) : (
+                <span>{task.title}</span>
+              )}
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              {!editMode && !showComments && userRole === 'admin' && (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setEditMode(true);
+                  setEditedTask({...task});
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+              {!showComments && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowComments(true)}
+                  className="gap-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Show Comments ({comments.length})
+                </Button>
+              )}
+            </div>
+          </div>
           <DialogDescription>Task details and team discussion</DialogDescription>
         </DialogHeader>
 
@@ -339,55 +446,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           <div className={`space-y-6 overflow-y-auto overflow-x-visible pr-4 flex-1 min-h-0 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
             <div>
               <Label>Description</Label>
-              {editingDescription ? (
-                <MentionAutocomplete
-                  value={task.description || ""}
-                  onChange={(value) => setTask({ ...task, description: value })}
-                  users={profiles.map(p => ({
-                    user_id: p.user_id,
-                    name: p.name || p.email,
-                    username: p.username
-                  }))}
-                  onBlur={async () => {
-                    setEditingDescription(false);
-                    const { error } = await supabase.from("tasks").update({ description: task.description }).eq("id", taskId);
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                      return;
-                    }
-                    
-                    // Process @mentions in description
-                    const mentions = (task.description || '').match(/@(\w+)/g) || [];
-                    for (const mention of mentions) {
-                      const username = mention.substring(1);
-                      const mentionedProfile = profiles.find(
-                        p => p.name?.toLowerCase() === username.toLowerCase() ||
-                             p.username?.toLowerCase() === username.toLowerCase()
-                      );
-                      
-                      if (mentionedProfile && mentionedProfile.user_id !== user?.id) {
-                        await supabase.from("notifications").insert({
-                          user_id: mentionedProfile.user_id,
-                          type: "mention",
-                          payload_json: { 
-                            task_id: taskId, 
-                            message: `mentioned you in task description`,
-                            task_title: task.title
-                          },
-                        });
-                      }
-                    }
-                  }}
-                  as="textarea"
-                  className="mt-1"
+              {editMode ? (
+                <Textarea
+                  value={editedTask?.description || ""}
+                  onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                  className="mt-1 min-h-[100px]"
                   placeholder="Add task description..."
                 />
               ) : (
-                <p
-                  onClick={() => setEditingDescription(true)}
-                  className="text-sm text-muted-foreground mt-1 cursor-pointer hover:text-foreground min-h-[40px] p-2 rounded border border-transparent hover:border-border"
-                >
-                  {task.description || "Click to add description"}
+                <p className="text-sm text-muted-foreground mt-1 min-h-[40px] p-2 rounded border border-transparent">
+                  {task.description || "No description"}
                 </p>
               )}
             </div>
@@ -403,8 +471,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   )}
                 </div>
                 <Select 
-                  value={task.status} 
+                  value={editMode ? editedTask?.status : task.status} 
                   onValueChange={async (value: any) => {
+                    if (editMode) {
+                      setEditedTask({ ...editedTask, status: value });
+                      return;
+                    }
                     // Check if this is a recurring task
                     const isRecurringTask = task.recurrence_rrule && task.recurrence_rrule !== 'none';
                     
@@ -492,8 +564,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               <div>
                 <Label className="mb-2 block">Priority</Label>
                 <Select 
-                  value={task.priority} 
+                  value={editMode ? editedTask?.priority : task.priority} 
                   onValueChange={async (value: any) => {
+                    if (editMode) {
+                      setEditedTask({ ...editedTask, priority: value });
+                      return;
+                    }
                     const { error } = await supabase
                       .from("tasks")
                       .update({ priority: value })
@@ -571,8 +647,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
                   >
                     <div className="flex flex-wrap gap-1">
-                      {selectedEntities.length > 0 ? (
-                        selectedEntities.map((ent: string) => (
+                      {(editMode ? (editedTask?.entity || []) : selectedEntities).length > 0 ? (
+                        (editMode ? (editedTask?.entity || []) : selectedEntities).map((ent: string) => (
                           <Badge key={ent} variant="secondary">{ent}</Badge>
                         ))
                       ) : (
@@ -602,22 +678,27 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                           <div key={entity} className="flex items-center space-x-2">
                             <Checkbox
                               id={`entity-${entity}`}
-                              checked={selectedEntities.includes(entity)}
+                              checked={(editMode ? (editedTask?.entity || []) : selectedEntities).includes(entity)}
                               onCheckedChange={async (checked) => {
+                                const currentEntities = editMode ? (editedTask?.entity || []) : selectedEntities;
                                 const newEntities = checked
-                                  ? [...selectedEntities, entity]
-                                  : selectedEntities.filter((e) => e !== entity);
-                                setSelectedEntities(newEntities);
+                                  ? [...currentEntities, entity]
+                                  : currentEntities.filter((e) => e !== entity);
                                 
-                                const { error } = await supabase
-                                  .from("tasks")
-                                  .update({ entity: newEntities })
-                                  .eq("id", taskId);
-                                  
-                                if (error) {
-                                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                                if (editMode) {
+                                  setEditedTask({ ...editedTask, entity: newEntities });
                                 } else {
-                                  await fetchTask();
+                                  setSelectedEntities(newEntities);
+                                  const { error } = await supabase
+                                    .from("tasks")
+                                    .update({ entity: newEntities })
+                                    .eq("id", taskId);
+                                    
+                                  if (error) {
+                                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                                  } else {
+                                    await fetchTask();
+                                  }
                                 }
                               }}
                               onClick={(e) => e.stopPropagation()}
@@ -643,29 +724,97 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">Recurring Task</Label>
-                <div className="flex items-center gap-2">
+                {editMode ? (
+                  <div className="space-y-2">
+                    <Select 
+                      value={(() => {
+                        if (!editedTask?.recurrence_rrule || editedTask.recurrence_rrule === 'none') return 'none';
+                        if (editedTask.recurrence_rrule.includes('DAILY')) return 'daily';
+                        if (editedTask.recurrence_rrule.includes('WEEKLY')) return 'weekly';
+                        if (editedTask.recurrence_rrule.includes('MONTHLY')) return 'monthly';
+                        return 'none';
+                      })()} 
+                      onValueChange={(value) => {
+                        setEditedTask({
+                          ...editedTask,
+                          recurrence_rrule: value === 'none' ? null : `FREQ=${value.toUpperCase()}`,
+                          recurrence_day_of_week: value !== 'weekly' ? null : editedTask.recurrence_day_of_week,
+                          recurrence_day_of_month: value !== 'monthly' ? null : editedTask.recurrence_day_of_month,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select recurrence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Recurrence</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {editedTask?.recurrence_rrule?.includes('WEEKLY') && (
+                      <Select 
+                        value={editedTask.recurrence_day_of_week?.toString() || ""} 
+                        onValueChange={(val) => setEditedTask({
+                          ...editedTask,
+                          recurrence_day_of_week: parseInt(val)
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">Sunday</SelectItem>
+                          <SelectItem value="1">Monday</SelectItem>
+                          <SelectItem value="2">Tuesday</SelectItem>
+                          <SelectItem value="3">Wednesday</SelectItem>
+                          <SelectItem value="4">Thursday</SelectItem>
+                          <SelectItem value="5">Friday</SelectItem>
+                          <SelectItem value="6">Saturday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+
+                    {editedTask?.recurrence_rrule?.includes('MONTHLY') && (
+                      <Select 
+                        value={editedTask.recurrence_day_of_month?.toString() || ""} 
+                        onValueChange={(val) => setEditedTask({
+                          ...editedTask,
+                          recurrence_day_of_month: parseInt(val)
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day (1-31)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                            <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ) : (
                   <Badge variant="outline" className="text-sm py-2 px-3">
                     {(() => {
                       if (!task.recurrence_rrule || task.recurrence_rrule === 'none') return 'No Recurrence';
-                      
                       if (task.recurrence_rrule.includes('DAILY')) return 'Daily';
-                      
                       if (task.recurrence_rrule.includes('WEEKLY')) {
                         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                         const dayName = days[task.recurrence_day_of_week || 0];
                         return `Weekly on ${dayName}`;
                       }
-                      
                       if (task.recurrence_rrule.includes('MONTHLY')) {
                         const day = task.recurrence_day_of_month || 1;
                         const suffix = day > 3 && day < 21 ? 'th' : ['th', 'st', 'nd', 'rd'][day % 10] || 'th';
                         return `Monthly on ${day}${suffix}`;
                       }
-                      
                       return 'Unknown';
                     })()}
                   </Badge>
-                </div>
+                )}
               </div>
             </div>
 
@@ -673,8 +822,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               <div>
                 <Label className="mb-2 block">Project</Label>
                 <Select 
-                  value={task.project_id || "none"} 
+                  value={(editMode ? editedTask?.project_id : task.project_id) || "none"} 
                   onValueChange={async (value) => {
+                    if (editMode) {
+                      setEditedTask({ ...editedTask, project_id: value === "none" ? null : value });
+                      return;
+                    }
                     const projectId = value === "none" ? null : value;
                     const { error } = await supabase
                       .from("tasks")
@@ -1089,6 +1242,54 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             </>
           )}
         </div>
+
+        {/* Edit Mode: Save/Discard Footer */}
+        {editMode && (
+          <>
+            <Separator />
+            <DialogFooter className="flex gap-2">
+              <Button onClick={handleSave} className="gap-2">
+                <Check className="h-4 w-4" />
+                Save Changes
+              </Button>
+              <Button variant="outline" onClick={handleDiscard} className="gap-2">
+                <X className="h-4 w-4" />
+                Discard
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {/* View Mode: Delete Button (Admin Only) */}
+        {!editMode && userRole === 'admin' && (
+          <>
+            <Separator />
+            <DialogFooter>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Delete Task
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{task?.title}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
