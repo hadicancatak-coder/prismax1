@@ -112,6 +112,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
               <TableHead className="w-32 font-semibold">Priority</TableHead>
               <TableHead className="w-48 font-semibold">Assignee</TableHead>
               <TableHead className="w-32 font-semibold">Due Date</TableHead>
+              <TableHead className="w-24 font-semibold">Action</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -213,6 +214,31 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                 </TableCell>
                 <TableCell className="text-sm">
                   {task.due_at ? format(new Date(task.due_at), "MMM dd, yyyy") : "-"}
+                </TableCell>
+                <TableCell>
+                  {task.status !== 'Completed' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const { error } = await supabase
+                          .from('tasks')
+                          .update({ status: 'Completed' })
+                          .eq('id', task.id);
+                        if (error) {
+                          toast({ title: "Error", description: error.message, variant: "destructive" });
+                        } else {
+                          toast({ title: "Success", description: "Task marked as completed" });
+                          onTaskUpdate();
+                        }
+                      }}
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Complete
+                    </Button>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

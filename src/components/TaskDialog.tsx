@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2 } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, CheckCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -1236,33 +1236,55 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           </>
         )}
 
-        {/* View Mode: Delete Button (Admin Only) */}
-        {!editMode && userRole === 'admin' && (
+        {/* View Mode: Complete & Delete Buttons */}
+        {!editMode && (
           <>
             <Separator />
-            <DialogFooter>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    Delete Task
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{task?.title}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            <DialogFooter className="flex gap-2">
+              {task?.status !== 'Completed' && (
+                <Button
+                  onClick={async () => {
+                    const { error } = await supabase
+                      .from('tasks')
+                      .update({ status: 'Completed' })
+                      .eq('id', taskId);
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Success", description: "Task marked as completed" });
+                      fetchTask();
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 gap-2"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Mark as Completed
+                </Button>
+              )}
+              {userRole === 'admin' && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Delete Task
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete "{task?.title}"? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </DialogFooter>
           </>
         )}
