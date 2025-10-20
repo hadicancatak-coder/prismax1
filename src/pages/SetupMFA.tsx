@@ -51,9 +51,10 @@ export default function SetupMFA() {
         }
       }
 
-      // Create fresh enrollment
+      // Create fresh enrollment with unique name to avoid conflicts
       const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'totp'
+        factorType: 'totp',
+        friendlyName: `Authenticator-${Date.now()}`
       });
 
       if (error) throw error;
