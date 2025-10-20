@@ -621,6 +621,13 @@ export default function AdminPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <StepUpMFADialog 
+        open={showStepUpMFA}
+        onOpenChange={setShowStepUpMFA}
+        onVerified={onMFAVerified}
+        actionContext={pendingAction?.type || ''}
+      />
     </div>
   );
 }
