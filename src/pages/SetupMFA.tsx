@@ -13,6 +13,7 @@ import { generateBackupCode, hashBackupCode } from "@/lib/mfaHelpers";
 export default function SetupMFA() {
   const [qrCode, setQrCode] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
+  const [factorId, setFactorId] = useState<string>("");
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
@@ -62,6 +63,7 @@ export default function SetupMFA() {
       if (data) {
         setQrCode(data.totp.qr_code);
         setSecret(data.totp.secret);
+        setFactorId(data.id);
       }
     } catch (error: any) {
       console.error("MFA enrollment error:", error);
@@ -76,10 +78,7 @@ export default function SetupMFA() {
   const verifyTOTP = async () => {
     setLoading(true);
     try {
-      const factors = await supabase.auth.mfa.listFactors();
-      if (!factors.data?.totp?.[0]?.id) throw new Error("No MFA factor found");
-
-      const factorId = factors.data.totp[0].id;
+      if (!factorId) throw new Error("No MFA factor found");
 
       const { error } = await supabase.auth.mfa.challengeAndVerify({
         factorId,
