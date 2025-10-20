@@ -14,33 +14,60 @@ export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const reason = searchParams.get("reason");
 
   const isSecurityUpgrade = reason === "security-upgrade";
+  const isRecoveryMode = searchParams.get("type") === "recovery";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendResetEmail = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("User email not found");
+
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password?type=recovery`
+      });
+
+      if (error) throw error;
+
+      setEmailSent(true);
+      toast({
+        title: "Reset Email Sent!",
+        description: `Check your inbox at ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reset email",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validate new password
       passwordV5Schema.parse(newPassword);
 
       if (newPassword !== confirmPassword) {
         throw new Error("Passwords do not match");
       }
 
-      // Update password via Supabase Auth
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (updateError) throw updateError;
 
-      // Update profile to mark password reset complete
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -51,7 +78,6 @@ export default function ResetPassword() {
           })
           .eq("user_id", user.id);
 
-        // Log the event
         await supabase.from("auth_events").insert({
           user_id: user.id,
           event_type: "password_reset",
@@ -62,7 +88,7 @@ export default function ResetPassword() {
 
       toast({
         title: "Password Updated!",
-        description: "Your password has been successfully updated with enhanced security.",
+        description: "Your password has been successfully updated.",
       });
 
       navigate("/");
@@ -94,13 +120,13 @@ export default function ResetPassword() {
             {isSecurityUpgrade ? "Security Upgrade Required" : "Reset Password"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {isSecurityUpgrade 
-              ? "We've upgraded our security. Please create a stronger password."
-              : "Create a new strong password for your account."}
+            {isRecoveryMode 
+              ? "Enter your new secure password below."
+              : "We'll send you a secure link to reset your password."}
           </p>
         </div>
 
-        {isSecurityUpgrade && (
+        {isSecurityUpgrade && !isRecoveryMode && (
           <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
             <ShieldAlert className="h-4 w-4 text-amber-500" />
             <AlertDescription className="text-sm ml-2">
@@ -115,33 +141,81 @@ export default function ResetPassword() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">New Password</label>
-            <Input
-              type="password"
-              placeholder="Enter new password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
+        {!isRecoveryMode && !emailSent && (
+          <div className="space-y-4">
+            <Alert className="border-blue-500/50 bg-blue-500/10">
+              <AlertDescription className="text-sm">
+                We'll send a secure reset link to your email address.
+              </AlertDescription>
+            </Alert>
+            <Button 
+              onClick={handleSendResetEmail} 
+              className="w-full" 
+              disabled={loading}
+            >
+              {loading ? "Sending..." : "Send Reset Email"}
+            </Button>
           </div>
+        )}
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">Confirm New Password</label>
-            <Input
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+        {!isRecoveryMode && emailSent && (
+          <div className="space-y-4">
+            <Alert className="border-green-500/50 bg-green-500/10">
+              <AlertDescription className="text-sm">
+                ✅ Check your email inbox! Click the reset link to continue.
+              </AlertDescription>
+            </Alert>
+            <Button 
+              variant="outline"
+              onClick={() => setEmailSent(false)} 
+              className="w-full"
+            >
+              Resend Email
+            </Button>
           </div>
+        )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Updating..." : "Update Password"}
-          </Button>
-        </form>
+        {isRecoveryMode && (
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <Alert className="mb-4 border-amber-500/50 bg-amber-500/10">
+              <AlertDescription className="text-xs">
+                <strong>Password Requirements:</strong>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Minimum 12 characters</li>
+                  <li>Upper & lowercase letters</li>
+                  <li>At least one number</li>
+                  <li>At least one special character</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">New Password</label>
+              <Input
+                type="password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Confirm New Password</label>
+              <Input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Updating..." : "Update Password"}
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );
