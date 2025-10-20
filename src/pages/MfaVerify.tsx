@@ -162,7 +162,7 @@ export default function MfaVerify() {
             variant="outline"
             onClick={async () => {
               await supabase.auth.signOut();
-              sessionStorage.removeItem('mfa_verified');
+              localStorage.removeItem('mfa_verified');
               navigate("/auth");
             }}
             className="w-full"

@@ -3,6 +3,39 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+// MFA verification helpers
+const MFA_EXPIRY_HOURS = 2;
+
+const getMfaVerificationStatus = (): boolean => {
+  const data = localStorage.getItem('mfa_verified');
+  if (!data) return false;
+  
+  try {
+    const { verified, timestamp } = JSON.parse(data);
+    const hoursPassed = (Date.now() - timestamp) / (1000 * 60 * 60);
+    
+    if (hoursPassed > MFA_EXPIRY_HOURS) {
+      localStorage.removeItem('mfa_verified');
+      return false;
+    }
+    
+    return verified;
+  } catch {
+    return false;
+  }
+};
+
+const setMfaVerificationStorage = (verified: boolean): void => {
+  if (verified) {
+    localStorage.setItem('mfa_verified', JSON.stringify({
+      verified: true,
+      timestamp: Date.now()
+    }));
+  } else {
+    localStorage.removeItem('mfa_verified');
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -22,16 +55,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
-  const [mfaVerified, setMfaVerified] = useState(false);
+  const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
+    return getMfaVerificationStatus();
+  });
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
   useEffect(() => {
     let mounted = true;
-    
-    // Check session storage for MFA verification status
-    const mfaStatus = sessionStorage.getItem('mfa_verified');
-    setMfaVerified(mfaStatus === 'true');
     
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
@@ -61,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUserRole(null);
           setRoleLoading(false);
           setMfaVerified(false);
-          sessionStorage.removeItem('mfa_verified');
+          localStorage.removeItem('mfa_verified');
         }
       }
     );
@@ -98,16 +129,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const setMfaVerifiedStatus = (verified: boolean) => {
     setMfaVerified(verified);
-    if (verified) {
-      sessionStorage.setItem('mfa_verified', 'true');
-    } else {
-      sessionStorage.removeItem('mfa_verified');
-    }
+    setMfaVerificationStorage(verified);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    sessionStorage.removeItem('mfa_verified');
+    localStorage.removeItem('mfa_verified');
     setMfaVerified(false);
     navigate("/auth");
   };

@@ -189,3 +189,10 @@ export const adSchema = z.object({
   
   entity: z.array(z.enum(ENTITIES as [string, ...string[]])).optional(),
 });
+
+// Auth password validation schema (strong password requirements)
+export const authPasswordSchema = z.string()
+  .min(9, "Password must be at least 9 characters")
+  .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+  .regex(/[0-9]/, "Must contain at least one number")
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Must contain at least one special character (including _)");

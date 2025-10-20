@@ -1090,6 +1090,7 @@ export type Database = {
           force_password_reset: boolean | null
           id: string
           last_mfa_prompt_at: string | null
+          last_password_change: string | null
           mfa_backup_codes: Json | null
           mfa_backup_codes_generated_at: string | null
           mfa_enabled: boolean | null
@@ -1115,6 +1116,7 @@ export type Database = {
           force_password_reset?: boolean | null
           id?: string
           last_mfa_prompt_at?: string | null
+          last_password_change?: string | null
           mfa_backup_codes?: Json | null
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
@@ -1140,6 +1142,7 @@ export type Database = {
           force_password_reset?: boolean | null
           id?: string
           last_mfa_prompt_at?: string | null
+          last_password_change?: string | null
           mfa_backup_codes?: Json | null
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
@@ -1958,6 +1961,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      regenerate_backup_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
       }
       reschedule_overdue_tasks: {
         Args: Record<PropertyKey, never>

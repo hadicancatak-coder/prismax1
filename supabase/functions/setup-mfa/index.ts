@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
         backupCodes.push(code);
       }
 
-      // Save to database
-      await supabase
+      // Save to database - store as text array for Postgres
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           mfa_secret: secret,
@@ -82,6 +82,11 @@ Deno.serve(async (req) => {
           mfa_enrolled_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw new Error('Failed to save MFA settings');
+      }
 
       console.log(`MFA enabled for user ${user.id}`);
 

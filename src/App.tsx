@@ -23,6 +23,8 @@ import LaunchPad from "./pages/LaunchPad";
 import Team from "./pages/Team";
 import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
+import Security from "./pages/Security";
+import About from "./pages/About";
 
 
 const queryClient = new QueryClient({
@@ -58,7 +60,8 @@ const App = () => (
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/launch-pad" element={<LaunchPad />} />
-            
+            <Route path="/security" element={<Security />} />
+            <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />
           </Routes>

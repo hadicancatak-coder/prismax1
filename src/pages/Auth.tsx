@@ -8,14 +8,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { authPasswordSchema } from "@/lib/validationSchemas";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 
 const authSchema = z.object({
   email: z.string()
     .email("Invalid email address")
     .regex(/@cfi\.trade$/, "Only @cfi.trade email addresses are allowed"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password must not exceed 100 characters"),
+  password: authPasswordSchema,
   name: z.string()
     .min(1, "Name is required")
     .max(100, "Name must not exceed 100 characters")
@@ -171,6 +171,11 @@ export default function Auth() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            {!isLogin && password && (
+              <div className="mt-3">
+                <PasswordStrengthIndicator password={password} />
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
