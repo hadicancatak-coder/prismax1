@@ -42,26 +42,59 @@ export default function SetupMFA() {
         if (!user || !mounted) return;
         
         const { data: factors } = await supabase.auth.mfa.listFactors();
-        const hasTotp = !!(factors?.totp && factors.totp.length > 0);
+        const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') || [];
+        const hasVerifiedTotp = verifiedTotp.length > 0;
         
-        if (hasTotp && mounted) {
-          console.log("Factor exists, marking enrolled and redirecting");
-          await supabase
+        if (hasVerifiedTotp && mounted) {
+          // Has verified factor - mark enrolled and redirect
+          console.log("Verified factor exists, marking enrolled and redirecting");
+          const { error } = await supabase
             .from("profiles")
             .update({ mfa_enrolled: true })
             .eq("user_id", user.id);
           
+          if (error) {
+            console.error("Failed to update profile:", error);
+            toast({
+              title: "Error",
+              description: "Failed to update profile. Please try again.",
+              variant: "destructive"
+            });
+            setInitializing(false);
+            return;
+          }
+          
           await supabase.auth.refreshSession();
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise(r => setTimeout(r, 200));
           navigate("/", { replace: true });
-        } else if (!hasTotp && mounted) {
-          // Initialize enrollment only if no factor exists
-          setInitializing(false);
-          enrollMFA();
+        } else {
+          // No verified factor - clean up any unverified and start fresh
+          if (mounted) {
+            // Clean up unverified factors
+            const unverifiedFactors = factors?.totp?.filter(f => f.status === 'unverified') || [];
+            for (const factor of unverifiedFactors) {
+              try {
+                await supabase.auth.mfa.unenroll({ factorId: factor.id });
+                console.log("Cleaned up unverified factor:", factor.id);
+              } catch (err) {
+                console.error("Failed to clean up unverified factor:", err);
+              }
+            }
+            
+            setInitializing(false);
+            enrollMFA();
+          }
         }
       } catch (error) {
         console.error("Error checking MFA status:", error);
-        if (mounted) setInitializing(false);
+        if (mounted) {
+          setInitializing(false);
+          toast({
+            title: "Error",
+            description: "Failed to check MFA status. Please refresh the page.",
+            variant: "destructive"
+          });
+        }
       }
     })();
 

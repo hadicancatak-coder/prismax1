@@ -138,7 +138,8 @@ export const useAuth = () => {
       }
       
       const { data: factors } = await supabase.auth.mfa.listFactors();
-      setHasTotpFactor(!!(factors?.totp && factors.totp.length > 0));
+      const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') || [];
+      setHasTotpFactor(verifiedTotp.length > 0);
     } catch (error) {
       console.error("Error fetching MFA factors:", error);
     } finally {
