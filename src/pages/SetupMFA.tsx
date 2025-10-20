@@ -19,6 +19,7 @@ export default function SetupMFA() {
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [step, setStep] = useState<'totp' | 'backup-codes' | 'confirm-codes'>('totp');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [confirmationIndices, setConfirmationIndices] = useState<number[]>([]);
@@ -33,31 +34,44 @@ export default function SetupMFA() {
 
   // Auto-resolve if user already has a TOTP factor
   useEffect(() => {
+    let mounted = true;
+    
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const hasTotp = !!(factors?.totp && factors.totp.length > 0);
-      
-      if (hasTotp) {
-        console.log("Factor exists, marking enrolled and redirecting");
-        await supabase
-          .from("profiles")
-          .update({ mfa_enrolled: true })
-          .eq("user_id", user.id);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !mounted) return;
         
-        await supabase.auth.refreshSession();
-        await new Promise(r => setTimeout(r, 100));
-        navigate("/", { replace: true });
-      } else {
-        // Initialize enrollment
-        enrollMFA();
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const hasTotp = !!(factors?.totp && factors.totp.length > 0);
+        
+        if (hasTotp && mounted) {
+          console.log("Factor exists, marking enrolled and redirecting");
+          await supabase
+            .from("profiles")
+            .update({ mfa_enrolled: true })
+            .eq("user_id", user.id);
+          
+          await supabase.auth.refreshSession();
+          await new Promise(r => setTimeout(r, 100));
+          navigate("/", { replace: true });
+        } else if (!hasTotp && mounted) {
+          // Initialize enrollment only if no factor exists
+          setInitializing(false);
+          enrollMFA();
+        }
+      } catch (error) {
+        console.error("Error checking MFA status:", error);
+        if (mounted) setInitializing(false);
       }
     })();
-  }, []);
+
+    return () => { mounted = false; };
+  }, [navigate]);
 
   const enrollMFA = async () => {
+    if (loading || factorId) return; // Prevent multiple enrollments
+    
+    setLoading(true);
     try {
       // Check for any unverified factors and clean them up
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
@@ -92,6 +106,8 @@ export default function SetupMFA() {
         description: error.message || "Failed to initialize MFA",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -239,13 +255,23 @@ export default function SetupMFA() {
     toast({ title: "Copied!", description: "Secret key copied to clipboard" });
   };
 
-  if (enrolled) {
+  if (initializing || enrolled) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md p-8 text-center">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">MFA Enabled Successfully!</h1>
-          <p className="text-muted-foreground">Redirecting you back...</p>
+          {enrolled ? (
+            <>
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold mb-2">MFA Enabled Successfully!</h1>
+              <p className="text-muted-foreground">Redirecting you back...</p>
+            </>
+          ) : (
+            <>
+              <Shield className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
+              <h1 className="text-2xl font-bold mb-2">Checking MFA Status...</h1>
+              <p className="text-muted-foreground">Please wait</p>
+            </>
+          )}
         </Card>
       </div>
     );
