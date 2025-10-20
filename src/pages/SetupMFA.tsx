@@ -28,35 +28,41 @@ export default function SetupMFA() {
   const { toast } = useToast();
   const reason = searchParams.get("reason");
 
-  const isMandatory = reason === "mandatory";
+  const isMandatory = reason === "mandatory" || reason === "enroll-required";
   const isBypassExpired = reason === "bypass-expired";
 
-  // Redirect already enrolled users
+  // Auto-resolve if user already has a TOTP factor
   useEffect(() => {
-    if (mfaEnrolled) {
-      navigate("/", { replace: true });
-    }
-  }, [mfaEnrolled, navigate]);
-
-  useEffect(() => {
-    enrollMFA();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasTotp = !!(factors?.totp && factors.totp.length > 0);
+      
+      if (hasTotp) {
+        console.log("Factor exists, marking enrolled and redirecting");
+        await supabase
+          .from("profiles")
+          .update({ mfa_enrolled: true })
+          .eq("user_id", user.id);
+        
+        await supabase.auth.refreshSession();
+        await new Promise(r => setTimeout(r, 100));
+        navigate("/", { replace: true });
+      } else {
+        // Initialize enrollment
+        enrollMFA();
+      }
+    })();
   }, []);
 
   const enrollMFA = async () => {
     try {
-      // Check if a verified TOTP factor already exists
-      const { data: factorsData } = await supabase.auth.mfa.listFactors();
-      const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
-
-      if (verifiedFactor) {
-        // Already enrolled, shouldn't be here
-        console.log("MFA already enrolled - redirecting");
-        navigate("/", { replace: true });
-        return;
-      }
-
       // Check for any unverified factors and clean them up
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const unverifiedFactors = factorsData?.totp?.filter(f => f.status === 'unverified') || [];
+      
       for (const factor of unverifiedFactors) {
         try {
           await supabase.auth.mfa.unenroll({ factorId: factor.id });
@@ -101,18 +107,32 @@ export default function SetupMFA() {
 
       if (error) throw error;
 
-      // Generate backup codes
-      const codes = Array.from({ length: 10 }, () => generateBackupCode());
-      setBackupCodes(codes);
+      // Generate backup codes via edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mfa-backup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ action: 'generate' })
+      });
+
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setBackupCodes(result.codes);
       
       // Select 2 random indices for confirmation
       const indices = [
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10)
+        Math.floor(Math.random() * result.codes.length),
+        Math.floor(Math.random() * result.codes.length)
       ];
       // Ensure they're different
       while (indices[1] === indices[0]) {
-        indices[1] = Math.floor(Math.random() * 10);
+        indices[1] = Math.floor(Math.random() * result.codes.length);
       }
       setConfirmationIndices(indices.sort((a, b) => a - b));
 
@@ -163,12 +183,7 @@ export default function SetupMFA() {
         throw new Error("Backup codes don't match. Please check and try again.");
       }
 
-      // Hash all backup codes
-      const hashedCodes = await Promise.all(
-        backupCodes.map(code => hashBackupCode(code))
-      );
-
-      // Update profile with backup codes and mark MFA as enrolled
+      // Mark MFA as enrolled in profile
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not found");
 
@@ -176,8 +191,6 @@ export default function SetupMFA() {
         .from("profiles")
         .update({ 
           mfa_enrolled: true,
-          mfa_backup_codes: hashedCodes,
-          mfa_backup_codes_generated_at: new Date().toISOString(),
           mfa_temp_bypass_until: null // Clear any bypass
         })
         .eq("user_id", user.id);
@@ -193,7 +206,7 @@ export default function SetupMFA() {
           user_id: user.id,
           event_type: "mfa_backup_codes_generated",
           success: true,
-          metadata: { codes_count: 10 }
+          metadata: { codes_count: backupCodes.length }
         }
       ]);
 

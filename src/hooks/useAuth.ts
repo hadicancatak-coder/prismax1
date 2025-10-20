@@ -10,17 +10,21 @@ export const useAuth = () => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
-  const [requiresMfaEnrollment, setRequiresMfaEnrollment] = useState(false);
   const [mfaEnrolled, setMfaEnrolled] = useState(false);
+  const [mfaRequiredFlag, setMfaRequiredFlag] = useState(false);
   const [mfaTempBypassActive, setMfaTempBypassActive] = useState(false);
   const [securityLoaded, setSecurityLoaded] = useState(false);
+  const [factorsLoaded, setFactorsLoaded] = useState(false);
+  const [hasTotpFactor, setHasTotpFactor] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
   useEffect(() => {
     let mounted = true;
     
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (!mounted) return;
       
       setSession(session);
@@ -28,15 +32,23 @@ export const useAuth = () => {
       
       if (session?.user) {
         setRoleLoading(true);
-        fetchUserRole(session.user.id);
-        fetchSecurityStatus(session.user.id);
+        await Promise.all([
+          fetchUserRole(session.user.id),
+          fetchSecurityStatus(session.user.id),
+          fetchMfaFactors()
+        ]);
+      } else {
+        setSecurityLoaded(true);
+        setFactorsLoaded(true);
       }
       
       setLoading(false);
-    });
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!mounted) return;
         
         setSession(session);
@@ -44,14 +56,19 @@ export const useAuth = () => {
         
         if (session?.user) {
           setRoleLoading(true);
-          fetchUserRole(session.user.id);
-          fetchSecurityStatus(session.user.id);
+          await Promise.all([
+            fetchUserRole(session.user.id),
+            fetchSecurityStatus(session.user.id),
+            fetchMfaFactors()
+          ]);
         } else {
           setUserRole(null);
           setRoleLoading(false);
           setRequiresPasswordReset(false);
-          setRequiresMfaEnrollment(false);
           setMfaEnrolled(false);
+          setMfaRequiredFlag(false);
+          setSecurityLoaded(true);
+          setFactorsLoaded(true);
         }
       }
     );
@@ -96,7 +113,7 @@ export const useAuth = () => {
     if (profile) {
       setRequiresPasswordReset(!!profile.force_password_reset);
       setMfaEnrolled(!!profile.mfa_enrolled);
-      setRequiresMfaEnrollment(!!profile.mfa_enrollment_required && !profile.mfa_enrolled);
+      setMfaRequiredFlag(!!profile.mfa_enrollment_required);
       
       // Check if temporary bypass is active
       const bypassUntil = profile.mfa_temp_bypass_until;
@@ -105,17 +122,37 @@ export const useAuth = () => {
     } else {
       setRequiresPasswordReset(false);
       setMfaEnrolled(false);
-      setRequiresMfaEnrollment(false);
+      setMfaRequiredFlag(false);
       setMfaTempBypassActive(false);
     }
     
     setSecurityLoaded(true);
   };
 
+  const fetchMfaFactors = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setFactorsLoaded(true);
+        return;
+      }
+      
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      setHasTotpFactor(!!(factors?.totp && factors.totp.length > 0));
+    } catch (error) {
+      console.error("Error fetching MFA factors:", error);
+    } finally {
+      setFactorsLoaded(true);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  // Derive requiresMfaEnrollment from the three flags
+  const requiresMfaEnrollment = mfaRequiredFlag === true && !(mfaEnrolled === true || hasTotpFactor === true);
 
   return { 
     user, 
@@ -128,6 +165,8 @@ export const useAuth = () => {
     requiresMfaEnrollment,
     mfaEnrolled,
     mfaTempBypassActive,
-    securityLoaded
+    securityLoaded,
+    factorsLoaded,
+    hasTotpFactor
   };
 };
