@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, Copy, Check } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import QRCode from "qrcode";
 
 export default function MfaSetup() {
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,10 @@ export default function MfaSetup() {
 
       if (error) throw error;
 
-      setQrCode(data.qrCode);
+      // Generate QR code on the frontend
+      const qrCodeDataUrl = await QRCode.toDataURL(data.otpauth);
+
+      setQrCode(qrCodeDataUrl);
       setSecret(data.secret);
       setLoading(false);
     } catch (error: any) {

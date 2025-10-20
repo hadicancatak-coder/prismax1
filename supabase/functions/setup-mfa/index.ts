@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import * as OTPAuth from 'https://esm.sh/otpauth@9.2.2';
-import QRCode from 'https://esm.sh/qrcode@1.5.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,7 +94,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate QR code
+    // Generate TOTP URI
     const totp = new OTPAuth.TOTP({
       issuer: 'Prisma',
       label: profile?.email || user.email || '',
@@ -105,12 +104,6 @@ Deno.serve(async (req) => {
     });
 
     const otpauth = totp.toString();
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauth, {
-      type: 'image/png',
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      width: 256
-    });
 
     // Save secret temporarily (not enabled yet)
     await supabase
@@ -121,7 +114,6 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         secret: secret,
-        qrCode: qrCodeDataUrl,
         otpauth: otpauth
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
