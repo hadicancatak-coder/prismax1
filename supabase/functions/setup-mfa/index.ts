@@ -105,7 +105,12 @@ Deno.serve(async (req) => {
     });
 
     const otpauth = totp.toString();
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauth, {
+      type: 'image/png',
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 256
+    });
 
     // Save secret temporarily (not enabled yet)
     await supabase
