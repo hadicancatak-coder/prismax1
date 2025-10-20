@@ -20,6 +20,8 @@ import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
 import LaunchPad from "./pages/LaunchPad";
 import Team from "./pages/Team";
+import ResetPassword from "./pages/ResetPassword";
+import SetupMFA from "./pages/SetupMFA";
 
 
 const queryClient = new QueryClient({
@@ -40,6 +42,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ProtectedRoute><ResetPassword /></ProtectedRoute>} />
+          <Route path="/setup-mfa" element={<ProtectedRoute><SetupMFA /></ProtectedRoute>} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />

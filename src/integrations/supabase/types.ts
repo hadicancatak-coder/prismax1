@@ -492,6 +492,42 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blocker_assignees: {
         Row: {
           assigned_at: string
@@ -917,13 +953,45 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           email: string
+          force_password_reset: boolean | null
           id: string
+          last_mfa_prompt_at: string | null
+          mfa_enrolled: boolean | null
+          mfa_enrollment_required: boolean | null
           name: string
+          password_last_changed_at: string | null
           phone_number: string | null
           tagline: string | null
           teams: Database["public"]["Enums"]["team"][] | null
@@ -936,8 +1004,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          force_password_reset?: boolean | null
           id?: string
+          last_mfa_prompt_at?: string | null
+          mfa_enrolled?: boolean | null
+          mfa_enrollment_required?: boolean | null
           name: string
+          password_last_changed_at?: string | null
           phone_number?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
@@ -950,13 +1023,66 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          force_password_reset?: boolean | null
           id?: string
+          last_mfa_prompt_at?: string | null
+          mfa_enrolled?: boolean | null
+          mfa_enrollment_required?: boolean | null
           name?: string
+          password_last_changed_at?: string | null
           phone_number?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string
+          username?: string | null
+          working_days?: string | null
+        }
+        Relationships: []
+      }
+      profiles_backup_v5_upgrade: {
+        Row: {
+          avatar_url: string | null
+          backup_timestamp: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone_number: string | null
+          tagline: string | null
+          teams: Database["public"]["Enums"]["team"][] | null
+          title: string | null
+          user_id: string | null
+          username: string | null
+          working_days: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          backup_timestamp?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone_number?: string | null
+          tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
+          title?: string | null
+          user_id?: string | null
+          username?: string | null
+          working_days?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          backup_timestamp?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone_number?: string | null
+          tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
+          title?: string | null
+          user_id?: string | null
           username?: string | null
           working_days?: string | null
         }
@@ -1580,6 +1706,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles_backup_v5_upgrade: {
+        Row: {
+          backup_timestamp: string | null
+          created_at: string | null
+          id: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          backup_timestamp?: string | null
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          backup_timestamp?: string | null
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
         }
         Relationships: []
       }

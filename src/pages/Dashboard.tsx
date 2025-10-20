@@ -10,6 +10,7 @@ import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
 import { UpcomingCampaigns } from "@/components/dashboard/UpcomingCampaigns";
 import { getDashboardStats } from "@/lib/dashboardQueries";
 import { NewsTicker } from "@/components/NewsTicker";
+import { SecurityUpgradeBanner } from "@/components/SecurityUpgradeBanner";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -90,6 +91,8 @@ export default function Dashboard() {
       </div>
 
       <NewsTicker />
+
+      <SecurityUpgradeBanner />
 
       <StatsCards stats={stats} onStatClick={handleStatClick} />
 

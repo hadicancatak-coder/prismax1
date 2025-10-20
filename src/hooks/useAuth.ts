@@ -9,6 +9,9 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
+  const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
+  const [requiresMfaEnrollment, setRequiresMfaEnrollment] = useState(false);
+  const [mfaEnrolled, setMfaEnrolled] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
@@ -24,6 +27,7 @@ export const useAuth = () => {
       if (session?.user) {
         setRoleLoading(true);
         fetchUserRole(session.user.id);
+        fetchSecurityStatus(session.user.id);
       }
       
       setLoading(false);
@@ -39,9 +43,13 @@ export const useAuth = () => {
         if (session?.user) {
           setRoleLoading(true);
           fetchUserRole(session.user.id);
+          fetchSecurityStatus(session.user.id);
         } else {
           setUserRole(null);
           setRoleLoading(false);
+          setRequiresPasswordReset(false);
+          setRequiresMfaEnrollment(false);
+          setMfaEnrolled(false);
         }
       }
     );
@@ -76,10 +84,34 @@ export const useAuth = () => {
     setRoleLoading(false);
   };
 
+  const fetchSecurityStatus = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("force_password_reset, mfa_enrolled, mfa_enrollment_required")
+      .eq("user_id", userId)
+      .maybeSingle();
+    
+    if (profile) {
+      setRequiresPasswordReset(profile.force_password_reset);
+      setRequiresMfaEnrollment(profile.mfa_enrollment_required && !profile.mfa_enrolled);
+      setMfaEnrolled(profile.mfa_enrolled);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  return { user, session, loading, roleLoading, userRole, signOut };
+  return { 
+    user, 
+    session, 
+    loading, 
+    roleLoading, 
+    userRole, 
+    signOut,
+    requiresPasswordReset,
+    requiresMfaEnrollment,
+    mfaEnrolled
+  };
 };
