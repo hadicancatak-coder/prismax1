@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { authSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
+import { verifyBackupCode } from "@/lib/mfaHelpers";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [backupCode, setBackupCode] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -35,8 +38,110 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleBackupCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (backupCode.length !== 8) {
+        throw new Error("Backup code must be 8 digits");
+      }
+
+      // First sign in with email/password
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      if (!data.user) throw new Error("Login failed");
+
+      // Get user's backup codes
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("mfa_backup_codes")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const storedHashes = profile.mfa_backup_codes as string[];
+      if (!storedHashes || storedHashes.length === 0) {
+        throw new Error("No backup codes available. Please contact support.");
+      }
+
+      // Verify the backup code
+      const matchIndex = await verifyBackupCode(backupCode, storedHashes);
+      if (matchIndex === -1) {
+        throw new Error("Invalid backup code");
+      }
+
+      // Remove the used code
+      const remainingCodes = storedHashes.filter((_, i) => i !== matchIndex);
+
+      // Update profile
+      await supabase
+        .from("profiles")
+        .update({ 
+          mfa_backup_codes: remainingCodes,
+          // If this was the last code, force re-enrollment
+          mfa_enrollment_required: remainingCodes.length === 0
+        })
+        .eq("user_id", data.user.id);
+
+      // Log backup code usage
+      await supabase.from("mfa_backup_code_usage").insert({
+        user_id: data.user.id,
+        code_hash: storedHashes[matchIndex],
+        ip_address: null,
+        user_agent: navigator.userAgent
+      });
+
+      // Log auth event
+      await supabase.from("auth_events").insert({
+        user_id: data.user.id,
+        event_type: "backup_code_login",
+        success: true,
+        metadata: { 
+          remaining_codes: remainingCodes.length,
+          last_code_used: remainingCodes.length === 0
+        }
+      });
+
+      if (remainingCodes.length === 0) {
+        toast({
+          title: "Last Backup Code Used",
+          description: "You'll need to set up MFA again after login.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: `${remainingCodes.length} backup codes remaining.`,
+        });
+      }
+
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid credentials or backup code",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (useBackupCode) {
+      await handleBackupCodeLogin(e);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -104,7 +209,7 @@ export default function Auth() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Prisma</h1>
           <p className="text-muted-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isLogin ? (useBackupCode ? "Use backup code" : "Welcome back") : "Create your account"}
           </p>
         </div>
 
@@ -149,15 +254,48 @@ export default function Auth() {
             />
           </div>
 
+          {isLogin && useBackupCode && (
+            <div>
+              <Input
+                type="text"
+                placeholder="Backup code (8 digits)"
+                value={backupCode}
+                onChange={(e) => setBackupCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                maxLength={8}
+                className="text-center text-xl font-mono tracking-widest"
+                required
+              />
+            </div>
+          )}
+
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? "Log In" : "Sign Up"}
+            {loading ? "Please wait..." : isLogin ? (useBackupCode ? "Login with Backup Code" : "Log In") : "Sign Up"}
           </Button>
+
+          {isLogin && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setUseBackupCode(!useBackupCode);
+                setBackupCode("");
+              }}
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              {useBackupCode ? "Use password instead" : "Use backup code instead"}
+            </Button>
+          )}
         </form>
 
         <div className="mt-6 text-center">
           <button
             type="button"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setUseBackupCode(false);
+              setBackupCode("");
+            }}
             className="text-sm text-primary hover:underline"
           >
             {isLogin

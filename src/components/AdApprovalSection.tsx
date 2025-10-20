@@ -8,6 +8,8 @@ import { CheckCircle, XCircle, Clock, AlertCircle, MessageSquare } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { StepUpMFADialog } from "@/components/StepUpMFADialog";
+import { checkRecentMFAChallenge } from "@/lib/mfaHelpers";
 
 interface AdApprovalSectionProps {
   adId: string;
@@ -21,6 +23,8 @@ export function AdApprovalSection({ adId, currentStatus, onStatusChange }: AdApp
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [showStepUpMFA, setShowStepUpMFA] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComments();
@@ -53,6 +57,19 @@ export function AdApprovalSection({ adId, currentStatus, onStatusChange }: AdApp
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    // Check for recent MFA challenge
+    const recentChallenge = await checkRecentMFAChallenge('approval');
+    
+    if (!recentChallenge) {
+      setPendingStatus(newStatus);
+      setShowStepUpMFA(true);
+      return;
+    }
+
+    await actuallyChangeStatus(newStatus);
+  };
+
+  const actuallyChangeStatus = async (newStatus: string) => {
     try {
       const { error } = await supabase
         .from('ads')
@@ -66,6 +83,12 @@ export function AdApprovalSection({ adId, currentStatus, onStatusChange }: AdApp
     } catch (error: any) {
       toast({ title: "Error updating status", description: error.message, variant: "destructive" });
     }
+  };
+
+  const onMFAVerified = async () => {
+    if (!pendingStatus) return;
+    await actuallyChangeStatus(pendingStatus);
+    setPendingStatus(null);
   };
 
   const handleAddComment = async () => {
@@ -187,6 +210,13 @@ export function AdApprovalSection({ adId, currentStatus, onStatusChange }: AdApp
           </Button>
         </div>
       </div>
+
+      <StepUpMFADialog 
+        open={showStepUpMFA}
+        onOpenChange={setShowStepUpMFA}
+        onVerified={onMFAVerified}
+        actionContext="approval"
+      />
     </div>
   );
 }

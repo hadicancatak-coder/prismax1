@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { workingDaysSchema, userRoleSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
+import { StepUpMFADialog } from "@/components/StepUpMFADialog";
+import { checkRecentMFAChallenge } from "@/lib/mfaHelpers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +33,8 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   const [loading, setLoading] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [showStepUpMFA, setShowStepUpMFA] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{type: string, data: any} | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -73,6 +77,19 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   };
 
   const handleRoleChange = async (userId: string, newRole: "admin" | "member") => {
+    // Check for recent MFA challenge
+    const recentChallenge = await checkRecentMFAChallenge('role_change');
+    
+    if (!recentChallenge) {
+      setPendingAction({ type: 'role_change', data: { userId, newRole } });
+      setShowStepUpMFA(true);
+      return;
+    }
+
+    await actuallyChangeRole(userId, newRole);
+  };
+
+  const actuallyChangeRole = async (userId: string, newRole: "admin" | "member") => {
     try {
       // Validate role with zod
       userRoleSchema.parse(newRole);
@@ -130,6 +147,19 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
   const confirmRemoveMember = async () => {
     if (!memberToRemove) return;
 
+    // Check for recent MFA challenge
+    const recentChallenge = await checkRecentMFAChallenge('user_delete');
+    
+    if (!recentChallenge) {
+      setPendingAction({ type: 'user_delete', data: { userId: memberToRemove } });
+      setShowStepUpMFA(true);
+      return;
+    }
+
+    await actuallyRemoveMember(memberToRemove);
+  };
+
+  const actuallyRemoveMember = async (userId: string) => {
     try {
       // Get the current session for authorization
       const { data: { session } } = await supabase.auth.getSession();
@@ -140,7 +170,7 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
 
       // Call the secure Edge Function to delete user
       const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId: memberToRemove },
+        body: { userId },
       });
 
       if (error) throw error;
@@ -161,6 +191,18 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
         variant: "destructive",
       });
     }
+  };
+
+  const onMFAVerified = async () => {
+    if (!pendingAction) return;
+    
+    if (pendingAction.type === 'role_change') {
+      await actuallyChangeRole(pendingAction.data.userId, pendingAction.data.newRole);
+    } else if (pendingAction.type === 'user_delete') {
+      await actuallyRemoveMember(pendingAction.data.userId);
+    }
+    
+    setPendingAction(null);
   };
 
   return (
@@ -273,6 +315,13 @@ export function UserManagementDialog({ open, onOpenChange }: UserManagementDialo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <StepUpMFADialog 
+        open={showStepUpMFA}
+        onOpenChange={setShowStepUpMFA}
+        onVerified={onMFAVerified}
+        actionContext={pendingAction?.type || ''}
+      />
     </>
   );
 }

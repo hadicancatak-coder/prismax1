@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { StepUpMFADialog } from "@/components/StepUpMFADialog";
+import { checkRecentMFAChallenge } from "@/lib/mfaHelpers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +47,8 @@ export default function AdminPanel() {
   const [userManagementOpen, setUserManagementOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [showStepUpMFA, setShowStepUpMFA] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{type: string, data: any} | null>(null);
 
   useEffect(() => {
     // Wait for BOTH auth AND role to load
@@ -170,6 +174,16 @@ export default function AdminPanel() {
   };
 
   const handleApproval = async (taskId: string, approved: boolean) => {
+    const recentChallenge = await checkRecentMFAChallenge('approval');
+    if (!recentChallenge) {
+      setPendingAction({ type: 'approval', data: { taskId, approved } });
+      setShowStepUpMFA(true);
+      return;
+    }
+    await actuallyApprove(taskId, approved);
+  };
+
+  const actuallyApprove = async (taskId: string, approved: boolean) => {
     const task = pendingTasks.find(t => t.id === taskId);
     if (!task || !task.pending_changes) return;
     
@@ -252,6 +266,14 @@ export default function AdminPanel() {
     }
     
     await fetchData();
+  };
+
+  const onMFAVerified = async () => {
+    if (!pendingAction) return;
+    if (pendingAction.type === 'approval') {
+      await actuallyApprove(pendingAction.data.taskId, pendingAction.data.approved);
+    }
+    setPendingAction(null);
   };
 
   const handleRoleChange = async (userId: string, newRole: "admin" | "member") => {

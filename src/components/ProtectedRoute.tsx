@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, requiresPasswordReset, requiresMfaEnrollment, userRole } = useAuth();
+  const { user, loading, requiresPasswordReset, requiresMfaEnrollment, userRole, mfaTempBypassActive } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,11 +28,19 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Force MFA enrollment for admins (block admin routes only)
-    const adminRoutes = ['/admin-panel', '/team'];
-    if (requiresMfaEnrollment && adminRoutes.some(route => location.pathname.startsWith(route))) {
-      navigate("/setup-mfa?reason=admin-required");
+    // Force MFA enrollment for ALL users (universal enforcement)
+    if (requiresMfaEnrollment) {
+      navigate("/setup-mfa?reason=mandatory");
       return;
+    }
+
+    // Check for temporary bypass - restrict to security routes only
+    if (mfaTempBypassActive) {
+      const allowedPathsDuringBypass = ['/profile', '/setup-mfa'];
+      if (!allowedPathsDuringBypass.some(path => location.pathname.startsWith(path))) {
+        navigate("/setup-mfa?reason=bypass-expired");
+        return;
+      }
     }
   }, [user, loading, requiresPasswordReset, requiresMfaEnrollment, userRole, location, navigate]);
 

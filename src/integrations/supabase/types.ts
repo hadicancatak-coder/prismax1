@@ -905,6 +905,60 @@ export type Database = {
           },
         ]
       }
+      mfa_backup_code_usage: {
+        Row: {
+          code_hash: string
+          id: string
+          ip_address: string | null
+          used_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          id?: string
+          ip_address?: string | null
+          used_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          id?: string
+          ip_address?: string | null
+          used_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_challenges: {
+        Row: {
+          action_context: string | null
+          challenge_type: string
+          expires_at: string
+          id: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          action_context?: string | null
+          challenge_type: string
+          expires_at?: string
+          id?: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          action_context?: string | null
+          challenge_type?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       notification_rate_limit: {
         Row: {
           created_at: string
@@ -988,8 +1042,11 @@ export type Database = {
           force_password_reset: boolean | null
           id: string
           last_mfa_prompt_at: string | null
+          mfa_backup_codes: Json | null
+          mfa_backup_codes_generated_at: string | null
           mfa_enrolled: boolean | null
           mfa_enrollment_required: boolean | null
+          mfa_temp_bypass_until: string | null
           name: string
           password_last_changed_at: string | null
           phone_number: string | null
@@ -1007,8 +1064,11 @@ export type Database = {
           force_password_reset?: boolean | null
           id?: string
           last_mfa_prompt_at?: string | null
+          mfa_backup_codes?: Json | null
+          mfa_backup_codes_generated_at?: string | null
           mfa_enrolled?: boolean | null
           mfa_enrollment_required?: boolean | null
+          mfa_temp_bypass_until?: string | null
           name: string
           password_last_changed_at?: string | null
           phone_number?: string | null
@@ -1026,8 +1086,11 @@ export type Database = {
           force_password_reset?: boolean | null
           id?: string
           last_mfa_prompt_at?: string | null
+          mfa_backup_codes?: Json | null
+          mfa_backup_codes_generated_at?: string | null
           mfa_enrolled?: boolean | null
           mfa_enrollment_required?: boolean | null
+          mfa_temp_bypass_until?: string | null
           name?: string
           password_last_changed_at?: string | null
           phone_number?: string | null

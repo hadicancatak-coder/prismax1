@@ -12,6 +12,7 @@ export const useAuth = () => {
   const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
   const [requiresMfaEnrollment, setRequiresMfaEnrollment] = useState(false);
   const [mfaEnrolled, setMfaEnrolled] = useState(false);
+  const [mfaTempBypassActive, setMfaTempBypassActive] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
@@ -87,7 +88,7 @@ export const useAuth = () => {
   const fetchSecurityStatus = async (userId: string) => {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("force_password_reset, mfa_enrolled, mfa_enrollment_required")
+      .select("force_password_reset, mfa_enrolled, mfa_enrollment_required, mfa_temp_bypass_until")
       .eq("user_id", userId)
       .maybeSingle();
     
@@ -95,6 +96,11 @@ export const useAuth = () => {
       setRequiresPasswordReset(profile.force_password_reset);
       setRequiresMfaEnrollment(profile.mfa_enrollment_required && !profile.mfa_enrolled);
       setMfaEnrolled(profile.mfa_enrolled);
+      
+      // Check if temporary bypass is active
+      const bypassUntil = profile.mfa_temp_bypass_until;
+      const bypassActive = bypassUntil && new Date(bypassUntil) > new Date();
+      setMfaTempBypassActive(bypassActive || false);
     }
   };
 
@@ -112,6 +118,7 @@ export const useAuth = () => {
     signOut,
     requiresPasswordReset,
     requiresMfaEnrollment,
-    mfaEnrolled
+    mfaEnrolled,
+    mfaTempBypassActive
   };
 };
