@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, securityLoaded, factorsLoaded, requiresPasswordReset, requiresMfaEnrollment } = useAuth();
+  const { user, loading, securityLoaded, factorsLoaded } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,7 +16,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       navigate("/auth", { replace: true, state: { from: location.pathname } });
       return;
     }
-  }, [user, loading, securityLoaded, factorsLoaded, requiresPasswordReset, location.pathname, navigate]);
+  }, [user, loading, securityLoaded, factorsLoaded, location.pathname, navigate]);
 
   if (loading || !securityLoaded || !factorsLoaded) {
     return (
