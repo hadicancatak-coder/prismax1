@@ -34,14 +34,14 @@ Deno.serve(async (req) => {
       verifyOtp = undefined;
     }
 
-    // Get or create secret
-    let { data: profile } = await supabase
-      .from('profiles')
-      .select('mfa_secret, email, name')
+    // Get or create secret from secure table
+    let { data: mfaSecrets } = await supabase
+      .from('user_mfa_secrets')
+      .select('mfa_secret')
       .eq('user_id', user.id)
       .single();
 
-    let secret = profile?.mfa_secret;
+    let secret = mfaSecrets?.mfa_secret;
     
     if (!secret) {
       // Generate new secret (base32, 20 bytes = 160 bits)
@@ -72,14 +72,26 @@ Deno.serve(async (req) => {
         backupCodes.push(code);
       }
 
-      // Save to database - store as text array for Postgres
+      // Save to secure MFA table
+      const { error: mfaError } = await supabase
+        .from('user_mfa_secrets')
+        .upsert({
+          user_id: user.id,
+          mfa_secret: secret,
+          mfa_backup_codes: backupCodes,
+          mfa_enrolled_at: new Date().toISOString()
+        });
+
+      if (mfaError) {
+        console.error('Error saving MFA secrets:', mfaError);
+        throw new Error('Failed to save MFA secrets');
+      }
+
+      // Update profiles table to mark MFA as enabled
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          mfa_secret: secret,
-          mfa_enabled: true,
-          mfa_backup_codes: backupCodes,
-          mfa_enrolled_at: new Date().toISOString()
+          mfa_enabled: true
         })
         .eq('user_id', user.id);
 
@@ -99,6 +111,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get user email for QR code
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('user_id', user.id)
+      .single();
+
     // Generate TOTP URI
     const totp = new OTPAuth.TOTP({
       issuer: 'Prisma',
@@ -112,9 +131,11 @@ Deno.serve(async (req) => {
 
     // Save secret temporarily (not enabled yet)
     await supabase
-      .from('profiles')
-      .update({ mfa_secret: secret })
-      .eq('user_id', user.id);
+      .from('user_mfa_secrets')
+      .upsert({
+        user_id: user.id,
+        mfa_secret: secret
+      });
 
     return new Response(
       JSON.stringify({

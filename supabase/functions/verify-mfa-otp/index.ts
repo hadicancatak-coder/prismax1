@@ -45,14 +45,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get user's MFA data
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Get user's MFA data from secure table
+    const { data: mfaSecrets } = await supabase
+      .from('user_mfa_secrets')
       .select('mfa_secret, mfa_backup_codes')
       .eq('user_id', user.id)
       .single();
 
-    if (!profile?.mfa_secret) {
+    if (!mfaSecrets?.mfa_secret) {
       throw new Error('MFA not set up for this user');
     }
 
@@ -60,21 +60,21 @@ Deno.serve(async (req) => {
 
     if (isBackupCode) {
       // Check backup code
-      const backupCodes = profile.mfa_backup_codes || [];
+      const backupCodes = mfaSecrets.mfa_backup_codes || [];
       isValid = backupCodes.includes(otpCode);
 
       if (isValid) {
         // Remove used backup code
         const updatedCodes = backupCodes.filter((code: string) => code !== otpCode);
         await supabase
-          .from('profiles')
+          .from('user_mfa_secrets')
           .update({ mfa_backup_codes: updatedCodes })
           .eq('user_id', user.id);
       }
     } else {
       // Verify TOTP code
       const totp = new OTPAuth.TOTP({
-        secret: OTPAuth.Secret.fromBase32(profile.mfa_secret),
+        secret: OTPAuth.Secret.fromBase32(mfaSecrets.mfa_secret),
         digits: 6,
         period: 30,
       });

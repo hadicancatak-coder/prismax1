@@ -46,20 +46,31 @@ export default function Security() {
   const fetchSecurityInfo = async () => {
     if (!user) return;
 
-    const { data } = await supabase
+    // Get MFA enabled status from profiles
+    const { data: profile } = await supabase
       .from("profiles")
-      .select("mfa_enabled, mfa_enrolled_at, mfa_backup_codes")
+      .select("mfa_enabled")
       .eq("user_id", user.id)
       .single();
 
-    if (data) {
-      setMfaEnabled(data.mfa_enabled || false);
-      setMfaEnrolledAt(data.mfa_enrolled_at);
-      // Handle both array and non-array formats, ensure strings
-      const codes = Array.isArray(data.mfa_backup_codes) 
-        ? data.mfa_backup_codes.filter((code): code is string => typeof code === 'string')
-        : [];
-      setBackupCodes(codes);
+    if (profile) {
+      setMfaEnabled(profile.mfa_enabled || false);
+    }
+
+    // Get MFA secrets and backup codes from secure table
+    const { data: mfaSecrets } = await supabase
+      .from("user_mfa_secrets")
+      .select("mfa_enrolled_at, mfa_backup_codes")
+      .eq("user_id", user.id)
+      .single();
+
+    if (mfaSecrets) {
+      setMfaEnrolledAt(mfaSecrets.mfa_enrolled_at);
+      
+      const codes = mfaSecrets.mfa_backup_codes;
+      if (codes && Array.isArray(codes)) {
+        setBackupCodes(codes.filter((c): c is string => typeof c === 'string'));
+      }
     }
   };
 

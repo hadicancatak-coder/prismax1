@@ -1091,13 +1091,10 @@ export type Database = {
           id: string
           last_mfa_prompt_at: string | null
           last_password_change: string | null
-          mfa_backup_codes: Json | null
           mfa_backup_codes_generated_at: string | null
           mfa_enabled: boolean | null
           mfa_enrolled: boolean | null
-          mfa_enrolled_at: string | null
           mfa_enrollment_required: boolean | null
-          mfa_secret: string | null
           mfa_temp_bypass_until: string | null
           name: string
           password_last_changed_at: string | null
@@ -1117,13 +1114,10 @@ export type Database = {
           id?: string
           last_mfa_prompt_at?: string | null
           last_password_change?: string | null
-          mfa_backup_codes?: Json | null
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled?: boolean | null
-          mfa_enrolled_at?: string | null
           mfa_enrollment_required?: boolean | null
-          mfa_secret?: string | null
           mfa_temp_bypass_until?: string | null
           name: string
           password_last_changed_at?: string | null
@@ -1143,13 +1137,10 @@ export type Database = {
           id?: string
           last_mfa_prompt_at?: string | null
           last_password_change?: string | null
-          mfa_backup_codes?: Json | null
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled?: boolean | null
-          mfa_enrolled_at?: string | null
           mfa_enrollment_required?: boolean | null
-          mfa_secret?: string | null
           mfa_temp_bypass_until?: string | null
           name?: string
           password_last_changed_at?: string | null
@@ -1158,54 +1149,6 @@ export type Database = {
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string
-          username?: string | null
-          working_days?: string | null
-        }
-        Relationships: []
-      }
-      profiles_backup_v5_upgrade: {
-        Row: {
-          avatar_url: string | null
-          backup_timestamp: string | null
-          created_at: string | null
-          email: string | null
-          id: string | null
-          name: string | null
-          phone_number: string | null
-          tagline: string | null
-          teams: Database["public"]["Enums"]["team"][] | null
-          title: string | null
-          user_id: string | null
-          username: string | null
-          working_days: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          backup_timestamp?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          name?: string | null
-          phone_number?: string | null
-          tagline?: string | null
-          teams?: Database["public"]["Enums"]["team"][] | null
-          title?: string | null
-          user_id?: string | null
-          username?: string | null
-          working_days?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          backup_timestamp?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          name?: string | null
-          phone_number?: string | null
-          tagline?: string | null
-          teams?: Database["public"]["Enums"]["team"][] | null
-          title?: string | null
-          user_id?: string | null
           username?: string | null
           working_days?: string | null
         }
@@ -1811,6 +1754,33 @@ export type Database = {
           },
         ]
       }
+      user_mfa_secrets: {
+        Row: {
+          created_at: string | null
+          mfa_backup_codes: string[] | null
+          mfa_enrolled_at: string | null
+          mfa_secret: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          mfa_backup_codes?: string[] | null
+          mfa_enrolled_at?: string | null
+          mfa_secret?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          mfa_backup_codes?: string[] | null
+          mfa_enrolled_at?: string | null
+          mfa_secret?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1829,30 +1799,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      user_roles_backup_v5_upgrade: {
-        Row: {
-          backup_timestamp: string | null
-          created_at: string | null
-          id: string | null
-          role: Database["public"]["Enums"]["app_role"] | null
-          user_id: string | null
-        }
-        Insert: {
-          backup_timestamp?: string | null
-          created_at?: string | null
-          id?: string | null
-          role?: Database["public"]["Enums"]["app_role"] | null
-          user_id?: string | null
-        }
-        Update: {
-          backup_timestamp?: string | null
-          created_at?: string | null
-          id?: string | null
-          role?: Database["public"]["Enums"]["app_role"] | null
-          user_id?: string | null
         }
         Relationships: []
       }
