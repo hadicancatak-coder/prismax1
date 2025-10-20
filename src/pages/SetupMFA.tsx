@@ -35,27 +35,37 @@ export default function SetupMFA() {
 
   const enrollMFA = async () => {
     try {
-      // Check if a TOTP factor already exists
+      // Check if a verified TOTP factor already exists
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
-      const existingFactor = factorsData?.totp?.[0];
+      const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
 
-      if (existingFactor) {
-        console.log("Existing TOTP factor found, attempting to unenroll...");
-        
-        // Try to unenroll the existing factor
+      if (verifiedFactor) {
+        // User already has MFA enrolled - redirect them
+        console.log("MFA already enrolled");
+        toast({
+          title: "MFA Already Enabled",
+          description: "Your account is already secured with two-factor authentication.",
+        });
+        setEnrolled(true);
+        setTimeout(() => navigate("/"), 1500);
+        return;
+      }
+
+      // Check for any unverified factors and clean them up
+      const unverifiedFactors = factorsData?.totp?.filter(f => f.status === 'unverified') || [];
+      for (const factor of unverifiedFactors) {
         try {
-          await supabase.auth.mfa.unenroll({ factorId: existingFactor.id });
-          console.log("Unenrolled successfully");
-        } catch (unenrollError: any) {
-          console.error("Unenroll failed, will create new factor:", unenrollError);
-          // If unenroll fails, we'll just try to create a new one anyway
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
+          console.log("Cleaned up unverified factor:", factor.id);
+        } catch (err) {
+          console.warn("Failed to clean up unverified factor:", err);
         }
       }
 
-      // Create fresh enrollment with unique name to avoid conflicts
+      // Create fresh enrollment
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: `Authenticator-${Date.now()}`
+        friendlyName: 'Authenticator'
       });
 
       if (error) throw error;
