@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface TasksTableProps {
   tasks: any[];
@@ -103,7 +105,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
+      <Card className="border-0 shadow-md overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -119,15 +121,13 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
             {tasks.map((task) => (
               <TableRow
                 key={task.id}
-                className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                  task.pending_approval ? 'border-l-4 border-l-blue-500' : ''
-                } ${
-                  isOverdue(task.due_at, task.status) ? 'border-l-4 border-l-red-500' : ''
-                } ${
-                  isDueToday(task.due_at) ? 'border-l-4 border-l-yellow-500' : ''
-                } ${
-                  isDueTomorrow(task.due_at) ? 'border-l-4 border-l-orange-500' : ''
-                }`}
+                className={cn(
+                  "cursor-pointer hover:bg-muted/50 transition-colors",
+                  task.pending_approval && 'border-l-4 border-l-blue-500',
+                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-red-500',
+                  isDueToday(task.due_at) && 'border-l-4 border-l-yellow-500',
+                  isDueTomorrow(task.due_at) && 'border-l-4 border-l-orange-500'
+                )}
                 onClick={() => handleRowClick(task.id)}
               >
                 <TableCell
@@ -260,7 +260,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
             No tasks found
           </div>
         )}
-      </div>
+      </Card>
 
       {selectedTaskId && (
         <TaskDialog

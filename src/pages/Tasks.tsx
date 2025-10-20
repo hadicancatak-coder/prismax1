@@ -1,89 +1,81 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { TasksTable } from "@/components/TasksTable";
-import { CreateTaskDialog } from "@/components/CreateTaskDialog";
-import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
-import { DateFilter, TaskDateFilterBar } from "@/components/TaskDateFilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, Filter, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
+import { TasksTable } from "@/components/TasksTable";
+import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
-import { Plus, FileText, Search, AlertCircle, Clock, Shield, TrendingUp } from "lucide-react";
-import { startOfToday, endOfToday, startOfTomorrow, endOfTomorrow, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, addMonths, isWithinInterval, addDays } from "date-fns";
-import { realtimeService } from "@/lib/realtimeService";
+import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
+import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
+import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
+import { TaskGridView } from "@/components/tasks/TaskGridView";
+import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { measureQueryTime } from "@/lib/monitoring";
+import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
-  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
+  const [dateFilter, setDateFilter] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'board'>('table');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  // Debounce search query to reduce API calls (80% fewer queries)
-  const debouncedSearch = useDebouncedValue(searchQuery, 500);
-
-  // Optimized query with React Query caching and joins + materialized view
   const fetchTasks = async () => {
-    return measureQueryTime('fetch-tasks', async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select(`
-          *,
-          task_assignees(
-            profiles:user_id(id, user_id, name, avatar_url, teams)
-          )
-        `)
-        .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        task_assignees(
+          profiles:user_id(id, user_id, name, avatar_url, teams)
+        ),
+        task_comment_counts(comment_count)
+      `)
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      // Fetch all comment counts in a single query using materialized view
-      const taskIds = data?.map(t => t.id) || [];
-      const { data: commentCounts } = await supabase
-        .from('task_comment_counts')
-        .select('task_id, comment_count')
-        .in('task_id', taskIds);
-      
-      const commentCountMap = new Map(
-        commentCounts?.map(cc => [cc.task_id, cc.comment_count]) || []
-      );
-
-      // Transform to match expected structure (70% faster - no N+1 queries!)
-      const tasksWithAssignees = (data || []).map((task) => ({ 
-        ...task, 
+    return (data || []).map((task: any) => {
+      return {
+        ...task,
         assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
-        comments_count: commentCountMap.get(task.id) || 0 
-      }));
-      
-      return tasksWithAssignees;
+        comments_count: task.task_comment_counts?.[0]?.comment_count || 0
+      };
     });
   };
 
-  // React Query for caching - reduces database reads by ~70%
-  const { data: tasks = [], isLoading, refetch } = useQuery({
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setTaskDialogOpen(true);
+  };
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Quick filter definitions
   const quickFilters = [
-    { 
-      label: "Overdue", 
-      icon: AlertCircle,
+    {
+      label: "Overdue",
+      Icon: AlertCircle,
       filter: (task: any) => task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed'
     },
-    { 
-      label: "Due Soon", 
-      icon: Clock,
+    {
+      label: "Due Soon",
+      Icon: Clock,
       filter: (task: any) => {
         if (!task.due_at) return false;
         const dueDate = new Date(task.due_at);
@@ -91,36 +83,19 @@ export default function Tasks() {
         return dueDate <= threeDaysFromNow && dueDate >= new Date() && task.status !== 'Completed';
       }
     },
-    { 
-      label: "Blocked", 
-      icon: Shield,
+    {
+      label: "Blocked",
+      Icon: Shield,
       filter: (task: any) => task.status === 'Blocked'
     },
-    { 
-      label: "High Priority", 
-      icon: TrendingUp,
+    {
+      label: "High Priority",
+      Icon: TrendingUp,
       filter: (task: any) => task.priority === 'High' && task.status !== 'Completed'
     }
   ];
 
-  // Centralized realtime - reduces from 20+ channels to ~5
-  useEffect(() => {
-    const unsubscribeTasks = realtimeService.subscribe('tasks', () => {
-      refetch();
-    });
-
-    const unsubscribeAssignees = realtimeService.subscribe('task_assignees', () => {
-      refetch();
-    });
-
-    return () => {
-      unsubscribeTasks();
-      unsubscribeAssignees();
-    };
-  }, [refetch]);
-
-  let filteredTasks = tasks.filter(task => {
-    // Check if any of the task's assignees match the selected assignees
+  let filteredTasks = (data || []).filter((task: any) => {
     const assigneeMatch = selectedAssignees.length === 0 || 
       task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
     
@@ -131,35 +106,23 @@ export default function Tasks() {
     
     let dateMatch = true;
     if (dateFilter) {
-      if (dateFilter.label === "Backlog") {
-        dateMatch = !task.due_at;
-      } else if (task.due_at) {
-        const dueDate = new Date(task.due_at);
-        dateMatch = isWithinInterval(dueDate, { 
-          start: dateFilter.startDate, 
-          end: dateFilter.endDate 
-        });
+      if (!task.due_at) {
+        dateMatch = dateFilter.label === "Backlog";
       } else {
-        dateMatch = false;
+        const dueDate = new Date(task.due_at);
+        dateMatch = dueDate >= dateFilter.startDate && dueDate <= dateFilter.endDate;
       }
     }
     
     const statusMatch = statusFilter === "all" || task.status === statusFilter;
     
-    // Full-text search with debounced value
     const searchMatch = debouncedSearch === "" || 
       task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
-      (task.entity && (
-        Array.isArray(task.entity) 
-          ? task.entity.some((e: string) => e.toLowerCase().includes(debouncedSearch.toLowerCase()))
-          : String(task.entity).toLowerCase().includes(debouncedSearch.toLowerCase())
-      ));
+      (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
     return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
   });
 
-  // Apply quick filter if active
   if (activeQuickFilter) {
     const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
     if (quickFilterDef) {
@@ -167,48 +130,37 @@ export default function Tasks() {
     }
   }
 
-  const handleCreateFromTemplate = (template: any) => {
-    // Pre-fill the create dialog with template data
-    setDialogOpen(true);
-    toast({
-      title: "Template loaded",
-      description: `Creating task from "${template.name}" template`,
-    });
-  };
+  const tasks = data || [];
+  
+  // Calculate statistics
+  const totalTasks = tasks.length;
+  const overdueCount = tasks.filter((task: any) => {
+    if (!task.due_at || task.status === 'Completed') return false;
+    return new Date(task.due_at) < new Date();
+  }).length;
+  const ongoingCount = tasks.filter((task: any) => task.status === 'Ongoing').length;
+  const completedCount = tasks.filter((task: any) => task.status === 'Completed').length;
+  const completionPercentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
-  const taskCounts = {
-    all: tasks.length,
-    today: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), { 
-      start: startOfToday(), end: endOfToday() 
-    })).length,
-    tomorrow: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), { 
-      start: startOfTomorrow(), end: endOfTomorrow() 
-    })).length,
-    thisWeek: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), {
-      start: startOfWeek(new Date()), end: endOfWeek(new Date())
-    })).length,
-    nextWeek: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), {
-      start: startOfWeek(addWeeks(new Date(), 1)), 
-      end: endOfWeek(addWeeks(new Date(), 1))
-    })).length,
-    thisMonth: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), {
-      start: startOfMonth(new Date()), end: endOfMonth(new Date())
-    })).length,
-    nextMonth: tasks.filter(t => t.due_at && isWithinInterval(new Date(t.due_at), {
-      start: startOfMonth(addMonths(new Date(), 1)), 
-      end: endOfMonth(addMonths(new Date(), 1))
-    })).length,
-    backlog: tasks.filter(t => !t.due_at).length
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Tasks</h1>
-        <div className="flex gap-3">
+        <div>
+          <h1 className="text-3xl font-bold">Tasks</h1>
+          <p className="text-muted-foreground">Manage and track your team's tasks</p>
+        </div>
+        <div className="flex gap-2">
           <Button onClick={() => setTemplateDialogOpen(true)} variant="outline">
-            <FileText className="mr-2 h-4 w-4" />
-            Templates
+            <ListTodo className="mr-2 h-4 w-4" />
+            Use Template
           </Button>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -216,96 +168,175 @@ export default function Tasks() {
           </Button>
         </div>
       </div>
+      
+      {/* Statistics Dashboard */}
+      <TaskStatsCards
+        totalTasks={totalTasks}
+        overdueCount={overdueCount}
+        ongoingCount={ongoingCount}
+        completedCount={completedCount}
+      />
+      
+      {/* Progress Indicator */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Overall Progress</span>
+          <span className="text-sm font-bold">{completionPercentage}%</span>
+        </div>
+        <Progress value={completionPercentage} className="h-2" />
+        <p className="text-xs text-muted-foreground mt-2">
+          {completedCount} of {totalTasks} tasks completed
+        </p>
+      </Card>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Search and View Switcher */}
+      <div className="flex gap-2 items-center justify-between">
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 max-w-md"
+          className="max-w-sm"
         />
-      </div>
-
-      {/* Quick Filters */}
-      <div className="flex gap-2 flex-wrap">
-        {quickFilters.map(({ label, icon: Icon }) => {
-          const count = tasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
-          return (
-            <Button
-              key={label}
-              variant={activeQuickFilter === label ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
-              className="gap-2"
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-              {count > 0 && (
-                <span className={cn(
-                  "ml-1 px-1.5 py-0.5 text-xs rounded-full",
-                  activeQuickFilter === label 
-                    ? "bg-primary-foreground text-primary" 
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {count}
-                </span>
-              )}
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Consolidated Filters */}
-      <div className="space-y-6">
-        <AssigneeFilterBar
-          selectedAssignees={selectedAssignees}
-          selectedTeams={selectedTeams}
-          onAssigneesChange={setSelectedAssignees}
-          onTeamsChange={setSelectedTeams}
-        />
-        
-        <TaskDateFilterBar 
-          onFilterChange={setDateFilter}
-          onStatusChange={setStatusFilter}
-          taskCounts={taskCounts}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="text-center py-12">Loading tasks...</div>
-      ) : tasks.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg mb-4">No tasks found</p>
-          <p className="text-sm text-muted-foreground">Click "New Task" to create your first task</p>
-        </div>
-      ) : filteredTasks.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg mb-4">No tasks match your filters</p>
-          <Button variant="outline" onClick={() => {
-            setSelectedAssignees([]);
-            setSelectedTeams([]);
-            setDateFilter(null);
-            setStatusFilter("all");
-          }}>
-            Clear All Filters
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'table' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('table')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'board' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('board')}
+          >
+            <Columns3 className="h-4 w-4" />
           </Button>
         </div>
+      </div>
+
+      {/* Filters with Accordion */}
+      <Card className="p-4">
+        <Accordion type="multiple" defaultValue={["quick", "assignee", "date"]}>
+          <AccordionItem value="quick" className="border-0">
+            <AccordionTrigger className="font-semibold hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Quick Filters
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="flex gap-2 flex-wrap pt-2">
+                {quickFilters.map(({ label, Icon }) => {
+                  const count = filteredTasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
+                  return (
+                    <Button
+                      key={label}
+                      variant={activeQuickFilter === label ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
+                      className={cn(
+                        "gap-2",
+                        activeQuickFilter === label && "ring-2 ring-offset-2 ring-primary"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                      <span className="ml-1 text-xs font-bold">({count})</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="assignee" className="border-0">
+            <AccordionTrigger className="font-semibold hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Assignees & Teams
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-2">
+                <AssigneeFilterBar
+                  selectedAssignees={selectedAssignees}
+                  onAssigneesChange={setSelectedAssignees}
+                  selectedTeams={selectedTeams}
+                  onTeamsChange={setSelectedTeams}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="date" className="border-0">
+            <AccordionTrigger className="font-semibold hover:no-underline">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Date & Status
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-2">
+                <TaskDateFilterBar
+                  onFilterChange={setDateFilter}
+                  onStatusChange={setStatusFilter}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </Card>
+
+      {/* Task Views */}
+      {filteredTasks.length === 0 ? (
+        <Card className="p-12 text-center">
+          <div className="flex flex-col items-center">
+            <div className="bg-primary/10 p-6 rounded-full mb-4">
+              <CheckCircle2 className="h-16 w-16 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">All Clear! 🎉</h2>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              {tasks.length === 0 
+                ? "You don't have any tasks yet. Create your first task to get started on achieving your goals."
+                : "No tasks found matching your filters. Try adjusting your search criteria."}
+            </p>
+            {tasks.length === 0 && (
+              <Button size="lg" onClick={() => setDialogOpen(true)}>
+                <Plus className="mr-2 h-5 w-5" />
+                Create Your First Task
+              </Button>
+            )}
+          </div>
+        </Card>
       ) : (
-        <TasksTable tasks={filteredTasks} onTaskUpdate={() => refetch()} />
+        <>
+          {viewMode === 'table' && <TasksTable tasks={filteredTasks} onTaskUpdate={refetch} />}
+          {viewMode === 'grid' && <TaskGridView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
+          {viewMode === 'board' && <TaskBoardView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
+        </>
       )}
 
-      <CreateTaskDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-
-      <TaskTemplateDialog
-        open={templateDialogOpen}
+      <CreateTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TaskTemplateDialog 
+        open={templateDialogOpen} 
         onOpenChange={setTemplateDialogOpen}
-        onCreateFromTemplate={handleCreateFromTemplate}
+        onCreateFromTemplate={() => {}}
       />
+      {selectedTaskId && (
+        <TaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          taskId={selectedTaskId}
+        />
+      )}
     </div>
   );
 }
