@@ -247,7 +247,7 @@ export default function SetupMFA() {
             <div>
               <p className="text-sm font-medium mb-4">Step 1: Scan QR code with your authenticator app</p>
               <div className="flex justify-center p-4 bg-white rounded-lg">
-                {qrCode && <QRCodeSVG value={qrCode} size={200} />}
+                {qrCode && <div dangerouslySetInnerHTML={{ __html: qrCode }} />}
               </div>
             </div>
 
