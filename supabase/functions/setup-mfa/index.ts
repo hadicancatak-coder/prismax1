@@ -25,7 +25,15 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { verifyOtp } = await req.json();
+    // Parse request body if present
+    let verifyOtp;
+    try {
+      const body = await req.json();
+      verifyOtp = body.verifyOtp;
+    } catch {
+      // No body provided - this is the initial QR code request
+      verifyOtp = undefined;
+    }
 
     // Get or create secret
     let { data: profile } = await supabase
