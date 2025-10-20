@@ -3,156 +3,68 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, CheckCircle, Copy, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ShieldCheck, Download, Copy, ArrowLeft } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { generateBackupCode, hashBackupCode } from "@/lib/mfaHelpers";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function SetupMFA() {
-  const { mfaEnrolled } = useAuth();
-  const [qrCode, setQrCode] = useState<string>("");
-  const [secret, setSecret] = useState<string>("");
-  const [factorId, setFactorId] = useState<string>("");
-  const [verifyCode, setVerifyCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [enrolled, setEnrolled] = useState(false);
-  const [initializing, setInitializing] = useState(true);
-  const [step, setStep] = useState<'totp' | 'backup-codes' | 'confirm-codes'>('totp');
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [confirmationIndices, setConfirmationIndices] = useState<number[]>([]);
-  const [confirmationInputs, setConfirmationInputs] = useState<string[]>(['', '']);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  
+  const [qrCode, setQrCode] = useState("");
+  const [secret, setSecret] = useState("");
+  const [factorId, setFactorId] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"setup" | "backup-codes" | "complete">("setup");
+  const [error, setError] = useState<string | null>(null);
+
   const reason = searchParams.get("reason");
+  const isOptional = reason === "optional";
 
-  const isMandatory = reason === "mandatory" || reason === "enroll-required";
-  const isBypassExpired = reason === "bypass-expired";
-
-  // Auto-resolve if user already has a TOTP factor
+  // Start enrollment when component mounts
   useEffect(() => {
-    let mounted = true;
-    
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) {
-          setInitializing(false);
-          return;
-        }
-        
-        const { data: factors } = await supabase.auth.mfa.listFactors();
-        const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') || [];
-        const hasVerifiedTotp = verifiedTotp.length > 0;
-        
-        if (hasVerifiedTotp && mounted) {
-          // User already has verified MFA - mark enrolled and redirect
-          console.log("Verified factor exists, marking enrolled");
-          const { error } = await supabase
-            .from("profiles")
-            .update({ mfa_enrolled: true })
-            .eq("user_id", user.id);
-          
-          if (error) {
-            console.error("Failed to update profile:", error);
-            toast({
-              title: "Error",
-              description: "Failed to update profile. Please try again.",
-              variant: "destructive"
-            });
-            setInitializing(false);
-            return;
-          }
-          
-          await supabase.auth.refreshSession();
-          await new Promise(r => setTimeout(r, 300));
-          navigate("/", { replace: true });
-          return;
-        }
-        
-        // No verified factor - just finish initializing
-        // DO NOT call enrollMFA here - let it happen in the next useEffect
-        if (mounted) {
-          setInitializing(false);
-        }
-      } catch (error) {
-        console.error("Error checking MFA status:", error);
-        if (mounted) {
-          setInitializing(false);
-          toast({
-            title: "Error",
-            description: "Failed to check MFA status. Please refresh the page.",
-            variant: "destructive"
-          });
-        }
-      }
-    })();
-
-    return () => { mounted = false; };
-  }, [navigate, toast]);
-
-  // Auto-start enrollment after initialization if no QR code exists
-  useEffect(() => {
-    if (!initializing && !loading && !qrCode && !factorId) {
-      console.log("Starting MFA enrollment");
+    if (!qrCode && !factorId && !loading) {
       enrollMFA();
     }
-  }, [initializing, loading, qrCode, factorId]);
+  }, []);
 
   const enrollMFA = async () => {
-    if (loading || factorId) {
-      console.log("Skipping enrollMFA: already loading or factorId exists");
-      return;
-    }
-    
-    console.log("enrollMFA: Starting enrollment process");
     setLoading(true);
+    setError(null);
     
     try {
-      // Clean up any existing unverified factors
-      const { data: factorsData } = await supabase.auth.mfa.listFactors();
-      console.log("enrollMFA: Current factors:", factorsData);
+      // Clean up any unverified factors first
+      const { data: existingFactors } = await supabase.auth.mfa.listFactors();
+      const unverified = existingFactors?.totp?.filter(f => f.status === 'unverified') || [];
       
-      const unverifiedFactors = factorsData?.totp?.filter(f => f.status === 'unverified') || [];
-      
-      if (unverifiedFactors.length > 0) {
-        console.log(`enrollMFA: Cleaning up ${unverifiedFactors.length} unverified factors`);
-        for (const factor of unverifiedFactors) {
-          try {
-            await supabase.auth.mfa.unenroll({ factorId: factor.id });
-            console.log("enrollMFA: Cleaned up factor:", factor.id);
-          } catch (err) {
-            console.warn("enrollMFA: Failed to clean up factor:", err);
-          }
-        }
+      for (const factor of unverified) {
+        await supabase.auth.mfa.unenroll({ factorId: factor.id });
       }
 
-      // Create fresh enrollment
-      console.log("enrollMFA: Creating new TOTP factor");
-      const { data, error } = await supabase.auth.mfa.enroll({
+      // Create new enrollment
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Authenticator'
+        friendlyName: 'Authenticator App'
       });
 
-      if (error) {
-        console.error("enrollMFA: Enrollment failed:", error);
-        throw error;
-      }
+      if (enrollError) throw enrollError;
 
       if (data) {
-        console.log("enrollMFA: Successfully created factor:", data.id);
         setQrCode(data.totp.qr_code);
         setSecret(data.totp.secret);
         setFactorId(data.id);
       }
-    } catch (error: any) {
-      console.error("enrollMFA: Error:", error);
+    } catch (err: any) {
+      console.error("Enrollment error:", err);
+      setError(err.message || "Failed to start MFA enrollment");
       toast({
         title: "Error",
-        description: error.message || "Failed to initialize MFA",
+        description: "Failed to initialize MFA setup. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -161,55 +73,80 @@ export default function SetupMFA() {
   };
 
   const verifyTOTP = async () => {
-    setLoading(true);
-    try {
-      if (!factorId) throw new Error("No MFA factor found");
+    if (!factorId || verificationCode.length !== 6) {
+      setError("Please enter a valid 6-digit code");
+      return;
+    }
 
-      const { error } = await supabase.auth.mfa.challengeAndVerify({
+    setLoading(true);
+    setError(null);
+
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId });
+      if (challenge.error) throw challenge.error;
+
+      const verify = await supabase.auth.mfa.verify({
         factorId,
-        code: verifyCode
+        challengeId: challenge.data.id,
+        code: verificationCode,
       });
+
+      if (verify.error) throw verify.error;
+
+      // Generate backup codes
+      const { data: backupData, error: backupError } = await supabase.functions.invoke(
+        "mfa-backup",
+        { body: { action: "generate" } }
+      );
+
+      if (backupError) throw backupError;
+
+      setBackupCodes(backupData.codes || []);
+      setStep("backup-codes");
+
+      toast({
+        title: "Success",
+        description: "MFA verified successfully!",
+      });
+    } catch (err: any) {
+      console.error("Verification error:", err);
+      setError(err.message || "Invalid code. Please try again.");
+      toast({
+        title: "Error",
+        description: "Invalid code. Please check and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmBackupCodes = async () => {
+    setLoading(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Mark MFA as enrolled
+      const { error } = await supabase
+        .from("profiles")
+        .update({ mfa_enrolled: true })
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
-      // Generate backup codes via edge function
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mfa-backup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ action: 'generate' })
-      });
+      await supabase.auth.refreshSession();
+      setStep("complete");
 
-      const result = await response.json();
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      setBackupCodes(result.codes);
-      
-      // Select 2 random indices for confirmation
-      const indices = [
-        Math.floor(Math.random() * result.codes.length),
-        Math.floor(Math.random() * result.codes.length)
-      ];
-      // Ensure they're different
-      while (indices[1] === indices[0]) {
-        indices[1] = Math.floor(Math.random() * result.codes.length);
-      }
-      setConfirmationIndices(indices.sort((a, b) => a - b));
-
-      setStep('backup-codes');
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 2000);
+    } catch (err: any) {
+      console.error("Error completing setup:", err);
       toast({
-        title: "TOTP Verified!",
-        description: "Now let's set up your backup codes.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Verification Failed",
-        description: error.message || "Invalid verification code",
+        title: "Error",
+        description: "Failed to complete setup. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -218,281 +155,174 @@ export default function SetupMFA() {
   };
 
   const downloadBackupCodes = () => {
-    const text = backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n');
-    const blob = new Blob([`Backup Codes - Save these safely!\n\n${text}\n\nEach code can only be used once.`], { type: 'text/plain' });
+    const content = backupCodes.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'mfa-backup-codes.txt';
+    a.download = "mfa-backup-codes.txt";
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Downloaded!", description: "Backup codes saved to file" });
   };
 
   const copyBackupCodes = () => {
-    const text = backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n');
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied!", description: "All backup codes copied to clipboard" });
+    navigator.clipboard.writeText(backupCodes.join("\n"));
+    toast({
+      title: "Copied",
+      description: "Backup codes copied to clipboard",
+    });
   };
 
-  const proceedToConfirmation = () => {
-    setStep('confirm-codes');
+  const handleSkip = () => {
+    navigate("/", { replace: true });
   };
 
-  const confirmBackupCodes = async () => {
-    setLoading(true);
-    try {
-      // Verify the entered codes match
-      if (confirmationInputs[0] !== backupCodes[confirmationIndices[0]] ||
-          confirmationInputs[1] !== backupCodes[confirmationIndices[1]]) {
-        throw new Error("Backup codes don't match. Please check and try again.");
-      }
-
-      // Mark MFA as enrolled in profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found");
-
-      await supabase
-        .from("profiles")
-        .update({ 
-          mfa_enrolled: true,
-          mfa_temp_bypass_until: null // Clear any bypass
-        })
-        .eq("user_id", user.id);
-
-      // Log events
-      await supabase.from("auth_events").insert([
-        {
-          user_id: user.id,
-          event_type: "mfa_enrolled",
-          success: true
-        },
-        {
-          user_id: user.id,
-          event_type: "mfa_backup_codes_generated",
-          success: true,
-          metadata: { codes_count: backupCodes.length }
-        }
-      ]);
-
-      // Refresh session to pick up new profile state
-      await supabase.auth.refreshSession();
-      
-      // Small delay to ensure session is refreshed
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      setEnrolled(true);
-      toast({
-        title: "MFA Enabled!",
-        description: "Two-factor authentication is now active on your account.",
-      });
-
-      setTimeout(() => navigate("/", { replace: true }), 2000);
-    } catch (error: any) {
-      toast({
-        title: "Confirmation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copySecret = () => {
-    navigator.clipboard.writeText(secret);
-    toast({ title: "Copied!", description: "Secret key copied to clipboard" });
-  };
-
-  if (initializing || enrolled) {
+  if (step === "complete") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          {enrolled ? (
-            <>
-              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold mb-2">MFA Enabled Successfully!</h1>
-              <p className="text-muted-foreground">Redirecting you back...</p>
-            </>
-          ) : (
-            <>
-              <Shield className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
-              <h1 className="text-2xl font-bold mb-2">Checking MFA Status...</h1>
-              <p className="text-muted-foreground">Please wait</p>
-            </>
-          )}
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <ShieldCheck className="w-16 h-16 mx-auto mb-4 text-green-500" />
+            <CardTitle>MFA Enabled Successfully!</CardTitle>
+            <CardDescription>Your account is now more secure</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center text-sm text-muted-foreground">
+            Redirecting you to the dashboard...
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === "backup-codes") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Save Your Backup Codes</CardTitle>
+            <CardDescription>
+              Store these codes in a safe place. You can use them to access your account if you lose your authenticator device.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription className="font-mono text-sm">
+                {backupCodes.map((code, i) => (
+                  <div key={i}>{code}</div>
+                ))}
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-2">
+              <Button onClick={downloadBackupCodes} variant="outline" className="flex-1">
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+              <Button onClick={copyBackupCodes} variant="outline" className="flex-1">
+                <Copy className="w-4 h-4 mr-2" />
+                Copy
+              </Button>
+            </div>
+
+            <Button onClick={confirmBackupCodes} disabled={loading} className="w-full">
+              {loading ? "Completing..." : "I've Saved My Codes"}
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Enable Two-Factor Authentication
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isMandatory || isBypassExpired
-              ? "Required for all users. Secure your account with MFA."
-              : "Add an extra layer of security to your account."}
-          </p>
-        </div>
-
-        {(isMandatory || isBypassExpired) && (
-          <Alert className="mb-6 border-primary/50 bg-primary/10">
-            <Shield className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-sm ml-2">
-              <strong>Required:</strong> MFA is mandatory for all users.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {step === 'totp' && (
-          <div className="space-y-6">
-            <div>
-              <p className="text-sm font-medium mb-4">Step 1: Scan QR code with your authenticator app</p>
-              <div className="flex justify-center p-4 bg-white rounded-lg">
-                {qrCode && <div dangerouslySetInnerHTML={{ __html: qrCode }} />}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">Or manually enter this secret:</p>
-              <div className="flex gap-2">
-                <Input value={secret} readOnly className="font-mono text-sm" />
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isOptional && (
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={copySecret}
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="mr-2"
                 >
-                  <Copy className="h-4 w-4" />
+                  <ArrowLeft className="w-4 h-4" />
                 </Button>
-              </div>
+              )}
+              <ShieldCheck className="w-6 h-6" />
             </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">Step 2: Enter the 6-digit code</p>
-              <Input
-                type="text"
-                placeholder="000000"
-                value={verifyCode}
-                onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                className="text-center text-2xl font-mono tracking-widest"
-              />
-            </div>
-
-            <Button
-              onClick={verifyTOTP}
-              className="w-full"
-              disabled={loading || verifyCode.length !== 6}
-            >
-              {loading ? "Verifying..." : "Verify & Continue"}
-            </Button>
           </div>
-        )}
-
-        {step === 'backup-codes' && (
-          <div className="space-y-6">
-            <Alert className="border-amber-500/50 bg-amber-500/10">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <AlertDescription className="text-sm ml-2">
-                <strong>Save these codes!</strong> Each can only be used once. If you lose your authenticator, these are your only way back in.
-              </AlertDescription>
+          <CardTitle>Enable Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            {isOptional 
+              ? "Add an extra layer of security to your account (optional)"
+              : "Enhance your account security with 2FA"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
 
-            <div>
-              <p className="text-sm font-medium mb-4">Your Backup Codes:</p>
-              <div className="bg-muted p-4 rounded-lg font-mono text-sm space-y-2">
-                {backupCodes.map((code, i) => (
-                  <div key={i} className="flex justify-between">
-                    <span className="text-muted-foreground">{i + 1}.</span>
-                    <span className="font-bold">{code}</span>
-                  </div>
-                ))}
+          {loading && !qrCode ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Setting up MFA...
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Step 1: Scan QR Code</p>
+                <p className="text-sm text-muted-foreground">
+                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                </p>
+                <div className="flex justify-center p-4 bg-white rounded-lg">
+                  <QRCodeSVG value={qrCode} size={200} />
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2">
-              <Button onClick={downloadBackupCodes} variant="outline" className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
-              <Button onClick={copyBackupCodes} variant="outline" className="flex-1">
-                <Copy className="h-4 w-4 mr-2" />
-                Copy All
-              </Button>
-            </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Or enter this code manually:</p>
+                <code className="block p-2 bg-muted rounded text-sm font-mono break-all">
+                  {secret}
+                </code>
+              </div>
 
-            <Button onClick={proceedToConfirmation} className="w-full">
-              I've Saved My Codes
-            </Button>
-          </div>
-        )}
-
-        {step === 'confirm-codes' && (
-          <div className="space-y-6">
-            <p className="text-sm font-medium">To confirm you saved them, enter these codes:</p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Backup code #{confirmationIndices[0] + 1}:
-                </label>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Step 2: Enter Verification Code</p>
                 <Input
                   type="text"
-                  placeholder="00000000"
-                  value={confirmationInputs[0]}
-                  onChange={(e) => {
-                    const newInputs = [...confirmationInputs];
-                    newInputs[0] = e.target.value.replace(/\D/g, '').slice(0, 8);
-                    setConfirmationInputs(newInputs);
-                  }}
-                  maxLength={8}
-                  className="text-center text-xl font-mono tracking-widest"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-lg tracking-widest"
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Backup code #{confirmationIndices[1] + 1}:
-                </label>
-                <Input
-                  type="text"
-                  placeholder="00000000"
-                  value={confirmationInputs[1]}
-                  onChange={(e) => {
-                    const newInputs = [...confirmationInputs];
-                    newInputs[1] = e.target.value.replace(/\D/g, '').slice(0, 8);
-                    setConfirmationInputs(newInputs);
-                  }}
-                  maxLength={8}
-                  className="text-center text-xl font-mono tracking-widest"
-                />
+              <div className="space-y-2">
+                <Button
+                  onClick={verifyTOTP}
+                  disabled={loading || verificationCode.length !== 6}
+                  className="w-full"
+                >
+                  {loading ? "Verifying..." : "Verify and Continue"}
+                </Button>
+                
+                {isOptional && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleSkip}
+                    className="w-full"
+                  >
+                    Skip for Now
+                  </Button>
+                )}
               </div>
-            </div>
-
-            <Button
-              onClick={confirmBackupCodes}
-              className="w-full"
-              disabled={loading || confirmationInputs.some(code => code.length !== 8)}
-            >
-              {loading ? "Confirming..." : "Confirm & Complete Setup"}
-            </Button>
-
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setStep('backup-codes')}
-            >
-              Back to Codes
-            </Button>
-          </div>
-        )}
+            </>
+          )}
+        </CardContent>
       </Card>
     </div>
   );
