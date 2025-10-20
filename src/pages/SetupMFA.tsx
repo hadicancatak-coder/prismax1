@@ -34,6 +34,24 @@ export default function SetupMFA() {
 
   const enrollMFA = async () => {
     try {
+      // Check if a TOTP factor already exists
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const existingFactor = factorsData?.totp?.[0];
+
+      if (existingFactor) {
+        console.log("Existing TOTP factor found, attempting to unenroll...");
+        
+        // Try to unenroll the existing factor
+        try {
+          await supabase.auth.mfa.unenroll({ factorId: existingFactor.id });
+          console.log("Unenrolled successfully");
+        } catch (unenrollError: any) {
+          console.error("Unenroll failed, will create new factor:", unenrollError);
+          // If unenroll fails, we'll just try to create a new one anyway
+        }
+      }
+
+      // Create fresh enrollment
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp'
       });
@@ -45,6 +63,7 @@ export default function SetupMFA() {
         setSecret(data.totp.secret);
       }
     } catch (error: any) {
+      console.error("MFA enrollment error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to initialize MFA",
