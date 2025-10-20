@@ -374,11 +374,14 @@ export type Database = {
         Row: {
           ad_group_id: string | null
           ad_strength: number | null
+          ad_type: string | null
           approval_status: string | null
+          business_name: string | null
           callouts: Json
           compliance_issues: Json | null
           created_at: string
           created_by: string
+          cta_text: string | null
           date_launched: string | null
           date_paused: string | null
           descriptions: Json
@@ -387,7 +390,9 @@ export type Database = {
           headlines: Json
           id: string
           landing_page: string | null
+          long_headline: string | null
           name: string
+          short_headlines: Json | null
           sitelinks: Json
           updated_at: string
           updated_by: string | null
@@ -395,11 +400,14 @@ export type Database = {
         Insert: {
           ad_group_id?: string | null
           ad_strength?: number | null
+          ad_type?: string | null
           approval_status?: string | null
+          business_name?: string | null
           callouts?: Json
           compliance_issues?: Json | null
           created_at?: string
           created_by: string
+          cta_text?: string | null
           date_launched?: string | null
           date_paused?: string | null
           descriptions?: Json
@@ -408,7 +416,9 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          long_headline?: string | null
           name: string
+          short_headlines?: Json | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
@@ -416,11 +426,14 @@ export type Database = {
         Update: {
           ad_group_id?: string | null
           ad_strength?: number | null
+          ad_type?: string | null
           approval_status?: string | null
+          business_name?: string | null
           callouts?: Json
           compliance_issues?: Json | null
           created_at?: string
           created_by?: string
+          cta_text?: string | null
           date_launched?: string | null
           date_paused?: string | null
           descriptions?: Json
@@ -429,7 +442,9 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          long_headline?: string | null
           name?: string
+          short_headlines?: Json | null
           sitelinks?: Json
           updated_at?: string
           updated_by?: string | null
@@ -474,6 +489,42 @@ export type Database = {
           message?: string
           priority?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      auth_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -854,6 +905,108 @@ export type Database = {
           },
         ]
       }
+      mfa_backup_code_usage: {
+        Row: {
+          code_hash: string
+          id: string
+          ip_address: string | null
+          used_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          id?: string
+          ip_address?: string | null
+          used_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          id?: string
+          ip_address?: string | null
+          used_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_backup_codes: {
+        Row: {
+          code_hash: string
+          created_at: string | null
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string | null
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string | null
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_challenges: {
+        Row: {
+          action_context: string | null
+          challenge_type: string
+          expires_at: string
+          id: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          action_context?: string | null
+          challenge_type: string
+          expires_at?: string
+          id?: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          action_context?: string | null
+          challenge_type?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
+      mfa_verification_attempts: {
+        Row: {
+          attempt_time: string
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempt_time?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempt_time?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_rate_limit: {
         Row: {
           created_at: string
@@ -902,13 +1055,51 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           email: string
+          force_password_reset: boolean | null
           id: string
+          last_mfa_prompt_at: string | null
+          mfa_backup_codes: Json | null
+          mfa_backup_codes_generated_at: string | null
+          mfa_enabled: boolean | null
+          mfa_enrolled: boolean | null
+          mfa_enrolled_at: string | null
+          mfa_enrollment_required: boolean | null
+          mfa_secret: string | null
+          mfa_temp_bypass_until: string | null
           name: string
+          password_last_changed_at: string | null
           phone_number: string | null
           tagline: string | null
           teams: Database["public"]["Enums"]["team"][] | null
@@ -921,8 +1112,19 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          force_password_reset?: boolean | null
           id?: string
+          last_mfa_prompt_at?: string | null
+          mfa_backup_codes?: Json | null
+          mfa_backup_codes_generated_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_enrolled?: boolean | null
+          mfa_enrolled_at?: string | null
+          mfa_enrollment_required?: boolean | null
+          mfa_secret?: string | null
+          mfa_temp_bypass_until?: string | null
           name: string
+          password_last_changed_at?: string | null
           phone_number?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
@@ -935,13 +1137,72 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          force_password_reset?: boolean | null
           id?: string
+          last_mfa_prompt_at?: string | null
+          mfa_backup_codes?: Json | null
+          mfa_backup_codes_generated_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_enrolled?: boolean | null
+          mfa_enrolled_at?: string | null
+          mfa_enrollment_required?: boolean | null
+          mfa_secret?: string | null
+          mfa_temp_bypass_until?: string | null
           name?: string
+          password_last_changed_at?: string | null
           phone_number?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
           user_id?: string
+          username?: string | null
+          working_days?: string | null
+        }
+        Relationships: []
+      }
+      profiles_backup_v5_upgrade: {
+        Row: {
+          avatar_url: string | null
+          backup_timestamp: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone_number: string | null
+          tagline: string | null
+          teams: Database["public"]["Enums"]["team"][] | null
+          title: string | null
+          user_id: string | null
+          username: string | null
+          working_days: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          backup_timestamp?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone_number?: string | null
+          tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
+          title?: string | null
+          user_id?: string | null
+          username?: string | null
+          working_days?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          backup_timestamp?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone_number?: string | null
+          tagline?: string | null
+          teams?: Database["public"]["Enums"]["team"][] | null
+          title?: string | null
+          user_id?: string | null
           username?: string | null
           working_days?: string | null
         }
@@ -1568,6 +1829,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles_backup_v5_upgrade: {
+        Row: {
+          backup_timestamp: string | null
+          created_at: string | null
+          id: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          backup_timestamp?: string | null
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          backup_timestamp?: string | null
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       launch_campaigns_with_assignees: {
@@ -1624,6 +1909,10 @@ export type Database = {
       calculate_actual_hours: {
         Args: { task_uuid: string }
         Returns: number
+      }
+      cleanup_old_mfa_attempts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_rate_limit: {
         Args: Record<PropertyKey, never>

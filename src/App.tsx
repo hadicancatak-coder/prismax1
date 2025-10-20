@@ -20,6 +20,8 @@ import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
 import LaunchPad from "./pages/LaunchPad";
 import Team from "./pages/Team";
+import MfaSetup from "./pages/MfaSetup";
+import MfaVerify from "./pages/MfaVerify";
 
 
 const queryClient = new QueryClient({
@@ -40,6 +42,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
+          <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />

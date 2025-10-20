@@ -59,17 +59,29 @@ export default function Auth() {
       authSchema.parse(validationData);
 
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in.",
-        });
+        // Check if MFA is enabled for this user
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('mfa_enabled')
+          .eq('user_id', signInData.user.id)
+          .single();
+
+        if (profile?.mfa_enabled) {
+          // Redirect to MFA verification
+          navigate("/mfa-verify");
+          return;
+        } else {
+          // First time login - redirect to MFA setup
+          navigate("/mfa-setup");
+          return;
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
