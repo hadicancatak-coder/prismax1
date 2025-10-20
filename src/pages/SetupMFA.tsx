@@ -9,8 +9,10 @@ import { Shield, CheckCircle, Copy, Download, AlertTriangle } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
 import { generateBackupCode, hashBackupCode } from "@/lib/mfaHelpers";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SetupMFA() {
+  const { mfaEnrolled } = useAuth();
   const [qrCode, setQrCode] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
   const [factorId, setFactorId] = useState<string>("");
@@ -29,6 +31,13 @@ export default function SetupMFA() {
   const isMandatory = reason === "mandatory";
   const isBypassExpired = reason === "bypass-expired";
 
+  // Redirect already enrolled users
+  useEffect(() => {
+    if (mfaEnrolled) {
+      navigate("/", { replace: true });
+    }
+  }, [mfaEnrolled, navigate]);
+
   useEffect(() => {
     enrollMFA();
   }, []);
@@ -40,22 +49,9 @@ export default function SetupMFA() {
       const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
 
       if (verifiedFactor) {
-        // User already has MFA enrolled - make sure profile is updated
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase
-            .from("profiles")
-            .update({ mfa_enrolled: true })
-            .eq("user_id", user.id);
-        }
-        
-        console.log("MFA already enrolled");
-        toast({
-          title: "MFA Already Enabled",
-          description: "Your account is already secured with two-factor authentication.",
-        });
-        setEnrolled(true);
-        setTimeout(() => navigate("/"), 1500);
+        // Already enrolled, shouldn't be here
+        console.log("MFA already enrolled - redirecting");
+        navigate("/", { replace: true });
         return;
       }
 
@@ -201,13 +197,19 @@ export default function SetupMFA() {
         }
       ]);
 
+      // Refresh session to pick up new profile state
+      await supabase.auth.refreshSession();
+      
+      // Small delay to ensure session is refreshed
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       setEnrolled(true);
       toast({
         title: "MFA Enabled!",
         description: "Two-factor authentication is now active on your account.",
       });
 
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate("/", { replace: true }), 2000);
     } catch (error: any) {
       toast({
         title: "Confirmation Failed",

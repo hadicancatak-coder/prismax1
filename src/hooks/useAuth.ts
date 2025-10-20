@@ -13,6 +13,7 @@ export const useAuth = () => {
   const [requiresMfaEnrollment, setRequiresMfaEnrollment] = useState(false);
   const [mfaEnrolled, setMfaEnrolled] = useState(false);
   const [mfaTempBypassActive, setMfaTempBypassActive] = useState(false);
+  const [securityLoaded, setSecurityLoaded] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
@@ -93,15 +94,22 @@ export const useAuth = () => {
       .maybeSingle();
     
     if (profile) {
-      setRequiresPasswordReset(profile.force_password_reset);
-      setRequiresMfaEnrollment(profile.mfa_enrollment_required && !profile.mfa_enrolled);
-      setMfaEnrolled(profile.mfa_enrolled);
+      setRequiresPasswordReset(!!profile.force_password_reset);
+      setMfaEnrolled(!!profile.mfa_enrolled);
+      setRequiresMfaEnrollment(!!profile.mfa_enrollment_required && !profile.mfa_enrolled);
       
       // Check if temporary bypass is active
       const bypassUntil = profile.mfa_temp_bypass_until;
       const bypassActive = bypassUntil && new Date(bypassUntil) > new Date();
       setMfaTempBypassActive(bypassActive || false);
+    } else {
+      setRequiresPasswordReset(false);
+      setMfaEnrolled(false);
+      setRequiresMfaEnrollment(false);
+      setMfaTempBypassActive(false);
     }
+    
+    setSecurityLoaded(true);
   };
 
   const signOut = async () => {
@@ -119,6 +127,7 @@ export const useAuth = () => {
     requiresPasswordReset,
     requiresMfaEnrollment,
     mfaEnrolled,
-    mfaTempBypassActive
+    mfaTempBypassActive,
+    securityLoaded
   };
 };
