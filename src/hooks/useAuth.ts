@@ -15,7 +15,6 @@ export const useAuth = () => {
   const [mfaTempBypassActive, setMfaTempBypassActive] = useState(false);
   const [securityLoaded, setSecurityLoaded] = useState(false);
   const [factorsLoaded, setFactorsLoaded] = useState(false);
-  const [hasTotpFactor, setHasTotpFactor] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
@@ -34,9 +33,9 @@ export const useAuth = () => {
         setRoleLoading(true);
         await Promise.all([
           fetchUserRole(session.user.id),
-          fetchSecurityStatus(session.user.id),
-          fetchMfaFactors()
+          fetchSecurityStatus(session.user.id)
         ]);
+        setFactorsLoaded(true);
       } else {
         setSecurityLoaded(true);
         setFactorsLoaded(true);
@@ -58,9 +57,9 @@ export const useAuth = () => {
           setRoleLoading(true);
           await Promise.all([
             fetchUserRole(session.user.id),
-            fetchSecurityStatus(session.user.id),
-            fetchMfaFactors()
+            fetchSecurityStatus(session.user.id)
           ]);
+          setFactorsLoaded(true);
         } else {
           setUserRole(null);
           setRoleLoading(false);
@@ -129,31 +128,14 @@ export const useAuth = () => {
     setSecurityLoaded(true);
   };
 
-  const fetchMfaFactors = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setFactorsLoaded(true);
-        return;
-      }
-      
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') || [];
-      setHasTotpFactor(verifiedTotp.length > 0);
-    } catch (error) {
-      console.error("Error fetching MFA factors:", error);
-    } finally {
-      setFactorsLoaded(true);
-    }
-  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  // Derive requiresMfaEnrollment from the three flags
-  const requiresMfaEnrollment = mfaRequiredFlag === true && !(mfaEnrolled === true || hasTotpFactor === true);
+  // Derive requiresMfaEnrollment from the database flag
+  const requiresMfaEnrollment = mfaRequiredFlag === true && mfaEnrolled === false;
 
   return { 
     user, 
@@ -167,7 +149,6 @@ export const useAuth = () => {
     mfaEnrolled,
     mfaTempBypassActive,
     securityLoaded,
-    factorsLoaded,
-    hasTotpFactor
+    factorsLoaded
   };
 };
