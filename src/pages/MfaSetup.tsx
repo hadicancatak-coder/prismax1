@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, Copy, Check } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import QRCode from "qrcode";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function MfaSetup() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ export default function MfaSetup() {
   const [copiedCodes, setCopiedCodes] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setMfaVerifiedStatus } = useAuth();
 
   useEffect(() => {
     setupMfa();

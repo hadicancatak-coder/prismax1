@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, KeyRound } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function MfaVerify() {
   const [otp, setOtp] = useState("");
@@ -15,6 +16,7 @@ export default function MfaVerify() {
   const [backupCode, setBackupCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setMfaVerifiedStatus } = useAuth();
 
   useEffect(() => {
     checkSession();
@@ -52,8 +54,8 @@ export default function MfaVerify() {
       if (error) throw error;
 
       if (data.success) {
-        // Mark MFA as verified in session storage
-        sessionStorage.setItem('mfa_verified', 'true');
+        // Mark MFA as verified
+        setMfaVerifiedStatus(true);
         
         toast({
           title: "Verified!",

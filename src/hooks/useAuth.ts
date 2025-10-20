@@ -83,6 +83,15 @@ export const useAuth = () => {
     setRoleLoading(false);
   };
 
+  const setMfaVerifiedStatus = (verified: boolean) => {
+    setMfaVerified(verified);
+    if (verified) {
+      sessionStorage.setItem('mfa_verified', 'true');
+    } else {
+      sessionStorage.removeItem('mfa_verified');
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     sessionStorage.removeItem('mfa_verified');
@@ -90,5 +99,5 @@ export const useAuth = () => {
     navigate("/auth");
   };
 
-  return { user, session, loading, roleLoading, userRole, mfaVerified, signOut };
+  return { user, session, loading, roleLoading, userRole, mfaVerified, setMfaVerifiedStatus, signOut };
 };
