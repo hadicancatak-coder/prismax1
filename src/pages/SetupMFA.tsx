@@ -39,15 +39,18 @@ export default function SetupMFA() {
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) return;
+        if (!user || !mounted) {
+          setInitializing(false);
+          return;
+        }
         
         const { data: factors } = await supabase.auth.mfa.listFactors();
         const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') || [];
         const hasVerifiedTotp = verifiedTotp.length > 0;
         
         if (hasVerifiedTotp && mounted) {
-          // Has verified factor - mark enrolled and redirect
-          console.log("Verified factor exists, marking enrolled and redirecting");
+          // User already has verified MFA - mark enrolled and redirect
+          console.log("Verified factor exists, marking enrolled");
           const { error } = await supabase
             .from("profiles")
             .update({ mfa_enrolled: true })
@@ -65,25 +68,15 @@ export default function SetupMFA() {
           }
           
           await supabase.auth.refreshSession();
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 300));
           navigate("/", { replace: true });
-        } else {
-          // No verified factor - clean up any unverified and start fresh
-          if (mounted) {
-            // Clean up unverified factors
-            const unverifiedFactors = factors?.totp?.filter(f => f.status === 'unverified') || [];
-            for (const factor of unverifiedFactors) {
-              try {
-                await supabase.auth.mfa.unenroll({ factorId: factor.id });
-                console.log("Cleaned up unverified factor:", factor.id);
-              } catch (err) {
-                console.error("Failed to clean up unverified factor:", err);
-              }
-            }
-            
-            setInitializing(false);
-            enrollMFA();
-          }
+          return;
+        }
+        
+        // No verified factor - just finish initializing
+        // DO NOT call enrollMFA here - let it happen in the next useEffect
+        if (mounted) {
+          setInitializing(false);
         }
       } catch (error) {
         console.error("Error checking MFA status:", error);
@@ -99,41 +92,64 @@ export default function SetupMFA() {
     })();
 
     return () => { mounted = false; };
-  }, [navigate]);
+  }, [navigate, toast]);
+
+  // Auto-start enrollment after initialization if no QR code exists
+  useEffect(() => {
+    if (!initializing && !loading && !qrCode && !factorId) {
+      console.log("Starting MFA enrollment");
+      enrollMFA();
+    }
+  }, [initializing, loading, qrCode, factorId]);
 
   const enrollMFA = async () => {
-    if (loading || factorId) return; // Prevent multiple enrollments
+    if (loading || factorId) {
+      console.log("Skipping enrollMFA: already loading or factorId exists");
+      return;
+    }
     
+    console.log("enrollMFA: Starting enrollment process");
     setLoading(true);
+    
     try {
-      // Check for any unverified factors and clean them up
+      // Clean up any existing unverified factors
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      console.log("enrollMFA: Current factors:", factorsData);
+      
       const unverifiedFactors = factorsData?.totp?.filter(f => f.status === 'unverified') || [];
       
-      for (const factor of unverifiedFactors) {
-        try {
-          await supabase.auth.mfa.unenroll({ factorId: factor.id });
-          console.log("Cleaned up unverified factor:", factor.id);
-        } catch (err) {
-          console.warn("Failed to clean up unverified factor:", err);
+      if (unverifiedFactors.length > 0) {
+        console.log(`enrollMFA: Cleaning up ${unverifiedFactors.length} unverified factors`);
+        for (const factor of unverifiedFactors) {
+          try {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+            console.log("enrollMFA: Cleaned up factor:", factor.id);
+          } catch (err) {
+            console.warn("enrollMFA: Failed to clean up factor:", err);
+          }
         }
       }
 
       // Create fresh enrollment
+      console.log("enrollMFA: Creating new TOTP factor");
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: 'Authenticator'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("enrollMFA: Enrollment failed:", error);
+        throw error;
+      }
 
       if (data) {
+        console.log("enrollMFA: Successfully created factor:", data.id);
         setQrCode(data.totp.qr_code);
         setSecret(data.totp.secret);
         setFactorId(data.id);
       }
     } catch (error: any) {
-      console.error("MFA enrollment error:", error);
+      console.error("enrollMFA: Error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to initialize MFA",
