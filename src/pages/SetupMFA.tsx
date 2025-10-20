@@ -40,7 +40,15 @@ export default function SetupMFA() {
       const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
 
       if (verifiedFactor) {
-        // User already has MFA enrolled - redirect them
+        // User already has MFA enrolled - make sure profile is updated
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from("profiles")
+            .update({ mfa_enrolled: true })
+            .eq("user_id", user.id);
+        }
+        
         console.log("MFA already enrolled");
         toast({
           title: "MFA Already Enabled",
