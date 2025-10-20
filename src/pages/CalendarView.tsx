@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TaskDialog } from "@/components/TaskDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle, Rocket } from "lucide-react";
+import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle, Rocket, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ export default function CalendarView() {
   const [userWorkingDays, setUserWorkingDays] = useState<string>("mon-fri");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     // 🛡️ GUARD: Don't fetch until role is loaded
@@ -275,36 +277,49 @@ export default function CalendarView() {
     }
   };
 
-  const handleStatusChange = async (taskId: string, newStatus: "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked", taskDate?: Date) => {
-    const task = tasks.find(t => t.id === taskId);
-    
-    // Handle recurring task instances separately
-    if (task?.is_recurring_instance && newStatus === 'Completed' && taskDate) {
-      const { error } = await supabase.from("recurring_task_completions").insert({
-        task_id: taskId,
-        completed_date: taskDate.toISOString().split('T')[0],
-        completed_by: user?.id
-      });
-      
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Instance completed", description: "This occurrence marked as done" });
-        await fetchTasks();
-      }
-    } else {
-      // Regular task status update
-      const { error } = await supabase
-        .from("tasks")
-        .update({ status: newStatus })
-        .eq("id", taskId);
+  const getNextStatus = (currentStatus: string): "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked" => {
+    const statusCycle: Array<"Pending" | "Ongoing" | "Completed"> = ['Pending', 'Ongoing', 'Completed'];
+    const currentIndex = statusCycle.indexOf(currentStatus as any);
+    if (currentIndex === -1) return 'Pending';
+    return statusCycle[(currentIndex + 1) % statusCycle.length];
+  };
 
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+  const handleStatusChange = async (taskId: string, newStatus: "Pending" | "Ongoing" | "Completed" | "Failed" | "Blocked", taskDate?: Date) => {
+    setLoadingTaskId(taskId);
+    
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      
+      // Handle recurring task instances separately
+      if (task?.is_recurring_instance && newStatus === 'Completed' && taskDate) {
+        const { error } = await supabase.from("recurring_task_completions").insert({
+          task_id: taskId,
+          completed_date: taskDate.toISOString().split('T')[0],
+          completed_by: user?.id
+        });
+        
+        if (error) {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Instance completed", description: "This occurrence marked as done" });
+          await fetchTasks();
+        }
       } else {
-        toast({ title: "Status updated", description: `Task marked as ${newStatus}` });
-        await fetchTasks();
+        // Regular task status update
+        const { error } = await supabase
+          .from("tasks")
+          .update({ status: newStatus })
+          .eq("id", taskId);
+
+        if (error) {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Status updated", description: `Task marked as ${newStatus}` });
+          await fetchTasks();
+        }
       }
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
@@ -398,26 +413,51 @@ export default function CalendarView() {
 
   // Task Card Component
   const TaskCard = ({ task, compact = false, completed = false }: any) => {
+    const isLoading = loadingTaskId === task.id;
+    
     return (
-      <div
-        className={cn(
-          "group p-4 border rounded-lg hover:shadow-md transition-all",
-          completed && "opacity-60"
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 mt-0.5"
-            onClick={() => handleStatusChange(task.id, task.status === 'Completed' ? 'Ongoing' : 'Completed')}
-          >
-            {task.status === 'Completed' ? (
-              <CheckCircle className="h-5 w-5 text-success fill-success" />
-            ) : (
-              <Circle className="h-5 w-5 text-muted-foreground" />
-            )}
-          </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(
+                "group p-4 border rounded-lg hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                completed && "opacity-60"
+              )}
+              tabIndex={0}
+              role="button"
+              aria-label={`Task: ${task.title}, Status: ${task.status}, Priority: ${task.priority}`}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.key === ' ') {
+                    handleStatusChange(task.id, getNextStatus(task.status));
+                  } else {
+                    setSelectedTaskId(task.id);
+                    setTaskDialogOpen(true);
+                  }
+                }
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 mt-0.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(task.id, task.status === 'Completed' ? 'Ongoing' : 'Completed');
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : task.status === 'Completed' ? (
+                    <CheckCircle className="h-5 w-5 text-success fill-success" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </Button>
 
           <div className="flex-1 min-w-0">
             <div
@@ -483,6 +523,23 @@ export default function CalendarView() {
           </div>
         </div>
       </div>
+    </TooltipTrigger>
+    <TooltipContent side="top" className="max-w-sm">
+      <div className="space-y-2">
+        <p className="font-semibold">{task.title}</p>
+        {task.description && <p className="text-sm">{task.description}</p>}
+        <div className="flex items-center gap-2 text-xs">
+          <Badge variant="outline">{task.priority}</Badge>
+          <Badge variant="outline">{task.status}</Badge>
+          {task.entity && <Badge variant="secondary">{task.entity}</Badge>}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Press Space to cycle status • Enter to open details
+        </p>
+      </div>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
     );
   };
 
