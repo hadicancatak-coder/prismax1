@@ -1,24 +1,18 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, securityLoaded, factorsLoaded } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    // Wait for both auth, security data, and MFA factors to load
-    if (loading || !securityLoaded || !factorsLoaded) return;
-
-    // Not authenticated - redirect to login
-    if (!user) {
-      navigate("/auth", { replace: true, state: { from: location.pathname } });
-      return;
+    if (!loading && !user) {
+      navigate("/auth");
     }
-  }, [user, loading, securityLoaded, factorsLoaded, location.pathname, navigate]);
+  }, [user, loading, navigate]);
 
-  if (loading || !securityLoaded || !factorsLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>

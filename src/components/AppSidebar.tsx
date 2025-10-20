@@ -21,7 +21,7 @@ const coreItems = [
 ];
 
 const marketingItems = [
-  { title: "PPC Planner", url: "/ads", icon: Megaphone },
+  { title: "Ads Planner", url: "/ads", icon: Megaphone },
   { title: "Campaigns", url: "/campaigns", icon: Target },
   { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
 ];

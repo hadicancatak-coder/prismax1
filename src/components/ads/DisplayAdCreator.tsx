@@ -1,12 +1,8 @@
-import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Bookmark } from 'lucide-react';
 import { ElementQuickInsert } from './ElementQuickInsert';
-import { CreateElementDialog } from './CreateElementDialog';
 
 interface DisplayAdCreatorProps {
   businessName: string;
@@ -36,32 +32,10 @@ export function DisplayAdCreator({
   ctaText, setCtaText,
   landingPage, setLandingPage,
 }: DisplayAdCreatorProps) {
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [saveElementType, setSaveElementType] = useState<'business_name' | 'long_headline' | 'headline' | 'description' | 'cta'>('business_name');
-  const [saveElementContent, setSaveElementContent] = useState('');
-
-  const handleSaveElement = (type: 'business_name' | 'long_headline' | 'cta', content: string) => {
-    setSaveElementType(type);
-    setSaveElementContent(content);
-    setShowSaveDialog(true);
-  };
-
   return (
-    <>
     <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label htmlFor="business-name">Business Name (25 chars max)</Label>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => handleSaveElement('business_name', businessName)}
-            disabled={!businessName}
-          >
-            <Bookmark className="w-4 h-4" />
-          </Button>
-        </div>
+        <Label htmlFor="business-name">Business Name (25 chars max)</Label>
         <Input
           id="business-name"
           value={businessName}
@@ -73,31 +47,20 @@ export function DisplayAdCreator({
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label htmlFor="long-headline">Long Headline (90 chars max)</Label>
-          <div className="flex gap-2">
-            <ElementQuickInsert
-              elementType="long_headline"
-              onInsert={(text) => setLongHeadline(text.slice(0, 90))}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => handleSaveElement('long_headline', longHeadline)}
-              disabled={!longHeadline}
-            >
-              <Bookmark className="w-4 h-4" />
-            </Button>
-          </div>
+        <Label htmlFor="long-headline">Long Headline (90 chars max)</Label>
+        <div className="flex gap-2">
+          <Input
+            id="long-headline"
+            value={longHeadline}
+            onChange={(e) => setLongHeadline(e.target.value.slice(0, 90))}
+            placeholder="Your main promotional message"
+            maxLength={90}
+          />
+          <ElementQuickInsert
+            elementType="headline"
+            onInsert={(text) => setLongHeadline(text.slice(0, 90))}
+          />
         </div>
-        <Input
-          id="long-headline"
-          value={longHeadline}
-          onChange={(e) => setLongHeadline(e.target.value.slice(0, 90))}
-          placeholder="Your main promotional message"
-          maxLength={90}
-        />
         <p className="text-xs text-muted-foreground mt-1">{longHeadline.length}/90</p>
       </div>
 
@@ -161,24 +124,7 @@ export function DisplayAdCreator({
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label htmlFor="cta">Call to Action</Label>
-          <div className="flex gap-2">
-            <ElementQuickInsert
-              elementType="cta"
-              onInsert={(text) => setCtaText(text)}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => handleSaveElement('cta', ctaText)}
-              disabled={!ctaText}
-            >
-              <Bookmark className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        <Label htmlFor="cta">Call to Action</Label>
         <Select value={ctaText} onValueChange={setCtaText}>
           <SelectTrigger>
             <SelectValue placeholder="Select CTA..." />
@@ -201,13 +147,5 @@ export function DisplayAdCreator({
         />
       </div>
     </div>
-
-    <CreateElementDialog
-      open={showSaveDialog}
-      onOpenChange={setShowSaveDialog}
-      elementType={saveElementType}
-      initialContent={saveElementContent}
-    />
-    </>
   );
 }

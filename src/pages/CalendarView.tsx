@@ -463,10 +463,6 @@ export default function CalendarView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'Completed')}>
-                  <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                  Mark as Completed
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'Ongoing')}>
                   Start Task
                 </DropdownMenuItem>

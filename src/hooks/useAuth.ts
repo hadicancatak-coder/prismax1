@@ -9,21 +9,13 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
-  const [requiresPasswordReset, setRequiresPasswordReset] = useState(false);
-  const [mfaEnrolled, setMfaEnrolled] = useState(false);
-  const [mfaRequiredFlag, setMfaRequiredFlag] = useState(false);
-  const [mfaTempBypassActive, setMfaTempBypassActive] = useState(false);
-  const [securityLoaded, setSecurityLoaded] = useState(false);
-  const [factorsLoaded, setFactorsLoaded] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
   useEffect(() => {
     let mounted = true;
     
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
       setSession(session);
@@ -31,23 +23,14 @@ export const useAuth = () => {
       
       if (session?.user) {
         setRoleLoading(true);
-        await Promise.all([
-          fetchUserRole(session.user.id),
-          fetchSecurityStatus(session.user.id)
-        ]);
-        setFactorsLoaded(true);
-      } else {
-        setSecurityLoaded(true);
-        setFactorsLoaded(true);
+        fetchUserRole(session.user.id);
       }
       
       setLoading(false);
-    };
-
-    initAuth();
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
         
         setSession(session);
@@ -55,19 +38,10 @@ export const useAuth = () => {
         
         if (session?.user) {
           setRoleLoading(true);
-          await Promise.all([
-            fetchUserRole(session.user.id),
-            fetchSecurityStatus(session.user.id)
-          ]);
-          setFactorsLoaded(true);
+          fetchUserRole(session.user.id);
         } else {
           setUserRole(null);
           setRoleLoading(false);
-          setRequiresPasswordReset(false);
-          setMfaEnrolled(false);
-          setMfaRequiredFlag(false);
-          setSecurityLoaded(true);
-          setFactorsLoaded(true);
         }
       }
     );
@@ -102,53 +76,10 @@ export const useAuth = () => {
     setRoleLoading(false);
   };
 
-  const fetchSecurityStatus = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("force_password_reset, mfa_enrolled, mfa_enrollment_required, mfa_temp_bypass_until")
-      .eq("user_id", userId)
-      .maybeSingle();
-    
-    if (profile) {
-      setRequiresPasswordReset(!!profile.force_password_reset);
-      setMfaEnrolled(!!profile.mfa_enrolled);
-      setMfaRequiredFlag(!!profile.mfa_enrollment_required);
-      
-      // Check if temporary bypass is active
-      const bypassUntil = profile.mfa_temp_bypass_until;
-      const bypassActive = bypassUntil && new Date(bypassUntil) > new Date();
-      setMfaTempBypassActive(bypassActive || false);
-    } else {
-      setRequiresPasswordReset(false);
-      setMfaEnrolled(false);
-      setMfaRequiredFlag(false);
-      setMfaTempBypassActive(false);
-    }
-    
-    setSecurityLoaded(true);
-  };
-
-
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  // Derive requiresMfaEnrollment from the database flag
-  const requiresMfaEnrollment = mfaRequiredFlag === true && mfaEnrolled === false;
-
-  return { 
-    user, 
-    session, 
-    loading, 
-    roleLoading, 
-    userRole, 
-    signOut,
-    requiresPasswordReset,
-    requiresMfaEnrollment,
-    mfaEnrolled,
-    mfaTempBypassActive,
-    securityLoaded,
-    factorsLoaded
-  };
+  return { user, session, loading, roleLoading, userRole, signOut };
 };

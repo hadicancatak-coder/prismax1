@@ -11,7 +11,7 @@ import { AdvancedFilters } from './AdvancedFilters';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export function SavedElementsLibrary() {
-  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout' | 'business_name' | 'long_headline' | 'cta'>('headline');
+  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<any>({});
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -28,7 +28,7 @@ export function SavedElementsLibrary() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Elements</h2>
+        <h2 className="text-2xl font-semibold">Saved Elements Library</h2>
         <div className="flex gap-2">
           <Button onClick={() => setShowBulkImport(true)} variant="outline">
             <Upload className="w-4 h-4 mr-2" />
@@ -57,17 +57,14 @@ export function SavedElementsLibrary() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="headline">Headlines</TabsTrigger>
           <TabsTrigger value="description">Descriptions</TabsTrigger>
           <TabsTrigger value="sitelink">Sitelinks</TabsTrigger>
           <TabsTrigger value="callout">Callouts</TabsTrigger>
-          <TabsTrigger value="business_name">Business Names</TabsTrigger>
-          <TabsTrigger value="long_headline">Long Headlines</TabsTrigger>
-          <TabsTrigger value="cta">CTAs</TabsTrigger>
         </TabsList>
 
-        {['headline', 'description', 'sitelink', 'callout', 'business_name', 'long_headline', 'cta'].map((type) => (
+        {['headline', 'description', 'sitelink', 'callout'].map((type) => (
           <TabsContent key={type} value={type} className="space-y-4 mt-4">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>

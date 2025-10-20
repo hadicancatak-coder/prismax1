@@ -19,7 +19,6 @@ import { AdStrengthIndicator } from "./AdStrengthIndicator";
 import { AdComplianceChecker } from "./AdComplianceChecker";
 import { AdVersionHistory } from "./ads/AdVersionHistory";
 import { AdComments } from "./ads/AdComments";
-import { DisplayAdPreview } from "./ads/DisplayAdPreview";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -116,8 +115,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+        <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? (
               <Input
@@ -135,8 +134,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="preview" className="flex-1 flex flex-col overflow-hidden min-h-0">
-          <TabsList className="mx-6 mt-2 flex-shrink-0">
+        <Tabs defaultValue="preview" className="flex-1 flex flex-col">
+          <TabsList className="mx-6 mt-2">
             <TabsTrigger value="preview">Preview</TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-2" />
@@ -148,18 +147,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="preview" className="flex-1 overflow-y-auto px-6 pb-4 space-y-3 mt-4 min-h-0">
+          <TabsContent value="preview" className="flex-1 overflow-y-auto px-6 pb-4 space-y-4 mt-4">
           {/* Ad Preview */}
-          {ad.ad_type === 'display' ? (
-            <DisplayAdPreview
-              businessName={ad.business_name || ''}
-              longHeadline={ad.long_headline || ''}
-              shortHeadline={(ad.short_headlines?.[0]) || ''}
-              description={(ad.descriptions?.[0]) || ''}
-              ctaText={ad.cta_text || ''}
-              landingPage={ad.landing_page || ''}
-            />
-          ) : (
           <Card className="p-4 bg-background">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -241,7 +230,6 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
             </>
           )}
           </Card>
-          )}
 
           {/* Quality & Compliance Side-by-Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,17 +440,17 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </div>
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 overflow-y-auto px-6 pb-4 min-h-0">
+          <TabsContent value="history" className="flex-1 overflow-y-auto px-6 pb-4">
             <AdVersionHistory adId={ad.id} />
           </TabsContent>
 
-          <TabsContent value="comments" className="flex-1 overflow-y-auto px-6 pb-4 min-h-0">
+          <TabsContent value="comments" className="flex-1 overflow-y-auto px-6 pb-4">
             <AdComments adId={ad.id} />
           </TabsContent>
         </Tabs>
 
         {/* Actions - Fixed Footer */}
-        <div className="flex gap-2 p-6 border-t bg-background flex-shrink-0">
+        <div className="flex gap-2 p-6 border-t bg-background">
           {isEditing ? (
             <>
               <Button onClick={handleSave} className="flex-1">

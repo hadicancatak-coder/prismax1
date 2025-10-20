@@ -7,8 +7,20 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { authSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string()
+    .email("Invalid email address")
+    .regex(/@cfi\.trade$/, "Only @cfi.trade email addresses are allowed"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password must not exceed 100 characters"),
+  name: z.string()
+    .min(1, "Name is required")
+    .max(100, "Name must not exceed 100 characters")
+    .optional(),
+});
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,9 +28,6 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mfaRequired, setMfaRequired] = useState(false);
-  const [mfaFactorId, setMfaFactorId] = useState<string>("");
-  const [totpCode, setTotpCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,7 +38,7 @@ export default function Auth() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
       }
@@ -40,7 +49,6 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
 
     try {
@@ -51,37 +59,13 @@ export default function Auth() {
       authSchema.parse(validationData);
 
       if (isLogin) {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
-        // Debug logging
-        console.log("Login response:", { 
-          hasUser: !!data.user, 
-          hasSession: !!data.session,
-          userId: data.user?.id 
-        });
-
-        // Check if MFA is required
-        if (data.user && !data.session) {
-          console.log("✓ MFA required - no session created");
-          // MFA is required, get the factor
-          const factors = await supabase.auth.mfa.listFactors();
-          const totpFactor = factors.data?.totp?.find(f => f.status === 'verified');
-          
-          if (totpFactor) {
-            setMfaRequired(true);
-            setMfaFactorId(totpFactor.id);
-            setLoading(false);
-            return; // Don't navigate yet
-          }
-        }
-
-        console.log("Session created - MFA not required or already passed");
-        // If we get here, login succeeded without MFA
         toast({
           title: "Welcome back!",
           description: "Successfully logged in.",
@@ -126,39 +110,6 @@ export default function Auth() {
     }
   };
 
-  const handleMfaVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (totpCode.length !== 6) {
-        throw new Error("Please enter a 6-digit code");
-      }
-
-      const { error } = await supabase.auth.mfa.challengeAndVerify({
-        factorId: mfaFactorId,
-        code: totpCode,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Welcome back!",
-        description: "Successfully authenticated.",
-      });
-
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Verification Failed",
-        description: error.message || "Invalid authentication code",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8">
@@ -177,80 +128,43 @@ export default function Auth() {
           </AlertDescription>
         </Alert>
 
-        {mfaRequired ? (
-          <form onSubmit={handleMfaVerify} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
             <div>
-              <label className="text-sm font-medium mb-2 block">
-                Enter your authenticator code
-              </label>
               <Input
                 type="text"
-                placeholder="000000"
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                className="text-center text-2xl font-mono tracking-widest"
-                autoFocus
-                required
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required={!isLogin}
               />
             </div>
+          )}
+          
+          <div>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-            <Button type="submit" className="w-full" disabled={loading || totpCode.length !== 6}>
-              {loading ? "Verifying..." : "Verify"}
-            </Button>
+          <div>
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setMfaRequired(false);
-                setMfaFactorId("");
-                setTotpCode("");
-              }}
-            >
-              Back to login
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={!isLogin}
-                />
-              </div>
-            )}
-            
-            <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : isLogin ? "Log In" : "Sign Up"}
-            </Button>
-          </form>
-        )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Please wait..." : isLogin ? "Log In" : "Sign Up"}
+          </Button>
+        </form>
 
         <div className="mt-6 text-center">
           <button
