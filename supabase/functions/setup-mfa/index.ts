@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
-import { authenticator } from 'https://esm.sh/otplib@12.0.1';
+import * as OTPAuth from 'https://esm.sh/otpauth@9.2.2';
 import QRCode from 'https://esm.sh/qrcode@1.5.3';
 
 const corsHeaders = {
@@ -37,16 +37,19 @@ Deno.serve(async (req) => {
     let secret = profile?.mfa_secret;
     
     if (!secret) {
-      // Generate new secret
-      secret = authenticator.generateSecret();
+      // Generate new secret (base32, 20 bytes = 160 bits)
+      secret = new OTPAuth.Secret({ size: 20 }).base32;
     }
 
     // If verifying OTP
     if (verifyOtp) {
-      const isValid = authenticator.verify({
-        token: verifyOtp,
-        secret: secret
+      const totp = new OTPAuth.TOTP({
+        secret: OTPAuth.Secret.fromBase32(secret),
+        digits: 6,
+        period: 30,
       });
+
+      const isValid = totp.validate({ token: verifyOtp, window: 1 }) !== null;
 
       if (!isValid) {
         return new Response(
@@ -85,13 +88,15 @@ Deno.serve(async (req) => {
     }
 
     // Generate QR code
-    const appName = 'Prisma';
-    const otpauth = authenticator.keyuri(
-      profile?.email || user.email,
-      appName,
-      secret
-    );
+    const totp = new OTPAuth.TOTP({
+      issuer: 'Prisma',
+      label: profile?.email || user.email || '',
+      secret: OTPAuth.Secret.fromBase32(secret),
+      digits: 6,
+      period: 30,
+    });
 
+    const otpauth = totp.toString();
     const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
 
     // Save secret temporarily (not enabled yet)

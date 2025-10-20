@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
-import { authenticator } from 'https://esm.sh/otplib@12.0.1';
+import * as OTPAuth from 'https://esm.sh/otpauth@9.2.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,10 +73,13 @@ Deno.serve(async (req) => {
       }
     } else {
       // Verify TOTP code
-      isValid = authenticator.verify({
-        token: otpCode,
-        secret: profile.mfa_secret
+      const totp = new OTPAuth.TOTP({
+        secret: OTPAuth.Secret.fromBase32(profile.mfa_secret),
+        digits: 6,
+        period: 30,
       });
+      
+      isValid = totp.validate({ token: otpCode, window: 1 }) !== null;
     }
 
     // Log attempt
