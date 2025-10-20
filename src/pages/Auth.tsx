@@ -19,6 +19,9 @@ export default function Auth() {
   const [backupCode, setBackupCode] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string>("");
+  const [totpCode, setTotpCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -152,13 +155,28 @@ export default function Auth() {
       authSchema.parse(validationData);
 
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
+        // Check if MFA is required
+        if (data.user && !data.session) {
+          // MFA is required, get the factor
+          const factors = await supabase.auth.mfa.listFactors();
+          const totpFactor = factors.data?.totp?.find(f => f.status === 'verified');
+          
+          if (totpFactor) {
+            setMfaRequired(true);
+            setMfaFactorId(totpFactor.id);
+            setLoading(false);
+            return; // Don't navigate yet
+          }
+        }
+
+        // If we get here, login succeeded without MFA
         toast({
           title: "Welcome back!",
           description: "Successfully logged in.",
@@ -203,6 +221,39 @@ export default function Auth() {
     }
   };
 
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (totpCode.length !== 6) {
+        throw new Error("Please enter a 6-digit code");
+      }
+
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaFactorId,
+        code: totpCode,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "Successfully authenticated.",
+      });
+
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid authentication code",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8">
@@ -221,72 +272,109 @@ export default function Auth() {
           </AlertDescription>
         </Alert>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+        {mfaRequired ? (
+          <form onSubmit={handleMfaVerify} className="space-y-4">
             <div>
+              <label className="text-sm font-medium mb-2 block">
+                Enter your authenticator code
+              </label>
               <Input
                 type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required={!isLogin}
-              />
-            </div>
-          )}
-          
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          {isLogin && useBackupCode && (
-            <div>
-              <Input
-                type="text"
-                placeholder="Backup code (8 digits)"
-                value={backupCode}
-                onChange={(e) => setBackupCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                maxLength={8}
-                className="text-center text-xl font-mono tracking-widest"
+                placeholder="000000"
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                className="text-center text-2xl font-mono tracking-widest"
+                autoFocus
                 required
               />
             </div>
-          )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? (useBackupCode ? "Login with Backup Code" : "Log In") : "Sign Up"}
-          </Button>
+            <Button type="submit" className="w-full" disabled={loading || totpCode.length !== 6}>
+              {loading ? "Verifying..." : "Verify"}
+            </Button>
 
-          {isLogin && (
             <Button
               type="button"
               variant="outline"
               className="w-full"
               onClick={() => {
-                setUseBackupCode(!useBackupCode);
-                setBackupCode("");
+                setMfaRequired(false);
+                setMfaFactorId("");
+                setTotpCode("");
               }}
             >
-              <KeyRound className="h-4 w-4 mr-2" />
-              {useBackupCode ? "Use password instead" : "Use backup code instead"}
+              Back to login
             </Button>
-          )}
-        </form>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={!isLogin}
+                />
+              </div>
+            )}
+            
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {isLogin && useBackupCode && (
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Backup code (8 digits)"
+                  value={backupCode}
+                  onChange={(e) => setBackupCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  maxLength={8}
+                  className="text-center text-xl font-mono tracking-widest"
+                  required
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Please wait..." : isLogin ? (useBackupCode ? "Login with Backup Code" : "Log In") : "Sign Up"}
+            </Button>
+
+            {isLogin && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setUseBackupCode(!useBackupCode);
+                  setBackupCode("");
+                }}
+              >
+                <KeyRound className="h-4 w-4 mr-2" />
+                {useBackupCode ? "Use password instead" : "Use backup code instead"}
+              </Button>
+            )}
+          </form>
+        )}
 
         <div className="mt-6 text-center">
           <button
