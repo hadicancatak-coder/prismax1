@@ -16,12 +16,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       navigate("/auth", { replace: true, state: { from: location.pathname } });
       return;
     }
-
-    // Only force password reset (MFA is now optional)
-    if (requiresPasswordReset && !location.pathname.startsWith('/reset-password')) {
-      navigate("/reset-password?reason=security-upgrade", { replace: true });
-      return;
-    }
   }, [user, loading, securityLoaded, factorsLoaded, requiresPasswordReset, location.pathname, navigate]);
 
   if (loading || !securityLoaded || !factorsLoaded) {
