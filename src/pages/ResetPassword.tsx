@@ -70,6 +70,9 @@ export default function ResetPassword() {
         metadata: { reason: isSecurityUpgrade ? "security_upgrade" : "user_initiated" }
       });
 
+      // Refresh session to trigger auth state change and re-fetch security status
+      await supabase.auth.refreshSession();
+
       toast({
         title: "Password Updated!",
         description: "Your password has been successfully updated.",
