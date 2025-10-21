@@ -60,7 +60,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
   
   // Auto-detected values
   const [detectedEntity, setDetectedEntity] = useState<string | null>(null);
-  const [lpType, setLpType] = useState<'static' | 'mauritius' | 'dynamic'>('dynamic');
+  const [lpType, setLpType] = useState<'static' | 'mauritius' | 'dynamic' | null>(null);
   const [dynamicLanguage, setDynamicLanguage] = useState<'EN' | 'AR'>('EN');
   
   const [autoUtmSource, setAutoUtmSource] = useState("");
@@ -576,41 +576,52 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
 
           {/* Preview */}
           {fullUrl && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Preview</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 p-3 bg-muted rounded-md font-mono text-sm break-all">
-                  {fullUrl}
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleCopy} variant="outline" size="icon">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button onClick={handleExpand} disabled={!isFormValid} variant="outline">
-                          <Maximize2 className="h-4 w-4 mr-2" />
-                          Expand
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{getExpandTooltip()}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <Button onClick={handleSave} disabled={!isFormValid}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button onClick={() => setShowSaveTemplate(true)} disabled={!isFormValid} variant="outline">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Save as Template
-                  </Button>
-                </div>
+              <div className="p-3 bg-muted rounded-md font-mono text-sm break-all">
+                {fullUrl}
               </div>
             </div>
           )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Primary Actions */}
+            <div className="flex gap-2 flex-1">
+              <Button onClick={handleSave} disabled={!isFormValid} size="lg" className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Save Link
+              </Button>
+              {fullUrl && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button onClick={handleExpand} disabled={!isFormValid} variant="default" size="lg" className="flex-1">
+                        <Maximize2 className="h-4 w-4 mr-2" />
+                        Expand ({lpType === 'static' ? ENTITIES.length : 2})
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{getExpandTooltip()}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+            
+            {/* Secondary Actions */}
+            <div className="flex gap-2">
+              {fullUrl && (
+                <Button onClick={handleCopy} variant="outline" size="icon">
+                  <Copy className="h-4 w-4" />
+                </Button>
+              )}
+              <Button onClick={() => setShowSaveTemplate(true)} disabled={!isFormValid} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Save as Template
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

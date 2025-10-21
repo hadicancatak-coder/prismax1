@@ -16,6 +16,7 @@ export const useUtmCampaigns = () => {
         .from("utm_campaigns")
         .select("*")
         .eq("is_active", true)
+        .order("created_at", { ascending: false })
         .order("last_used_at", { ascending: false, nullsFirst: false })
         .order("usage_count", { ascending: false })
         .order("name");
