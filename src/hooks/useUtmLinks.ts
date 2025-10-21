@@ -12,7 +12,10 @@ export type UtmLink = UtmLinkRow;
 export interface UtmLinkFilters {
   entity?: string[];
   teams?: string[];
-  campaign_type?: string;
+  campaign_name?: string[];
+  platform?: string[];
+  language?: string[];
+  link_purpose?: string[];
   status?: string;
   created_by?: string;
   search?: string;
@@ -33,8 +36,17 @@ export const useUtmLinks = (filters?: UtmLinkFilters) => {
       if (filters?.teams && filters.teams.length > 0) {
         query = query.overlaps("teams", filters.teams);
       }
-      if (filters?.campaign_type) {
-        query = query.eq("campaign_type", filters.campaign_type as any);
+      if (filters?.campaign_name && filters.campaign_name.length > 0) {
+        query = query.in("campaign_name", filters.campaign_name);
+      }
+      if (filters?.platform && filters.platform.length > 0) {
+        query = query.in("platform", filters.platform);
+      }
+      if (filters?.language && filters.language.length > 0) {
+        query = query.in("language", filters.language);
+      }
+      if (filters?.link_purpose && filters.link_purpose.length > 0) {
+        query = query.in("link_purpose", filters.link_purpose);
       }
       if (filters?.status) {
         query = query.eq("status", filters.status as any);
@@ -44,7 +56,7 @@ export const useUtmLinks = (filters?: UtmLinkFilters) => {
       }
       if (filters?.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,full_url.ilike.%${filters.search}%,utm_campaign.ilike.%${filters.search}%`
+          `name.ilike.%${filters.search}%,full_url.ilike.%${filters.search}%,utm_campaign.ilike.%${filters.search}%,campaign_name.ilike.%${filters.search}%`
         );
       }
 

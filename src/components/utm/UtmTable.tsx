@@ -2,27 +2,17 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Edit, Trash2, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Copy, ExternalLink, Trash2, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { UtmLink, useDeleteUtmLink } from "@/hooks/useUtmLinks";
-import { formatDistanceToNow } from "date-fns";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useDeleteUtmLink, type UtmLink } from "@/hooks/useUtmLinks";
+import { format } from "date-fns";
 
 interface UtmTableProps {
   links: UtmLink[];
-  onEdit?: (link: UtmLink) => void;
 }
 
-export const UtmTable = ({ links, onEdit }: UtmTableProps) => {
+export const UtmTable = ({ links }: UtmTableProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const deleteUtmLink = useDeleteUtmLink();
 
@@ -32,24 +22,51 @@ export const UtmTable = ({ links, onEdit }: UtmTableProps) => {
   };
 
   const handleDelete = async () => {
-    if (deleteId) {
+    if (!deleteId) return;
+    
+    try {
       await deleteUtmLink.mutateAsync(deleteId);
       setDeleteId(null);
+    } catch (error) {
+      // Error handled by mutation
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-500/10 text-green-500";
+        return "bg-green-500/10 text-green-700 dark:text-green-400";
       case "paused":
-        return "bg-yellow-500/10 text-yellow-500";
+        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
       case "archived":
-        return "bg-gray-500/10 text-gray-500";
+        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
       default:
-        return "bg-gray-500/10 text-gray-500";
+        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
     }
   };
+
+  const getPurposeColor = (purpose: string) => {
+    switch (purpose) {
+      case "AO":
+        return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+      case "Seminar":
+        return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
+      case "Webinar":
+        return "bg-pink-500/10 text-pink-700 dark:text-pink-400";
+      case "Education":
+        return "bg-orange-500/10 text-orange-700 dark:text-orange-400";
+      default:
+        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+    }
+  };
+
+  if (links.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        No UTM links found. Create your first link to get started!
+      </div>
+    );
+  }
 
   return (
     <>
@@ -57,10 +74,15 @@ export const UtmTable = ({ links, onEdit }: UtmTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Medium</TableHead>
+              <TableHead>Link Name</TableHead>
               <TableHead>Campaign</TableHead>
+              <TableHead>Platform</TableHead>
+              <TableHead>Language</TableHead>
+              <TableHead>Purpose</TableHead>
+              <TableHead>UTM Medium</TableHead>
+              <TableHead>Month/Year</TableHead>
+              <TableHead>Entity</TableHead>
+              <TableHead>Teams</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Validated</TableHead>
               <TableHead>Created</TableHead>
@@ -68,81 +90,107 @@ export const UtmTable = ({ links, onEdit }: UtmTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {links.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No UTM links found. Create your first one above!
+            {links.map((link) => (
+              <TableRow key={link.id}>
+                <TableCell className="font-medium">
+                  <div className="max-w-[200px]">
+                    <div className="truncate">{link.name}</div>
+                    <div className="text-xs text-muted-foreground truncate font-mono">
+                      {link.utm_campaign}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>{link.campaign_name || "-"}</TableCell>
+                <TableCell>{link.platform || "-"}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="font-mono">
+                    {link.language || "-"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {link.link_purpose ? (
+                    <Badge className={getPurposeColor(link.link_purpose)}>
+                      {link.link_purpose}
+                    </Badge>
+                  ) : "-"}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="font-mono">
+                    {link.utm_medium}
+                  </Badge>
+                </TableCell>
+                <TableCell>{link.month_year || "-"}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {link.entity?.map((e) => (
+                      <Badge key={e} variant="outline" className="text-xs">
+                        {e}
+                      </Badge>
+                    )) || "-"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {link.teams?.map((t) => (
+                      <Badge key={t} variant="outline" className="text-xs">
+                        {t}
+                      </Badge>
+                    )) || "-"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(link.status || "active")}>
+                    {link.status || "active"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {link.is_validated ? (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-xs">Yes</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-yellow-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-xs">Pending</span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {format(new Date(link.created_at), "MMM d, yyyy")}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(link.full_url)}
+                      title="Copy URL"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(link.full_url, "_blank")}
+                      title="Open URL"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteId(link.id)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : (
-              links.map((link) => (
-                <TableRow key={link.id}>
-                  <TableCell className="font-medium">{link.name}</TableCell>
-                  <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">{link.utm_source}</code>
-                  </TableCell>
-                  <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">{link.utm_medium}</code>
-                  </TableCell>
-                  <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">{link.utm_campaign}</code>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(link.status)}>
-                      {link.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {link.is_validated ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-gray-400" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(link.created_at), { addSuffix: true })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCopy(link.full_url)}
-                        title="Copy URL"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => window.open(link.full_url, "_blank")}
-                        title="Open URL"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      {onEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(link)}
-                          title="Edit"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(link.id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>

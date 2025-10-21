@@ -1,289 +1,421 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Plus, CheckCircle2, AlertCircle, Save } from "lucide-react";
-import { toast } from "sonner";
-import { buildUtmUrl, validateUtmParameters } from "@/hooks/useUtmValidation";
-import { useCreateUtmLink } from "@/hooks/useUtmLinks";
-import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
+import { AddCampaignDialog } from "./AddCampaignDialog";
+import { useCreateUtmLink } from "@/hooks/useUtmLinks";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
+import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
+import { useUtmLanguages } from "@/hooks/useUtmLanguages";
+import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl } from "@/lib/utmHelpers";
+import { ENTITIES, TEAMS } from "@/lib/constants";
+import { Copy, Save, AlertCircle, Plus, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UtmBuilderProps {
   onSave?: () => void;
 }
 
+const LINK_PURPOSES = [
+  { value: "AO", label: "AO" },
+  { value: "Seminar", label: "Seminar" },
+  { value: "Webinar", label: "Webinar" },
+  { value: "Education", label: "Education" },
+];
+
 export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
-  const [name, setName] = useState("");
+  const [linkName, setLinkName] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
-  const [utmSource, setUtmSource] = useState("");
-  const [utmMedium, setUtmMedium] = useState("");
-  const [utmCampaign, setUtmCampaign] = useState("");
-  const [utmTerm, setUtmTerm] = useState("");
+  const [selectedCampaign, setSelectedCampaign] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [selectedPurpose, setSelectedPurpose] = useState("");
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [utmContent, setUtmContent] = useState("");
-  const [entity, setEntity] = useState<string[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
-  const [campaignType, setCampaignType] = useState("");
-  const [usageContext, setUsageContext] = useState("");
+  const [utmTerm, setUtmTerm] = useState("");
   const [notes, setNotes] = useState("");
+  const [showAddCampaign, setShowAddCampaign] = useState(false);
+  
+  const [autoUtmSource, setAutoUtmSource] = useState("");
+  const [autoUtmMedium, setAutoUtmMedium] = useState("");
+  const [autoUtmCampaign, setAutoUtmCampaign] = useState("");
+  const [autoMonthYear, setAutoMonthYear] = useState("");
   const [fullUrl, setFullUrl] = useState("");
 
   const createUtmLink = useCreateUtmLink();
+  const { data: campaigns = [], isLoading: loadingCampaigns } = useUtmCampaigns();
+  const { data: platforms = [], isLoading: loadingPlatforms } = useUtmPlatforms();
+  const { data: languages = [], isLoading: loadingLanguages } = useUtmLanguages();
 
-  const validation = validateUtmParameters({
-    utm_source: utmSource,
-    utm_medium: utmMedium,
-    utm_campaign: utmCampaign,
-    utm_term: utmTerm,
-    utm_content: utmContent,
-    base_url: baseUrl,
-  });
-
+  // Auto-calculate UTM parameters whenever dependencies change
   useEffect(() => {
-    if (baseUrl && utmSource && utmMedium && utmCampaign) {
+    if (selectedPlatform) {
+      setAutoUtmSource(selectedPlatform.toLowerCase());
+      setAutoUtmMedium(calculateUtmMedium(selectedPlatform));
+    }
+
+    if (selectedCampaign && selectedLanguage) {
+      const campaign = generateUtmCampaign(selectedCampaign, selectedLanguage);
+      setAutoUtmCampaign(campaign);
+    }
+
+    setAutoMonthYear(formatMonthYearReadable());
+  }, [selectedCampaign, selectedPlatform, selectedLanguage]);
+
+  // Build full URL whenever parameters change
+  useEffect(() => {
+    if (baseUrl && autoUtmSource && autoUtmMedium && autoUtmCampaign) {
       const url = buildUtmUrl({
-        base_url: baseUrl,
-        utm_source: utmSource,
-        utm_medium: utmMedium,
-        utm_campaign: utmCampaign,
-        utm_term: utmTerm,
-        utm_content: utmContent,
+        baseUrl,
+        utmSource: autoUtmSource,
+        utmMedium: autoUtmMedium,
+        utmCampaign: autoUtmCampaign,
+        utmContent: utmContent || undefined,
+        utmTerm: utmTerm || undefined,
       });
       setFullUrl(url);
     } else {
       setFullUrl("");
     }
-  }, [baseUrl, utmSource, utmMedium, utmCampaign, utmTerm, utmContent]);
+  }, [baseUrl, autoUtmSource, autoUtmMedium, autoUtmCampaign, utmContent, utmTerm]);
 
   const handleCopy = () => {
-    if (fullUrl) {
-      navigator.clipboard.writeText(fullUrl);
-      toast.success("URL copied to clipboard!");
-    }
+    navigator.clipboard.writeText(fullUrl);
+    toast.success("URL copied to clipboard!");
   };
 
   const handleSave = async () => {
-    if (!validation.isValid) {
-      toast.error("Please fix validation errors before saving");
+    if (!linkName.trim()) {
+      toast.error("Please enter a link name");
       return;
     }
 
-    if (!name.trim()) {
-      toast.error("Please enter a name for this UTM link");
+    if (!baseUrl.trim()) {
+      toast.error("Please enter a base URL");
       return;
     }
 
-    await createUtmLink.mutateAsync({
-      name: name.trim(),
-      base_url: baseUrl,
-      full_url: fullUrl,
-      utm_source: utmSource.toLowerCase().replace(/\s+/g, "-"),
-      utm_medium: utmMedium.toLowerCase().replace(/\s+/g, "-"),
-      utm_campaign: utmCampaign.toLowerCase().replace(/\s+/g, "-"),
-      utm_term: utmTerm ? utmTerm.toLowerCase().replace(/\s+/g, "-") : undefined,
-      utm_content: utmContent ? utmContent.toLowerCase().replace(/\s+/g, "-") : undefined,
-      entity: entity.length > 0 ? entity : undefined,
-      teams: teams.length > 0 ? teams : undefined,
-      campaign_type: campaignType ? (campaignType as any) : undefined,
-      usage_context: usageContext || undefined,
-      notes: notes || undefined,
-      status: "active",
-      is_validated: false,
-    });
+    if (!selectedCampaign) {
+      toast.error("Please select a campaign");
+      return;
+    }
 
-    // Reset form
-    setName("");
-    setBaseUrl("");
-    setUtmSource("");
-    setUtmMedium("");
-    setUtmCampaign("");
-    setUtmTerm("");
-    setUtmContent("");
-    setEntity([]);
-    setTeams([]);
-    setCampaignType("");
-    setUsageContext("");
-    setNotes("");
+    if (!selectedPlatform) {
+      toast.error("Please select a platform");
+      return;
+    }
 
-    onSave?.();
+    if (!selectedLanguage) {
+      toast.error("Please select a language");
+      return;
+    }
+
+    if (!selectedPurpose) {
+      toast.error("Please select a link purpose");
+      return;
+    }
+
+    if (selectedEntities.length === 0) {
+      toast.error("Please select at least one entity");
+      return;
+    }
+
+    if (selectedTeams.length === 0) {
+      toast.error("Please select at least one team");
+      return;
+    }
+
+    try {
+      await createUtmLink.mutateAsync({
+        name: linkName.trim(),
+        base_url: baseUrl.trim(),
+        full_url: fullUrl,
+        campaign_name: selectedCampaign,
+        platform: selectedPlatform,
+        language: selectedLanguage,
+        link_purpose: selectedPurpose as any,
+        month_year: autoMonthYear,
+        utm_source: autoUtmSource,
+        utm_medium: autoUtmMedium,
+        utm_campaign: autoUtmCampaign,
+        utm_content: utmContent || null,
+        utm_term: utmTerm || null,
+        entity: selectedEntities,
+        teams: selectedTeams,
+        notes: notes || null,
+      });
+
+      // Reset form
+      setLinkName("");
+      setBaseUrl("");
+      setSelectedCampaign("");
+      setSelectedPlatform("");
+      setSelectedLanguage("");
+      setSelectedPurpose("");
+      setSelectedEntities([]);
+      setSelectedTeams([]);
+      setUtmContent("");
+      setUtmTerm("");
+      setNotes("");
+
+      if (onSave) onSave();
+    } catch (error) {
+      // Error handled by mutation
+    }
   };
 
+  const isFormValid = linkName && baseUrl && selectedCampaign && selectedPlatform && 
+    selectedLanguage && selectedPurpose && selectedEntities.length > 0 && selectedTeams.length > 0;
+
   return (
-    <div className="space-y-6">
+    <>
       <Card>
         <CardHeader>
-          <CardTitle>Build UTM Link</CardTitle>
+          <CardTitle>UTM Link Builder</CardTitle>
+          <CardDescription>
+            Create UTM-tagged links with auto-generated parameters based on GA4 standards
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Link Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., UAE Q1 Facebook Lead Gen"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
+        <CardContent className="space-y-6">
+          {/* Link Name */}
+          <div className="space-y-2">
+            <Label htmlFor="link-name">Link Name *</Label>
+            <Input
+              id="link-name"
+              value={linkName}
+              onChange={(e) => setLinkName(e.target.value)}
+              placeholder="e.g., Gold Facebook AR October"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="baseUrl">Base URL *</Label>
-              <Input
-                id="baseUrl"
-                placeholder="https://cfi.trade/open-account"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-              />
-            </div>
+          {/* Base URL */}
+          <div className="space-y-2">
+            <Label htmlFor="base-url">Base URL *</Label>
+            <Input
+              id="base-url"
+              type="url"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder="https://cfi.trade/open-account"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="utmSource">UTM Source *</Label>
-              <Input
-                id="utmSource"
-                placeholder="e.g., facebook, google, newsletter"
-                value={utmSource}
-                onChange={(e) => setUtmSource(e.target.value)}
-              />
+          {/* Campaign Selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Campaign *</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddCampaign(true)}
+                className="h-7"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                New Campaign
+              </Button>
             </div>
+            <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select campaign..." />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingCampaigns ? (
+                  <SelectItem value="loading" disabled>Loading...</SelectItem>
+                ) : (
+                  campaigns.map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.name}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
+          {/* Platform & Language Row */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="utmMedium">UTM Medium *</Label>
-              <Input
-                id="utmMedium"
-                placeholder="e.g., cpc, email, social"
-                value={utmMedium}
-                onChange={(e) => setUtmMedium(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="utmCampaign">UTM Campaign *</Label>
-              <Input
-                id="utmCampaign"
-                placeholder="e.g., q1_2025_uae_lead_gen"
-                value={utmCampaign}
-                onChange={(e) => setUtmCampaign(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="utmTerm">UTM Term (Optional)</Label>
-              <Input
-                id="utmTerm"
-                placeholder="e.g., forex trading"
-                value={utmTerm}
-                onChange={(e) => setUtmTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="utmContent">UTM Content (Optional)</Label>
-              <Input
-                id="utmContent"
-                placeholder="e.g., carousel_ad_v2"
-                value={utmContent}
-                onChange={(e) => setUtmContent(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Entity</Label>
-              <SimpleMultiSelect
-                options={ENTITIES.map(e => ({ value: e, label: e }))}
-                selected={entity}
-                onChange={setEntity}
-                placeholder="Select entities..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Team</Label>
-              <SimpleMultiSelect
-                options={TEAMS.map(t => ({ value: t, label: t }))}
-                selected={teams}
-                onChange={setTeams}
-                placeholder="Select teams..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="campaignType">Campaign Type</Label>
-              <Select value={campaignType} onValueChange={setCampaignType}>
+              <Label>Platform *</Label>
+              <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select campaign type" />
+                  <SelectValue placeholder="Select platform..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="paid_search">Paid Search</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="display">Display</SelectItem>
-                  <SelectItem value="affiliate">Affiliate</SelectItem>
-                  <SelectItem value="referral">Referral</SelectItem>
-                  <SelectItem value="organic">Organic</SelectItem>
+                  {loadingPlatforms ? (
+                    <SelectItem value="loading" disabled>Loading...</SelectItem>
+                  ) : (
+                    platforms.map((platform) => (
+                      <SelectItem key={platform.id} value={platform.name}>
+                        {platform.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="usageContext">Usage Context</Label>
-              <Input
-                id="usageContext"
-                placeholder="Where will this be used?"
-                value={usageContext}
-                onChange={(e) => setUsageContext(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Additional notes about this UTM link..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
+              <Label>Language *</Label>
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingLanguages ? (
+                    <SelectItem value="loading" disabled>Loading...</SelectItem>
+                  ) : (
+                    languages.map((language) => (
+                      <SelectItem key={language.id} value={language.code}>
+                        {language.name} ({language.code})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {validation.errors.length > 0 && (
-            <div className="space-y-2">
-              {validation.errors.map((error, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 mt-0.5" />
-                  <span>{error}</span>
-                </div>
+          {/* Link Purpose */}
+          <div className="space-y-2">
+            <Label>Link Purpose *</Label>
+            <div className="flex gap-2">
+              {LINK_PURPOSES.map((purpose) => (
+                <Button
+                  key={purpose.value}
+                  type="button"
+                  variant={selectedPurpose === purpose.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedPurpose(purpose.value)}
+                >
+                  {purpose.label}
+                </Button>
               ))}
+            </div>
+          </div>
+
+          {/* Entity Selection */}
+          <div className="space-y-2">
+            <Label>Entities *</Label>
+            <SimpleMultiSelect
+              options={ENTITIES.map(e => ({ value: e, label: e }))}
+              selected={selectedEntities}
+              onChange={setSelectedEntities}
+              placeholder="Select entities..."
+            />
+          </div>
+
+          {/* Team Selection */}
+          <div className="space-y-2">
+            <Label>Teams *</Label>
+            <SimpleMultiSelect
+              options={TEAMS.map(t => ({ value: t, label: t }))}
+              selected={selectedTeams}
+              onChange={setSelectedTeams}
+              placeholder="Select teams..."
+            />
+          </div>
+
+          {/* Optional UTM Parameters */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="text-sm font-medium">Optional Parameters</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="utm-content">UTM Content</Label>
+                <Input
+                  id="utm-content"
+                  value={utmContent}
+                  onChange={(e) => setUtmContent(e.target.value)}
+                  placeholder="e.g., carousel_ad_v2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="utm-term">UTM Term</Label>
+                <Input
+                  id="utm-term"
+                  value={utmTerm}
+                  onChange={(e) => setUtmTerm(e.target.value)}
+                  placeholder="e.g., gold+trading"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Auto-Generated Parameters */}
+          {(autoUtmSource || autoUtmMedium || autoUtmCampaign) && (
+            <div className="space-y-3 pt-4 border-t">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Auto-Generated UTM Parameters
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {autoUtmSource && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">utm_source:</span>
+                    <div className="font-mono bg-muted px-2 py-1 rounded">{autoUtmSource}</div>
+                  </div>
+                )}
+                {autoUtmMedium && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">utm_medium:</span>
+                    <div className="font-mono bg-muted px-2 py-1 rounded">{autoUtmMedium}</div>
+                  </div>
+                )}
+                {autoUtmCampaign && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">utm_campaign:</span>
+                    <div className="font-mono bg-muted px-2 py-1 rounded">{autoUtmCampaign}</div>
+                  </div>
+                )}
+                {autoMonthYear && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground">Month/Year:</span>
+                    <div className="font-mono bg-muted px-2 py-1 rounded">{autoMonthYear}</div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {validation.warnings.length > 0 && (
-            <div className="space-y-2">
-              {validation.warnings.map((warning, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-yellow-600">
-                  <AlertCircle className="h-4 w-4 mt-0.5" />
-                  <span>{warning}</span>
-                </div>
-              ))}
-            </div>
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Additional notes about this UTM link..."
+              rows={3}
+            />
+          </div>
+
+          {/* Validation Warning */}
+          {!isFormValid && (linkName || baseUrl || selectedCampaign || selectedPlatform) && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Please fill in all required fields (marked with *)
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
+      {/* Generated URL Preview */}
       {fullUrl && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Generated URL
-              {validation.isValid && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-            </CardTitle>
+            <CardTitle>Generated URL</CardTitle>
+            <CardDescription>Your complete UTM-tagged link</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-muted rounded-md break-all font-mono text-sm">
+            <div className="p-3 bg-muted rounded-lg font-mono text-sm break-all">
               {fullUrl}
             </div>
             <div className="flex gap-2">
@@ -293,7 +425,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
               </Button>
               <Button 
                 onClick={handleSave} 
-                disabled={!validation.isValid || !name.trim()} 
+                disabled={!isFormValid || createUtmLink.isPending}
                 className="flex-1"
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -303,6 +435,8 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
           </CardContent>
         </Card>
       )}
-    </div>
+
+      <AddCampaignDialog open={showAddCampaign} onOpenChange={setShowAddCampaign} />
+    </>
   );
 };

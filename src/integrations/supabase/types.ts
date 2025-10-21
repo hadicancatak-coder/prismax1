@@ -1802,6 +1802,30 @@ export type Database = {
         }
         Relationships: []
       }
+      utm_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       utm_change_history: {
         Row: {
           change_reason: string | null
@@ -1843,9 +1867,34 @@ export type Database = {
           },
         ]
       }
+      utm_languages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       utm_links: {
         Row: {
           base_url: string
+          campaign_name: string | null
           campaign_type: Database["public"]["Enums"]["campaign_type"] | null
           click_count: number | null
           created_at: string
@@ -1855,9 +1904,13 @@ export type Database = {
           full_url: string
           id: string
           is_validated: boolean | null
+          language: string | null
           last_used_at: string | null
+          link_purpose: string | null
+          month_year: string | null
           name: string
           notes: string | null
+          platform: string | null
           status: Database["public"]["Enums"]["utm_status"] | null
           tags: string[] | null
           teams: string[] | null
@@ -1875,6 +1928,7 @@ export type Database = {
         }
         Insert: {
           base_url: string
+          campaign_name?: string | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
           click_count?: number | null
           created_at?: string
@@ -1884,9 +1938,13 @@ export type Database = {
           full_url: string
           id?: string
           is_validated?: boolean | null
+          language?: string | null
           last_used_at?: string | null
+          link_purpose?: string | null
+          month_year?: string | null
           name: string
           notes?: string | null
+          platform?: string | null
           status?: Database["public"]["Enums"]["utm_status"] | null
           tags?: string[] | null
           teams?: string[] | null
@@ -1904,6 +1962,7 @@ export type Database = {
         }
         Update: {
           base_url?: string
+          campaign_name?: string | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
           click_count?: number | null
           created_at?: string
@@ -1913,9 +1972,13 @@ export type Database = {
           full_url?: string
           id?: string
           is_validated?: boolean | null
+          language?: string | null
           last_used_at?: string | null
+          link_purpose?: string | null
+          month_year?: string | null
           name?: string
           notes?: string | null
+          platform?: string | null
           status?: Database["public"]["Enums"]["utm_status"] | null
           tags?: string[] | null
           teams?: string[] | null
@@ -1930,6 +1993,27 @@ export type Database = {
           validated_at?: string | null
           validated_by?: string | null
           validation_notes?: string | null
+        }
+        Relationships: []
+      }
+      utm_platforms: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
         }
         Relationships: []
       }
