@@ -129,6 +129,35 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
     toast({ title: "All content copied to clipboard" });
   };
 
+  const saveAsElement = async (content: string, type: string, entity: string) => {
+    if (!content.trim() || !entity) {
+      toast({
+        title: "Cannot save",
+        description: "Select entity and enter content first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('ad_elements').insert({
+      element_type: type,
+      content: { text: content },
+      entity: [entity],
+      created_by: user!.id,
+      tags: [entity, type],
+      google_status: 'pending'
+    });
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "✓ Saved to library", 
+        description: `Tagged with ${entity}` 
+      });
+    }
+  };
+
   const handleSaveAd = async () => {
     if (!user || !adName.trim()) {
       toast({ title: "Error", description: "Please enter an ad name", variant: "destructive" });
@@ -369,7 +398,7 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                   />
                   <Select value={adEntity} onValueChange={setAdEntity}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Entity" />
+                      <SelectValue placeholder="Select Entity *" />
                     </SelectTrigger>
                     <SelectContent>
                       {ENTITIES.map((ent) => (
@@ -377,6 +406,9 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                       ))}
                     </SelectContent>
                   </Select>
+                  {!adEntity && (
+                    <p className="text-xs text-destructive">⚠️ Select entity first to enable inputs</p>
+                  )}
                   <div className="text-xs text-muted-foreground">
                     Created: {format(new Date(), "MMM dd, yyyy")}
                   </div>
@@ -403,19 +435,30 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         className="text-sm"
                         disabled={!adEntity}
                       />
-                      <span className="text-xs text-muted-foreground w-12">{headline.length}/30</span>
+                      <span className="text-xs text-muted-foreground w-12 shrink-0">{headline.length}/30</span>
                       <ElementQuickInsert
                         elementType="headline"
                         onInsert={(content) => {
                           const newHeadlines = [...headlines];
                           newHeadlines[index] = content.slice(0, 30);
                           setHeadlines(newHeadlines);
+                          incrementUsage.mutate(content);
                         }}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => saveAsElement(headline, 'headline', adEntity)}
+                        disabled={!headline.trim() || !adEntity}
+                        title="Save for reuse"
+                      >
+                        <Save className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
                         onClick={() => handleCopy(headline)}
                         disabled={!headline}
                       >
@@ -450,23 +493,36 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                         />
                         <span className="text-xs text-muted-foreground">{desc.length}/90</span>
                       </div>
-                      <ElementQuickInsert
-                        elementType="description"
-                        onInsert={(content) => {
-                          const newDescs = [...descriptions];
-                          newDescs[index] = content.slice(0, 90);
-                          setDescriptions(newDescs);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleCopy(desc)}
-                        disabled={!desc}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <ElementQuickInsert
+                          elementType="description"
+                          onInsert={(content) => {
+                            const newDescs = [...descriptions];
+                            newDescs[index] = content.slice(0, 90);
+                            setDescriptions(newDescs);
+                            incrementUsage.mutate(content);
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => saveAsElement(desc, 'description', adEntity)}
+                          disabled={!desc.trim() || !adEntity}
+                          title="Save for reuse"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(desc)}
+                          disabled={!desc}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -506,11 +562,30 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                             newLinks[index] = { ...newLinks[index], title: e.target.value.slice(0, 25) };
                             setSitelinks(newLinks);
                           }}
-                          placeholder={`Sitelink ${index + 1} Title`}
+                          placeholder={adEntity ? `Sitelink ${index + 1} Title` : "Select entity first"}
                           maxLength={25}
                           className="text-sm"
+                          disabled={!adEntity}
                         />
-                        <span className="text-xs text-muted-foreground w-12">{link.title.length}/25</span>
+                        <span className="text-xs text-muted-foreground w-12 shrink-0">{link.title.length}/25</span>
+                        <ElementQuickInsert
+                          elementType="sitelink"
+                          onInsert={(content) => {
+                            const newLinks = [...sitelinks];
+                            newLinks[index] = { ...newLinks[index], title: content.slice(0, 25) };
+                            setSitelinks(newLinks);
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => saveAsElement(link.title, 'sitelink', adEntity)}
+                          disabled={!link.title.trim() || !adEntity}
+                          title="Save for reuse"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
                       </div>
                       <div className="flex items-center gap-2">
                         <Input
@@ -520,11 +595,12 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                             newLinks[index] = { ...newLinks[index], description: e.target.value.slice(0, 35) };
                             setSitelinks(newLinks);
                           }}
-                          placeholder="Description"
+                          placeholder={adEntity ? "Description" : "Select entity first"}
                           maxLength={35}
                           className="text-sm"
+                          disabled={!adEntity}
                         />
-                        <span className="text-xs text-muted-foreground w-12">{link.description.length}/35</span>
+                        <span className="text-xs text-muted-foreground w-12 shrink-0">{link.description.length}/35</span>
                       </div>
                     </div>
                   ))}
@@ -546,15 +622,34 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                           newCallouts[index] = e.target.value.slice(0, 25);
                           setCallouts(newCallouts);
                         }}
-                        placeholder={`Callout ${index + 1}`}
+                        placeholder={adEntity ? `Callout ${index + 1}` : "Select entity first"}
                         maxLength={25}
                         className="text-sm"
+                        disabled={!adEntity}
                       />
-                      <span className="text-xs text-muted-foreground w-12">{callout.length}/25</span>
+                      <span className="text-xs text-muted-foreground w-12 shrink-0">{callout.length}/25</span>
+                      <ElementQuickInsert
+                        elementType="callout"
+                        onInsert={(content) => {
+                          const newCallouts = [...callouts];
+                          newCallouts[index] = content.slice(0, 25);
+                          setCallouts(newCallouts);
+                        }}
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => saveAsElement(callout, 'callout', adEntity)}
+                        disabled={!callout.trim() || !adEntity}
+                        title="Save for reuse"
+                      >
+                        <Save className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
                         onClick={() => handleCopy(callout)}
                         disabled={!callout}
                       >

@@ -17,7 +17,10 @@ interface DisplayAdPreviewProps {
 export function DisplayAdPreview(props: DisplayAdPreviewProps) {
   const [combinationIndex, setCombinationIndex] = useState(0);
   const displayUrl = props.landingPage ? new URL(props.landingPage).hostname.replace('www.', '') : 'example.com';
-  const activeDescription = props.descriptions.filter(d => d.trim())[combinationIndex % props.descriptions.filter(d => d.trim()).length] || props.descriptions[0];
+  
+  // Get active filtered arrays
+  const activeDescriptions = props.descriptions.filter(d => d.trim());
+  const currentDescription = activeDescriptions[combinationIndex % activeDescriptions.length] || activeDescriptions[0] || '';
 
   return (
     <div className="space-y-4">
@@ -43,20 +46,64 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
           <TabsTrigger value="sidebar">Sidebar</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="mobile" className="mt-4">
-          <div className="border rounded-lg overflow-hidden bg-background max-w-[375px] mx-auto">
-            <div className="h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">375x200 Image</p>
+        <TabsContent value="mobile" className="mt-4 flex justify-center">
+          {/* Phone Frame Mockup */}
+          <div className="relative w-[400px] h-[800px]">
+            {/* Phone bezel */}
+            <div className="absolute inset-0 rounded-[3rem] bg-gray-900 shadow-2xl p-3">
+              {/* Screen */}
+              <div className="h-full w-full rounded-[2.5rem] bg-white overflow-hidden relative">
+                {/* Status bar */}
+                <div className="h-8 bg-gray-50 flex items-center justify-between px-6 text-xs text-gray-600">
+                  <span>9:41</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-3 border border-gray-400 rounded-sm" />
+                    <div className="w-1 h-3 bg-gray-400 rounded-sm" />
+                  </div>
+                </div>
+                
+                {/* Ad content - scrollable */}
+                <div className="h-[calc(100%-2rem)] overflow-y-auto bg-white">
+                  {/* Ad */}
+                  <div className="border-b">
+                    <div className="h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                      <div className="text-center">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">375x200 Image</p>
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">{displayUrl}</p>
+                      <h3 className="font-semibold text-sm line-clamp-2 text-gray-900">
+                        {props.shortHeadline || props.longHeadline || 'Your headline here'}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {currentDescription || 'Your description here'}
+                      </p>
+                      {props.ctaText && (
+                        <Button size="sm" className="w-full mt-2">
+                          {props.ctaText}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Fake content below ad */}
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                  </div>
+                </div>
+                
+                {/* Home indicator */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-400 rounded-full" />
               </div>
             </div>
-            <div className="p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">{displayUrl}</p>
-              <h3 className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Your headline here'}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">{activeDescription || 'Your description here'}</p>
-              {props.ctaText && <Button size="sm" className="w-full mt-2">{props.ctaText}</Button>}
-            </div>
+            
+            {/* Power button */}
+            <div className="absolute right-0 top-32 w-1 h-16 bg-gray-800 rounded-l" />
+            {/* Volume buttons */}
+            <div className="absolute left-0 top-28 w-1 h-8 bg-gray-800 rounded-r" />
+            <div className="absolute left-0 top-40 w-1 h-12 bg-gray-800 rounded-r" />
           </div>
         </TabsContent>
 
@@ -99,7 +146,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
                   <Badge variant="outline" className="text-xs">Ad</Badge>
                 </div>
                 <h3 className="font-semibold text-base">{props.longHeadline || 'Your email subject'}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-3">{activeDescription || 'Ad description...'}</p>
+                <p className="text-sm text-muted-foreground line-clamp-3">{currentDescription || 'Ad description...'}</p>
                 <div className="flex items-center gap-2 pt-2">
                   {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
                   <Button size="sm" variant="ghost">Learn More</Button>
@@ -118,7 +165,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">{displayUrl}</p>
                 <h3 className="font-semibold text-sm line-clamp-1">{props.longHeadline || 'Headline'}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-1">{activeDescription}</p>
+                <p className="text-xs text-muted-foreground line-clamp-1">{currentDescription}</p>
               </div>
               {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
             </div>
@@ -136,7 +183,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
             <div className="p-3 space-y-2">
               <p className="text-xs text-muted-foreground">{displayUrl}</p>
               <h3 className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Headline'}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">{activeDescription}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{currentDescription}</p>
               {props.ctaText && <Button size="sm" className="w-full">{props.ctaText}</Button>}
             </div>
           </div>

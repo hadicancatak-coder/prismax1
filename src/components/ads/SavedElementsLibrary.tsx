@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Upload } from 'lucide-react';
 import { useAdElements } from '@/hooks/useAdElements';
 import { ElementCard } from './ElementCard';
@@ -9,11 +10,13 @@ import { CreateElementDialog } from './CreateElementDialog';
 import { BulkImportDialog } from './BulkImportDialog';
 import { AdvancedFilters } from './AdvancedFilters';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { ENTITIES } from '@/lib/constants';
 
 export function SavedElementsLibrary() {
   const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<any>({});
+  const [entityFilter, setEntityFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   
@@ -22,6 +25,7 @@ export function SavedElementsLibrary() {
   const { data: elements, isLoading } = useAdElements({
     elementType: activeTab,
     search: debouncedSearch,
+    entity: entityFilter === 'all' ? undefined : entityFilter,
     ...filters,
   });
 
@@ -42,6 +46,17 @@ export function SavedElementsLibrary() {
       </div>
 
       <div className="flex gap-4">
+        <Select value={entityFilter} onValueChange={setEntityFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by Entity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Entities</SelectItem>
+            {ENTITIES.map((ent) => (
+              <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

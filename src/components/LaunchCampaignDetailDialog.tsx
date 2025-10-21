@@ -148,36 +148,82 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Rocket className="h-6 w-6 text-primary" />
-              <DialogTitle className="text-2xl">
-                {editMode ? "Edit Mission" : "Mission Details"}
-              </DialogTitle>
+        <DialogHeader className="pb-4 border-b">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Rocket className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">
+                  {editMode ? "Edit Mission" : "Mission Details"}
+                </DialogTitle>
+                <DialogDescription className="text-sm mt-0.5">
+                  {editMode ? "Update mission details" : campaign.title}
+                </DialogDescription>
+              </div>
             </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
               {campaign.status === 'pending' && !editMode && (
                 <Button 
                   variant="default" 
                   size="sm" 
                   onClick={async () => {
-                    const { error } = await supabase
-                      .from('launch_pad_campaigns')
-                      .update({ 
-                        status: 'live',
-                        launched_at: new Date().toISOString()
-                      })
-                      .eq('id', campaignId);
+                    try {
+                      // Update campaign status
+                      const { error: updateError } = await supabase
+                        .from('launch_pad_campaigns')
+                        .update({ 
+                          status: 'live',
+                          launched_at: new Date().toISOString()
+                        })
+                        .eq('id', campaignId);
+                        
+                      if (updateError) {
+                        console.error('Campaign update error:', updateError);
+                        throw new Error(updateError.message);
+                      }
+
+                      // Send notifications (non-blocking)
+                      if (campaign.launch_campaign_assignees?.length > 0) {
+                        const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
+                          user_id: assignee.user_id,
+                          type: 'campaign_launched',
+                          payload_json: {
+                            campaign_id: campaignId,
+                            campaign_title: campaign.title,
+                            message: `Campaign "${campaign.title}" has launched!`
+                          }
+                        }));
+                        
+                        // Don't block on notification errors
+                        const { error: notifError } = await supabase
+                          .from('notifications')
+                          .insert(notifications);
+                          
+                        if (notifError) {
+                          console.warn('Notification send failed (non-critical):', notifError);
+                        }
+                      }
                       
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
                       toast({ 
                         title: "🚀 Campaign Launched", 
-                        description: "Campaign moved to live status" 
+                        description: "Campaign moved to live status",
+                        variant: "default"
                       });
+                      
+                      // Refresh data
                       await fetchCampaign();
                       onUpdate?.();
+                      
+                    } catch (error: any) {
+                      console.error('Launch failed:', error);
+                      toast({ 
+                        title: "Launch Failed", 
+                        description: error.message || 'Unable to launch campaign. Please try again.',
+                        variant: "destructive" 
+                      });
                     }
                   }}
                   className="bg-green-600 hover:bg-green-700"
@@ -192,10 +238,8 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                   Edit
                 </Button>
               )}
+            </div>
           </div>
-          <DialogDescription>
-            {editMode ? "Update mission details" : "View mission information"}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

@@ -1,8 +1,13 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ElementQuickInsert } from './ElementQuickInsert';
+import { Save, Copy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface DisplayAdCreatorProps {
   businessName: string;
@@ -34,34 +39,108 @@ export function DisplayAdCreator({
   landingPage, setLandingPage,
   adEntity,
 }: DisplayAdCreatorProps) {
+  const { user } = useAuth();
+
+  const saveAsElement = async (content: string, type: string) => {
+    if (!content.trim() || !adEntity || !user) {
+      toast({
+        title: "Cannot save",
+        description: "Select entity and enter content first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('ad_elements').insert({
+      element_type: type,
+      content: { text: content },
+      entity: [adEntity],
+      created_by: user.id,
+      tags: [adEntity, type],
+      google_status: 'pending'
+    });
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "✓ Saved to library", 
+        description: `Tagged with ${adEntity}` 
+      });
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <Label htmlFor="business-name">Business Name (25 chars max)</Label>
-        <Input
-          id="business-name"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value.slice(0, 25))}
-          placeholder="Your Business Name"
-          maxLength={25}
-        />
+        <div className="flex gap-2 items-center">
+          <Input
+            id="business-name"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value.slice(0, 25))}
+            placeholder={adEntity ? "Your Business Name" : "Select entity first"}
+            maxLength={25}
+            disabled={!adEntity}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => saveAsElement(businessName, 'headline')}
+            disabled={!businessName.trim() || !adEntity}
+            title="Save for reuse"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopy(businessName)}
+            disabled={!businessName}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">{businessName.length}/25</p>
       </div>
 
       <div>
         <Label htmlFor="long-headline">Long Headline (90 chars max)</Label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input
             id="long-headline"
             value={longHeadline}
             onChange={(e) => setLongHeadline(e.target.value.slice(0, 90))}
-            placeholder="Your main promotional message"
+            placeholder={adEntity ? "Your main promotional message" : "Select entity first"}
             maxLength={90}
+            disabled={!adEntity}
           />
           <ElementQuickInsert
             elementType="headline"
             onInsert={(text) => setLongHeadline(text.slice(0, 90))}
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => saveAsElement(longHeadline, 'headline')}
+            disabled={!longHeadline.trim() || !adEntity}
+            title="Save for reuse"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopy(longHeadline)}
+            disabled={!longHeadline}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-1">{longHeadline.length}/90</p>
       </div>
@@ -69,7 +148,7 @@ export function DisplayAdCreator({
       <div>
         <Label>Short Headlines (5x 30 chars max)</Label>
         {shortHeadlines.map((headline, index) => (
-          <div key={index} className="flex gap-2 mt-2">
+          <div key={index} className="flex gap-2 mt-2 items-center">
             <Input
               value={headline}
               onChange={(e) => {
@@ -81,6 +160,9 @@ export function DisplayAdCreator({
               maxLength={30}
               disabled={!adEntity}
             />
+            <span className="text-xs text-muted-foreground min-w-12 flex items-center shrink-0">
+              {headline.length}/30
+            </span>
             <ElementQuickInsert
               elementType="headline"
               onInsert={(text) => {
@@ -89,9 +171,25 @@ export function DisplayAdCreator({
                 setShortHeadlines(newHeadlines);
               }}
             />
-            <span className="text-xs text-muted-foreground min-w-12 flex items-center">
-              {headline.length}/30
-            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() => saveAsElement(headline, 'headline')}
+              disabled={!headline.trim() || !adEntity}
+              title="Save for reuse"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() => handleCopy(headline)}
+              disabled={!headline}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
           </div>
         ))}
       </div>
@@ -99,7 +197,7 @@ export function DisplayAdCreator({
       <div>
         <Label>Descriptions (5x 90 chars max)</Label>
         {descriptions.map((desc, index) => (
-          <div key={index} className="flex gap-2 mt-2">
+          <div key={index} className="flex gap-2 mt-2 items-start">
             <Textarea
               value={desc}
               onChange={(e) => {
@@ -112,17 +210,36 @@ export function DisplayAdCreator({
               rows={2}
               disabled={!adEntity}
             />
-            <ElementQuickInsert
-              elementType="description"
-              onInsert={(text) => {
-                const newDescs = [...descriptions];
-                newDescs[index] = text.slice(0, 90);
-                setDescriptions(newDescs);
-              }}
-            />
-            <span className="text-xs text-muted-foreground min-w-12 flex items-start pt-2">
-              {desc.length}/90
-            </span>
+            <div className="flex flex-col gap-1 shrink-0 pt-2">
+              <span className="text-xs text-muted-foreground min-w-12">
+                {desc.length}/90
+              </span>
+              <ElementQuickInsert
+                elementType="description"
+                onInsert={(text) => {
+                  const newDescs = [...descriptions];
+                  newDescs[index] = text.slice(0, 90);
+                  setDescriptions(newDescs);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => saveAsElement(desc, 'description')}
+                disabled={!desc.trim() || !adEntity}
+                title="Save for reuse"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleCopy(desc)}
+                disabled={!desc}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
