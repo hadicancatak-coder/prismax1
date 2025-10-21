@@ -1,0 +1,273 @@
+import { useEffect, useState } from "react";
+import { errorLogger } from "@/lib/errorLogger";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CheckCircle2, XCircle, AlertCircle, Info } from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface ErrorLog {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  error_type: string;
+  error_message: string;
+  stack_trace: string | null;
+  resolved: boolean;
+  created_at: string;
+  profiles: {
+    name: string;
+    email: string;
+  } | null;
+}
+
+export default function ErrorLogs() {
+  const [errors, setErrors] = useState<ErrorLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [resolvedFilter, setResolvedFilter] = useState<string>("unresolved");
+  const [selectedError, setSelectedError] = useState<ErrorLog | null>(null);
+
+  useEffect(() => {
+    fetchErrors();
+  }, [severityFilter, typeFilter, resolvedFilter]);
+
+  const fetchErrors = async () => {
+    setLoading(true);
+    try {
+      const filters: any = {};
+      
+      if (severityFilter !== 'all') filters.severity = severityFilter;
+      if (typeFilter !== 'all') filters.type = typeFilter;
+      if (resolvedFilter === 'resolved') filters.resolved = true;
+      if (resolvedFilter === 'unresolved') filters.resolved = false;
+
+      const data = await errorLogger.getErrors(filters);
+      setErrors(data as any);
+    } catch (error) {
+      console.error('Error fetching error logs:', error);
+      toast.error('Failed to fetch error logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResolve = async (errorId: string) => {
+    try {
+      const success = await errorLogger.resolveError(errorId);
+      if (success) {
+        toast.success('Error marked as resolved');
+        fetchErrors();
+      } else {
+        toast.error('Failed to resolve error');
+      }
+    } catch (error) {
+      toast.error('Failed to resolve error');
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <XCircle className="h-4 w-4 text-destructive" />;
+      case 'warning':
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+      case 'info':
+        return <Info className="h-4 w-4 text-blue-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const variants: Record<string, any> = {
+      critical: 'destructive',
+      warning: 'default',
+      info: 'secondary',
+    };
+    return <Badge variant={variants[severity]}>{severity}</Badge>;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <Select value={severityFilter} onValueChange={setSeverityFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Severity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Severities</SelectItem>
+            <SelectItem value="critical">Critical</SelectItem>
+            <SelectItem value="warning">Warning</SelectItem>
+            <SelectItem value="info">Info</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="database">Database</SelectItem>
+            <SelectItem value="auth">Auth</SelectItem>
+            <SelectItem value="api">API</SelectItem>
+            <SelectItem value="edge_function">Edge Function</SelectItem>
+            <SelectItem value="frontend">Frontend</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={resolvedFilter} onValueChange={setResolvedFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="unresolved">Unresolved</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button onClick={fetchErrors} variant="outline">
+          Refresh
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Logs ({errors.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Severity</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Message</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                </TableRow>
+              ) : errors.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">No errors found</TableCell>
+                </TableRow>
+              ) : (
+                errors.map((error) => (
+                  <TableRow key={error.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getSeverityIcon(error.severity)}
+                        {getSeverityBadge(error.severity)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{error.error_type}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-md truncate">
+                      <button
+                        onClick={() => setSelectedError(error)}
+                        className="text-left hover:underline"
+                      >
+                        {error.error_message}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      {error.profiles ? error.profiles.name : 'System'}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {format(new Date(error.created_at), 'MMM dd, HH:mm')}
+                    </TableCell>
+                    <TableCell>
+                      {error.resolved ? (
+                        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Resolved
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="w-fit">Unresolved</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!error.resolved && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResolve(error.id)}
+                        >
+                          Resolve
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selectedError} onOpenChange={() => setSelectedError(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Error Details</DialogTitle>
+          </DialogHeader>
+          {selectedError && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Severity</p>
+                  <div className="mt-1">{getSeverityBadge(selectedError.severity)}</div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Type</p>
+                  <Badge variant="outline" className="mt-1">{selectedError.error_type}</Badge>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Error Message</p>
+                <p className="text-sm bg-muted p-3 rounded-md">{selectedError.error_message}</p>
+              </div>
+
+              {selectedError.stack_trace && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Stack Trace</p>
+                  <ScrollArea className="h-[300px] w-full rounded-md border">
+                    <pre className="text-xs p-4 bg-muted">{selectedError.stack_trace}</pre>
+                  </ScrollArea>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSelectedError(null)}>
+                  Close
+                </Button>
+                {!selectedError.resolved && (
+                  <Button onClick={() => {
+                    handleResolve(selectedError.id);
+                    setSelectedError(null);
+                  }}>
+                    Mark as Resolved
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

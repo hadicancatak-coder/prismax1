@@ -1,0 +1,138 @@
+import { supabase } from "@/integrations/supabase/client";
+import { logger } from "./logger";
+
+type ErrorSeverity = 'critical' | 'warning' | 'info';
+type ErrorType = 'database' | 'auth' | 'api' | 'edge_function' | 'frontend';
+
+interface LogErrorParams {
+  severity: ErrorSeverity;
+  type: ErrorType;
+  message: string;
+  stack?: string;
+  metadata?: Record<string, any>;
+}
+
+interface ErrorFilters {
+  severity?: ErrorSeverity;
+  type?: ErrorType;
+  resolved?: boolean;
+  startDate?: Date;
+  endDate?: Date;
+  userId?: string;
+}
+
+class ErrorLogger {
+  async logError({ severity, type, message, stack, metadata = {} }: LogErrorParams) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('error_logs')
+        .insert({
+          severity,
+          error_type: type,
+          error_message: message,
+          stack_trace: stack,
+          user_id: user?.id,
+          metadata,
+        });
+
+      if (error) {
+        logger.error('Failed to log error to database', error);
+      }
+    } catch (err) {
+      logger.error('Error in errorLogger.logError', err);
+    }
+  }
+
+  async getErrors(filters: ErrorFilters = {}) {
+    try {
+      let query = supabase
+        .from('error_logs')
+        .select('*, profiles!error_logs_user_id_fkey(name, email, avatar_url)')
+        .order('created_at', { ascending: false });
+
+      if (filters.severity) {
+        query = query.eq('severity', filters.severity);
+      }
+      if (filters.type) {
+        query = query.eq('error_type', filters.type);
+      }
+      if (filters.resolved !== undefined) {
+        query = query.eq('resolved', filters.resolved);
+      }
+      if (filters.userId) {
+        query = query.eq('user_id', filters.userId);
+      }
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        query = query.lte('created_at', filters.endDate.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      logger.error('Error fetching error logs', err);
+      return [];
+    }
+  }
+
+  async resolveError(errorId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('error_logs')
+        .update({
+          resolved: true,
+          resolved_by: user.id,
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', errorId);
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      logger.error('Error resolving error log', err);
+      return false;
+    }
+  }
+
+  async getErrorStats() {
+    try {
+      const { data, error } = await supabase
+        .from('error_logs')
+        .select('severity, error_type, resolved');
+
+      if (error) throw error;
+
+      const stats = {
+        total: data?.length || 0,
+        critical: data?.filter(e => e.severity === 'critical').length || 0,
+        warning: data?.filter(e => e.severity === 'warning').length || 0,
+        info: data?.filter(e => e.severity === 'info').length || 0,
+        unresolved: data?.filter(e => !e.resolved).length || 0,
+        resolved: data?.filter(e => e.resolved).length || 0,
+        byType: {
+          database: data?.filter(e => e.error_type === 'database').length || 0,
+          auth: data?.filter(e => e.error_type === 'auth').length || 0,
+          api: data?.filter(e => e.error_type === 'api').length || 0,
+          edge_function: data?.filter(e => e.error_type === 'edge_function').length || 0,
+          frontend: data?.filter(e => e.error_type === 'frontend').length || 0,
+        },
+      };
+
+      return stats;
+    } catch (err) {
+      logger.error('Error fetching error stats', err);
+      return null;
+    }
+  }
+}
+
+export const errorLogger = new ErrorLogger();

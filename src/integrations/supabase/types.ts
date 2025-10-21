@@ -370,6 +370,39 @@ export type Database = {
           },
         ]
       }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          changes: Json | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
           ad_group_id: string | null
@@ -489,6 +522,42 @@ export type Database = {
           message?: string
           priority?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      approval_history: {
+        Row: {
+          approver_id: string | null
+          changes: Json
+          comment: string | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          requester_id: string | null
+          status: string
+        }
+        Insert: {
+          approver_id?: string | null
+          changes?: Json
+          comment?: string | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          requester_id?: string | null
+          status: string
+        }
+        Update: {
+          approver_id?: string | null
+          changes?: Json
+          comment?: string | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          requester_id?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -777,6 +846,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      error_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string
+          error_type: string
+          id: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       launch_campaign_assignees: {
         Row: {

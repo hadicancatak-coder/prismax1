@@ -10,6 +10,12 @@ import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
 import AdminPanel from "./pages/AdminPanel";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Overview from "./pages/admin/Overview";
+import UsersManagement from "./pages/admin/UsersManagement";
+import ErrorLogs from "./pages/admin/ErrorLogs";
+import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
+import AuditLog from "./pages/admin/AuditLog";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -54,6 +60,14 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="overview" element={<Overview />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="approvals" element={<ApprovalsCenter />} />
+              <Route path="errors" element={<ErrorLogs />} />
+              <Route path="activity" element={<ActivityLog />} />
+              <Route path="audit" element={<AuditLog />} />
+            </Route>
             <Route path="/team-base" element={<TeamBase />} />
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/notifications" element={<Notifications />} />
