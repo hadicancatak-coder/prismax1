@@ -159,11 +159,27 @@ export default function LaunchPad() {
     }
   };
 
-  const pendingCampaigns = campaigns.filter(c => c.status === 'pending');
-  const socialUACampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('SocialUA'));
-  const ppcCampaigns = campaigns.filter(c => c.status === 'live' && c.teams?.includes('PPC'));
+  const launchpadCampaigns = campaigns.filter(c => c.status === 'launchpad');
+  const liveCampaigns = campaigns.filter(c => c.status === 'live');
   const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
   const landedCampaigns = campaigns.filter(c => c.status === 'landed');
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const campaign = campaigns.find(c => c.id === event.active.id);
+    setActiveCampaign(campaign);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveCampaign(null);
+    
+    if (!over) return;
+    
+    const campaignId = active.id as string;
+    const newStatus = over.id as string;
+    
+    await handleStatusChange(campaignId, newStatus);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">

@@ -3,12 +3,24 @@ import { Badge } from "@/components/ui/badge";
 import { Info, Sparkles, Mail } from "lucide-react";
 
 export default function About() {
-  const currentVersion = "1.2.0";
+  const currentVersion = "1.2.1";
   
   const versionHistory = [
     {
+      version: "1.2.1",
+      date: "October 2024",
+      features: [
+        "Drag & drop campaign status management in Launch Pad",
+        "Automated workflows on status changes (notifications, task completion)",
+        "Fixed scrolling in Launch Pad boxes",
+        "CFI logo integration in sidebar",
+        "Restructured navigation (Operations menu)",
+        "Admin links moved to user menu",
+      ],
+    },
+    {
       version: "1.2.0",
-      date: "January 2025",
+      date: "October 2024",
       features: [
         "Enhanced password security (9+ characters, uppercase, number, special)",
         "User profile menu with quick access",
@@ -20,7 +32,7 @@ export default function About() {
     },
     {
       version: "1.1.0",
-      date: "December 2024",
+      date: "November 2024",
       features: [
         "Two-factor authentication (MFA)",
         "Campaign management system",
@@ -31,7 +43,7 @@ export default function About() {
     },
     {
       version: "1.0.0",
-      date: "November 2024",
+      date: "October 16, 2024",
       features: [
         "Initial release",
         "Task management",
@@ -82,11 +94,10 @@ export default function About() {
                 )}
                 <span className="text-sm text-muted-foreground">{version.date}</span>
               </div>
-              <ul className="space-y-1">
+              <ul className="space-y-1 list-disc list-inside">
                 {version.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-1">✨</span>
-                    <span>{feature}</span>
+                  <li key={featureIndex} className="text-sm text-muted-foreground">
+                    {feature}
                   </li>
                 ))}
               </ul>
@@ -106,16 +117,16 @@ export default function About() {
           <div>
             <p className="text-sm font-medium">Support Email</p>
             <a 
-              href="mailto:support@cfi.trade" 
+              href="mailto:h.catak@cfi.trade" 
               className="text-sm text-primary hover:underline"
             >
-              support@cfi.trade
+              h.catak@cfi.trade
             </a>
           </div>
           
           <div>
             <p className="text-sm font-medium">Organization</p>
-            <p className="text-sm text-muted-foreground">CFI Trade</p>
+            <p className="text-sm text-muted-foreground">PerMar at CFI Financial Group</p>
           </div>
         </div>
       </Card>

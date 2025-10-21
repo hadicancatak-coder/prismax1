@@ -9,13 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Shield, Info, LogOut } from "lucide-react";
+import { User, Shield, Info, LogOut, Activity, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -71,6 +71,21 @@ export const UserMenu = () => {
           <Info className="mr-2 h-4 w-4" />
           About
         </DropdownMenuItem>
+        
+        {userRole === 'admin' && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/activity-log")} className="cursor-pointer">
+              <Activity className="mr-2 h-4 w-4" />
+              Activity Log
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/admin-panel")} className="cursor-pointer">
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Admin Panel
+            </DropdownMenuItem>
+          </>
+        )}
+        
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
