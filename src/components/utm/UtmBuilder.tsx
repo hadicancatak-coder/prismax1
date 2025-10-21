@@ -13,9 +13,10 @@ import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl, detectEntityFromUrl } from "@/lib/utmHelpers";
 import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Copy, Save, AlertCircle, Plus, CheckCircle2 } from "lucide-react";
+import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UtmBuilderProps {
   onSave?: () => void;
@@ -29,6 +30,11 @@ const LINK_PURPOSES = [
 ];
 
 export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
+  // Mode state - persisted to localStorage
+  const [mode, setMode] = useState<'template' | 'custom'>(() => {
+    return (localStorage.getItem('utmBuilderMode') as 'template' | 'custom') || 'template';
+  });
+
   const [linkName, setLinkName] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState("");
@@ -40,6 +46,12 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
   const [utmTerm, setUtmTerm] = useState("");
   const [notes, setNotes] = useState("");
   const [showAddCampaign, setShowAddCampaign] = useState(false);
+
+  // Handle mode change
+  const handleModeChange = (newMode: 'template' | 'custom') => {
+    setMode(newMode);
+    localStorage.setItem('utmBuilderMode', newMode);
+  };
   
   // Auto-detected values
   const [detectedEntity, setDetectedEntity] = useState<string | null>(null);
@@ -70,15 +82,15 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
     }
   }, [baseUrl]);
 
-  // Auto-populate base URL when campaign selected
+  // Auto-populate base URL when campaign selected (Template mode only)
   useEffect(() => {
-    if (selectedCampaign && campaigns.length > 0) {
+    if (mode === 'template' && selectedCampaign && campaigns.length > 0) {
       const campaign = campaigns.find(c => c.name === selectedCampaign);
-      if (campaign?.landing_page && !baseUrl) {
+      if (campaign?.landing_page) {
         setBaseUrl(campaign.landing_page);
       }
     }
-  }, [selectedCampaign, campaigns]);
+  }, [selectedCampaign, campaigns, mode]);
 
   // Auto-calculate UTM parameters
   useEffect(() => {
@@ -187,10 +199,26 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>UTM Link Builder</CardTitle>
-          <CardDescription>
-            Create a new UTM-tagged link with auto-generated parameters
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>UTM Link Builder</CardTitle>
+              <CardDescription>
+                Create a new UTM-tagged link with auto-generated parameters
+              </CardDescription>
+            </div>
+            <Tabs value={mode} onValueChange={(v) => handleModeChange(v as 'template' | 'custom')}>
+              <TabsList>
+                <TabsTrigger value="template" className="text-xs">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Quick
+                </TabsTrigger>
+                <TabsTrigger value="custom" className="text-xs">
+                  <Settings2 className="h-3 w-3 mr-1" />
+                  Custom
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Campaign and Platform Row */}
@@ -257,31 +285,51 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             </div>
           </div>
 
-          {/* Base URL */}
-          <div className="space-y-2">
-            <Label htmlFor="base-url">Base URL *</Label>
-            <Input
-              id="base-url"
-              type="url"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="https://cfi.trade/jo/open-account"
-            />
-            {baseUrl && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {detectedEntity && (
-                  <Badge variant="secondary">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    {detectedEntity}
-                  </Badge>
-                )}
-                <Badge variant="outline">{lpType === 'static' ? 'Static LP' : lpType === 'mauritius' ? 'Mauritius LP' : 'Dynamic LP'}</Badge>
-                {autoUtmMedium && (
-                  <Badge variant="outline">utm_medium: {autoUtmMedium}</Badge>
-                )}
+          {/* Base URL - Custom mode only shows input, Template mode shows auto-filled */}
+          {mode === 'custom' ? (
+            <div className="space-y-2">
+              <Label htmlFor="base-url">Base URL *</Label>
+              <Input
+                id="base-url"
+                type="url"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://cfi.trade/jo/open-account"
+              />
+              {baseUrl && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {detectedEntity && (
+                    <Badge variant="secondary">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      {detectedEntity}
+                    </Badge>
+                  )}
+                  <Badge variant="outline">{lpType === 'static' ? 'Static LP' : lpType === 'mauritius' ? 'Mauritius LP' : 'Dynamic LP'}</Badge>
+                  {autoUtmMedium && (
+                    <Badge variant="outline">utm_medium: {autoUtmMedium}</Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            baseUrl && (
+              <div className="space-y-2">
+                <Label>Landing Page (auto-filled)</Label>
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <span className="font-mono text-sm flex-1 break-all">{baseUrl}</span>
+                  <div className="flex gap-2">
+                    {detectedEntity && (
+                      <Badge variant="secondary" className="text-xs">
+                        {detectedEntity}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs">{lpType === 'static' ? 'Static' : lpType === 'mauritius' ? 'Mauritius' : 'Dynamic'}</Badge>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            )
+          )}
 
           {/* Language Selector - Only for Dynamic LPs */}
           {lpType === 'dynamic' && (
@@ -306,40 +354,45 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             </div>
           )}
 
-          {/* Teams */}
-          <div className="space-y-2">
-            <Label>Teams</Label>
-            <SimpleMultiSelect
-              options={TEAMS.map(team => ({ value: team, label: team }))}
-              selected={selectedTeams}
-              onChange={setSelectedTeams}
-              placeholder="Select teams"
-            />
-          </div>
+          {/* Custom mode - show all fields */}
+          {mode === 'custom' && (
+            <>
+              {/* Teams */}
+              <div className="space-y-2">
+                <Label>Teams</Label>
+                <SimpleMultiSelect
+                  options={TEAMS.map(team => ({ value: team, label: team }))}
+                  selected={selectedTeams}
+                  onChange={setSelectedTeams}
+                  placeholder="Select teams"
+                />
+              </div>
 
-          {/* Entity Override */}
-          {lpType !== 'dynamic' && (
-            <div className="space-y-2">
-              <Label>Entity {detectedEntity && '(Auto-detected)'}</Label>
-              <SimpleMultiSelect
-                options={ENTITIES.map(entity => ({ value: entity, label: entity }))}
-                selected={selectedEntities}
-                onChange={setSelectedEntities}
-                placeholder="Select entities"
-              />
-            </div>
+              {/* Entity Override */}
+              {lpType !== 'dynamic' && (
+                <div className="space-y-2">
+                  <Label>Entity {detectedEntity && '(Auto-detected)'}</Label>
+                  <SimpleMultiSelect
+                    options={ENTITIES.map(entity => ({ value: entity, label: entity }))}
+                    selected={selectedEntities}
+                    onChange={setSelectedEntities}
+                    placeholder="Select entities"
+                  />
+                </div>
+              )}
+
+              {/* Link Name */}
+              <div className="space-y-2">
+                <Label htmlFor="link-name">Link Name (optional)</Label>
+                <Input
+                  id="link-name"
+                  value={linkName}
+                  onChange={(e) => setLinkName(e.target.value)}
+                  placeholder={`Auto: ${selectedCampaign} ${selectedPlatform} ${detectedEntity || 'Dynamic'} ${autoMonthYear}`}
+                />
+              </div>
+            </>
           )}
-
-          {/* Link Name */}
-          <div className="space-y-2">
-            <Label htmlFor="link-name">Link Name (optional)</Label>
-            <Input
-              id="link-name"
-              value={linkName}
-              onChange={(e) => setLinkName(e.target.value)}
-              placeholder={`Auto: ${selectedCampaign} ${selectedPlatform} ${detectedEntity || 'Dynamic'} ${autoMonthYear}`}
-            />
-          </div>
 
           {/* Auto-Generated Campaign */}
           {autoUtmCampaign && (
@@ -351,44 +404,46 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             </Alert>
           )}
 
-          {/* Optional Fields - Collapsed */}
-          <details className="space-y-4">
-            <summary className="cursor-pointer font-medium">Optional Fields</summary>
-            <div className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="utm-content">UTM Content</Label>
-                  <Input
-                    id="utm-content"
-                    value={utmContent}
-                    onChange={(e) => setUtmContent(e.target.value)}
-                    placeholder="e.g., banner-top"
-                  />
+          {/* Optional Fields - Only in Custom mode, collapsed */}
+          {mode === 'custom' && (
+            <details className="space-y-4">
+              <summary className="cursor-pointer font-medium">Optional Fields</summary>
+              <div className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="utm-content">UTM Content</Label>
+                    <Input
+                      id="utm-content"
+                      value={utmContent}
+                      onChange={(e) => setUtmContent(e.target.value)}
+                      placeholder="e.g., banner-top"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="utm-term">UTM Term</Label>
+                    <Input
+                      id="utm-term"
+                      value={utmTerm}
+                      onChange={(e) => setUtmTerm(e.target.value)}
+                      placeholder="e.g., forex+trading"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="utm-term">UTM Term</Label>
-                  <Input
-                    id="utm-term"
-                    value={utmTerm}
-                    onChange={(e) => setUtmTerm(e.target.value)}
-                    placeholder="e.g., forex+trading"
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Optional notes about this link"
+                    rows={3}
                   />
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional notes about this link"
-                  rows={3}
-                />
-              </div>
-            </div>
-          </details>
+            </details>
+          )}
 
           {/* Preview */}
           {fullUrl && (
