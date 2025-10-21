@@ -4,11 +4,11 @@ import { Info, Sparkles, Mail } from "lucide-react";
 
 export default function About() {
   const currentVersion = "1.2.1";
-  
+
   const versionHistory = [
     {
       version: "1.2.1",
-      date: "October 2024",
+      date: "October 25",
       features: [
         "Drag & drop campaign status management in Launch Pad",
         "Automated workflows on status changes (notifications, task completion)",
@@ -20,7 +20,7 @@ export default function About() {
     },
     {
       version: "1.2.0",
-      date: "October 2024",
+      date: "October 25",
       features: [
         "Enhanced password security (9+ characters, uppercase, number, special)",
         "User profile menu with quick access",
@@ -32,7 +32,7 @@ export default function About() {
     },
     {
       version: "1.1.0",
-      date: "November 2024",
+      date: "October 25",
       features: [
         "Two-factor authentication (MFA)",
         "Campaign management system",
@@ -43,7 +43,7 @@ export default function About() {
     },
     {
       version: "1.0.0",
-      date: "October 16, 2024",
+      date: "October 25",
       features: [
         "Initial release",
         "Task management",
@@ -64,14 +64,14 @@ export default function About() {
           </div>
           <div className="flex-1">
             <h1 className="text-4xl font-bold mb-2">Prisma</h1>
-            <Badge variant="secondary" className="mb-4">Version {currentVersion}</Badge>
-            <p className="text-lg text-muted-foreground mb-4">
-              Comprehensive Task & Campaign Management Platform
-            </p>
+            <Badge variant="secondary" className="mb-4">
+              Version {currentVersion}
+            </Badge>
+            <p className="text-lg text-muted-foreground mb-4">Comprehensive Task & Campaign Management Platform</p>
             <p className="text-sm text-muted-foreground">
-              Prisma is a powerful platform designed to streamline task management, campaign coordination, 
-              and team collaboration. Built with security and efficiency in mind, it helps teams stay 
-              organized and productive.
+              Prisma is a powerful platform designed to streamline task management, campaign coordination, and team
+              collaboration. Built with security and efficiency in mind, it helps teams stay organized and productive.
+              Created by and for the CFI Global Performance Marketing Team.
             </p>
           </div>
         </div>
@@ -89,9 +89,7 @@ export default function About() {
             <div key={version.version} className="border-l-2 border-primary/20 pl-4">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-lg font-semibold">Version {version.version}</h3>
-                {index === 0 && (
-                  <Badge variant="default">Current</Badge>
-                )}
+                {index === 0 && <Badge variant="default">Current</Badge>}
                 <span className="text-sm text-muted-foreground">{version.date}</span>
               </div>
               <ul className="space-y-1 list-disc list-inside">
@@ -116,14 +114,11 @@ export default function About() {
         <div className="space-y-3">
           <div>
             <p className="text-sm font-medium">Support Email</p>
-            <a 
-              href="mailto:h.catak@cfi.trade" 
-              className="text-sm text-primary hover:underline"
-            >
+            <a href="mailto:h.catak@cfi.trade" className="text-sm text-primary hover:underline">
               h.catak@cfi.trade
             </a>
           </div>
-          
+
           <div>
             <p className="text-sm font-medium">Organization</p>
             <p className="text-sm text-muted-foreground">PerMar at CFI Financial Group</p>
