@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, Filter, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
@@ -15,6 +17,7 @@ import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
 import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
 import { TaskGridView } from "@/components/tasks/TaskGridView";
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
+import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -32,7 +35,20 @@ export default function Tasks() {
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'board'>('table');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
+  const [filteredDialogType, setFilteredDialogType] = useState<'all' | 'overdue' | 'ongoing' | 'completed'>('all');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('tasksItemsPerPage');
+    if (saved) setItemsPerPage(Number(saved));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('tasksItemsPerPage', String(itemsPerPage));
+  }, [itemsPerPage]);
 
   const fetchTasks = async () => {
     const { data, error } = await supabase
@@ -175,6 +191,10 @@ export default function Tasks() {
         overdueCount={overdueCount}
         ongoingCount={ongoingCount}
         completedCount={completedCount}
+        onCardClick={(type) => {
+          setFilteredDialogType(type);
+          setFilteredDialogOpen(true);
+        }}
       />
       
       {/* Progress Indicator */}
@@ -318,9 +338,88 @@ export default function Tasks() {
         </Card>
       ) : (
         <>
-          {viewMode === 'table' && <TasksTable tasks={filteredTasks} onTaskUpdate={refetch} />}
-          {viewMode === 'grid' && <TaskGridView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
-          {viewMode === 'board' && <TaskBoardView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredTasks.length)}-{Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Items per page:</span>
+              <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Paginated Task Views */}
+          {(() => {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedTasks = filteredTasks.slice(startIndex, startIndex + itemsPerPage);
+            const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+
+            return (
+              <>
+                {viewMode === 'table' && <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} />}
+                {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
+                {viewMode === 'board' && <TaskBoardView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Pagination className="mt-6">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </>
+            );
+          })()}
         </>
       )}
 
@@ -337,6 +436,24 @@ export default function Tasks() {
           taskId={selectedTaskId}
         />
       )}
+      
+      {/* Filtered Tasks Dialog */}
+      <FilteredTasksDialog
+        open={filteredDialogOpen}
+        onOpenChange={setFilteredDialogOpen}
+        filterType={filteredDialogType}
+        tasks={(() => {
+          if (filteredDialogType === 'overdue') {
+            return tasks.filter((t: any) => t.due_at && new Date(t.due_at) < new Date() && t.status !== 'Completed');
+          } else if (filteredDialogType === 'ongoing') {
+            return tasks.filter((t: any) => t.status === 'Ongoing');
+          } else if (filteredDialogType === 'completed') {
+            return tasks.filter((t: any) => t.status === 'Completed');
+          }
+          return tasks;
+        })()}
+        onRefresh={refetch}
+      />
     </div>
   );
 }

@@ -6,12 +6,22 @@ interface TaskStatsCardsProps {
   overdueCount: number;
   ongoingCount: number;
   completedCount: number;
+  onCardClick: (type: 'all' | 'overdue' | 'ongoing' | 'completed') => void;
 }
 
-export const TaskStatsCards = ({ totalTasks, overdueCount, ongoingCount, completedCount }: TaskStatsCardsProps) => {
+export const TaskStatsCards = ({ 
+  totalTasks, 
+  overdueCount, 
+  ongoingCount, 
+  completedCount,
+  onCardClick 
+}: TaskStatsCardsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      <Card 
+        className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        onClick={() => onCardClick('all')}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Total Tasks</p>
@@ -21,7 +31,10 @@ export const TaskStatsCards = ({ totalTasks, overdueCount, ongoingCount, complet
         </div>
       </Card>
       
-      <Card className="p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
+      <Card 
+        className="p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        onClick={() => onCardClick('overdue')}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Overdue</p>
@@ -31,7 +44,10 @@ export const TaskStatsCards = ({ totalTasks, overdueCount, ongoingCount, complet
         </div>
       </Card>
       
-      <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+      <Card 
+        className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        onClick={() => onCardClick('ongoing')}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">In Progress</p>
@@ -41,7 +57,10 @@ export const TaskStatsCards = ({ totalTasks, overdueCount, ongoingCount, complet
         </div>
       </Card>
       
-      <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+      <Card 
+        className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        onClick={() => onCardClick('completed')}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Completed</p>

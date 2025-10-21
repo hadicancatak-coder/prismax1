@@ -105,15 +105,15 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
 
   return (
     <>
-      <Card className="border-0 shadow-md overflow-hidden">
+      <Card className="border-0 shadow-md overflow-x-auto">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="font-semibold">Task</TableHead>
-              <TableHead className="w-32 font-semibold">Status</TableHead>
-              <TableHead className="w-32 font-semibold">Priority</TableHead>
-              <TableHead className="w-48 font-semibold">Assignee</TableHead>
-              <TableHead className="w-32 font-semibold">Due Date</TableHead>
+              <TableHead className="font-semibold min-w-[300px]">Task</TableHead>
+              <TableHead className="font-semibold min-w-[120px]">Status</TableHead>
+              <TableHead className="font-semibold min-w-[100px] hidden md:table-cell">Priority</TableHead>
+              <TableHead className="font-semibold min-w-[150px] hidden lg:table-cell">Assignee</TableHead>
+              <TableHead className="font-semibold min-w-[120px]">Due Date</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -185,12 +185,12 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                     {task.status}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                   <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
                     {task.priority}
                   </Badge>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell">
                   {task.assignees && task.assignees.length > 0 ? (
                     <div className="flex items-center gap-1">
                       {task.assignees.slice(0, 3).map((assignee: any) => (

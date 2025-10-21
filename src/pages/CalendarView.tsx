@@ -11,6 +11,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TaskDialog } from "@/components/TaskDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
+import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { MorningBriefing } from "@/components/calendar/MorningBriefing";
+import { TodayCommandCenter } from "@/components/calendar/TodayCommandCenter";
+import { PrioritySection } from "@/components/calendar/PrioritySection";
+import { WhatsNextCard } from "@/components/calendar/WhatsNextCard";
+import { DailySummaryCard } from "@/components/calendar/DailySummaryCard";
+import { FocusMode } from "@/components/calendar/FocusMode";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight, Circle, CheckCircle, MoreVertical, AlertCircle, Rocket, Loader2 } from "lucide-react";
@@ -35,6 +42,15 @@ export default function CalendarView() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
+  const [briefingDismissed, setBriefingDismissed] = useState(() => {
+    const dismissed = localStorage.getItem('briefingDismissedToday');
+    const today = new Date().toDateString();
+    return dismissed === today;
+  });
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
+  const [focusTask, setFocusTask] = useState<any | null>(null);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     // 🛡️ GUARD: Don't fetch until role is loaded
@@ -46,6 +62,7 @@ export default function CalendarView() {
     console.log("✅ Calendar: Role loaded, fetching data...", { userRole, selectedUserId });
     
     fetchUserWorkingDays();
+    fetchUserProfile();
     fetchTasks();
     fetchCampaigns();
     if (userRole === "admin") {
@@ -82,6 +99,16 @@ export default function CalendarView() {
       supabase.removeChannel(profilesChannel);
     };
   }, [selectedUserId, userRole, roleLoading, user?.id]);
+
+  const fetchUserProfile = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("user_id", user.id)
+      .single();
+    setUserProfile(data);
+  };
 
   const fetchUserWorkingDays = async () => {
     if (!user?.id) return;
@@ -944,8 +971,67 @@ export default function CalendarView() {
     );
   };
 
+  const todayTasks = getTasksForDate(new Date());
+  const highPriorityTasks = todayTasks.filter(t => t.priority === 'High' && t.status !== 'Completed');
+  const completedToday = todayTasks.filter(t => t.status === 'Completed').length;
+  const overdueCount = tasks.filter(t => t.due_at && new Date(t.due_at) < new Date() && t.status !== 'Completed').length;
+  const nextTask = tasks.filter(t => t.status !== 'Completed').sort((a, b) => {
+    if (a.priority === 'High' && b.priority !== 'High') return -1;
+    if (b.priority === 'High' && a.priority !== 'High') return 1;
+    return 0;
+  })[0] || null;
+
   return (
     <div className="p-8 space-y-6">
+      {!briefingDismissed && view === 'daily' && (
+        <MorningBriefing
+          userName={userProfile?.name || 'there'}
+          overdueCount={overdueCount}
+          dueTodayCount={todayTasks.length - completedToday}
+          meetingsCount={getCampaignsForDate(new Date()).length}
+          onDismiss={() => {
+            setBriefingDismissed(true);
+            localStorage.setItem('briefingDismissedToday', new Date().toDateString());
+          }}
+        />
+      )}
+
+      {view === 'daily' && (
+        <>
+          <TodayCommandCenter
+            currentDate={currentDate}
+            highPriorityCount={highPriorityTasks.length}
+            upcomingCount={todayTasks.length - completedToday}
+            completedToday={completedToday}
+            totalToday={todayTasks.length}
+            onAddTask={() => setCreateTaskOpen(true)}
+            onFocusMode={() => {
+              if (nextTask) {
+                setFocusTask(nextTask);
+                setFocusModeOpen(true);
+              }
+            }}
+          />
+          
+          <PrioritySection
+            tasks={highPriorityTasks}
+            onTaskClick={(id) => { setSelectedTaskId(id); setTaskDialogOpen(true); }}
+            onStatusChange={handleStatusChange}
+          />
+
+          <WhatsNextCard
+            task={nextTask}
+            onStartTask={(id) => { setSelectedTaskId(id); setTaskDialogOpen(true); }}
+          />
+
+          <DailySummaryCard
+            completedTasks={completedToday}
+            totalTasks={todayTasks.length}
+            timeTracked="0h"
+          />
+        </>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Agenda</h1>
@@ -1036,6 +1122,15 @@ export default function CalendarView() {
           taskId={selectedTaskId}
         />
       )}
+
+      <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} />
+      
+      <FocusMode
+        open={focusModeOpen}
+        onOpenChange={setFocusModeOpen}
+        task={focusTask}
+        onComplete={(id) => handleStatusChange(id, 'Completed')}
+      />
 
       {selectedCampaignId && (
         <LaunchCampaignDetailDialog
