@@ -16,6 +16,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 export default function LaunchPad() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -25,8 +38,17 @@ export default function LaunchPad() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [activeCampaign, setActiveCampaign] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     fetchCampaigns();
@@ -159,10 +181,82 @@ export default function LaunchPad() {
     }
   };
 
+  const handleStatusChange = async (campaignId: string, newStatus: string) => {
+    try {
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (!campaign) return;
+      
+      const updates: any = { status: newStatus };
+      
+      if (newStatus === 'live') {
+        updates.launched_at = new Date().toISOString();
+      }
+      
+      const { error } = await supabase
+        .from('launch_pad_campaigns')
+        .update(updates)
+        .eq('id', campaignId);
+        
+      if (error) throw error;
+      
+      // Automations
+      if (newStatus === 'live') {
+        if (campaign.launch_campaign_assignees?.length > 0) {
+          const notifications = campaign.launch_campaign_assignees.map((assignee: any) => ({
+            user_id: assignee.user_id,
+            type: 'campaign_launched',
+            payload_json: {
+              campaign_id: campaignId,
+              campaign_title: campaign.title,
+              message: `Campaign "${campaign.title}" is now live!`
+            }
+          }));
+          await supabase.from('notifications').insert(notifications);
+        }
+        
+        toast({ 
+          title: "🚀 Campaign Launched", 
+          description: "Team members notified" 
+        });
+      }
+      
+      if (newStatus === 'orbit') {
+        if (campaign.task_id) {
+          await supabase
+            .from('tasks')
+            .update({ status: 'Completed' })
+            .eq('id', campaign.task_id);
+        }
+        
+        toast({ 
+          title: "🌍 In Orbit", 
+          description: "Campaign completed and marked in tasks" 
+        });
+      }
+      
+      if (newStatus === 'landed') {
+        toast({ 
+          title: "🏁 Campaign Landed", 
+          description: "Campaign archived" 
+        });
+      }
+      
+      fetchCampaigns();
+    } catch (error: any) {
+      toast({ 
+        title: "Status update failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const launchpadCampaigns = campaigns.filter(c => c.status === 'launchpad');
   const liveCampaigns = campaigns.filter(c => c.status === 'live');
   const orbitCampaigns = campaigns.filter(c => c.status === 'orbit');
   const landedCampaigns = campaigns.filter(c => c.status === 'landed');
+  const socialUACampaigns = liveCampaigns.filter(c => c.teams?.includes('SocialUA'));
+  const ppcCampaigns = liveCampaigns.filter(c => c.teams?.includes('PPC'));
 
   const handleDragStart = (event: DragStartEvent) => {
     const campaign = campaigns.find(c => c.id === event.active.id);
@@ -180,6 +274,39 @@ export default function LaunchPad() {
     
     await handleStatusChange(campaignId, newStatus);
   };
+
+  // Droppable wrapper component
+  function Droppable({ id, children }: { id: string; children: React.ReactNode }) {
+    const { setNodeRef, isOver } = useDroppable({ id });
+    
+    return (
+      <div 
+        ref={setNodeRef} 
+        className={`h-full transition-all ${isOver ? 'ring-2 ring-primary/50 rounded-lg' : ''}`}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  // Draggable campaign card wrapper
+  function DraggableCampaignCard({ campaign, ...props }: any) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: campaign.id,
+    });
+    
+    const style = {
+      transform: CSS.Translate.toString(transform),
+      opacity: isDragging ? 0.5 : 1,
+      cursor: 'grab',
+    };
+    
+    return (
+      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+        <LaunchCampaignCard campaign={campaign} {...props} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -264,7 +391,7 @@ export default function LaunchPad() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold">{pendingCampaigns.length}</p>
+              <p className="text-3xl font-bold">{launchpadCampaigns.length}</p>
               <Clock className="h-8 w-8 text-amber-500/20" />
             </div>
           </CardContent>
@@ -298,110 +425,131 @@ export default function LaunchPad() {
       </div>
 
       {/* Active Campaign Columns - 3 Column Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Pending Launch */}
-        <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-background">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
-              Pending Launch
-              <Badge variant="secondary" className="ml-auto">{pendingCampaigns.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[500px] pr-4">
-              <div className="space-y-3">
-                {pendingCampaigns.map((campaign) => (
-                  <LaunchCampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    onLaunch={handleLaunch}
-                    onDelete={handleDelete}
-                    onCardClick={(id) => {
-                      setSelectedCampaignId(id);
-                      setDetailDialogOpen(true);
-                    }}
-                  />
-                ))}
-                {pendingCampaigns.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Rocket className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">No pending campaigns</p>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Pending Launch */}
+          <Droppable id="launchpad">
+            <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-amber-500" />
+                  On the Launch Pad
+                  <Badge variant="secondary" className="ml-auto">{launchpadCampaigns.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="max-h-[500px] pr-4">
+                  <div className="space-y-3">
+                    {launchpadCampaigns.map((campaign) => (
+                      <DraggableCampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        onLaunch={handleLaunch}
+                        onDelete={handleDelete}
+                        onCardClick={(id) => {
+                          setSelectedCampaignId(id);
+                          setDetailDialogOpen(true);
+                        }}
+                      />
+                    ))}
+                    {launchpadCampaigns.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Rocket className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm">No campaigns on the launch pad</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </Droppable>
 
-        {/* SocialUA - Live */}
-        <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-background">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-blue-500" />
-              SocialUA - Live
-              <Badge variant="secondary" className="ml-auto">{socialUACampaigns.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[500px] pr-4">
-              <div className="space-y-3">
-                {socialUACampaigns.map((campaign) => (
-                  <LaunchCampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    onDelete={handleDelete}
-                    onCardClick={(id) => {
-                      setSelectedCampaignId(id);
-                      setDetailDialogOpen(true);
-                    }}
-                  />
-                ))}
-                {socialUACampaigns.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">No live SocialUA campaigns</p>
+          {/* SocialUA - Live */}
+          <Droppable id="live">
+            <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-blue-500" />
+                  SocialUA - Live
+                  <Badge variant="secondary" className="ml-auto">{socialUACampaigns.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="max-h-[500px] pr-4">
+                  <div className="space-y-3">
+                    {socialUACampaigns.map((campaign) => (
+                      <DraggableCampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        onDelete={handleDelete}
+                        onCardClick={(id) => {
+                          setSelectedCampaignId(id);
+                          setDetailDialogOpen(true);
+                        }}
+                      />
+                    ))}
+                    {socialUACampaigns.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm">No live SocialUA campaigns</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </Droppable>
 
-        {/* PPC - Live */}
-        <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-background">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Target className="h-5 w-5 text-purple-500" />
-              PPC - Live
-              <Badge variant="secondary" className="ml-auto">{ppcCampaigns.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[500px] pr-4">
-              <div className="space-y-3">
-                {ppcCampaigns.map((campaign) => (
-                  <LaunchCampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    onDelete={handleDelete}
-                    onCardClick={(id) => {
-                      setSelectedCampaignId(id);
-                      setDetailDialogOpen(true);
-                    }}
-                  />
-                ))}
-                {ppcCampaigns.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Target className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">No live PPC campaigns</p>
+          {/* PPC - Live */}
+          <Droppable id="live">
+            <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="h-5 w-5 text-purple-500" />
+                  PPC - Live
+                  <Badge variant="secondary" className="ml-auto">{ppcCampaigns.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="max-h-[500px] pr-4">
+                  <div className="space-y-3">
+                    {ppcCampaigns.map((campaign) => (
+                      <DraggableCampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        onDelete={handleDelete}
+                        onCardClick={(id) => {
+                          setSelectedCampaignId(id);
+                          setDetailDialogOpen(true);
+                        }}
+                      />
+                    ))}
+                    {ppcCampaigns.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Target className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm">No live PPC campaigns</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </Droppable>
+        </div>
+
+        <DragOverlay>
+          {activeCampaign ? (
+            <div className="opacity-80">
+              <LaunchCampaignCard campaign={activeCampaign} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* In Orbit - Table List */}
       <Card className="mb-6">
