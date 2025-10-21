@@ -88,14 +88,14 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
         <div className="space-y-2">
           <Label>LP Type</Label>
           <Select
-            value={filters.lp_type || ""}
-            onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value || undefined })}
+            value={filters.lp_type || "all"}
+            onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value === "all" ? undefined : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="All LP types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All LP types</SelectItem>
+              <SelectItem value="all">All LP types</SelectItem>
               {LP_TYPES.map((type) => (
                 <SelectItem key={type.value} value={type.value}>
                   {type.label}
@@ -142,14 +142,14 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
         <div className="space-y-2">
           <Label>Status</Label>
           <Select
-            value={filters.status || ""}
-            onValueChange={(value) => onFiltersChange({ ...filters, status: value || undefined })}
+            value={filters.status || "all"}
+            onValueChange={(value) => onFiltersChange({ ...filters, status: value === "all" ? undefined : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               {STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
