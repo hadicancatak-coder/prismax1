@@ -5,10 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Rocket, Building, Radio, Users } from "lucide-react";
+import { Plus, Rocket, Building, Radio, Users, Clock, Share2, Target, PauseCircle, Trash2 } from "lucide-react";
 import { LaunchCampaignDialog } from "@/components/LaunchCampaignDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { LaunchCampaignCard } from "@/components/LaunchCampaignCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { format } from "date-fns";
 
 export default function LaunchPad() {
   const [campaigns, setCampaigns] = useState<any[]>([]);

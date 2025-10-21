@@ -13,7 +13,7 @@ import { format } from "date-fns";
 
 interface LaunchCampaignCardProps {
   campaign: any;
-  onLaunch: (id: string) => void;
+  onLaunch?: (id: string) => void;
   showLaunchButton?: boolean;
   onDelete?: (id: string) => void;
   onCardClick?: (id: string) => void;
