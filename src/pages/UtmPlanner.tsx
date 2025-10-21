@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmBuilder } from "@/components/utm/UtmBuilder";
-import { UtmCompactList } from "@/components/utm/UtmCompactList";
+import { UtmGroupedList } from "@/components/utm/UtmGroupedList";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
 import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
@@ -59,7 +59,7 @@ const UtmPlanner = () => {
               </CardContent>
             </Card>
           ) : (
-            <UtmCompactList links={utmLinks} />
+            <UtmGroupedList links={utmLinks} />
           )}
         </TabsContent>
       </Tabs>

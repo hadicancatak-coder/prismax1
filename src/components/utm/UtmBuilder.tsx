@@ -177,6 +177,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
         notes: notes || undefined,
         lp_type: lpType,
         dynamic_language: lpType === 'dynamic' ? dynamicLanguage : undefined,
+        expansion_group_id: undefined,
       });
 
       // Reset form
@@ -248,6 +249,9 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
     }
 
     try {
+      // Generate unique group ID for this expansion
+      const expansionGroupId = crypto.randomUUID();
+      
       const bulkLinks = variants.map((variant) => ({
         name: variant.language 
           ? `${selectedCampaign} ${selectedPlatform} ${variant.entity || ''} ${variant.language} ${autoMonthYear}`.trim().replace(/\s+/g, ' ')
@@ -268,6 +272,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
         notes: notes || undefined,
         lp_type: lpType,
         dynamic_language: (variant.language as 'EN' | 'AR') || undefined,
+        expansion_group_id: expansionGroupId,
       }));
 
       await bulkCreateUtmLinks.mutateAsync(bulkLinks);
@@ -494,12 +499,27 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
               {lpType !== 'dynamic' && (
                 <div className="space-y-2">
                   <Label>Entity {detectedEntity && '(Auto-detected)'}</Label>
-                  <SimpleMultiSelect
-                    options={ENTITIES.map(entity => ({ value: entity, label: entity }))}
-                    selected={selectedEntities}
-                    onChange={setSelectedEntities}
-                    placeholder="Select entities"
-                  />
+                  {lpType === 'static' ? (
+                    <Select value={selectedEntities[0] || ''} onValueChange={(val) => setSelectedEntities([val])}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select one entity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ENTITIES.map((entity) => (
+                          <SelectItem key={entity} value={entity}>
+                            {entity}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <SimpleMultiSelect
+                      options={ENTITIES.map(entity => ({ value: entity, label: entity }))}
+                      selected={selectedEntities}
+                      onChange={setSelectedEntities}
+                      placeholder="Select entities"
+                    />
+                  )}
                 </div>
               )}
 

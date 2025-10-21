@@ -1887,6 +1887,7 @@ export type Database = {
           custom_params: Json | null
           dynamic_language: string | null
           entity: string[] | null
+          expansion_group_id: string | null
           full_url: string
           id: string
           is_validated: boolean | null
@@ -1922,6 +1923,7 @@ export type Database = {
           custom_params?: Json | null
           dynamic_language?: string | null
           entity?: string[] | null
+          expansion_group_id?: string | null
           full_url: string
           id?: string
           is_validated?: boolean | null
@@ -1957,6 +1959,7 @@ export type Database = {
           custom_params?: Json | null
           dynamic_language?: string | null
           entity?: string[] | null
+          expansion_group_id?: string | null
           full_url?: string
           id?: string
           is_validated?: boolean | null
