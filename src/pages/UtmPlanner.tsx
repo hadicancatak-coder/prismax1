@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmBuilder } from "@/components/utm/UtmBuilder";
-import { UtmTable } from "@/components/utm/UtmTable";
-import { UtmFilters } from "@/components/utm/UtmFilters";
+import { UtmCompactList } from "@/components/utm/UtmCompactList";
+import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
-import { Link2, Plus, List, Filter } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link2, Plus, List } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const UtmPlanner = () => {
   const [activeTab, setActiveTab] = useState("builder");
@@ -40,20 +40,8 @@ const UtmPlanner = () => {
           <UtmBuilder onSave={() => setActiveTab("links")} />
         </TabsContent>
 
-        <TabsContent value="links" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <UtmFilters filters={filters} onFiltersChange={setFilters} />
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="links" className="space-y-4">
+          <UtmInlineFilters filters={filters} onFiltersChange={setFilters} />
 
           {isLoading ? (
             <Card>
@@ -62,7 +50,7 @@ const UtmPlanner = () => {
               </CardContent>
             </Card>
           ) : (
-            <UtmTable links={utmLinks} />
+            <UtmCompactList links={utmLinks} />
           )}
         </TabsContent>
       </Tabs>
