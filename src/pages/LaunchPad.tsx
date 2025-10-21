@@ -184,20 +184,40 @@ export default function LaunchPad() {
   const handleStatusChange = async (campaignId: string, newStatus: string) => {
     try {
       const campaign = campaigns.find(c => c.id === campaignId);
-      if (!campaign) return;
-      
-      const updates: any = { status: newStatus };
-      
-      if (newStatus === 'live') {
-        updates.launched_at = new Date().toISOString();
+      if (!campaign) {
+        console.error('Campaign not found:', campaignId);
+        return;
       }
       
-      const { error } = await supabase
+      console.log('Updating campaign status:', { campaignId, newStatus, currentStatus: campaign.status });
+      
+      const updates: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+        updated_by: user?.id
+      };
+      
+      // Set teams based on status
+      if (newStatus === 'live') {
+        updates.launched_at = new Date().toISOString();
+        // Keep existing teams or default to empty array
+        if (!campaign.teams || campaign.teams.length === 0) {
+          updates.teams = ['SocialUA']; // Default team
+        }
+      }
+      
+      const { data, error } = await supabase
         .from('launch_pad_campaigns')
         .update(updates)
-        .eq('id', campaignId);
+        .eq('id', campaignId)
+        .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Successfully updated campaign:', data);
       
       // Automations
       if (newStatus === 'live') {
@@ -243,9 +263,10 @@ export default function LaunchPad() {
       
       fetchCampaigns();
     } catch (error: any) {
+      console.error('Error in handleStatusChange:', error);
       toast({ 
         title: "Status update failed", 
-        description: error.message, 
+        description: error.message || 'An unknown error occurred', 
         variant: "destructive" 
       });
     }
@@ -267,10 +288,35 @@ export default function LaunchPad() {
     const { active, over } = event;
     setActiveCampaign(null);
     
-    if (!over) return;
+    if (!over) {
+      console.log('No drop target');
+      return;
+    }
     
     const campaignId = active.id as string;
-    const newStatus = over.id as string;
+    const dropZoneId = over.id as string;
+    
+    console.log('Drag ended:', { campaignId, dropZoneId });
+    
+    // Map drop zone IDs to statuses
+    const statusMap: Record<string, string> = {
+      'launchpad': 'launchpad',
+      'live': 'live',
+      'orbit': 'orbit',
+      'landed': 'landed'
+    };
+    
+    const newStatus = statusMap[dropZoneId];
+    
+    if (!newStatus) {
+      console.error('Unknown drop zone:', dropZoneId);
+      toast({
+        title: "Invalid drop zone",
+        description: "Please drop the campaign into a valid status column",
+        variant: "destructive"
+      });
+      return;
+    }
     
     await handleStatusChange(campaignId, newStatus);
   };
@@ -469,20 +515,20 @@ export default function LaunchPad() {
             </Card>
           </Droppable>
 
-          {/* SocialUA - Live */}
+          {/* Live Campaigns */}
           <Droppable id="live">
             <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-background">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Share2 className="h-5 w-5 text-blue-500" />
-                  SocialUA - Live
-                  <Badge variant="secondary" className="ml-auto">{socialUACampaigns.length}</Badge>
+                  Live Campaigns
+                  <Badge variant="secondary" className="ml-auto">{liveCampaigns.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="max-h-[500px] pr-4">
                   <div className="space-y-3">
-                    {socialUACampaigns.map((campaign) => (
+                    {liveCampaigns.map((campaign) => (
                       <DraggableCampaignCard
                         key={campaign.id}
                         campaign={campaign}
@@ -493,10 +539,10 @@ export default function LaunchPad() {
                         }}
                       />
                     ))}
-                    {socialUACampaigns.length === 0 && (
+                    {liveCampaigns.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm">No live SocialUA campaigns</p>
+                        <p className="text-sm">No live campaigns</p>
                       </div>
                     )}
                   </div>
@@ -505,20 +551,20 @@ export default function LaunchPad() {
             </Card>
           </Droppable>
 
-          {/* PPC - Live */}
-          <Droppable id="live">
-            <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-background">
+          {/* In Orbit */}
+          <Droppable id="orbit">
+            <Card className="border-green-500/50 bg-gradient-to-br from-green-500/5 to-background">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-500" />
-                  PPC - Live
-                  <Badge variant="secondary" className="ml-auto">{ppcCampaigns.length}</Badge>
+                  <Radio className="h-5 w-5 text-green-500" />
+                  In Orbit
+                  <Badge variant="secondary" className="ml-auto">{orbitCampaigns.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="max-h-[500px] pr-4">
                   <div className="space-y-3">
-                    {ppcCampaigns.map((campaign) => (
+                    {orbitCampaigns.map((campaign) => (
                       <DraggableCampaignCard
                         key={campaign.id}
                         campaign={campaign}
@@ -529,10 +575,10 @@ export default function LaunchPad() {
                         }}
                       />
                     ))}
-                    {ppcCampaigns.length === 0 && (
+                    {orbitCampaigns.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        <Target className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm">No live PPC campaigns</p>
+                        <Radio className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm">No campaigns in orbit</p>
                       </div>
                     )}
                   </div>
@@ -551,203 +597,48 @@ export default function LaunchPad() {
         </DragOverlay>
       </DndContext>
 
-      {/* In Orbit - Table List */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-green-500" />
-            In Orbit Campaigns
-            <Badge variant="secondary" className="ml-2">{orbitCampaigns.length}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {orbitCampaigns.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Radio className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p className="text-sm">No campaigns in orbit</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30%]">Campaign</TableHead>
-                  <TableHead className="w-[15%]">Teams</TableHead>
-                  <TableHead className="w-[20%]">Entities</TableHead>
-                  <TableHead className="w-[15%]">Launch Date</TableHead>
-                  <TableHead className="w-[10%]">Crew</TableHead>
-                  <TableHead className="w-[10%] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orbitCampaigns.map((campaign) => (
-                  <TableRow 
-                    key={campaign.id} 
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSelectedCampaignId(campaign.id);
-                      setDetailDialogOpen(true);
-                    }}
-                  >
-                    <TableCell className="font-medium">
-                      <div>
-                        <p className="font-semibold">{campaign.title}</p>
-                        {campaign.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">{campaign.description}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.teams?.map((team: string) => (
-                          <Badge key={team} variant="outline" className="text-xs">{team}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.entity?.map((ent: string) => (
-                          <Badge key={ent} variant="secondary" className="text-xs">{ent}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {campaign.launch_date ? format(new Date(campaign.launch_date), 'MMM d, yyyy') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex -space-x-2">
-                        {campaign.launch_campaign_assignees?.slice(0, 3).map((assignee: any) => (
-                          <Avatar key={assignee.user_id} className="h-7 w-7 border-2 border-background">
-                            <AvatarImage src={assignee.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {assignee.profiles?.name?.[0] || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
-                        {campaign.launch_campaign_assignees?.length > 3 && (
-                          <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
-                            +{campaign.launch_campaign_assignees.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(campaign.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Landed (Archived) - Droppable */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <Droppable id="landed">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PauseCircle className="h-5 w-5 text-gray-500" />
+                Landed (Archived) Campaigns
+                <Badge variant="secondary" className="ml-2">{landedCampaigns.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {landedCampaigns.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <PauseCircle className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">Drop campaigns here to archive them</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {landedCampaigns.map((campaign) => (
+                    <DraggableCampaignCard
+                      key={campaign.id}
+                      campaign={campaign}
+                      onDelete={handleDelete}
+                      onCardClick={(id) => {
+                        setSelectedCampaignId(id);
+                        setDetailDialogOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </Droppable>
+      </DndContext>
 
-      {/* Landed (Paused) - Table List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PauseCircle className="h-5 w-5 text-gray-500" />
-            Landed (Paused) Campaigns
-            <Badge variant="secondary" className="ml-2">{landedCampaigns.length}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {landedCampaigns.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <PauseCircle className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p className="text-sm">No landed campaigns</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30%]">Campaign</TableHead>
-                  <TableHead className="w-[15%]">Teams</TableHead>
-                  <TableHead className="w-[20%]">Entities</TableHead>
-                  <TableHead className="w-[15%]">Launch Date</TableHead>
-                  <TableHead className="w-[10%]">Crew</TableHead>
-                  <TableHead className="w-[10%] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {landedCampaigns.map((campaign) => (
-                  <TableRow 
-                    key={campaign.id} 
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSelectedCampaignId(campaign.id);
-                      setDetailDialogOpen(true);
-                    }}
-                  >
-                    <TableCell className="font-medium">
-                      <div>
-                        <p className="font-semibold">{campaign.title}</p>
-                        {campaign.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">{campaign.description}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.teams?.map((team: string) => (
-                          <Badge key={team} variant="outline" className="text-xs">{team}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.entity?.map((ent: string) => (
-                          <Badge key={ent} variant="secondary" className="text-xs">{ent}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {campaign.launch_date ? format(new Date(campaign.launch_date), 'MMM d, yyyy') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex -space-x-2">
-                        {campaign.launch_campaign_assignees?.slice(0, 3).map((assignee: any) => (
-                          <Avatar key={assignee.user_id} className="h-7 w-7 border-2 border-background">
-                            <AvatarImage src={assignee.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {assignee.profiles?.name?.[0] || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
-                        {campaign.launch_campaign_assignees?.length > 3 && (
-                          <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
-                            +{campaign.launch_campaign_assignees.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(campaign.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
 
       <LaunchCampaignDialog
         open={dialogOpen} 
