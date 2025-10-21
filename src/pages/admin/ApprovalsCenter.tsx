@@ -50,7 +50,7 @@ export default function ApprovalsCenter() {
           type,
           task_id,
           created_at,
-          requester:profiles!task_change_requests_requester_id_fkey(name),
+          requester:profiles!requester_id(name),
           task:tasks(title)
         `)
         .eq('status', 'pending');
@@ -64,7 +64,7 @@ export default function ApprovalsCenter() {
           id,
           name,
           created_at,
-          creator:profiles!ads_created_by_fkey(name)
+          creator:profiles!created_by(name)
         `)
         .eq('approval_status', 'pending');
 

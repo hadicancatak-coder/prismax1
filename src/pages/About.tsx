@@ -3,9 +3,24 @@ import { Badge } from "@/components/ui/badge";
 import { Info, Sparkles, Mail } from "lucide-react";
 
 export default function About() {
-  const currentVersion = "1.2.1";
+  const currentVersion = "1.3.0";
 
   const versionHistory = [
+    {
+      version: "1.3.0",
+      date: "October 25",
+      features: [
+        "Comprehensive Admin Dashboard redesign",
+        "System Overview with real-time health metrics (users, tasks, errors, approvals)",
+        "Enhanced User Management with inline editing and teams management",
+        "Error Logs Dashboard with severity tracking and resolution workflow",
+        "Approvals Center with unified workflow for tasks and ads",
+        "Admin Audit Log for tracking all administrative actions",
+        "Bulk user operations (role changes, team assignments, deletion)",
+        "Admin access moved to profile menu for cleaner navigation",
+        "Full user profile editing capabilities (name, email, title, teams, role, working days)",
+      ],
+    },
     {
       version: "1.2.1",
       date: "October 25",

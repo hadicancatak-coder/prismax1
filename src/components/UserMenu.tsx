@@ -79,9 +79,9 @@ export const UserMenu = () => {
               <Activity className="mr-2 h-4 w-4" />
               Activity Log
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/admin-panel")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => navigate("/admin/overview")} className="cursor-pointer">
               <ShieldCheck className="mr-2 h-4 w-4" />
-              Admin Panel
+              Admin Dashboard
             </DropdownMenuItem>
           </>
         )}

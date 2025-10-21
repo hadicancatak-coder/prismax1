@@ -11,6 +11,7 @@ import { Trash2, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { adminService } from "@/lib/adminService";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 
 interface User {
   id: string;
@@ -86,6 +87,28 @@ export default function UsersManagement() {
       fetchUsers();
     } catch (error: any) {
       toast.error('Failed to update role: ' + error.message);
+    }
+  };
+
+  const handleTeamsChange = async (userId: string, teams: string[]) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ teams: teams as any })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      await adminService.auditAdminAction({
+        action: 'teams_change',
+        targetUserId: userId,
+        changes: { teams },
+      });
+
+      toast.success('Teams updated successfully');
+      fetchUsers();
+    } catch (error: any) {
+      toast.error('Failed to update teams: ' + error.message);
     }
   };
 
@@ -241,6 +264,7 @@ export default function UsersManagement() {
               <TableHead>User</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Title</TableHead>
+              <TableHead>Teams</TableHead>
               <TableHead>Working Days</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Actions</TableHead>
@@ -249,11 +273,11 @@ export default function UsersManagement() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={8} className="text-center">Loading...</TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">No users found</TableCell>
+                <TableCell colSpan={8} className="text-center">No users found</TableCell>
               </TableRow>
             ) : (
               filteredUsers.map((user) => (
@@ -275,6 +299,12 @@ export default function UsersManagement() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.title || '-'}</TableCell>
+                  <TableCell>
+                    <TeamsMultiSelect
+                      selectedTeams={user.teams || []}
+                      onChange={(teams) => handleTeamsChange(user.user_id, teams)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Select
                       value={user.working_days || 'mon-fri'}
