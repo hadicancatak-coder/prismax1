@@ -158,8 +158,11 @@ const STATIC_COUNTRY_CODES: Record<string, string> = {
 };
 
 /**
- * Generate country variants for static LPs
- * Replaces country code in URL with all available static entities
+ * Generate country + language variants for static LPs
+ * Creates 2 links per entity: EN and AR versions
+ * 
+ * Input: cfi.trade/jo/en/open-account
+ * Output: 28 links (14 entities × 2 languages)
  */
 export const generateStaticLpVariants = (
   baseUrl: string,
@@ -170,7 +173,7 @@ export const generateStaticLpVariants = (
     utmContent?: string;
     utmTerm?: string;
   }
-): Array<{ entity: string; url: string }> => {
+): Array<{ entity: string; language: string; url: string }> => {
   // Detect current country code in URL
   const currentCode = Object.values(STATIC_COUNTRY_CODES).find(code => 
     baseUrl.includes(`/${code}/`)
@@ -178,14 +181,43 @@ export const generateStaticLpVariants = (
 
   if (!currentCode) return [];
 
-  // Generate variants for each country
-  return Object.entries(STATIC_COUNTRY_CODES).map(([entity, code]) => ({
-    entity,
-    url: buildUtmUrl({
-      baseUrl: baseUrl.replace(`/${currentCode}/`, `/${code}/`),
-      ...utmParams
-    })
-  }));
+  // Detect current language path
+  const hasEnPath = baseUrl.includes('/en/');
+  const hasArPath = baseUrl.includes('/ar/');
+  const languagePath = hasEnPath ? '/en/' : hasArPath ? '/ar/' : null;
+
+  const variants: Array<{ entity: string; language: string; url: string }> = [];
+
+  // Generate 2 links per entity (EN + AR)
+  Object.entries(STATIC_COUNTRY_CODES).forEach(([entity, code]) => {
+    // EN version
+    const enUrl = languagePath 
+      ? baseUrl
+          .replace(`/${currentCode}/`, `/${code}/`)
+          .replace(languagePath, '/en/')
+      : baseUrl.replace(`/${currentCode}/`, `/${code}/en/`);
+    
+    variants.push({
+      entity,
+      language: 'EN',
+      url: buildUtmUrl({ baseUrl: enUrl, ...utmParams })
+    });
+
+    // AR version
+    const arUrl = languagePath
+      ? baseUrl
+          .replace(`/${currentCode}/`, `/${code}/`)
+          .replace(languagePath, '/ar/')
+      : baseUrl.replace(`/${currentCode}/`, `/${code}/ar/`);
+    
+    variants.push({
+      entity,
+      language: 'AR',
+      url: buildUtmUrl({ baseUrl: arUrl, ...utmParams })
+    });
+  });
+
+  return variants;
 };
 
 /**

@@ -8,7 +8,6 @@ import { ENTITIES } from "@/lib/constants";
 
 const LP_TYPES = [
   { value: "static", label: "Static" },
-  { value: "mauritius", label: "Mauritius" },
   { value: "dynamic", label: "Dynamic" },
 ];
 

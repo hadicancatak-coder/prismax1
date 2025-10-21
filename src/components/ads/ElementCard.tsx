@@ -20,17 +20,20 @@ export function ElementCard({ element }: ElementCardProps) {
   const deleteElement = useDeleteAdElement();
   const { toast } = useToast();
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const text = typeof element.content === 'string' ? element.content : element.content?.text || JSON.stringify(element.content);
     navigator.clipboard.writeText(text);
     toast({ title: 'Copied to clipboard' });
   };
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
     updateElement.mutate({ id: element.id, updates: { is_favorite: !element.is_favorite } });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm('Are you sure you want to delete this element?')) {
       deleteElement.mutate(element.id);
     }
@@ -72,7 +75,7 @@ export function ElementCard({ element }: ElementCardProps) {
 
   return (
     <>
-      <Card className="p-4 hover:shadow-md transition-shadow">
+      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={handleEdit}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             {isEditing ? (
@@ -84,8 +87,8 @@ export function ElementCard({ element }: ElementCardProps) {
                   className="text-sm"
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveEdit}>Save</Button>
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                  <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveEdit(); }}>Save</Button>
+                  <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}>Cancel</Button>
                 </div>
               </div>
             ) : (
@@ -120,7 +123,7 @@ export function ElementCard({ element }: ElementCardProps) {
             <div className="flex items-center justify-between mb-3">
               <Badge 
                 className={getStatusColor(element.google_status)}
-                onClick={() => setShowStatusDialog(true)}
+                onClick={(e) => { e.stopPropagation(); setShowStatusDialog(true); }}
                 role="button"
               >
                 {element.google_status}
@@ -135,10 +138,10 @@ export function ElementCard({ element }: ElementCardProps) {
                 <Copy className="w-3 h-3 mr-1" />
                 Copy
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleEdit}>
+              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
                 <Edit className="w-3 h-3" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleDelete}>
+              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDelete(e); }}>
                 <Trash2 className="w-3 h-3" />
               </Button>
             </div>

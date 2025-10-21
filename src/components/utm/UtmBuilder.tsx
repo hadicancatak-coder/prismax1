@@ -233,7 +233,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
 
     if (lpType === 'static') {
       variants = generateStaticLpVariants(baseUrl, utmParams);
-      toast.info(`Generating ${variants.length} links for all static entities...`);
+      toast.info(`Generating ${variants.length} links for all static entities (EN + AR)...`);
     } else if (lpType === 'dynamic') {
       variants = generateDynamicLpVariants(baseUrl, utmParams);
       toast.info('Generating 2 links (EN + AR) for dynamic LP...');
@@ -249,7 +249,9 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
 
     try {
       const bulkLinks = variants.map((variant) => ({
-        name: `${selectedCampaign} ${selectedPlatform} ${variant.entity || variant.language} ${autoMonthYear}`,
+        name: variant.language 
+          ? `${selectedCampaign} ${selectedPlatform} ${variant.entity || ''} ${variant.language} ${autoMonthYear}`.trim().replace(/\s+/g, ' ')
+          : `${selectedCampaign} ${selectedPlatform} ${variant.entity || variant.language} ${autoMonthYear}`,
         base_url: baseUrl,
         campaign_name: selectedCampaign,
         platform: selectedPlatform,
@@ -270,22 +272,13 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
 
       await bulkCreateUtmLinks.mutateAsync(bulkLinks);
       
-      // Reset form
-      setLinkName("");
-      setBaseUrl("");
-      setSelectedCampaign("");
-      setSelectedPlatform("");
-      setSelectedPurpose("AO");
-      setSelectedEntities([]);
-      setSelectedTeams([]);
-      setUtmContent("");
-      setUtmTerm("");
-      setNotes("");
-      setDynamicLanguage('EN');
+      // ✅ Stay on Builder tab - DO NOT call onSave()
+      // ✅ Keep form fields intact - DO NOT reset
       
-      if (onSave) {
-        onSave();
-      }
+      toast.success(
+        `✅ Created ${variants.length} UTM links successfully! You can continue editing or view them in the Links tab.`,
+        { duration: 5000 }
+      );
     } catch (error) {
       // Error handled by mutation
     }
@@ -298,7 +291,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
         utmMedium: autoUtmMedium,
         utmCampaign: autoUtmCampaign,
       });
-      return `Generate ${variants.length} links for all static entities`;
+      return `Generate ${variants.length} links for all static entities (EN + AR each)`;
     } else if (lpType === 'dynamic') {
       return 'Generate 2 links (EN + AR)';
     } else if (lpType === 'mauritius') {
@@ -461,7 +454,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
           )}
 
           {/* Language Selector - Only for Dynamic LPs */}
-          {lpType === 'dynamic' && (
+          {lpType === 'dynamic' && baseUrl && (
             <div className="space-y-2">
               <Label>Language for Dynamic LP *</Label>
               <div className="flex gap-2">
@@ -523,6 +516,17 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             </>
           )}
 
+          {/* UTM Content Field - Always visible in both modes */}
+          <div className="space-y-2">
+            <Label htmlFor="utm-content">UTM Content</Label>
+            <Input
+              id="utm-content"
+              value={utmContent}
+              onChange={(e) => setUtmContent(e.target.value)}
+              placeholder="e.g., banner-top, sidebar-cta"
+            />
+          </div>
+
           {/* Auto-Generated Campaign */}
           {autoUtmCampaign && (
             <Alert>
@@ -538,26 +542,14 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             <details className="space-y-4">
               <summary className="cursor-pointer font-medium">Optional Fields</summary>
               <div className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="utm-content">UTM Content</Label>
-                    <Input
-                      id="utm-content"
-                      value={utmContent}
-                      onChange={(e) => setUtmContent(e.target.value)}
-                      placeholder="e.g., banner-top"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="utm-term">UTM Term</Label>
-                    <Input
-                      id="utm-term"
-                      value={utmTerm}
-                      onChange={(e) => setUtmTerm(e.target.value)}
-                      placeholder="e.g., forex+trading"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="utm-term">UTM Term</Label>
+                  <Input
+                    id="utm-term"
+                    value={utmTerm}
+                    onChange={(e) => setUtmTerm(e.target.value)}
+                    placeholder="e.g., forex+trading"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -598,7 +590,7 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
                     <TooltipTrigger asChild>
                       <Button onClick={handleExpand} disabled={!isFormValid} variant="default" size="lg" className="flex-1">
                         <Maximize2 className="h-4 w-4 mr-2" />
-                        Expand ({lpType === 'static' ? ENTITIES.length : 2})
+                        Expand ({lpType === 'static' ? (ENTITIES.length * 2) : 2})
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
