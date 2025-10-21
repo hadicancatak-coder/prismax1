@@ -22,7 +22,7 @@ import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { BlockerDialog } from "./BlockerDialog";
 import { TaskDependenciesSection } from "./TaskDependenciesSection";
 import { TaskChecklistSection } from "./TaskChecklistSection";
-import { TaskTimeTrackingSection } from "./TaskTimeTrackingSection";
+// import { TaskTimeTrackingSection } from "./TaskTimeTrackingSection"; // Removed time tracking
 import { MultiAssigneeSelector } from "./MultiAssigneeSelector";
 import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -469,6 +469,32 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               )}
             </DialogTitle>
             <div className="flex items-center gap-2">
+              {task.status !== 'Completed' && !editMode && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={async () => {
+                    const { error } = await supabase
+                      .from('tasks')
+                      .update({ 
+                        status: 'Completed',
+                        completed_at: new Date().toISOString()
+                      })
+                      .eq('id', taskId);
+                      
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Success", description: "Task marked as complete" });
+                      fetchTask();
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Mark Complete
+                </Button>
+              )}
               {!editMode && !showComments && (
                 <Button variant="outline" size="sm" onClick={() => {
                   setEditMode(true);
@@ -1042,14 +1068,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             </div>
 
-            {/* Time Tracking Section */}
-            <TaskTimeTrackingSection
-              taskId={taskId}
-              estimatedHours={task.estimated_hours}
-              actualHours={task.actual_hours}
-              onUpdate={fetchTask}
-            />
-
+            {/* Time Tracking Section - Removed per user request */}
+            
             <Separator />
 
             {/* Dependencies Section */}

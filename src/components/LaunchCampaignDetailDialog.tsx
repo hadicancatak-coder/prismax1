@@ -156,12 +156,42 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                 {editMode ? "Edit Mission" : "Mission Details"}
               </DialogTitle>
             </div>
-            {!editMode && (
-              <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            )}
+              {campaign.status === 'pending' && !editMode && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={async () => {
+                    const { error } = await supabase
+                      .from('launch_pad_campaigns')
+                      .update({ 
+                        status: 'live',
+                        launched_at: new Date().toISOString()
+                      })
+                      .eq('id', campaignId);
+                      
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ 
+                        title: "🚀 Campaign Launched", 
+                        description: "Campaign moved to live status" 
+                      });
+                      await fetchCampaign();
+                      onUpdate?.();
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Launch Campaign
+                </Button>
+              )}
+              {!editMode && (
+                <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
           </div>
           <DialogDescription>
             {editMode ? "Update mission details" : "View mission information"}
@@ -366,11 +396,10 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">🚧 In Prep</SelectItem>
-                    <SelectItem value="live">🛰️ Live</SelectItem>
-                    <SelectItem value="orbit">🌍 In Orbit</SelectItem>
-                    <SelectItem value="paused">☄️ Paused</SelectItem>
-                    <SelectItem value="stopped">🔴 Stopped</SelectItem>
+                    <SelectItem value="pending">Pending Launch</SelectItem>
+                    <SelectItem value="live">Live</SelectItem>
+                    <SelectItem value="orbit">In Orbit</SelectItem>
+                    <SelectItem value="landed">Landed (Paused)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -439,16 +468,19 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                   <div className="mt-1">
                     <Badge variant="outline" className={
                       campaign.status === 'live' 
-                        ? "bg-success/10 text-success border-success/20"
+                        ? "bg-green-500/10 text-green-600 border-green-500/20"
                         : campaign.status === 'orbit'
-                        ? "bg-primary/10 text-primary border-primary/20"
+                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
                         : campaign.status === 'pending'
-                        ? "bg-warning/10 text-warning border-warning/20"
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        : campaign.status === 'landed'
+                        ? "bg-gray-500/10 text-gray-600 border-gray-500/20"
                         : "bg-muted"
                     }>
-                      {campaign.status === 'live' ? '🛰️ Live' : 
-                       campaign.status === 'orbit' ? '🌍 In Orbit' :
-                       campaign.status === 'pending' ? '🚧 In Prep' :
+                      {campaign.status === 'live' ? 'Live' : 
+                       campaign.status === 'orbit' ? 'In Orbit' :
+                       campaign.status === 'pending' ? 'Pending' :
+                       campaign.status === 'landed' ? 'Paused' :
                        campaign.status === 'paused' ? '☄️ Paused' : '🔴 Stopped'}
                     </Badge>
                   </div>
