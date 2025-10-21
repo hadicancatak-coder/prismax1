@@ -815,7 +815,7 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
               <DisplayAdPreview
                 businessName={businessName}
                 longHeadline={longHeadline}
-                shortHeadline={shortHeadlines[0] || ''}
+                shortHeadlines={shortHeadlines}
                 descriptions={descriptions}
                 ctaText={ctaText}
                 landingPage={landingPage}

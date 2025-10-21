@@ -5,7 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Rocket, Building, Radio, Users, Clock, Share2, Target, PauseCircle, Trash2 } from "lucide-react";
+import { Plus, Rocket, Building, Radio, Users, Clock, Share2, Target, PauseCircle, Trash2, CalendarIcon, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import { LaunchCampaignDialog } from "@/components/LaunchCampaignDialog";
 import { LaunchCampaignDetailDialog } from "@/components/LaunchCampaignDetailDialog";
 import { LaunchCampaignCard } from "@/components/LaunchCampaignCard";
@@ -20,6 +23,8 @@ export default function LaunchPad() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -40,7 +45,7 @@ export default function LaunchPad() {
 
   const fetchCampaigns = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('launch_pad_campaigns')
         .select(`
           *,
@@ -51,6 +56,17 @@ export default function LaunchPad() {
         `)
         .order('created_at', { ascending: false });
 
+      // Apply date filters
+      if (startDate) {
+        query = query.gte('launch_date', startDate.toISOString());
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('launch_date', endOfDay.toISOString());
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setCampaigns(data || []);
     } catch (error: any) {
@@ -59,6 +75,10 @@ export default function LaunchPad() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, [startDate, endDate]);
 
   const handleLaunch = async (id: string) => {
     try {
@@ -161,6 +181,53 @@ export default function LaunchPad() {
         </Button>
       </div>
 
+      {/* Date Filter */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Label>Filter by Launch Date:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[200px] justify-start text-left">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "MMM d, yyyy") : "Start date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={startDate || undefined} onSelect={(date) => setStartDate(date || null)} />
+                </PopoverContent>
+              </Popover>
+              
+              <span className="text-muted-foreground">to</span>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[200px] justify-start text-left">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={endDate || undefined} onSelect={(date) => setEndDate(date || null)} />
+                </PopoverContent>
+              </Popover>
+              
+              {(startDate || endDate) && (
+                <Button variant="ghost" size="sm" onClick={() => { setStartDate(null); setEndDate(null); }}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+            
+            <div className="text-sm text-muted-foreground ml-auto">
+              Showing {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Professional Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="border-l-4 border-l-primary/50">
@@ -226,7 +293,7 @@ export default function LaunchPad() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+            <ScrollArea className="max-h-[500px] pr-4">
               <div className="space-y-3">
                 {pendingCampaigns.map((campaign) => (
                   <LaunchCampaignCard
@@ -261,7 +328,7 @@ export default function LaunchPad() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+            <ScrollArea className="max-h-[500px] pr-4">
               <div className="space-y-3">
                 {socialUACampaigns.map((campaign) => (
                   <LaunchCampaignCard
@@ -295,7 +362,7 @@ export default function LaunchPad() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+            <ScrollArea className="max-h-[500px] pr-4">
               <div className="space-y-3">
                 {ppcCampaigns.map((campaign) => (
                   <LaunchCampaignCard

@@ -8,7 +8,7 @@ import { useState } from 'react';
 interface DisplayAdPreviewProps {
   businessName: string;
   longHeadline: string;
-  shortHeadline?: string;
+  shortHeadlines?: string[];
   descriptions: string[];
   ctaText: string;
   landingPage: string;
@@ -19,8 +19,12 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
   const displayUrl = props.landingPage ? new URL(props.landingPage).hostname.replace('www.', '') : 'example.com';
   
   // Get active filtered arrays
+  const activeShortHeadlines = props.shortHeadlines?.filter(h => h.trim()) || [];
   const activeDescriptions = props.descriptions.filter(d => d.trim());
-  const currentDescription = activeDescriptions[combinationIndex % activeDescriptions.length] || activeDescriptions[0] || '';
+  
+  // Cycle through both headlines and descriptions
+  const currentShortHeadline = activeShortHeadlines[combinationIndex % activeShortHeadlines.length] || props.longHeadline;
+  const currentDescription = activeDescriptions[combinationIndex % activeDescriptions.length] || '';
 
   return (
     <div className="space-y-4">
@@ -75,7 +79,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
                     <div className="p-3 space-y-2">
                       <p className="text-xs text-muted-foreground">{displayUrl}</p>
                       <h3 className="font-semibold text-sm line-clamp-2 text-gray-900">
-                        {props.shortHeadline || props.longHeadline || 'Your headline here'}
+                        {currentShortHeadline || 'Your headline here'}
                       </h3>
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {currentDescription || 'Your description here'}
@@ -124,7 +128,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground truncate">{displayUrl}</p>
-                <p className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Your ad headline'}</p>
+                <p className="font-semibold text-sm line-clamp-2">{currentShortHeadline || props.longHeadline || 'Your ad headline'}</p>
               </div>
               {props.ctaText && <Button size="sm" variant="secondary">{props.ctaText}</Button>}
             </div>
@@ -164,7 +168,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
             <div className="flex-1 px-4 py-2 flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">{displayUrl}</p>
-                <h3 className="font-semibold text-sm line-clamp-1">{props.longHeadline || 'Headline'}</h3>
+                <h3 className="font-semibold text-sm line-clamp-1">{currentShortHeadline || props.longHeadline || 'Headline'}</h3>
                 <p className="text-xs text-muted-foreground line-clamp-1">{currentDescription}</p>
               </div>
               {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
@@ -182,7 +186,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
             </div>
             <div className="p-3 space-y-2">
               <p className="text-xs text-muted-foreground">{displayUrl}</p>
-              <h3 className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Headline'}</h3>
+              <h3 className="font-semibold text-sm line-clamp-2">{currentShortHeadline || props.longHeadline || 'Headline'}</h3>
               <p className="text-xs text-muted-foreground line-clamp-2">{currentDescription}</p>
               {props.ctaText && <Button size="sm" className="w-full">{props.ctaText}</Button>}
             </div>
