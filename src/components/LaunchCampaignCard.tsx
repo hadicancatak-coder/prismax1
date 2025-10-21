@@ -22,12 +22,12 @@ interface LaunchCampaignCardProps {
 export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onDelete, onCardClick }: LaunchCampaignCardProps) {
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; className: string }> = {
-      pending: { label: "Pending", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+      launchpad: { label: "On Launch Pad", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
       live: { label: "Live", className: "bg-green-500/10 text-green-600 border-green-500/20" },
       orbit: { label: "In Orbit", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-      landed: { label: "Paused", className: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
+      landed: { label: "Landed", className: "bg-gray-500/10 text-gray-600 border-gray-500/20" }
     };
-    return configs[status] || configs.pending;
+    return configs[status] || configs.launchpad;
   };
 
   const statusConfig = getStatusConfig(campaign.status);
@@ -114,7 +114,7 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onDel
         
         {/* Footer with actions */}
         <div className="flex items-center gap-2 pt-3 border-t">
-          {showLaunchButton && campaign.status === 'pending' && (
+          {showLaunchButton && campaign.status === 'launchpad' && (
             <Button 
               size="sm" 
               className="flex-1 gap-2"

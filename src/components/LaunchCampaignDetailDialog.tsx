@@ -73,7 +73,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
       setLpUrl(data.lp_url || "");
       setCreativesLink(data.creatives_link || "");
       setCaptions(data.captions || "");
-      setStatus(data.status || "pending");
+      setStatus(data.status || "launchpad");
       setJiraLinks(Array.isArray(data.jira_links) ? data.jira_links.filter((l): l is string => typeof l === 'string') : []);
     }
     setLoading(false);
@@ -165,7 +165,7 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
             </div>
             
             <div className="flex items-center gap-2 shrink-0">
-              {campaign.status === 'pending' && !editMode && (
+              {campaign.status === 'launchpad' && !editMode && (
                 <Button 
                   variant="default" 
                   size="sm" 
@@ -440,10 +440,10 @@ export function LaunchCampaignDetailDialog({ open, onOpenChange, campaignId, onU
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending Launch</SelectItem>
+                    <SelectItem value="launchpad">On Launch Pad</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="orbit">In Orbit</SelectItem>
-                    <SelectItem value="landed">Landed (Paused)</SelectItem>
+                    <SelectItem value="landed">Landed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
