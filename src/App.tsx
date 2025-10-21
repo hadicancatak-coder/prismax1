@@ -9,7 +9,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
-import AdminPanel from "./pages/AdminPanel";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Overview from "./pages/admin/Overview";
 import UsersManagement from "./pages/admin/UsersManagement";
@@ -59,7 +58,6 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/admin-panel" element={<AdminPanel />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />

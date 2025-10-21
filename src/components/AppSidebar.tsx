@@ -1,4 +1,4 @@
-import { CheckSquare, Calendar, LayoutDashboard, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2 } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -31,6 +31,10 @@ const operationsItems = [
 const teamItems = [
   { title: "Base", url: "/team-base", icon: FolderKanban },
   { title: "Notifications", url: "/notifications", icon: Bell },
+];
+
+const adminItems = [
+  { title: "Admin", url: "/admin/overview", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -128,6 +132,33 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {userRole === 'admin' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs text-muted-foreground">Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
