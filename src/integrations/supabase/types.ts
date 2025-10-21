@@ -1802,6 +1802,191 @@ export type Database = {
         }
         Relationships: []
       }
+      utm_change_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string
+          field_changed: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          utm_link_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by: string
+          field_changed: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          utm_link_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string
+          field_changed?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          utm_link_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_change_history_utm_link_id_fkey"
+            columns: ["utm_link_id"]
+            isOneToOne: false
+            referencedRelation: "utm_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utm_links: {
+        Row: {
+          base_url: string
+          campaign_type: Database["public"]["Enums"]["campaign_type"] | null
+          click_count: number | null
+          created_at: string
+          created_by: string
+          custom_params: Json | null
+          entity: string[] | null
+          full_url: string
+          id: string
+          is_validated: boolean | null
+          last_used_at: string | null
+          name: string
+          notes: string | null
+          status: Database["public"]["Enums"]["utm_status"] | null
+          tags: string[] | null
+          teams: string[] | null
+          updated_at: string
+          updated_by: string | null
+          usage_context: string | null
+          utm_campaign: string
+          utm_content: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term: string | null
+          validated_at: string | null
+          validated_by: string | null
+          validation_notes: string | null
+        }
+        Insert: {
+          base_url: string
+          campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
+          click_count?: number | null
+          created_at?: string
+          created_by: string
+          custom_params?: Json | null
+          entity?: string[] | null
+          full_url: string
+          id?: string
+          is_validated?: boolean | null
+          last_used_at?: string | null
+          name: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["utm_status"] | null
+          tags?: string[] | null
+          teams?: string[] | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_context?: string | null
+          utm_campaign: string
+          utm_content?: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_notes?: string | null
+        }
+        Update: {
+          base_url?: string
+          campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
+          click_count?: number | null
+          created_at?: string
+          created_by?: string
+          custom_params?: Json | null
+          entity?: string[] | null
+          full_url?: string
+          id?: string
+          is_validated?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["utm_status"] | null
+          tags?: string[] | null
+          teams?: string[] | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_context?: string | null
+          utm_campaign?: string
+          utm_content?: string | null
+          utm_medium?: string
+          utm_source?: string
+          utm_term?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_notes?: string | null
+        }
+        Relationships: []
+      }
+      utm_templates: {
+        Row: {
+          campaign_type: Database["public"]["Enums"]["campaign_type"] | null
+          created_at: string
+          created_by: string
+          description: string | null
+          entity: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          team: string | null
+          updated_at: string
+          utm_campaign: string
+          utm_content: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term: string | null
+        }
+        Insert: {
+          campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          entity?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          team?: string | null
+          updated_at?: string
+          utm_campaign: string
+          utm_content?: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term?: string | null
+        }
+        Update: {
+          campaign_type?: Database["public"]["Enums"]["campaign_type"] | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          team?: string | null
+          updated_at?: string
+          utm_campaign?: string
+          utm_content?: string | null
+          utm_medium?: string
+          utm_source?: string
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       launch_campaigns_with_assignees: {
@@ -1934,12 +2119,21 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      campaign_type:
+        | "paid_search"
+        | "social"
+        | "email"
+        | "display"
+        | "affiliate"
+        | "referral"
+        | "organic"
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
       task_type: "task" | "campaign_launch"
       task_visibility: "global" | "pool" | "private"
       team: "SocialUA" | "PPC" | "PerMar"
+      utm_status: "active" | "paused" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2068,12 +2262,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      campaign_type: [
+        "paid_search",
+        "social",
+        "email",
+        "display",
+        "affiliate",
+        "referral",
+        "organic",
+      ],
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],
       task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
       task_type: ["task", "campaign_launch"],
       task_visibility: ["global", "pool", "private"],
       team: ["SocialUA", "PPC", "PerMar"],
+      utm_status: ["active", "paused", "archived"],
     },
   },
 } as const

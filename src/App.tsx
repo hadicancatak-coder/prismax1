@@ -25,6 +25,7 @@ import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
 import About from "./pages/About";
+import UtmPlanner from "./pages/UtmPlanner";
 
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/launch-pad" element={<LaunchPad />} />
+            <Route path="/utm-planner" element={<UtmPlanner />} />
             <Route path="/security" element={<Security />} />
             <Route path="/about" element={<About />} />
           </Route>

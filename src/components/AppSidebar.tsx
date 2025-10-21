@@ -1,4 +1,4 @@
-import { CheckSquare, Calendar, LayoutDashboard, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -24,6 +24,7 @@ const coreItems = [
 const operationsItems = [
   { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
+  { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Preview", url: "/campaigns", icon: Target },
 ];
 
