@@ -176,3 +176,34 @@ export const useValidateUtmLink = () => {
     },
   });
 };
+
+export const useBulkCreateUtmLinks = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (links: Array<Omit<UtmLinkInsert, "created_by" | "created_at" | "updated_at" | "id">>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const linksWithUser = links.map(link => ({
+        ...link,
+        created_by: user.id,
+      }));
+
+      const { data, error } = await supabase
+        .from("utm_links")
+        .insert(linksWithUser)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["utm-links"] });
+      toast.success(`Created ${data.length} UTM links successfully`);
+    },
+    onError: (error) => {
+      toast.error("Failed to create bulk UTM links: " + error.message);
+    },
+  });
+};

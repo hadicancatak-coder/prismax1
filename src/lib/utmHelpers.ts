@@ -136,3 +136,119 @@ export const buildUtmUrl = (params: {
     return params.baseUrl;
   }
 };
+
+/**
+ * Country mapping for static LPs
+ */
+const STATIC_COUNTRY_CODES: Record<string, string> = {
+  Jordan: 'jo',
+  Lebanon: 'lb',
+  Mauritius: 'mu',
+  Vietnam: 'vn',
+  Iraq: 'iq',
+  Azerbaijan: 'az',
+  UAE: 'uae',
+  Kuwait: 'kw',
+  Oman: 'om',
+  UK: 'uk',
+  Cyprus: 'cy',
+  Vanuatu: 'vu',
+  Palestine: 'ps',
+  'South Africa': 'za',
+};
+
+/**
+ * Generate country variants for static LPs
+ * Replaces country code in URL with all available static entities
+ */
+export const generateStaticLpVariants = (
+  baseUrl: string,
+  utmParams: {
+    utmSource: string;
+    utmMedium: string;
+    utmCampaign: string;
+    utmContent?: string;
+    utmTerm?: string;
+  }
+): Array<{ entity: string; url: string }> => {
+  // Detect current country code in URL
+  const currentCode = Object.values(STATIC_COUNTRY_CODES).find(code => 
+    baseUrl.includes(`/${code}/`)
+  );
+
+  if (!currentCode) return [];
+
+  // Generate variants for each country
+  return Object.entries(STATIC_COUNTRY_CODES).map(([entity, code]) => ({
+    entity,
+    url: buildUtmUrl({
+      baseUrl: baseUrl.replace(`/${currentCode}/`, `/${code}/`),
+      ...utmParams
+    })
+  }));
+};
+
+/**
+ * Generate language variants for dynamic LPs
+ * Adds &lang=EN and &lang=AR to the URL
+ */
+export const generateDynamicLpVariants = (
+  baseUrl: string,
+  utmParams: {
+    utmSource: string;
+    utmMedium: string;
+    utmCampaign: string;
+    utmContent?: string;
+    utmTerm?: string;
+  }
+): Array<{ language: 'EN' | 'AR'; url: string }> => {
+  return [
+    {
+      language: 'EN',
+      url: buildUtmUrl({ baseUrl, ...utmParams, dynamicLanguage: 'EN' })
+    },
+    {
+      language: 'AR',
+      url: buildUtmUrl({ baseUrl, ...utmParams, dynamicLanguage: 'AR' })
+    }
+  ];
+};
+
+/**
+ * Generate language variants for Mauritius LPs
+ * Replaces /en/ with /ar/ or vice-versa
+ */
+export const generateMauritiusLpVariants = (
+  baseUrl: string,
+  utmParams: {
+    utmSource: string;
+    utmMedium: string;
+    utmCampaign: string;
+    utmContent?: string;
+    utmTerm?: string;
+  }
+): Array<{ language: string; url: string }> => {
+  const hasEn = baseUrl.includes('/en/');
+  const hasAr = baseUrl.includes('/ar/');
+  
+  const variants = [];
+  
+  if (hasEn) {
+    variants.push({
+      language: 'EN',
+      url: buildUtmUrl({ baseUrl, ...utmParams })
+    });
+  }
+  
+  if (hasAr || hasEn) {
+    variants.push({
+      language: 'AR',
+      url: buildUtmUrl({ 
+        baseUrl: hasEn ? baseUrl.replace('/en/', '/ar/') : baseUrl,
+        ...utmParams 
+      })
+    });
+  }
+  
+  return variants;
+};

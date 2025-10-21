@@ -56,3 +56,50 @@ export const useCreateUtmCampaign = () => {
     },
   });
 };
+
+export const useUpdateUtmCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, name, landing_page }: { id: string; name?: string; landing_page?: string | null }) => {
+      const { data, error } = await supabase
+        .from("utm_campaigns")
+        .update({ name, landing_page })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["utm-campaigns"] });
+      toast.success("Campaign updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update campaign: " + error.message);
+    },
+  });
+};
+
+export const useDeleteUtmCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("utm_campaigns")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["utm-campaigns"] });
+      toast.success("Campaign deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete campaign: " + error.message);
+    },
+  });
+};

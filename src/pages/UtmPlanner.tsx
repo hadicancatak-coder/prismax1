@@ -3,8 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmBuilder } from "@/components/utm/UtmBuilder";
 import { UtmCompactList } from "@/components/utm/UtmCompactList";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
+import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
-import { Link2, Plus, List } from "lucide-react";
+import { Link2, Plus, List, Folder } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const UtmPlanner = () => {
@@ -25,19 +26,27 @@ const UtmPlanner = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2">
+        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">
           <TabsTrigger value="builder" className="gap-2">
             <Plus className="h-4 w-4" />
             Builder
           </TabsTrigger>
+          <TabsTrigger value="campaigns" className="gap-2">
+            <Folder className="h-4 w-4" />
+            Campaigns
+          </TabsTrigger>
           <TabsTrigger value="links" className="gap-2">
             <List className="h-4 w-4" />
-            Saved Links ({utmLinks.length})
+            Links ({utmLinks.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="builder" className="space-y-6">
           <UtmBuilder onSave={() => setActiveTab("links")} />
+        </TabsContent>
+
+        <TabsContent value="campaigns" className="space-y-4">
+          <CampaignLibrary />
         </TabsContent>
 
         <TabsContent value="links" className="space-y-4">

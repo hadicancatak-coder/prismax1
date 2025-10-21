@@ -8,15 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
 import { AddCampaignDialog } from "./AddCampaignDialog";
-import { useCreateUtmLink } from "@/hooks/useUtmLinks";
+import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
+import { useCreateUtmLink, useBulkCreateUtmLinks } from "@/hooks/useUtmLinks";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
-import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl, detectEntityFromUrl } from "@/lib/utmHelpers";
+import { useUtmTemplates } from "@/hooks/useUtmTemplates";
+import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl, detectEntityFromUrl, generateStaticLpVariants, generateDynamicLpVariants, generateMauritiusLpVariants } from "@/lib/utmHelpers";
 import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2 } from "lucide-react";
+import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2, Maximize2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UtmBuilderProps {
   onSave?: () => void;
@@ -46,6 +49,8 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
   const [utmTerm, setUtmTerm] = useState("");
   const [notes, setNotes] = useState("");
   const [showAddCampaign, setShowAddCampaign] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   // Handle mode change
   const handleModeChange = (newMode: 'template' | 'custom') => {
@@ -65,8 +70,10 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
   const [fullUrl, setFullUrl] = useState("");
 
   const createUtmLink = useCreateUtmLink();
+  const bulkCreateUtmLinks = useBulkCreateUtmLinks();
   const { data: campaigns = [], isLoading: loadingCampaigns } = useUtmCampaigns();
   const { data: platforms = [], isLoading: loadingPlatforms } = useUtmPlatforms();
+  const { data: templates = [] } = useUtmTemplates();
 
   // Auto-detect entity and LP type from URL
   useEffect(() => {
@@ -193,31 +200,153 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
     }
   };
 
-  const isFormValid = baseUrl && selectedCampaign && selectedPlatform && (lpType !== 'dynamic' || dynamicLanguage);
+  const isFormValid = baseUrl && selectedCampaign && selectedPlatform && (lpType === 'dynamic' ? !!dynamicLanguage : true);
+
+  // Load template when selected
+  useEffect(() => {
+    if (selectedTemplate && templates.length > 0) {
+      const template = templates.find(t => t.id === selectedTemplate);
+      if (template) {
+        setAutoUtmSource(template.utm_source);
+        setAutoUtmMedium(template.utm_medium);
+        setAutoUtmCampaign(template.utm_campaign);
+        if (template.utm_content) setUtmContent(template.utm_content);
+        if (template.utm_term) setUtmTerm(template.utm_term);
+        if (template.entity) setSelectedEntities([template.entity]);
+        toast.success(`Loaded template: ${template.name}`);
+      }
+    }
+  }, [selectedTemplate, templates]);
+
+  const handleExpand = async () => {
+    if (!isFormValid) return;
+
+    const utmParams = {
+      utmSource: autoUtmSource,
+      utmMedium: autoUtmMedium,
+      utmCampaign: autoUtmCampaign,
+      utmContent: utmContent || undefined,
+      utmTerm: utmTerm || undefined,
+    };
+
+    let variants: Array<{ entity?: string; language?: string; url: string }> = [];
+
+    if (lpType === 'static') {
+      variants = generateStaticLpVariants(baseUrl, utmParams);
+      toast.info(`Generating ${variants.length} links for all static entities...`);
+    } else if (lpType === 'dynamic') {
+      variants = generateDynamicLpVariants(baseUrl, utmParams);
+      toast.info('Generating 2 links (EN + AR) for dynamic LP...');
+    } else if (lpType === 'mauritius') {
+      variants = generateMauritiusLpVariants(baseUrl, utmParams);
+      toast.info('Generating 2 links (EN + AR) for Mauritius LP...');
+    }
+
+    if (variants.length === 0) {
+      toast.error('No variants to generate');
+      return;
+    }
+
+    try {
+      const bulkLinks = variants.map((variant) => ({
+        name: `${selectedCampaign} ${selectedPlatform} ${variant.entity || variant.language} ${autoMonthYear}`,
+        base_url: baseUrl,
+        campaign_name: selectedCampaign,
+        platform: selectedPlatform,
+        link_purpose: selectedPurpose || undefined,
+        entity: variant.entity ? [variant.entity] : undefined,
+        teams: selectedTeams.length > 0 ? selectedTeams : undefined,
+        utm_source: autoUtmSource,
+        utm_medium: autoUtmMedium,
+        utm_campaign: autoUtmCampaign,
+        utm_content: utmContent || undefined,
+        utm_term: utmTerm || undefined,
+        full_url: variant.url,
+        month_year: autoMonthYear,
+        notes: notes || undefined,
+        lp_type: lpType,
+        dynamic_language: (variant.language as 'EN' | 'AR') || undefined,
+      }));
+
+      await bulkCreateUtmLinks.mutateAsync(bulkLinks);
+      
+      // Reset form
+      setLinkName("");
+      setBaseUrl("");
+      setSelectedCampaign("");
+      setSelectedPlatform("");
+      setSelectedPurpose("AO");
+      setSelectedEntities([]);
+      setSelectedTeams([]);
+      setUtmContent("");
+      setUtmTerm("");
+      setNotes("");
+      setDynamicLanguage('EN');
+      
+      if (onSave) {
+        onSave();
+      }
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  const getExpandTooltip = () => {
+    if (lpType === 'static') {
+      const variants = generateStaticLpVariants(baseUrl, {
+        utmSource: autoUtmSource,
+        utmMedium: autoUtmMedium,
+        utmCampaign: autoUtmCampaign,
+      });
+      return `Generate ${variants.length} links for all static entities`;
+    } else if (lpType === 'dynamic') {
+      return 'Generate 2 links (EN + AR)';
+    } else if (lpType === 'mauritius') {
+      return 'Generate 2 links (EN + AR)';
+    }
+    return 'Expand to multiple links';
+  };
 
   return (
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <CardTitle>UTM Link Builder</CardTitle>
               <CardDescription>
                 Create a new UTM-tagged link with auto-generated parameters
               </CardDescription>
             </div>
-            <Tabs value={mode} onValueChange={(v) => handleModeChange(v as 'template' | 'custom')}>
-              <TabsList>
-                <TabsTrigger value="template" className="text-xs">
-                  <Zap className="h-3 w-3 mr-1" />
-                  Quick
-                </TabsTrigger>
-                <TabsTrigger value="custom" className="text-xs">
-                  <Settings2 className="h-3 w-3 mr-1" />
-                  Custom
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex gap-2">
+              {templates.length > 0 && (
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger className="w-48">
+                    <FileText className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Load template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Tabs value={mode} onValueChange={(v) => handleModeChange(v as 'template' | 'custom')}>
+                <TabsList>
+                  <TabsTrigger value="template" className="text-xs">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Quick
+                  </TabsTrigger>
+                  <TabsTrigger value="custom" className="text-xs">
+                    <Settings2 className="h-3 w-3 mr-1" />
+                    Custom
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -457,9 +586,26 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
                   <Button onClick={handleCopy} variant="outline" size="icon">
                     <Copy className="h-4 w-4" />
                   </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button onClick={handleExpand} disabled={!isFormValid} variant="outline">
+                          <Maximize2 className="h-4 w-4 mr-2" />
+                          Expand
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{getExpandTooltip()}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <Button onClick={handleSave} disabled={!isFormValid}>
                     <Save className="h-4 w-4 mr-2" />
                     Save
+                  </Button>
+                  <Button onClick={() => setShowSaveTemplate(true)} disabled={!isFormValid} variant="outline">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Save as Template
                   </Button>
                 </div>
               </div>
@@ -469,6 +615,19 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
       </Card>
 
       <AddCampaignDialog open={showAddCampaign} onOpenChange={setShowAddCampaign} />
+      <SaveAsTemplateDialog
+        open={showSaveTemplate}
+        onOpenChange={setShowSaveTemplate}
+        templateData={{
+          utm_source: autoUtmSource,
+          utm_medium: autoUtmMedium,
+          utm_campaign: autoUtmCampaign,
+          utm_content: utmContent || undefined,
+          utm_term: utmTerm || undefined,
+          entity: selectedEntities[0],
+          team: selectedTeams[0],
+        }}
+      />
     </>
   );
 };
