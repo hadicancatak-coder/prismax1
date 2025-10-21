@@ -54,14 +54,103 @@ export function AdApprovalSection({ adId, currentStatus, onStatusChange }: AdApp
 
   const handleStatusChange = async (newStatus: string) => {
     try {
+      // Update ad approval status
       const { error } = await supabase
         .from('ads')
         .update({ approval_status: newStatus })
         .eq('id', adId);
 
       if (error) throw error;
+      
+      // If approved, create launch pad campaign
+      if (newStatus === 'approved') {
+        // Fetch full ad details
+        const { data: ad, error: adError } = await supabase
+          .from('ads')
+          .select('*')
+          .eq('id', adId)
+          .single();
+
+        if (adError) throw adError;
+
+        // Get PPC team members
+        const { data: ppcMembers, error: ppcError } = await supabase
+          .from('profiles')
+          .select('id, user_id')
+          .contains('teams', ['PPC']);
+
+        if (ppcError) throw ppcError;
+
+        // Build ad content description
+        const headlines = JSON.parse(String(ad.headlines || '[]')).filter((h: string) => h.trim());
+        const descriptions = JSON.parse(String(ad.descriptions || '[]')).filter((d: string) => d.trim());
+        const sitelinks = JSON.parse(String(ad.sitelinks || '[]')).filter((s: any) => s.title?.trim());
+        const callouts = JSON.parse(String(ad.callouts || '[]')).filter((c: string) => c.trim());
+
+        const adContent = `
+**Ad Name:** ${ad.name}
+
+**Headlines:**
+${headlines.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')}
+
+**Descriptions:**
+${descriptions.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n')}
+
+${sitelinks.length > 0 ? `**Sitelinks:**\n${sitelinks.map((s: any, i: number) => `${i + 1}. ${s.title}: ${s.description || ''}`).join('\n')}` : ''}
+
+${callouts.length > 0 ? `**Callouts:**\n${callouts.join(' • ')}` : ''}
+
+**Landing Page:** ${ad.landing_page || 'Not specified'}
+        `.trim();
+
+        // Create launch pad campaign
+        const { data: campaign, error: campaignError } = await supabase
+          .from('launch_pad_campaigns')
+          .insert({
+            title: ad.name,
+            description: adContent,
+            status: 'pending',
+            entity: ad.entity ? [ad.entity] : [],
+            teams: ['PPC'],
+            launch_month: format(new Date(), 'MMMM yyyy'),
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          })
+          .select()
+          .single();
+
+        if (campaignError) throw campaignError;
+
+        // Auto-assign PPC team members
+        if (ppcMembers && ppcMembers.length > 0 && campaign) {
+          const assignerId = (await supabase.auth.getUser()).data.user?.id;
+          const { data: assignerProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', assignerId)
+            .single();
+
+          const assignments = ppcMembers.map((member) => ({
+            campaign_id: campaign.id,
+            user_id: member.id,
+            assigned_by: assignerProfile?.id
+          }));
+
+          const { error: assignError } = await supabase
+            .from('launch_campaign_assignees')
+            .insert(assignments);
+
+          if (assignError) console.error('Assignment error:', assignError);
+        }
+
+        toast({ 
+          title: "✅ Ad Approved & Sent to Launch Pad", 
+          description: `Campaign created and assigned to PPC team` 
+        });
+      } else {
+        toast({ title: "Status updated" });
+      }
+
       setStatus(newStatus);
-      toast({ title: "Status updated" });
       onStatusChange();
     } catch (error: any) {
       toast({ title: "Error updating status", description: error.message, variant: "destructive" });
