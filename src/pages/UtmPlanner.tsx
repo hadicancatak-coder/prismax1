@@ -41,7 +41,19 @@ const UtmPlanner = () => {
         </TabsContent>
 
         <TabsContent value="links" className="space-y-6">
-          <UtmFilters filters={filters} onFiltersChange={setFilters} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <UtmFilters filters={filters} onFiltersChange={setFilters} />
+              </div>
+            </CardContent>
+          </Card>
 
           {isLoading ? (
             <Card>
@@ -50,17 +62,7 @@ const UtmPlanner = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>UTM Links Library</CardTitle>
-                <CardDescription>
-                  All your saved UTM links in one place
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <UtmTable links={utmLinks} />
-              </CardContent>
-            </Card>
+            <UtmTable links={utmLinks} />
           )}
         </TabsContent>
       </Tabs>

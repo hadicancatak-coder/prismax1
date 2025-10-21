@@ -77,7 +77,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
               <TableHead>Link Name</TableHead>
               <TableHead>Campaign</TableHead>
               <TableHead>Platform</TableHead>
-              <TableHead>Language</TableHead>
+              <TableHead>LP Type</TableHead>
               <TableHead>Purpose</TableHead>
               <TableHead>UTM Medium</TableHead>
               <TableHead>Month/Year</TableHead>
@@ -103,9 +103,11 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 <TableCell>{link.campaign_name || "-"}</TableCell>
                 <TableCell>{link.platform || "-"}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="font-mono">
-                    {link.language || "-"}
-                  </Badge>
+                  {link.lp_type ? (
+                    <Badge variant={link.lp_type === 'static' ? 'default' : link.lp_type === 'mauritius' ? 'secondary' : 'outline'}>
+                      {link.lp_type}
+                    </Badge>
+                  ) : "-"}
                 </TableCell>
                 <TableCell>
                   {link.link_purpose ? (

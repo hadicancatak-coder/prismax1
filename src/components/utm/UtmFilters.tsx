@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
-import { useUtmLanguages } from "@/hooks/useUtmLanguages";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { Search, X } from "lucide-react";
 import type { UtmLinkFilters } from "@/hooks/useUtmLinks";
@@ -18,11 +17,15 @@ interface UtmFiltersProps {
 
 const LINK_PURPOSES = ["AO", "Seminar", "Webinar", "Education"];
 const STATUSES = ["active", "paused", "archived"];
+const LP_TYPES = [
+  { value: "static", label: "Static" },
+  { value: "mauritius", label: "Mauritius" },
+  { value: "dynamic", label: "Dynamic" },
+];
 
 export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
-  const { data: languages = [] } = useUtmLanguages();
 
   const handleClearFilters = () => {
     onFiltersChange({});
@@ -81,15 +84,25 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
           />
         </div>
 
-        {/* Language */}
+        {/* LP Type */}
         <div className="space-y-2">
-          <Label>Language</Label>
-          <SimpleMultiSelect
-            options={languages.map(l => ({ value: l.code, label: `${l.name} (${l.code})` }))}
-            selected={filters.language || []}
-            onChange={(selected) => onFiltersChange({ ...filters, language: selected })}
-            placeholder="All languages"
-          />
+          <Label>LP Type</Label>
+          <Select
+            value={filters.lp_type || ""}
+            onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value || undefined })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All LP types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All LP types</SelectItem>
+              {LP_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Link Purpose */}

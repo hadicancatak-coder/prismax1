@@ -1808,21 +1808,30 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean | null
+          landing_page: string | null
+          last_used_at: string | null
           name: string
+          usage_count: number | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          landing_page?: string | null
+          last_used_at?: string | null
           name: string
+          usage_count?: number | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          landing_page?: string | null
+          last_used_at?: string | null
           name?: string
+          usage_count?: number | null
         }
         Relationships: []
       }
@@ -1867,30 +1876,6 @@ export type Database = {
           },
         ]
       }
-      utm_languages: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          is_active: boolean | null
-          name: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          name: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          name?: string
-        }
-        Relationships: []
-      }
       utm_links: {
         Row: {
           base_url: string
@@ -1900,13 +1885,14 @@ export type Database = {
           created_at: string
           created_by: string
           custom_params: Json | null
+          dynamic_language: string | null
           entity: string[] | null
           full_url: string
           id: string
           is_validated: boolean | null
-          language: string | null
           last_used_at: string | null
           link_purpose: string | null
+          lp_type: string | null
           month_year: string | null
           name: string
           notes: string | null
@@ -1934,13 +1920,14 @@ export type Database = {
           created_at?: string
           created_by: string
           custom_params?: Json | null
+          dynamic_language?: string | null
           entity?: string[] | null
           full_url: string
           id?: string
           is_validated?: boolean | null
-          language?: string | null
           last_used_at?: string | null
           link_purpose?: string | null
+          lp_type?: string | null
           month_year?: string | null
           name: string
           notes?: string | null
@@ -1968,13 +1955,14 @@ export type Database = {
           created_at?: string
           created_by?: string
           custom_params?: Json | null
+          dynamic_language?: string | null
           entity?: string[] | null
           full_url?: string
           id?: string
           is_validated?: boolean | null
-          language?: string | null
           last_used_at?: string | null
           link_purpose?: string | null
+          lp_type?: string | null
           month_year?: string | null
           name?: string
           notes?: string | null

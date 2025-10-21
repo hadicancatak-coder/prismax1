@@ -13,6 +13,7 @@ interface AddCampaignDialogProps {
 
 export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps) => {
   const [campaignName, setCampaignName] = useState("");
+  const [landingPage, setLandingPage] = useState("");
   const createCampaign = useCreateUtmCampaign();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +21,9 @@ export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps
     if (!campaignName.trim()) return;
 
     try {
-      await createCampaign.mutateAsync(campaignName.trim());
+      await createCampaign.mutateAsync({ name: campaignName.trim(), landingPage: landingPage.trim() || undefined });
       setCampaignName("");
+      setLandingPage("");
       onOpenChange(false);
     } catch (error) {
       // Error handled by mutation
@@ -46,6 +48,16 @@ export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps
               onChange={(e) => setCampaignName(e.target.value)}
               placeholder="e.g., Gold, Stocks, FOREX"
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="landing-page">Default Landing Page (optional)</Label>
+            <Input
+              id="landing-page"
+              type="url"
+              value={landingPage}
+              onChange={(e) => setLandingPage(e.target.value)}
+              placeholder="https://cfi.trade/jo/open-account"
             />
           </div>
           <div className="flex justify-end gap-2">

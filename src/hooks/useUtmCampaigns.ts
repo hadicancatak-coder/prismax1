@@ -16,6 +16,8 @@ export const useUtmCampaigns = () => {
         .from("utm_campaigns")
         .select("*")
         .eq("is_active", true)
+        .order("last_used_at", { ascending: false, nullsFirst: false })
+        .order("usage_count", { ascending: false })
         .order("name");
 
       if (error) throw error;
@@ -28,7 +30,7 @@ export const useCreateUtmCampaign = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, landingPage }: { name: string; landingPage?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -36,6 +38,7 @@ export const useCreateUtmCampaign = () => {
         .from("utm_campaigns")
         .insert({
           name,
+          landing_page: landingPage || null,
           created_by: user.id,
         })
         .select()

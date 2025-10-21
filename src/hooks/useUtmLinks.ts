@@ -14,8 +14,8 @@ export interface UtmLinkFilters {
   teams?: string[];
   campaign_name?: string[];
   platform?: string[];
-  language?: string[];
   link_purpose?: string[];
+  lp_type?: string;
   status?: string;
   created_by?: string;
   search?: string;
@@ -42,11 +42,11 @@ export const useUtmLinks = (filters?: UtmLinkFilters) => {
       if (filters?.platform && filters.platform.length > 0) {
         query = query.in("platform", filters.platform);
       }
-      if (filters?.language && filters.language.length > 0) {
-        query = query.in("language", filters.language);
-      }
       if (filters?.link_purpose && filters.link_purpose.length > 0) {
         query = query.in("link_purpose", filters.link_purpose);
+      }
+      if (filters?.lp_type) {
+        query = query.eq("lp_type", filters.lp_type);
       }
       if (filters?.status) {
         query = query.eq("status", filters.status as any);

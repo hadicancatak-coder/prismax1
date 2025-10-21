@@ -16,19 +16,17 @@ export const calculateUtmMedium = (platform: string): string => {
 };
 
 /**
- * Generate UTM campaign name in format: {campaign}_{language}_{monthyear}
- * Example: gold_en_oct2025
+ * Generate UTM campaign name in format: {campaign}_{monthyear}
+ * Example: gold_oct2025
  */
 export const generateUtmCampaign = (
   campaignName: string,
-  language: string,
   date: Date = new Date()
 ): string => {
   const campaign = campaignName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const lang = language.toLowerCase();
   const monthYear = formatMonthYear(date);
   
-  return `${campaign}_${lang}_${monthYear}`;
+  return `${campaign}_${monthYear}`;
 };
 
 /**
@@ -54,6 +52,47 @@ export const formatMonthYearReadable = (date: Date = new Date()): string => {
 };
 
 /**
+ * Detect entity and LP type from URL
+ */
+export const detectEntityFromUrl = (url: string): {
+  entity: string | null;
+  lpType: 'static' | 'mauritius' | 'dynamic';
+} => {
+  const countryMap: Record<string, string> = {
+    '/jo/': 'Jordan',
+    '/lb/': 'Lebanon',
+    '/mu/': 'Mauritius',
+    '/vn/': 'Vietnam',
+    '/iq/': 'Iraq',
+    '/az/': 'Azerbaijan',
+    '/uae/': 'UAE',
+    '/kw/': 'Kuwait',
+    '/om/': 'Oman',
+    '/uk/': 'UK',
+    '/cy/': 'Cyprus',
+    '/vu/': 'Vanuatu',
+    '/ps/': 'Palestine',
+    '/za/': 'South Africa',
+  };
+
+  // Check for country param (Static LP)
+  for (const [param, entity] of Object.entries(countryMap)) {
+    if (url.includes(param)) {
+      return { entity, lpType: 'static' };
+    }
+  }
+
+  // Check for language-only param (Mauritius LP)
+  const langPattern = /\/(en|ar|es|fr|de|it|pt|ru|zh|ja|ko|vi|th|id|ms|tr|fa|ur|hi|bn|pa|ta|te|ml|kn|gu|mr|or|as|ne|si|my|km|lo|tl|sw|am|ha|yo|ig|zu|xh|st|tn|ss|nr|ve|ts|af)\//i;
+  if (langPattern.test(url)) {
+    return { entity: 'Mauritius', lpType: 'mauritius' };
+  }
+
+  // No country or language param = Dynamic LP
+  return { entity: null, lpType: 'dynamic' };
+};
+
+/**
  * Build complete UTM URL from parameters
  */
 export const buildUtmUrl = (params: {
@@ -63,6 +102,7 @@ export const buildUtmUrl = (params: {
   utmCampaign: string;
   utmContent?: string;
   utmTerm?: string;
+  dynamicLanguage?: string;
   customParams?: Record<string, string>;
 }): string => {
   try {
@@ -78,6 +118,11 @@ export const buildUtmUrl = (params: {
     
     if (params.utmTerm) {
       url.searchParams.set('utm_term', params.utmTerm.toLowerCase());
+    }
+
+    // Add &lang= for Dynamic LPs
+    if (params.dynamicLanguage) {
+      url.searchParams.set('lang', params.dynamicLanguage);
     }
     
     if (params.customParams) {
