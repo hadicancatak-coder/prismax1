@@ -20,6 +20,7 @@ import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
 import { TemplateSelector } from "@/components/ads/TemplateSelector";
 import { ElementQuickInsert } from "@/components/ads/ElementQuickInsert";
 import { DisplayAdCreator } from "@/components/ads/DisplayAdCreator";
+import { DisplayAdPreview } from "@/components/ads/DisplayAdPreview";
 import { AdvancedFilters } from "@/components/ads/AdvancedFilters";
 import { BulkActionsBar } from "@/components/ads/BulkActionsBar";
 import { useIncrementElementUsage } from "@/hooks/useAdElements";
@@ -134,9 +135,32 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
       return;
     }
 
+    // Validate entity is selected
+    if (!adEntity) {
+      toast({ 
+        title: "Entity Required", 
+        description: "Please select an entity before saving", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Validate has content
+    const hasHeadlines = headlines.some(h => h.trim());
+    const hasDescriptions = descriptions.some(d => d.trim());
+    
+    if (!hasHeadlines || !hasDescriptions) {
+      toast({
+        title: "Content Required",
+        description: "Add at least one headline and description",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const adData = {
       name: adName.trim(),
-      entity: adEntity || null,
+      entity: adEntity,
       headlines: JSON.stringify(headlines),
       descriptions: JSON.stringify(descriptions),
       landing_page: landingPage || null,
@@ -374,9 +398,10 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                           newHeadlines[index] = e.target.value.slice(0, 30);
                           setHeadlines(newHeadlines);
                         }}
-                        placeholder={`Headline ${index + 1}`}
+                        placeholder={adEntity ? `Headline ${index + 1}` : "Select entity first"}
                         maxLength={30}
                         className="text-sm"
+                        disabled={!adEntity}
                       />
                       <span className="text-xs text-muted-foreground w-12">{headline.length}/30</span>
                       <ElementQuickInsert
@@ -417,10 +442,11 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
                             newDescs[index] = e.target.value.slice(0, 90);
                             setDescriptions(newDescs);
                           }}
-                          placeholder={`Description ${index + 1}`}
+                          placeholder={adEntity ? `Description ${index + 1}` : "Select entity first"}
                           maxLength={90}
                           rows={2}
                           className="text-sm resize-none"
+                          disabled={!adEntity}
                         />
                         <span className="text-xs text-muted-foreground">{desc.length}/90</span>
                       </div>
@@ -675,20 +701,31 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
           </TabsContent>
 
           <TabsContent value="display" className="mt-6">
-            <DisplayAdCreator
-              businessName={businessName}
-              setBusinessName={setBusinessName}
-              longHeadline={longHeadline}
-              setLongHeadline={setLongHeadline}
-              shortHeadlines={shortHeadlines}
-              setShortHeadlines={setShortHeadlines}
-              descriptions={descriptions}
-              setDescriptions={setDescriptions}
-              ctaText={ctaText}
-              setCtaText={setCtaText}
-              landingPage={landingPage}
-              setLandingPage={setLandingPage}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DisplayAdCreator
+                businessName={businessName}
+                setBusinessName={setBusinessName}
+                longHeadline={longHeadline}
+                setLongHeadline={setLongHeadline}
+                shortHeadlines={shortHeadlines}
+                setShortHeadlines={setShortHeadlines}
+                descriptions={descriptions}
+                setDescriptions={setDescriptions}
+                ctaText={ctaText}
+                setCtaText={setCtaText}
+                landingPage={landingPage}
+                setLandingPage={setLandingPage}
+                adEntity={adEntity}
+              />
+              <DisplayAdPreview
+                businessName={businessName}
+                longHeadline={longHeadline}
+                shortHeadlines={shortHeadlines}
+                descriptions={descriptions}
+                ctaText={ctaText}
+                landingPage={landingPage}
+              />
+            </div>
           </TabsContent>
         </Tabs>
         </TabsContent>

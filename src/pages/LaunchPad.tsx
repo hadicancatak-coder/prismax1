@@ -142,14 +142,14 @@ export default function LaunchPad() {
   const landedCampaigns = campaigns.filter(c => c.status === 'landed');
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-[1800px]">
+    <div className="container mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
-            Campaign Launch Pad
+            Launch Pad
           </h1>
-          <p className="text-muted-foreground mt-1">Professional campaign management and tracking</p>
+          <p className="text-muted-foreground mt-1">Mission Control - Manage and track your campaign launches</p>
         </div>
         <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
           <Plus className="h-4 w-4" />
@@ -178,7 +178,7 @@ export default function LaunchPad() {
           <CardContent>
             <div className="flex items-center justify-between">
               <p className="text-3xl font-bold">{pendingCampaigns.length}</p>
-              <Building className="h-8 w-8 text-amber-500/20" />
+              <Clock className="h-8 w-8 text-amber-500/20" />
             </div>
           </CardContent>
         </Card>
@@ -210,158 +210,311 @@ export default function LaunchPad() {
         </Card>
       </div>
 
-      {/* Professional 4-Column Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Pending Column */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-4 py-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-            <h3 className="font-semibold text-sm">Pending Launch</h3>
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-              {pendingCampaigns.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {pendingCampaigns.map(campaign => (
-              <LaunchCampaignCard 
-                key={campaign.id} 
-                campaign={campaign} 
-                onLaunch={handleLaunch}
-                onDelete={handleDelete}
-                showLaunchButton
-                onCardClick={(id) => {
-                  setSelectedCampaignId(id);
-                  setDetailDialogOpen(true);
-                }}
-              />
-            ))}
-            {pendingCampaigns.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <p className="text-sm text-muted-foreground">No pending campaigns</p>
-              </Card>
-            )}
-          </div>
-        </div>
+      {/* Active Campaign Columns - 3 Column Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Pending Launch */}
+        <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-background">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Pending Launch
+              <Badge variant="secondary" className="ml-auto">{pendingCampaigns.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+              <div className="space-y-3">
+                {pendingCampaigns.map((campaign) => (
+                  <LaunchCampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onLaunch={handleLaunch}
+                    onDelete={handleDelete}
+                    onCardClick={(id) => {
+                      setSelectedCampaignId(id);
+                      setDetailDialogOpen(true);
+                    }}
+                  />
+                ))}
+                {pendingCampaigns.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Rocket className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">No pending campaigns</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-        {/* SocialUA Live Column */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <h3 className="font-semibold text-sm">SocialUA - Live</h3>
-            <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
-              {socialUACampaigns.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {socialUACampaigns.map(campaign => (
-              <LaunchCampaignCard 
-                key={campaign.id} 
-                campaign={campaign} 
-                onLaunch={handleLaunch}
-                onDelete={handleDelete}
-                onCardClick={(id) => {
-                  setSelectedCampaignId(id);
-                  setDetailDialogOpen(true);
-                }}
-              />
-            ))}
-            {socialUACampaigns.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <p className="text-sm text-muted-foreground">No live campaigns</p>
-              </Card>
-            )}
-          </div>
-        </div>
+        {/* SocialUA - Live */}
+        <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-background">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-blue-500" />
+              SocialUA - Live
+              <Badge variant="secondary" className="ml-auto">{socialUACampaigns.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+              <div className="space-y-3">
+                {socialUACampaigns.map((campaign) => (
+                  <LaunchCampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onDelete={handleDelete}
+                    onCardClick={(id) => {
+                      setSelectedCampaignId(id);
+                      setDetailDialogOpen(true);
+                    }}
+                  />
+                ))}
+                {socialUACampaigns.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">No live SocialUA campaigns</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-        {/* PPC Live Column */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-4 py-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-            <h3 className="font-semibold text-sm">PPC - Live</h3>
-            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/20">
-              {ppcCampaigns.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {ppcCampaigns.map(campaign => (
-              <LaunchCampaignCard 
-                key={campaign.id} 
-                campaign={campaign} 
-                onLaunch={handleLaunch}
-                onDelete={handleDelete}
-                onCardClick={(id) => {
-                  setSelectedCampaignId(id);
-                  setDetailDialogOpen(true);
-                }}
-              />
-            ))}
-            {ppcCampaigns.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <p className="text-sm text-muted-foreground">No live campaigns</p>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        {/* In Orbit Column */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-4 py-2 bg-green-500/10 rounded-lg border border-green-500/20">
-            <h3 className="font-semibold text-sm">In Orbit</h3>
-            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-              {orbitCampaigns.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {orbitCampaigns.map(campaign => (
-              <LaunchCampaignCard 
-                key={campaign.id} 
-                campaign={campaign} 
-                onLaunch={handleLaunch}
-                onDelete={handleDelete}
-                showLaunchButton={false}
-                onCardClick={(id) => {
-                  setSelectedCampaignId(id);
-                  setDetailDialogOpen(true);
-                }}
-              />
-            ))}
-            {orbitCampaigns.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <p className="text-sm text-muted-foreground">No completed campaigns</p>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        {/* NEW: Landed (Paused) Column */}
-        <div className="space-y-4 lg:col-start-2">
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-500/10 rounded-lg border border-gray-500/20">
-            <h3 className="font-semibold text-sm">Landed (Paused)</h3>
-            <Badge variant="outline" className="bg-gray-500/10 text-gray-600 border-gray-500/20">
-              {landedCampaigns.length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {landedCampaigns.map(campaign => (
-              <LaunchCampaignCard 
-                key={campaign.id} 
-                campaign={campaign} 
-                onLaunch={handleLaunch}
-                onDelete={handleDelete}
-                showLaunchButton={false}
-                onCardClick={(id) => {
-                  setSelectedCampaignId(id);
-                  setDetailDialogOpen(true);
-                }}
-              />
-            ))}
-            {landedCampaigns.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <p className="text-sm text-muted-foreground">No paused campaigns</p>
-              </Card>
-            )}
-          </div>
-        </div>
+        {/* PPC - Live */}
+        <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-background">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="h-5 w-5 text-purple-500" />
+              PPC - Live
+              <Badge variant="secondary" className="ml-auto">{ppcCampaigns.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+              <div className="space-y-3">
+                {ppcCampaigns.map((campaign) => (
+                  <LaunchCampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onDelete={handleDelete}
+                    onCardClick={(id) => {
+                      setSelectedCampaignId(id);
+                      setDetailDialogOpen(true);
+                    }}
+                  />
+                ))}
+                {ppcCampaigns.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Target className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">No live PPC campaigns</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
 
-      <LaunchCampaignDialog 
+      {/* In Orbit - Table List */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-green-500" />
+            In Orbit Campaigns
+            <Badge variant="secondary" className="ml-2">{orbitCampaigns.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {orbitCampaigns.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Radio className="h-12 w-12 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">No campaigns in orbit</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30%]">Campaign</TableHead>
+                  <TableHead className="w-[15%]">Teams</TableHead>
+                  <TableHead className="w-[20%]">Entities</TableHead>
+                  <TableHead className="w-[15%]">Launch Date</TableHead>
+                  <TableHead className="w-[10%]">Crew</TableHead>
+                  <TableHead className="w-[10%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orbitCampaigns.map((campaign) => (
+                  <TableRow 
+                    key={campaign.id} 
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedCampaignId(campaign.id);
+                      setDetailDialogOpen(true);
+                    }}
+                  >
+                    <TableCell className="font-medium">
+                      <div>
+                        <p className="font-semibold">{campaign.title}</p>
+                        {campaign.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">{campaign.description}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {campaign.teams?.map((team: string) => (
+                          <Badge key={team} variant="outline" className="text-xs">{team}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {campaign.entity?.map((ent: string) => (
+                          <Badge key={ent} variant="secondary" className="text-xs">{ent}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {campaign.launch_date ? format(new Date(campaign.launch_date), 'MMM d, yyyy') : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex -space-x-2">
+                        {campaign.launch_campaign_assignees?.slice(0, 3).map((assignee: any) => (
+                          <Avatar key={assignee.user_id} className="h-7 w-7 border-2 border-background">
+                            <AvatarImage src={assignee.profiles?.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {assignee.profiles?.name?.[0] || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {campaign.launch_campaign_assignees?.length > 3 && (
+                          <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
+                            +{campaign.launch_campaign_assignees.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(campaign.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Landed (Paused) - Table List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PauseCircle className="h-5 w-5 text-gray-500" />
+            Landed (Paused) Campaigns
+            <Badge variant="secondary" className="ml-2">{landedCampaigns.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {landedCampaigns.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <PauseCircle className="h-12 w-12 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">No landed campaigns</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30%]">Campaign</TableHead>
+                  <TableHead className="w-[15%]">Teams</TableHead>
+                  <TableHead className="w-[20%]">Entities</TableHead>
+                  <TableHead className="w-[15%]">Launch Date</TableHead>
+                  <TableHead className="w-[10%]">Crew</TableHead>
+                  <TableHead className="w-[10%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {landedCampaigns.map((campaign) => (
+                  <TableRow 
+                    key={campaign.id} 
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedCampaignId(campaign.id);
+                      setDetailDialogOpen(true);
+                    }}
+                  >
+                    <TableCell className="font-medium">
+                      <div>
+                        <p className="font-semibold">{campaign.title}</p>
+                        {campaign.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">{campaign.description}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {campaign.teams?.map((team: string) => (
+                          <Badge key={team} variant="outline" className="text-xs">{team}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {campaign.entity?.map((ent: string) => (
+                          <Badge key={ent} variant="secondary" className="text-xs">{ent}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {campaign.launch_date ? format(new Date(campaign.launch_date), 'MMM d, yyyy') : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex -space-x-2">
+                        {campaign.launch_campaign_assignees?.slice(0, 3).map((assignee: any) => (
+                          <Avatar key={assignee.user_id} className="h-7 w-7 border-2 border-background">
+                            <AvatarImage src={assignee.profiles?.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {assignee.profiles?.name?.[0] || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {campaign.launch_campaign_assignees?.length > 3 && (
+                          <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
+                            +{campaign.launch_campaign_assignees.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(campaign.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <LaunchCampaignDialog
         open={dialogOpen} 
         onOpenChange={setDialogOpen}
         onSuccess={fetchCampaigns}

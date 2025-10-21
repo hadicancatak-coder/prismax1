@@ -1,103 +1,147 @@
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImageIcon, Video, Mail, ChevronLeft, ChevronRight, Building } from 'lucide-react';
+import { useState } from 'react';
 
 interface DisplayAdPreviewProps {
   businessName: string;
   longHeadline: string;
-  shortHeadline: string;
-  description: string;
+  shortHeadline?: string;
+  descriptions: string[];
   ctaText: string;
   landingPage: string;
 }
 
-export function DisplayAdPreview({
-  businessName,
-  longHeadline,
-  shortHeadline,
-  description,
-  ctaText,
-  landingPage,
-}: DisplayAdPreviewProps) {
-  const displayUrl = landingPage ? new URL(landingPage).hostname : 'example.com';
+export function DisplayAdPreview(props: DisplayAdPreviewProps) {
+  const [combinationIndex, setCombinationIndex] = useState(0);
+  const displayUrl = props.landingPage ? new URL(props.landingPage).hostname.replace('www.', '') : 'example.com';
+  const activeDescription = props.descriptions.filter(d => d.trim())[combinationIndex % props.descriptions.filter(d => d.trim()).length] || props.descriptions[0];
 
   return (
-    <Card className="p-4">
-      <h3 className="font-semibold mb-4">Display Ad Preview</h3>
-      
-      <Tabs defaultValue="banner">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="banner">Banner (728x90)</TabsTrigger>
-          <TabsTrigger value="sidebar">Sidebar (300x250)</TabsTrigger>
-          <TabsTrigger value="native">Native</TabsTrigger>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setCombinationIndex(Math.max(0, combinationIndex - 1))} disabled={combinationIndex === 0}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-muted-foreground">Combination {combinationIndex + 1}</span>
+          <Button variant="ghost" size="icon" onClick={() => setCombinationIndex(combinationIndex + 1)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">Preview different combinations</p>
+      </div>
+
+      <Tabs defaultValue="mobile">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="mobile">Mobile</TabsTrigger>
+          <TabsTrigger value="youtube">YouTube</TabsTrigger>
+          <TabsTrigger value="gmail">Gmail</TabsTrigger>
+          <TabsTrigger value="banner">Banner</TabsTrigger>
+          <TabsTrigger value="sidebar">Sidebar</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="banner" className="mt-4">
-          <div className="border rounded-lg overflow-hidden bg-background" style={{ width: '728px', height: '90px' }}>
-            <div className="flex h-full">
-              <div className="w-24 bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                728x90
+        <TabsContent value="mobile" className="mt-4">
+          <div className="border rounded-lg overflow-hidden bg-background max-w-[375px] mx-auto">
+            <div className="h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+              <div className="text-center">
+                <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">375x200 Image</p>
               </div>
-              <div className="flex-1 p-2 flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-foreground">{businessName || 'Business Name'}</p>
-                  <p className="text-xs text-foreground line-clamp-2">{shortHeadline || longHeadline || 'Your headline here'}</p>
+            </div>
+            <div className="p-3 space-y-2">
+              <p className="text-xs text-muted-foreground">{displayUrl}</p>
+              <h3 className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Your headline here'}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">{activeDescription || 'Your description here'}</p>
+              {props.ctaText && <Button size="sm" className="w-full mt-2">{props.ctaText}</Button>}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="youtube" className="mt-4">
+          <div className="border rounded-lg overflow-hidden bg-background max-w-[640px] mx-auto">
+            <div className="aspect-video bg-black relative flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Video className="h-16 w-16 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm opacity-75">1280x720 Video</p>
                 </div>
-                {ctaText && (
-                  <Button size="sm" className="ml-2 h-7 text-xs">
-                    {ctaText}
-                  </Button>
-                )}
               </div>
+              <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded text-xs text-white">Skip Ad</div>
+            </div>
+            <div className="p-4 bg-muted/50 flex items-center gap-4">
+              <div className="w-16 h-16 bg-muted rounded flex items-center justify-center shrink-0">
+                <Building className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground truncate">{displayUrl}</p>
+                <p className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Your ad headline'}</p>
+              </div>
+              {props.ctaText && <Button size="sm" variant="secondary">{props.ctaText}</Button>}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="gmail" className="mt-4">
+          <div className="border rounded-lg overflow-hidden bg-background max-w-[600px] mx-auto">
+            <div className="border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/20">
+              <div className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center shrink-0">
+                    <Mail className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{props.businessName || 'Advertiser'}</p>
+                    <p className="text-xs text-muted-foreground">Ad • {displayUrl}</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Ad</Badge>
+                </div>
+                <h3 className="font-semibold text-base">{props.longHeadline || 'Your email subject'}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-3">{activeDescription || 'Ad description...'}</p>
+                <div className="flex items-center gap-2 pt-2">
+                  {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
+                  <Button size="sm" variant="ghost">Learn More</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="banner" className="mt-4">
+          <div className="border rounded-lg overflow-hidden bg-background max-w-[728px] h-[90px] mx-auto flex items-center">
+            <div className="w-[120px] h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="flex-1 px-4 py-2 flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">{displayUrl}</p>
+                <h3 className="font-semibold text-sm line-clamp-1">{props.longHeadline || 'Headline'}</h3>
+                <p className="text-xs text-muted-foreground line-clamp-1">{activeDescription}</p>
+              </div>
+              {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="sidebar" className="mt-4">
-          <div className="border rounded-lg overflow-hidden bg-background" style={{ width: '300px', height: '250px' }}>
-            <div className="h-32 bg-muted flex items-center justify-center text-xs text-muted-foreground">
-              300x250
+          <div className="border rounded-lg overflow-hidden bg-background w-[300px] h-[250px] mx-auto">
+            <div className="h-[120px] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+              <div className="text-center">
+                <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-1" />
+                <p className="text-xs text-muted-foreground">300x120</p>
+              </div>
             </div>
             <div className="p-3 space-y-2">
-              <p className="text-xs font-semibold text-foreground">{businessName || 'Business Name'}</p>
-              <p className="text-sm font-medium text-foreground line-clamp-2">
-                {shortHeadline || longHeadline || 'Your headline here'}
-              </p>
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {description || 'Your description here'}
-              </p>
-              {ctaText && (
-                <Button size="sm" className="w-full h-8 text-xs">
-                  {ctaText}
-                </Button>
-              )}
               <p className="text-xs text-muted-foreground">{displayUrl}</p>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="native" className="mt-4">
-          <div className="border rounded-lg overflow-hidden bg-background max-w-sm">
-            <div className="h-48 bg-muted flex items-center justify-center text-sm text-muted-foreground">
-              Image Placeholder
-            </div>
-            <div className="p-4 space-y-2">
-              <p className="text-xs text-muted-foreground">{displayUrl}</p>
-              <p className="text-lg font-semibold text-foreground">
-                {shortHeadline || longHeadline || 'Your headline here'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {description || 'Your description here'}
-              </p>
-              {ctaText && (
-                <Button className="w-full">
-                  {ctaText}
-                </Button>
-              )}
+              <h3 className="font-semibold text-sm line-clamp-2">{props.longHeadline || 'Headline'}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">{activeDescription}</p>
+              {props.ctaText && <Button size="sm" className="w-full">{props.ctaText}</Button>}
             </div>
           </div>
         </TabsContent>
       </Tabs>
-    </Card>
+    </div>
   );
 }

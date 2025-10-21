@@ -115,8 +115,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? (
               <Input
@@ -134,8 +134,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="preview" className="flex-1 flex flex-col">
-          <TabsList className="mx-6 mt-2">
+        <Tabs defaultValue="preview" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="shrink-0 mx-6 mt-2">
             <TabsTrigger value="preview">Preview</TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-2" />
@@ -450,7 +450,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
         </Tabs>
 
         {/* Actions - Fixed Footer */}
-        <div className="flex gap-2 p-6 border-t bg-background">
+        <div className="shrink-0 flex gap-2 p-6 border-t bg-background">
           {isEditing ? (
             <>
               <Button onClick={handleSave} className="flex-1">

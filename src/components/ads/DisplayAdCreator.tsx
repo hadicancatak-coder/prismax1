@@ -17,6 +17,7 @@ interface DisplayAdCreatorProps {
   setCtaText: (value: string) => void;
   landingPage: string;
   setLandingPage: (value: string) => void;
+  adEntity?: string;
 }
 
 const CTA_OPTIONS = [
@@ -31,6 +32,7 @@ export function DisplayAdCreator({
   descriptions, setDescriptions,
   ctaText, setCtaText,
   landingPage, setLandingPage,
+  adEntity,
 }: DisplayAdCreatorProps) {
   return (
     <div className="space-y-6">
@@ -75,8 +77,9 @@ export function DisplayAdCreator({
                 newHeadlines[index] = e.target.value.slice(0, 30);
                 setShortHeadlines(newHeadlines);
               }}
-              placeholder={`Short headline ${index + 1}`}
+              placeholder={adEntity ? `Short headline ${index + 1}` : "Select entity first"}
               maxLength={30}
+              disabled={!adEntity}
             />
             <ElementQuickInsert
               elementType="headline"
@@ -104,9 +107,10 @@ export function DisplayAdCreator({
                 newDescs[index] = e.target.value.slice(0, 90);
                 setDescriptions(newDescs);
               }}
-              placeholder={`Description ${index + 1}`}
+              placeholder={adEntity ? `Description ${index + 1}` : "Select entity first"}
               maxLength={90}
               rows={2}
+              disabled={!adEntity}
             />
             <ElementQuickInsert
               elementType="description"
