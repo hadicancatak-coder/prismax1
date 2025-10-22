@@ -302,8 +302,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
   const handleSave = async () => {
     try {
-      // Define fields requiring approval
-      const APPROVAL_REQUIRED_FIELDS = ['status', 'assignee_id', 'due_at', 'recurrence_rrule', 'recurrence_day_of_week', 'recurrence_day_of_month'];
+      // Define fields requiring approval (ONLY for status changes to Completed/Failed)
+      const APPROVAL_REQUIRED_STATUSES = ['Completed', 'Failed'];
       
       // Validate recurring task working days if changed
       if (editedTask.recurrence_rrule?.includes('WEEKLY') && assignees.length > 0) {
@@ -337,44 +337,47 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         }
       }
 
-      // Members: Check if changes require approval
+      // Members: Check if completing/failing task (requires approval)
       if (userRole === 'member') {
-        const changedFields = Object.keys(editedTask).filter(key => 
-          editedTask[key] !== task[key]
-        );
-        
-        const requiresApproval = changedFields.some(field => 
-          APPROVAL_REQUIRED_FIELDS.includes(field) || 
-          (field === 'status' && editedTask.status === 'Completed')
-        );
+        const statusChanged = editedTask.status !== task.status;
+        const requiresApproval = statusChanged && APPROVAL_REQUIRED_STATUSES.includes(editedTask.status);
         
         if (requiresApproval) {
-          // Submit for approval
-          const { error } = await supabase.from('tasks').update({
-            pending_approval: true,
-            approval_requested_by: user?.id,
-            approval_requested_at: new Date().toISOString(),
-            pending_changes: editedTask,
-            change_requested_fields: changedFields.filter(f => APPROVAL_REQUIRED_FIELDS.includes(f))
-          }).eq('id', taskId);
+          // Create task_change_request for approval
+          const { error } = await supabase.from('task_change_requests').insert({
+            requester_id: user?.id,
+            type: 'status_change',
+            payload_json: { 
+              task_id: taskId,
+              status: editedTask.status,
+              failure_reason: editedTask.failure_reason 
+            }
+          });
           
           if (error) throw error;
           
           toast({ 
             title: "Submitted for Approval", 
-            description: "Your changes will be reviewed by an admin" 
+            description: `Task ${editedTask.status.toLowerCase()} status will be reviewed by an admin` 
           });
           setEditMode(false);
           setEditedTask(null);
           fetchTask();
         } else {
-          // Direct save for non-sensitive fields
+          // Members can update all fields EXCEPT completing/failing
           const { error } = await supabase.from('tasks').update({
             title: editedTask.title,
             description: editedTask.description,
+            status: editedTask.status,
             priority: editedTask.priority,
             entity: editedTask.entity,
+            project_id: editedTask.project_id,
+            due_at: editedTask.due_at,
             jira_links: editedTask.jira_links,
+            recurrence_rrule: editedTask.recurrence_rrule,
+            recurrence_day_of_week: editedTask.recurrence_day_of_week,
+            recurrence_day_of_month: editedTask.recurrence_day_of_month,
+            blocker_reason: editedTask.blocker_reason,
             checklist: editedTask.checklist
           }).eq('id', taskId);
           

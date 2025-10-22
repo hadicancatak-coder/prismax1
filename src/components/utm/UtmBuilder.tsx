@@ -634,6 +634,18 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
               </Button>
             </div>
           </div>
+
+          {/* Validation Feedback */}
+          {!isFormValid && baseUrl && selectedCampaign && selectedPlatform && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {lpType === 'dynamic' && !dynamicLanguage 
+                  ? "Please select a language for Dynamic LP to enable preview and actions" 
+                  : "Please fill in all required fields (*) to generate the UTM link"}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

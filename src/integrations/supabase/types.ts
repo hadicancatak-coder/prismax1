@@ -490,13 +490,6 @@ export type Database = {
             referencedRelation: "ad_groups"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "ads_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       announcements: {

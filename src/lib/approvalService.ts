@@ -121,26 +121,40 @@ class ApprovalService {
 
   async getApprovalHistory(filters: ApprovalFilters = {}) {
     try {
-      let query = supabase
+      // Fetch approval history and manually join profiles using user_id
+      const { data: historyData, error: historyError } = await supabase
         .from('approval_history')
-        .select(`
-          *,
-          requester:profiles!approval_history_requester_id_fkey(name, email, avatar_url),
-          approver:profiles!approval_history_approver_id_fkey(name, email, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
+      
+      if (historyError) throw historyError;
+      
+      // Manually join profiles by fetching all at once
+      const userIds = [...new Set(historyData.flatMap(h => [h.requester_id, h.approver_id].filter(Boolean)))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, avatar_url')
+        .in('user_id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      const data = historyData.map(h => ({
+        ...h,
+        requester: h.requester_id ? profileMap.get(h.requester_id) : null,
+        approver: h.approver_id ? profileMap.get(h.approver_id) : null,
+      }));
+      
+      let query = data;
 
-      if (filters.entityType) query = query.eq('entity_type', filters.entityType);
-      if (filters.status) query = query.eq('status', filters.status);
-      if (filters.requesterId) query = query.eq('requester_id', filters.requesterId);
-      if (filters.approverId) query = query.eq('approver_id', filters.approverId);
-      if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString());
-      if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString());
+      // Apply filters
+      if (filters.entityType) query = query.filter(h => h.entity_type === filters.entityType);
+      if (filters.status) query = query.filter(h => h.status === filters.status);
+      if (filters.requesterId) query = query.filter(h => h.requester_id === filters.requesterId);
+      if (filters.approverId) query = query.filter(h => h.approver_id === filters.approverId);
+      if (filters.startDate) query = query.filter(h => new Date(h.created_at) >= filters.startDate);
+      if (filters.endDate) query = query.filter(h => new Date(h.created_at) <= filters.endDate);
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data || [];
+      return query;
     } catch (err) {
       logger.error('Error fetching approval history', err);
       return [];
