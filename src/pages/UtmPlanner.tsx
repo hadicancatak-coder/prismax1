@@ -42,15 +42,15 @@ const UtmPlanner = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="builder" className="space-y-6">
+        <TabsContent value="builder" forceMount hidden={activeTab !== "builder"} className="space-y-6">
           <UtmBuilder onSave={() => setActiveTab("links")} />
         </TabsContent>
 
-        <TabsContent value="campaigns" className="space-y-4">
+        <TabsContent value="campaigns" forceMount hidden={activeTab !== "campaigns"} className="space-y-4">
           <CampaignLibrary />
         </TabsContent>
 
-        <TabsContent value="links" className="space-y-4">
+        <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="space-y-4">
           <UtmInlineFilters filters={filters} onFiltersChange={setFilters} />
 
           {isLoading ? (
