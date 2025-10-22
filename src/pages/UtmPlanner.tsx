@@ -4,20 +4,15 @@ import { UtmBuilder } from "@/components/utm/UtmBuilder";
 import { UtmTableGroupedView } from "@/components/utm/UtmTableGroupedView";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
 import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
-import { UtmCompactList } from "@/components/utm/UtmCompactList";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
 import { Link2, Plus, List, Folder } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const UtmPlanner = () => {
   const [activeTab, setActiveTab] = useState("builder");
   const [filters, setFilters] = useState<UtmLinkFilters>({});
-  const [latestExpansionGroupId, setLatestExpansionGroupId] = useState<string | null>(null);
   
   const { data: utmLinks = [], isLoading } = useUtmLinks(filters);
-  const { data: expandedLinks = [] } = useUtmLinks(
-    latestExpansionGroupId ? { expansion_group_id: latestExpansionGroupId } : {}
-  );
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -48,24 +43,7 @@ const UtmPlanner = () => {
         </TabsList>
 
         <TabsContent value="builder" className="space-y-6">
-          <UtmBuilder 
-            onSave={() => setActiveTab("links")}
-            onExpand={(groupId) => setLatestExpansionGroupId(groupId)}
-          />
-          
-          {expandedLinks.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Expanded Links ({expandedLinks.length})</CardTitle>
-                <CardDescription>
-                  Links created from the latest expansion
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <UtmCompactList links={expandedLinks} />
-              </CardContent>
-            </Card>
-          )}
+          <UtmBuilder onSave={() => setActiveTab("links")} />
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-4">

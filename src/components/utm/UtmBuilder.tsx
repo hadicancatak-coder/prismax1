@@ -9,17 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
 import { AddCampaignDialog } from "./AddCampaignDialog";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
+import { UtmCompactList } from "./UtmCompactList";
 import { useCreateUtmLink, useBulkCreateUtmLinks } from "@/hooks/useUtmLinks";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { useUtmTemplates } from "@/hooks/useUtmTemplates";
+import { useEntityPresets, useCreateEntityPreset, useDeleteEntityPreset } from "@/hooks/useEntityPresets";
 import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl, detectEntityFromUrl, generateStaticLpVariants, generateDynamicLpVariants, generateMauritiusLpVariants } from "@/lib/utmHelpers";
 import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2, Maximize2, FileText } from "lucide-react";
+import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2, Maximize2, FileText, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface UtmBuilderProps {
   onSave?: () => void;
@@ -68,6 +71,13 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
   const [selectedExpansionEntities, setSelectedExpansionEntities] = useState<string[]>([]);
   const [selectedExpansionLanguages, setSelectedExpansionLanguages] = useState<string[]>(['EN', 'AR']);
   
+  // Preview state for expanded links (NOT saved to database)
+  const [expandedLinksPreviews, setExpandedLinksPreviews] = useState<any[]>([]);
+  
+  // Preset management
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  
   const [autoUtmSource, setAutoUtmSource] = useState("");
   const [autoUtmMedium, setAutoUtmMedium] = useState("");
   const [autoUtmCampaign, setAutoUtmCampaign] = useState("");
@@ -79,6 +89,9 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
   const { data: campaigns = [], isLoading: loadingCampaigns } = useUtmCampaigns();
   const { data: platforms = [], isLoading: loadingPlatforms } = useUtmPlatforms();
   const { data: templates = [] } = useUtmTemplates();
+  const { data: entityPresets = [] } = useEntityPresets();
+  const createPreset = useCreateEntityPreset();
+  const deletePreset = useDeleteEntityPreset();
 
   // Auto-detect entity and LP type from URL
   useEffect(() => {
@@ -229,7 +242,7 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
     }
   }, [selectedTemplate, templates]);
 
-  const handleExpand = async () => {
+  const handleExpand = () => {
     if (!isFormValid) return;
 
     const utmParams = {
@@ -261,44 +274,83 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
       return;
     }
 
-    try {
-      // Generate unique group ID for this expansion
-      const expansionGroupId = crypto.randomUUID();
-      
-      const bulkLinks = variants.map((variant) => ({
-        name: variant.language 
-          ? `${selectedCampaign} ${selectedPlatform} ${variant.entity || ''} ${variant.language} ${autoMonthYear}`.trim().replace(/\s+/g, ' ')
-          : `${selectedCampaign} ${selectedPlatform} ${variant.entity || variant.language} ${autoMonthYear}`,
-        base_url: baseUrl,
-        campaign_name: selectedCampaign,
-        platform: selectedPlatform,
-        link_purpose: selectedPurpose || undefined,
-        entity: variant.entity ? [variant.entity] : undefined,
-        teams: selectedTeams.length > 0 ? selectedTeams : undefined,
-        utm_source: autoUtmSource,
-        utm_medium: autoUtmMedium,
-        utm_campaign: autoUtmCampaign,
-        utm_content: utmContent || undefined,
-        utm_term: utmTerm || undefined,
-        full_url: variant.url,
-        month_year: autoMonthYear,
-        notes: notes || undefined,
-        lp_type: lpType,
-        dynamic_language: (variant.language as 'EN' | 'AR') || undefined,
-        expansion_group_id: expansionGroupId,
-      }));
+    const expansionGroupId = crypto.randomUUID();
+    
+    const previewLinks = variants.map((variant) => ({
+      id: crypto.randomUUID(),
+      name: variant.language 
+        ? `${selectedCampaign} ${selectedPlatform} ${variant.entity || ''} ${variant.language} ${autoMonthYear}`.trim().replace(/\s+/g, ' ')
+        : `${selectedCampaign} ${selectedPlatform} ${variant.entity || variant.language} ${autoMonthYear}`,
+      base_url: baseUrl,
+      campaign_name: selectedCampaign,
+      platform: selectedPlatform,
+      link_purpose: selectedPurpose || undefined,
+      entity: variant.entity ? [variant.entity] : undefined,
+      teams: selectedTeams.length > 0 ? selectedTeams : undefined,
+      utm_source: autoUtmSource,
+      utm_medium: autoUtmMedium,
+      utm_campaign: autoUtmCampaign,
+      utm_content: utmContent || undefined,
+      utm_term: utmTerm || undefined,
+      full_url: variant.url,
+      month_year: autoMonthYear,
+      notes: notes || undefined,
+      lp_type: lpType,
+      dynamic_language: (variant.language as 'EN' | 'AR') || undefined,
+      expansion_group_id: expansionGroupId,
+      created_at: new Date().toISOString(),
+    }));
 
-      await bulkCreateUtmLinks.mutateAsync(bulkLinks);
-      
-      // Notify parent to show expanded links
-      if (onExpand) {
-        onExpand(expansionGroupId);
+    setExpandedLinksPreviews(previewLinks);
+    toast.success(`Generated ${variants.length} link previews`);
+  };
+
+  const handleSaveExpandedLinks = async () => {
+    if (expandedLinksPreviews.length === 0) return;
+    
+    try {
+      await bulkCreateUtmLinks.mutateAsync(expandedLinksPreviews);
+      toast.success(`✅ Saved ${expandedLinksPreviews.length} UTM links to database!`);
+      setExpandedLinksPreviews([]);
+      if (onSave) {
+        onSave();
       }
-      
-      toast.success(`✅ Created ${variants.length} UTM links!`);
     } catch (error) {
-      // Error handled by mutation
+      toast.error('Failed to save links');
     }
+  };
+
+  const handleClearPreviews = () => {
+    setExpandedLinksPreviews([]);
+    toast.info('Preview cleared');
+  };
+
+  const handleSavePreset = async () => {
+    if (!presetName.trim()) {
+      toast.error('Please enter a preset name');
+      return;
+    }
+    
+    if (selectedExpansionEntities.length === 0) {
+      toast.error('Please select at least one entity');
+      return;
+    }
+    
+    await createPreset.mutateAsync({
+      name: presetName,
+      entities: selectedExpansionEntities,
+    });
+    
+    setPresetName('');
+    setShowSavePreset(false);
+  };
+
+  const toggleEntity = (entity: string) => {
+    setSelectedExpansionEntities(prev =>
+      prev.includes(entity)
+        ? prev.filter(e => e !== entity)
+        : [...prev, entity]
+    );
   };
 
   const getExpandTooltip = () => {
@@ -643,30 +695,120 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
                 
                 {/* Entity Selection (Static LP only) */}
                 {lpType === 'static' && (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Label>Entities to Generate</Label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          if (selectedExpansionEntities.length === ENTITIES.length) {
-                            setSelectedExpansionEntities([]);
-                          } else {
-                            setSelectedExpansionEntities(ENTITIES);
-                          }
-                        }}
-                      >
-                        {selectedExpansionEntities.length === ENTITIES.length ? 'Deselect All' : 'Select All'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedExpansionEntities([])}
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedExpansionEntities(ENTITIES)}
+                        >
+                          Select All
+                        </Button>
+                      </div>
                     </div>
-                    <SimpleMultiSelect
-                      options={ENTITIES.map(e => ({ value: e, label: e }))}
-                      selected={selectedExpansionEntities}
-                      onChange={setSelectedExpansionEntities}
-                      placeholder="Select entities to expand"
-                    />
+                    
+                    {/* Entity Presets */}
+                    {entityPresets.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Quick Select Presets</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {entityPresets.map((preset) => (
+                            <div key={preset.id} className="relative group">
+                              <Badge
+                                variant="secondary"
+                                className="cursor-pointer pr-8"
+                                onClick={() => setSelectedExpansionEntities(preset.entities)}
+                              >
+                                {preset.name} ({preset.entities.length})
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="absolute right-0 top-0 h-6 w-6 opacity-0 group-hover:opacity-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePreset.mutate(preset.id);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Entity Toggle Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      {ENTITIES.map(entity => (
+                        <Badge
+                          key={entity}
+                          variant={selectedExpansionEntities.includes(entity) ? 'default' : 'outline'}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => toggleEntity(entity)}
+                        >
+                          {entity}
+                        </Badge>
+                      ))}
+                    </div>
+                    
+                    {/* Save Preset Button */}
+                    {selectedExpansionEntities.length > 0 && (
+                      <Dialog open={showSavePreset} onOpenChange={setShowSavePreset}>
+                        <DialogTrigger asChild>
+                          <Button type="button" size="sm" variant="outline" className="w-full">
+                            <Save className="h-3 w-3 mr-2" />
+                            Save as Preset
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Save Entity Preset</DialogTitle>
+                            <DialogDescription>
+                              Save your current selection ({selectedExpansionEntities.length} entities) as a preset for quick access
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="preset-name">Preset Name</Label>
+                              <Input
+                                id="preset-name"
+                                placeholder="e.g., Middle East, Africa, GCC..."
+                                value={presetName}
+                                onChange={(e) => setPresetName(e.target.value)}
+                              />
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {selectedExpansionEntities.map(entity => (
+                                <Badge key={entity} variant="secondary" className="text-xs">
+                                  {entity}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowSavePreset(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleSavePreset}>
+                              Save Preset
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
                 )}
                 
@@ -766,6 +908,33 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
           team: selectedTeams[0],
         }}
       />
+
+      {/* Expanded Links Preview */}
+      {expandedLinksPreviews.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Expanded Links Preview ({expandedLinksPreviews.length})</CardTitle>
+                <CardDescription>Review before saving to database</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleClearPreviews}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Preview
+                </Button>
+                <Button onClick={handleSaveExpandedLinks}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save All to Database
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <UtmCompactList links={expandedLinksPreviews} />
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 };

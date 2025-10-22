@@ -847,6 +847,33 @@ export type Database = {
           },
         ]
       }
+      entity_presets: {
+        Row: {
+          created_at: string | null
+          entities: string[]
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entities: string[]
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entities?: string[]
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           created_at: string | null
@@ -2241,20 +2268,11 @@ export type Database = {
       }
     }
     Functions: {
-      calculate_actual_hours: {
-        Args: { task_uuid: string }
-        Returns: number
-      }
-      cleanup_old_mfa_attempts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_rate_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      calculate_actual_hours: { Args: { task_uuid: string }; Returns: number }
+      cleanup_old_mfa_attempts: { Args: never; Returns: undefined }
+      cleanup_rate_limit: { Args: never; Returns: undefined }
       get_all_users_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avatar_url: string
           email: string
@@ -2294,14 +2312,8 @@ export type Database = {
         }
         Returns: string
       }
-      regenerate_backup_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
-      reschedule_overdue_tasks: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      regenerate_backup_codes: { Args: never; Returns: string[] }
+      reschedule_overdue_tasks: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "member"
