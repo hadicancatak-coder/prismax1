@@ -19,6 +19,7 @@ export interface UtmLinkFilters {
   status?: string;
   created_by?: string;
   search?: string;
+  expansion_group_id?: string;
 }
 
 export const useUtmLinks = (filters?: UtmLinkFilters) => {
@@ -58,6 +59,9 @@ export const useUtmLinks = (filters?: UtmLinkFilters) => {
         query = query.or(
           `name.ilike.%${filters.search}%,full_url.ilike.%${filters.search}%,utm_campaign.ilike.%${filters.search}%,campaign_name.ilike.%${filters.search}%`
         );
+      }
+      if (filters?.expansion_group_id) {
+        query = query.eq("expansion_group_id", filters.expansion_group_id);
       }
 
       const { data, error } = await query;

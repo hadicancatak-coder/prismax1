@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface UtmBuilderProps {
   onSave?: () => void;
+  onExpand?: (groupId: string) => void;
 }
 
 const LINK_PURPOSES = [
@@ -32,7 +33,7 @@ const LINK_PURPOSES = [
   { value: "Education", label: "Education" },
 ];
 
-export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
+export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
   // Mode state - persisted to localStorage
   const [mode, setMode] = useState<'template' | 'custom'>(() => {
     return (localStorage.getItem('utmBuilderMode') as 'template' | 'custom') || 'template';
@@ -63,6 +64,10 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
   const [lpType, setLpType] = useState<'static' | 'mauritius' | 'dynamic' | null>(null);
   const [dynamicLanguage, setDynamicLanguage] = useState<'EN' | 'AR'>('EN');
   
+  // Expansion configuration
+  const [selectedExpansionEntities, setSelectedExpansionEntities] = useState<string[]>([]);
+  const [selectedExpansionLanguages, setSelectedExpansionLanguages] = useState<string[]>(['EN', 'AR']);
+  
   const [autoUtmSource, setAutoUtmSource] = useState("");
   const [autoUtmMedium, setAutoUtmMedium] = useState("");
   const [autoUtmCampaign, setAutoUtmCampaign] = useState("");
@@ -85,6 +90,11 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
       // Auto-set entity based on detection
       if (detection.entity && !selectedEntities.includes(detection.entity)) {
         setSelectedEntities([detection.entity]);
+      }
+      
+      // Initialize entity selection for static LPs
+      if (detection.lpType === 'static') {
+        setSelectedExpansionEntities(ENTITIES);
       }
     }
   }, [baseUrl]);
@@ -233,18 +243,21 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
     let variants: Array<{ entity?: string; language?: string; url: string }> = [];
 
     if (lpType === 'static') {
-      variants = generateStaticLpVariants(baseUrl, utmParams);
-      toast.info(`Generating ${variants.length} links for all static entities (EN + AR)...`);
+      const allVariants = generateStaticLpVariants(baseUrl, utmParams);
+      variants = allVariants.filter(v => 
+        selectedExpansionEntities.includes(v.entity) && 
+        selectedExpansionLanguages.includes(v.language)
+      );
     } else if (lpType === 'dynamic') {
-      variants = generateDynamicLpVariants(baseUrl, utmParams);
-      toast.info('Generating 2 links (EN + AR) for dynamic LP...');
+      const allVariants = generateDynamicLpVariants(baseUrl, utmParams);
+      variants = allVariants.filter(v => selectedExpansionLanguages.includes(v.language));
     } else if (lpType === 'mauritius') {
-      variants = generateMauritiusLpVariants(baseUrl, utmParams);
-      toast.info('Generating 2 links (EN + AR) for Mauritius LP...');
+      const allVariants = generateMauritiusLpVariants(baseUrl, utmParams);
+      variants = allVariants.filter(v => selectedExpansionLanguages.includes(v.language));
     }
 
     if (variants.length === 0) {
-      toast.error('No variants to generate');
+      toast.error('No variants selected. Please choose at least one entity/language.');
       return;
     }
 
@@ -277,13 +290,12 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
 
       await bulkCreateUtmLinks.mutateAsync(bulkLinks);
       
-      // ✅ Stay on Builder tab - DO NOT call onSave()
-      // ✅ Keep form fields intact - DO NOT reset
+      // Notify parent to show expanded links
+      if (onExpand) {
+        onExpand(expansionGroupId);
+      }
       
-      toast.success(
-        `✅ Created ${variants.length} UTM links successfully! You can continue editing or view them in the Links tab.`,
-        { duration: 5000 }
-      );
+      toast.success(`✅ Created ${variants.length} UTM links!`);
     } catch (error) {
       // Error handled by mutation
     }
@@ -586,6 +598,91 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
             </details>
           )}
 
+          {/* Expansion Configuration */}
+          {fullUrl && lpType && (
+            <details className="space-y-4 border rounded-lg p-4">
+              <summary className="cursor-pointer font-medium flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                Configure Expansion Options
+              </summary>
+              <div className="space-y-4 pt-4">
+                {/* Language Selection */}
+                <div className="space-y-2">
+                  <Label>Languages to Generate</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={selectedExpansionLanguages.includes('EN') ? 'default' : 'outline'}
+                      onClick={() => {
+                        setSelectedExpansionLanguages(prev =>
+                          prev.includes('EN') 
+                            ? prev.filter(l => l !== 'EN')
+                            : [...prev, 'EN']
+                        );
+                      }}
+                    >
+                      English (EN)
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={selectedExpansionLanguages.includes('AR') ? 'default' : 'outline'}
+                      onClick={() => {
+                        setSelectedExpansionLanguages(prev =>
+                          prev.includes('AR')
+                            ? prev.filter(l => l !== 'AR')
+                            : [...prev, 'AR']
+                        );
+                      }}
+                    >
+                      Arabic (AR)
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Entity Selection (Static LP only) */}
+                {lpType === 'static' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Entities to Generate</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          if (selectedExpansionEntities.length === ENTITIES.length) {
+                            setSelectedExpansionEntities([]);
+                          } else {
+                            setSelectedExpansionEntities(ENTITIES);
+                          }
+                        }}
+                      >
+                        {selectedExpansionEntities.length === ENTITIES.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                    </div>
+                    <SimpleMultiSelect
+                      options={ENTITIES.map(e => ({ value: e, label: e }))}
+                      selected={selectedExpansionEntities}
+                      onChange={setSelectedExpansionEntities}
+                      placeholder="Select entities to expand"
+                    />
+                  </div>
+                )}
+                
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Will generate {lpType === 'static' 
+                      ? `${selectedExpansionEntities.length} entities × ${selectedExpansionLanguages.length} languages = ${selectedExpansionEntities.length * selectedExpansionLanguages.length} links`
+                      : `${selectedExpansionLanguages.length} language variant(s)`
+                    }
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </details>
+          )}
+
           {/* Preview */}
           {fullUrl && (
             <div className="space-y-3">
@@ -608,9 +705,15 @@ export const UtmBuilder = ({ onSave }: UtmBuilderProps) => {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={handleExpand} disabled={!isFormValid} variant="default" size="lg" className="flex-1">
+                      <Button 
+                        onClick={handleExpand} 
+                        disabled={!isFormValid || selectedExpansionLanguages.length === 0} 
+                        variant="default" 
+                        size="lg" 
+                        className="flex-1"
+                      >
                         <Maximize2 className="h-4 w-4 mr-2" />
-                        Expand ({lpType === 'static' ? (ENTITIES.length * 2) : 2})
+                        Expand ({lpType === 'static' ? (selectedExpansionEntities.length * selectedExpansionLanguages.length) : selectedExpansionLanguages.length})
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
