@@ -928,6 +928,7 @@ export type Database = {
           dimension_type: string | null
           id: string
           row_number: number
+          time_key_parsed: string | null
         }
         Insert: {
           created_at?: string | null
@@ -937,6 +938,7 @@ export type Database = {
           dimension_type?: string | null
           id?: string
           row_number: number
+          time_key_parsed?: string | null
         }
         Update: {
           created_at?: string | null
@@ -946,6 +948,7 @@ export type Database = {
           dimension_type?: string | null
           id?: string
           row_number?: number
+          time_key_parsed?: string | null
         }
         Relationships: [
           {
@@ -971,6 +974,7 @@ export type Database = {
           granularity: string | null
           has_dimensions: boolean | null
           id: string
+          last_sync_error: string | null
           last_synced_at: string | null
           name: string
           parsing_metadata: Json | null
@@ -978,6 +982,7 @@ export type Database = {
           row_count: number | null
           source_type: string
           structure_config: Json | null
+          sync_frequency: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -994,6 +999,7 @@ export type Database = {
           granularity?: string | null
           has_dimensions?: boolean | null
           id?: string
+          last_sync_error?: string | null
           last_synced_at?: string | null
           name: string
           parsing_metadata?: Json | null
@@ -1001,6 +1007,7 @@ export type Database = {
           row_count?: number | null
           source_type: string
           structure_config?: Json | null
+          sync_frequency?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1017,6 +1024,7 @@ export type Database = {
           granularity?: string | null
           has_dimensions?: boolean | null
           id?: string
+          last_sync_error?: string | null
           last_synced_at?: string | null
           name?: string
           parsing_metadata?: Json | null
@@ -1024,6 +1032,7 @@ export type Database = {
           row_count?: number | null
           source_type?: string
           structure_config?: Json | null
+          sync_frequency?: string | null
           updated_at?: string | null
           user_id?: string | null
         }

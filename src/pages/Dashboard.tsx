@@ -6,7 +6,7 @@ import { TaskListDialog } from "@/components/TaskListDialog";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WhatsNext } from "@/components/dashboard/WhatsNext";
-import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
+import { OverdueTasks } from "@/components/dashboard/OverdueTasks";
 import { UpcomingCampaigns } from "@/components/dashboard/UpcomingCampaigns";
 import { getDashboardStats } from "@/lib/dashboardQueries";
 import { NewsTicker } from "@/components/NewsTicker";
@@ -89,10 +89,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-8">
+    <div className="p-8 bg-gray-50 min-h-screen space-y-6">
       <header>
-        <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your team's progress</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">Welcome back! Here's your overview</p>
       </header>
 
       <NewsTicker />
@@ -116,7 +116,7 @@ export default function Dashboard() {
         </div>
         
         <div className="lg:col-span-1">
-          <NeedsAttention />
+          <OverdueTasks />
         </div>
         
         <div className="lg:col-span-1">

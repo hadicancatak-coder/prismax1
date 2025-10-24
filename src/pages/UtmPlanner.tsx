@@ -15,11 +15,11 @@ const UtmPlanner = () => {
   const { data: utmLinks = [], isLoading } = useUtmLinks(filters);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-3">
         <Link2 className="h-8 w-8" />
         <div>
-          <h1 className="text-3xl font-bold">UTM Planner</h1>
+          <h1 className="text-3xl font-bold text-foreground">UTM Planner</h1>
           <p className="text-muted-foreground">
             Create, manage, and track your UTM campaign links
           </p>

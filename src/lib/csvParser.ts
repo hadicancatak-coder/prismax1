@@ -18,6 +18,7 @@ export interface ParsedDataset {
 
 export interface NormalizedRow {
   time_key: string | null;
+  time_key_parsed: Date | null;
   dimension: string | null;
   dimension_type: string | null;
   metric_name: string;
@@ -337,6 +338,7 @@ function normalizeData(
         
         normalized.push({
           time_key: month,
+          time_key_parsed: parseTimeKey(month),
           dimension: row.dimension || null,
           dimension_type: row.dimension_type || null,
           metric_name: metricName,
@@ -354,9 +356,11 @@ function normalizeData(
         
         const rawValue = row[header];
         const { value, unit } = normalizeValue(rawValue);
+        const timeValue = timeKey ? row[timeKey] : null;
         
         normalized.push({
-          time_key: timeKey ? row[timeKey] : null,
+          time_key: timeValue,
+          time_key_parsed: parseTimeKey(timeValue),
           dimension: row.dimension || null,
           dimension_type: row.dimension_type || null,
           metric_name: header,

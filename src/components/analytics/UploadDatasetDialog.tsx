@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Upload, FileText, AlertCircle, FileSpreadsheet } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +21,7 @@ import { parseCSV } from "@/lib/csvParser";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { errorLogger } from "@/lib/errorLogger";
+import { GoogleSheetsConnector } from "./GoogleSheetsConnector";
 
 interface UploadDatasetDialogProps {
   open: boolean;
@@ -35,6 +37,7 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
   const [isUploading, setIsUploading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [parsedSummary, setParsedSummary] = useState<any>(null);
+  const [showGoogleSheets, setShowGoogleSheets] = useState(false);
 
   const uploadMutation = useMutation({
     mutationFn: async ({
@@ -47,19 +50,16 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       file: File;
     }) => {
       try {
-        // Use intelligent parser
         const parsed = await parseCSV(file);
         
         if (!parsed.normalizedRows || parsed.normalizedRows.length === 0) {
           throw new Error("CSV file contains no valid data rows");
         }
       
-      // Get user for RLS policy
       if (!user?.id) {
         throw new Error("User must be logged in to upload datasets");
       }
 
-      // Create dataset with metadata
       const { data: dataset, error: datasetError } = await supabase
         .from("datasets")
         .insert([{
@@ -83,7 +83,6 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       
       if (datasetError) throw datasetError;
       
-      // Insert normalized rows in batches
       const batchSize = 500;
       for (let i = 0; i < parsed.normalizedRows.length; i += batchSize) {
         const batch = parsed.normalizedRows.slice(i, i + batchSize);
@@ -92,8 +91,10 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
           row_number: i + index + 1,
           dimension: row.dimension,
           dimension_type: row.dimension_type,
+          time_key_parsed: row.time_key_parsed?.toISOString().split('T')[0],
           data: {
             time_key: row.time_key,
+            time_key_parsed: row.time_key_parsed?.toISOString(),
             metric_name: row.metric_name,
             metric_value: row.metric_value,
             metric_unit: row.metric_unit,
@@ -171,86 +172,161 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
     }
   };
 
+  const handleGoogleSheetsConnect = async (data: {
+    name: string;
+    description: string;
+    googleSheetUrl: string;
+    googleSheetId: string;
+    syncFrequency: 'manual' | 'hourly' | 'daily';
+  }) => {
+    try {
+      const { data: dataset, error } = await supabase
+        .from('datasets')
+        .insert({
+          name: data.name,
+          description: data.description,
+          source_type: 'google_sheets',
+          google_sheet_url: data.googleSheetUrl,
+          google_sheet_id: data.googleSheetId,
+          sync_frequency: data.syncFrequency,
+          user_id: user?.id,
+          column_definitions: [],
+          row_count: 0
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Google Sheet connected successfully! Data will sync shortly." });
+      setShowGoogleSheets(false);
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ['datasets'] });
+    } catch (error) {
+      console.error('Error connecting Google Sheet:', error);
+      toast({ title: "Error", description: "Failed to connect Google Sheet", variant: "destructive" });
+    }
+  };
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
+      <GoogleSheetsConnector
+        open={showGoogleSheets}
+        onOpenChange={setShowGoogleSheets}
+        onConnect={handleGoogleSheetsConnect}
+      />
+
+      <Dialog open={open && !showSummary} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload Dataset</DialogTitle>
+          <DialogTitle>Add New Dataset</DialogTitle>
           <DialogDescription>
-            Upload a CSV file to create a new dataset for analysis
+            Upload a CSV file or connect a Google Sheet
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Dataset Name *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Sales Data 2024"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your dataset..."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="file">CSV File *</Label>
-            <div className="relative">
-              <Input
-                id="file"
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="cursor-pointer file:cursor-pointer"
-                required
-              />
-            </div>
-            {file && (
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg mt-2">
-                <FileText className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700 font-medium">{file.name}</span>
-                <span className="text-xs text-gray-500 ml-auto">
-                  {(file.size / 1024).toFixed(2)} KB
-                </span>
+        <Tabs defaultValue="csv" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="csv">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload CSV
+            </TabsTrigger>
+            <TabsTrigger value="google-sheets">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Google Sheets
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="csv" className="mt-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Dataset Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Weekly Performance Data"
+                  required
+                />
               </div>
-            )}
-          </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isUploading || !file || !name} className="gap-2">
-              {isUploading ? (
-                <>
-                  <Upload className="h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Upload Dataset
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What does this dataset contain?"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="file">CSV File *</Label>
+                <div className="relative">
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="cursor-pointer file:cursor-pointer"
+                    required
+                  />
+                </div>
+                {file && (
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg mt-2">
+                    <FileText className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700 font-medium">{file.name}</span>
+                    <span className="text-xs text-gray-500 ml-auto">
+                      {(file.size / 1024).toFixed(2)} KB
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isUploading || !file || !name} className="gap-2">
+                  {isUploading ? (
+                    <>
+                      <Upload className="h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Upload Dataset
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="google-sheets" className="mt-4">
+            <div className="text-center py-8 space-y-4">
+              <FileSpreadsheet className="h-16 w-16 mx-auto text-primary" />
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Connect Google Sheets</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Import data directly from Google Sheets with automatic syncing
+                </p>
+              </div>
+              <Button onClick={() => {
+                setShowGoogleSheets(true);
+                onOpenChange(false);
+              }}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Connect Google Sheet
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
 
-    {/* Summary Dialog */}
     <Dialog open={showSummary} onOpenChange={setShowSummary}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
