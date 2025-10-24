@@ -11,26 +11,26 @@ interface AdvancedFiltersProps {
 }
 
 export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
-  const [entity, setEntity] = useState('');
-  const [googleStatus, setGoogleStatus] = useState('');
+  const [entity, setEntity] = useState('all');
+  const [googleStatus, setGoogleStatus] = useState('all');
   const [open, setOpen] = useState(false);
 
   const activeFilters = [
-    entity && { key: 'entity', label: entity },
-    googleStatus && { key: 'googleStatus', label: googleStatus },
+    entity && entity !== 'all' && { key: 'entity', label: entity },
+    googleStatus && googleStatus !== 'all' && { key: 'googleStatus', label: googleStatus },
   ].filter(Boolean);
 
   const applyFilters = () => {
     onFiltersChange({
-      entity: entity || undefined,
-      googleStatus: googleStatus || undefined,
+      entity: entity && entity !== 'all' ? entity : undefined,
+      googleStatus: googleStatus && googleStatus !== 'all' ? googleStatus : undefined,
     });
     setOpen(false);
   };
 
   const clearFilters = () => {
-    setEntity('');
-    setGoogleStatus('');
+    setEntity('all');
+    setGoogleStatus('all');
     onFiltersChange({});
   };
 
@@ -67,7 +67,7 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
                   <SelectValue placeholder="All entities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All entities</SelectItem>
+                  <SelectItem value="all">All entities</SelectItem>
                   <SelectItem value="FBK">FBK</SelectItem>
                   <SelectItem value="FBC">FBC</SelectItem>
                   <SelectItem value="CFI">CFI</SelectItem>
@@ -83,7 +83,7 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="limited">Limited</SelectItem>
