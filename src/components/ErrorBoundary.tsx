@@ -1,47 +1,72 @@
-import React from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import React, { Component, ReactNode } from 'react';
 import { errorLogger } from '@/lib/errorLogger';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: any) {
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
+    
     errorLogger.logError({
       severity: 'critical',
       type: 'frontend',
       message: error.message,
       stack: error.stack,
-      metadata: { componentStack: errorInfo.componentStack }
+      metadata: {
+        componentStack: errorInfo.componentStack,
+      },
     });
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-6">
-          <Alert variant="destructive" className="max-w-lg">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Something went wrong</AlertTitle>
-            <AlertDescription className="mt-2">
-              <p className="mb-4">{this.state.error?.message}</p>
-              <Button onClick={() => window.location.reload()}>
-                Reload Page
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <CardTitle>Something went wrong</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                An unexpected error occurred. This has been logged and will be reviewed.
+              </p>
+              {this.state.error && (
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-xs font-mono text-muted-foreground">
+                    {this.state.error.message}
+                  </p>
+                </div>
+              )}
+              <Button 
+                onClick={() => window.location.href = '/'}
+                className="w-full"
+              >
+                Return to Dashboard
               </Button>
-            </AlertDescription>
-          </Alert>
+            </CardContent>
+          </Card>
         </div>
       );
     }
@@ -49,5 +74,3 @@ class ErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

@@ -924,6 +924,8 @@ export type Database = {
           created_at: string | null
           data: Json
           dataset_id: string | null
+          dimension: string | null
+          dimension_type: string | null
           id: string
           row_number: number
         }
@@ -931,6 +933,8 @@ export type Database = {
           created_at?: string | null
           data?: Json
           dataset_id?: string | null
+          dimension?: string | null
+          dimension_type?: string | null
           id?: string
           row_number: number
         }
@@ -938,6 +942,8 @@ export type Database = {
           created_at?: string | null
           data?: Json
           dataset_id?: string | null
+          dimension?: string | null
+          dimension_type?: string | null
           id?: string
           row_number?: number
         }
@@ -959,9 +965,11 @@ export type Database = {
           date_range_start: string | null
           description: string | null
           detected_type: string | null
+          dimension_values: string[] | null
           google_sheet_id: string | null
           google_sheet_url: string | null
           granularity: string | null
+          has_dimensions: boolean | null
           id: string
           last_synced_at: string | null
           name: string
@@ -969,6 +977,7 @@ export type Database = {
           primary_kpi_fields: string[] | null
           row_count: number | null
           source_type: string
+          structure_config: Json | null
           updated_at: string | null
           user_id: string | null
         }
@@ -979,9 +988,11 @@ export type Database = {
           date_range_start?: string | null
           description?: string | null
           detected_type?: string | null
+          dimension_values?: string[] | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           granularity?: string | null
+          has_dimensions?: boolean | null
           id?: string
           last_synced_at?: string | null
           name: string
@@ -989,6 +1000,7 @@ export type Database = {
           primary_kpi_fields?: string[] | null
           row_count?: number | null
           source_type: string
+          structure_config?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -999,9 +1011,11 @@ export type Database = {
           date_range_start?: string | null
           description?: string | null
           detected_type?: string | null
+          dimension_values?: string[] | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           granularity?: string | null
+          has_dimensions?: boolean | null
           id?: string
           last_synced_at?: string | null
           name?: string
@@ -1009,6 +1023,7 @@ export type Database = {
           primary_kpi_fields?: string[] | null
           row_count?: number | null
           source_type?: string
+          structure_config?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }

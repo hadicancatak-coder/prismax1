@@ -50,12 +50,14 @@ export default function ApprovalsCenter() {
           type,
           task_id,
           created_at,
-          requester:profiles!task_change_requests_requester_id_fkey(name),
-          task:tasks!task_change_requests_task_id_fkey(title)
+          requester_id
         `)
         .eq('status', 'pending');
 
-      if (taskError) throw taskError;
+      if (taskError) {
+        console.error('Task requests error:', taskError);
+        throw taskError;
+      }
 
       // Fetch pending ads
       const { data: ads, error: adsError } = await supabase
@@ -64,25 +66,40 @@ export default function ApprovalsCenter() {
           id,
           name,
           created_at,
-          creator:profiles!ads_created_by_fkey(name)
+          created_by
         `)
         .eq('approval_status', 'pending');
 
-      if (adsError) throw adsError;
+      if (adsError) {
+        console.error('Ads error:', adsError);
+        throw adsError;
+      }
+      
+      // Fetch related profile names separately
+      const requesterIds = taskRequests?.map(r => r.requester_id).filter(Boolean) || [];
+      const creatorIds = ads?.map(a => a.created_by).filter(Boolean) || [];
+      const allUserIds = [...new Set([...requesterIds, ...creatorIds])];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', allUserIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
 
       const pending: PendingItem[] = [
         ...(taskRequests?.map(req => ({
           id: req.id,
           type: 'task_change',
-          title: (req as any).task?.title || 'Unknown Task',
-          requester: (req as any).requester?.name || 'Unknown',
+          title: 'Task Change Request',
+          requester: profileMap.get(req.requester_id) || 'Unknown',
           created_at: req.created_at,
         })) || []),
         ...(ads?.map(ad => ({
           id: ad.id,
           type: 'ad',
           title: ad.name,
-          requester: (ad as any).creator?.name || 'Unknown',
+          requester: profileMap.get(ad.created_by) || 'Unknown',
           created_at: ad.created_at,
         })) || []),
       ];

@@ -7,6 +7,8 @@ export interface ParsedDataset {
   dateRange: { start: Date | null; end: Date | null };
   normalizedRows: NormalizedRow[];
   columnDefinitions: ColumnDefinition[];
+  hasDimensions: boolean;
+  dimensionValues: string[];
   parsingMetadata: {
     unpivotApplied: boolean;
     columnsNormalized: string[];
@@ -16,6 +18,8 @@ export interface ParsedDataset {
 
 export interface NormalizedRow {
   time_key: string | null;
+  dimension: string | null;
+  dimension_type: string | null;
   metric_name: string;
   metric_value: number | null;
   metric_unit: 'AED' | '%' | 'count' | 'text';
@@ -36,7 +40,7 @@ export async function parseCSV(file: File): Promise<ParsedDataset> {
       throw new Error('CSV file is empty');
     }
     
-    const lines = text.split('\n').filter(line => line.trim() && !line.match(/^Total|^Difference/i));
+    const lines = text.split('\n').filter(line => line.trim());
     
     if (lines.length === 0) {
       throw new Error('CSV file contains no valid data');
@@ -53,14 +57,8 @@ export async function parseCSV(file: File): Promise<ParsedDataset> {
       throw new Error('CSV file has no headers');
     }
     
-    const dataRows = lines.slice(1).map(row => {
-      const values = parseCSVLine(row);
-      const obj: Record<string, string> = {};
-      headers.forEach((header, i) => {
-        obj[header] = values[i] || '';
-      });
-      return obj;
-    });
+    // Parse rows with section header detection
+    const { dataRows, dimensionValues } = parseRowsWithSections(lines.slice(1), headers);
     
     if (dataRows.length === 0) {
       throw new Error('CSV file has no data rows');
@@ -100,6 +98,8 @@ export async function parseCSV(file: File): Promise<ParsedDataset> {
       dateRange,
       normalizedRows,
       columnDefinitions,
+      hasDimensions: dimensionValues.length > 0,
+      dimensionValues,
       parsingMetadata: {
         unpivotApplied: detectedType === 'monthly_performance',
         columnsNormalized: metricColumns,
@@ -109,6 +109,108 @@ export async function parseCSV(file: File): Promise<ParsedDataset> {
   } catch (error: any) {
     throw new Error(`CSV parsing error: ${error.message || 'Unknown error'}`);
   }
+}
+
+// Helper: Parse rows with section header detection
+function parseRowsWithSections(
+  lines: string[], 
+  headers: string[]
+): { dataRows: Array<Record<string, string> & { dimension?: string; dimension_type?: string }>; dimensionValues: string[] } {
+  const dataRows: Array<Record<string, string> & { dimension?: string; dimension_type?: string }> = [];
+  const dimensionValues: string[] = [];
+  let currentDimension: string | null = null;
+  
+  for (const line of lines) {
+    const values = parseCSVLine(line);
+    
+    // Check if this is a section header row
+    const sectionHeader = isSectionHeaderRow(values, headers);
+    
+    if (sectionHeader) {
+      currentDimension = sectionHeader;
+      if (!dimensionValues.includes(sectionHeader)) {
+        dimensionValues.push(sectionHeader);
+      }
+      continue; // Skip section header rows
+    }
+    
+    // Create data row object
+    const obj: Record<string, string> & { dimension?: string; dimension_type?: string } = {};
+    headers.forEach((header, i) => {
+      obj[header] = values[i] || '';
+    });
+    
+    // Add dimension info if we're in a section
+    if (currentDimension) {
+      obj.dimension = currentDimension;
+      obj.dimension_type = detectDimensionType(currentDimension);
+    }
+    
+    dataRows.push(obj);
+  }
+  
+  return { dataRows, dimensionValues };
+}
+
+// Helper: Check if row is a section header
+function isSectionHeaderRow(values: string[], headers: string[]): string | null {
+  if (values.length === 0) return null;
+  
+  const firstValue = values[0]?.trim();
+  if (!firstValue) return null;
+  
+  // Common section header patterns
+  const sectionPatterns = [
+    /^Total$/i,
+    /^UAE$/i,
+    /^KSA$/i,
+    /^Jordan$/i,
+    /^Egypt$/i,
+    /^Saudi Arabia$/i,
+    /^United Arab Emirates$/i,
+    /^GCC$/i,
+    /^MENA$/i,
+    /^Overall$/i,
+    /^Summary$/i
+  ];
+  
+  // Check if first value matches a section pattern
+  const isSection = sectionPatterns.some(pattern => pattern.test(firstValue));
+  
+  if (!isSection) return null;
+  
+  // Verify that most other cells are empty (section headers typically have only the first column filled)
+  const nonEmptyCells = values.slice(1).filter(v => v && v.trim() !== '').length;
+  const emptinessRatio = nonEmptyCells / (values.length - 1);
+  
+  if (emptinessRatio < 0.3) { // Less than 30% of cells are filled
+    return firstValue;
+  }
+  
+  return null;
+}
+
+// Helper: Detect dimension type from dimension name
+function detectDimensionType(dimension: string): string {
+  const dim = dimension.toLowerCase();
+  
+  // Country names
+  const countries = ['uae', 'ksa', 'jordan', 'egypt', 'saudi', 'emirates'];
+  if (countries.some(c => dim.includes(c))) {
+    return 'country';
+  }
+  
+  // Total/Overall
+  if (dim.match(/total|overall|summary/)) {
+    return 'total';
+  }
+  
+  // Regional groupings
+  if (dim.match(/gcc|mena|region/)) {
+    return 'region';
+  }
+  
+  return 'custom';
 }
 
 // Helper: Parse CSV line handling quoted fields
@@ -214,7 +316,7 @@ function identifyMetrics(headers: string[]): string[] {
 
 // Helper: Normalize data rows
 function normalizeData(
-  rows: Record<string, string>[],
+  rows: Array<Record<string, string> & { dimension?: string; dimension_type?: string }>,
   headers: string[],
   timeKey: string | null,
   type: ParsedDataset['detectedType']
@@ -235,6 +337,8 @@ function normalizeData(
         
         normalized.push({
           time_key: month,
+          dimension: row.dimension || null,
+          dimension_type: row.dimension_type || null,
           metric_name: metricName,
           metric_value: value,
           metric_unit: unit,
@@ -253,6 +357,8 @@ function normalizeData(
         
         normalized.push({
           time_key: timeKey ? row[timeKey] : null,
+          dimension: row.dimension || null,
+          dimension_type: row.dimension_type || null,
           metric_name: header,
           metric_value: value,
           metric_unit: unit,

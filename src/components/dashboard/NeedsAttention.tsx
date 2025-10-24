@@ -23,7 +23,17 @@ export function NeedsAttention() {
 
   const totalItems = data.overdueTasks.length + data.blockers.length + data.pendingApprovals.length;
 
-  if (totalItems === 0) return null;
+  if (totalItems === 0) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-xl font-semibold text-foreground">Needs Attention</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">No items need attention right now. Great work!</p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6 bg-destructive/5 border-destructive/20">

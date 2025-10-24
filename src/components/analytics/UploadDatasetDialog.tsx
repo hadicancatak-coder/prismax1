@@ -74,6 +74,8 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
           date_range_start: parsed.dateRange.start?.toISOString().split('T')[0],
           date_range_end: parsed.dateRange.end?.toISOString().split('T')[0],
           detected_type: parsed.detectedType,
+          has_dimensions: parsed.hasDimensions,
+          dimension_values: parsed.dimensionValues,
           parsing_metadata: parsed.parsingMetadata as any,
         }])
         .select()
@@ -88,6 +90,8 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
         const rowInserts = batch.map((row, index) => ({
           dataset_id: dataset.id,
           row_number: i + index + 1,
+          dimension: row.dimension,
+          dimension_type: row.dimension_type,
           data: {
             time_key: row.time_key,
             metric_name: row.metric_name,
