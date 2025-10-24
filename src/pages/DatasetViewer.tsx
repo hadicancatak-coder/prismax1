@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { ArrowLeft, Calendar, Database, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, Database, TrendingUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { CreateVisualizationDialog } from "@/components/visualizations/CreateVisualizationDialog";
 
 export default function DatasetViewer() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [createVizOpen, setCreateVizOpen] = useState(false);
   
   const { data: dataset, isLoading } = useQuery({
     queryKey: ['dataset', id],
@@ -64,15 +66,20 @@ export default function DatasetViewer() {
 
   return (
     <div className="container mx-auto p-8 space-y-6">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => navigate('/data-sources')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Data Sources
-      </Button>
+      <div className="flex items-center justify-between mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate('/data-sources')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Data Sources
+        </Button>
+        <Button onClick={() => setCreateVizOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Create Visualization
+        </Button>
+      </div>
 
       {/* Dataset Header with Metadata */}
       <Card>
@@ -191,6 +198,12 @@ export default function DatasetViewer() {
           )}
         </CardContent>
       </Card>
+
+      <CreateVisualizationDialog
+        open={createVizOpen}
+        onOpenChange={setCreateVizOpen}
+        defaultDatasetId={id}
+      />
     </div>
   );
 }

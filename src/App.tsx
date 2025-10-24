@@ -32,6 +32,7 @@ import Security from "./pages/Security";
 import About from "./pages/About";
 import UtmPlanner from "./pages/UtmPlanner";
 import DataSources from "./pages/DataSources";
+import DatasetViewer from "./pages/DatasetViewer";
 import Visualizations from "./pages/Visualizations";
 import Dashboards from "./pages/Dashboards";
 
@@ -78,7 +79,8 @@ const App = () => (
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/launch-pad" element={<LaunchPad />} />
             <Route path="/utm-planner" element={<UtmPlanner />} />
-            <Route path="/data-sources" element={<DataSources />} />
+              <Route path="/data-sources" element={<DataSources />} />
+              <Route path="/data-sources/:id" element={<DatasetViewer />} />
             <Route path="/visualizations" element={<Visualizations />} />
             <Route path="/dashboards" element={<Dashboards />} />
             <Route path="/security" element={<Security />} />
