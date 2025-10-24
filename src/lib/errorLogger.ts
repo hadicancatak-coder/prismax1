@@ -49,7 +49,7 @@ class ErrorLogger {
     try {
       let query = supabase
         .from('error_logs')
-        .select('*, profiles(name, email, avatar_url)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters.severity) {
@@ -71,10 +71,30 @@ class ErrorLogger {
         query = query.lte('created_at', filters.endDate.toISOString());
       }
 
-      const { data, error } = await query;
-
+      const { data: errors, error } = await query;
       if (error) throw error;
-      return data || [];
+
+      // Fetch user profiles separately
+      const userIds = [...new Set(errors?.map(e => e.user_id).filter(Boolean) || [])];
+      
+      if (userIds.length === 0) {
+        return errors?.map(error => ({ ...error, profiles: null })) || [];
+      }
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, avatar_url')
+        .in('user_id', userIds);
+
+      const profilesMap: Record<string, any> = {};
+      profiles?.forEach(p => profilesMap[p.user_id] = p);
+
+      const enrichedErrors = errors?.map(error => ({
+        ...error,
+        profiles: profilesMap[error.user_id] || null
+      })) || [];
+
+      return enrichedErrors;
     } catch (err) {
       logger.error('Error fetching error logs', err);
       return [];

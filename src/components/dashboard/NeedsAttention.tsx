@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 export function NeedsAttention() {
   const { user } = useAuth();
   const [data, setData] = useState<any>({ overdueTasks: [], blockers: [], pendingApprovals: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -17,11 +19,49 @@ export function NeedsAttention() {
 
   const fetchNeedsAttention = async () => {
     if (!user?.id) return;
-    const result = await getNeedsAttention(user.id);
-    setData(result);
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('NeedsAttention: Fetching data for user', user.id);
+      const result = await getNeedsAttention(user.id);
+      console.log('NeedsAttention: Received data', result);
+      setData(result);
+    } catch (err) {
+      console.error('NeedsAttention: Error fetching data', err);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const totalItems = data.overdueTasks.length + data.blockers.length + data.pendingApprovals.length;
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse space-y-3">
+          <div className="h-6 bg-muted rounded w-40"></div>
+          <div className="h-4 bg-muted rounded w-32"></div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6 border-destructive/20">
+        <div className="text-destructive flex items-start gap-2">
+          <AlertTriangle className="h-5 w-5 mt-0.5" />
+          <div>
+            <p className="font-semibold">Error Loading Data</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const totalItems = (data.overdueTasks?.length || 0) + (data.blockers?.length || 0) + (data.pendingApprovals?.length || 0);
 
   if (totalItems === 0) {
     return (

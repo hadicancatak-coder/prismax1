@@ -149,11 +149,7 @@ class AdminService {
     try {
       let query = supabase
         .from('admin_audit_log')
-        .select(`
-          *,
-          admin:profiles!admin_audit_log_admin_id_fkey(name, email, avatar_url),
-          target:profiles!admin_audit_log_target_user_id_fkey(name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters.adminId) query = query.eq('admin_id', filters.adminId);
@@ -161,10 +157,33 @@ class AdminService {
       if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString());
       if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString());
 
-      const { data, error } = await query;
+      const { data: logs, error } = await query;
       if (error) throw error;
 
-      return data || [];
+      // Fetch admin and target profiles separately
+      const adminIds = [...new Set(logs?.map(log => log.admin_id) || [])];
+      const targetIds = [...new Set(logs?.map(log => log.target_user_id).filter(Boolean) || [])];
+      const allUserIds = [...new Set([...adminIds, ...targetIds])];
+
+      if (allUserIds.length === 0) {
+        return logs?.map(log => ({ ...log, admin: null, target: null })) || [];
+      }
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, avatar_url')
+        .in('user_id', allUserIds);
+
+      const profilesMap: Record<string, any> = {};
+      profiles?.forEach(p => profilesMap[p.user_id] = p);
+
+      const enrichedLogs = logs?.map(log => ({
+        ...log,
+        admin: profilesMap[log.admin_id] || null,
+        target: profilesMap[log.target_user_id] || null
+      })) || [];
+
+      return enrichedLogs;
     } catch (err) {
       logger.error('Error fetching audit logs', err);
       return [];
