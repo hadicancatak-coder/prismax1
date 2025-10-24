@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,11 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, AlertCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { parseCSV } from "@/lib/csvParser";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 interface UploadDatasetDialogProps {
   open: boolean;
@@ -28,6 +32,8 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [parsedSummary, setParsedSummary] = useState<any>(null);
 
   const uploadMutation = useMutation({
     mutationFn: async ({
@@ -39,67 +45,60 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       description: string;
       file: File;
     }) => {
-      // Parse CSV file
-      const text = await file.text();
-      const lines = text.split("\n").filter((line) => line.trim());
+      // Use intelligent parser
+      const parsed = await parseCSV(file);
       
-      if (lines.length === 0) {
-        throw new Error("CSV file is empty");
-      }
-
-      // Parse headers
-      const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-      const dataRows = lines.slice(1);
-
-      // Create column definitions
-      const columnDefinitions = headers.map((header) => ({
-        name: header,
-        type: "text",
-      }));
-
-      // Create dataset
+      // Create dataset with metadata
       const { data: dataset, error: datasetError } = await supabase
         .from("datasets")
-        .insert({
-          user_id: user?.id,
-          name,
+        .insert([{
+          name: name || parsed.datasetName,
           description,
           source_type: "csv_upload",
-          column_definitions: columnDefinitions,
-          row_count: dataRows.length,
-        })
+          column_definitions: parsed.columnDefinitions as any,
+          row_count: parsed.normalizedRows.length,
+          granularity: parsed.granularity,
+          primary_kpi_fields: parsed.primaryKpiFields,
+          date_range_start: parsed.dateRange.start?.toISOString().split('T')[0],
+          date_range_end: parsed.dateRange.end?.toISOString().split('T')[0],
+          detected_type: parsed.detectedType,
+          parsing_metadata: parsed.parsingMetadata as any,
+        }])
         .select()
         .single();
-
+      
       if (datasetError) throw datasetError;
-
-      // Insert rows in batches
-      const batchSize = 100;
-      for (let i = 0; i < dataRows.length; i += batchSize) {
-        const batch = dataRows.slice(i, i + batchSize);
-        const rowInserts = batch.map((row, index) => {
-          const values = row.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
-          const rowData: Record<string, string> = {};
-          headers.forEach((header, colIndex) => {
-            rowData[header] = values[colIndex] || "";
-          });
-          return {
-            dataset_id: dataset.id,
-            row_number: i + index + 1,
-            data: rowData,
-          };
-        });
-
+      
+      // Insert normalized rows in batches
+      const batchSize = 500;
+      for (let i = 0; i < parsed.normalizedRows.length; i += batchSize) {
+        const batch = parsed.normalizedRows.slice(i, i + batchSize);
+        const rowInserts = batch.map((row, index) => ({
+          dataset_id: dataset.id,
+          row_number: i + index + 1,
+          data: {
+            time_key: row.time_key,
+            metric_name: row.metric_name,
+            metric_value: row.metric_value,
+            metric_unit: row.metric_unit,
+            ...row.raw_data
+          },
+        }));
+        
         const { error: rowsError } = await supabase.from("dataset_rows").insert(rowInserts);
         if (rowsError) throw rowsError;
       }
-
-      return dataset;
+      
+      return { dataset, parsed };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["datasets"] });
-      toast({ title: "Success", description: "Dataset uploaded successfully" });
-      onOpenChange(false);
+      setParsedSummary(data.parsed);
+      setShowSummary(true);
+      toast({ 
+        title: "Success", 
+        description: `Dataset imported: ${data.parsed.detectedType} | ${data.parsed.normalizedRows.length} metrics parsed` 
+      });
       resetForm();
     },
     onError: (error: Error) => {
@@ -137,8 +136,9 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload Dataset</DialogTitle>
           <DialogDescription>
@@ -213,5 +213,77 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Summary Dialog */}
+    <Dialog open={showSummary} onOpenChange={setShowSummary}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Import Summary</DialogTitle>
+          <DialogDescription>
+            Your dataset has been successfully imported and parsed
+          </DialogDescription>
+        </DialogHeader>
+        
+        {parsedSummary && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm text-muted-foreground">Dataset Type</Label>
+                <p className="font-semibold text-foreground capitalize">
+                  {parsedSummary.detectedType.replace(/_/g, ' ')}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Granularity</Label>
+                <p className="font-semibold text-foreground capitalize">{parsedSummary.granularity}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Total Metrics</Label>
+                <p className="font-semibold text-foreground">{parsedSummary.normalizedRows.length.toLocaleString()}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Date Range</Label>
+                <p className="font-semibold text-foreground">
+                  {parsedSummary.dateRange.start && parsedSummary.dateRange.end 
+                    ? `${parsedSummary.dateRange.start.toLocaleDateString()} - ${parsedSummary.dateRange.end.toLocaleDateString()}`
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+            
+            {parsedSummary.primaryKpiFields.length > 0 && (
+              <div>
+                <Label className="text-sm text-muted-foreground mb-2 block">Detected KPIs</Label>
+                <div className="flex flex-wrap gap-2">
+                  {parsedSummary.primaryKpiFields.map((kpi: string) => (
+                    <Badge key={kpi} variant="secondary">{kpi}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {parsedSummary.parsingMetadata.unpivotApplied && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Data Transformation Applied</AlertTitle>
+                <AlertDescription>
+                  Monthly columns were unpivoted into a time-series format for better analysis.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
+        
+        <DialogFooter>
+          <Button onClick={() => {
+            setShowSummary(false);
+            onOpenChange(false);
+          }}>
+            Done
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }

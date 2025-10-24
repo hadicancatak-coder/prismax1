@@ -8,76 +8,83 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Apple-inspired neutral palette - soft grays */
+    /* Backgrounds - Clean whites with subtle warmth */
     --background: 0 0% 98%;
-    --foreground: 220 13% 13%;
+    --foreground: 220 20% 15%;
 
+    /* Cards - Pure white elevated surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
+    --card-foreground: 220 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
+    --popover-foreground: 220 20% 15%;
 
-    /* Sophisticated primary - muted blue-gray */
-    --primary: 215 28% 52%;
+    /* Primary - Professional Blue (Jira-style) */
+    --primary: 211 84% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 96%;
-    --secondary-foreground: 220 13% 13%;
+    /* Secondary - Soft neutral gray */
+    --secondary: 220 15% 95%;
+    --secondary-foreground: 220 20% 20%;
 
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted - Subtle backgrounds */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 12% 45%;
 
-    --accent: 215 28% 52%;
+    /* Accent - Darker blue for hover states */
+    --accent: 211 100% 38%;
     --accent-foreground: 0 0% 100%;
 
-    /* Status colors - muted, pastel versions */
-    --destructive: 0 65% 55%;
+    /* Destructive - Professional red */
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 215 28% 52%;
+    /* Borders and Inputs */
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 211 84% 48%;
 
     --radius: 0.625rem;
 
-    --success: 142 50% 50%;
+    /* Success - Muted green */
+    --success: 145 70% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 75% 55%;
+    /* Warning - Amber tone */
+    --warning: 35 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --pending: 215 28% 52%;
+    --pending: 211 84% 48%;
     --pending-foreground: 0 0% 100%;
 
-    /* Light sidebar - Apple aesthetic */
-    --sidebar-background: 220 13% 97%;
-    --sidebar-foreground: 220 13% 13%;
-    --sidebar-primary: 215 28% 52%;
+    /* Sidebar - Dark charcoal with blue hints */
+    --sidebar-background: 220 20% 18%;
+    --sidebar-foreground: 220 10% 90%;
+    --sidebar-primary: 211 84% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 28% 95%;
-    --sidebar-accent-foreground: 215 28% 52%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 215 28% 52%;
+    --sidebar-accent: 220 18% 24%;
+    --sidebar-accent-foreground: 211 100% 70%;
+    --sidebar-border: 220 22% 22%;
+    --sidebar-ring: 211 84% 48%;
 
-    /* Expanded gray scale for depth */
-    --gray-50: 220 13% 98%;
-    --gray-100: 220 13% 96%;
-    --gray-200: 220 13% 94%;
-    --gray-300: 220 13% 91%;
-    --gray-400: 220 13% 85%;
-    --gray-500: 220 9% 65%;
-    --gray-600: 220 9% 46%;
-    --gray-700: 220 13% 30%;
-    --gray-800: 220 13% 18%;
-    --gray-900: 220 13% 13%;
+    /* Gray Scale - Professional hierarchy */
+    --gray-50: 220 15% 98%;
+    --gray-100: 220 15% 95%;
+    --gray-200: 220 15% 90%;
+    --gray-300: 220 15% 82%;
+    --gray-400: 220 12% 70%;
+    --gray-500: 220 10% 55%;
+    --gray-600: 220 13% 40%;
+    --gray-700: 220 16% 28%;
+    --gray-800: 220 20% 18%;
+    --gray-900: 220 20% 15%;
 
-    /* Elevation system - multi-layered shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06);
-    --shadow-xl: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 8px 16px -8px rgba(0, 0, 0, 0.08);
+    /* Elevation - Professional shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
     --shadow-2xl: 0 30px 60px -15px rgba(0, 0, 0, 0.15);
 
     /* Border radius system */
@@ -111,51 +118,64 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 220 13% 9%;
-    --foreground: 0 0% 98%;
+    --background: 220 20% 12%;
+    --foreground: 220 10% 92%;
 
-    --card: 220 13% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 20% 16%;
+    --card-foreground: 220 10% 92%;
 
-    --popover: 220 13% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 20% 16%;
+    --popover-foreground: 220 10% 92%;
 
-    --primary: 217 91% 60%;
+    --primary: 211 84% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 16%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 20% 20%;
+    --secondary-foreground: 220 10% 92%;
 
-    --muted: 220 13% 16%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 65%;
 
-    --accent: 217 91% 60%;
+    --accent: 211 100% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 18%;
-    --input: 220 13% 18%;
-    --ring: 217 91% 60%;
+    --border: 220 25% 18%;
+    --input: 220 25% 15%;
+    --ring: 211 84% 48%;
 
-    --success: 142 71% 45%;
+    --success: 145 70% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 35 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --pending: 217 91% 60%;
+    --pending: 211 84% 48%;
     --pending-foreground: 0 0% 100%;
 
-    --sidebar-background: 220 13% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 217 91% 60%;
+    /* Sidebar - Dark Mode */
+    --sidebar-background: 220 22% 10%;
+    --sidebar-foreground: 220 10% 85%;
+    --sidebar-primary: 211 84% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 16%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 220 13% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 220 20% 16%;
+    --sidebar-accent-foreground: 211 100% 70%;
+    --sidebar-border: 220 25% 15%;
+    --sidebar-ring: 211 84% 48%;
+
+    /* Gray Scale - Dark Mode */
+    --gray-900: 220 15% 92%;
+    --gray-800: 220 15% 80%;
+    --gray-700: 220 15% 65%;
+    --gray-600: 220 15% 50%;
+    --gray-500: 220 15% 35%;
+    --gray-400: 220 20% 25%;
+    --gray-300: 220 25% 18%;
+    --gray-200: 220 25% 12%;
+    --gray-100: 220 25% 8%;
+    --gray-50: 220 25% 5%;
   }
 }
 

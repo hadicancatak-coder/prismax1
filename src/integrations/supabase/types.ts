@@ -955,12 +955,18 @@ export type Database = {
         Row: {
           column_definitions: Json
           created_at: string | null
+          date_range_end: string | null
+          date_range_start: string | null
           description: string | null
+          detected_type: string | null
           google_sheet_id: string | null
           google_sheet_url: string | null
+          granularity: string | null
           id: string
           last_synced_at: string | null
           name: string
+          parsing_metadata: Json | null
+          primary_kpi_fields: string[] | null
           row_count: number | null
           source_type: string
           updated_at: string | null
@@ -969,12 +975,18 @@ export type Database = {
         Insert: {
           column_definitions?: Json
           created_at?: string | null
+          date_range_end?: string | null
+          date_range_start?: string | null
           description?: string | null
+          detected_type?: string | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
+          granularity?: string | null
           id?: string
           last_synced_at?: string | null
           name: string
+          parsing_metadata?: Json | null
+          primary_kpi_fields?: string[] | null
           row_count?: number | null
           source_type: string
           updated_at?: string | null
@@ -983,12 +995,18 @@ export type Database = {
         Update: {
           column_definitions?: Json
           created_at?: string | null
+          date_range_end?: string | null
+          date_range_start?: string | null
           description?: string | null
+          detected_type?: string | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
+          granularity?: string | null
           id?: string
           last_synced_at?: string | null
           name?: string
+          parsing_metadata?: Json | null
+          primary_kpi_fields?: string[] | null
           row_count?: number | null
           source_type?: string
           updated_at?: string | null
