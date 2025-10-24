@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Database, BarChart3, LayoutDashboard, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -40,30 +41,48 @@ const teamItems = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const { signOut, userRole } = useAuth();
+  const { signOut, userRole, user } = useAuth();
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("name")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.name) {
+            setUserName(data.name);
+          } else {
+            setUserName(user.user_metadata?.name || user.email?.split('@')[0] || "User");
+          }
+        });
+    }
+  }, [user]);
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/10 text-primary border-l-4 border-l-primary ml-[-4px] font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-colors"
-      : "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors";
+      ? `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl bg-primary/10 text-primary ${open ? 'border-l-4 border-l-primary ml-[-4px]' : ''} font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-colors`
+      : `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors`;
 
   return (
     <TooltipProvider delayDuration={0}>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarContent className="px-4 py-6 bg-gradient-sidebar space-y-8 overflow-y-auto sidebar-scroll">
+        <SidebarContent className={`bg-gradient-sidebar overflow-y-auto sidebar-scroll ${open ? 'px-4 py-6 space-y-8' : 'px-2 py-4 space-y-4'}`}>
           {/* Logo */}
-          <div className={`flex items-center ${open ? 'gap-3 px-2' : 'justify-center'}`}>
+          <div className={`flex ${open ? 'items-center gap-3 px-2' : 'flex-col items-center justify-center'}`}>
             <img 
               src="/src/assets/cfi-logo.png" 
-              alt="CFI Logo" 
-              className={`transition-all ${open ? 'h-12' : 'h-10'}`}
+              alt="Prisma" 
+              className={`transition-all ${open ? 'h-10' : 'h-8'}`}
             />
             {open && (
               <div className="flex flex-col">
-                <span className="font-bold text-xl text-sidebar-primary-foreground tracking-tight leading-none">Mission Control</span>
-                {userRole && (
+                <span className="font-bold text-xl text-sidebar-primary-foreground tracking-tight leading-none">Prisma</span>
+                {userName && (
                   <span className="text-xs text-sidebar-foreground/70 uppercase tracking-wider mt-0.5">
-                    {userRole}
+                    {userName}
                   </span>
                 )}
               </div>
@@ -221,7 +240,7 @@ export function AppSidebar() {
           )}
 
           {/* Sign Out */}
-          <SidebarMenu>
+          <SidebarMenu className={open ? '' : 'flex justify-center'}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 {!open ? (
@@ -229,7 +248,7 @@ export function AppSidebar() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={signOut}
-                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors w-full"
+                        className="flex items-center justify-center w-12 h-12 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
                         <LogOut className="h-5 w-5 shrink-0" strokeWidth={2} />
                       </button>
