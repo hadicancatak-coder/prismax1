@@ -13,6 +13,7 @@ import { NewsTicker } from "@/components/NewsTicker";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     today: 0,
     overdue: 0,
@@ -29,8 +30,13 @@ export default function Dashboard() {
     if (!user?.id) return;
 
     const fetchDashboardData = async () => {
-      const statsData = await getDashboardStats(user.id);
-      setStats(statsData);
+      setLoading(true);
+      try {
+        const statsData = await getDashboardStats(user.id);
+        setStats(statsData);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchDashboardData();
@@ -91,7 +97,18 @@ export default function Dashboard() {
 
       <NewsTicker />
 
-      <StatsCards stats={stats} onStatClick={handleStatClick} />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-16"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <StatsCards stats={stats} onStatClick={handleStatClick} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">

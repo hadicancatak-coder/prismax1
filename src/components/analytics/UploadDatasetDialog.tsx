@@ -54,10 +54,16 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
           throw new Error("CSV file contains no valid data rows");
         }
       
+      // Get user for RLS policy
+      if (!user?.id) {
+        throw new Error("User must be logged in to upload datasets");
+      }
+
       // Create dataset with metadata
       const { data: dataset, error: datasetError } = await supabase
         .from("datasets")
         .insert([{
+          user_id: user.id,
           name: name || parsed.datasetName,
           description,
           source_type: "csv_upload",

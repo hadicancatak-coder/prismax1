@@ -49,7 +49,7 @@ class ErrorLogger {
     try {
       let query = supabase
         .from('error_logs')
-        .select('*, profiles!error_logs_user_id_fkey(name, email, avatar_url)')
+        .select('*, profiles(name, email, avatar_url)')
         .order('created_at', { ascending: false });
 
       if (filters.severity) {

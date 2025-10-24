@@ -63,8 +63,8 @@ export function AppSidebar() {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl bg-primary/10 text-primary ${open ? 'border-l-4 border-l-primary ml-[-4px]' : ''} font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-colors`
-      : `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors`;
+      ? `flex items-center ${open ? 'gap-3 px-4' : 'justify-center'} py-2.5 rounded-xl bg-primary/10 text-primary ${open ? 'border-l-4 border-l-primary ml-[-4px]' : ''} font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-colors`
+      : `flex items-center ${open ? 'gap-3 px-4' : 'justify-center'} py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors`;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -209,35 +209,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroup>
 
-          {/* Admin Section */}
-          {userRole && userRole !== 'member' && (
-            <SidebarGroup>
-              {open && <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">Admin</SidebarGroupLabel>}
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    {!open ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <NavLink to="/admin" className={getNavLinkClass}>
-                            <Shield className="h-5 w-5 shrink-0" strokeWidth={2} />
-                          </NavLink>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                          <p className="font-medium">Admin Panel</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <NavLink to="/admin" className={getNavLinkClass}>
-                        <Shield className="h-5 w-5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-medium">Admin Panel</span>
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>
-          )}
 
           {/* Sign Out */}
           <SidebarMenu className={open ? '' : 'flex justify-center'}>

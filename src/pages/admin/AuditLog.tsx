@@ -58,6 +58,9 @@ export default function AuditLog() {
     <Card>
       <CardHeader>
         <CardTitle>Admin Audit Log</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Audit logging captures administrative actions automatically. View history of user management, role changes, and system modifications.
+        </p>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px]">
@@ -78,7 +81,12 @@ export default function AuditLog() {
                 </TableRow>
               ) : logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">No audit logs found</TableCell>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="text-muted-foreground">
+                      <p className="font-medium mb-2">No audit logs found</p>
+                      <p className="text-sm">Admin actions will be automatically logged here</p>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : (
                 logs.map((log) => (
