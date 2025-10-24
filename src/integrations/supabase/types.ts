@@ -847,6 +847,155 @@ export type Database = {
           },
         ]
       }
+      dashboard_visualizations: {
+        Row: {
+          created_at: string | null
+          dashboard_id: string | null
+          id: string
+          position: Json
+          visualization_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dashboard_id?: string | null
+          id?: string
+          position?: Json
+          visualization_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dashboard_id?: string | null
+          id?: string
+          position?: Json
+          visualization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_visualizations_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "dashboards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboard_visualizations_visualization_id_fkey"
+            columns: ["visualization_id"]
+            isOneToOne: false
+            referencedRelation: "visualizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboards: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          layout: Json
+          name: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          layout?: Json
+          name: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          layout?: Json
+          name?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      dataset_rows: {
+        Row: {
+          created_at: string | null
+          data: Json
+          dataset_id: string | null
+          id: string
+          row_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json
+          dataset_id?: string | null
+          id?: string
+          row_number: number
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          dataset_id?: string | null
+          id?: string
+          row_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dataset_rows_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      datasets: {
+        Row: {
+          column_definitions: Json
+          created_at: string | null
+          description: string | null
+          google_sheet_id: string | null
+          google_sheet_url: string | null
+          id: string
+          last_synced_at: string | null
+          name: string
+          row_count: number | null
+          source_type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          column_definitions?: Json
+          created_at?: string | null
+          description?: string | null
+          google_sheet_id?: string | null
+          google_sheet_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name: string
+          row_count?: number | null
+          source_type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          column_definitions?: Json
+          created_at?: string | null
+          description?: string | null
+          google_sheet_id?: string | null
+          google_sheet_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          row_count?: number | null
+          source_type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       entity_presets: {
         Row: {
           created_at: string | null
@@ -2199,6 +2348,53 @@ export type Database = {
           utm_term?: string | null
         }
         Relationships: []
+      }
+      visualizations: {
+        Row: {
+          config: Json
+          created_at: string | null
+          dataset_id: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string | null
+          viz_type: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string | null
+          dataset_id?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id?: string | null
+          viz_type: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          dataset_id?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string | null
+          viz_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visualizations_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

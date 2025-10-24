@@ -1,4 +1,4 @@
-import { CheckSquare, Calendar, LayoutDashboard, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2 } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Database, BarChart3, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
 import {
@@ -16,7 +16,7 @@ import {
 import cfiLogo from "@/assets/cfi-logo.png";
 
 const coreItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/", icon: DashboardIcon },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Agenda", url: "/calendar", icon: Calendar },
 ];
@@ -26,6 +26,12 @@ const operationsItems = [
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Preview", url: "/campaigns", icon: Target },
+];
+
+const analyticsItems = [
+  { title: "Data Sources", url: "/data-sources", icon: Database },
+  { title: "Visualizations", url: "/visualizations", icon: BarChart3 },
+  { title: "Dashboards", url: "/dashboards", icon: LayoutDashboard },
 ];
 
 const teamItems = [
@@ -88,6 +94,33 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium shadow-sm transition-all duration-200"
+                          : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+                      }
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-sm">{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup className="mt-6">
+          <SidebarGroupLabel className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 px-3">
+            Analytics
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {analyticsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
