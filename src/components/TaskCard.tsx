@@ -57,35 +57,35 @@ export const TaskCard = ({ task }: { task: Task }) => {
   };
   
   const statusColors = {
-    "Ongoing": "bg-warning/10 text-warning border-warning/20",
-    "Pending": "bg-pending/10 text-pending border-pending/20",
-    "Blocked": "bg-destructive/10 text-destructive border-destructive/20",
-    "Completed": "bg-success/10 text-success border-success/20",
-    "Failed": "bg-muted text-muted-foreground border-border",
+    "Ongoing": "bg-warning/10 text-warning border-warning/30 shadow-xs",
+    "Pending": "bg-pending/10 text-pending border-pending/30 shadow-xs",
+    "Blocked": "bg-destructive/10 text-destructive border-destructive/30 shadow-xs",
+    "Completed": "bg-success/10 text-success border-success/30 shadow-xs",
+    "Failed": "bg-gray-100 text-gray-600 border-gray-300 shadow-xs",
   };
 
   const priorityColors = {
-    High: "bg-destructive/10 text-destructive border-destructive/20",
-    Medium: "bg-warning/10 text-warning border-warning/20",
-    Low: "bg-muted text-muted-foreground border-border",
+    High: "bg-destructive/10 text-destructive border-destructive/30 shadow-xs",
+    Medium: "bg-warning/10 text-warning border-warning/30 shadow-xs",
+    Low: "bg-gray-100 text-gray-600 border-gray-300 shadow-xs",
   };
 
   return (
     <>
-      <Card className="p-4 transition-all hover:shadow-medium cursor-pointer" onClick={() => setDialogOpen(true)}>
+      <Card className="p-5 transition-all hover:shadow-lg cursor-pointer group" onClick={() => setDialogOpen(true)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-foreground mb-1 truncate">{task.title}</h3>
-            <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+            <h3 className="text-base font-semibold text-gray-900 mb-1.5 truncate group-hover:text-primary transition-colors">{task.title}</h3>
+            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{task.description}</p>
           </div>
-          <div className="flex gap-1 ml-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
-              <MessageCircle className="h-3.5 w-3.5" />
+          <div className="flex gap-1 ml-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 hover:text-primary" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
+              <MessageCircle className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                  <MoreVertical className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -104,10 +104,10 @@ export const TaskCard = ({ task }: { task: Task }) => {
           </div>
         </div>
 
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <Badge
           variant="outline"
-          className={statusColors[task.status as keyof typeof statusColors] || "bg-muted text-muted-foreground border-border"}
+          className={statusColors[task.status as keyof typeof statusColors] || "bg-gray-100 text-gray-600 border-gray-300 shadow-xs"}
         >
           {task.status}
         </Badge>
@@ -119,36 +119,36 @@ export const TaskCard = ({ task }: { task: Task }) => {
         </Badge>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="flex items-center justify-between text-sm text-gray-600">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
-            <span>{task.assignee}</span>
+          <div className="flex items-center gap-1.5">
+            <User className="h-4 w-4 text-gray-500" />
+            <span className="font-medium">{task.assignee}</span>
           </div>
           {task.entity && (
             <>
               {Array.isArray(task.entity) ? (
                 <>
                   {task.entity.slice(0, 2).map((e: string) => (
-                    <Badge key={e} variant="outline" className="text-xs h-5">
+                    <Badge key={e} variant="secondary" className="text-xs h-6 px-2">
                       {e}
                     </Badge>
                   ))}
                   {task.entity.length > 2 && (
-                    <Badge variant="outline" className="text-xs h-5">
+                    <Badge variant="secondary" className="text-xs h-6 px-2">
                       +{task.entity.length - 2}
                     </Badge>
                   )}
                 </>
               ) : (
-                <Badge variant="outline" className="text-xs h-5">
+                <Badge variant="secondary" className="text-xs h-6 px-2">
                   {task.entity}
                 </Badge>
               )}
             </>
           )}
           {task.recurrence && task.recurrence !== "none" && (
-            <Badge variant="outline" className="text-xs h-5">
+            <Badge variant="secondary" className="text-xs h-6 px-2">
               {task.recurrence}
             </Badge>
           )}
