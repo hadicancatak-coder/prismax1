@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { errorLogger } from '@/lib/errorLogger';
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -18,6 +19,13 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
+    errorLogger.logError({
+      severity: 'critical',
+      type: 'frontend',
+      message: error.message,
+      stack: error.stack,
+      metadata: { componentStack: errorInfo.componentStack }
+    });
   }
 
   render() {

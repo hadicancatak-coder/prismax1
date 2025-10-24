@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,7 +141,7 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                 .join(", ");
 
               return (
-                <>
+                <React.Fragment key={group.groupKey}>
                   {/* Parent Group Row */}
                   <tr
                     key={group.groupKey}
@@ -180,9 +180,8 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                       const isLinkExpanded = expandedLinks.has(link.id);
 
                       return (
-                        <>
+                        <React.Fragment key={link.id}>
                           <tr
-                            key={link.id}
                             className="border-b hover:bg-muted/20"
                           >
                             <td className="p-3 pl-8">
@@ -290,10 +289,10 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>

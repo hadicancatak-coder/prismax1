@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { parseCSV } from "@/lib/csvParser";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { errorLogger } from "@/lib/errorLogger";
 
 interface UploadDatasetDialogProps {
   open: boolean;
@@ -45,8 +46,13 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       description: string;
       file: File;
     }) => {
-      // Use intelligent parser
-      const parsed = await parseCSV(file);
+      try {
+        // Use intelligent parser
+        const parsed = await parseCSV(file);
+        
+        if (!parsed.normalizedRows || parsed.normalizedRows.length === 0) {
+          throw new Error("CSV file contains no valid data rows");
+        }
       
       // Create dataset with metadata
       const { data: dataset, error: datasetError } = await supabase
@@ -89,7 +95,10 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
         if (rowsError) throw rowsError;
       }
       
-      return { dataset, parsed };
+        return { dataset, parsed };
+      } catch (parseError: any) {
+        throw new Error(`Failed to parse CSV: ${parseError.message || 'Unknown error'}`);
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["datasets"] });
@@ -102,6 +111,12 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       resetForm();
     },
     onError: (error: Error) => {
+      errorLogger.logError({
+        severity: 'warning',
+        type: 'frontend',
+        message: `CSV upload failed: ${error.message}`,
+        metadata: { fileName: file?.name, fileSize: file?.size }
+      });
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
@@ -119,9 +134,20 @@ export function UploadDatasetDialog({ open, onOpenChange }: UploadDatasetDialogP
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
+    
+    if (!user?.id) {
+      toast({ title: "Error", description: "You must be logged in to upload datasets", variant: "destructive" });
+      return;
+    }
 
     setIsUploading(true);
-    uploadMutation.mutate({ name, description, file });
+    try {
+      await uploadMutation.mutateAsync({ name, description, file });
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

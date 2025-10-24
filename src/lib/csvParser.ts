@@ -29,60 +29,86 @@ export interface ColumnDefinition {
 }
 
 export async function parseCSV(file: File): Promise<ParsedDataset> {
-  const text = await file.text();
-  const lines = text.split('\n').filter(line => line.trim() && !line.match(/^Total|^Difference/i));
-  
-  if (lines.length === 0) {
-    throw new Error('CSV file is empty');
-  }
-  
-  // 1. Parse headers and detect structure
-  const headers = parseCSVLine(lines[0]).map(h => cleanHeader(h));
-  const dataRows = lines.slice(1).map(row => {
-    const values = parseCSVLine(row);
-    const obj: Record<string, string> = {};
-    headers.forEach((header, i) => {
-      obj[header] = values[i] || '';
-    });
-    return obj;
-  });
-  
-  // 2. Detect file type
-  const detectedType = detectFileType(file.name, headers);
-  const granularity = detectGranularity(headers);
-  
-  // 3. Identify key columns
-  const timeKey = identifyTimeKey(headers);
-  const metricColumns = identifyMetrics(headers);
-  
-  // 4. Normalize values
-  const normalizedRows = normalizeData(dataRows, headers, timeKey, detectedType);
-  
-  // 5. Extract date range
-  const dateRange = extractDateRange(normalizedRows);
-  
-  // 6. Create column definitions
-  const columnDefinitions: ColumnDefinition[] = headers.map(header => ({
-    name: header,
-    type: inferColumnType(dataRows, header),
-    format: detectFormat(dataRows, header)
-  }));
-  
-  return {
-    datasetName: file.name.replace('.csv', ''),
-    detectedType,
-    granularity,
-    timeKey,
-    primaryKpiFields: metricColumns,
-    dateRange,
-    normalizedRows,
-    columnDefinitions,
-    parsingMetadata: {
-      unpivotApplied: detectedType === 'monthly_performance',
-      columnsNormalized: metricColumns,
-      unclassifiedMetrics: []
+  try {
+    const text = await file.text();
+    
+    if (!text || text.trim().length === 0) {
+      throw new Error('CSV file is empty');
     }
-  };
+    
+    const lines = text.split('\n').filter(line => line.trim() && !line.match(/^Total|^Difference/i));
+    
+    if (lines.length === 0) {
+      throw new Error('CSV file contains no valid data');
+    }
+    
+    if (lines.length < 2) {
+      throw new Error('CSV must have at least a header row and one data row');
+    }
+    
+    // 1. Parse headers and detect structure
+    const headers = parseCSVLine(lines[0]).map(h => cleanHeader(h));
+    
+    if (headers.length === 0) {
+      throw new Error('CSV file has no headers');
+    }
+    
+    const dataRows = lines.slice(1).map(row => {
+      const values = parseCSVLine(row);
+      const obj: Record<string, string> = {};
+      headers.forEach((header, i) => {
+        obj[header] = values[i] || '';
+      });
+      return obj;
+    });
+    
+    if (dataRows.length === 0) {
+      throw new Error('CSV file has no data rows');
+    }
+    
+    // 2. Detect file type
+    const detectedType = detectFileType(file.name, headers);
+    const granularity = detectGranularity(headers);
+    
+    // 3. Identify key columns
+    const timeKey = identifyTimeKey(headers);
+    const metricColumns = identifyMetrics(headers);
+    
+    // 4. Normalize values
+    const normalizedRows = normalizeData(dataRows, headers, timeKey, detectedType);
+    
+    if (normalizedRows.length === 0) {
+      throw new Error('Could not parse any valid data from CSV. Please check the file format.');
+    }
+    
+    // 5. Extract date range
+    const dateRange = extractDateRange(normalizedRows);
+    
+    // 6. Create column definitions
+    const columnDefinitions: ColumnDefinition[] = headers.map(header => ({
+      name: header,
+      type: inferColumnType(dataRows, header),
+      format: detectFormat(dataRows, header)
+    }));
+    
+    return {
+      datasetName: file.name.replace('.csv', ''),
+      detectedType,
+      granularity,
+      timeKey,
+      primaryKpiFields: metricColumns,
+      dateRange,
+      normalizedRows,
+      columnDefinitions,
+      parsingMetadata: {
+        unpivotApplied: detectedType === 'monthly_performance',
+        columnsNormalized: metricColumns,
+        unclassifiedMetrics: []
+      }
+    };
+  } catch (error: any) {
+    throw new Error(`CSV parsing error: ${error.message || 'Unknown error'}`);
+  }
 }
 
 // Helper: Parse CSV line handling quoted fields

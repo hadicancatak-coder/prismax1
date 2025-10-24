@@ -53,14 +53,25 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
     },
   ];
 
+  const getStatType = (title: string): string => {
+    const mapping: Record<string, string> = {
+      "Due Today": "today",
+      "In Progress": "inProgress",
+      "Overdue": "overdue",
+    };
+    return mapping[title] || "";
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {statsDisplay.map((stat) => (
-        <Card 
-          key={stat.title} 
-          className="p-6 transition-shadow duration-200 hover:shadow-lg cursor-pointer group"
-          onClick={() => onStatClick(stat.title.toLowerCase().replace(/ /g, '_'))}
-        >
+      {statsDisplay.map((stat) => {
+        const statType = getStatType(stat.title);
+        return (
+          <Card 
+            key={stat.title} 
+            className="p-6 transition-shadow duration-200 hover:shadow-lg cursor-pointer group"
+            onClick={() => statType && onStatClick(statType)}
+          >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600 mb-2">{stat.title}</p>
@@ -71,7 +82,8 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
             </div>
           </div>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
