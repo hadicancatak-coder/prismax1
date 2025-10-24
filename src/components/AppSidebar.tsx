@@ -43,42 +43,46 @@ export function AppSidebar() {
   const { open } = useSidebar();
   const { signOut, userRole } = useAuth();
 
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    isActive
+      ? "flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/10 text-primary border-l-4 border-l-primary ml-[-4px] font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-all duration-200"
+      : "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:scale-[1.02] transition-all duration-200";
+
   return (
-    <Sidebar collapsible="icon" className="bg-sidebar border-r border-sidebar-border">
-      <div className="p-5 flex items-center justify-between border-b border-gray-200/60">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <div className="p-6 flex items-center justify-between border-b border-sidebar-border">
         {open && (
           <div className="flex items-center gap-3">
-            <img src={cfiLogo} alt="CFI Logo" className="h-9 w-9 object-contain" />
-            {userRole && (
-              <span className="text-xs text-gray-600 font-medium uppercase tracking-wider">{userRole}</span>
-            )}
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+              <img src={cfiLogo} alt="CFI Logo" className="h-7 w-7 object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base font-bold text-sidebar-foreground">Prisma</span>
+              {userRole && (
+                <span className="text-xs text-sidebar-foreground/60 uppercase tracking-wide">{userRole}</span>
+              )}
+            </div>
           </div>
         )}
-        {!open && <img src={cfiLogo} alt="CFI Logo" className="h-9 w-9 object-contain mx-auto" />}
-        <SidebarTrigger className="ml-auto text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" />
+        {!open && (
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 mx-auto">
+            <img src={cfiLogo} alt="CFI Logo" className="h-7 w-7 object-contain" />
+          </div>
+        )}
+        <SidebarTrigger className="ml-auto text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-all" />
       </div>
       
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent className="px-4 py-6 bg-gradient-sidebar space-y-8">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 px-3">
-            Core
-          </SidebarGroupLabel>
+          {open && <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-wider mb-3 px-3">Core</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={({ isActive }) =>
-                        isActive
-                          ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium shadow-sm transition-all duration-200"
-                          : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="text-sm">{item.title}</span>
+                    <NavLink to={item.url} end className={getNavLinkClass}>
+                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
+                      {open && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -87,25 +91,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 px-3">
-            Operations
-          </SidebarGroupLabel>
+        <SidebarGroup>
+          {open && <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-wider mb-3 px-3">Operations</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium shadow-sm transition-all duration-200"
-                          : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="text-sm">{item.title}</span>
+                    <NavLink to={item.url} className={getNavLinkClass}>
+                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
+                      {open && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -114,25 +109,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 px-3">
-            Analytics
-          </SidebarGroupLabel>
+        <SidebarGroup>
+          {open && <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-wider mb-3 px-3">Analytics</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {analyticsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium shadow-sm transition-all duration-200"
-                          : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="text-sm">{item.title}</span>
+                    <NavLink to={item.url} className={getNavLinkClass}>
+                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
+                      {open && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -141,25 +127,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 px-3">
-            Team
-          </SidebarGroupLabel>
+        <SidebarGroup>
+          {open && <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/50 uppercase tracking-wider mb-3 px-3">Team</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {teamItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium shadow-sm transition-all duration-200"
-                          : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="text-sm">{item.title}</span>
+                    <NavLink to={item.url} className={getNavLinkClass}>
+                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2} />
+                      {open && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -168,16 +145,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup className="mt-auto pt-6 border-t border-sidebar-border">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   onClick={signOut}
-                  className="text-sidebar-foreground/70 hover:bg-destructive/90 hover:text-destructive-foreground"
+                  className="text-sidebar-foreground hover:bg-destructive/20 hover:text-destructive hover:scale-[1.02] transition-all duration-200 rounded-xl py-2.5"
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
+                  <LogOut className="h-5 w-5" strokeWidth={2} />
+                  {open && <span className="font-semibold">Sign Out</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

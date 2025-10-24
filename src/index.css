@@ -8,43 +8,43 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Backgrounds - Clean whites with subtle warmth */
+    /* Backgrounds - Clean & Modern */
     --background: 0 0% 98%;
-    --foreground: 220 20% 15%;
+    --foreground: 220 15% 10%;
 
     /* Cards - Pure white elevated surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 15% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 15% 10%;
 
-    /* Primary - Professional Blue (Jira-style) */
-    --primary: 211 84% 48%;
+    /* Primary - Vibrant Blue #0057FF */
+    --primary: 218 100% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Soft neutral gray */
-    --secondary: 220 15% 95%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 20% 15%;
 
     /* Muted - Subtle backgrounds */
     --muted: 220 15% 96%;
     --muted-foreground: 220 12% 45%;
 
-    /* Accent - Darker blue for hover states */
-    --accent: 211 100% 38%;
+    /* Accent - Teal/Green #00D8AA */
+    --accent: 167 100% 42%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive - Professional red */
-    --destructive: 0 75% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and Inputs */
     --border: 220 15% 88%;
     --input: 220 15% 92%;
-    --ring: 211 84% 48%;
+    --ring: 218 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
     /* Success - Muted green */
     --success: 145 70% 40%;
@@ -54,18 +54,18 @@ All colors MUST be HSL.
     --warning: 35 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --pending: 211 84% 48%;
+    --pending: 218 100% 50%;
     --pending-foreground: 0 0% 100%;
 
-    /* Sidebar - Dark charcoal with blue hints */
-    --sidebar-background: 220 20% 18%;
-    --sidebar-foreground: 220 10% 90%;
-    --sidebar-primary: 211 84% 48%;
+    /* Sidebar - Dark Modern */
+    --sidebar-background: 220 20% 12%;
+    --sidebar-foreground: 220 10% 85%;
+    --sidebar-primary: 218 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 18% 24%;
-    --sidebar-accent-foreground: 211 100% 70%;
-    --sidebar-border: 220 22% 22%;
-    --sidebar-ring: 211 84% 48%;
+    --sidebar-accent: 220 18% 18%;
+    --sidebar-accent-foreground: 218 100% 65%;
+    --sidebar-border: 220 25% 15%;
+    --sidebar-ring: 218 100% 50%;
 
     /* Gray Scale - Professional hierarchy */
     --gray-50: 220 15% 98%;
@@ -111,40 +111,40 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     
-    --gradient-primary: linear-gradient(135deg, hsl(215 28% 52%), hsl(215 28% 62%));
-    --gradient-subtle: linear-gradient(180deg, hsl(220 13% 98%), hsl(220 13% 96%));
-    --gradient-accent: linear-gradient(135deg, hsl(215 28% 52%), hsl(38 75% 55%));
-    --gradient-sidebar: linear-gradient(180deg, hsl(220 13% 97%), hsl(220 13% 96%));
+    --gradient-primary: linear-gradient(135deg, hsl(218 100% 50%), hsl(218 100% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 15% 98%), hsl(220 15% 96%));
+    --gradient-accent: linear-gradient(135deg, hsl(218 100% 50%), hsl(167 100% 42%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(220 20% 12%), hsl(220 20% 10%));
   }
 
   .dark {
-    --background: 220 20% 12%;
-    --foreground: 220 10% 92%;
+    --background: 220 20% 8%;
+    --foreground: 220 10% 95%;
 
-    --card: 220 20% 16%;
-    --card-foreground: 220 10% 92%;
+    --card: 220 20% 10%;
+    --card-foreground: 220 10% 95%;
 
-    --popover: 220 20% 16%;
-    --popover-foreground: 220 10% 92%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 220 10% 95%;
 
-    --primary: 211 84% 48%;
+    --primary: 218 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 20%;
-    --secondary-foreground: 220 10% 92%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 10% 95%;
 
-    --muted: 220 20% 20%;
+    --muted: 220 20% 18%;
     --muted-foreground: 220 10% 65%;
 
-    --accent: 211 100% 38%;
+    --accent: 167 100% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 75% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 18%;
-    --input: 220 25% 15%;
-    --ring: 211 84% 48%;
+    --border: 220 25% 15%;
+    --input: 220 25% 12%;
+    --ring: 218 100% 50%;
 
     --success: 145 70% 40%;
     --success-foreground: 0 0% 100%;
@@ -152,18 +152,18 @@ All colors MUST be HSL.
     --warning: 35 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --pending: 211 84% 48%;
+    --pending: 218 100% 50%;
     --pending-foreground: 0 0% 100%;
 
     /* Sidebar - Dark Mode */
-    --sidebar-background: 220 22% 10%;
+    --sidebar-background: 220 22% 6%;
     --sidebar-foreground: 220 10% 85%;
-    --sidebar-primary: 211 84% 48%;
+    --sidebar-primary: 218 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 16%;
-    --sidebar-accent-foreground: 211 100% 70%;
-    --sidebar-border: 220 25% 15%;
-    --sidebar-ring: 211 84% 48%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 218 100% 65%;
+    --sidebar-border: 220 25% 10%;
+    --sidebar-ring: 218 100% 50%;
 
     /* Gray Scale - Dark Mode */
     --gray-900: 220 15% 92%;
@@ -186,10 +186,10 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.011em;
   }
 }
 

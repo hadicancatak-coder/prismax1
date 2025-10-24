@@ -105,14 +105,14 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
 
   return (
     <>
-      <Card className="border-0 shadow-md overflow-x-auto">
+      <Card className="border-0 shadow-sm overflow-hidden rounded-2xl">
         <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow>
-              <TableHead className="font-semibold min-w-[300px]">Task</TableHead>
-              <TableHead className="font-semibold min-w-[120px]">Status</TableHead>
-              <TableHead className="font-semibold min-w-[100px] hidden md:table-cell">Priority</TableHead>
-              <TableHead className="font-semibold min-w-[150px] hidden lg:table-cell">Assignee</TableHead>
+          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
+            <TableRow className="hover:bg-gray-50">
+              <TableHead className="font-bold text-gray-900 py-4 min-w-[300px]">Task</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[140px]">Status</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[120px] hidden md:table-cell">Priority</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[160px] hidden lg:table-cell">Assignee</TableHead>
               <TableHead className="font-semibold min-w-[120px]">Due Date</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -122,11 +122,11 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
               <TableRow
                 key={task.id}
                 className={cn(
-                  "cursor-pointer hover:bg-muted/50 transition-colors",
-                  task.pending_approval && 'border-l-4 border-l-blue-500',
-                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-red-500',
-                  isDueToday(task.due_at) && 'border-l-4 border-l-yellow-500',
-                  isDueTomorrow(task.due_at) && 'border-l-4 border-l-orange-500'
+                  "cursor-pointer hover:bg-gray-50 transition-all duration-200 hover:shadow-sm border-b border-gray-100 last:border-0",
+                  task.pending_approval && 'border-l-4 border-l-primary',
+                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive',
+                  isDueToday(task.due_at) && 'border-l-4 border-l-warning',
+                  isDueTomorrow(task.due_at) && 'border-l-4 border-l-accent'
                 )}
                 onClick={() => handleRowClick(task.id)}
               >
@@ -158,22 +158,22 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1 py-1">
                       <div className="flex items-center gap-2">
-                        <div className="font-medium">{task.title}</div>
+                        <div className="font-semibold text-gray-900">{task.title}</div>
                         {task.pending_approval && (
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 text-xs">
-                            ⏳ Pending
+                          <Badge variant="default" className="text-xs">
+                            Pending
                           </Badge>
                         )}
                         {task.comments_count > 0 && (
-                          <Badge variant="outline" className="bg-muted text-xs">
+                          <Badge variant="outline" className="text-xs">
                             💬 {task.comments_count}
                           </Badge>
                         )}
                       </div>
                       {task.description && (
-                        <div className="text-sm text-muted-foreground line-clamp-1">
+                        <div className="text-sm text-gray-500 line-clamp-1">
                           {task.description}
                         </div>
                       )}
