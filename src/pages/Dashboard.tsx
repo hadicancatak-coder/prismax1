@@ -83,24 +83,31 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+    <div className="p-6 bg-gray-50 min-h-screen space-y-8">
+      <header>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's your team's progress</p>
-      </div>
+      </header>
 
       <NewsTicker />
 
       <StatsCards stats={stats} onStatClick={handleStatClick} />
 
-      <UpcomingCampaigns />
-
-      <NeedsAttention />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WhatsNext />
-        <ActivityFeed />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <UpcomingCampaigns />
+        </div>
+        
+        <div className="lg:col-span-1">
+          <NeedsAttention />
+        </div>
+        
+        <div className="lg:col-span-1">
+          <ActivityFeed />
+        </div>
       </div>
+
+      <WhatsNext />
 
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />

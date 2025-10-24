@@ -107,13 +107,13 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     <>
       <Card className="border-0 shadow-sm overflow-hidden rounded-2xl">
         <Table>
-          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
+          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200 shadow-sm">
             <TableRow className="hover:bg-gray-50">
-              <TableHead className="font-bold text-gray-900 py-4 min-w-[300px]">Task</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[140px]">Status</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[120px] hidden md:table-cell">Priority</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[160px] hidden lg:table-cell">Assignee</TableHead>
-              <TableHead className="font-semibold min-w-[120px]">Due Date</TableHead>
+              <TableHead className="font-bold text-gray-900 py-4 min-w-[350px]">Task</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[150px]">Status</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[130px] hidden md:table-cell">Priority</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[180px] hidden lg:table-cell">Assignee</TableHead>
+              <TableHead className="font-bold text-gray-900 min-w-[130px]">Due Date</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>

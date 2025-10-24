@@ -41,7 +41,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
 
   return (
     <Card 
-      className="p-5 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] border-l-4 animate-fade-in"
+      className="p-5 cursor-pointer hover:shadow-lg transition-shadow duration-200 border-l-4"
       style={{ borderLeftColor: getPriorityColor(task.priority) }}
       onClick={onClick}
     >

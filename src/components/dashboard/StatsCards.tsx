@@ -55,11 +55,10 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {statsDisplay.map((stat, index) => (
+      {statsDisplay.map((stat) => (
         <Card 
           key={stat.title} 
-          className="p-6 transition-all hover:shadow-lg hover:-translate-y-1 animate-scale-in cursor-pointer group"
-          style={{ animationDelay: `${index * 100}ms` }}
+          className="p-6 transition-shadow duration-200 hover:shadow-lg cursor-pointer group"
           onClick={() => onStatClick(stat.title.toLowerCase().replace(/ /g, '_'))}
         >
           <div className="flex items-start justify-between">
@@ -67,7 +66,7 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
               <p className="text-sm font-medium text-gray-600 mb-2">{stat.title}</p>
               <p className="text-4xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
             </div>
-            <div className={`${stat.bgColor} p-4 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200`}>
+            <div className={`${stat.bgColor} p-4 rounded-xl shadow-sm`}>
               <stat.icon className={`h-6 w-6 ${stat.color}`} strokeWidth={2.5} />
             </div>
           </div>

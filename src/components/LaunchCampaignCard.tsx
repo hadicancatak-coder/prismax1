@@ -34,7 +34,7 @@ export function LaunchCampaignCard({ campaign, onLaunch, showLaunchButton, onDel
 
   return (
     <Card 
-      className="group p-5 hover:shadow-xl transition-all duration-300 border cursor-pointer bg-gradient-to-br from-background to-muted/20"
+      className="group p-5 hover:shadow-xl transition-shadow duration-200 border cursor-pointer bg-gradient-to-br from-background to-muted/20"
       onClick={() => onCardClick?.(campaign.id)}
     >
       <div className="space-y-4">

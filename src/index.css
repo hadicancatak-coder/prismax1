@@ -182,6 +182,8 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--gray-400)) transparent;
   }
 
   body {
@@ -190,6 +192,45 @@ All colors MUST be HSL.
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
+  }
+
+  /* Modern Minimal Scrollbar - Webkit Browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--gray-400));
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--gray-500));
+  }
+
+  /* Dark scrollbar for sidebar */
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-accent));
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-primary) / 0.3);
+  }
+
+  /* Hide scrollbar utility */
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

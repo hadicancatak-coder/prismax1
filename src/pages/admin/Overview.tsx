@@ -52,7 +52,7 @@ export default function Overview() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -71,74 +71,84 @@ export default function Overview() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.users}</div>
-            <p className="text-xs text-muted-foreground">Active team members</p>
-          </CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.users}</h3>
+            </div>
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.tasks}</div>
-            <p className="text-xs text-muted-foreground">Across all projects</p>
-          </CardContent>
+        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.tasks}</h3>
+            </div>
+            <div className="p-3 bg-blue-500/10 rounded-lg">
+              <ListTodo className="h-6 w-6 text-blue-500" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unresolved Errors</CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.unresolvedErrors}</div>
-            <p className="text-xs text-muted-foreground">
-              {errorStats.critical} critical, {errorStats.warning} warnings
-            </p>
-          </CardContent>
+        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg border-l-4 border-l-destructive">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Unresolved Errors</p>
+              <h3 className="text-3xl font-bold mt-2 text-destructive">{stats.unresolvedErrors}</h3>
+            </div>
+            <div className="p-3 bg-destructive/10 rounded-lg">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
-          </CardContent>
+        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Pending Approvals</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.pendingApprovals}</h3>
+            </div>
+            <div className="p-3 bg-amber-500/10 rounded-lg">
+              <CheckSquare className="h-6 w-6 text-amber-500" />
+            </div>
+          </div>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>System Health</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Database</span>
-              <span className="text-sm font-medium text-green-600">Healthy</span>
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-green-500" />
+          System Health
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="font-medium">Database</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Authentication</span>
-              <span className="text-sm font-medium text-green-600">Operational</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">API</span>
-              <span className="text-sm font-medium text-green-600">Operational</span>
-            </div>
+            <span className="text-sm text-green-700 font-medium">Operational</span>
           </div>
-        </CardContent>
+          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="font-medium">Authentication</span>
+            </div>
+            <span className="text-sm text-green-700 font-medium">Operational</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <span className="font-medium">API</span>
+            </div>
+            <span className="text-sm text-green-700 font-medium">Operational</span>
+          </div>
+        </div>
       </Card>
     </div>
   );
