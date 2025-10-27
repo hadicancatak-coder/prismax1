@@ -24,10 +24,8 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editScopeDialogOpen, setEditScopeDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
-  const [kpisText, setKpisText] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<string>("name");
@@ -102,12 +100,7 @@ export default function Team() {
     setEditDialogOpen(true);
   };
 
-  const handleEditScopeOfWork = (profile: any, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedProfile(profile);
-    setKpisText(profile.kpis || "");
-    setEditScopeDialogOpen(true);
-  };
+  // Removed handleEditScopeOfWork - KPIs now managed in individual profiles
 
   const toggleTeam = (team: string) => {
     setSelectedTeams(prev =>
@@ -142,32 +135,7 @@ export default function Team() {
     }
   };
 
-  const handleSaveScopeOfWork = async () => {
-    if (!selectedProfile) return;
-
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ kpis: kpisText })
-        .eq("user_id", selectedProfile.user_id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "KPIs updated successfully",
-      });
-
-      setEditScopeDialogOpen(false);
-      fetchProfiles();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  // Removed handleSaveScopeOfWork - KPIs now managed in individual profiles
 
   const exportToCSV = () => {
     const headers = ["Name", "Email", "Title", "Phone", "Teams", "KPIs"];
@@ -297,16 +265,6 @@ export default function Team() {
                 >
                   <Settings className="h-4 w-4 text-muted-foreground" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="default"
-                  className="h-8 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
-                  onClick={(e) => handleEditScopeOfWork(profile, e)}
-                  title="Edit Key Performance Indicators"
-                >
-                  <Target className="h-4 w-4 mr-1.5" />
-                  <span className="text-xs font-semibold">KPIs</span>
-                </Button>
               </div>
             )}
             <div className={`flex items-start gap-4 ${viewMode === "list" ? "flex-1" : ""}`}>
@@ -334,20 +292,6 @@ export default function Team() {
                   <p className="text-sm text-foreground/80 mb-3 italic">
                     "{profile.tagline}"
                   </p>
-                )}
-
-                {profile.kpis && (
-                  <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-md">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Target className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
-                        Key Performance Indicators
-                      </span>
-                    </div>
-                    <p className="text-xs text-foreground/70 line-clamp-3 leading-relaxed">
-                      {profile.kpis}
-                    </p>
-                  </div>
                 )}
                 
                 <div className="space-y-2">
@@ -442,59 +386,6 @@ export default function Team() {
                 Save Teams
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editScopeDialogOpen} onOpenChange={setEditScopeDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle>Edit Key Performance Indicators</DialogTitle>
-                <DialogDescription>
-                  Define measurable goals and responsibilities for {selectedProfile?.name}
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="kpis" className="text-sm font-medium">
-                KPIs & Responsibilities
-              </Label>
-              <Textarea
-                id="kpis"
-                value={kpisText}
-                onChange={(e) => setKpisText(e.target.value)}
-                placeholder="Example:&#10;• Complete 10 campaigns per month&#10;• Maintain 95% on-time delivery&#10;• Reduce cost per acquisition by 15%&#10;• Weekly reporting to stakeholders"
-                rows={10}
-                className="w-full font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                💡 Tip: Use bullet points for clarity. Include specific metrics and targets.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 justify-end border-t pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setEditScopeDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveScopeOfWork}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Target className="h-4 w-4 mr-2" />
-              Save KPIs
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

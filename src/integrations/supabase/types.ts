@@ -1274,6 +1274,7 @@ export type Database = {
           name: string
           password_last_changed_at: string | null
           phone_number: string | null
+          quarterly_kpis: Json | null
           tagline: string | null
           teams: Database["public"]["Enums"]["team"][] | null
           title: string | null
@@ -1298,6 +1299,7 @@ export type Database = {
           name: string
           password_last_changed_at?: string | null
           phone_number?: string | null
+          quarterly_kpis?: Json | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
@@ -1322,6 +1324,7 @@ export type Database = {
           name?: string
           password_last_changed_at?: string | null
           phone_number?: string | null
+          quarterly_kpis?: Json | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null

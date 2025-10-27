@@ -11,10 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/TaskCard";
-import { Upload, Users, Target } from "lucide-react";
+import { Upload, Users, Target, Edit, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
+import { KPIManager, type KPI } from "@/components/KPIManager";
 
 const TEAMS = ["SocialUA", "PPC", "PerMar"];
 
@@ -34,6 +35,10 @@ export default function Profile() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any>({ completed: [], pending: [], blocked: [], failed: [] });
   const [uploading, setUploading] = useState(false);
+  const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
+  const [quarterlyKpiDialogOpen, setQuarterlyKpiDialogOpen] = useState(false);
+  const [kpis, setKpis] = useState<KPI[]>([]);
+  const [quarterlyKpis, setQuarterlyKpis] = useState<KPI[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -53,6 +58,21 @@ export default function Profile() {
       setPhoneNumber(data.phone_number || "");
       setTagline(data.tagline || "");
       setSelectedTeams((data.teams as string[]) || []);
+      
+      // Parse KPIs from database
+      try {
+        const parsedKpis = data.kpis ? (typeof data.kpis === 'string' ? JSON.parse(data.kpis) : data.kpis) : [];
+        setKpis(Array.isArray(parsedKpis) ? parsedKpis as unknown as KPI[] : []);
+      } catch (e) {
+        setKpis([]);
+      }
+      
+      try {
+        const parsedQuarterlyKpis = data.quarterly_kpis || [];
+        setQuarterlyKpis(Array.isArray(parsedQuarterlyKpis) ? parsedQuarterlyKpis as unknown as KPI[] : []);
+      } catch (e) {
+        setQuarterlyKpis([]);
+      }
     }
   };
 
@@ -191,6 +211,34 @@ export default function Profile() {
     );
   };
 
+  const handleSaveKPIs = async (newKpis: KPI[]) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ kpis: newKpis as any })
+      .eq("user_id", profile.user_id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "KPIs updated" });
+      fetchProfile();
+    }
+  };
+
+  const handleSaveQuarterlyKPIs = async (newKpis: KPI[]) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ quarterly_kpis: newKpis as any })
+      .eq("user_id", profile.user_id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Quarterly KPIs updated" });
+      fetchProfile();
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -273,23 +321,60 @@ export default function Profile() {
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
                 
-                <div className="pt-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Key Performance Indicators</h3>
+                {/* Annual & Quarterly KPIs */}
+                <div className="pt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Annual KPIs</h3>
+                    </div>
+                    {userRole === 'admin' && (
+                      <Button size="sm" variant="outline" onClick={() => setKpiDialogOpen(true)}>
+                        <Edit className="h-4 w-4 mr-2" />Edit
+                      </Button>
+                    )}
                   </div>
-                  {profile.kpis ? (
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                      <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-                        {profile.kpis}
-                      </p>
+                  {kpis.length > 0 ? (
+                    <div className="space-y-2">
+                      {kpis.map((kpi) => (
+                        <div key={kpi.id} className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                          <div className="flex justify-between gap-2 mb-1">
+                            <p className="text-sm font-medium flex-1">{kpi.description}</p>
+                            <Badge variant="secondary">{kpi.weight}%</Badge>
+                          </div>
+                          {kpi.timeline && <p className="text-xs text-muted-foreground">Timeline: {kpi.timeline}</p>}
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="p-4 bg-muted/50 border border-dashed border-muted-foreground/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground italic text-center">
-                        No KPIs set yet. Contact your admin to define your goals and responsibilities.
-                      </p>
+                    <p className="text-sm text-muted-foreground italic">No annual KPIs set</p>
+                  )}
+                  
+                  <div className="flex items-center justify-between pt-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Quarterly KPIs</h3>
                     </div>
+                    {userRole === 'admin' && (
+                      <Button size="sm" variant="outline" onClick={() => setQuarterlyKpiDialogOpen(true)}>
+                        <Edit className="h-4 w-4 mr-2" />Edit
+                      </Button>
+                    )}
+                  </div>
+                  {quarterlyKpis.length > 0 ? (
+                    <div className="space-y-2">
+                      {quarterlyKpis.map((kpi) => (
+                        <div key={kpi.id} className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                          <div className="flex justify-between gap-2 mb-1">
+                            <p className="text-sm font-medium flex-1">{kpi.description}</p>
+                            <Badge variant="secondary">{kpi.weight}%</Badge>
+                          </div>
+                          {kpi.timeline && <p className="text-xs text-muted-foreground">Timeline: {kpi.timeline}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No quarterly KPIs set</p>
                   )}
                 </div>
                 
