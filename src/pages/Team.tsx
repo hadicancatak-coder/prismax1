@@ -287,7 +287,7 @@ export default function Team() {
             onClick={() => navigate(`/profile/${profile.user_id}`)}
           >
             {userRole === 'admin' && (
-              <div className="absolute top-3 right-3 flex gap-2">
+              <div className="absolute top-4 right-4 flex gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
@@ -321,7 +321,7 @@ export default function Team() {
                 <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background" title="Online" />
               </div>
               
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-24">
                 <h3 className="text-xl font-semibold text-foreground truncate">
                   {profile.name}
                 </h3>
