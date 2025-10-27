@@ -22,7 +22,7 @@ const TEAMS = ["SocialUA", "PPC", "PerMar"];
 export default function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const isOwnProfile = !userId || userId === user?.id;
   
   const [profile, setProfile] = useState<any>(null);
