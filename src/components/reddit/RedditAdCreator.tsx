@@ -9,6 +9,8 @@ import { Copy, Eraser, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ElementQuickInsert } from "@/components/ads/ElementQuickInsert";
+import { useSaveSocialElement } from "@/hooks/useSocialAdElements";
 
 interface RedditAdCreatorProps {
   adData: any;
@@ -18,11 +20,34 @@ interface RedditAdCreatorProps {
 export function RedditAdCreator({ adData, setAdData }: RedditAdCreatorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const saveElement = useSaveSocialElement();
 
   const handleCopyAll = () => {
     const text = `Title: ${adData.title}\n\n${adData.bodyText}\n\nLink: ${adData.linkUrl}`;
     navigator.clipboard.writeText(text);
     toast({ title: "Copied to clipboard" });
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
+  };
+
+  const handleSaveField = (content: string, type: string) => {
+    if (!content.trim() || !adData.entity || adData.entity.length === 0) {
+      toast({
+        title: "Cannot save",
+        description: "Select entity and enter content first",
+        variant: "destructive",
+      });
+      return;
+    }
+    saveElement.mutate({
+      content,
+      elementType: type,
+      entity: adData.entity,
+      language: adData.language,
+    });
   };
 
   const handleClear = () => {
@@ -109,27 +134,75 @@ export function RedditAdCreator({ adData, setAdData }: RedditAdCreatorProps) {
 
       <div>
         <Label htmlFor="title">Post Title</Label>
-        <Input
-          id="title"
-          value={adData.title}
-          onChange={(e) => setAdData({ ...adData, title: e.target.value })}
-          placeholder="Enter post title"
-          maxLength={300}
-          dir={adData.language === "AR" ? "rtl" : "ltr"}
-        />
+        <div className="flex gap-2 items-center">
+          <Input
+            id="title"
+            value={adData.title}
+            onChange={(e) => setAdData({ ...adData, title: e.target.value })}
+            placeholder="Enter post title"
+            maxLength={300}
+            dir={adData.language === "AR" ? "rtl" : "ltr"}
+          />
+          <ElementQuickInsert
+            elementType="headline"
+            onInsert={(text) => setAdData({ ...adData, title: text.slice(0, 300) })}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleSaveField(adData.title, "headline")}
+            disabled={!adData.title.trim() || !adData.entity || adData.entity.length === 0}
+            title="Save for reuse"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopy(adData.title)}
+            disabled={!adData.title}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">{adData.title.length}/300</p>
       </div>
 
       <div>
         <Label htmlFor="bodyText">Body Text</Label>
-        <Textarea
-          id="bodyText"
-          value={adData.bodyText}
-          onChange={(e) => setAdData({ ...adData, bodyText: e.target.value})}
-          placeholder="Enter post body"
-          rows={5}
-          dir={adData.language === "AR" ? "rtl" : "ltr"}
-        />
+        <div className="flex gap-2 items-start">
+          <Textarea
+            id="bodyText"
+            value={adData.bodyText}
+            onChange={(e) => setAdData({ ...adData, bodyText: e.target.value})}
+            placeholder="Enter post body"
+            rows={5}
+            dir={adData.language === "AR" ? "rtl" : "ltr"}
+          />
+          <div className="flex flex-col gap-1 shrink-0 pt-2">
+            <ElementQuickInsert
+              elementType="description"
+              onInsert={(text) => setAdData({ ...adData, bodyText: text })}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleSaveField(adData.bodyText, "description")}
+              disabled={!adData.bodyText.trim() || !adData.entity || adData.entity.length === 0}
+              title="Save for reuse"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleCopy(adData.bodyText)}
+              disabled={!adData.bodyText}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div>

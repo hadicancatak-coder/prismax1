@@ -178,6 +178,12 @@ export default function Tasks() {
     return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
   });
 
+  // Apply filter recalculation when dependencies change
+  useEffect(() => {
+    // Force re-render when filters change
+    setCurrentPage(1);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, debouncedSearch]);
+
   if (activeQuickFilter) {
     const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
     if (quickFilterDef) {

@@ -52,6 +52,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [attachedAds, setAttachedAds] = useState<any[]>([]);
+  const [taskType, setTaskType] = useState<string>("general");
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -302,39 +303,55 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
-        <form className="space-y-4 py-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input 
-              id="title" 
-              placeholder="Enter task title" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={validationErrors.title ? "border-destructive" : ""}
-              required 
-            />
-            {validationErrors.title && (
-              <p className="text-sm text-destructive">{validationErrors.title}</p>
-            )}
-          </div>
+        <form className="flex-1 flex flex-col" onSubmit={handleSubmit}>
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input 
+                  id="title" 
+                  placeholder="Enter task title" 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={validationErrors.title ? "border-destructive" : ""}
+                  required 
+                />
+                {validationErrors.title && (
+                  <p className="text-sm text-destructive">{validationErrors.title}</p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Enter task description"
-              className={cn("min-h-[100px]", validationErrors.description && "border-destructive")}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            {validationErrors.description && (
-              <p className="text-sm text-destructive">{validationErrors.description}</p>
-            )}
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="task-type">Task Type</Label>
+                <Select value={taskType} onValueChange={setTaskType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select task type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General Task</SelectItem>
+                    <SelectItem value="operations">Operations Task</SelectItem>
+                    <SelectItem value="campaign">Campaign</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Enter task description"
+                className={cn("min-h-[100px]", validationErrors.description && "border-destructive")}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              {validationErrors.description && (
+                <p className="text-sm text-destructive">{validationErrors.description}</p>
+              )}
+            </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -631,16 +648,20 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           )}
 
-          {/* Attached Ads Section */}
-          <div className="space-y-2 pt-2 border-t">
-            <AttachedAdsSection
-              attachedAds={attachedAds}
-              onAdsChange={setAttachedAds}
-              editable={true}
-            />
-          </div>
+              {/* Attached Ads Section - Only show for Campaign type */}
+              {taskType === "campaign" && (
+                <div className="space-y-2 pt-2 border-t">
+                  <AttachedAdsSection
+                    attachedAds={attachedAds}
+                    onAdsChange={setAttachedAds}
+                    editable={true}
+                  />
+                </div>
+              )}
+            </div>
+          </ScrollArea>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

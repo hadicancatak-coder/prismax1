@@ -24,7 +24,7 @@ const coreItems = [
 
 const operationsItems = [
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
-  { title: "Social Planner", url: "/socialua", icon: Share2 },
+  { title: "SocialUA Planner", url: "/socialua", icon: Share2 },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Preview", url: "/campaigns", icon: Target },
 ];

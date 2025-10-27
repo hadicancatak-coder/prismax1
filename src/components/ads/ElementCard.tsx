@@ -7,6 +7,9 @@ import { Copy, Edit, Trash2, Star } from 'lucide-react';
 import { useUpdateAdElement, useDeleteAdElement, AdElement } from '@/hooks/useAdElements';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ENTITIES } from '@/lib/constants';
 
 interface ElementCardProps {
   element: AdElement;
@@ -16,6 +19,8 @@ export function ElementCard({ element }: ElementCardProps) {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [editingEntity, setEditingEntity] = useState(false);
+  const [selectedEntities, setSelectedEntities] = useState<string[]>(element.entity || []);
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
   const { toast } = useToast();
@@ -62,6 +67,21 @@ export function ElementCard({ element }: ElementCardProps) {
     );
   };
 
+  const handleSaveEntity = () => {
+    updateElement.mutate(
+      {
+        id: element.id,
+        updates: { entity: selectedEntities }
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "Entity updated" });
+          setEditingEntity(false);
+        }
+      }
+    );
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-500/10 text-green-500 border-green-500/20';
@@ -94,17 +114,65 @@ export function ElementCard({ element }: ElementCardProps) {
             ) : (
               <>
                 <p className="text-sm font-medium line-clamp-2">{content}</p>
-                <div className="flex flex-wrap gap-1 mt-2">
+                <div className="flex flex-wrap gap-1 mt-2 items-center">
                   {(element as any).language && (
                     <Badge variant={(element as any).language === 'AR' ? 'secondary' : 'default'} className="text-xs">
                       {(element as any).language}
                     </Badge>
                   )}
-                  {element.entity && element.entity.length > 0 && element.entity.map((ent) => (
-                    <Badge key={ent} variant="outline" className="text-xs">
-                      {ent}
-                    </Badge>
-                  ))}
+                  {editingEntity ? (
+                    <Popover open={editingEntity} onOpenChange={setEditingEntity}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
+                          Edit Entities ({selectedEntities.length})
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64" onClick={(e) => e.stopPropagation()}>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm mb-2">Select Entities</h4>
+                          <div className="max-h-48 overflow-y-auto space-y-2">
+                            {ENTITIES.map((ent) => (
+                              <div key={ent} className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={selectedEntities.includes(ent)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedEntities(prev =>
+                                      checked ? [...prev, ent] : prev.filter(e => e !== ent)
+                                    );
+                                  }}
+                                />
+                                <label className="text-sm">{ent}</label>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveEntity(); }}>
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingEntity(false); setSelectedEntities(element.entity || []); }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <>
+                      {element.entity && element.entity.length > 0 && element.entity.map((ent) => (
+                        <Badge key={ent} variant="outline" className="text-xs">
+                          {ent}
+                        </Badge>
+                      ))}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); setEditingEntity(true); }}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </>
             )}

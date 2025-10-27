@@ -8,6 +8,8 @@ import { Copy, Eraser, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ElementQuickInsert } from "@/components/ads/ElementQuickInsert";
+import { useSaveSocialElement } from "@/hooks/useSocialAdElements";
 
 interface SnapAdCreatorProps {
   adData: any;
@@ -17,11 +19,34 @@ interface SnapAdCreatorProps {
 export function SnapAdCreator({ adData, setAdData }: SnapAdCreatorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const saveElement = useSaveSocialElement();
 
   const handleCopyAll = () => {
     const text = `Headline: ${adData.headline}\nBrand: ${adData.brandName}\nCTA: ${adData.cta}`;
     navigator.clipboard.writeText(text);
     toast({ title: "Copied to clipboard" });
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
+  };
+
+  const handleSaveField = (content: string, type: string) => {
+    if (!content.trim() || !adData.entity || adData.entity.length === 0) {
+      toast({
+        title: "Cannot save",
+        description: "Select entity and enter content first",
+        variant: "destructive",
+      });
+      return;
+    }
+    saveElement.mutate({
+      content,
+      elementType: type,
+      entity: adData.entity,
+      language: adData.language,
+    });
   };
 
   const handleClear = () => {
@@ -110,14 +135,37 @@ export function SnapAdCreator({ adData, setAdData }: SnapAdCreatorProps) {
 
       <div>
         <Label htmlFor="headline">Headline</Label>
-        <Input
-          id="headline"
-          value={adData.headline}
-          onChange={(e) => setAdData({ ...adData, headline: e.target.value })}
-          placeholder="Enter headline"
-          maxLength={34}
-          dir={adData.language === "AR" ? "rtl" : "ltr"}
-        />
+        <div className="flex gap-2 items-center">
+          <Input
+            id="headline"
+            value={adData.headline}
+            onChange={(e) => setAdData({ ...adData, headline: e.target.value })}
+            placeholder="Enter headline"
+            maxLength={34}
+            dir={adData.language === "AR" ? "rtl" : "ltr"}
+          />
+          <ElementQuickInsert
+            elementType="headline"
+            onInsert={(text) => setAdData({ ...adData, headline: text.slice(0, 34) })}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleSaveField(adData.headline, "headline")}
+            disabled={!adData.headline.trim() || !adData.entity || adData.entity.length === 0}
+            title="Save for reuse"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopy(adData.headline)}
+            disabled={!adData.headline}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">{adData.headline.length}/34</p>
       </div>
 
