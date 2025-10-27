@@ -114,9 +114,18 @@ export default function Team() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Users className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">Team Directory</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Team Directory</h1>
+          <p className="text-muted-foreground text-sm">
+            Connect with your team members across all departments
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {profiles.length} Members
+          </Badge>
+        </div>
       </div>
 
       <div className="relative">

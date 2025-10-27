@@ -140,12 +140,18 @@ export default function Notifications() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Notifications</h1>
-          <p className="text-muted-foreground">Stay updated with your tasks and mentions</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+          <p className="text-muted-foreground text-sm">
+            Stay updated with your tasks, mentions, and important updates
+          </p>
         </div>
-        <Bell className="h-8 w-8 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {notifications.filter(n => !n.read_at).length} Unread
+          </Badge>
+        </div>
       </div>
 
       <AnnouncementsSection />

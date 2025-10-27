@@ -107,14 +107,14 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     <>
       <Card className="border-0 shadow-sm overflow-hidden rounded-2xl">
         <Table>
-          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200 shadow-sm">
+          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
             <TableRow className="hover:bg-gray-50">
-              <TableHead className="font-bold text-gray-900 py-4 min-w-[350px]">Task</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[150px]">Status</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[130px] hidden md:table-cell">Priority</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[180px] hidden lg:table-cell">Assignee</TableHead>
-              <TableHead className="font-bold text-gray-900 min-w-[130px]">Due Date</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[350px]">Task</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[120px]">Status</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[110px] hidden md:table-cell">Priority</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[150px] hidden lg:table-cell">Assignee</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[110px]">Due Date</TableHead>
+              <TableHead className="w-10 py-2"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -122,7 +122,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
               <TableRow
                 key={task.id}
                 className={cn(
-                  "cursor-pointer hover:bg-gray-50 transition-all duration-200 hover:shadow-sm border-b border-gray-100 last:border-0",
+                  "cursor-pointer hover:bg-gray-50 transition-colors h-10 border-b border-gray-100 last:border-0",
                   task.pending_approval && 'border-l-4 border-l-primary',
                   isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive',
                   isDueToday(task.due_at) && 'border-l-4 border-l-warning',
@@ -158,67 +158,60 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <div className="space-y-1 py-1">
-                      <div className="flex items-center gap-2">
-                        <div className="font-semibold text-gray-900">{task.title}</div>
-                        {task.pending_approval && (
-                          <Badge variant="default" className="text-xs">
-                            Pending
-                          </Badge>
-                        )}
-                        {task.comments_count > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            💬 {task.comments_count}
-                          </Badge>
-                        )}
-                      </div>
-                      {task.description && (
-                        <div className="text-sm text-gray-500 line-clamp-1">
-                          {task.description}
-                        </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">{task.title}</span>
+                      {task.pending_approval && (
+                        <Badge variant="default" className="text-[10px] px-1 py-0">
+                          Pending
+                        </Badge>
+                      )}
+                      {task.comments_count > 0 && (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0">
+                          💬 {task.comments_count}
+                        </Badge>
                       )}
                     </div>
                   )}
                 </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={statusColors[task.status as keyof typeof statusColors]}>
+                <TableCell className="py-1.5 px-3">
+                  <Badge variant="outline" className={cn(statusColors[task.status as keyof typeof statusColors], "text-[10px] px-1.5 py-0")}>
                     {task.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
+                <TableCell className="hidden md:table-cell py-1.5 px-3">
+                  <Badge variant="outline" className={cn(priorityColors[task.priority as keyof typeof priorityColors], "text-[10px] px-1.5 py-0")}>
                     {task.priority}
                   </Badge>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell">
+                <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-1.5 px-3">
                   {task.assignees && task.assignees.length > 0 ? (
                     <div className="flex items-center gap-1">
                       {task.assignees.slice(0, 3).map((assignee: any) => (
-                        <Avatar key={assignee.id} className="h-6 w-6 border-2 border-background">
+                        <Avatar key={assignee.id} className="h-5 w-5 border">
                           <AvatarImage src={assignee.avatar_url} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-[10px]">
                             {assignee.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       ))}
                       {task.assignees.length > 3 && (
-                        <span className="text-xs text-muted-foreground ml-1">
+                        <span className="text-[10px] text-muted-foreground ml-1">
                           +{task.assignees.length - 3}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Unassigned</span>
+                    <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
-                <TableCell className="text-sm">
-                  {task.due_at ? format(new Date(task.due_at), "MMM dd, yyyy") : "-"}
+                <TableCell className="text-xs py-1.5 px-3">
+                  {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-1.5 px-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <MoreVertical className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

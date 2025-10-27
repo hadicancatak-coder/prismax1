@@ -147,7 +147,14 @@ export default function Tasks() {
     const assigneeMatch = selectedAssignees.length === 0 || 
       task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
     
+    // Fix team filtering - check task.teams directly AND assignee teams
+    const taskTeams = Array.isArray(task.teams) && task.teams.length > 0
+      ? task.teams 
+      : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
+    
     const teamMatch = selectedTeams.length === 0 || 
+      (taskTeams.length === 0) || // Show legacy tasks with no teams
+      taskTeams.some((team: string) => selectedTeams.includes(team)) ||
       task.assignees?.some((assignee: any) => 
         assignee.teams?.some((team: string) => selectedTeams.includes(team))
       );
@@ -229,17 +236,6 @@ export default function Tasks() {
         }}
       />
       
-      {/* Progress Indicator */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium">Overall Progress</span>
-          <span className="text-sm font-bold">{completionPercentage}%</span>
-        </div>
-        <Progress value={completionPercentage} className="h-2" />
-        <p className="text-xs text-muted-foreground mt-2">
-          {completedCount} of {totalTasks} tasks completed
-        </p>
-      </Card>
 
       {/* Search and View Switcher */}
       <div className="flex gap-2 items-center justify-between">
@@ -276,7 +272,7 @@ export default function Tasks() {
 
       {/* Filters with Accordion */}
       <Card className="p-4">
-        <Accordion type="multiple" defaultValue={["quick", "assignee", "date"]}>
+        <Accordion type="multiple" defaultValue={[]}>
           <AccordionItem value="quick" className="border-0">
             <AccordionTrigger className="font-semibold hover:no-underline">
               <div className="flex items-center gap-2">

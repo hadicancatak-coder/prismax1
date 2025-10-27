@@ -216,11 +216,21 @@ export default function Campaigns() {
 
   return (
     <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Campaigns</h1>
-          <p className="text-muted-foreground mt-1">Manage your marketing campaigns</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Marketing Campaigns</h1>
+          <p className="text-muted-foreground text-sm">
+            Plan, manage, and track your marketing campaigns
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {campaigns.length} Campaigns
+          </Badge>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <div></div>
         {userRole === "admin" && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
