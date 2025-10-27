@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
+import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -50,6 +51,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [attachedAds, setAttachedAds] = useState<any[]>([]);
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -228,6 +230,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_day_of_week: recurrenceDayOfWeek,
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
+        attached_ads: attachedAds.length > 0 ? attachedAds.map(ad => ({ id: ad.id, headline: ad.headline, ad_type: ad.ad_type })) : null,
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
@@ -284,6 +287,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setRecurrenceDayOfMonth(null);
       setValidationErrors({});
       setSelectedTeams([]);
+      setAttachedAds([]);
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -626,6 +630,15 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               )}
             </div>
           )}
+
+          {/* Attached Ads Section */}
+          <div className="space-y-2 pt-2 border-t">
+            <AttachedAdsSection
+              attachedAds={attachedAds}
+              onAdsChange={setAttachedAds}
+              editable={true}
+            />
+          </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

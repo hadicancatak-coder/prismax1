@@ -31,6 +31,7 @@ import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
+import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 
 interface TaskDialogProps {
   open: boolean;
@@ -1112,6 +1113,26 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               initialChecklist={task.checklist || []}
               onUpdate={fetchTask}
             />
+
+            <Separator />
+
+            {/* Attached Ads Section */}
+            {task.attached_ads && task.attached_ads.length > 0 && (
+              <>
+                <AttachedAdsSection
+                  attachedAds={task.attached_ads}
+                  onAdsChange={async (ads) => {
+                    await supabase
+                      .from("tasks")
+                      .update({ attached_ads: ads.map(ad => ({ id: ad.id, headline: ad.headline, ad_type: ad.ad_type })) } as any)
+                      .eq("id", taskId);
+                    fetchTask();
+                  }}
+                  editable={editMode}
+                />
+                <Separator />
+              </>
+            )}
           </div>
 
           {/* Comments Section - Messaging Style */}

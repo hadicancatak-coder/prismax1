@@ -7,8 +7,13 @@ import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TodayCommandCenter } from "@/components/calendar/TodayCommandCenter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
 
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
@@ -19,6 +24,9 @@ export default function CalendarView() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "custom">("today");
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
   const currentDate = new Date();
 
   useEffect(() => {
@@ -26,7 +34,7 @@ export default function CalendarView() {
       fetchUsers();
     }
     fetchTasks();
-  }, [userRole, user?.id, selectedUserId]);
+  }, [userRole, user?.id, selectedUserId, dateView, customDateRange]);
 
   const fetchUsers = async () => {
     const { data } = await supabase
@@ -50,15 +58,42 @@ export default function CalendarView() {
       task_assignees(user_id)
     `);
 
-    // Filter to today's tasks
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Calculate date range based on selected view
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (dateView) {
+      case "yesterday":
+        startDate = startOfDay(subDays(new Date(), 1));
+        endDate = endOfDay(subDays(new Date(), 1));
+        break;
+      case "tomorrow":
+        startDate = startOfDay(addDays(new Date(), 1));
+        endDate = endOfDay(addDays(new Date(), 1));
+        break;
+      case "week":
+        startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+        endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
+        break;
+      case "custom":
+        if (customDateRange) {
+          startDate = startOfDay(customDateRange.from);
+          endDate = endOfDay(customDateRange.to);
+        } else {
+          startDate = startOfDay(new Date());
+          endDate = endOfDay(new Date());
+        }
+        break;
+      case "today":
+      default:
+        startDate = startOfDay(new Date());
+        endDate = endOfDay(new Date());
+        break;
+    }
 
     query = query
-      .gte("due_at", today.toISOString())
-      .lt("due_at", tomorrow.toISOString())
+      .gte("due_at", startDate.toISOString())
+      .lte("due_at", endDate.toISOString())
       .order("due_at", { ascending: true });
 
     const { data: allTasks } = await query;
@@ -105,43 +140,98 @@ export default function CalendarView() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Today's Agenda</h1>
-        <p className="text-gray-600">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
-        
-        {userRole === 'admin' && users.length > 0 && (
-          <div className="mt-4 max-w-xs">
-            <Select value={selectedUserId || undefined} onValueChange={(value) => setSelectedUserId(value === 'all' ? null : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Users" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.user_id}>
-                    {user.name || user.username || 'Unknown User'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </header>
+      {!focusMode && (
+        <>
+          <header className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Agenda</h1>
+            <p className="text-gray-600">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
+            
+            {userRole === 'admin' && users.length > 0 && (
+              <div className="mt-4 max-w-xs">
+                <Select value={selectedUserId || undefined} onValueChange={(value) => setSelectedUserId(value === 'all' ? null : value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Users" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.user_id}>
+                        {user.name || user.username || 'Unknown User'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-      <TodayCommandCenter 
-        currentDate={currentDate}
-        highPriorityCount={highPriorityCount}
-        upcomingCount={upcomingCount}
-        completedToday={completedToday}
-        totalToday={totalToday}
-        onAddTask={() => setCreateTaskOpen(true)}
-        onFocusMode={() => {}}
-      />
+            <div className="mt-6 flex items-center gap-4">
+              <Tabs value={dateView} onValueChange={(v) => setDateView(v as any)} className="w-auto">
+                <TabsList>
+                  <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                  <TabsTrigger value="today">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="week">This Week</TabsTrigger>
+                  <TabsTrigger value="custom">Custom</TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Today's Tasks ({todayTasks.length})</CardTitle>
+              {dateView === "custom" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDateRange ? (
+                        `${format(customDateRange.from, "MMM d")} - ${format(customDateRange.to, "MMM d")}`
+                      ) : (
+                        "Pick a date range"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={customDateRange ? { from: customDateRange.from, to: customDateRange.to } : undefined}
+                      onSelect={(range) => {
+                        if (range?.from && range?.to) {
+                          setCustomDateRange({ from: range.from, to: range.to });
+                        }
+                      }}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          </header>
+
+          <TodayCommandCenter 
+            currentDate={currentDate}
+            highPriorityCount={highPriorityCount}
+            upcomingCount={upcomingCount}
+            completedToday={completedToday}
+            totalToday={totalToday}
+            onAddTask={() => setCreateTaskOpen(true)}
+            onFocusMode={() => setFocusMode(true)}
+          />
+        </>
+      )}
+
+      <div className={`grid gap-6 mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
+        <Card className={focusMode ? '' : 'lg:col-span-2'}>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>
+              {dateView === "today" && "Today's Tasks"} 
+              {dateView === "yesterday" && "Yesterday's Tasks"}
+              {dateView === "tomorrow" && "Tomorrow's Tasks"}
+              {dateView === "week" && "This Week's Tasks"}
+              {dateView === "custom" && "Custom Range Tasks"}
+              ({todayTasks.length})
+            </CardTitle>
+            {focusMode && (
+              <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
+                Exit Focus Mode
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -187,25 +277,27 @@ export default function CalendarView() {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Completed</span>
-              <span className="font-bold text-lg">{completedToday}/{totalToday}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">High Priority</span>
-              <span className="font-bold text-lg text-red-600">{highPriorityCount}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Upcoming</span>
-              <span className="font-bold text-lg text-purple-600">{upcomingCount}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {!focusMode && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Completed</span>
+                <span className="font-bold text-lg">{completedToday}/{totalToday}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">High Priority</span>
+                <span className="font-bold text-lg text-red-600">{highPriorityCount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Upcoming</span>
+                <span className="font-bold text-lg text-purple-600">{upcomingCount}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {selectedTaskId && (
