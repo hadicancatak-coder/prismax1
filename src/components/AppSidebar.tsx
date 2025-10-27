@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import logoImage from "@/assets/cfi-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -67,7 +68,7 @@ export function AppSidebar() {
           {/* Logo */}
           <div className={`flex ${open ? 'items-center gap-3 px-2' : 'flex-col items-center justify-center'}`}>
             <img 
-              src="/src/assets/cfi-logo.png" 
+              src={logoImage} 
               alt="Prisma" 
               className={`transition-all ${open ? 'h-10' : 'h-8'}`}
             />

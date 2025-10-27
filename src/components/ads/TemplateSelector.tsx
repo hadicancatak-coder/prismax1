@@ -58,13 +58,18 @@ export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelec
                   </Button>
                 </div>
                 
-                <div className="flex gap-2 mt-3">
-                  <Badge variant="outline">{template.ad_type}</Badge>
+                 <div className="flex gap-2 mt-3">
+                  <Badge variant={(template as any).ad_type === 'display' ? 'default' : 'outline'}>
+                    {(template as any).ad_type === 'display' ? 'Display' : 'Search'}
+                  </Badge>
                   {template.entity && (
                     <Badge variant="outline">{template.entity}</Badge>
                   )}
                   <Badge variant="secondary">
-                    {template.headlines.length} headlines
+                    {(template as any).ad_type === 'display' 
+                      ? `${((template as any).short_headlines?.filter((h: string) => h).length || 0)} headlines`
+                      : `${(template.headlines?.length || 0)} headlines`
+                    }
                   </Badge>
                 </div>
               </Card>

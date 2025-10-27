@@ -317,11 +317,24 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
   const handleTemplateSelect = (template: any) => {
     setAdName(template.name || "");
     setAdEntity(template.entity || "");
-    setHeadlines(template.headlines || Array(15).fill(""));
-    setDescriptions(template.descriptions || Array(4).fill(""));
-    setLandingPage(template.landing_page || "");
-    setSitelinks(template.sitelinks || Array(4).fill({ title: "", description: "" }));
-    setCallouts(template.callouts || Array(4).fill(""));
+    
+    if (template.ad_type === 'display') {
+      // Load display ad data
+      setBusinessName(template.business_name || "");
+      setLongHeadline(template.long_headline || "");
+      setShortHeadlines(template.short_headlines || Array(5).fill(""));
+      setCtaText(template.cta_text || "");
+      setDescriptions(template.descriptions || Array(4).fill(""));
+      setLandingPage(template.landing_page || "");
+    } else {
+      // Load search ad data
+      setHeadlines(template.headlines || Array(15).fill(""));
+      setDescriptions(template.descriptions || Array(4).fill(""));
+      setLandingPage(template.landing_page || "");
+      setSitelinks(template.sitelinks || Array(4).fill({ title: "", description: "" }));
+      setCallouts(template.callouts || Array(4).fill(""));
+    }
+    
     setTemplateSelectorOpen(false);
     toast({ title: "Template loaded" });
   };
@@ -338,6 +351,83 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
       setSelectedAdIds([]);
       fetchSavedAds();
     }
+  };
+
+  const handleSaveDisplayAd = async () => {
+    if (!user || !adName.trim()) {
+      toast({ title: "Error", description: "Please enter an ad name", variant: "destructive" });
+      return;
+    }
+
+    if (!adEntity) {
+      toast({ title: "Entity Required", description: "Please select an entity", variant: "destructive" });
+      return;
+    }
+
+    const hasHeadlines = businessName.trim() || longHeadline.trim() || shortHeadlines.some(h => h.trim());
+    const hasDescriptions = descriptions.some(d => d.trim());
+    
+    if (!hasHeadlines || !hasDescriptions) {
+      toast({ title: "Content Required", description: "Add headlines and descriptions", variant: "destructive" });
+      return;
+    }
+
+    const adData = {
+      name: adName.trim(),
+      entity: adEntity,
+      ad_type: 'display',
+      business_name: businessName,
+      long_headline: longHeadline,
+      short_headlines: shortHeadlines,
+      descriptions: descriptions,
+      cta_text: ctaText,
+      landing_page: landingPage || null,
+      created_by: user.id,
+    };
+
+    const { error } = await supabase.from("ads").insert([adData]);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Display ad saved successfully" });
+      fetchSavedAds();
+      handleClearDisplayAd();
+    }
+  };
+
+  const handleCopyAllDisplay = () => {
+    const allContent = `
+BUSINESS NAME:
+${businessName}
+
+LONG HEADLINE:
+${longHeadline}
+
+SHORT HEADLINES:
+${shortHeadlines.filter(h => h).map((h, i) => `${i + 1}. ${h}`).join('\n')}
+
+DESCRIPTIONS:
+${descriptions.filter(d => d).map((d, i) => `${i + 1}. ${d}`).join('\n')}
+
+CALL TO ACTION:
+${ctaText}
+
+LANDING PAGE:
+${landingPage}
+    `.trim();
+    
+    navigator.clipboard.writeText(allContent);
+    toast({ title: "All display ad content copied to clipboard" });
+  };
+
+  const handleClearDisplayAd = () => {
+    setBusinessName("");
+    setLongHeadline("");
+    setShortHeadlines(Array(5).fill(""));
+    setCtaText("");
+    setLandingPage("");
+    setAdName("");
   };
 
   const filteredSavedAds = savedAds.filter((ad) => {
@@ -797,29 +887,77 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
 
           <TabsContent value="display" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DisplayAdCreator
-                businessName={businessName}
-                setBusinessName={setBusinessName}
-                longHeadline={longHeadline}
-                setLongHeadline={setLongHeadline}
-                shortHeadlines={shortHeadlines}
-                setShortHeadlines={setShortHeadlines}
-                descriptions={descriptions}
-                setDescriptions={setDescriptions}
-                ctaText={ctaText}
-                setCtaText={setCtaText}
-                landingPage={landingPage}
-                setLandingPage={setLandingPage}
-                adEntity={adEntity}
-              />
-              <DisplayAdPreview
-                businessName={businessName}
-                longHeadline={longHeadline}
-                shortHeadlines={shortHeadlines}
-                descriptions={descriptions}
-                ctaText={ctaText}
-                landingPage={landingPage}
-              />
+              {/* Left Column - Inputs */}
+              <div className="space-y-4">
+                {/* Ad Info Card */}
+                <Card>
+                  <CardContent className="pt-6 space-y-3">
+                    <Input
+                      value={adName}
+                      onChange={(e) => setAdName(e.target.value)}
+                      placeholder="Ad Name *"
+                    />
+                    <Select value={adEntity} onValueChange={setAdEntity}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Entity *" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ENTITIES.map((ent) => (
+                          <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!adEntity && (
+                      <p className="text-xs text-destructive">⚠️ Select entity first to enable inputs</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Display Ad Creator */}
+                <DisplayAdCreator
+                  businessName={businessName}
+                  setBusinessName={setBusinessName}
+                  longHeadline={longHeadline}
+                  setLongHeadline={setLongHeadline}
+                  shortHeadlines={shortHeadlines}
+                  setShortHeadlines={setShortHeadlines}
+                  descriptions={descriptions}
+                  setDescriptions={setDescriptions}
+                  ctaText={ctaText}
+                  setCtaText={setCtaText}
+                  landingPage={landingPage}
+                  setLandingPage={setLandingPage}
+                  adEntity={adEntity}
+                />
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveDisplayAd} className="flex-1">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Display Ad
+                  </Button>
+                  <Button onClick={() => setTemplateSelectorOpen(true)} variant="outline" className="flex-1">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Load Template
+                  </Button>
+                  <Button onClick={handleCopyAllDisplay} variant="outline" className="flex-1">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right Column - Preview (sticky) */}
+              <div className="lg:sticky lg:top-8 lg:self-start">
+                <DisplayAdPreview
+                  businessName={businessName}
+                  longHeadline={longHeadline}
+                  shortHeadlines={shortHeadlines}
+                  descriptions={descriptions}
+                  ctaText={ctaText}
+                  landingPage={landingPage}
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
