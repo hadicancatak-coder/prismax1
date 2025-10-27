@@ -287,23 +287,25 @@ export default function Team() {
             onClick={() => navigate(`/profile/${profile.user_id}`)}
           >
             {userRole === 'admin' && (
-              <div className="absolute top-2 right-2 flex gap-1">
+              <div className="absolute top-3 right-3 flex gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
+                  className="h-8 w-8 p-0"
                   onClick={(e) => handleEditTeams(profile, e)}
                   title="Edit Teams"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="border-primary/20 hover:bg-primary/10 hover:border-primary"
+                  variant="default"
+                  className="h-8 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
                   onClick={(e) => handleEditScopeOfWork(profile, e)}
+                  title="Edit Key Performance Indicators"
                 >
-                  <Target className="h-4 w-4 mr-1 text-primary" />
-                  KPIs
+                  <Target className="h-4 w-4 mr-1.5" />
+                  <span className="text-xs font-semibold">KPIs</span>
                 </Button>
               </div>
             )}

@@ -273,19 +273,25 @@ export default function Profile() {
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
                 
-                {profile.kpis && (
-                  <div className="pt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-semibold">Key Performance Indicators</h3>
-                    </div>
+                <div className="pt-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Key Performance Indicators</h3>
+                  </div>
+                  {profile.kpis ? (
                     <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                       <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
                         {profile.kpis}
                       </p>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="p-4 bg-muted/50 border border-dashed border-muted-foreground/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground italic text-center">
+                        No KPIs set yet. Contact your admin to define your goals and responsibilities.
+                      </p>
+                    </div>
+                  )}
+                </div>
                 
                 {profile.teams && profile.teams.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
