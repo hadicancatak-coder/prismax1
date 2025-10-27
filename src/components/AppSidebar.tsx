@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Shield } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, Music, Ghost, MessageCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/cfi-logo.png";
@@ -23,8 +23,11 @@ const coreItems = [
 ];
 
 const operationsItems = [
-  { title: "Launch Pad", url: "/launch-pad", icon: Rocket },
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
+  { title: "SocialUA", url: "/socialua", icon: Share2 },
+  { title: "TikTok", url: "/tiktok", icon: Music },
+  { title: "Snap", url: "/snap", icon: Ghost },
+  { title: "Reddit", url: "/reddit", icon: MessageCircle },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Preview", url: "/campaigns", icon: Target },
 ];

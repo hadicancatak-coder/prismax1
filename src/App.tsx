@@ -25,8 +25,10 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
-import LaunchPad from "./pages/LaunchPad";
-import Team from "./pages/Team";
+import SocialUAPlanner from "./pages/SocialUAPlanner";
+import TikTokPlanner from "./pages/TikTokPlanner";
+import SnapPlanner from "./pages/SnapPlanner";
+import RedditPlanner from "./pages/RedditPlanner";
 import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
@@ -75,7 +77,10 @@ const App = () => (
             <Route path="/profile/:userId?" element={<Profile />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
-            <Route path="/launch-pad" element={<LaunchPad />} />
+            <Route path="/socialua" element={<SocialUAPlanner />} />
+            <Route path="/tiktok" element={<TikTokPlanner />} />
+            <Route path="/snap" element={<SnapPlanner />} />
+            <Route path="/reddit" element={<RedditPlanner />} />
             <Route path="/utm-planner" element={<UtmPlanner />} />
             <Route path="/security" element={<Security />} />
             <Route path="/about" element={<About />} />
