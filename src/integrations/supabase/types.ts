@@ -1263,6 +1263,7 @@ export type Database = {
           email: string
           force_password_reset: boolean | null
           id: string
+          kpis: string | null
           last_mfa_prompt_at: string | null
           last_password_change: string | null
           mfa_backup_codes_generated_at: string | null
@@ -1273,7 +1274,6 @@ export type Database = {
           name: string
           password_last_changed_at: string | null
           phone_number: string | null
-          scope_of_work: string | null
           tagline: string | null
           teams: Database["public"]["Enums"]["team"][] | null
           title: string | null
@@ -1287,6 +1287,7 @@ export type Database = {
           email: string
           force_password_reset?: boolean | null
           id?: string
+          kpis?: string | null
           last_mfa_prompt_at?: string | null
           last_password_change?: string | null
           mfa_backup_codes_generated_at?: string | null
@@ -1297,7 +1298,6 @@ export type Database = {
           name: string
           password_last_changed_at?: string | null
           phone_number?: string | null
-          scope_of_work?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
@@ -1311,6 +1311,7 @@ export type Database = {
           email?: string
           force_password_reset?: boolean | null
           id?: string
+          kpis?: string | null
           last_mfa_prompt_at?: string | null
           last_password_change?: string | null
           mfa_backup_codes_generated_at?: string | null
@@ -1321,7 +1322,6 @@ export type Database = {
           name?: string
           password_last_changed_at?: string | null
           phone_number?: string | null
-          scope_of_work?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null

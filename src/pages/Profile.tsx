@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/TaskCard";
-import { Upload, Users } from "lucide-react";
+import { Upload, Users, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
@@ -273,10 +273,17 @@ export default function Profile() {
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
                 
-                {profile.scope_of_work && (
-                  <div className="pt-4">
-                    <h3 className="text-sm font-semibold mb-2">Scope of Work</h3>
-                    <p className="text-sm whitespace-pre-wrap">{profile.scope_of_work}</p>
+                {profile.kpis && (
+                  <div className="pt-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Key Performance Indicators</h3>
+                    </div>
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
+                        {profile.kpis}
+                      </p>
+                    </div>
                   </div>
                 )}
                 

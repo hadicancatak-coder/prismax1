@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Phone, Users, Search, Edit, Grid3x3, List, Download, Settings } from "lucide-react";
+import { Mail, Phone, Users, Search, Edit, Grid3x3, List, Download, Settings, Target } from "lucide-react";
 import { TEAMS } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -27,7 +27,7 @@ export default function Team() {
   const [editScopeDialogOpen, setEditScopeDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
-  const [scopeOfWorkText, setScopeOfWorkText] = useState("");
+  const [kpisText, setKpisText] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<string>("name");
@@ -105,7 +105,7 @@ export default function Team() {
   const handleEditScopeOfWork = (profile: any, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedProfile(profile);
-    setScopeOfWorkText(profile.scope_of_work || "");
+    setKpisText(profile.kpis || "");
     setEditScopeDialogOpen(true);
   };
 
@@ -148,14 +148,14 @@ export default function Team() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ scope_of_work: scopeOfWorkText })
+        .update({ kpis: kpisText })
         .eq("user_id", selectedProfile.user_id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Scope of work updated successfully",
+        description: "KPIs updated successfully",
       });
 
       setEditScopeDialogOpen(false);
@@ -170,14 +170,14 @@ export default function Team() {
   };
 
   const exportToCSV = () => {
-    const headers = ["Name", "Email", "Title", "Phone", "Teams", "Scope of Work"];
+    const headers = ["Name", "Email", "Title", "Phone", "Teams", "KPIs"];
     const rows = filteredProfiles.map((p) => [
       p.name || "",
       p.email || "",
       p.title || "",
       p.phone_number || "",
       p.teams?.join(", ") || "",
-      p.scope_of_work || "",
+      p.kpis || "",
     ]);
 
     const csvContent = [
@@ -298,11 +298,12 @@ export default function Team() {
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
+                  className="border-primary/20 hover:bg-primary/10 hover:border-primary"
                   onClick={(e) => handleEditScopeOfWork(profile, e)}
-                  title="Edit Scope of Work"
                 >
-                  <Edit className="h-4 w-4" />
+                  <Target className="h-4 w-4 mr-1 text-primary" />
+                  KPIs
                 </Button>
               </div>
             )}
@@ -333,10 +334,18 @@ export default function Team() {
                   </p>
                 )}
 
-                {profile.scope_of_work && (
-                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                    {profile.scope_of_work}
-                  </p>
+                {profile.kpis && (
+                  <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                        Key Performance Indicators
+                      </span>
+                    </div>
+                    <p className="text-xs text-foreground/70 line-clamp-3 leading-relaxed">
+                      {profile.kpis}
+                    </p>
+                  </div>
                 )}
                 
                 <div className="space-y-2">
@@ -436,28 +445,53 @@ export default function Team() {
       </Dialog>
 
       <Dialog open={editScopeDialogOpen} onOpenChange={setEditScopeDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Edit Scope of Work</DialogTitle>
-            <DialogDescription>
-              Define the responsibilities and KPIs for {selectedProfile?.name}
-            </DialogDescription>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Edit Key Performance Indicators</DialogTitle>
+                <DialogDescription>
+                  Define measurable goals and responsibilities for {selectedProfile?.name}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
+          
           <div className="space-y-4 py-4">
-            <Textarea
-              value={scopeOfWorkText}
-              onChange={(e) => setScopeOfWorkText(e.target.value)}
-              placeholder="Define member's responsibilities, KPIs, and scope of work..."
-              rows={8}
-              className="w-full"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="kpis" className="text-sm font-medium">
+                KPIs & Responsibilities
+              </Label>
+              <Textarea
+                id="kpis"
+                value={kpisText}
+                onChange={(e) => setKpisText(e.target.value)}
+                placeholder="Example:&#10;• Complete 10 campaigns per month&#10;• Maintain 95% on-time delivery&#10;• Reduce cost per acquisition by 15%&#10;• Weekly reporting to stakeholders"
+                rows={10}
+                className="w-full font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Use bullet points for clarity. Include specific metrics and targets.
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setEditScopeDialogOpen(false)}>
+          
+          <div className="flex gap-2 justify-end border-t pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setEditScopeDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveScopeOfWork}>
-              Save Scope
+            <Button 
+              onClick={handleSaveScopeOfWork}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Target className="h-4 w-4 mr-2" />
+              Save KPIs
             </Button>
           </div>
         </DialogContent>
