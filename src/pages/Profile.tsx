@@ -477,6 +477,23 @@ export default function Profile() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* KPI Manager Dialogs */}
+      <KPIManager
+        open={kpiDialogOpen}
+        onOpenChange={setKpiDialogOpen}
+        kpis={kpis}
+        onSave={handleSaveKPIs}
+        title="Manage Annual KPIs"
+      />
+
+      <KPIManager
+        open={quarterlyKpiDialogOpen}
+        onOpenChange={setQuarterlyKpiDialogOpen}
+        kpis={quarterlyKpis}
+        onSave={handleSaveQuarterlyKPIs}
+        title="Manage Quarterly KPIs"
+      />
     </div>
   );
 }

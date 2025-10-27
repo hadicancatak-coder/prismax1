@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,11 @@ interface KPIManagerProps {
 
 export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManagerProps) {
   const [localKPIs, setLocalKPIs] = useState<KPI[]>(kpis);
+
+  // Sync local state with props when dialog opens or kpis change
+  useEffect(() => {
+    setLocalKPIs(kpis);
+  }, [kpis, open]);
 
   const addKPI = () => {
     setLocalKPIs([
