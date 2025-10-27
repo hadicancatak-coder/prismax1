@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Database, BarChart3, LayoutDashboard, Shield } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Rocket, Bell, FolderKanban, Link2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -26,12 +26,6 @@ const operationsItems = [
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Preview", url: "/campaigns", icon: Target },
-];
-
-const analyticsItems = [
-  { title: "Data Sources", url: "/data-sources", icon: Database },
-  { title: "Visualizations", url: "/visualizations", icon: BarChart3 },
-  { title: "Dashboards", url: "/dashboards", icon: LayoutDashboard },
 ];
 
 const teamItems = [
@@ -140,36 +134,6 @@ export function AppSidebar() {
                     ) : (
                       <NavLink to={item.url} className={getNavLinkClass}>
                         <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-medium">{item.title}</span>
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-
-          {/* Analytics */}
-          <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">Analytics</SidebarGroupLabel>}
-            <SidebarMenu>
-              {analyticsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    {!open ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <NavLink to={item.url} className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
-                          </NavLink>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                          <p className="font-medium">{item.title}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" />
                         <span className="text-sm font-medium">{item.title}</span>
                       </NavLink>
                     )}

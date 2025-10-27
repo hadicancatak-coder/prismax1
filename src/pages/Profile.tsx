@@ -14,6 +14,7 @@ import { TaskCard } from "@/components/TaskCard";
 import { Upload, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NotificationPreferences } from "@/components/NotificationPreferences";
 
 const TEAMS = ["SocialUA", "PPC", "PerMar"];
 
@@ -290,6 +291,11 @@ export default function Profile() {
           </div>
         </div>
       </Card>
+
+      {/* Notification Preferences - Only for own profile */}
+      {isOwnProfile && (
+        <NotificationPreferences />
+      )}
 
       {/* Team Members */}
       {teamMembers.length > 0 && (

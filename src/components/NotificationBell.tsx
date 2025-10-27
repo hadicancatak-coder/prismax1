@@ -59,6 +59,22 @@ export function NotificationBell() {
         return `Mentioned in "${payload.task_title}"`;
       case "task_updated":
         return payload.message || `"${payload.task_title}" updated`;
+      case "deadline_reminder_3days":
+        return `⏰ Task "${payload.task_title}" due in 3 days`;
+      case "deadline_reminder_1day":
+        return `🔔 Task "${payload.task_title}" due tomorrow!`;
+      case "deadline_reminder_overdue":
+        return `❗ Task "${payload.task_title}" is ${payload.days_overdue} days overdue`;
+      case "campaign_starting_soon":
+        return `🚀 Campaign "${payload.campaign_title}" launches in 3 days`;
+      case "task_status_changed":
+        return `Task "${payload.task_title}" moved to ${payload.new_status}`;
+      case "campaign_status_changed":
+        return `Campaign "${payload.campaign_title}" moved to ${payload.new_status}`;
+      case "blocker_resolved":
+        return `✅ Blocker resolved for "${payload.task_title}"`;
+      case "approval_pending":
+        return `⏳ Approval pending for "${payload.task_title}" (${payload.days_pending} days)`;
       default:
         return "New notification";
     }

@@ -847,197 +847,6 @@ export type Database = {
           },
         ]
       }
-      dashboard_visualizations: {
-        Row: {
-          created_at: string | null
-          dashboard_id: string | null
-          id: string
-          position: Json
-          visualization_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          dashboard_id?: string | null
-          id?: string
-          position?: Json
-          visualization_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          dashboard_id?: string | null
-          id?: string
-          position?: Json
-          visualization_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dashboard_visualizations_dashboard_id_fkey"
-            columns: ["dashboard_id"]
-            isOneToOne: false
-            referencedRelation: "dashboards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dashboard_visualizations_visualization_id_fkey"
-            columns: ["visualization_id"]
-            isOneToOne: false
-            referencedRelation: "visualizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dashboards: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          is_public: boolean | null
-          layout: Json
-          name: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_public?: boolean | null
-          layout?: Json
-          name: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_public?: boolean | null
-          layout?: Json
-          name?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      dataset_rows: {
-        Row: {
-          created_at: string | null
-          data: Json
-          dataset_id: string | null
-          dimension: string | null
-          dimension_type: string | null
-          id: string
-          row_number: number
-          time_key_parsed: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          data?: Json
-          dataset_id?: string | null
-          dimension?: string | null
-          dimension_type?: string | null
-          id?: string
-          row_number: number
-          time_key_parsed?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          data?: Json
-          dataset_id?: string | null
-          dimension?: string | null
-          dimension_type?: string | null
-          id?: string
-          row_number?: number
-          time_key_parsed?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dataset_rows_dataset_id_fkey"
-            columns: ["dataset_id"]
-            isOneToOne: false
-            referencedRelation: "datasets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      datasets: {
-        Row: {
-          column_definitions: Json
-          created_at: string | null
-          date_range_end: string | null
-          date_range_start: string | null
-          description: string | null
-          detected_type: string | null
-          dimension_values: string[] | null
-          google_sheet_id: string | null
-          google_sheet_url: string | null
-          granularity: string | null
-          has_dimensions: boolean | null
-          id: string
-          last_sync_error: string | null
-          last_synced_at: string | null
-          name: string
-          parsing_metadata: Json | null
-          primary_kpi_fields: string[] | null
-          row_count: number | null
-          source_type: string
-          structure_config: Json | null
-          sync_frequency: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          column_definitions?: Json
-          created_at?: string | null
-          date_range_end?: string | null
-          date_range_start?: string | null
-          description?: string | null
-          detected_type?: string | null
-          dimension_values?: string[] | null
-          google_sheet_id?: string | null
-          google_sheet_url?: string | null
-          granularity?: string | null
-          has_dimensions?: boolean | null
-          id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          name: string
-          parsing_metadata?: Json | null
-          primary_kpi_fields?: string[] | null
-          row_count?: number | null
-          source_type: string
-          structure_config?: Json | null
-          sync_frequency?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          column_definitions?: Json
-          created_at?: string | null
-          date_range_end?: string | null
-          date_range_start?: string | null
-          description?: string | null
-          detected_type?: string | null
-          dimension_values?: string[] | null
-          google_sheet_id?: string | null
-          google_sheet_url?: string | null
-          granularity?: string | null
-          has_dimensions?: boolean | null
-          id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          name?: string
-          parsing_metadata?: Json | null
-          primary_kpi_fields?: string[] | null
-          row_count?: number | null
-          source_type?: string
-          structure_config?: Json | null
-          sync_frequency?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       entity_presets: {
         Row: {
           created_at: string | null
@@ -1332,6 +1141,33 @@ export type Database = {
           id?: string
           ip_address?: string | null
           success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          notification_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2391,53 +2227,6 @@ export type Database = {
         }
         Relationships: []
       }
-      visualizations: {
-        Row: {
-          config: Json
-          created_at: string | null
-          dataset_id: string | null
-          description: string | null
-          id: string
-          is_public: boolean | null
-          name: string
-          updated_at: string | null
-          user_id: string | null
-          viz_type: string
-        }
-        Insert: {
-          config?: Json
-          created_at?: string | null
-          dataset_id?: string | null
-          description?: string | null
-          id?: string
-          is_public?: boolean | null
-          name: string
-          updated_at?: string | null
-          user_id?: string | null
-          viz_type: string
-        }
-        Update: {
-          config?: Json
-          created_at?: string | null
-          dataset_id?: string | null
-          description?: string | null
-          id?: string
-          is_public?: boolean | null
-          name?: string
-          updated_at?: string | null
-          user_id?: string | null
-          viz_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "visualizations_dataset_id_fkey"
-            columns: ["dataset_id"]
-            isOneToOne: false
-            referencedRelation: "datasets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       launch_campaigns_with_assignees: {
@@ -2537,6 +2326,10 @@ export type Database = {
         Args: { _comment_id: string; _user_id: string }
         Returns: boolean
       }
+      is_notification_enabled: {
+        Args: { p_notification_type: string; p_user_id: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           p_action: string
@@ -2552,6 +2345,10 @@ export type Database = {
       }
       regenerate_backup_codes: { Args: never; Returns: string[] }
       reschedule_overdue_tasks: { Args: never; Returns: undefined }
+      send_notification: {
+        Args: { p_payload_json: Json; p_type: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "member"
