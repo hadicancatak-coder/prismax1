@@ -56,8 +56,27 @@ export default function AdsPage() {
   const [longHeadline, setLongHeadline] = useState("");
   const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(""));
   const [ctaText, setCtaText] = useState("");
+  const [detectedLanguage, setDetectedLanguage] = useState<'EN' | 'AR'>('EN');
   
   const incrementUsage = useIncrementElementUsage();
+
+  // Auto-detect language from ad content
+  useEffect(() => {
+    const detectLanguage = (text: string): 'EN' | 'AR' => {
+      const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+      return arabicRegex.test(text) ? 'AR' : 'EN';
+    };
+
+    const allText = [
+      ...headlines.filter(h => h),
+      ...descriptions.filter(d => d),
+      businessName,
+      longHeadline,
+      ...shortHeadlines.filter(h => h)
+    ].join(' ');
+    
+    setDetectedLanguage(detectLanguage(allText));
+  }, [headlines, descriptions, businessName, longHeadline, shortHeadlines]);
 
   useEffect(() => {
     fetchSavedAds();
@@ -956,6 +975,7 @@ ${landingPage}
                   descriptions={descriptions}
                   ctaText={ctaText}
                   landingPage={landingPage}
+                  language={detectedLanguage}
                 />
               </div>
             </div>

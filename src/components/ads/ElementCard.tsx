@@ -94,15 +94,18 @@ export function ElementCard({ element }: ElementCardProps) {
             ) : (
               <>
                 <p className="text-sm font-medium line-clamp-2">{content}</p>
-                {element.entity && element.entity.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {element.entity.map((ent) => (
-                      <Badge key={ent} variant="outline" className="text-xs">
-                        {ent}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(element as any).language && (
+                    <Badge variant={(element as any).language === 'AR' ? 'secondary' : 'default'} className="text-xs">
+                      {(element as any).language}
+                    </Badge>
+                  )}
+                  {element.entity && element.entity.length > 0 && element.entity.map((ent) => (
+                    <Badge key={ent} variant="outline" className="text-xs">
+                      {ent}
+                    </Badge>
+                  ))}
+                </div>
               </>
             )}
           </div>

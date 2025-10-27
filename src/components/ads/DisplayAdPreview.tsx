@@ -2,8 +2,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ImageIcon, Video, Mail, ChevronLeft, ChevronRight, Building } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ImageIcon, Video, Mail, ChevronLeft, ChevronRight, Building, Check } from 'lucide-react';
 import { useState } from 'react';
+import { getProfileForLanguage } from '@/lib/adProfiles';
 
 interface DisplayAdPreviewProps {
   businessName: string;
@@ -12,11 +14,14 @@ interface DisplayAdPreviewProps {
   descriptions: string[];
   ctaText: string;
   landingPage: string;
+  language?: string;
 }
 
 export function DisplayAdPreview(props: DisplayAdPreviewProps) {
   const [combinationIndex, setCombinationIndex] = useState(0);
   const displayUrl = props.landingPage ? new URL(props.landingPage).hostname.replace('www.', '') : 'example.com';
+  const profile = getProfileForLanguage(props.language || 'EN');
+  const isRTL = props.language === 'AR';
   
   // Get active filtered arrays
   const activeShortHeadlines = props.shortHeadlines?.filter(h => h.trim()) || [];
@@ -66,17 +71,31 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
                   </div>
                 </div>
                 
-                {/* Ad content - scrollable */}
+                  {/* Ad content - scrollable */}
                 <div className="h-[calc(100%-2rem)] overflow-y-auto bg-white">
                   {/* Ad */}
                   <div className="border-b">
+                    {/* Profile Header */}
+                    <div className="flex items-center gap-2 p-3 border-b">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile.avatar} />
+                        <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs font-semibold">{profile.name}</p>
+                          {profile.verified && <Check className="h-3 w-3 text-blue-500" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Sponsored</p>
+                      </div>
+                    </div>
                     <div className="h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                       <div className="text-center">
                         <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
                         <p className="text-xs text-muted-foreground">375x200 Image</p>
                       </div>
                     </div>
-                    <div className="p-3 space-y-2">
+                    <div className={`p-3 space-y-2 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
                       <p className="text-xs text-muted-foreground">{displayUrl}</p>
                       <h3 className="font-semibold text-sm line-clamp-2 text-gray-900">
                         {currentShortHeadline || 'Your headline here'}
@@ -123,12 +142,17 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
               <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded text-xs text-white">Skip Ad</div>
             </div>
             <div className="p-4 bg-muted/50 flex items-center gap-4">
-              <div className="w-16 h-16 bg-muted rounded flex items-center justify-center shrink-0">
-                <Building className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
+              <Avatar className="w-16 h-16 shrink-0">
+                <AvatarImage src={profile.avatar} />
+                <AvatarFallback>{profile.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs font-semibold truncate">{profile.name}</p>
+                  {profile.verified && <Check className="h-3 w-3 text-blue-500" />}
+                </div>
                 <p className="text-xs text-muted-foreground truncate">{displayUrl}</p>
-                <p className="font-semibold text-sm line-clamp-2">{currentShortHeadline || props.longHeadline || 'Your ad headline'}</p>
+                <p className="font-semibold text-sm line-clamp-2 mt-1">{currentShortHeadline || props.longHeadline || 'Your ad headline'}</p>
               </div>
               {props.ctaText && <Button size="sm" variant="secondary">{props.ctaText}</Button>}
             </div>
@@ -140,17 +164,25 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
             <div className="border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/20">
               <div className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center shrink-0">
-                    <Mail className="h-6 w-6 text-muted-foreground" />
-                  </div>
+                  <Avatar className="w-12 h-12 shrink-0">
+                    <AvatarImage src={profile.avatar} />
+                    <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{props.businessName || 'Advertiser'}</p>
+                    <div className="flex items-center gap-1">
+                      <p className="font-semibold text-sm">{profile.name}</p>
+                      {profile.verified && <Check className="h-3 w-3 text-blue-500" />}
+                    </div>
                     <p className="text-xs text-muted-foreground">Ad • {displayUrl}</p>
                   </div>
                   <Badge variant="outline" className="text-xs">Ad</Badge>
                 </div>
-                <h3 className="font-semibold text-base">{props.longHeadline || 'Your email subject'}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-3">{currentDescription || 'Ad description...'}</p>
+                <h3 className={`font-semibold text-base ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                  {props.longHeadline || 'Your email subject'}
+                </h3>
+                <p className={`text-sm text-muted-foreground line-clamp-3 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                  {currentDescription || 'Ad description...'}
+                </p>
                 <div className="flex items-center gap-2 pt-2">
                   {props.ctaText && <Button size="sm">{props.ctaText}</Button>}
                   <Button size="sm" variant="ghost">Learn More</Button>
@@ -166,7 +198,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
               <ImageIcon className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="flex-1 px-4 py-2 flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
+              <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
                 <p className="text-xs text-muted-foreground">{displayUrl}</p>
                 <h3 className="font-semibold text-sm line-clamp-1">{currentShortHeadline || props.longHeadline || 'Headline'}</h3>
                 <p className="text-xs text-muted-foreground line-clamp-1">{currentDescription}</p>
@@ -184,7 +216,7 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
                 <p className="text-xs text-muted-foreground">300x120</p>
               </div>
             </div>
-            <div className="p-3 space-y-2">
+            <div className={`p-3 space-y-2 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
               <p className="text-xs text-muted-foreground">{displayUrl}</p>
               <h3 className="font-semibold text-sm line-clamp-2">{currentShortHeadline || props.longHeadline || 'Headline'}</h3>
               <p className="text-xs text-muted-foreground line-clamp-2">{currentDescription}</p>

@@ -17,6 +17,8 @@ export function SavedElementsLibrary() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<any>({});
   const [entityFilter, setEntityFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   
@@ -26,6 +28,8 @@ export function SavedElementsLibrary() {
     elementType: activeTab,
     search: debouncedSearch,
     entity: entityFilter === 'all' ? undefined : entityFilter,
+    language: languageFilter,
+    platform: platformFilter,
     ...filters,
   });
 
@@ -45,10 +49,10 @@ export function SavedElementsLibrary() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-2 flex-wrap">
         <Select value={entityFilter} onValueChange={setEntityFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by Entity" />
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Entity" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Entities</SelectItem>
@@ -57,7 +61,34 @@ export function SavedElementsLibrary() {
             ))}
           </SelectContent>
         </Select>
-        <div className="flex-1">
+        
+        <Select value={languageFilter} onValueChange={setLanguageFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Languages</SelectItem>
+            <SelectItem value="EN">English</SelectItem>
+            <SelectItem value="AR">Arabic</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select value={platformFilter} onValueChange={setPlatformFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Platform" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Platforms</SelectItem>
+            <SelectItem value="ppc">PPC</SelectItem>
+            <SelectItem value="facebook">Facebook</SelectItem>
+            <SelectItem value="instagram">Instagram</SelectItem>
+            <SelectItem value="tiktok">TikTok</SelectItem>
+            <SelectItem value="snap">Snap</SelectItem>
+            <SelectItem value="reddit">Reddit</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input

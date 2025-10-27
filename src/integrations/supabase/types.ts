@@ -139,7 +139,9 @@ export type Database = {
           google_status_notes: string | null
           id: string
           is_favorite: boolean | null
+          language: string | null
           last_used_at: string | null
+          platform: string | null
           tags: string[] | null
           updated_at: string | null
           use_count: number | null
@@ -155,7 +157,9 @@ export type Database = {
           google_status_notes?: string | null
           id?: string
           is_favorite?: boolean | null
+          language?: string | null
           last_used_at?: string | null
+          platform?: string | null
           tags?: string[] | null
           updated_at?: string | null
           use_count?: number | null
@@ -171,7 +175,9 @@ export type Database = {
           google_status_notes?: string | null
           id?: string
           is_favorite?: boolean | null
+          language?: string | null
           last_used_at?: string | null
+          platform?: string | null
           tags?: string[] | null
           updated_at?: string | null
           use_count?: number | null
@@ -423,6 +429,7 @@ export type Database = {
           headlines: Json
           id: string
           landing_page: string | null
+          language: string | null
           long_headline: string | null
           name: string
           short_headlines: Json | null
@@ -449,6 +456,7 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          language?: string | null
           long_headline?: string | null
           name: string
           short_headlines?: Json | null
@@ -475,6 +483,7 @@ export type Database = {
           headlines?: Json
           id?: string
           landing_page?: string | null
+          language?: string | null
           long_headline?: string | null
           name?: string
           short_headlines?: Json | null
@@ -1745,6 +1754,7 @@ export type Database = {
           sprint: string | null
           status: Database["public"]["Enums"]["task_status"]
           task_type: Database["public"]["Enums"]["task_type"] | null
+          teams: Json | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -1788,6 +1798,7 @@ export type Database = {
           sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          teams?: Json | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -1831,6 +1842,7 @@ export type Database = {
           sprint?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          teams?: Json | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -2298,6 +2310,7 @@ export type Database = {
       calculate_actual_hours: { Args: { task_uuid: string }; Returns: number }
       cleanup_old_mfa_attempts: { Args: never; Returns: undefined }
       cleanup_rate_limit: { Args: never; Returns: undefined }
+      detect_language: { Args: { content_text: string }; Returns: string }
       get_all_users_admin: {
         Args: never
         Returns: {
@@ -2314,6 +2327,14 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_users_in_teams: {
+        Args: { team_names: string[] }
+        Returns: {
+          name: string
+          profile_id: string
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {

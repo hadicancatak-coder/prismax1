@@ -17,6 +17,8 @@ export interface AdElement {
   last_used_at?: string;
   created_at: string;
   updated_at: string;
+  language?: string;
+  platform?: string;
 }
 
 export function useAdElements(filters?: {
@@ -25,6 +27,8 @@ export function useAdElements(filters?: {
   googleStatus?: string;
   tags?: string[];
   search?: string;
+  language?: string;
+  platform?: string;
 }) {
   return useQuery({
     queryKey: ['ad-elements', filters],
@@ -45,6 +49,12 @@ export function useAdElements(filters?: {
       }
       if (filters?.search) {
         query = query.ilike('content', `%${filters.search}%`);
+      }
+      if (filters?.language && filters.language !== 'all') {
+        query = query.eq('language', filters.language);
+      }
+      if (filters?.platform && filters.platform !== 'all') {
+        query = query.eq('platform', filters.platform);
       }
 
       query = query.order('last_used_at', { ascending: false, nullsFirst: false })
