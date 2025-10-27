@@ -303,14 +303,13 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
-        <form className="flex-1 flex flex-col min-h-0" onSubmit={handleSubmit}>
-          <ScrollArea className="flex-1 max-h-[60vh] pr-4">
-            <div className="pr-4">
-            <div className="space-y-4 py-4">
+        <form className="flex-1 flex flex-col overflow-hidden" onSubmit={handleSubmit}>
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="space-y-4 px-6 py-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input 
@@ -659,11 +658,10 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   />
                 </div>
               )}
-              </div>
             </div>
           </ScrollArea>
 
-          <div className="flex justify-end gap-3 pt-4 mt-2 border-t sticky bottom-0 bg-background">
+          <div className="flex-shrink-0 flex justify-end gap-3 px-6 pt-4 border-t bg-background">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

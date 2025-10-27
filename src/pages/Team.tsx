@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Phone, Users, Search, Edit, Grid3x3, List, Download } from "lucide-react";
+import { Mail, Phone, Users, Search, Edit, Grid3x3, List, Download, Settings } from "lucide-react";
 import { TEAMS } from "@/lib/constants";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Team() {
   const navigate = useNavigate();
@@ -23,8 +24,10 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editScopeDialogOpen, setEditScopeDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [scopeOfWorkText, setScopeOfWorkText] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<string>("name");
@@ -99,6 +102,13 @@ export default function Team() {
     setEditDialogOpen(true);
   };
 
+  const handleEditScopeOfWork = (profile: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedProfile(profile);
+    setScopeOfWorkText(profile.scope_of_work || "");
+    setEditScopeDialogOpen(true);
+  };
+
   const toggleTeam = (team: string) => {
     setSelectedTeams(prev =>
       prev.includes(team) ? prev.filter(t => t !== team) : [...prev, team]
@@ -122,6 +132,33 @@ export default function Team() {
       });
 
       setEditDialogOpen(false);
+      fetchProfiles();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveScopeOfWork = async () => {
+    if (!selectedProfile) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ scope_of_work: scopeOfWorkText })
+        .eq("user_id", selectedProfile.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Scope of work updated successfully",
+      });
+
+      setEditScopeDialogOpen(false);
       fetchProfiles();
     } catch (error: any) {
       toast({
@@ -250,14 +287,24 @@ export default function Team() {
             onClick={() => navigate(`/profile/${profile.user_id}`)}
           >
             {userRole === 'admin' && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="absolute top-2 right-2"
-                onClick={(e) => handleEditTeams(profile, e)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              <div className="absolute top-2 right-2 flex gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => handleEditTeams(profile, e)}
+                  title="Edit Teams"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => handleEditScopeOfWork(profile, e)}
+                  title="Edit Scope of Work"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
             )}
             <div className={`flex items-start gap-4 ${viewMode === "list" ? "flex-1" : ""}`}>
               <div className="relative">
@@ -384,6 +431,34 @@ export default function Team() {
                 Save Teams
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editScopeDialogOpen} onOpenChange={setEditScopeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Scope of Work</DialogTitle>
+            <DialogDescription>
+              Define the responsibilities and KPIs for {selectedProfile?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={scopeOfWorkText}
+              onChange={(e) => setScopeOfWorkText(e.target.value)}
+              placeholder="Define member's responsibilities, KPIs, and scope of work..."
+              rows={8}
+              className="w-full"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setEditScopeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveScopeOfWork}>
+              Save Scope
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
