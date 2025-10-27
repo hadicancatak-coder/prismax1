@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Bell, Check, Trash2 } from "lucide-react";
+import { Bell, Check, Trash2, Search, CheckCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns";
 import { AnnouncementsSection } from "@/components/AnnouncementsSection";
 import { NotificationDetailDialog } from "@/components/NotificationDetailDialog";
 
@@ -15,11 +19,16 @@ export default function Notifications() {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [filteredNotifications, setFilteredNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -47,6 +56,10 @@ export default function Notifications() {
     };
   }, [user]);
 
+  useEffect(() => {
+    applyFilters();
+  }, [notifications, readFilter, typeFilter, searchQuery]);
+
   const fetchNotifications = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -61,6 +74,32 @@ export default function Notifications() {
     setLoading(false);
   };
 
+  const applyFilters = () => {
+    let filtered = [...notifications];
+
+    // Read/unread filter
+    if (readFilter === "unread") {
+      filtered = filtered.filter(n => !n.read_at);
+    } else if (readFilter === "read") {
+      filtered = filtered.filter(n => n.read_at);
+    }
+
+    // Type filter
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(n => n.type === typeFilter);
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(n => {
+        const message = getNotificationMessage(n).toLowerCase();
+        return message.includes(searchQuery.toLowerCase());
+      });
+    }
+
+    setFilteredNotifications(filtered);
+  };
+
   const markAsRead = async (notificationId: string) => {
     const { error } = await supabase
       .from("notifications")
@@ -68,6 +107,19 @@ export default function Notifications() {
       .eq("id", notificationId);
 
     if (!error) {
+      fetchNotifications();
+    }
+  };
+
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", user?.id)
+      .is("read_at", null);
+
+    if (!error) {
+      toast({ title: "All notifications marked as read" });
       fetchNotifications();
     }
   };
@@ -83,6 +135,19 @@ export default function Notifications() {
     }
   };
 
+  const deleteSelected = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .delete()
+      .in("id", selectedIds);
+
+    if (!error) {
+      toast({ title: `${selectedIds.length} notifications deleted` });
+      setSelectedIds([]);
+      fetchNotifications();
+    }
+  };
+
   const handleNotificationClick = async (notification: any) => {
     setSelectedNotification(notification);
     setDetailDialogOpen(true);
@@ -94,6 +159,12 @@ export default function Notifications() {
       setSelectedTaskId(payload.task_id);
       setTaskDialogOpen(true);
     }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const getNotificationMessage = (notification: any) => {
@@ -130,6 +201,43 @@ export default function Notifications() {
     }
   };
 
+  const getPriorityBadge = (type: string) => {
+    if (type.includes("overdue") || type.includes("blocker")) {
+      return <Badge variant="destructive" className="text-xs">Urgent</Badge>;
+    }
+    if (type.includes("1day") || type.includes("approval")) {
+      return <Badge variant="default" className="text-xs bg-orange-500">High</Badge>;
+    }
+    return null;
+  };
+
+  const groupByDate = (notifs: any[]) => {
+    const groups: Record<string, any[]> = {
+      Today: [],
+      Yesterday: [],
+      "This Week": [],
+      Older: []
+    };
+
+    notifs.forEach(n => {
+      const date = new Date(n.created_at);
+      if (isToday(date)) {
+        groups.Today.push(n);
+      } else if (isYesterday(date)) {
+        groups.Yesterday.push(n);
+      } else if (isThisWeek(date, { weekStartsOn: 1 })) {
+        groups["This Week"].push(n);
+      } else {
+        groups.Older.push(n);
+      }
+    });
+
+    return groups;
+  };
+
+  const notificationTypes = Array.from(new Set(notifications.map(n => n.type)));
+  const groupedNotifications = groupByDate(filteredNotifications);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -156,58 +264,134 @@ export default function Notifications() {
 
       <AnnouncementsSection />
 
-      <div className="space-y-4">
-        {notifications.length > 0 ? (
-          notifications.map((notification) => (
-            <Card
-              key={notification.id}
-              className={`p-4 transition-all hover:shadow-medium cursor-pointer ${
-                notification.read_at ? "bg-background" : "bg-muted/50 border-primary/20"
-              }`}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-sm text-foreground mb-2">{getNotificationMessage(notification)}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{new Date(notification.created_at).toLocaleString()}</span>
-                    {!notification.read_at && (
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        New
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  {!notification.read_at && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => markAsRead(notification.id)}
-                      className="gap-2"
-                    >
-                      <Check className="h-4 w-4" />
-                      Mark Read
-                    </Button>
-                  )}
-                  {(userRole === "admin" || notification.user_id === user?.id) && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteNotification(notification.id)}
-                      className="gap-2 hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+      {/* Filters and Actions */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <Tabs value={readFilter} onValueChange={(v: any) => setReadFilter(v)} className="w-full md:w-auto">
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="unread">Unread</TabsTrigger>
+              <TabsTrigger value="read">Read</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {notificationTypes.map(type => (
+                <SelectItem key={type} value={type}>
+                  {type.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search notifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <Button onClick={markAllAsRead} variant="outline" size="sm">
+            <CheckCheck className="h-4 w-4 mr-2" />
+            Mark All Read
+          </Button>
+        </div>
+
+        {selectedIds.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 p-3 bg-muted rounded-md">
+            <span className="text-sm">{selectedIds.length} selected</span>
+            <Button onClick={deleteSelected} variant="destructive" size="sm">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Selected
+            </Button>
+            <Button onClick={() => setSelectedIds([])} variant="ghost" size="sm">
+              Clear Selection
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* Grouped Notifications */}
+      <div className="space-y-6">
+        {Object.entries(groupedNotifications).map(([group, notifs]) => (
+          notifs.length > 0 && (
+            <div key={group}>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">{group}</h2>
+              <div className="space-y-2">
+                {notifs.map((notification) => (
+                  <Card
+                    key={notification.id}
+                    className={`p-4 transition-all hover:shadow-medium cursor-pointer ${
+                      notification.read_at ? "bg-background" : "bg-muted/50 border-primary/20"
+                    } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1">
+                        <Checkbox
+                          checked={selectedIds.includes(notification.id)}
+                          onCheckedChange={() => toggleSelect(notification.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm text-foreground mb-2">{getNotificationMessage(notification)}</p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}</span>
+                            {!notification.read_at && (
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                New
+                              </Badge>
+                            )}
+                            {getPriorityBadge(notification.type)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        {!notification.read_at && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => markAsRead(notification.id)}
+                            className="gap-2"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(userRole === "admin" || notification.user_id === user?.id) && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteNotification(notification.id)}
+                            className="gap-2 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
-          ))
-        ) : (
+            </div>
+          )
+        ))}
+
+        {filteredNotifications.length === 0 && (
           <Card className="p-8 text-center">
             <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No notifications yet</p>
+            <p className="text-muted-foreground">
+              {searchQuery || typeFilter !== "all" || readFilter !== "all"
+                ? "No notifications match your filters"
+                : "No notifications yet"}
+            </p>
           </Card>
         )}
       </div>

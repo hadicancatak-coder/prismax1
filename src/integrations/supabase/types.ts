@@ -1273,6 +1273,7 @@ export type Database = {
           name: string
           password_last_changed_at: string | null
           phone_number: string | null
+          scope_of_work: string | null
           tagline: string | null
           teams: Database["public"]["Enums"]["team"][] | null
           title: string | null
@@ -1296,6 +1297,7 @@ export type Database = {
           name: string
           password_last_changed_at?: string | null
           phone_number?: string | null
+          scope_of_work?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null
@@ -1319,6 +1321,7 @@ export type Database = {
           name?: string
           password_last_changed_at?: string | null
           phone_number?: string | null
+          scope_of_work?: string | null
           tagline?: string | null
           teams?: Database["public"]["Enums"]["team"][] | null
           title?: string | null

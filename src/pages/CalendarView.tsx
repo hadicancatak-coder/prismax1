@@ -216,6 +216,15 @@ export default function CalendarView() {
         </>
       )}
 
+      {focusMode && (
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Focus Mode</h1>
+          <Button onClick={() => setFocusMode(false)} variant="outline">
+            Exit Focus Mode
+          </Button>
+        </div>
+      )}
+
       <div className={`grid gap-6 mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
         <Card className={focusMode ? '' : 'lg:col-span-2'}>
           <CardHeader className="flex flex-row items-center justify-between">

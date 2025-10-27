@@ -30,6 +30,7 @@ export default function Profile() {
   const [title, setTitle] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [tagline, setTagline] = useState("");
+  const [scopeOfWork, setScopeOfWork] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any>({ completed: [], pending: [], blocked: [], failed: [] });
@@ -52,6 +53,7 @@ export default function Profile() {
       setTitle(data.title || "");
       setPhoneNumber(data.phone_number || "");
       setTagline(data.tagline || "");
+      setScopeOfWork(data.scope_of_work || "");
       setSelectedTeams((data.teams as string[]) || []);
     }
   };
@@ -171,6 +173,7 @@ export default function Profile() {
         title, 
         phone_number: phoneNumber, 
         tagline,
+        scope_of_work: scopeOfWork,
         teams: selectedTeams as any
       })
       .eq("user_id", user?.id);
@@ -244,6 +247,10 @@ export default function Profile() {
                   <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." />
                 </div>
                 <div>
+                  <Label>Scope of Work</Label>
+                  <Textarea value={scopeOfWork} onChange={(e) => setScopeOfWork(e.target.value)} placeholder="Responsibilities and areas of focus..." rows={4} />
+                </div>
+                <div>
                   <Label className="mb-3 block">Teams</Label>
                   <div className="space-y-2">
                     {TEAMS.map((team) => (
@@ -272,6 +279,13 @@ export default function Profile() {
                 {profile.tagline && <p className="text-sm">{profile.tagline}</p>}
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
+                
+                {profile.scope_of_work && (
+                  <div className="pt-4">
+                    <h3 className="text-sm font-semibold mb-2">Scope of Work</h3>
+                    <p className="text-sm whitespace-pre-wrap">{profile.scope_of_work}</p>
+                  </div>
+                )}
                 
                 {profile.teams && profile.teams.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
