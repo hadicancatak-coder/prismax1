@@ -24,7 +24,8 @@ import { taskSchema } from "@/lib/validationSchemas";
 import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ENTITIES } from "@/lib/constants";
+import { ENTITIES, TEAMS } from "@/lib/constants";
+import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -48,6 +49,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number | null>(null);
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -225,6 +227,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_rrule: recurrenceRule || null,
         recurrence_day_of_week: recurrenceDayOfWeek,
         recurrence_day_of_month: recurrenceDayOfMonth,
+        teams: selectedTeams,
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
@@ -280,6 +283,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setRecurrenceDayOfWeek(null);
       setRecurrenceDayOfMonth(null);
       setValidationErrors({});
+      setSelectedTeams([]);
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -540,6 +544,16 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {userRole === "admin" && (
+            <div className="space-y-2">
+              <Label>Teams</Label>
+              <TeamsMultiSelect
+                selectedTeams={selectedTeams}
+                onChange={setSelectedTeams}
+              />
             </div>
           )}
 

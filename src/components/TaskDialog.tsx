@@ -29,7 +29,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ENTITIES } from "@/lib/constants";
+import { ENTITIES, TEAMS } from "@/lib/constants";
+import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 
 interface TaskDialogProps {
   open: boolean;
@@ -607,6 +608,28 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 )}
               </div>
             </div>
+
+            {userRole === 'admin' && (
+              <div>
+                <Label className="mb-2 block">Teams</Label>
+                {editMode ? (
+                  <TeamsMultiSelect
+                    selectedTeams={Array.isArray(editedTask?.teams) ? editedTask.teams : []}
+                    onChange={(teams) => setEditedTask({ ...editedTask, teams })}
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(task?.teams) ? task.teams : []).length > 0 ? (
+                      (Array.isArray(task?.teams) ? task.teams : []).map((team: string) => (
+                        <Badge key={team} variant="secondary">{team}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No teams assigned</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div>
               <Label className="mb-2 block">Assignees</Label>

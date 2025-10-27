@@ -38,6 +38,13 @@ export default function CalendarView() {
   const fetchTasks = async () => {
     if (!user?.id) return;
 
+    // Get current user's profile with teams
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('id, user_id, teams')
+      .eq('user_id', selectedUserId || user.id)
+      .single();
+
     let query = supabase.from("tasks").select(`
       *,
       task_assignees(user_id)
@@ -54,43 +61,31 @@ export default function CalendarView() {
       .lt("due_at", tomorrow.toISOString())
       .order("due_at", { ascending: true });
 
-    // Apply user filter if needed
-    if (userRole === 'admin' && selectedUserId) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", selectedUserId)
-        .single();
+    const { data: allTasks } = await query;
 
-      if (profile) {
-        const { data: assignedTaskIds } = await supabase
-          .from("task_assignees")
-          .select("task_id")
-          .eq("user_id", profile.id);
-
-        const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
-        query = query.in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000']);
+    // Filter tasks by direct assignment OR team membership
+    const filteredTasks = (allTasks || []).filter((task: any) => {
+      // Admin sees all tasks if no specific user selected
+      if (userRole === 'admin' && !selectedUserId) {
+        return true;
       }
-    } else if (userRole !== 'admin') {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
 
-      if (profile) {
-        const { data: assignedTaskIds } = await supabase
-          .from("task_assignees")
-          .select("task_id")
-          .eq("user_id", profile.id);
+      // Check direct assignment
+      const assigneeIds = task.task_assignees?.map((a: any) => a.user_id) || [];
+      const isDirectAssignee = assigneeIds.includes(currentProfile?.id);
+      
+      // Check team membership
+      const userTeams = currentProfile?.teams || [];
+      const taskTeams = Array.isArray(task.teams) 
+        ? task.teams 
+        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
+      
+      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
+      
+      return isDirectAssignee || isTeamMember;
+    });
 
-        const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
-        query = query.in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000']);
-      }
-    }
-
-    const { data } = await query;
-    setTasks(data || []);
+    setTasks(filteredTasks);
   };
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {

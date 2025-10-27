@@ -22,6 +22,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TaskDialog } from "@/components/TaskDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +51,18 @@ export default function Tasks() {
     localStorage.setItem('tasksItemsPerPage', String(itemsPerPage));
   }, [itemsPerPage]);
 
+  const { user, userRole } = useAuth();
+
   const fetchTasks = async () => {
+    if (!user) return [];
+
+    // Get current user's profile with teams
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('id, user_id, teams')
+      .eq('user_id', user.id)
+      .single();
+
     const { data, error } = await supabase
       .from("tasks")
       .select(`
@@ -64,12 +76,32 @@ export default function Tasks() {
 
     if (error) throw error;
 
-    return (data || []).map((task: any) => {
+    // Map tasks and filter by team membership
+    const allTasks = (data || []).map((task: any) => {
       return {
         ...task,
         assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
         comments_count: task.task_comment_counts?.[0]?.comment_count || 0
       };
+    });
+
+    // Filter tasks where user is either:
+    // 1. Direct assignee OR
+    // 2. Member of an assigned team
+    return allTasks.filter((task: any) => {
+      // Check direct assignment
+      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
+      
+      // Check team membership
+      const userTeams = currentProfile?.teams || [];
+      const taskTeams = Array.isArray(task.teams) 
+        ? task.teams 
+        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
+      
+      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
+      
+      // Show if user is admin, direct assignee, or team member
+      return userRole === 'admin' || isDirectAssignee || isTeamMember;
     });
   };
 
