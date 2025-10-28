@@ -216,3 +216,26 @@ export function useDefaultAssignees(platform: string | null) {
     enabled: !!platform,
   });
 }
+
+export function useDeleteOperationLog() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: operationsService.deleteAuditLog,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["operation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["operation-stats"] });
+      toast({
+        title: "Success",
+        description: "Audit log deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}

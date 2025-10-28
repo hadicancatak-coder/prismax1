@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, FileText, ListChecks, AlertCircle, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CreateAuditLogDialog } from "@/components/operations/CreateAuditLogDialog";
+import { DeleteAuditLogDialog } from "@/components/operations/DeleteAuditLogDialog";
 import { useOperationLogs, useOperationStats } from "@/hooks/useOperationLogs";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ppcPlatforms = ["Google", "Search", "DGen", "PMax", "Display", "GDN", "YouTube"];
@@ -14,6 +16,8 @@ const socialPlatforms = ["Meta", "Facebook", "Instagram", "X", "TikTok", "Snap",
 
 export default function Operations() {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const isAdmin = userRole === 'admin';
   const [platformFilter, setPlatformFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
@@ -172,11 +176,10 @@ export default function Operations() {
                   <Card
                     key={log.id}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => navigate(`/operations/${log.id}`)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                        <div className="flex-1" onClick={() => navigate(`/operations/${log.id}`)}>
                           <div className="flex items-center gap-2 mb-1">
                             <Badge 
                               variant="outline" 
@@ -196,9 +199,21 @@ export default function Operations() {
                             </CardDescription>
                           )}
                         </div>
-                        <Badge variant={getStatusColor(log.status)}>
-                          {log.status.replace('_', ' ')}
-                        </Badge>
+                        <div className="flex items-start gap-2">
+                          <Badge variant={getStatusColor(log.status)}>
+                            {log.status.replace('_', ' ')}
+                          </Badge>
+                          {isAdmin && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <DeleteAuditLogDialog
+                                logId={log.id}
+                                logTitle={log.title}
+                                hasLinkedTask={!!log.task_id}
+                                variant="icon"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 mt-3">

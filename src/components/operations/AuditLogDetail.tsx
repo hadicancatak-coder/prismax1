@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { EditAuditLogDialog } from "./EditAuditLogDialog";
+import { DeleteAuditLogDialog } from "./DeleteAuditLogDialog";
 
 export function AuditLogDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +88,19 @@ export function AuditLogDetail() {
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-2xl">{log.title}</CardTitle>
-                {isAdmin && <EditAuditLogDialog log={log} />}
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <EditAuditLogDialog log={log} />
+                    <DeleteAuditLogDialog
+                      logId={log.id}
+                      logTitle={log.title}
+                      itemCount={items?.length || 0}
+                      hasLinkedTask={!!log.task_id}
+                      onSuccess={() => navigate("/operations")}
+                      variant="icon"
+                    />
+                  </div>
+                )}
               </div>
               {log.description && (
                 <CardDescription className="mt-2">{log.description}</CardDescription>

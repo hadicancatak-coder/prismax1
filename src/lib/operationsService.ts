@@ -369,6 +369,22 @@ class OperationsService {
     }
   }
 
+  async deleteAuditLog(id: string) {
+    try {
+      // Delete audit log (cascade will handle items)
+      const { error } = await supabase
+        .from('operation_audit_logs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      logger.error('Error deleting audit log', error);
+      throw error;
+    }
+  }
+
   async getAuditStats() {
     try {
       const { data: logs, error: logsError } = await supabase
