@@ -35,7 +35,7 @@ export function CreateAuditLogDialog() {
       description,
       platform,
       entity,
-      deadline: deadline || undefined,
+      deadline: deadline ? new Date(deadline + 'T00:00:00Z').toISOString() : undefined,
     });
 
     setOpen(false);
