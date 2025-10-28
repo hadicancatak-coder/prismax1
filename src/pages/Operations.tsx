@@ -18,13 +18,13 @@ export default function Operations() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
   const isAdmin = userRole === 'admin';
-  const [platformFilter, setPlatformFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
 
   const { data: allLogs = [], isLoading } = useOperationLogs({
-    platform: platformFilter || undefined,
-    status: statusFilter || undefined,
+    platform: platformFilter && platformFilter !== "all" ? platformFilter : undefined,
+    status: statusFilter && statusFilter !== "all" ? statusFilter : undefined,
   });
 
   const { data: stats } = useOperationStats();
@@ -128,7 +128,7 @@ export default function Operations() {
                   <SelectValue placeholder="All Platforms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Platforms</SelectItem>
+                  <SelectItem value="all">All Platforms</SelectItem>
                   {ppcPlatforms.map(p => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
