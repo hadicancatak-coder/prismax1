@@ -30,20 +30,25 @@ export function CreateAuditLogDialog() {
     
     if (!title || !platform) return;
 
-    await createLog.mutateAsync({
-      title,
-      description,
-      platform,
-      entity,
-      deadline: deadline ? new Date(deadline + 'T00:00:00Z').toISOString() : undefined,
-    });
+    try {
+      await createLog.mutateAsync({
+        title,
+        description,
+        platform,
+        entity,
+        deadline: deadline ? new Date(deadline + 'T00:00:00Z').toISOString() : undefined,
+      });
 
-    setOpen(false);
-    setTitle("");
-    setDescription("");
-    setPlatform("");
-    setEntity([]);
-    setDeadline("");
+      setOpen(false);
+      setTitle("");
+      setDescription("");
+      setPlatform("");
+      setEntity([]);
+      setDeadline("");
+    } catch (error) {
+      // Error is already handled by the mutation's onError callback
+      console.error('Failed to create audit log:', error);
+    }
   };
 
   const handleEntityChange = (value: string) => {
