@@ -115,7 +115,7 @@ export default function ErrorLogs() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <Select value={severityFilter} onValueChange={setSeverityFilter}>
+        <Select value={severityFilter || "all"} onValueChange={setSeverityFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Severity" />
           </SelectTrigger>
@@ -127,7 +127,7 @@ export default function ErrorLogs() {
           </SelectContent>
         </Select>
 
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <Select value={typeFilter || "all"} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
@@ -141,7 +141,7 @@ export default function ErrorLogs() {
           </SelectContent>
         </Select>
 
-        <Select value={resolvedFilter} onValueChange={setResolvedFilter}>
+        <Select value={resolvedFilter || "unresolved"} onValueChange={setResolvedFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
