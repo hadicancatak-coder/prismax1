@@ -10,6 +10,7 @@ interface InlineEditFieldProps {
   type?: "text" | "textarea";
   className?: string;
   disabled?: boolean;
+  renderContent?: (value: string) => React.ReactNode;
 }
 
 export function InlineEditField({
@@ -18,6 +19,7 @@ export function InlineEditField({
   type = "text",
   className = "",
   disabled = false,
+  renderContent,
 }: InlineEditFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -77,7 +79,7 @@ export function InlineEditField({
         onClick={() => setIsEditing(true)}
         className={`inline-flex items-center gap-2 hover:bg-accent/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors group ${className}`}
       >
-        <span>{value || "—"}</span>
+        <span>{renderContent ? renderContent(value) : (value || "—")}</span>
         <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
       </button>
     );

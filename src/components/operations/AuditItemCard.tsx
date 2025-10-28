@@ -4,16 +4,42 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, Circle, XCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, Trash2, ExternalLink } from "lucide-react";
 import { OperationAuditItem } from "@/lib/operationsService";
 import { useUpdateOperationItem, useDeleteOperationItem } from "@/hooks/useOperationLogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { InlineEditField } from "@/components/InlineEditField";
 
 interface AuditItemCardProps {
   item: OperationAuditItem;
   auditLogId: string;
   index: number;
+}
+
+function LinkifiedText({ text }: { text: string }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return (
+    <>
+      {parts.map((part, i) => 
+        urlRegex.test(part) ? (
+          <a 
+            key={i} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline inline-flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : part
+      )}
+    </>
+  );
 }
 
 export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
@@ -77,7 +103,18 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
                 <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
                 {getStatusBadge()}
               </div>
-              <p className="text-sm">{item.content}</p>
+              <InlineEditField
+                value={item.content}
+                onSave={async (newContent) => {
+                  await updateItem.mutateAsync({
+                    id: item.id,
+                    updates: { content: newContent }
+                  });
+                }}
+                type="textarea"
+                className="text-sm"
+                renderContent={(content) => <LinkifiedText text={content} />}
+              />
             </div>
 
             {isAdmin && (
