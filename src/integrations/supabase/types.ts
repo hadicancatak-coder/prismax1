@@ -856,6 +856,57 @@ export type Database = {
           },
         ]
       }
+      copywriter_copies: {
+        Row: {
+          campaigns: string[] | null
+          content_ar: string | null
+          content_az: string | null
+          content_en: string | null
+          content_es: string | null
+          created_at: string
+          created_by: string
+          element_type: string
+          entity: string[]
+          id: string
+          is_synced_to_planner: boolean | null
+          platform: string[]
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          campaigns?: string[] | null
+          content_ar?: string | null
+          content_az?: string | null
+          content_en?: string | null
+          content_es?: string | null
+          created_at?: string
+          created_by: string
+          element_type: string
+          entity?: string[]
+          id?: string
+          is_synced_to_planner?: boolean | null
+          platform?: string[]
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          campaigns?: string[] | null
+          content_ar?: string | null
+          content_az?: string | null
+          content_en?: string | null
+          content_es?: string | null
+          created_at?: string
+          created_by?: string
+          element_type?: string
+          entity?: string[]
+          id?: string
+          is_synced_to_planner?: boolean | null
+          platform?: string[]
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entity_presets: {
         Row: {
           created_at: string | null
@@ -1228,6 +1279,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      operation_audit_item_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          item_id: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          item_id: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operation_audit_item_comments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "operation_audit_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operation_audit_item_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "operation_audit_item_comments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operation_audit_items: {
         Row: {

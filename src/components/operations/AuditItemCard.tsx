@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, Circle, XCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, Trash2, MessageSquare } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { OperationAuditItem } from "@/lib/operationsService";
 import { useUpdateOperationItem, useDeleteOperationItem } from "@/hooks/useOperationLogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { AuditItemComments } from "./AuditItemComments";
+import { useAuditItemComments } from "@/hooks/useAuditItemComments";
 
 interface AuditItemCardProps {
   item: OperationAuditItem;
@@ -23,6 +26,8 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   const updateItem = useUpdateOperationItem();
   const deleteItem = useDeleteOperationItem();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { data: comments } = useAuditItemComments(item.id);
   
   const isAdmin = user?.user_metadata?.role === 'admin';
 
@@ -149,6 +154,23 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
               Completed {new Date(item.completed_at).toLocaleDateString()}
             </p>
           )}
+
+          <Collapsible open={commentsOpen} onOpenChange={setCommentsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-start mt-2">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Comments
+                {comments && comments.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {comments.length}
+                  </Badge>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <AuditItemComments itemId={item.id} />
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
     </Card>
