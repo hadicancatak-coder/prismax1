@@ -29,6 +29,7 @@ export default function Team() {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<string>("name");
+  const [kpiFilter, setKpiFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchProfiles();
@@ -36,13 +37,13 @@ export default function Team() {
 
   useEffect(() => {
     applyFiltersAndSort();
-  }, [profiles, searchQuery, teamFilter, sortBy]);
+  }, [profiles, searchQuery, teamFilter, sortBy, kpiFilter]);
 
   const fetchProfiles = async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, kpis, quarterly_kpis")
         .order("name");
 
       if (error) throw error;
@@ -74,6 +75,19 @@ export default function Team() {
     // Apply team filter
     if (teamFilter !== "all") {
       filtered = filtered.filter(p => p.teams?.includes(teamFilter));
+    }
+
+    // Apply KPI filter
+    if (kpiFilter === "with_kpis") {
+      filtered = filtered.filter(p => 
+        (Array.isArray(p.kpis) && p.kpis.length > 0) || 
+        (Array.isArray(p.quarterly_kpis) && p.quarterly_kpis.length > 0)
+      );
+    } else if (kpiFilter === "without_kpis") {
+      filtered = filtered.filter(p => 
+        (!Array.isArray(p.kpis) || p.kpis.length === 0) && 
+        (!Array.isArray(p.quarterly_kpis) || p.quarterly_kpis.length === 0)
+      );
     }
 
     // Apply sort
@@ -243,6 +257,17 @@ export default function Team() {
             <SelectItem value="team">Sort by Team</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={kpiFilter} onValueChange={setKpiFilter}>
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="KPI Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Members</SelectItem>
+            <SelectItem value="with_kpis">With KPIs</SelectItem>
+            <SelectItem value="without_kpis">Without KPIs</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
@@ -280,9 +305,19 @@ export default function Team() {
               </div>
               
               <div className="flex-1 min-w-0 pr-24">
-                <h3 className="text-xl font-semibold text-foreground truncate">
-                  {profile.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-semibold text-foreground truncate">
+                    {profile.name}
+                  </h3>
+                  {((Array.isArray(profile.kpis) && profile.kpis.length > 0) || 
+                    (Array.isArray(profile.quarterly_kpis) && profile.quarterly_kpis.length > 0)) && (
+                    <Badge variant="outline" className="bg-primary/10 text-primary flex items-center gap-1">
+                      <Target className="h-3 w-3" />
+                      {(Array.isArray(profile.kpis) ? profile.kpis.length : 0) + 
+                       (Array.isArray(profile.quarterly_kpis) ? profile.quarterly_kpis.length : 0)} KPIs
+                    </Badge>
+                  )}
+                </div>
                 
                 {profile.title && (
                   <p className="text-sm text-muted-foreground mb-2">{profile.title}</p>

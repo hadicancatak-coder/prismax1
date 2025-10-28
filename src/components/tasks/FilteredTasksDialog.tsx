@@ -223,7 +223,15 @@ export const FilteredTasksDialog = ({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2 mb-1">
-                    <h4 className="font-medium line-clamp-1">{task.title}</h4>
+                    <h4 
+                      className="font-medium line-clamp-1 cursor-pointer hover:text-primary hover:underline transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/tasks?taskId=${task.id}`;
+                      }}
+                    >
+                      {task.title}
+                    </h4>
                     <div className="flex gap-1 flex-shrink-0">
                       <Badge className={priorityColors[task.priority as keyof typeof priorityColors]} variant="secondary">
                         {task.priority}

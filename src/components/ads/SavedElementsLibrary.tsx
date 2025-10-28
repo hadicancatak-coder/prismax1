@@ -3,14 +3,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Upload } from 'lucide-react';
+import { Search, Plus, Upload, Grid3x3, List, Download } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAdElements } from '@/hooks/useAdElements';
 import { ElementCard } from './ElementCard';
 import { CreateElementDialog } from './CreateElementDialog';
 import { BulkImportDialog } from './BulkImportDialog';
 import { AdvancedFilters } from './AdvancedFilters';
+import { SavedElementsTableView } from './SavedElementsTableView';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { ENTITIES } from '@/lib/constants';
+import { format } from 'date-fns';
 
 export function SavedElementsLibrary() {
   const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
@@ -21,6 +24,7 @@ export function SavedElementsLibrary() {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   
   const debouncedSearch = useDebouncedValue(search, 500);
   
@@ -33,11 +37,48 @@ export function SavedElementsLibrary() {
     ...filters,
   });
 
+  const exportToCSV = () => {
+    if (!elements || elements.length === 0) return;
+    
+    const headers = ['Type', 'Content', 'Entity', 'Language', 'Platform', 'Status', 'Uses', 'Created'];
+    const rows = elements.map(el => [
+      activeTab,
+      el.content?.text || el.content,
+      el.entity?.join('; ') || '',
+      el.language || 'EN',
+      el.platform || 'ppc',
+      el.google_status || 'pending',
+      el.use_count || 0,
+      format(new Date(el.created_at), 'yyyy-MM-dd')
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `saved-${activeTab}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Saved Elements Library</h2>
         <div className="flex gap-2">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(v: any) => v && setViewMode(v)}>
+            <ToggleGroupItem value="grid" aria-label="Grid view">
+              <Grid3x3 className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="table" aria-label="Table view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
           <Button onClick={() => setShowBulkImport(true)} variant="outline">
             <Upload className="w-4 h-4 mr-2" />
             Bulk Import
@@ -115,11 +156,15 @@ export function SavedElementsLibrary() {
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
             ) : elements && elements.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {elements.map((element) => (
-                  <ElementCard key={element.id} element={element} />
-                ))}
-              </div>
+              viewMode === 'grid' ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {elements.map((element) => (
+                    <ElementCard key={element.id} element={element} />
+                  ))}
+                </div>
+              ) : (
+                <SavedElementsTableView elements={elements} />
+              )
             ) : (
               <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <p className="text-muted-foreground mb-4">No {type}s saved yet</p>

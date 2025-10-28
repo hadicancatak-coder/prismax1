@@ -4,6 +4,7 @@ import { Users, ListTodo, AlertCircle, CheckSquare } from "lucide-react";
 import { adminService } from "@/lib/adminService";
 import { errorLogger } from "@/lib/errorLogger";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TeamKPIsManager } from "@/components/admin/TeamKPIsManager";
 
 export default function Overview() {
   const [loading, setLoading] = useState(true);
@@ -150,6 +151,9 @@ export default function Overview() {
           </div>
         </div>
       </Card>
+
+      {/* Team KPIs Section */}
+      <TeamKPIsManager />
     </div>
   );
 }

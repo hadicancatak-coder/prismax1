@@ -8,6 +8,7 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WhatsNext } from "@/components/dashboard/WhatsNext";
 import { OverdueTasks } from "@/components/dashboard/OverdueTasks";
 import { UpcomingCampaigns } from "@/components/dashboard/UpcomingCampaigns";
+import { MyKPIsProgress } from "@/components/dashboard/MyKPIsProgress";
 import { getDashboardStats } from "@/lib/dashboardQueries";
 import { NewsTicker } from "@/components/NewsTicker";
 
@@ -110,11 +111,17 @@ export default function Dashboard() {
         <StatsCards stats={stats} onStatClick={handleStatClick} />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="lg:col-span-1">
+          <MyKPIsProgress />
+        </div>
+        
         <div className="lg:col-span-1">
           <UpcomingCampaigns />
         </div>
-        
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="lg:col-span-1">
           <OverdueTasks />
         </div>

@@ -105,7 +105,16 @@ export function ElementCard({ element }: ElementCardProps) {
                   onChange={(e) => setEditedContent(e.target.value)}
                   rows={3}
                   className="text-sm"
+                  maxLength={element.element_type === 'headline' ? 30 : element.element_type === 'description' ? 90 : 1000}
                 />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {editedContent.length} / {element.element_type === 'headline' ? '30' : element.element_type === 'description' ? '90' : '1000'} characters
+                  </span>
+                  {editedContent.length > (element.element_type === 'headline' ? 30 : element.element_type === 'description' ? 90 : 1000) && (
+                    <span className="text-destructive">Character limit exceeded!</span>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveEdit(); }}>Save</Button>
                   <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}>Cancel</Button>
@@ -116,8 +125,17 @@ export function ElementCard({ element }: ElementCardProps) {
                 <p className="text-sm font-medium line-clamp-2">{content}</p>
                 <div className="flex flex-wrap gap-1 mt-2 items-center">
                   {(element as any).language && (
-                    <Badge variant={(element as any).language === 'AR' ? 'secondary' : 'default'} className="text-xs">
-                      {(element as any).language}
+                    <Badge 
+                      variant={(element as any).language === 'AR' ? 'secondary' : 'default'} 
+                      className="text-xs"
+                      title="Auto-detected language"
+                    >
+                      {(element as any).language === 'AR' ? '🇸🇦 Arabic' : '🇬🇧 English'}
+                    </Badge>
+                  )}
+                  {(element as any).platform && (
+                    <Badge variant="outline" className="text-xs">
+                      {(element as any).platform.toUpperCase()}
                     </Badge>
                   )}
                   {editingEntity ? (
