@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 // MFA verification helpers
-const MFA_EXPIRY_HOURS = 2;
+const MFA_EXPIRY_HOURS = 6;
 
 const getMfaVerificationStatus = (): boolean => {
   const data = localStorage.getItem('mfa_verified');
