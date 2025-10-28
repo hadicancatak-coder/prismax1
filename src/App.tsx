@@ -31,6 +31,8 @@ import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
 import About from "./pages/About";
 import UtmPlanner from "./pages/UtmPlanner";
+import Operations from "./pages/Operations";
+import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
 
@@ -76,6 +78,8 @@ const App = () => (
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/socialua" element={<SocialUAPlanner />} />
             <Route path="/utm-planner" element={<UtmPlanner />} />
+            <Route path="/operations" element={<Operations />} />
+            <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/security" element={<Security />} />
             <Route path="/about" element={<About />} />
           </Route>

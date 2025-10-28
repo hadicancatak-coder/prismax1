@@ -1229,6 +1229,113 @@ export type Database = {
         }
         Relationships: []
       }
+      operation_audit_items: {
+        Row: {
+          assigned_to: string | null
+          audit_log_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          content: string
+          created_at: string | null
+          id: string
+          order_index: number | null
+          status: string | null
+          task_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          audit_log_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          status?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          audit_log_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          status?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operation_audit_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operation_audit_items_audit_log_id_fkey"
+            columns: ["audit_log_id"]
+            isOneToOne: false
+            referencedRelation: "operation_audit_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operation_audit_items_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operation_audit_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operation_audit_logs: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          entity: string[] | null
+          id: string
+          platform: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          entity?: string[] | null
+          id?: string
+          platform: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          entity?: string[] | null
+          id?: string
+          platform?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -1253,6 +1360,30 @@ export type Database = {
           token_hash?: string
           used_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_team_mapping: {
+        Row: {
+          created_at: string | null
+          default_assignees: string[] | null
+          id: string
+          platform: string
+          team_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_assignees?: string[] | null
+          id?: string
+          platform: string
+          team_name: string
+        }
+        Update: {
+          created_at?: string | null
+          default_assignees?: string[] | null
+          id?: string
+          platform?: string
+          team_name?: string
         }
         Relationships: []
       }

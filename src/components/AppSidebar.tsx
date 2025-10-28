@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2 } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/cfi-logo.png";
@@ -23,6 +23,7 @@ const coreItems = [
 ];
 
 const operationsItems = [
+  { title: "Audit Logs", url: "/operations", icon: FileText },
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
   { title: "SocialUA Planner", url: "/socialua", icon: Share2 },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
