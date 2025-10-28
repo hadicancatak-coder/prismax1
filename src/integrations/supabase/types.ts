@@ -1299,6 +1299,7 @@ export type Database = {
       }
       operation_audit_logs: {
         Row: {
+          auto_assigned: boolean | null
           created_at: string | null
           created_by: string | null
           deadline: string | null
@@ -1307,10 +1308,12 @@ export type Database = {
           id: string
           platform: string
           status: string | null
+          task_id: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          auto_assigned?: boolean | null
           created_at?: string | null
           created_by?: string | null
           deadline?: string | null
@@ -1319,10 +1322,12 @@ export type Database = {
           id?: string
           platform: string
           status?: string | null
+          task_id?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          auto_assigned?: boolean | null
           created_at?: string | null
           created_by?: string | null
           deadline?: string | null
@@ -1331,10 +1336,19 @@ export type Database = {
           id?: string
           platform?: string
           status?: string | null
+          task_id?: string | null
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operation_audit_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_tokens: {
         Row: {

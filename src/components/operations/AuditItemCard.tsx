@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, Circle, XCircle, Trash2, ExternalLink } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, Trash2 } from "lucide-react";
 import { OperationAuditItem } from "@/lib/operationsService";
-import { useUpdateOperationItem, useDeleteOperationItem, useCreateTaskFromItem } from "@/hooks/useOperationLogs";
+import { useUpdateOperationItem, useDeleteOperationItem } from "@/hooks/useOperationLogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AuditItemCardProps {
   item: OperationAuditItem;
@@ -17,11 +17,12 @@ interface AuditItemCardProps {
 }
 
 export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
+  const { user } = useAuth();
   const updateItem = useUpdateOperationItem();
   const deleteItem = useDeleteOperationItem();
-  const createTask = useCreateTaskFromItem();
-  const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const isAdmin = user?.user_metadata?.role === 'admin';
 
   const handleStatusChange = (newStatus: string) => {
     updateItem.mutate({
@@ -31,13 +32,10 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   };
 
   const handleDelete = async () => {
+    if (!isAdmin) return;
     setIsDeleting(true);
     await deleteItem.mutateAsync(item.id);
     setIsDeleting(false);
-  };
-
-  const handleCreateTask = async () => {
-    await createTask.mutateAsync({ itemId: item.id, auditLogId });
   };
 
   const getStatusIcon = () => {
@@ -82,37 +80,29 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
               <p className="text-sm">{item.content}</p>
             </div>
 
-            <div className="flex items-center gap-1">
-              {item.task_id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate(`/tasks?id=${item.task_id}`)}
-                  title="View linked task"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" disabled={isDeleting}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this item? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-1">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={isDeleting}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this item? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 text-sm">
@@ -140,17 +130,6 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
                 </Avatar>
                 <span className="text-muted-foreground">{item.profiles.name}</span>
               </div>
-            )}
-
-            {!item.task_id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCreateTask}
-                disabled={createTask.isPending}
-              >
-                Create Task
-              </Button>
             )}
           </div>
 

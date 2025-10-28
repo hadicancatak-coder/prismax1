@@ -12,6 +12,8 @@ export interface OperationAuditLog {
   updated_at: string;
   deadline?: string;
   status: 'in_progress' | 'completed' | 'archived';
+  task_id?: string;
+  auto_assigned?: boolean;
 }
 
 export interface OperationAuditItem {
@@ -49,7 +51,7 @@ class OperationsService {
     try {
       let query = supabase
         .from('operation_audit_logs')
-        .select('*')
+        .select('*, tasks(*)')
         .order('created_at', { ascending: false });
 
       if (filters?.platform) {
@@ -75,7 +77,7 @@ class OperationsService {
     try {
       const { data, error } = await supabase
         .from('operation_audit_logs')
-        .select('*')
+        .select('*, tasks(*)')
         .eq('id', id)
         .single();
 
@@ -104,7 +106,7 @@ class OperationsService {
           ...log,
           created_by: user.id,
         })
-        .select()
+        .select('*, tasks(*)')
         .single();
 
       if (error) throw error;
@@ -121,10 +123,24 @@ class OperationsService {
         .from('operation_audit_logs')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('*, tasks(*)')
         .single();
 
       if (error) throw error;
+
+      // If the log has a linked task, update it as well
+      if (data.task_id && (updates.title || updates.description || updates.deadline)) {
+        const taskUpdates: any = {};
+        if (updates.title) taskUpdates.title = updates.title;
+        if (updates.description) taskUpdates.description = updates.description;
+        if (updates.deadline) taskUpdates.due_at = updates.deadline;
+
+        await supabase
+          .from('tasks')
+          .update(taskUpdates)
+          .eq('id', data.task_id);
+      }
+
       return data;
     } catch (error) {
       logger.error('Error updating audit log', error);
@@ -328,16 +344,28 @@ class OperationsService {
     try {
       const { data, error } = await supabase
         .from('platform_team_mapping')
-        .select('default_assignees')
-        .eq('platform', platform);
+        .select('default_assignees, team_name')
+        .eq('platform', platform)
+        .single();
 
-      if (error) throw error;
+      if (error) return { assignees: [], teamName: '' };
+      
+      if (!data.default_assignees || data.default_assignees.length === 0) {
+        return { assignees: [], teamName: data.team_name };
+      }
 
-      const allAssignees = data.flatMap(mapping => mapping.default_assignees || []);
-      return [...new Set(allAssignees)];
+      // Fetch profile details for the assignees
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', data.default_assignees);
+
+      if (profileError) return { assignees: [], teamName: data.team_name };
+
+      return { assignees: profiles || [], teamName: data.team_name };
     } catch (error) {
       logger.error('Error fetching default assignees', error);
-      return [];
+      return { assignees: [], teamName: '' };
     }
   }
 

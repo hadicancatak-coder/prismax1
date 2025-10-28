@@ -184,3 +184,35 @@ export const useOperationStats = () => {
     queryFn: operationsService.getAuditStats,
   });
 };
+
+export function useUpdateAuditLog() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<any> }) =>
+      operationsService.updateAuditLog(id, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["operation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["operation-log", variables.id] });
+      toast({
+        title: "Success",
+        description: "Audit log updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useDefaultAssignees(platform: string | null) {
+  return useQuery({
+    queryKey: ["default-assignees", platform],
+    queryFn: () => platform ? operationsService.getDefaultAssignees(platform) : Promise.resolve({ assignees: [], teamName: '' }),
+    enabled: !!platform,
+  });
+}

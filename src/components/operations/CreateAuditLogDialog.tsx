@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { useCreateOperationLog } from "@/hooks/useOperationLogs";
+import { Plus, Users } from "lucide-react";
+import { useCreateOperationLog, useDefaultAssignees } from "@/hooks/useOperationLogs";
 import { ENTITIES } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function CreateAuditLogDialog() {
   const [open, setOpen] = useState(false);
@@ -18,6 +20,10 @@ export function CreateAuditLogDialog() {
   const [deadline, setDeadline] = useState("");
 
   const createLog = useCreateOperationLog();
+  const { data: assigneeData } = useDefaultAssignees(platform);
+
+  const ppcPlatforms = ["Google", "Search", "DGen", "PMax", "Display", "GDN", "YouTube"];
+  const socialPlatforms = ["Meta", "Facebook", "Instagram", "X", "TikTok", "Snap", "Reddit"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,14 +97,56 @@ export function CreateAuditLogDialog() {
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Google">Google Ads</SelectItem>
-                  <SelectItem value="SocialUA">SocialUA (Meta)</SelectItem>
-                  <SelectItem value="Snap">Snapchat</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
-                  <SelectItem value="X">X (Twitter)</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                    PPC Team
+                  </div>
+                  {ppcPlatforms.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+                          PPC
+                        </Badge>
+                        {p}
+                      </div>
+                    </SelectItem>
+                  ))}
+                  <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground mt-2">
+                    SocialUA Team
+                  </div>
+                  {socialPlatforms.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-200">
+                          Social
+                        </Badge>
+                        {p}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              
+              {assigneeData && assigneeData.assignees.length > 0 && (
+                <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                    <Users className="h-4 w-4" />
+                    Auto-assigned to {assigneeData.teamName} Team:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {assigneeData.assignees.map((assignee: any) => (
+                      <div key={assignee.id} className="flex items-center gap-1.5 bg-background px-2 py-1 rounded-md border">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={assignee.avatar_url} />
+                          <AvatarFallback className="text-xs">
+                            {assignee.name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs">{assignee.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

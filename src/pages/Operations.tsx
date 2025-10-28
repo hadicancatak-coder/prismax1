@@ -3,23 +3,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, FileText, ListChecks, AlertCircle } from "lucide-react";
+import { Calendar, FileText, ListChecks, AlertCircle, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CreateAuditLogDialog } from "@/components/operations/CreateAuditLogDialog";
 import { useOperationLogs, useOperationStats } from "@/hooks/useOperationLogs";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const ppcPlatforms = ["Google", "Search", "DGen", "PMax", "Display", "GDN", "YouTube"];
+const socialPlatforms = ["Meta", "Facebook", "Instagram", "X", "TikTok", "Snap", "Reddit"];
+
 export default function Operations() {
   const navigate = useNavigate();
   const [platformFilter, setPlatformFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
 
-  const { data: logs = [], isLoading } = useOperationLogs({
+  const { data: allLogs = [], isLoading } = useOperationLogs({
     platform: platformFilter || undefined,
     status: statusFilter || undefined,
   });
 
   const { data: stats } = useOperationStats();
+
+  // Filter by team
+  const logs = teamFilter === "all" 
+    ? allLogs 
+    : allLogs.filter(log => {
+        if (teamFilter === "PPC") return ppcPlatforms.includes(log.platform);
+        if (teamFilter === "SocialUA") return socialPlatforms.includes(log.platform);
+        return true;
+      });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,16 +108,29 @@ export default function Operations() {
           <div className="flex items-center justify-between">
             <CardTitle>Audit Logs</CardTitle>
             <div className="flex gap-2">
+              <Select value={teamFilter} onValueChange={setTeamFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Teams" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Teams</SelectItem>
+                  <SelectItem value="PPC">PPC Team</SelectItem>
+                  <SelectItem value="SocialUA">SocialUA Team</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={platformFilter} onValueChange={setPlatformFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Platforms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  <SelectItem value="Google">Google Ads</SelectItem>
-                  <SelectItem value="SocialUA">SocialUA</SelectItem>
-                  <SelectItem value="Snap">Snapchat</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="">All Platforms</SelectItem>
+                  {ppcPlatforms.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                  {socialPlatforms.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -140,50 +166,68 @@ export default function Operations() {
             </div>
           ) : (
             <div className="space-y-4">
-              {logs.map(log => (
-                <Card
-                  key={log.id}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/operations/${log.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{log.title}</CardTitle>
-                        {log.description && (
-                          <CardDescription className="mt-1">
-                            {log.description}
-                          </CardDescription>
+              {logs.map(log => {
+                const isPPC = ppcPlatforms.includes(log.platform);
+                return (
+                  <Card
+                    key={log.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/operations/${log.id}`)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge 
+                              variant="outline" 
+                              className={isPPC 
+                                ? "bg-blue-500/10 text-blue-600 border-blue-200" 
+                                : "bg-purple-500/10 text-purple-600 border-purple-200"
+                              }
+                            >
+                              {isPPC ? "PPC" : "SocialUA"}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{log.platform}</span>
+                          </div>
+                          <CardTitle className="text-lg">{log.title}</CardTitle>
+                          {log.description && (
+                            <CardDescription className="mt-1">
+                              {log.description}
+                            </CardDescription>
+                          )}
+                        </div>
+                        <Badge variant={getStatusColor(log.status)}>
+                          {log.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {log.entity && log.entity.length > 0 && (
+                          <>
+                            {log.entity.map(e => (
+                              <Badge key={e} variant="secondary">
+                                {e}
+                              </Badge>
+                            ))}
+                          </>
+                        )}
+                        {log.deadline && (
+                          <Badge variant="outline">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(log.deadline).toLocaleDateString()}
+                          </Badge>
+                        )}
+                        {log.task_id && (
+                          <Badge variant="default" className="gap-1">
+                            <ExternalLink className="h-3 w-3" />
+                            Task Linked
+                          </Badge>
                         )}
                       </div>
-                      <Badge variant={getStatusColor(log.status)}>
-                        {log.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <Badge variant="outline">
-                        Platform: {log.platform}
-                      </Badge>
-                      {log.entity && log.entity.length > 0 && (
-                        <>
-                          {log.entity.map(e => (
-                            <Badge key={e} variant="secondary">
-                              {e}
-                            </Badge>
-                          ))}
-                        </>
-                      )}
-                      {log.deadline && (
-                        <Badge variant="outline">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(log.deadline).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
