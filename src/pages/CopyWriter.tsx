@@ -3,16 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
-import { CopyCard } from "@/components/copywriter/CopyCard";
 import { CreateCopyDialog } from "@/components/copywriter/CreateCopyDialog";
+import { SavedCopiesTableView } from "@/components/copywriter/SavedCopiesTableView";
 import {
   useCopywriterCopies,
-  useDeleteCopywriterCopy,
   CopywriterCopy,
 } from "@/hooks/useCopywriterCopies";
-import { useAuth } from "@/hooks/useAuth";
-import { syncCopyToPlanners } from "@/lib/copywriterSync";
-import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { ENTITIES } from "@/lib/constants";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
@@ -20,8 +17,7 @@ const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "si
 const PLATFORMS = ["ppc", "facebook", "instagram", "tiktok", "snap", "reddit", "whatsapp"];
 
 function CopyWriter() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCopy, setEditingCopy] = useState<CopywriterCopy | null>(null);
   const [search, setSearch] = useState("");
@@ -37,32 +33,6 @@ function CopyWriter() {
     elementType: typeFilter !== "all" ? typeFilter : undefined,
     search: debouncedSearch,
   });
-
-  const deleteCopy = useDeleteCopywriterCopy();
-
-  const handleEdit = (copy: CopywriterCopy) => {
-    setEditingCopy(copy);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm("Delete this copy?")) {
-      await deleteCopy.mutateAsync(id);
-    }
-  };
-
-  const handleSync = async (copy: CopywriterCopy) => {
-    try {
-      await syncCopyToPlanners({ copy });
-      toast({ title: "Synced to planners successfully" });
-    } catch (error: any) {
-      toast({
-        title: "Error syncing",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -135,80 +105,11 @@ function CopyWriter() {
 
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading copies...</div>
-        ) : !copies || copies.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No copies found. Create your first copy!
-          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">English (EN)</h2>
-              {copies.map((copy) => (
-                <CopyCard
-                  key={copy.id}
-                  copy={copy}
-                  content={copy.content_en}
-                  language="en"
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onSync={handleSync}
-                  isOwner={user?.id === copy.created_by}
-                  isAdmin={user?.role === "admin"}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Arabic (AR)</h2>
-              {copies.map((copy) => (
-                <CopyCard
-                  key={copy.id}
-                  copy={copy}
-                  content={copy.content_ar}
-                  language="ar"
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onSync={handleSync}
-                  isOwner={user?.id === copy.created_by}
-                  isAdmin={user?.role === "admin"}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Azerbaijani (AZ)</h2>
-              {copies.map((copy) => (
-                <CopyCard
-                  key={copy.id}
-                  copy={copy}
-                  content={copy.content_az}
-                  language="az"
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onSync={handleSync}
-                  isOwner={user?.id === copy.created_by}
-                  isAdmin={user?.role === "admin"}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Spanish (ES)</h2>
-              {copies.map((copy) => (
-                <CopyCard
-                  key={copy.id}
-                  copy={copy}
-                  content={copy.content_es}
-                  language="es"
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onSync={handleSync}
-                  isOwner={user?.id === copy.created_by}
-                  isAdmin={user?.role === "admin"}
-                />
-              ))}
-            </div>
-          </div>
+          <SavedCopiesTableView 
+            copies={copies || []} 
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["copywriter-copies"] })}
+          />
         )}
       </div>
 
