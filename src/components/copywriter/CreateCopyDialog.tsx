@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import { CopywriterCopy, useCreateCopywriterCopy, useUpdateCopywriterCopy } from
 import { ENTITIES } from "@/lib/constants";
 import { syncCopyToPlanners } from "@/lib/copywriterSync";
 import { useToast } from "@/hooks/use-toast";
+import { InlineRichTextField } from "@/components/InlineRichTextField";
 
 interface CreateCopyDialogProps {
   open: boolean;
@@ -213,10 +213,10 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
               <TabsTrigger value="es">Spanish</TabsTrigger>
             </TabsList>
             <TabsContent value="en" className="space-y-2">
-              <Textarea
+              <InlineRichTextField
                 value={contentEn}
-                onChange={(e) => setContentEn(e.target.value)}
-                placeholder="Enter English content..."
+                onChange={setContentEn}
+                placeholder="Enter English content... (Paste URLs to create links)"
                 className="min-h-[100px]"
                 maxLength={charLimit}
               />
@@ -225,9 +225,9 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
               </div>
             </TabsContent>
             <TabsContent value="ar" className="space-y-2">
-              <Textarea
+              <InlineRichTextField
                 value={contentAr}
-                onChange={(e) => setContentAr(e.target.value)}
+                onChange={setContentAr}
                 placeholder="أدخل المحتوى العربي..."
                 className="min-h-[100px]"
                 dir="rtl"
@@ -238,9 +238,9 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
               </div>
             </TabsContent>
             <TabsContent value="az" className="space-y-2">
-              <Textarea
+              <InlineRichTextField
                 value={contentAz}
-                onChange={(e) => setContentAz(e.target.value)}
+                onChange={setContentAz}
                 placeholder="Azərbaycan məzmunu daxil edin..."
                 className="min-h-[100px]"
                 maxLength={charLimit}
@@ -250,9 +250,9 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
               </div>
             </TabsContent>
             <TabsContent value="es" className="space-y-2">
-              <Textarea
+              <InlineRichTextField
                 value={contentEs}
-                onChange={(e) => setContentEs(e.target.value)}
+                onChange={setContentEs}
                 placeholder="Ingrese contenido en español..."
                 className="min-h-[100px]"
                 maxLength={charLimit}

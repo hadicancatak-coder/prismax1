@@ -2,17 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Trash2, Upload, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, Trash2, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { CopywriterCopy, useUpdateCopywriterCopy, useDeleteCopywriterCopy } from "@/hooks/useCopywriterCopies";
 import { syncCopyToPlanners } from "@/lib/copywriterSync";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { ENTITIES } from "@/lib/constants";
 import { PlatformMultiSelect } from "./PlatformMultiSelect";
 import { CampaignsTagsInput } from "./CampaignsTagsInput";
+import { InlineRichTextField } from "@/components/InlineRichTextField";
 
 const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 
@@ -268,17 +267,14 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
                     <TableCell key={field} className="max-w-[250px]">
                       {editingCell?.id === copy.id && editingCell?.field === field ? (
                         <div className="space-y-1">
-                          <Textarea
+                          <InlineRichTextField
                             value={copy[field as keyof CopywriterCopy] as string || ""}
-                            onChange={(e) => {
-                              const newCopies = copies.map(c =>
-                                c.id === copy.id ? { ...c, [field]: e.target.value } : c
-                              );
-                            }}
-                            onBlur={(e) => handleUpdateField(copy.id, field, e.target.value || null)}
-                            className={`min-h-[60px] text-sm ${field === "content_ar" ? "text-right" : ""}`}
+                            onChange={(val) => handleUpdateField(copy.id, field, val || null)}
+                            onBlur={() => setEditingCell(null)}
+                            className="min-h-[60px] text-sm"
                             dir={field === "content_ar" ? "rtl" : "ltr"}
                             autoFocus
+                            maxLength={charLimit}
                           />
                           <span className={`text-xs ${getCharLimitColor(
                             (copy[field as keyof CopywriterCopy] as string || "").length,
@@ -289,14 +285,17 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
                         </div>
                       ) : (
                         <div
-                          className={`text-sm cursor-pointer hover:bg-muted/50 p-2 rounded min-h-[40px] ${
-                            field === "content_ar" ? "text-right" : ""
-                          }`}
+                          className="cursor-pointer hover:bg-muted/50 p-2 rounded min-h-[40px]"
                           onClick={() => canEdit && setEditingCell({ id: copy.id, field })}
                         >
-                          {copy[field as keyof CopywriterCopy] as string || (
-                            <span className="text-muted-foreground italic">Click to add</span>
-                          )}
+                          <InlineRichTextField
+                            value={copy[field as keyof CopywriterCopy] as string || ""}
+                            onChange={() => {}}
+                            readOnly
+                            dir={field === "content_ar" ? "rtl" : "ltr"}
+                            placeholder="Click to add"
+                            className="text-sm"
+                          />
                         </div>
                       )}
                     </TableCell>
