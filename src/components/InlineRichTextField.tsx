@@ -37,12 +37,20 @@ export function InlineRichTextField({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingLink, setEditingLink] = useState<{ index: number; text: string; url: string } | null>(null);
+  const [isEditing, setIsEditing] = useState(autoFocus || false);
 
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
       textareaRef.current.focus();
+      setIsEditing(true);
     }
   }, [autoFocus]);
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pastedText = e.clipboardData.getData("text");
@@ -130,6 +138,17 @@ export function InlineRichTextField({
     });
   };
 
+  const handleClickToEdit = () => {
+    if (!readOnly && !disabled) {
+      setIsEditing(true);
+    }
+  };
+
+  const handleBlurTextarea = () => {
+    setIsEditing(false);
+    onBlur?.();
+  };
+
   if (readOnly) {
     return (
       <>
@@ -155,6 +174,35 @@ export function InlineRichTextField({
     );
   }
 
+  // When not actively editing and has content, show rendered view with clickable links
+  if (!isEditing && value) {
+    return (
+      <>
+        <div 
+          onClick={handleClickToEdit}
+          className={cn(
+            "whitespace-pre-wrap text-sm cursor-text rounded-md border border-transparent hover:border-input transition-colors p-2 -m-2",
+            className
+          )}
+          dir={dir}
+          style={{ minHeight }}
+        >
+          {renderContent()}
+        </div>
+        {editingLink && (
+          <EditLinkDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            text={editingLink.text}
+            url={editingLink.url}
+            onSave={handleSaveEditedLink}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Show textarea when editing or when empty
   return (
     <>
       <Textarea
@@ -162,13 +210,14 @@ export function InlineRichTextField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onPaste={handlePaste}
-        onBlur={onBlur}
+        onBlur={handleBlurTextarea}
         placeholder={placeholder}
         className={className}
         disabled={disabled}
         dir={dir}
         maxLength={maxLength}
         style={{ minHeight }}
+        autoFocus={isEditing}
       />
       {editingLink && (
         <EditLinkDialog
