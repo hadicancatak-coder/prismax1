@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, X, Pencil, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Check, X, Pencil, Link as LinkIcon } from "lucide-react";
 import { parseMarkdownLinks, insertMarkdownLink, removeMarkdownLink, updateMarkdownLink } from "@/lib/markdownParser";
-import { LinkPopover } from "@/components/LinkPopover";
+import { LinkTooltip } from "@/components/LinkTooltip";
+import { EditLinkDialog } from "@/components/EditLinkDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
@@ -22,6 +23,8 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
   const [isSaving, setIsSaving] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingLink, setEditingLink] = useState<{ index: number; text: string; url: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -57,6 +60,24 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
   const handleCancel = () => {
     setEditValue(value);
     setIsEditing(false);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    const urlRegex = /^https?:\/\/.+/;
+    
+    if (urlRegex.test(pastedText) && textareaRef.current) {
+      const start = textareaRef.current.selectionStart;
+      const end = textareaRef.current.selectionEnd;
+      
+      // Only auto-convert if there's selected text
+      if (start !== end) {
+        e.preventDefault();
+        const newContent = insertMarkdownLink(editValue, start, end, pastedText);
+        setEditValue(newContent);
+        toast({ title: "Link created from pasted URL" });
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -97,9 +118,17 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
     toast({ title: "Link inserted" });
   };
 
-  const handleEditLink = (linkIndex: number, newUrl: string, newText: string) => {
-    const newContent = updateMarkdownLink(value, linkIndex, newUrl, newText);
-    onSave(newContent);
+  const handleOpenEditDialog = (linkIndex: number, text: string, url: string) => {
+    setEditingLink({ index: linkIndex, text, url });
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEditedLink = (newUrl: string, newText: string) => {
+    if (editingLink) {
+      const newContent = updateMarkdownLink(value, editingLink.index, newUrl, newText);
+      onSave(newContent);
+      setEditingLink(null);
+    }
   };
 
   const handleRemoveLink = (linkIndex: number) => {
@@ -116,28 +145,22 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
       if (segment.type === 'link') {
         const currentLinkIndex = linkIndex++;
         return (
-          <LinkPopover
+          <LinkTooltip
             key={i}
-            text={segment.content}
             url={segment.url || ''}
-            linkIndex={currentLinkIndex}
-            onEdit={handleEditLink}
-            onRemove={handleRemoveLink}
+            onEdit={() => handleOpenEditDialog(currentLinkIndex, segment.content, segment.url || '')}
+            onCopy={() => {}}
+            onRemove={() => handleRemoveLink(currentLinkIndex)}
           >
             <a
               href={segment.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
-              onClick={(e) => {
-                // Allow link to be clicked normally, popover will show on hover
-                e.stopPropagation();
-              }}
+              className="text-primary underline hover:no-underline cursor-pointer"
             >
               {segment.content}
-              <ExternalLink className="h-3 w-3" />
             </a>
-          </LinkPopover>
+          </LinkTooltip>
         );
       }
       return <span key={i}>{segment.content}</span>;
@@ -170,6 +193,7 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             disabled={isSaving}
             className="min-h-[100px]"
             placeholder="Enter text... Use [text](url) for links or Ctrl+K"
@@ -242,6 +266,16 @@ export function RichTextEditor({ value, onSave, className = "", disabled = false
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {editingLink && (
+        <EditLinkDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          text={editingLink.text}
+          url={editingLink.url}
+          onSave={handleSaveEditedLink}
+        />
+      )}
     </>
   );
 }
