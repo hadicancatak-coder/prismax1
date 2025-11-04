@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ListPlus } from "lucide-react";
 import { useCreateBulkOperationItems } from "@/hooks/useOperationLogs";
+import { InlineRichTextField } from "@/components/InlineRichTextField";
 
 interface BulkItemsInputProps {
   auditLogId: string;
@@ -53,12 +53,15 @@ export function BulkItemsInput({ auditLogId, defaultAssignee }: BulkItemsInputPr
             <Label htmlFor="bulk-items">
               Enter items (one per line)
             </Label>
-            <Textarea
-              id="bulk-items"
+            <InlineRichTextField
               value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              placeholder="Fix disapproved ads in SA campaign&#10;Update negative keywords list&#10;Budget allocation needs review&#10;..."
-              rows={12}
+              onChange={setBulkText}
+              placeholder="Fix disapproved ads in SA campaign
+Update negative keywords list
+Budget allocation needs review
+...
+(Paste URLs to create links)"
+              minHeight="300px"
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-2">

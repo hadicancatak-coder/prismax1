@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +10,10 @@ import { OperationAuditItem } from "@/lib/operationsService";
 import { useUpdateOperationItem, useDeleteOperationItem } from "@/hooks/useOperationLogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { RichTextEditor } from "@/components/RichTextEditor";
+import { InlineRichTextField } from "@/components/InlineRichTextField";
 import { AuditItemComments } from "./AuditItemComments";
 import { useAuditItemComments } from "@/hooks/useAuditItemComments";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 interface AuditItemCardProps {
   item: OperationAuditItem;
@@ -28,8 +29,23 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const { data: comments } = useAuditItemComments(item.id);
+  const [localContent, setLocalContent] = useState(item.content);
+  const debouncedContent = useDebouncedValue(localContent, 500);
   
   const isAdmin = user?.user_metadata?.role === 'admin';
+
+  useEffect(() => {
+    if (debouncedContent !== item.content && debouncedContent !== localContent) {
+      updateItem.mutate({
+        id: item.id,
+        updates: { content: debouncedContent }
+      });
+    }
+  }, [debouncedContent]);
+
+  useEffect(() => {
+    setLocalContent(item.content);
+  }, [item.content]);
 
   const handleStatusChange = (newStatus: string) => {
     updateItem.mutate({
@@ -84,15 +100,12 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
                 <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
                 {getStatusBadge()}
               </div>
-              <RichTextEditor
-                value={item.content}
-                onSave={async (newContent) => {
-                  await updateItem.mutateAsync({
-                    id: item.id,
-                    updates: { content: newContent }
-                  });
-                }}
+              <InlineRichTextField
+                value={localContent}
+                onChange={setLocalContent}
+                placeholder="Action item details..."
                 className="text-sm"
+                minHeight="60px"
               />
             </div>
 

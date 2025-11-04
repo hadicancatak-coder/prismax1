@@ -3,13 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Users } from "lucide-react";
 import { useCreateOperationLog, useDefaultAssignees } from "@/hooks/useOperationLogs";
 import { ENTITIES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InlineRichTextField } from "@/components/InlineRichTextField";
 
 export function CreateAuditLogDialog() {
   const [open, setOpen] = useState(false);
@@ -85,12 +85,11 @@ export function CreateAuditLogDialog() {
 
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <InlineRichTextField
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Overall audit notes..."
-              rows={3}
+              onChange={setDescription}
+              placeholder="Overall audit notes... (Paste URLs to create links)"
+              minHeight="80px"
             />
           </div>
 
