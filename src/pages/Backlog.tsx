@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
 import { Calendar, AlertCircle, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Backlog() {
   const { userRole } = useAuth();
@@ -17,6 +21,8 @@ export default function Backlog() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [schedulingTaskId, setSchedulingTaskId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   useEffect(() => {
     // Wait for userRole to load before checking
@@ -99,10 +105,10 @@ export default function Backlog() {
     setLoading(false);
   };
 
-  const handleScheduleTask = async (taskId: string, date: string) => {
+  const handleScheduleTask = async (taskId: string, date: Date) => {
     const { error } = await supabase
       .from("tasks")
-      .update({ due_at: date })
+      .update({ due_at: format(date, 'yyyy-MM-dd') })
       .eq("id", taskId);
 
     if (error) {
@@ -116,10 +122,12 @@ export default function Backlog() {
 
     toast({
       title: "Task Scheduled",
-      description: "Task has been moved to the calendar",
+      description: `Task scheduled for ${format(date, 'MMM dd, yyyy')}`,
     });
 
     await fetchBacklogTasks();
+    setSchedulingTaskId(null);
+    setSelectedDate(undefined);
   };
 
   if (loading || userRole === null) {
@@ -224,20 +232,35 @@ export default function Backlog() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const date = prompt("Enter date (YYYY-MM-DD):");
-                          if (date) {
-                            handleScheduleTask(task.id, date);
-                          }
-                        }}
-                      >
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Schedule
-                      </Button>
+                      <Popover open={schedulingTaskId === task.id} onOpenChange={(open) => !open && setSchedulingTaskId(null)}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSchedulingTaskId(task.id);
+                            }}
+                          >
+                            <Calendar className="h-3 w-3 mr-1" />
+                            Schedule
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                          <CalendarComponent
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                setSelectedDate(date);
+                                handleScheduleTask(task.id, date);
+                              }
+                            }}
+                            className={cn("p-3 pointer-events-auto")}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </td>
                   </tr>
                 ))

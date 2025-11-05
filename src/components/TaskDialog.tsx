@@ -33,6 +33,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import { PromptDialog } from "@/components/ui/PromptDialog";
 
 interface TaskDialogProps {
   open: boolean;
@@ -63,6 +65,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [showJiraInput, setShowJiraInput] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedTask, setEditedTask] = useState<any>(null);
+  const [confirmDeleteComment, setConfirmDeleteComment] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState<{id: string, body: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
@@ -1167,34 +1171,32 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                                 size="sm"
                                 variant="ghost"
                                 className="h-6 w-6 p-0"
-                                onClick={async () => {
-                                  const newBody = prompt("Edit comment:", comment.body);
-                                  if (newBody && newBody.trim()) {
-                                    await supabase
-                                      .from('comments')
-                                      .update({ body: newBody.trim() })
-                                      .eq('id', comment.id);
-                                    fetchComments();
-                                    toast({ title: "Comment updated" });
-                                  }
-                                }}
+                                onClick={() => setEditingComment({id: comment.id, body: comment.body})}
                               >
                                 ✏️
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-destructive"
-                                onClick={async () => {
-                                  if (confirm("Delete this comment?")) {
-                                    await supabase.from('comments').delete().eq('id', comment.id);
-                                    fetchComments();
-                                    toast({ title: "Comment deleted" });
-                                  }
+                              <ConfirmPopover
+                                open={confirmDeleteComment === comment.id}
+                                onOpenChange={(open) => !open && setConfirmDeleteComment(null)}
+                                onConfirm={async () => {
+                                  await supabase.from('comments').delete().eq('id', comment.id);
+                                  fetchComments();
+                                  toast({ title: "Comment deleted" });
+                                  setConfirmDeleteComment(null);
                                 }}
-                              >
-                                🗑️
-                              </Button>
+                                title="Delete this comment?"
+                                description="This action cannot be undone."
+                                trigger={
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-destructive"
+                                    onClick={() => setConfirmDeleteComment(comment.id)}
+                                  >
+                                    🗑️
+                                  </Button>
+                                }
+                              />
                             </div>
                           )}
                           
@@ -1336,6 +1338,25 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           </>
         )}
       </DialogContent>
+      
+      <PromptDialog
+        open={!!editingComment}
+        onOpenChange={(open) => !open && setEditingComment(null)}
+        title="Edit comment"
+        defaultValue={editingComment?.body || ""}
+        placeholder="Enter comment text..."
+        onConfirm={async (newBody) => {
+          if (editingComment && newBody.trim()) {
+            await supabase
+              .from('comments')
+              .update({ body: newBody.trim() })
+              .eq('id', editingComment.id);
+            fetchComments();
+            toast({ title: "Comment updated" });
+            setEditingComment(null);
+          }
+        }}
+      />
     </Dialog>
   );
 }

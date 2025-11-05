@@ -26,6 +26,7 @@ import { AdvancedFilters } from "@/components/ads/AdvancedFilters";
 import { BulkActionsBar } from "@/components/ads/BulkActionsBar";
 import { useIncrementElementUsage } from "@/hooks/useAdElements";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 
 export default function AdsPage() {
   const { user } = useAuth();
@@ -258,8 +259,6 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
   };
 
   const handleDeleteAd = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this ad?")) return;
-
     const { error } = await supabase
       .from("ads")
       .delete()
@@ -360,8 +359,6 @@ ${callouts.filter(c => c).map((c, i) => `${i + 1}. ${c}`).join('\n')}
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedAdIds.length} ads?`)) return;
-    
     const { error } = await supabase.from('ads').delete().in('id', selectedAdIds);
     
     if (error) {

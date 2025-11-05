@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Download, Copy, Trash2 } from 'lucide-react';
+import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
@@ -19,6 +21,8 @@ export function BulkActionsBar({
   onDuplicate,
   onDelete,
 }: BulkActionsBarProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  
   if (selectedIds.length === 0) return null;
 
   return (
@@ -76,14 +80,26 @@ export function BulkActionsBar({
           )}
 
           {onDelete && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Delete
-            </Button>
+            <ConfirmPopover
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              onConfirm={() => {
+                onDelete();
+                setConfirmDelete(false);
+              }}
+              title={`Delete ${selectedIds.length} items?`}
+              description="This action cannot be undone."
+              trigger={
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </Button>
+              }
+            />
           )}
         </div>
       </div>
