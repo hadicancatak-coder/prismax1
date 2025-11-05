@@ -50,25 +50,20 @@ export function NewsTicker() {
     }
   };
 
-  if (announcements.length === 0) return null;
-
-  return (
+  return announcements.length === 0 ? null : (
     <div 
-      className="bg-muted border border-border rounded overflow-hidden cursor-pointer hover:opacity-80 transition-smooth"
+      className="bg-white border-b border-gray-200 cursor-pointer"
       onClick={() => navigate("/notifications")}
     >
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
           {announcements.map((announcement) => (
-            <div key={announcement.id} className="flex-[0_0_100%] min-w-0 p-3">
+            <div key={announcement.id} className="flex-[0_0_100%] min-w-0 py-2 px-4">
               <div className="flex items-center justify-center gap-3">
-                <Megaphone className="h-4 w-4 text-primary flex-shrink-0" />
-                <Badge className={getPriorityColor(announcement.priority)}>
-                  {announcement.priority}
-                </Badge>
-                <span className="font-medium text-foreground">{announcement.title}</span>
-                <span className="text-muted-foreground">-</span>
-                <span className="text-body text-muted-foreground truncate">{announcement.message}</span>
+                <Megaphone className="h-3.5 w-3.5 text-gray-600" />
+                <span className="text-sm text-gray-900 font-medium">{announcement.title}</span>
+                <span className="text-gray-400">·</span>
+                <span className="text-sm text-gray-600 truncate">{announcement.message}</span>
               </div>
             </div>
           ))}

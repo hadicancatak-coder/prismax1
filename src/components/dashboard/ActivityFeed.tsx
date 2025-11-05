@@ -38,34 +38,34 @@ export function ActivityFeed() {
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <Activity className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-section-title text-foreground">Recent Activity</h2>
-      </div>
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
-        {activities.length > 0 ? (
-          activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0">
-              <Avatar className="h-8 w-8">
+    <div className="space-y-0">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+      
+      {activities.length === 0 ? (
+        <div className="py-8 text-center text-gray-500">
+          No recent activity
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-100 border-t border-gray-100">
+          {activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-3 py-3 hover:bg-gray-50 transition-colors">
+              <Avatar className="h-8 w-8 shrink-0">
                 <AvatarImage src={activity.user?.avatar_url} />
                 <AvatarFallback>{activity.user?.name?.[0] || "?"}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-body text-foreground">
+                <p className="text-sm text-gray-900">
                   <span className="font-medium">{activity.user?.name || "Unknown"}</span>
                   {" "}{getActionText(activity)}
                 </p>
-                <p className="text-metadata">
+                <p className="text-xs text-gray-500 mt-1">
                   {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
-          ))
-        ) : (
-          <p className="text-body text-muted-foreground py-4">No recent activity</p>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
