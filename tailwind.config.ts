@@ -123,11 +123,20 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        "shimmer": {
+          "0%": { 
+            backgroundPosition: "-1000px 0"
+          },
+          "100%": { 
+            backgroundPosition: "1000px 0"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 150ms ease-in-out",
         "accordion-up": "accordion-up 150ms ease-in-out",
         "fade-in": "fade-in 150ms ease-in-out",
+        "shimmer": "shimmer 2s infinite linear",
       },
     },
   },
