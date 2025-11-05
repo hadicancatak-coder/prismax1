@@ -1,6 +1,6 @@
-import { Editor } from '@tiptap/react';
+import { Editor, BubbleMenu } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Bold,
   Italic,
@@ -35,40 +35,6 @@ const COLORS = [
 export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const updatePosition = () => {
-      const { state } = editor;
-      const { from, to } = state.selection;
-      
-      if (from === to) {
-        setPosition(null);
-        return;
-      }
-
-      const start = editor.view.coordsAtPos(from);
-      const end = editor.view.coordsAtPos(to);
-      
-      const left = (start.left + end.left) / 2;
-      const top = start.top - 10;
-      
-      setPosition({ top, left });
-    };
-
-    const handleSelectionUpdate = () => {
-      updatePosition();
-    };
-
-    editor.on('selectionUpdate', handleSelectionUpdate);
-    editor.on('update', handleSelectionUpdate);
-    
-    return () => {
-      editor.off('selectionUpdate', handleSelectionUpdate);
-      editor.off('update', handleSelectionUpdate);
-    };
-  }, [editor]);
 
   const handleLinkClick = () => {
     const previousUrl = editor.getAttributes('link').href;
@@ -125,20 +91,16 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
     </Button>
   );
 
-  if (!position) {
-    return null;
-  }
-
   return (
     <>
-      <div
-        ref={menuRef}
-        className="fixed z-50 flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg"
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-          transform: 'translate(-50%, -100%)',
+      <BubbleMenu 
+        editor={editor}
+        tippyOptions={{ 
+          duration: 100,
+          placement: 'top',
+          maxWidth: 'none',
         }}
+        className="flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg"
       >
         <BubbleButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -212,7 +174,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
             </div>
           </PopoverContent>
         </Popover>
-      </div>
+      </BubbleMenu>
 
       <EditorLinkDialog
         open={linkDialogOpen}
