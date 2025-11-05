@@ -378,20 +378,19 @@ export default function Notifications() {
               </div>
             </div>
           )
-          ))}
+        ))}
 
-          {filteredNotifications.length === 0 && !loading && (
-            <div className="py-12 text-center">
-              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-body text-muted-foreground">
-                {searchQuery || typeFilter !== "all" || readFilter !== "all"
-                  ? "No notifications match your filters"
-                  : "No notifications yet"}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+        {filteredNotifications.length === 0 && !loading && (
+          <div className="py-12 text-center">
+            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-body text-muted-foreground">
+              {searchQuery || typeFilter !== "all" || readFilter !== "all"
+                ? "No notifications match your filters"
+                : "No notifications yet"}
+            </p>
+          </div>
+        )}
+      </div>
 
       {selectedTaskId && (
         <TaskDialog
