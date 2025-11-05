@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
+import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
@@ -27,6 +28,7 @@ export default function CalendarView() {
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "custom">("today");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [focusMode, setFocusMode] = useState(false);
+  const [loading, setLoading] = useState(true);
   const currentDate = new Date();
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function CalendarView() {
 
   const fetchTasks = async () => {
     if (!user?.id) return;
+    setLoading(true);
 
     // Get current user's profile with teams
     const { data: currentProfile } = await supabase
@@ -121,6 +124,7 @@ export default function CalendarView() {
     });
 
     setTasks(filteredTasks);
+    setLoading(false);
   };
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
@@ -243,6 +247,9 @@ export default function CalendarView() {
             )}
           </div>
           <div>
+            {loading ? (
+              <ListSkeleton items={5} />
+            ) : (
             <div className="space-y-2">
               {todayTasks.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">No tasks for today</p>
@@ -283,6 +290,7 @@ export default function CalendarView() {
                 ))
               )}
             </div>
+            )}
           </div>
         </div>
         

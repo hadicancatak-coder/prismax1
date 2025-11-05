@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { adminService } from "@/lib/adminService";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 interface User {
   id: string;
@@ -251,6 +252,9 @@ export default function UsersManagement() {
         )}
       </div>
 
+      {loading ? (
+        <TableSkeleton columns={8} rows={10} />
+      ) : (
       <div className="bg-card border border-border rounded">
         <Table>
           <TableHeader>
@@ -271,11 +275,7 @@ export default function UsersManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">Loading...</TableCell>
-              </TableRow>
-            ) : filteredUsers.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center">No users found</TableCell>
               </TableRow>
@@ -350,6 +350,7 @@ export default function UsersManagement() {
           </TableBody>
         </Table>
       </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

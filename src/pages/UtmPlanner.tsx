@@ -7,6 +7,7 @@ import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
 import { Link2, Plus, List, Folder } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const UtmPlanner = () => {
   const [activeTab, setActiveTab] = useState("builder");
@@ -54,9 +55,7 @@ const UtmPlanner = () => {
           <UtmInlineFilters filters={filters} onFiltersChange={setFilters} />
 
           {isLoading ? (
-            <div className="py-12 text-center text-muted-foreground">
-              Loading UTM links...
-            </div>
+            <TableSkeleton columns={5} rows={8} />
           ) : (
             <UtmTableGroupedView links={utmLinks} />
           )}

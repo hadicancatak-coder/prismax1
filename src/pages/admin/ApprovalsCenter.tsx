@@ -9,6 +9,7 @@ import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { approvalService } from "@/lib/approvalService";
 import { format } from "date-fns";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 interface PendingItem {
   id: string;
@@ -184,6 +185,9 @@ export default function ApprovalsCenter() {
               <CardTitle>Pending Approvals</CardTitle>
             </CardHeader>
             <CardContent>
+              {loading ? (
+                <TableSkeleton columns={5} rows={5} />
+              ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -195,11 +199,7 @@ export default function ApprovalsCenter() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                    </TableRow>
-                  ) : pendingApprovals.length === 0 ? (
+                  {pendingApprovals.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center">No pending approvals</TableCell>
                     </TableRow>
@@ -243,6 +243,7 @@ export default function ApprovalsCenter() {
                   )}
                 </TableBody>
               </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

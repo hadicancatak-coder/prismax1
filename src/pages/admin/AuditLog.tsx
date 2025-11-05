@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 interface AuditLogEntry {
   id: string;
@@ -63,6 +64,9 @@ export default function AuditLog() {
         </p>
       </div>
       
+      {loading ? (
+        <TableSkeleton columns={5} rows={10} />
+      ) : (
       <div className="bg-card border border-border rounded">
         <ScrollArea className="h-[600px]">
           <Table>
@@ -76,11 +80,7 @@ export default function AuditLog() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                </TableRow>
-              ) : logs.length === 0 ? (
+              {logs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8">
                     <div className="text-muted-foreground">
@@ -132,6 +132,7 @@ export default function AuditLog() {
           </Table>
         </ScrollArea>
       </div>
+      )}
     </div>
   );
 }

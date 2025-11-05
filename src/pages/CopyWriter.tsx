@@ -12,6 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { ENTITIES } from "@/lib/constants";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 const PLATFORMS = ["ppc", "facebook", "instagram", "tiktok", "snap", "reddit", "whatsapp"];
@@ -112,9 +113,9 @@ function CopyWriter() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading copies...</div>
+          <TableSkeleton columns={6} rows={10} />
         ) : (
-          <SavedCopiesTableView 
+          <SavedCopiesTableView
             copies={copies || []} 
             activeLanguages={activeLanguages}
             addingNewRow={addingNewRow}
