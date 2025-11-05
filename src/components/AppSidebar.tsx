@@ -80,7 +80,7 @@ export function AppSidebar() {
           </div>
 
           {/* Core Features */}
-          <SidebarGroup>
+          <SidebarGroup className="pt-0">
             {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
