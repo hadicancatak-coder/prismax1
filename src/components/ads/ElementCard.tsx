@@ -11,6 +11,7 @@ import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ENTITIES } from '@/lib/constants';
+import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
 
 interface ElementCardProps {
   element: AdElement;
@@ -22,6 +23,7 @@ export function ElementCard({ element }: ElementCardProps) {
   const [editedContent, setEditedContent] = useState('');
   const [editingEntity, setEditingEntity] = useState(false);
   const [selectedEntities, setSelectedEntities] = useState<string[]>(element.entity || []);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
   const { toast } = useToast();
@@ -38,11 +40,9 @@ export function ElementCard({ element }: ElementCardProps) {
     updateElement.mutate({ id: element.id, updates: { is_favorite: !element.is_favorite } });
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Are you sure you want to delete this element?')) {
-      deleteElement.mutate(element.id);
-    }
+  const handleDelete = () => {
+    deleteElement.mutate(element.id);
+    setConfirmDelete(false);
   };
 
   const handleEdit = () => {
@@ -234,9 +234,18 @@ export function ElementCard({ element }: ElementCardProps) {
               <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
                 <Edit className="w-3 h-3" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDelete(e); }}>
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              <ConfirmPopover
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                onConfirm={handleDelete}
+                title="Delete this element?"
+                description="This action cannot be undone."
+                trigger={
+                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                }
+              />
             </div>
           </>
         )}

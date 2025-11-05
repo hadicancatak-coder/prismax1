@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdTemplates, useDeleteAdTemplate } from '@/hooks/useAdTemplates';
 import { Trash2 } from 'lucide-react';
+import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
 
 interface TemplateSelectorProps {
   open: boolean;
@@ -12,14 +14,13 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelectorProps) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { data: templates, isLoading } = useAdTemplates();
   const deleteTemplate = useDeleteAdTemplate();
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (confirm('Delete this template?')) {
-      deleteTemplate.mutate(id);
-    }
+  const handleDelete = (id: string) => {
+    deleteTemplate.mutate(id);
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -49,13 +50,22 @@ export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelec
                       <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => handleDelete(e, template.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <ConfirmPopover
+                    open={confirmDeleteId === template.id}
+                    onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+                    onConfirm={() => handleDelete(template.id)}
+                    title="Delete this template?"
+                    description="This action cannot be undone."
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(template.id); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    }
+                  />
                 </div>
                 
                  <div className="flex gap-2 mt-3">

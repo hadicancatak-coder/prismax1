@@ -19,6 +19,7 @@ import { AdStrengthIndicator } from "./AdStrengthIndicator";
 import { AdComplianceChecker } from "./AdComplianceChecker";
 import { AdVersionHistory } from "./ads/AdVersionHistory";
 import { AdComments } from "./ads/AdComments";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const [sitelinks, setSitelinks] = useState<{ title: string; description: string }[]>([]);
   const [callouts, setCallouts] = useState<string[]>([]);
   const [combinationIndex, setCombinationIndex] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (ad) {
@@ -72,8 +74,6 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this ad?")) return;
-
     const { error } = await supabase.from("ads").delete().eq("id", ad.id);
 
     if (error) {
@@ -82,6 +82,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
       toast({ title: "Success", description: "Ad deleted" });
       onOpenChange(false);
       onUpdate();
+      setConfirmDelete(false);
     }
   };
 
@@ -472,10 +473,19 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
               </Button>
-              <Button onClick={handleDelete} variant="destructive" className="flex-1">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
+              <ConfirmPopover
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                onConfirm={handleDelete}
+                title="Delete this ad?"
+                description="This action cannot be undone."
+                trigger={
+                  <Button onClick={() => setConfirmDelete(true)} variant="destructive" className="flex-1">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                }
+              />
             </>
           )}
         </div>

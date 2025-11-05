@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "./TaskDialog";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 import {
   Table,
   TableBody,
@@ -40,6 +41,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfiles();
@@ -89,15 +91,13 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this task?")) return;
-
+  const handleDelete = async (taskId: string) => {
     try {
       const { error } = await supabase.from("tasks").delete().eq("id", taskId);
       if (error) throw error;
       toast({ title: "Task deleted successfully" });
       onTaskUpdate();
+      setConfirmDeleteId(null);
     } catch (error: any) {
       toast({ title: "Error deleting task", description: error.message, variant: "destructive" });
     }
@@ -236,7 +236,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuItem onClick={(e) => handleDelete(task.id, e)}>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -262,6 +262,15 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
           taskId={selectedTaskId}
         />
       )}
+      
+      <ConfirmPopover
+        open={!!confirmDeleteId}
+        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+        onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+        title="Delete this task?"
+        description="This action cannot be undone."
+        trigger={<span />}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { Copy, Trash, Edit2, Star, ArrowUpDown } from "lucide-react";
 import { useUpdateAdElement, useDeleteAdElement } from "@/hooks/useAdElements";
 import { toast } from "@/hooks/use-toast";
 import { UpdateGoogleStatusDialog } from "./UpdateGoogleStatusDialog";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 
 interface SavedElementsTableViewProps {
   elements: any[];
@@ -19,6 +20,8 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedElement, setSelectedElement] = useState<any>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
@@ -65,16 +68,14 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this element?")) {
-      await deleteElement.mutateAsync(id);
-    }
+    await deleteElement.mutateAsync(id);
+    setConfirmDeleteId(null);
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Delete ${selectedIds.length} elements?`)) {
-      await Promise.all(selectedIds.map(id => deleteElement.mutateAsync(id)));
-      setSelectedIds([]);
-    }
+    await Promise.all(selectedIds.map(id => deleteElement.mutateAsync(id)));
+    setSelectedIds([]);
+    setConfirmBulkDelete(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -91,10 +92,19 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
           <span className="text-sm font-medium">{selectedIds.length} selected</span>
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-            <Trash className="h-4 w-4 mr-1" />
-            Delete
-          </Button>
+          <ConfirmPopover
+            open={confirmBulkDelete}
+            onOpenChange={setConfirmBulkDelete}
+            onConfirm={handleBulkDelete}
+            title={`Delete ${selectedIds.length} elements?`}
+            description="This action cannot be undone."
+            trigger={
+              <Button variant="destructive" size="sm" onClick={() => setConfirmBulkDelete(true)}>
+                <Trash className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            }
+          />
         </div>
       )}
 
@@ -189,14 +199,23 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => handleDelete(element.id)}
-                    >
-                      <Trash className="h-3 w-3" />
-                    </Button>
+                    <ConfirmPopover
+                      open={confirmDeleteId === element.id}
+                      onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+                      onConfirm={() => handleDelete(element.id)}
+                      title="Delete this element?"
+                      description="This action cannot be undone."
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setConfirmDeleteId(element.id)}
+                        >
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      }
+                    />
                   </div>
                 </TableCell>
               </TableRow>

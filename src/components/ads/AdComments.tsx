@@ -6,12 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAdComments, useCreateAdComment, useDeleteAdComment } from '@/hooks/useAdComments';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
 interface AdCommentsProps {
   adId: string;
 }
 
 export function AdComments({ adId }: AdCommentsProps) {
   const [newComment, setNewComment] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { data: comments, isLoading } = useAdComments(adId);
   const createComment = useCreateAdComment();
   const deleteComment = useDeleteAdComment();
@@ -28,9 +30,8 @@ export function AdComments({ adId }: AdCommentsProps) {
   };
 
   const handleDelete = (commentId: string) => {
-    if (confirm('Delete this comment?')) {
-      deleteComment.mutate(commentId);
-    }
+    deleteComment.mutate(commentId);
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -61,13 +62,22 @@ export function AdComments({ adId }: AdCommentsProps) {
                       {format(new Date(comment.created_at), 'MMM dd, yyyy HH:mm')}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(comment.id)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  <ConfirmPopover
+                    open={confirmDeleteId === comment.id}
+                    onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+                    onConfirm={() => handleDelete(comment.id)}
+                    title="Delete this comment?"
+                    description="This action cannot be undone."
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setConfirmDeleteId(comment.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    }
+                  />
                 </div>
                 <p className="text-sm mt-1">{comment.body}</p>
               </div>

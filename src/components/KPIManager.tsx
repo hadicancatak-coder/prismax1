@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AlertBanner } from "@/components/ui/AlertBanner";
 
 export interface KPI {
   id: string;
@@ -24,10 +25,12 @@ interface KPIManagerProps {
 
 export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManagerProps) {
   const [localKPIs, setLocalKPIs] = useState<KPI[]>(kpis);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Sync local state with props when dialog opens or kpis change
   useEffect(() => {
     setLocalKPIs(kpis);
+    setValidationError(null);
   }, [kpis, open]);
 
   const addKPI = () => {
@@ -63,7 +66,7 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
     const totalWeight = validKPIs.reduce((sum, kpi) => sum + kpi.weight, 0);
     
     if (totalWeight > 100) {
-      alert("Total weight cannot exceed 100%");
+      setValidationError("Total weight cannot exceed 100%");
       return;
     }
     
@@ -88,6 +91,14 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
             </span>
           </div>
         </DialogHeader>
+
+        {validationError && (
+          <AlertBanner
+            variant="error"
+            message={validationError}
+            onDismiss={() => setValidationError(null)}
+          />
+        )}
 
         <div className="space-y-4 py-4">
           {localKPIs.length === 0 ? (

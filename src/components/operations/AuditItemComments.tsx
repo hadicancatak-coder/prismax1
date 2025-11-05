@@ -10,6 +10,7 @@ import {
 } from "@/hooks/useAuditItemComments";
 import { useAuth } from "@/hooks/useAuth";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 
 interface AuditItemCommentsProps {
   itemId: string;
@@ -17,6 +18,7 @@ interface AuditItemCommentsProps {
 
 export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
   const [newComment, setNewComment] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { data: comments, isLoading } = useAuditItemComments(itemId);
   const createComment = useCreateAuditItemComment();
   const deleteComment = useDeleteAuditItemComment();
@@ -34,9 +36,8 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
   };
 
   const handleDelete = async (commentId: string) => {
-    if (confirm("Delete this comment?")) {
-      await deleteComment.mutateAsync(commentId);
-    }
+    await deleteComment.mutateAsync(commentId);
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -66,14 +67,23 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
                 />
               </div>
               {user?.id === comment.author_id && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(comment.id)}
-                  className="flex-shrink-0 h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <ConfirmPopover
+                  open={confirmDeleteId === comment.id}
+                  onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+                  onConfirm={() => handleDelete(comment.id)}
+                  title="Delete this comment?"
+                  description="This action cannot be undone."
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmDeleteId(comment.id)}
+                      className="flex-shrink-0 h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  }
+                />
               )}
             </div>
           ))
