@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -531,16 +532,17 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             <div>
               <Label>Description</Label>
               {editMode ? (
-                <Textarea
+                <RichTextEditor
                   value={editedTask?.description || ""}
-                  onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-                  className="mt-1 min-h-[100px]"
+                  onChange={(value) => setEditedTask({ ...editedTask, description: value })}
                   placeholder="Add task description..."
+                  minHeight="100px"
                 />
               ) : (
-                <p className="text-sm text-muted-foreground mt-1 min-h-[40px] p-2 rounded border border-transparent">
-                  {task.description || "No description"}
-                </p>
+                <div 
+                  className="text-sm text-muted-foreground mt-1 min-h-[40px] p-2 rounded border border-transparent prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: task.description || "No description" }}
+                />
               )}
             </div>
 

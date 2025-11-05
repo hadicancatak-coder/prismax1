@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SimpleMultiSelect } from "@/components/utm/SimpleMultiSelect";
@@ -171,13 +172,11 @@ export function RedditAdCreator({ adData, setAdData }: RedditAdCreatorProps) {
       <div>
         <Label htmlFor="bodyText">Body Text</Label>
         <div className="flex gap-2 items-start">
-          <Textarea
-            id="bodyText"
+          <RichTextEditor
             value={adData.bodyText}
-            onChange={(e) => setAdData({ ...adData, bodyText: e.target.value})}
+            onChange={(text) => setAdData({ ...adData, bodyText: text })}
             placeholder="Enter post body"
-            rows={5}
-            dir={adData.language === "AR" ? "rtl" : "ltr"}
+            minHeight="120px"
           />
           <div className="flex flex-col gap-1 shrink-0 pt-2">
             <ElementQuickInsert

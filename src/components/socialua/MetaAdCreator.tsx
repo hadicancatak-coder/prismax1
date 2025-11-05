@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SimpleMultiSelect } from "@/components/utm/SimpleMultiSelect";
@@ -165,14 +166,11 @@ export function MetaAdCreator({ adData, setAdData, platform }: MetaAdCreatorProp
       <div>
         <Label htmlFor="primaryText">Primary Text</Label>
         <div className="flex gap-2 items-start">
-          <Textarea
-            id="primaryText"
+          <RichTextEditor
             value={adData.primaryText}
-            onChange={(e) => setAdData({ ...adData, primaryText: e.target.value })}
+            onChange={(text) => setAdData({ ...adData, primaryText: text.slice(0, 125) })}
             placeholder="Enter primary text"
-            rows={3}
-            maxLength={125}
-            dir={adData.language === "AR" ? "rtl" : "ltr"}
+            minHeight="80px"
           />
           <div className="flex flex-col gap-1 shrink-0 pt-2">
             <ElementQuickInsert
