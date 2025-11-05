@@ -1,49 +1,48 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Trash2, Upload, ChevronDown, ChevronUp } from "lucide-react";
-import { CopywriterCopy, useUpdateCopywriterCopy, useDeleteCopywriterCopy } from "@/hooks/useCopywriterCopies";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trash2, ArrowUpDown, CheckCircle2 } from "lucide-react";
+import { useUpdateCopywriterCopy, useDeleteCopywriterCopy, CopywriterCopy } from "@/hooks/useCopywriterCopies";
+import { useAuth } from "@/hooks/useAuth";
 import { syncCopyToPlanners } from "@/lib/copywriterSync";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { PlatformMultiSelect } from "./PlatformMultiSelect";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { CampaignsTagsInput } from "./CampaignsTagsInput";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
-
-const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 
 interface SavedCopiesTableViewProps {
   copies: CopywriterCopy[];
   onRefresh?: () => void;
 }
 
+const CHAR_LIMITS: Record<string, Record<string, number>> = {
+  headline: { ppc: 30, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
+  description: { ppc: 90, facebook: 125, instagram: 125, tiktok: 100, snap: 80, reddit: 300, whatsapp: 4096 },
+  primary_text: { ppc: 60, facebook: 125, instagram: 2200, tiktok: 100, snap: 80, reddit: 300, whatsapp: 1024 },
+  callout: { ppc: 25, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
+  sitelink: { ppc: 25, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
+};
+
 export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableViewProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selected, setSelected] = useState<string[]>([]);
-  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [isAddingRow, setIsAddingRow] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
 
-  const updateCopy = useUpdateCopywriterCopy();
-  const deleteCopy = useDeleteCopywriterCopy();
+  const updateCopyMutation = useUpdateCopywriterCopy();
+  const deleteCopyMutation = useDeleteCopywriterCopy();
 
   const sortedCopies = [...copies].sort((a, b) => {
-    let aVal = a[sortField as keyof CopywriterCopy];
-    let bVal = b[sortField as keyof CopywriterCopy];
-    
-    if (sortField.startsWith("content_")) {
-      aVal = aVal || "";
-      bVal = bVal || "";
-    }
-    
-    if (aVal === bVal) return 0;
-    const comparison = aVal > bVal ? 1 : -1;
-    return sortOrder === "asc" ? comparison : -comparison;
+    const aVal = a[sortField as keyof CopywriterCopy];
+    const bVal = b[sortField as keyof CopywriterCopy];
+    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+    return 0;
   });
 
   const toggleSort = (field: string) => {
@@ -55,223 +54,202 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
     }
   };
 
-  const toggleSelectAll = () => {
-    setSelected(selected.length === copies.length ? [] : copies.map(c => c.id));
-  };
-
   const toggleSelect = (id: string) => {
-    setSelected(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
   };
 
-  const handleUpdateField = async (id: string, field: string, value: any) => {
-    try {
-      await updateCopy.mutateAsync({ id, updates: { [field]: value } });
-      setEditingCell(null);
-      onRefresh?.();
-    } catch (error: any) {
-      toast({
-        title: "Error updating",
-        description: error.message,
-        variant: "destructive",
-      });
+  const handleUpdateField = (id: string, field: string, value: any) => {
+    updateCopyMutation.mutate({ id, updates: { [field]: value } });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Delete this copy?")) {
+      deleteCopyMutation.mutate(id);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this copy?")) return;
-    try {
-      await deleteCopy.mutateAsync(id);
-      toast({ title: "Copy deleted" });
-      onRefresh?.();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting",
-        description: error.message,
-        variant: "destructive",
-      });
+  const handleBulkDelete = () => {
+    if (confirm(`Delete ${selectedIds.size} copies?`)) {
+      selectedIds.forEach((id) => deleteCopyMutation.mutate(id));
+      setSelectedIds(new Set());
     }
   };
 
   const handleSync = async (copy: CopywriterCopy) => {
     try {
       await syncCopyToPlanners({ copy });
-      await handleUpdateField(copy.id, "is_synced_to_planner", true);
-      toast({ title: "Synced to planners" });
-    } catch (error: any) {
-      toast({
-        title: "Error syncing",
-        description: error.message,
-        variant: "destructive",
+      await updateCopyMutation.mutateAsync({
+        id: copy.id,
+        updates: { is_synced_to_planner: true },
       });
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selected.length} copies?`)) return;
-    try {
-      await Promise.all(selected.map(id => deleteCopy.mutateAsync(id)));
-      setSelected([]);
-      toast({ title: `Deleted ${selected.length} copies` });
-      onRefresh?.();
+      toast({ title: "Copy synced to planners" });
     } catch (error: any) {
-      toast({
-        title: "Error bulk deleting",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Sync failed", description: error.message, variant: "destructive" });
     }
   };
 
-  const getCharLimit = (type: string, platforms: string[]) => {
-    const hasPPC = platforms.includes("ppc");
-    const hasSocial = platforms.some(p => ["facebook", "instagram", "tiktok", "snap", "reddit", "whatsapp"].includes(p));
-    
-    switch (type) {
-      case "headline":
-        return hasPPC && !hasSocial ? 30 : 60;
-      case "description":
-        return hasPPC && !hasSocial ? 90 : 125;
-      case "primary_text":
-        return 125;
-      case "callout":
-      case "sitelink":
-        return 25;
-      default:
-        return 1000;
+  const getCharLimit = (type: string, platforms: string[]): number => {
+    const limits = CHAR_LIMITS[type] || {};
+    const platformLimits = platforms.map((p) => limits[p] || 125).filter((l) => l > 0);
+    return platformLimits.length > 0 ? Math.min(...platformLimits) : 125;
+  };
+
+  const getStatusColor = (count: number, limit: number) => {
+    if (count > limit) return "destructive";
+    return "default";
+  };
+
+  const getStatusText = (count: number, limit: number) => {
+    if (count > limit) return "NEEDS TO BE REDUCED";
+    return "Limit Available";
+  };
+
+  const stripHtml = (html: string | null): string => {
+    if (!html) return "";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  };
+
+  const renderContentCell = (copy: CopywriterCopy, field: "content_en" | "content_ar" | "content_az") => {
+    const content = copy[field] || "";
+    const plainText = stripHtml(content);
+    const isEditing = editingCell?.id === copy.id && editingCell?.field === field;
+    const canEdit = user?.id === copy.created_by || user?.role === "admin";
+
+    if (isEditing && canEdit) {
+      return (
+        <div className="h-[44px] overflow-hidden">
+          <RichTextEditor
+            value={content}
+            onChange={(value) => handleUpdateField(copy.id, field, value)}
+            onBlur={() => setEditingCell(null)}
+            autoFocus
+            className="text-xs"
+            minHeight="44px"
+          />
+        </div>
+      );
     }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className="cursor-pointer h-[44px] flex items-center overflow-hidden text-ellipsis line-clamp-2"
+              onClick={() => canEdit && setEditingCell({ id: copy.id, field })}
+            >
+              <span className="text-xs">{plainText || "-"}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-md">
+            <div className="text-xs whitespace-pre-wrap">{plainText}</div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
-  const getCharLimitColor = (length: number, limit: number) => {
-    const percent = (length / limit) * 100;
-    if (percent > 100) return "text-destructive";
-    if (percent >= 80) return "text-orange-500";
-    return "text-muted-foreground";
-  };
-
-  const SortIcon = ({ field }: { field: string }) => {
-    if (sortField !== field) return null;
-    return sortOrder === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />;
-  };
+  if (copies.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <p>No copies found. Create your first copy to get started.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {selected.length > 0 && (
-        <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">{selected.length} selected</span>
-          <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Selected
           </Button>
         </div>
       )}
 
-      <div className="border rounded-lg overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selected.length === copies.length && copies.length > 0}
-                  onCheckedChange={toggleSelectAll}
+      <div className="border rounded-lg overflow-auto max-h-[calc(100vh-300px)]">
+        <Table className="table-fixed">
+          <TableHeader className="sticky top-0 bg-background z-10 border-b">
+            <TableRow className="h-[44px] hover:bg-transparent">
+              <TableHead className="w-12 border-r">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === copies.length}
+                  onChange={() => {
+                    if (selectedIds.size === copies.length) {
+                      setSelectedIds(new Set());
+                    } else {
+                      setSelectedIds(new Set(copies.map((c) => c.id)));
+                    }
+                  }}
                 />
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("element_type")}>
-                <div className="flex items-center gap-1">
-                  Type <SortIcon field="element_type" />
-                </div>
+              <TableHead className="w-[100px] border-r">
+                <Button variant="ghost" size="sm" onClick={() => toggleSort("region")} className="h-8 px-2 text-xs">
+                  Region <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
               </TableHead>
-              <TableHead>Platforms</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Campaigns</TableHead>
-              <TableHead>Region</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("content_en")}>
-                <div className="flex items-center gap-1">
-                  EN Content <SortIcon field="content_en" />
-                </div>
+              <TableHead className="w-[140px] border-r text-xs">Campaign</TableHead>
+              <TableHead className="w-[100px] border-r">
+                <Button variant="ghost" size="sm" onClick={() => toggleSort("element_type")} className="h-8 px-2 text-xs">
+                  Type <ArrowUpDown className="ml-1 h-3 w-3" />
+                </Button>
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("content_ar")}>
-                <div className="flex items-center gap-1">
-                  AR Content <SortIcon field="content_ar" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("content_az")}>
-                <div className="flex items-center gap-1">
-                  AZ Content <SortIcon field="content_az" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("content_es")}>
-                <div className="flex items-center gap-1">
-                  ES Content <SortIcon field="content_es" />
-                </div>
-              </TableHead>
-              <TableHead className="w-20 text-center">Synced</TableHead>
-              <TableHead className="w-32">Actions</TableHead>
+              
+              <TableHead className="w-[250px] border-r text-xs">English</TableHead>
+              <TableHead className="w-[60px] border-r text-right text-xs">EN Cnt</TableHead>
+              <TableHead className="w-[80px] border-r text-xs">EN Limit</TableHead>
+              <TableHead className="w-[140px] border-r text-xs">EN Status</TableHead>
+
+              <TableHead className="w-[250px] border-r text-xs">Arabic</TableHead>
+              <TableHead className="w-[60px] border-r text-right text-xs">AR Cnt</TableHead>
+              <TableHead className="w-[80px] border-r text-xs">AR Limit</TableHead>
+              <TableHead className="w-[140px] border-r text-xs">AR Status</TableHead>
+
+              <TableHead className="w-[250px] border-r text-xs">Azerice</TableHead>
+              <TableHead className="w-[60px] border-r text-right text-xs">AZ Cnt</TableHead>
+              <TableHead className="w-[80px] border-r text-xs">AZ Limit</TableHead>
+              <TableHead className="w-[140px] border-r text-xs">AZ Status</TableHead>
+
+              <TableHead className="w-[100px] text-xs">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedCopies.map((copy) => {
-              const charLimit = getCharLimit(copy.element_type, copy.platform);
-              const canEdit = user?.id === copy.created_by || user?.role === "admin";
-              
+            {sortedCopies.map((copy, idx) => {
+              const defaultLimit = getCharLimit(copy.element_type, copy.platform);
+              const enCount = stripHtml(copy.content_en).length;
+              const arCount = stripHtml(copy.content_ar).length;
+              const azCount = stripHtml(copy.content_az).length;
+              const enLimit = copy.char_limit_en || defaultLimit;
+              const arLimit = copy.char_limit_ar || defaultLimit;
+              const azLimit = copy.char_limit_az || defaultLimit;
+
               return (
-                <TableRow key={copy.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selected.includes(copy.id)}
-                      onCheckedChange={() => toggleSelect(copy.id)}
+                <TableRow key={copy.id} className={`h-[44px] max-h-[44px] border-b ${idx % 2 === 0 ? "bg-muted/30" : ""}`}>
+                  <TableCell className="h-[44px] border-r">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(copy.id)}
+                      onChange={() => toggleSelect(copy.id)}
                     />
                   </TableCell>
-                  <TableCell>
-                    <Select
-                      value={copy.element_type}
-                      onValueChange={(val) => handleUpdateField(copy.id, "element_type", val)}
-                      disabled={!canEdit}
-                    >
-                      <SelectTrigger className="h-8 w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ELEMENT_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <PlatformMultiSelect
-                      value={copy.platform}
-                      onChange={(val) => handleUpdateField(copy.id, "platform", val)}
-                      disabled={!canEdit}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {copy.entity?.map((ent) => (
-                        <Badge key={ent} variant="outline" className="text-xs">
-                          {ent}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <CampaignsTagsInput
-                      value={copy.campaigns || []}
-                      onChange={(val) => handleUpdateField(copy.id, "campaigns", val)}
-                      disabled={!canEdit}
-                    />
-                  </TableCell>
-                  <TableCell>
+                  <TableCell className="h-[44px] border-r">
                     <Select
                       value={copy.region || ""}
-                      onValueChange={(val) => handleUpdateField(copy.id, "region", val)}
-                      disabled={!canEdit}
+                      onValueChange={(value) => handleUpdateField(copy.id, "region", value)}
                     >
-                      <SelectTrigger className="h-8 w-[100px]">
-                        <SelectValue placeholder="Region" />
+                      <SelectTrigger className="h-8 text-xs border-0">
+                        <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="MENA">MENA</SelectItem>
@@ -280,79 +258,106 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  {["content_en", "content_ar", "content_az", "content_es"].map((field) => (
-                    <TableCell key={field} className="max-w-[250px]">
-                      {editingCell?.id === copy.id && editingCell?.field === field ? (
-                        <div className="space-y-1">
-                          <InlineRichTextField
-                            value={copy[field as keyof CopywriterCopy] as string || ""}
-                            onChange={(val) => handleUpdateField(copy.id, field, val || null)}
-                            onBlur={() => setEditingCell(null)}
-                            className="min-h-[60px] text-sm"
-                            dir={field === "content_ar" ? "rtl" : "ltr"}
-                            autoFocus
-                            maxLength={charLimit}
-                          />
-                          <span className={`text-xs ${getCharLimitColor(
-                            (copy[field as keyof CopywriterCopy] as string || "").length,
-                            charLimit
-                          )}`}>
-                            {(copy[field as keyof CopywriterCopy] as string || "").length}/{charLimit}
-                          </span>
-                        </div>
-                      ) : (
-                        <div
-                          className="cursor-pointer hover:bg-muted/50 p-2 rounded min-h-[40px]"
-                          onClick={() => canEdit && setEditingCell({ id: copy.id, field })}
-                        >
-                          <InlineRichTextField
-                            value={copy[field as keyof CopywriterCopy] as string || ""}
-                            onChange={() => {}}
-                            readOnly
-                            dir={field === "content_ar" ? "rtl" : "ltr"}
-                            placeholder="Click to add"
-                            className="text-sm"
-                          />
-                        </div>
-                      )}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-center">
-                    {copy.is_synced_to_planner && (
-                      <Check className="h-4 w-4 text-green-600 mx-auto" />
-                    )}
+                  <TableCell className="h-[44px] border-r">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs">
+                      <CampaignsTagsInput
+                        value={copy.campaigns}
+                        onChange={(campaigns) => handleUpdateField(copy.id, "campaigns", campaigns)}
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="h-[44px] border-r">
+                    <Badge variant="outline" className="text-xs">{copy.element_type}</Badge>
+                  </TableCell>
+
+                  {/* English */}
+                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_en")}</TableCell>
+                  <TableCell className="h-[44px] border-r text-right">
+                    <span className={`text-xs font-mono ${enCount > enLimit ? "text-destructive font-bold" : ""}`}>
+                      {enCount}
+                    </span>
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Input
+                      type="number"
+                      value={enLimit}
+                      onChange={(e) => handleUpdateField(copy.id, "char_limit_en", parseInt(e.target.value) || defaultLimit)}
+                      className="h-8 w-16 text-xs border-0"
+                    />
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Badge variant={getStatusColor(enCount, enLimit)} className="text-xs whitespace-nowrap">
+                      {getStatusText(enCount, enLimit)}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Arabic */}
+                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_ar")}</TableCell>
+                  <TableCell className="h-[44px] border-r text-right">
+                    <span className={`text-xs font-mono ${arCount > arLimit ? "text-destructive font-bold" : ""}`}>
+                      {arCount}
+                    </span>
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Input
+                      type="number"
+                      value={arLimit}
+                      onChange={(e) => handleUpdateField(copy.id, "char_limit_ar", parseInt(e.target.value) || defaultLimit)}
+                      className="h-8 w-16 text-xs border-0"
+                    />
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Badge variant={getStatusColor(arCount, arLimit)} className="text-xs whitespace-nowrap">
+                      {getStatusText(arCount, arLimit)}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Azerice */}
+                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_az")}</TableCell>
+                  <TableCell className="h-[44px] border-r text-right">
+                    <span className={`text-xs font-mono ${azCount > azLimit ? "text-destructive font-bold" : ""}`}>
+                      {azCount}
+                    </span>
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Input
+                      type="number"
+                      value={azLimit}
+                      onChange={(e) => handleUpdateField(copy.id, "char_limit_az", parseInt(e.target.value) || defaultLimit)}
+                      className="h-8 w-16 text-xs border-0"
+                    />
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r">
+                    <Badge variant={getStatusColor(azCount, azLimit)} className="text-xs whitespace-nowrap">
+                      {getStatusText(azCount, azLimit)}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell className="h-[44px]">
+                    <div className="flex gap-1">
                       <Button
-                        size="sm"
                         variant="ghost"
+                        size="sm"
                         onClick={() => handleSync(copy)}
-                        disabled={!canEdit}
+                        disabled={copy.is_synced_to_planner}
+                        className="h-7 px-2"
                       >
-                        <Upload className="h-4 w-4" />
+                        <CheckCircle2 className={`h-3 w-3 ${copy.is_synced_to_planner ? "text-green-500" : ""}`} />
                       </Button>
-                      {canEdit && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(copy.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(copy.id)}
+                        className="h-7 px-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               );
             })}
-            {sortedCopies.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                  No copies found. Click "Add New Copy" to get started.
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>

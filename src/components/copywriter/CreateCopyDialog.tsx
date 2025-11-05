@@ -97,6 +97,10 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
       content_az: contentAz || null,
       content_es: contentEs || null,
       region: region || null,
+      char_limit_en: null,
+      char_limit_ar: null,
+      char_limit_az: null,
+      char_limit_es: null,
     };
 
     try {

@@ -24,6 +24,7 @@ function CopyWriter() {
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -50,7 +51,7 @@ function CopyWriter() {
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-2">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -58,13 +59,13 @@ function CopyWriter() {
                 placeholder="Search copies..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9"
               />
             </div>
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Element Type" />
+            <SelectTrigger className="w-[140px] h-9 text-sm">
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
@@ -76,7 +77,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[140px] h-9 text-sm">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
             <SelectContent>
@@ -89,7 +90,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={entityFilter} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[140px] h-9 text-sm">
               <SelectValue placeholder="Entity" />
             </SelectTrigger>
             <SelectContent>
@@ -99,6 +100,17 @@ function CopyWriter() {
                   {entity}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={regionFilter} onValueChange={setRegionFilter}>
+            <SelectTrigger className="w-[120px] h-9 text-sm">
+              <SelectValue placeholder="Region" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
+              <SelectItem value="MENA">MENA</SelectItem>
+              <SelectItem value="LATAM">LATAM</SelectItem>
+              <SelectItem value="Global">Global</SelectItem>
             </SelectContent>
           </Select>
         </div>

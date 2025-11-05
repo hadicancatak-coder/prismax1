@@ -859,6 +859,10 @@ export type Database = {
       copywriter_copies: {
         Row: {
           campaigns: string[] | null
+          char_limit_ar: number | null
+          char_limit_az: number | null
+          char_limit_en: number | null
+          char_limit_es: number | null
           content_ar: string | null
           content_az: string | null
           content_en: string | null
@@ -876,6 +880,10 @@ export type Database = {
         }
         Insert: {
           campaigns?: string[] | null
+          char_limit_ar?: number | null
+          char_limit_az?: number | null
+          char_limit_en?: number | null
+          char_limit_es?: number | null
           content_ar?: string | null
           content_az?: string | null
           content_en?: string | null
@@ -893,6 +901,10 @@ export type Database = {
         }
         Update: {
           campaigns?: string[] | null
+          char_limit_ar?: number | null
+          char_limit_az?: number | null
+          char_limit_en?: number | null
+          char_limit_es?: number | null
           content_ar?: string | null
           content_az?: string | null
           content_en?: string | null

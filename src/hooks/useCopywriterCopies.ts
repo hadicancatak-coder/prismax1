@@ -18,6 +18,10 @@ export interface CopywriterCopy {
   tags: string[];
   is_synced_to_planner: boolean;
   region: string | null;
+  char_limit_en: number | null;
+  char_limit_ar: number | null;
+  char_limit_az: number | null;
+  char_limit_es: number | null;
 }
 
 interface CopywriterFilters {

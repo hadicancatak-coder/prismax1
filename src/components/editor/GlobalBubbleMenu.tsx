@@ -123,29 +123,21 @@ export function GlobalBubbleMenu() {
         return;
       }
 
-      // Find scroll container
-      const scrollParent = findScrollParent(editorElement as HTMLElement);
-      const scrollRect = scrollParent === document.documentElement 
-        ? { top: 0, left: 0, bottom: window.innerHeight, right: window.innerWidth }
-        : scrollParent.getBoundingClientRect();
-
-      // Calculate center of selection
-      const selectionCenterX = rect.left + rect.width / 2;
-      const selectionTop = rect.top;
-      const selectionBottom = rect.bottom;
-
       // Bubble dimensions (approximate)
       const bubbleHeight = 44;
       const bubbleWidth = 300;
       const offset = 8;
 
+      // Calculate center of selection
+      const selectionCenterX = rect.left + rect.width / 2;
+
       // Try positioning above first
-      let top = selectionTop - bubbleHeight - offset;
+      let top = rect.top - bubbleHeight - offset;
       let isBelow = false;
 
       // If not enough space above, position below
-      if (top < scrollRect.top) {
-        top = selectionBottom + offset;
+      if (top < 20) {
+        top = rect.bottom + offset;
         isBelow = true;
       }
 
@@ -156,17 +148,6 @@ export function GlobalBubbleMenu() {
       if (left < 20) left = 20;
       if (left + bubbleWidth > window.innerWidth - 20) {
         left = window.innerWidth - bubbleWidth - 20;
-      }
-
-      // Check if selection is visible in scroll container
-      if (
-        rect.bottom < scrollRect.top ||
-        rect.top > scrollRect.bottom ||
-        rect.right < scrollRect.left ||
-        rect.left > scrollRect.right
-      ) {
-        setShow(false);
-        return;
       }
 
       setPosition({ top, left, isBelow });
