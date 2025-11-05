@@ -2,12 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
+import { PageTransition } from "@/components/PageTransition";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
@@ -48,6 +49,47 @@ const queryClient = new QueryClient({
   },
 });
 
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <PageTransition key={location.pathname}>
+      <Routes location={location}>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
+        <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/calendar" element={<CalendarView />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="overview" element={<Overview />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="approvals" element={<ApprovalsCenter />} />
+            <Route path="errors" element={<ErrorLogs />} />
+            <Route path="activity" element={<ActivityLog />} />
+            <Route path="audit" element={<AuditLog />} />
+          </Route>
+          <Route path="/team-base" element={<TeamBase />} />
+          <Route path="/ads" element={<AdsPage />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile/:userId?" element={<Profile />} />
+          <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/activity-log" element={<ActivityLog />} />
+          <Route path="/socialua" element={<SocialUAPlanner />} />
+          <Route path="/utm-planner" element={<UtmPlanner />} />
+          <Route path="/operations" element={<Operations />} />
+          <Route path="/operations/:id" element={<AuditLogDetail />} />
+          <Route path="/copywriter" element={<CopyWriter />} />
+          <Route path="/security" element={<Security />} />
+          <Route path="/about" element={<About />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </PageTransition>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -57,38 +99,7 @@ const App = () => (
         <GlobalBubbleMenu />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
-            <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
-          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="overview" element={<Overview />} />
-              <Route path="users" element={<UsersManagement />} />
-              <Route path="approvals" element={<ApprovalsCenter />} />
-              <Route path="errors" element={<ErrorLogs />} />
-              <Route path="activity" element={<ActivityLog />} />
-              <Route path="audit" element={<AuditLog />} />
-            </Route>
-            <Route path="/team-base" element={<TeamBase />} />
-            <Route path="/ads" element={<AdsPage />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile/:userId?" element={<Profile />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/activity-log" element={<ActivityLog />} />
-            <Route path="/socialua" element={<SocialUAPlanner />} />
-            <Route path="/utm-planner" element={<UtmPlanner />} />
-            <Route path="/operations" element={<Operations />} />
-            <Route path="/operations/:id" element={<AuditLogDetail />} />
-            <Route path="/copywriter" element={<CopyWriter />} />
-            <Route path="/security" element={<Security />} />
-            <Route path="/about" element={<About />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AnimatedRoutes />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
