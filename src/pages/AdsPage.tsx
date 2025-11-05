@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Sparkles, ExternalLink, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, BookOpen, Library } from "lucide-react";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -531,48 +532,53 @@ ${landingPage}
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {headlines.map((headline, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <Input
-                        value={headline}
-                        onChange={(e) => {
-                          const newHeadlines = [...headlines];
-                          newHeadlines[index] = e.target.value.slice(0, 30);
-                          setHeadlines(newHeadlines);
-                        }}
-                        placeholder={adEntity ? `Headline ${index + 1}` : "Select entity first"}
-                        maxLength={30}
-                        className="text-sm"
-                        disabled={!adEntity}
-                      />
-                      <span className="text-xs text-muted-foreground w-12 shrink-0">{headline.length}/30</span>
-                      <ElementQuickInsert
-                        elementType="headline"
-                        onInsert={(content) => {
-                          const newHeadlines = [...headlines];
-                          newHeadlines[index] = content.slice(0, 30);
-                          setHeadlines(newHeadlines);
-                          incrementUsage.mutate(content);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={() => saveAsElement(headline, 'headline', adEntity)}
-                        disabled={!headline.trim() || !adEntity}
-                        title="Save for reuse"
-                      >
-                        <Save className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={() => handleCopy(headline)}
-                        disabled={!headline}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <RichTextEditor
+                          value={headline}
+                          onChange={(value) => {
+                            const newHeadlines = [...headlines];
+                            const plainText = value.replace(/<[^>]*>/g, '');
+                            newHeadlines[index] = plainText.slice(0, 30);
+                            setHeadlines(newHeadlines);
+                          }}
+                          placeholder={adEntity ? `Headline ${index + 1}` : "Select entity first"}
+                          className="text-sm"
+                          disabled={!adEntity}
+                          minHeight="40px"
+                        />
+                        <span className="text-xs text-muted-foreground">{headline.length}/30</span>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <ElementQuickInsert
+                          elementType="headline"
+                          onInsert={(content) => {
+                            const newHeadlines = [...headlines];
+                            newHeadlines[index] = content.slice(0, 30);
+                            setHeadlines(newHeadlines);
+                            incrementUsage.mutate(content);
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => saveAsElement(headline, 'headline', adEntity)}
+                          disabled={!headline.trim() || !adEntity}
+                          title="Save for reuse"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(headline)}
+                          disabled={!headline}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -587,18 +593,18 @@ ${landingPage}
                   {descriptions.map((desc, index) => (
                     <div key={index} className="flex gap-2 items-start">
                       <div className="flex-1">
-                        <Textarea
+                        <RichTextEditor
                           value={desc}
-                          onChange={(e) => {
+                          onChange={(value) => {
                             const newDescs = [...descriptions];
-                            newDescs[index] = e.target.value.slice(0, 90);
+                            const plainText = value.replace(/<[^>]*>/g, '');
+                            newDescs[index] = plainText.slice(0, 90);
                             setDescriptions(newDescs);
                           }}
                           placeholder={adEntity ? `Description ${index + 1}` : "Select entity first"}
-                          maxLength={90}
-                          rows={2}
-                          className="text-sm resize-none"
+                          className="text-sm"
                           disabled={!adEntity}
+                          minHeight="60px"
                         />
                         <span className="text-xs text-muted-foreground">{desc.length}/90</span>
                       </div>
@@ -663,20 +669,23 @@ ${landingPage}
                 <CardContent className="space-y-3">
                   {sitelinks.map((link, index) => (
                     <div key={index} className="space-y-2 p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={link.title}
-                          onChange={(e) => {
-                            const newLinks = [...sitelinks];
-                            newLinks[index] = { ...newLinks[index], title: e.target.value.slice(0, 25) };
-                            setSitelinks(newLinks);
-                          }}
-                          placeholder={adEntity ? `Sitelink ${index + 1} Title` : "Select entity first"}
-                          maxLength={25}
-                          className="text-sm"
-                          disabled={!adEntity}
-                        />
-                        <span className="text-xs text-muted-foreground w-12 shrink-0">{link.title.length}/25</span>
+                      <div className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <RichTextEditor
+                            value={link.title}
+                            onChange={(value) => {
+                              const newLinks = [...sitelinks];
+                              const plainText = value.replace(/<[^>]*>/g, '');
+                              newLinks[index] = { ...newLinks[index], title: plainText.slice(0, 25) };
+                              setSitelinks(newLinks);
+                            }}
+                            placeholder={adEntity ? `Sitelink ${index + 1} Title` : "Select entity first"}
+                            className="text-sm"
+                            disabled={!adEntity}
+                            minHeight="40px"
+                          />
+                          <span className="text-xs text-muted-foreground">{link.title.length}/25</span>
+                        </div>
                         <ElementQuickInsert
                           elementType="sitelink"
                           onInsert={(content) => {
@@ -685,31 +694,44 @@ ${landingPage}
                             setSitelinks(newLinks);
                           }}
                         />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => saveAsElement(link.title, 'sitelink', adEntity)}
-                          disabled={!link.title.trim() || !adEntity}
-                          title="Save for reuse"
-                        >
-                          <Save className="h-3 w-3" />
-                        </Button>
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <ElementQuickInsert
+                            elementType="sitelink"
+                            onInsert={(content) => {
+                              const newLinks = [...sitelinks];
+                              newLinks[index] = { ...newLinks[index], title: content.slice(0, 25) };
+                              setSitelinks(newLinks);
+                            }}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => saveAsElement(link.title, 'sitelink', adEntity)}
+                            disabled={!link.title.trim() || !adEntity}
+                            title="Save for reuse"
+                          >
+                            <Save className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={link.description}
-                          onChange={(e) => {
-                            const newLinks = [...sitelinks];
-                            newLinks[index] = { ...newLinks[index], description: e.target.value.slice(0, 35) };
-                            setSitelinks(newLinks);
-                          }}
-                          placeholder={adEntity ? "Description" : "Select entity first"}
-                          maxLength={35}
-                          className="text-sm"
-                          disabled={!adEntity}
-                        />
-                        <span className="text-xs text-muted-foreground w-12 shrink-0">{link.description.length}/35</span>
+                      <div className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <RichTextEditor
+                            value={link.description}
+                            onChange={(value) => {
+                              const newLinks = [...sitelinks];
+                              const plainText = value.replace(/<[^>]*>/g, '');
+                              newLinks[index] = { ...newLinks[index], description: plainText.slice(0, 35) };
+                              setSitelinks(newLinks);
+                            }}
+                            placeholder={adEntity ? "Description" : "Select entity first"}
+                            className="text-sm"
+                            disabled={!adEntity}
+                            minHeight="40px"
+                          />
+                          <span className="text-xs text-muted-foreground">{link.description.length}/35</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -723,47 +745,52 @@ ${landingPage}
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {callouts.map((callout, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <Input
-                        value={callout}
-                        onChange={(e) => {
-                          const newCallouts = [...callouts];
-                          newCallouts[index] = e.target.value.slice(0, 25);
-                          setCallouts(newCallouts);
-                        }}
-                        placeholder={adEntity ? `Callout ${index + 1}` : "Select entity first"}
-                        maxLength={25}
-                        className="text-sm"
-                        disabled={!adEntity}
-                      />
-                      <span className="text-xs text-muted-foreground w-12 shrink-0">{callout.length}/25</span>
-                      <ElementQuickInsert
-                        elementType="callout"
-                        onInsert={(content) => {
-                          const newCallouts = [...callouts];
-                          newCallouts[index] = content.slice(0, 25);
-                          setCallouts(newCallouts);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={() => saveAsElement(callout, 'callout', adEntity)}
-                        disabled={!callout.trim() || !adEntity}
-                        title="Save for reuse"
-                      >
-                        <Save className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={() => handleCopy(callout)}
-                        disabled={!callout}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <RichTextEditor
+                          value={callout}
+                          onChange={(value) => {
+                            const newCallouts = [...callouts];
+                            const plainText = value.replace(/<[^>]*>/g, '');
+                            newCallouts[index] = plainText.slice(0, 25);
+                            setCallouts(newCallouts);
+                          }}
+                          placeholder={adEntity ? `Callout ${index + 1}` : "Select entity first"}
+                          className="text-sm"
+                          disabled={!adEntity}
+                          minHeight="40px"
+                        />
+                        <span className="text-xs text-muted-foreground">{callout.length}/25</span>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <ElementQuickInsert
+                          elementType="callout"
+                          onInsert={(content) => {
+                            const newCallouts = [...callouts];
+                            newCallouts[index] = content.slice(0, 25);
+                            setCallouts(newCallouts);
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => saveAsElement(callout, 'callout', adEntity)}
+                          disabled={!callout.trim() || !adEntity}
+                          title="Save for reuse"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(callout)}
+                          disabled={!callout}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>

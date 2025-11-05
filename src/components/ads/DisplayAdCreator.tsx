@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { RichTextEditor } from '@/components/editor/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ElementQuickInsert } from './ElementQuickInsert';
 import { Save, Copy } from 'lucide-react';
@@ -111,72 +112,30 @@ export function DisplayAdCreator({
 
       <div>
         <Label htmlFor="long-headline">Long Headline (90 chars max)</Label>
-        <div className="flex gap-2 items-center">
-          <Input
-            id="long-headline"
-            value={longHeadline}
-            onChange={(e) => setLongHeadline(e.target.value.slice(0, 90))}
-            placeholder={adEntity ? "Your main promotional message" : "Select entity first"}
-            maxLength={90}
-            disabled={!adEntity}
-          />
-          <ElementQuickInsert
-            elementType="headline"
-            onInsert={(text) => setLongHeadline(text.slice(0, 90))}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => saveAsElement(longHeadline, 'headline')}
-            disabled={!longHeadline.trim() || !adEntity}
-            title="Save for reuse"
-          >
-            <Save className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleCopy(longHeadline)}
-            disabled={!longHeadline}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">{longHeadline.length}/90</p>
-      </div>
-
-      <div>
-        <Label>Short Headlines (5x 30 chars max)</Label>
-        {shortHeadlines.map((headline, index) => (
-          <div key={index} className="flex gap-2 mt-2 items-center">
-            <Input
-              value={headline}
-              onChange={(e) => {
-                const newHeadlines = [...shortHeadlines];
-                newHeadlines[index] = e.target.value.slice(0, 30);
-                setShortHeadlines(newHeadlines);
+        <div className="flex gap-2 items-start">
+          <div className="flex-1">
+            <RichTextEditor
+              value={longHeadline}
+              onChange={(value) => {
+                const plainText = value.replace(/<[^>]*>/g, '');
+                setLongHeadline(plainText.slice(0, 90));
               }}
-              placeholder={adEntity ? `Short headline ${index + 1}` : "Select entity first"}
-              maxLength={30}
+              placeholder={adEntity ? "Your main promotional message" : "Select entity first"}
               disabled={!adEntity}
+              minHeight="60px"
             />
-            <span className="text-xs text-muted-foreground min-w-12 flex items-center shrink-0">
-              {headline.length}/30
-            </span>
+            <p className="text-xs text-muted-foreground mt-1">{longHeadline.length}/90</p>
+          </div>
+          <div className="flex flex-col gap-1 shrink-0">
             <ElementQuickInsert
               elementType="headline"
-              onInsert={(text) => {
-                const newHeadlines = [...shortHeadlines];
-                newHeadlines[index] = text.slice(0, 30);
-                setShortHeadlines(newHeadlines);
-              }}
+              onInsert={(text) => setLongHeadline(text.slice(0, 90))}
             />
             <Button
               variant="ghost"
               size="icon"
-              className="shrink-0"
-              onClick={() => saveAsElement(headline, 'headline')}
-              disabled={!headline.trim() || !adEntity}
+              onClick={() => saveAsElement(longHeadline, 'headline')}
+              disabled={!longHeadline.trim() || !adEntity}
               title="Save for reuse"
             >
               <Save className="h-4 w-4" />
@@ -184,12 +143,63 @@ export function DisplayAdCreator({
             <Button
               variant="ghost"
               size="icon"
-              className="shrink-0"
-              onClick={() => handleCopy(headline)}
-              disabled={!headline}
+              onClick={() => handleCopy(longHeadline)}
+              disabled={!longHeadline}
             >
               <Copy className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label>Short Headlines (5x 30 chars max)</Label>
+        {shortHeadlines.map((headline, index) => (
+          <div key={index} className="flex gap-2 mt-2 items-start">
+            <div className="flex-1">
+              <RichTextEditor
+                value={headline}
+                onChange={(value) => {
+                  const newHeadlines = [...shortHeadlines];
+                  const plainText = value.replace(/<[^>]*>/g, '');
+                  newHeadlines[index] = plainText.slice(0, 30);
+                  setShortHeadlines(newHeadlines);
+                }}
+                placeholder={adEntity ? `Short headline ${index + 1}` : "Select entity first"}
+                disabled={!adEntity}
+                minHeight="40px"
+              />
+              <span className="text-xs text-muted-foreground">
+                {headline.length}/30
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 shrink-0">
+              <ElementQuickInsert
+                elementType="headline"
+                onInsert={(text) => {
+                  const newHeadlines = [...shortHeadlines];
+                  newHeadlines[index] = text.slice(0, 30);
+                  setShortHeadlines(newHeadlines);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => saveAsElement(headline, 'headline')}
+                disabled={!headline.trim() || !adEntity}
+                title="Save for reuse"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleCopy(headline)}
+                disabled={!headline}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -198,22 +208,24 @@ export function DisplayAdCreator({
         <Label>Descriptions (5x 90 chars max)</Label>
         {descriptions.map((desc, index) => (
           <div key={index} className="flex gap-2 mt-2 items-start">
-            <Textarea
-              value={desc}
-              onChange={(e) => {
-                const newDescs = [...descriptions];
-                newDescs[index] = e.target.value.slice(0, 90);
-                setDescriptions(newDescs);
-              }}
-              placeholder={adEntity ? `Description ${index + 1}` : "Select entity first"}
-              maxLength={90}
-              rows={2}
-              disabled={!adEntity}
-            />
-            <div className="flex flex-col gap-1 shrink-0 pt-2">
-              <span className="text-xs text-muted-foreground min-w-12">
+            <div className="flex-1">
+              <RichTextEditor
+                value={desc}
+                onChange={(value) => {
+                  const newDescs = [...descriptions];
+                  const plainText = value.replace(/<[^>]*>/g, '');
+                  newDescs[index] = plainText.slice(0, 90);
+                  setDescriptions(newDescs);
+                }}
+                placeholder={adEntity ? `Description ${index + 1}` : "Select entity first"}
+                disabled={!adEntity}
+                minHeight="60px"
+              />
+              <span className="text-xs text-muted-foreground">
                 {desc.length}/90
               </span>
+            </div>
+            <div className="flex flex-col gap-1 shrink-0">
               <ElementQuickInsert
                 elementType="description"
                 onInsert={(text) => {

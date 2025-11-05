@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Edit, Trash2, Star } from 'lucide-react';
+import { RichTextEditor } from '@/components/editor/RichTextEditor';
 import { useUpdateAdElement, useDeleteAdElement, AdElement } from '@/hooks/useAdElements';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
@@ -100,12 +101,15 @@ export function ElementCard({ element }: ElementCardProps) {
           <div className="flex-1">
             {isEditing ? (
               <div className="space-y-2">
-                <Textarea
+                <RichTextEditor
                   value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  rows={3}
+                  onChange={(value) => {
+                    const plainText = value.replace(/<[^>]*>/g, '');
+                    const maxLength = element.element_type === 'headline' ? 30 : element.element_type === 'description' ? 90 : 1000;
+                    setEditedContent(plainText.slice(0, maxLength));
+                  }}
                   className="text-sm"
-                  maxLength={element.element_type === 'headline' ? 30 : element.element_type === 'description' ? 90 : 1000}
+                  minHeight="80px"
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
