@@ -139,7 +139,7 @@ export default function CalendarView() {
   const upcomingCount = tasks.filter(t => t.status === 'Pending').length;
 
   return (
-    <div className="min-h-screen bg-background px-12 py-8">
+    <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
       {!focusMode && (
         <>
           <header className="mb-8">
@@ -164,14 +164,14 @@ export default function CalendarView() {
               </div>
             )}
 
-            <div className="mt-6 flex items-center gap-4">
-              <Tabs value={dateView} onValueChange={(v) => setDateView(v as any)} className="w-auto">
-                <TabsList>
-                  <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                  <TabsTrigger value="today">Today</TabsTrigger>
-                  <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="week">This Week</TabsTrigger>
-                  <TabsTrigger value="custom">Custom</TabsTrigger>
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Tabs value={dateView} onValueChange={(v) => setDateView(v as any)} className="w-full sm:w-auto">
+                <TabsList className="grid grid-cols-2 sm:flex w-full sm:w-auto">
+                  <TabsTrigger value="yesterday" className="min-h-[44px]">Yesterday</TabsTrigger>
+                  <TabsTrigger value="today" className="min-h-[44px]">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow" className="min-h-[44px]">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="week" className="min-h-[44px] hidden sm:inline-flex">This Week</TabsTrigger>
+                  <TabsTrigger value="custom" className="min-h-[44px] hidden sm:inline-flex">Custom</TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -225,7 +225,7 @@ export default function CalendarView() {
         </div>
       )}
 
-      <div className={`grid gap-8 mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
+      <div className={`grid gap-6 lg:gap-8 mt-6 lg:mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
         <div className={focusMode ? '' : 'lg:col-span-2'}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-section-title">

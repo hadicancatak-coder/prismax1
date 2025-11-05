@@ -15,7 +15,7 @@ const UtmPlanner = () => {
   const { data: utmLinks = [], isLoading } = useUtmLinks(filters);
 
   return (
-    <div className="px-12 py-8 space-y-8 bg-background min-h-screen">
+    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8 bg-background min-h-screen">
       <div className="flex items-center gap-3">
         <Link2 className="h-6 w-6 text-primary" />
         <div>
@@ -27,7 +27,7 @@ const UtmPlanner = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">
+        <TabsList className="grid grid-cols-3 w-full md:w-auto md:inline-grid">
           <TabsTrigger value="builder" className="gap-2">
             <Plus className="h-4 w-4" />
             Builder

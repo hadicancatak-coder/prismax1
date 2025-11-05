@@ -218,14 +218,14 @@ export default function Tasks() {
           <h1 className="text-page-title text-foreground">Tasks</h1>
           <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline">
-            <ListTodo className="mr-2 h-4 w-4" />
-            Use Template
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" className="min-h-[44px]">
+            <ListTodo className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Template</span>
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Task
+          <Button onClick={() => setDialogOpen(true)} className="min-h-[44px]">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">New Task</span>
           </Button>
         </div>
       </div>
@@ -243,33 +243,39 @@ export default function Tasks() {
       />
       
 
-      {/* Search and View Switcher */}
-      <div className="flex gap-2 items-center justify-between">
+      {/* Search and View Switcher - Responsive */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center sm:justify-between">
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm min-h-[44px]"
         />
         <div className="flex items-center gap-2">
           <Button
             variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="sm"
+            size="icon"
             onClick={() => setViewMode('table')}
+            className="min-h-[44px] min-w-[44px]"
+            title="Table View"
           >
             <List className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="sm"
+            size="icon"
             onClick={() => setViewMode('grid')}
+            className="min-h-[44px] min-w-[44px]"
+            title="Grid View"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === 'board' ? 'default' : 'outline'}
-            size="sm"
+            size="icon"
             onClick={() => setViewMode('board')}
+            className="min-h-[44px] min-w-[44px]"
+            title="Board View"
           >
             <Columns3 className="h-4 w-4" />
           </Button>

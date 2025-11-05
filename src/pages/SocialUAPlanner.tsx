@@ -93,7 +93,7 @@ export default function SocialUAPlanner() {
   };
 
   return (
-    <div className="px-12 py-8 space-y-8 bg-background">
+    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8 bg-background">
       <div>
         <h1 className="text-page-title">Social Media Planner</h1>
         <p className="text-muted-foreground mt-1">
@@ -102,7 +102,7 @@ export default function SocialUAPlanner() {
       </div>
 
       <Tabs value={activePlatform} onValueChange={setActivePlatform}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full lg:w-auto gap-1">
           <TabsTrigger value="facebook" className="flex items-center gap-2">
             <Facebook className="h-4 w-4" />
             <span className="hidden sm:inline">Facebook</span>

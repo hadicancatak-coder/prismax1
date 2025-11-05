@@ -247,8 +247,8 @@ export default function Notifications() {
   }
 
   return (
-    <div className="px-48 py-8 space-y-8">
-      <div className="flex items-center justify-between mb-4">
+    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-page-title">Notifications</h1>
           <p className="text-body text-muted-foreground">

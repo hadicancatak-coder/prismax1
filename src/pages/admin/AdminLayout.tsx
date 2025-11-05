@@ -14,14 +14,14 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="px-12 py-8 bg-background min-h-screen space-y-8">
+    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 bg-background min-h-screen space-y-6 lg:space-y-8">
       <div>
         <h1 className="text-page-title">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-1">Manage system settings and monitor activity</p>
       </div>
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto border-b border-border">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6 lg:space-y-8">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto border-b border-border overflow-x-auto">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>

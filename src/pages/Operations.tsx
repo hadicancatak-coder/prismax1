@@ -52,8 +52,8 @@ export default function Operations() {
   };
 
   return (
-    <div className="px-48 py-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-page-title">Operations Audit Logs</h1>
           <p className="text-body text-muted-foreground">
@@ -64,18 +64,18 @@ export default function Operations() {
       </div>
 
       {stats && (
-        <div className="flex items-center gap-8 py-6 border-b border-border">
-          <div className="flex-1">
+        <div className="flex items-center gap-6 lg:gap-8 py-6 border-b border-border overflow-x-auto">
+          <div className="flex-1 min-w-[120px]">
             <div className="text-metadata mb-1">Total Logs</div>
             <div className="text-4xl font-semibold text-foreground">{stats.totalLogs}</div>
           </div>
           <div className="w-px h-12 bg-border" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-[120px]">
             <div className="text-metadata mb-1">In Progress</div>
             <div className="text-4xl font-semibold text-foreground">{stats.inProgress}</div>
           </div>
           <div className="w-px h-12 bg-border" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-[120px]">
             <div className="text-metadata mb-1">Pending Items</div>
             <div className="text-4xl font-semibold text-foreground">{stats.pendingItems}</div>
           </div>

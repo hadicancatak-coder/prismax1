@@ -40,7 +40,7 @@ function CopyWriter() {
 
   return (
     <>
-      <div className="px-12 py-8 space-y-8 bg-background">
+      <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8 bg-background">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-page-title">Copy Writer</h1>
@@ -58,18 +58,19 @@ function CopyWriter() {
           </div>
         </div>
 
-        <div className="flex gap-3 items-center flex-wrap border-b border-border pb-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap border-b border-border pb-4">
+          <div className="relative flex-1 w-full sm:max-w-sm min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Search copies..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 min-h-[44px] w-full"
             />
           </div>
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -82,7 +83,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
             <SelectContent>
@@ -95,7 +96,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={entityFilter} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Entity" />
             </SelectTrigger>
             <SelectContent>
@@ -107,6 +108,7 @@ function CopyWriter() {
               ))}
             </SelectContent>
           </Select>
+          </div>
         </div>
 
         {isLoading ? (

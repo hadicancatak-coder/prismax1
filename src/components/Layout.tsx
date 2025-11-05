@@ -14,25 +14,25 @@ export const Layout = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
+        <main className="flex-1 overflow-auto w-full">
+          <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-smooth" />
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-smooth min-h-[44px] min-w-[44px]" />
               {showBackButton && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(-1)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground min-h-[44px]"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
-                  Back
+                  <span className="hidden sm:inline">Back</span>
                 </Button>
               )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <NotificationBell />
               <UserMenu />
             </div>
