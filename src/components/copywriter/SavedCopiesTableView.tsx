@@ -185,6 +185,7 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
               <TableHead>Platforms</TableHead>
               <TableHead>Entity</TableHead>
               <TableHead>Campaigns</TableHead>
+              <TableHead>Region</TableHead>
               <TableHead className="cursor-pointer" onClick={() => toggleSort("content_en")}>
                 <div className="flex items-center gap-1">
                   EN Content <SortIcon field="content_en" />
@@ -263,6 +264,22 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
                       disabled={!canEdit}
                     />
                   </TableCell>
+                  <TableCell>
+                    <Select
+                      value={copy.region || ""}
+                      onValueChange={(val) => handleUpdateField(copy.id, "region", val)}
+                      disabled={!canEdit}
+                    >
+                      <SelectTrigger className="h-8 w-[100px]">
+                        <SelectValue placeholder="Region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MENA">MENA</SelectItem>
+                        <SelectItem value="LATAM">LATAM</SelectItem>
+                        <SelectItem value="Global">Global</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   {["content_en", "content_ar", "content_az", "content_es"].map((field) => (
                     <TableCell key={field} className="max-w-[250px]">
                       {editingCell?.id === copy.id && editingCell?.field === field ? (
@@ -331,7 +348,7 @@ export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableView
             })}
             {sortedCopies.length === 0 && (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                   No copies found. Click "Add New Copy" to get started.
                 </TableCell>
               </TableRow>

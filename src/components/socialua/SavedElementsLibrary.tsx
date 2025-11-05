@@ -26,12 +26,13 @@ export function SavedElementsLibrary({ platform, onElementSelect }: SavedElement
   
   const debouncedSearch = useDebouncedValue(search, 500);
   
-  const { data: elements, isLoading } = useSocialAdElements(
-    activeTab,
-    debouncedSearch,
-    entityFilter === 'all' ? undefined : entityFilter,
-    languageFilter
-  );
+  const { data: elements, isLoading } = useSocialAdElements({
+    elementType: activeTab,
+    search: debouncedSearch,
+    entity: entityFilter === 'all' ? undefined : entityFilter,
+    language: languageFilter,
+    platform: platform,
+  });
 
   const exportToCSV = () => {
     if (!elements || elements.length === 0) return;

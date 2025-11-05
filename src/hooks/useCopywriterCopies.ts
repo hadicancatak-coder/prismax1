@@ -17,6 +17,7 @@ export interface CopywriterCopy {
   campaigns: string[];
   tags: string[];
   is_synced_to_planner: boolean;
+  region: string | null;
 }
 
 interface CopywriterFilters {

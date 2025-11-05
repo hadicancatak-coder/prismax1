@@ -44,6 +44,7 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
   const [contentAr, setContentAr] = useState(editingCopy?.content_ar || "");
   const [contentAz, setContentAz] = useState(editingCopy?.content_az || "");
   const [contentEs, setContentEs] = useState(editingCopy?.content_es || "");
+  const [region, setRegion] = useState(editingCopy?.region || "");
 
   const togglePlatform = (platform: string) => {
     setPlatforms((prev) =>
@@ -95,6 +96,7 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
       content_ar: contentAr || null,
       content_az: contentAz || null,
       content_es: contentEs || null,
+      region: region || null,
     };
 
     try {
@@ -177,6 +179,20 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
                 </Badge>
               ))}
             </div>
+          </div>
+
+          <div>
+            <Label>Region</Label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MENA">MENA</SelectItem>
+                <SelectItem value="LATAM">LATAM</SelectItem>
+                <SelectItem value="Global">Global</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

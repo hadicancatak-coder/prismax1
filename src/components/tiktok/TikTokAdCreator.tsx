@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SimpleMultiSelect } from "@/components/utm/SimpleMultiSelect";
 import { ENTITIES } from "@/lib/constants";
@@ -139,15 +139,14 @@ export function TikTokAdCreator({ adData, setAdData }: TikTokAdCreatorProps) {
       <div>
         <Label htmlFor="caption">Caption</Label>
         <div className="flex gap-2 items-start">
-          <Textarea
-            id="caption"
-            value={adData.caption}
-            onChange={(e) => setAdData({ ...adData, caption: e.target.value })}
-            placeholder="Enter caption"
-            rows={3}
-            maxLength={150}
-            dir={adData.language === "AR" ? "rtl" : "ltr"}
-          />
+          <div className="flex-1">
+            <RichTextEditor
+              value={adData.caption}
+              onChange={(v) => setAdData({ ...adData, caption: v.slice(0, 150) })}
+              placeholder="Enter caption"
+              minHeight="80px"
+            />
+          </div>
           <div className="flex flex-col gap-1 shrink-0 pt-2">
             <ElementQuickInsert
               elementType="description"

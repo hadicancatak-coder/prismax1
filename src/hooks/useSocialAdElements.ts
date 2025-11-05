@@ -16,26 +16,60 @@ export interface SocialAdElement {
   created_at: string;
 }
 
-export const useSocialAdElements = (elementType?: string, entity?: string[]) => {
+export const useSocialAdElements = (filters?: {
+  elementType?: string;
+  entity?: string;
+  search?: string;
+  language?: string;
+  platform?: string;
+  googleStatus?: string;
+  tags?: string[];
+}) => {
   return useQuery({
-    queryKey: ["social-ad-elements", elementType, entity],
+    queryKey: ["social-ad-elements", filters],
     queryFn: async () => {
       let query = supabase
         .from("ad_elements")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (elementType) {
-        query = query.eq("element_type", elementType);
+      if (filters?.elementType) {
+        query = query.eq("element_type", filters.elementType);
       }
 
-      if (entity && entity.length > 0) {
-        query = query.overlaps("entity", entity);
+      if (filters?.entity) {
+        query = query.contains("entity", [filters.entity]);
+      }
+
+      if (filters?.language && filters.language !== 'all') {
+        query = query.eq("language", filters.language);
+      }
+
+      if (filters?.platform && filters.platform !== 'all') {
+        query = query.eq("platform", filters.platform);
+      }
+
+      if (filters?.googleStatus) {
+        query = query.eq("google_status", filters.googleStatus);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as SocialAdElement[];
+      
+      let results = data as SocialAdElement[];
+      
+      // Client-side search filter
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        results = results.filter(element => {
+          const content = typeof element.content === 'string' 
+            ? element.content 
+            : JSON.stringify(element.content);
+          return content.toLowerCase().includes(searchLower);
+        });
+      }
+      
+      return results;
     },
   });
 };
