@@ -18,6 +18,7 @@ import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
 import { TaskGridView } from "@/components/tasks/TaskGridView";
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
+import { TaskInlineFilters } from "@/components/tasks/TaskInlineFilters";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -246,13 +247,13 @@ export default function Tasks() {
       />
       
 
-      {/* Search and View Switcher - Responsive */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center sm:justify-between">
+      {/* Search and Filters - Single Row */}
+      <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center lg:justify-between">
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:max-w-sm min-h-[44px]"
+          className="w-full lg:max-w-sm min-h-[44px]"
         />
         <div className="flex items-center gap-2">
           <Button
@@ -285,78 +286,19 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* Filters with Accordion */}
-      <div className="border border-border rounded">
-        <Accordion type="multiple" defaultValue={[]}>
-          <AccordionItem value="quick" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Quick Filters
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="flex gap-2 flex-wrap pt-2 pb-4">
-                {quickFilters.map(({ label, Icon }) => {
-                  const count = filteredTasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
-                  return (
-                    <Button
-                      key={label}
-                      variant={activeQuickFilter === label ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
-                      className={cn(
-                        "gap-2",
-                        activeQuickFilter === label && "ring-2 ring-offset-2 ring-primary"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                      <span className="ml-1 text-xs font-bold">({count})</span>
-                    </Button>
-                  );
-                })}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="assignee" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Assignees & Teams
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2 pb-4">
-                <AssigneeFilterBar
-                  selectedAssignees={selectedAssignees}
-                  onAssigneesChange={setSelectedAssignees}
-                  selectedTeams={selectedTeams}
-                  onTeamsChange={setSelectedTeams}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="date" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Date & Status
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2 pb-4">
-                <TaskDateFilterBar
-                  onFilterChange={setDateFilter}
-                  onStatusChange={setStatusFilter}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      {/* Inline Filters - Compact */}
+      <TaskInlineFilters
+        selectedAssignees={selectedAssignees}
+        onAssigneesChange={setSelectedAssignees}
+        selectedTeams={selectedTeams}
+        onTeamsChange={setSelectedTeams}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        activeQuickFilter={activeQuickFilter}
+        onQuickFilterChange={setActiveQuickFilter}
+        quickFilters={quickFilters}
+        filteredTasks={filteredTasks}
+      />
 
       {/* Task Views */}
       {filteredTasks.length === 0 ? (

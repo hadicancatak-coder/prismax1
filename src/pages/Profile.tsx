@@ -268,7 +268,7 @@ export default function Profile() {
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-bold">{profile.name}</h1>
+                <h1 className="text-page-title text-foreground">{profile.name}</h1>
                 {profile.title && <p className="text-lg text-muted-foreground">{profile.title}</p>}
                 {profile.tagline && <p className="text-sm">{profile.tagline}</p>}
                 {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}

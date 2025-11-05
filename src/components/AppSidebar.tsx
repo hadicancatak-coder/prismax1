@@ -93,8 +93,8 @@ export function AppSidebar() {
                             <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                          <p className="text-body font-medium">{item.title}</p>
+                        <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                          <p className="text-sm font-medium whitespace-nowrap">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (
@@ -123,8 +123,8 @@ export function AppSidebar() {
                             <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                          <p className="text-body font-medium">{item.title}</p>
+                        <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                          <p className="text-sm font-medium whitespace-nowrap">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (
@@ -153,8 +153,8 @@ export function AppSidebar() {
                         <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                      <p className="text-body font-medium">Sign Out</p>
+                    <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                      <p className="text-sm font-medium whitespace-nowrap">Sign Out</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
