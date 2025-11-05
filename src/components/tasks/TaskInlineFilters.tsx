@@ -5,6 +5,9 @@ import { AssigneeMultiSelect } from "@/components/AssigneeMultiSelect";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 
 interface TaskInlineFiltersProps {
   selectedAssignees: string[];
@@ -17,6 +20,8 @@ interface TaskInlineFiltersProps {
   onQuickFilterChange: (filter: string | null) => void;
   quickFilters: Array<{ label: string; Icon: any; filter: (task: any) => boolean }>;
   filteredTasks: any[];
+  dateRange: { from: Date | undefined; to: Date | undefined };
+  onDateRangeChange: (range: { from: Date | undefined; to: Date | undefined }) => void;
 }
 
 const TEAMS = ["SocialUA", "PPC", "PerMar"];
@@ -32,6 +37,8 @@ export function TaskInlineFilters({
   onQuickFilterChange,
   quickFilters,
   filteredTasks,
+  dateRange,
+  onDateRangeChange,
 }: TaskInlineFiltersProps) {
   const [users, setUsers] = useState<any[]>([]);
 
@@ -51,13 +58,16 @@ export function TaskInlineFilters({
     selectedAssignees.length > 0 || 
     selectedTeams.length > 0 || 
     statusFilter !== "all" || 
-    activeQuickFilter !== null;
+    activeQuickFilter !== null ||
+    dateRange.from !== undefined ||
+    dateRange.to !== undefined;
 
   const handleClearAll = () => {
     onAssigneesChange([]);
     onTeamsChange([]);
     onStatusChange("all");
     onQuickFilterChange(null);
+    onDateRangeChange({ from: undefined, to: undefined });
   };
 
   return (
@@ -194,6 +204,59 @@ export function TaskInlineFilters({
           <SelectItem value="Failed">Failed</SelectItem>
         </SelectContent>
       </Select>
+
+      {/* Date Range Filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-[220px] min-h-[44px] justify-start text-left font-normal",
+              !dateRange.from && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {dateRange.from ? (
+              dateRange.to ? (
+                <>
+                  {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+                </>
+              ) : (
+                format(dateRange.from, "MMM d, yyyy")
+              )
+            ) : (
+              "Date Range"
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={{ from: dateRange.from, to: dateRange.to }}
+            onSelect={(range) => {
+              if (range) {
+                onDateRangeChange({ from: range.from, to: range.to });
+              } else {
+                onDateRangeChange({ from: undefined, to: undefined });
+              }
+            }}
+            initialFocus
+            numberOfMonths={2}
+          />
+          {(dateRange.from || dateRange.to) && (
+            <div className="p-3 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDateRangeChange({ from: undefined, to: undefined })}
+                className="w-full"
+              >
+                Clear Date Range
+              </Button>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
 
       {/* Clear All Button */}
       {hasActiveFilters && (

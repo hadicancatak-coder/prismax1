@@ -34,6 +34,10 @@ export default function Tasks() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<any>(null);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
@@ -175,18 +179,35 @@ export default function Tasks() {
     
     const statusMatch = statusFilter === "all" || task.status === statusFilter;
     
+    // Date range filter
+    let dateRangeMatch = true;
+    if (dateRange.from || dateRange.to) {
+      if (!task.due_at) {
+        dateRangeMatch = false;
+      } else {
+        const dueDate = new Date(task.due_at);
+        if (dateRange.from && dateRange.to) {
+          dateRangeMatch = dueDate >= dateRange.from && dueDate <= dateRange.to;
+        } else if (dateRange.from) {
+          dateRangeMatch = dueDate >= dateRange.from;
+        } else if (dateRange.to) {
+          dateRangeMatch = dueDate <= dateRange.to;
+        }
+      }
+    }
+    
     const searchMatch = debouncedSearch === "" || 
       task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
-    return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
+    return assigneeMatch && teamMatch && dateMatch && statusMatch && dateRangeMatch && searchMatch;
   });
 
   // Apply filter recalculation when dependencies change
   useEffect(() => {
     // Force re-render when filters change
     setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, debouncedSearch]);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, dateRange, debouncedSearch]);
 
   if (activeQuickFilter) {
     const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
@@ -298,6 +319,8 @@ export default function Tasks() {
         onQuickFilterChange={setActiveQuickFilter}
         quickFilters={quickFilters}
         filteredTasks={filteredTasks}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
       />
 
       {/* Task Views */}

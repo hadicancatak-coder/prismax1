@@ -53,8 +53,8 @@ export function AppSidebar() {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-primary ml-[-4px]' : 'justify-center px-0 border-l-4 border-primary ml-[-4px]'} py-3 text-primary font-medium transition-smooth`
-      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent ml-[-4px]' : 'justify-center px-0'} py-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:border-l-sidebar-foreground/20 transition-smooth`;
+      ? `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-primary' : 'justify-center px-0 border-l-4 border-primary'} py-3 text-primary font-medium transition-smooth`
+      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent' : 'justify-center px-0 border-l-4 border-transparent'} py-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:border-l-sidebar-foreground/20 transition-smooth`;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -148,7 +148,7 @@ export function AppSidebar() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={signOut}
-                        className="flex items-center justify-center py-3 text-sidebar-foreground hover:text-destructive transition-smooth border-l-4 border-transparent hover:border-destructive ml-[-4px]"
+                        className="flex items-center justify-center px-0 border-l-4 border-transparent py-3 text-sidebar-foreground hover:text-destructive transition-smooth"
                       >
                         <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                       </button>
@@ -160,7 +160,7 @@ export function AppSidebar() {
                 ) : (
                   <button
                     onClick={signOut}
-                    className="flex items-center gap-3 px-3 py-3 text-sidebar-foreground hover:text-destructive transition-smooth w-full border-l-4 border-transparent hover:border-destructive ml-[-4px]"
+                    className="flex items-center gap-3 px-3 border-l-4 border-transparent py-3 text-sidebar-foreground hover:text-destructive transition-smooth w-full"
                   >
                     <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                     <span className="text-body">Sign Out</span>
