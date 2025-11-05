@@ -58,7 +58,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <Sidebar collapsible="icon" variant="floating">
         <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo */}
           <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'}`}>
