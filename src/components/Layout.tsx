@@ -17,15 +17,15 @@ export const Layout = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" />
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-smooth" />
               {showBackButton && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(-1)}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Back

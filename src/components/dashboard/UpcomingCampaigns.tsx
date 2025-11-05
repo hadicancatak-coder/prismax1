@@ -65,24 +65,22 @@ export function UpcomingCampaigns() {
   if (campaigns.length === 0) return null;
 
   return (
-    <Card className="p-6 border-primary/20 bg-primary/5">
+    <div className="border-l-2 border-primary pl-6">
       <div className="flex items-center gap-2 mb-4">
         <Rocket className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">🚀 Your Mission Launches</h2>
-        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-          {campaigns.length}
-        </Badge>
+        <h2 className="text-section-title text-foreground">🚀 Your Mission Launches</h2>
+        <Badge variant="outline">{campaigns.length}</Badge>
       </div>
       
       <div className="space-y-3">
         {campaigns.map((campaign: any) => (
           <div
             key={campaign.id}
-            className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-all"
+            className="py-3 border-b border-border last:border-0 hover:opacity-80 transition-smooth"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
-                <h3 className="font-medium text-sm mb-1">{campaign.title}</h3>
+                <h3 className="font-medium text-body mb-2">{campaign.title}</h3>
                 <div className="flex gap-2 flex-wrap">
                   {campaign.teams?.map((team: string) => (
                     <Badge key={team} variant="secondary" className="text-xs">
@@ -102,18 +100,11 @@ export function UpcomingCampaigns() {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <Badge 
-                  variant="outline" 
-                  className={
-                    campaign.status === 'live' 
-                      ? "bg-success/10 text-success border-success/20"
-                      : "bg-warning/10 text-warning border-warning/20"
-                  }
-                >
+                <Badge variant="outline">
                   {campaign.status === 'live' ? '🛰️ Live' : '🚧 Prep'}
                 </Badge>
                 {campaign.launch_date && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="text-metadata flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {format(new Date(campaign.launch_date), 'MMM dd')}
                   </span>
@@ -123,6 +114,6 @@ export function UpcomingCampaigns() {
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }

@@ -33,35 +33,33 @@ export function WhatsNext() {
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold text-foreground mb-4">What's Next</h2>
-      <ScrollArea className="max-h-[400px] pr-4">
-        <div className="space-y-3">
-          {upcomingTasks.length > 0 ? (
-            upcomingTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => navigate('/tasks')}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-all cursor-pointer"
-              >
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground text-sm mb-1">{task.title}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {task.assignees && task.assignees.length > 0 
-                      ? task.assignees.map((a: any) => a.name).join(", ")
-                      : "Unassigned"}
-                  </p>
-                </div>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                  {task.due_at ? getDateLabel(task.due_at) : "No date"}
-                </Badge>
+    <div>
+      <h2 className="text-section-title text-foreground mb-4">What's Next</h2>
+      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+        {upcomingTasks.length > 0 ? (
+          upcomingTasks.map((task) => (
+            <div
+              key={task.id}
+              onClick={() => navigate('/tasks')}
+              className="flex items-center justify-between py-3 border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
+            >
+              <div className="flex-1">
+                <h3 className="font-medium text-body text-foreground mb-1">{task.title}</h3>
+                <p className="text-metadata">
+                  {task.assignees && task.assignees.length > 0 
+                    ? task.assignees.map((a: any) => a.name).join(", ")
+                    : "Unassigned"}
+                </p>
               </div>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No upcoming tasks</p>
-          )}
-        </div>
-      </ScrollArea>
-    </Card>
+              <Badge variant="outline" className="ml-4">
+                {task.due_at ? getDateLabel(task.due_at) : "No date"}
+              </Badge>
+            </div>
+          ))
+        ) : (
+          <p className="text-body text-muted-foreground text-center py-8">No upcoming tasks</p>
+        )}
+      </div>
+    </div>
   );
 }

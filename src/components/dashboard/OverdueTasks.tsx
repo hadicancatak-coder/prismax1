@@ -73,50 +73,48 @@ export function OverdueTasks() {
 
   if (loading) {
     return (
-      <Card className="p-6">
-        <div className="animate-pulse space-y-3">
-          <div className="h-6 bg-gray-200 rounded w-40"></div>
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
-        </div>
-      </Card>
+      <div className="animate-pulse space-y-3">
+        <div className="h-6 bg-muted rounded w-40"></div>
+        <div className="h-4 bg-muted rounded w-32"></div>
+      </div>
     );
   }
 
   if (overdueTasks.length === 0) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-2">
+      <div>
+        <div className="flex items-center gap-2 mb-4">
           <Clock className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-xl font-semibold text-foreground">Overdue Tasks</h2>
+          <h2 className="text-section-title text-foreground">Overdue Tasks</h2>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-body text-muted-foreground">
           No overdue tasks. Great work! 🎉
         </p>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="p-6 bg-destructive/5 border-destructive/20">
+    <div className="border-l-2 border-destructive pl-6">
       <div className="flex items-center gap-2 mb-4">
         <AlertTriangle className="h-5 w-5 text-destructive" />
-        <h2 className="text-xl font-semibold text-foreground">Overdue Tasks</h2>
+        <h2 className="text-section-title text-foreground">Overdue Tasks</h2>
         <Badge variant="destructive">{overdueTasks.length}</Badge>
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-3">
         {overdueTasks.map((task) => (
-          <div key={task.id} className="flex items-start gap-2 p-3 bg-card rounded-lg border">
+          <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0">
             <Clock className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-foreground truncate">{task.title}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-medium text-body text-foreground">{task.title}</p>
+              <p className="text-metadata">
                 Due: {format(new Date(task.due_at), "MMM d, yyyy")}
               </p>
             </div>
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }

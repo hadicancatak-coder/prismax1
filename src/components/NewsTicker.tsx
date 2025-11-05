@@ -54,7 +54,7 @@ export function NewsTicker() {
 
   return (
     <div 
-      className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-muted border border-border rounded overflow-hidden cursor-pointer hover:opacity-80 transition-smooth"
       onClick={() => navigate("/notifications")}
     >
       <div ref={emblaRef} className="overflow-hidden">
@@ -66,9 +66,9 @@ export function NewsTicker() {
                 <Badge className={getPriorityColor(announcement.priority)}>
                   {announcement.priority}
                 </Badge>
-                <span className="font-semibold text-foreground">{announcement.title}</span>
+                <span className="font-medium text-foreground">{announcement.title}</span>
                 <span className="text-muted-foreground">-</span>
-                <span className="text-sm text-muted-foreground truncate">{announcement.message}</span>
+                <span className="text-body text-muted-foreground truncate">{announcement.message}</span>
               </div>
             </div>
           ))}

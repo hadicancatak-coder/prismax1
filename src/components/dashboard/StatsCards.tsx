@@ -63,25 +63,18 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="flex items-center gap-8 py-6 border-b border-border">
       {statsDisplay.map((stat) => {
         const statType = getStatType(stat.title);
         return (
-          <Card 
-            key={stat.title} 
-            className="p-6 transition-shadow duration-200 hover:shadow-lg cursor-pointer group"
+          <div 
+            key={stat.title}
+            className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
             onClick={() => statType && onStatClick(statType)}
           >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-2">{stat.title}</p>
-              <p className="text-4xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
-            </div>
-            <div className={`${stat.bgColor} p-4 rounded-xl shadow-sm`}>
-              <stat.icon className={`h-6 w-6 ${stat.color}`} strokeWidth={2.5} />
-            </div>
+            <div className="text-metadata mb-1">{stat.title}</div>
+            <div className="text-4xl font-semibold text-foreground tracking-tight">{stat.value}</div>
           </div>
-        </Card>
         );
       })}
     </div>

@@ -90,20 +90,20 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen space-y-6">
+    <div className="px-48 py-8 bg-background min-h-screen space-y-8">
       <header>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your overview</p>
+        <h1 className="text-page-title text-foreground mb-1">Dashboard</h1>
+        <p className="text-body text-muted-foreground">Welcome back! Here's your overview</p>
       </header>
 
       <NewsTicker />
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex items-center gap-8 py-6 border-b border-border">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-16"></div>
+            <div key={i} className="animate-pulse flex-1">
+              <div className="h-3 bg-muted rounded w-24 mb-3"></div>
+              <div className="h-10 bg-muted rounded w-16"></div>
             </div>
           ))}
         </div>
@@ -111,22 +111,14 @@ export default function Dashboard() {
         <StatsCards stats={stats} onStatClick={handleStatClick} />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-8">
           <MyKPIsProgress />
-        </div>
-        
-        <div className="lg:col-span-1">
-          <UpcomingCampaigns />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="lg:col-span-1">
           <OverdueTasks />
         </div>
         
-        <div className="lg:col-span-1">
+        <div className="space-y-8">
+          <UpcomingCampaigns />
           <ActivityFeed />
         </div>
       </div>
