@@ -8,6 +8,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { EditorToolbar } from './EditorToolbar';
+import { EditorBubbleMenu } from './EditorBubbleMenu';
 
 interface RichTextEditorProps {
   value: string;
@@ -94,7 +95,8 @@ export function RichTextEditor({
   return (
     <div className={cn('border border-input rounded-md bg-background', className)}>
       {!disabled && <EditorToolbar editor={editor} />}
-      <div 
+      {!disabled && <EditorBubbleMenu editor={editor} />}
+      <div
         className="px-3 py-2"
         style={{ minHeight }}
         data-placeholder={placeholder}
