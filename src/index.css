@@ -207,4 +207,21 @@ All colors MUST be HSL.
   .text-heading-md { font-size: 1.25rem; line-height: 1.35; font-weight: 600; }
   .text-body-lg { font-size: 1rem; line-height: 1.5; font-weight: 400; }
   .text-body-md { font-size: 0.875rem; line-height: 1.5; font-weight: 400; }
+
+  /* Micro-interaction utilities */
+  .interactive-scale {
+    @apply transition-all duration-200 ease-out hover:scale-105 active:scale-95;
+  }
+
+  .interactive-lift {
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0;
+  }
+
+  .interactive-glow {
+    @apply transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/20;
+  }
+
+  .interactive-card {
+    @apply transition-all duration-200 ease-out hover:border-primary/50 hover:shadow-sm cursor-pointer;
+  }
 }
