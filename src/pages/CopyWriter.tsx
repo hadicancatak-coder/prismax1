@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
-import { CreateCopyDialog } from "@/components/copywriter/CreateCopyDialog";
 import { SavedCopiesTableView } from "@/components/copywriter/SavedCopiesTableView";
+import { LanguageColumnToggle } from "@/components/copywriter/LanguageColumnToggle";
 import {
   useCopywriterCopies,
   CopywriterCopy,
@@ -18,13 +18,12 @@ const PLATFORMS = ["ppc", "facebook", "instagram", "tiktok", "snap", "reddit", "
 
 function CopyWriter() {
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCopy, setEditingCopy] = useState<CopywriterCopy | null>(null);
+  const [addingNewRow, setAddingNewRow] = useState(false);
   const [search, setSearch] = useState("");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [activeLanguages, setActiveLanguages] = useState<string[]>(["en", "ar"]);
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -35,9 +34,8 @@ function CopyWriter() {
     search: debouncedSearch,
   });
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingCopy(null);
+  const handleAddRow = () => {
+    setAddingNewRow(true);
   };
 
   return (
@@ -45,26 +43,30 @@ function CopyWriter() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Copy Writer</h1>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Copy
-          </Button>
+          <div className="flex gap-2">
+            <LanguageColumnToggle
+              activeLanguages={activeLanguages}
+              onToggle={setActiveLanguages}
+            />
+            <Button onClick={handleAddRow}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Row
+            </Button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search copies..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-9"
-              />
-            </div>
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search copies..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-9"
+            />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px] h-9 text-sm">
+            <SelectTrigger className="w-[120px] h-9 text-sm">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -77,7 +79,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-[140px] h-9 text-sm">
+            <SelectTrigger className="w-[120px] h-9 text-sm">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
             <SelectContent>
@@ -90,7 +92,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={entityFilter} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-[140px] h-9 text-sm">
+            <SelectTrigger className="w-[120px] h-9 text-sm">
               <SelectValue placeholder="Entity" />
             </SelectTrigger>
             <SelectContent>
@@ -102,17 +104,6 @@ function CopyWriter() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={regionFilter} onValueChange={setRegionFilter}>
-            <SelectTrigger className="w-[120px] h-9 text-sm">
-              <SelectValue placeholder="Region" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
-              <SelectItem value="MENA">MENA</SelectItem>
-              <SelectItem value="LATAM">LATAM</SelectItem>
-              <SelectItem value="Global">Global</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {isLoading ? (
@@ -120,16 +111,13 @@ function CopyWriter() {
         ) : (
           <SavedCopiesTableView 
             copies={copies || []} 
+            activeLanguages={activeLanguages}
+            addingNewRow={addingNewRow}
+            onNewRowComplete={() => setAddingNewRow(false)}
             onRefresh={() => queryClient.invalidateQueries({ queryKey: ["copywriter-copies"] })}
           />
         )}
       </div>
-
-      <CreateCopyDialog
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        editingCopy={editingCopy}
-      />
     </>
   );
 }

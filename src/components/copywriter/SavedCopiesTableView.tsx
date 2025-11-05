@@ -1,363 +1,515 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { CopywriterCopy } from "@/hooks/useCopywriterCopies";
+import {
+  useUpdateCopywriterCopy,
+  useDeleteCopywriterCopy,
+  useCreateCopywriterCopy,
+} from "@/hooks/useCopywriterCopies";
+import { syncCopyToPlanners } from "@/lib/copywriterSync";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Trash2, ArrowUpDown, CheckCircle2 } from "lucide-react";
-import { useUpdateCopywriterCopy, useDeleteCopywriterCopy, CopywriterCopy } from "@/hooks/useCopywriterCopies";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Upload } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { syncCopyToPlanners } from "@/lib/copywriterSync";
-import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
-import { CampaignsTagsInput } from "./CampaignsTagsInput";
+import { CampaignsTagsInput } from "@/components/copywriter/CampaignsTagsInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ENTITIES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+
+const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 
 interface SavedCopiesTableViewProps {
   copies: CopywriterCopy[];
+  activeLanguages: string[];
+  addingNewRow: boolean;
+  onNewRowComplete: () => void;
   onRefresh?: () => void;
 }
 
-const CHAR_LIMITS: Record<string, Record<string, number>> = {
-  headline: { ppc: 30, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
-  description: { ppc: 90, facebook: 125, instagram: 125, tiktok: 100, snap: 80, reddit: 300, whatsapp: 4096 },
-  primary_text: { ppc: 60, facebook: 125, instagram: 2200, tiktok: 100, snap: 80, reddit: 300, whatsapp: 1024 },
-  callout: { ppc: 25, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
-  sitelink: { ppc: 25, facebook: 40, instagram: 40, tiktok: 100, snap: 34, reddit: 300, whatsapp: 60 },
+interface NewRowData {
+  entity: string;
+  campaigns: string[];
+  element_type: string;
+  content_en: string;
+  content_ar: string;
+  content_es: string;
+  content_az: string;
+  char_limit_en: number | null;
+  char_limit_ar: number | null;
+  char_limit_es: number | null;
+  char_limit_az: number | null;
+}
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  en: "English",
+  ar: "Arabic",
+  es: "Spanish",
+  az: "Azerice",
 };
 
-export function SavedCopiesTableView({ copies, onRefresh }: SavedCopiesTableViewProps) {
+export function SavedCopiesTableView({ 
+  copies, 
+  activeLanguages,
+  addingNewRow,
+  onNewRowComplete,
+  onRefresh 
+}: SavedCopiesTableViewProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sortField, setSortField] = useState<string>("created_at");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const isGuest = user?.user_metadata?.role === "guest";
 
-  const updateCopyMutation = useUpdateCopywriterCopy();
-  const deleteCopyMutation = useDeleteCopywriterCopy();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [newRow, setNewRow] = useState<NewRowData | null>(null);
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [isAnyEditing, setIsAnyEditing] = useState(false);
 
-  const sortedCopies = [...copies].sort((a, b) => {
-    const aVal = a[sortField as keyof CopywriterCopy];
-    const bVal = b[sortField as keyof CopywriterCopy];
-    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-    return 0;
-  });
+  const newRowEnglishRef = useRef<HTMLDivElement>(null);
 
-  const toggleSort = (field: string) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
+  const updateMutation = useUpdateCopywriterCopy();
+  const deleteMutation = useDeleteCopywriterCopy();
+  const createMutation = useCreateCopywriterCopy();
+
+  useEffect(() => {
+    setIsAnyEditing(editingCell !== null || newRow !== null);
+  }, [editingCell, newRow]);
+
+  useEffect(() => {
+    if (addingNewRow && !newRow) {
+      setNewRow({
+        entity: "",
+        campaigns: [],
+        element_type: "headline",
+        content_en: "",
+        content_ar: "",
+        content_es: "",
+        content_az: "",
+        char_limit_en: null,
+        char_limit_ar: null,
+        char_limit_es: null,
+        char_limit_az: null,
+      });
+      setTimeout(() => {
+        newRowEnglishRef.current?.focus();
+      }, 100);
+    }
+  }, [addingNewRow, newRow]);
+
+  const handleCancelNewRow = () => {
+    setNewRow(null);
+    onNewRowComplete();
+  };
+
+  const handleSaveNewRow = async () => {
+    if (!newRow) return;
+
+    if (!newRow.content_en.trim()) {
+      toast({ title: "English content is required", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await createMutation.mutateAsync({
+        entity: newRow.entity ? [newRow.entity] : [],
+        campaigns: newRow.campaigns,
+        element_type: newRow.element_type,
+        platform: [],
+        content_en: newRow.content_en,
+        content_ar: newRow.content_ar,
+        content_es: newRow.content_es,
+        content_az: newRow.content_az,
+        char_limit_en: newRow.char_limit_en,
+        char_limit_ar: newRow.char_limit_ar,
+        char_limit_es: newRow.char_limit_es,
+        char_limit_az: newRow.char_limit_az,
+        tags: [],
+        region: "",
+      });
+      setNewRow(null);
+      onNewRowComplete();
+      onRefresh?.();
+      toast({ title: "Copy created successfully" });
+    } catch (error) {
+      toast({ title: "Failed to create copy", variant: "destructive" });
     }
   };
 
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const handleUpdateField = (id: string, field: string, value: any) => {
-    updateCopyMutation.mutate({ id, updates: { [field]: value } });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Delete this copy?")) {
-      deleteCopyMutation.mutate(id);
+  const handleUpdateField = async (id: string, field: string, value: any) => {
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        updates: { [field]: value },
+      });
+      onRefresh?.();
+    } catch (error) {
+      toast({ title: "Failed to update copy", variant: "destructive" });
     }
   };
 
-  const handleBulkDelete = () => {
-    if (confirm(`Delete ${selectedIds.size} copies?`)) {
-      selectedIds.forEach((id) => deleteCopyMutation.mutate(id));
-      setSelectedIds(new Set());
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+      onRefresh?.();
+      toast({ title: "Copy deleted successfully" });
+    } catch (error) {
+      toast({ title: "Failed to delete copy", variant: "destructive" });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selected.map((id) => deleteMutation.mutateAsync(id)));
+      setSelected([]);
+      onRefresh?.();
+      toast({ title: `${selected.length} copies deleted` });
+    } catch (error) {
+      toast({ title: "Failed to delete copies", variant: "destructive" });
     }
   };
 
   const handleSync = async (copy: CopywriterCopy) => {
     try {
-      await syncCopyToPlanners({ copy });
-      await updateCopyMutation.mutateAsync({
-        id: copy.id,
-        updates: { is_synced_to_planner: true },
-      });
+      const languagesToSync = activeLanguages.filter((lang) => {
+        const content = copy[`content_${lang}` as keyof CopywriterCopy];
+        return content && typeof content === "string" && content.trim() !== "";
+      }) as ("en" | "ar" | "az" | "es")[];
+
+      await syncCopyToPlanners({ copy, languages: languagesToSync });
       toast({ title: "Copy synced to planners" });
-    } catch (error: any) {
-      toast({ title: "Sync failed", description: error.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: "Failed to sync copy", variant: "destructive" });
     }
   };
 
-  const getCharLimit = (type: string, platforms: string[]): number => {
-    const limits = CHAR_LIMITS[type] || {};
-    const platformLimits = platforms.map((p) => limits[p] || 125).filter((l) => l > 0);
-    return platformLimits.length > 0 ? Math.min(...platformLimits) : 125;
+  const toggleSelectAll = () => {
+    if (selected.length === copies.length) {
+      setSelected([]);
+    } else {
+      setSelected(copies.map((c) => c.id));
+    }
   };
 
-  const getStatusColor = (count: number, limit: number) => {
-    if (count > limit) return "destructive";
-    return "default";
+  const toggleSelect = (id: string) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
   };
 
-  const getStatusText = (count: number, limit: number) => {
-    if (count > limit) return "NEEDS TO BE REDUCED";
-    return "Limit Available";
-  };
-
-  const stripHtml = (html: string | null): string => {
-    if (!html) return "";
+  const getCharCount = (content: string): number => {
     const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "";
+    div.innerHTML = content;
+    return div.textContent?.length || 0;
   };
 
-  const renderContentCell = (copy: CopywriterCopy, field: "content_en" | "content_ar" | "content_az") => {
-    const content = copy[field] || "";
-    const plainText = stripHtml(content);
-    const isEditing = editingCell?.id === copy.id && editingCell?.field === field;
-    const canEdit = user?.id === copy.created_by || user?.role === "admin";
-
-    if (isEditing && canEdit) {
-      return (
-        <div className="h-[44px] overflow-hidden">
-          <RichTextEditor
-            value={content}
-            onChange={(value) => handleUpdateField(copy.id, field, value)}
-            onBlur={() => setEditingCell(null)}
-            autoFocus
-            className="text-xs"
-            minHeight="44px"
-          />
-        </div>
-      );
+  const getStatusBadge = (count: number, limit: number | null) => {
+    if (!limit) return null;
+    const diff = limit - count;
+    if (diff < 0) {
+      return <Badge variant="destructive" className="text-xs">Over by {Math.abs(diff)}</Badge>;
     }
+    return <Badge variant="secondary" className="text-xs">{diff} left</Badge>;
+  };
+
+  const renderLanguageColumns = (copy: CopywriterCopy | null, lang: string, isNewRow: boolean = false) => {
+    const contentKey = `content_${lang}` as keyof CopywriterCopy;
+    const limitKey = `char_limit_${lang}` as keyof CopywriterCopy;
+    const content = isNewRow && newRow ? newRow[contentKey as keyof NewRowData] as string : (copy?.[contentKey] as string || "");
+    const limit = isNewRow && newRow ? newRow[limitKey as keyof NewRowData] as number | null : (copy?.[limitKey] as number | null);
+    const count = getCharCount(content);
+    const cellId = isNewRow ? `new-${lang}` : `${copy?.id}-${lang}`;
+    const isEditing = editingCell === cellId;
 
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
+      <>
+        <TableCell className={cn("h-[44px] border-r p-2", lang === "ar" && "text-right")}>
+          {isEditing ? (
+            <RichTextEditor
+              value={content}
+              onChange={(val) => {
+                if (isNewRow && newRow) {
+                  setNewRow({ ...newRow, [contentKey]: val });
+                } else if (copy) {
+                  handleUpdateField(copy.id, contentKey, val);
+                }
+              }}
+              minHeight="32px"
+              className="text-xs"
+              onBlur={() => setEditingCell(null)}
+              autoFocus
+            />
+          ) : (
             <div
-              className="cursor-pointer h-[44px] flex items-center overflow-hidden text-ellipsis line-clamp-2"
-              onClick={() => canEdit && setEditingCell({ id: copy.id, field })}
-            >
-              <span className="text-xs">{plainText || "-"}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-md">
-            <div className="text-xs whitespace-pre-wrap">{plainText}</div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+              className={cn(
+                "text-xs cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 min-h-[32px]",
+                "line-clamp-2 overflow-hidden",
+                !content && "text-muted-foreground italic"
+              )}
+              onClick={() => !isGuest && setEditingCell(cellId)}
+              dangerouslySetInnerHTML={{ __html: content || (lang === "en" ? "Click to edit..." : "") }}
+            />
+          )}
+        </TableCell>
+        <TableCell className="h-[44px] border-r p-2 text-center">
+          <span className={cn("text-xs font-mono", count > (limit || Infinity) && "text-destructive font-semibold")}>
+            {count}
+          </span>
+        </TableCell>
+        <TableCell className="h-[44px] border-r p-2">
+          <Input
+            type="number"
+            value={limit ?? ""}
+            onChange={(e) => {
+              const val = e.target.value === "" ? null : parseInt(e.target.value);
+              if (isNewRow && newRow) {
+                setNewRow({ ...newRow, [limitKey]: val });
+              } else if (copy) {
+                handleUpdateField(copy.id, limitKey, val);
+              }
+            }}
+            className="h-7 text-xs text-center border-0"
+            placeholder="-"
+            disabled={isGuest}
+          />
+        </TableCell>
+        <TableCell className="h-[44px] border-r p-2">
+          {getStatusBadge(count, limit)}
+        </TableCell>
+      </>
     );
   };
 
-  if (copies.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No copies found. Create your first copy to get started.</p>
-      </div>
-    );
-  }
+  const allLanguages = ["en", "ar", ...activeLanguages.filter((l) => l !== "en" && l !== "ar")];
+  const totalWidth = 50 + 100 + 140 + 100 + allLanguages.length * 530 + 100;
 
   return (
     <div className="space-y-4">
-      {selectedIds.size > 0 && (
+      {selected.length > 0 && !isGuest && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Selected
-          </Button>
+          <span className="text-sm text-muted-foreground">{selected.length} selected</span>
+          <ConfirmPopover
+            open={confirmBulkDelete}
+            onOpenChange={setConfirmBulkDelete}
+            onConfirm={handleBulkDelete}
+            title={`Delete ${selected.length} copies?`}
+            description="This action cannot be undone."
+            trigger={
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete Selected
+              </Button>
+            }
+          />
         </div>
       )}
 
-      <div className="border rounded-lg overflow-auto max-h-[calc(100vh-300px)]">
-        <Table className="table-fixed">
-          <TableHeader className="sticky top-0 bg-background z-10 border-b">
-            <TableRow className="h-[44px] hover:bg-transparent">
-              <TableHead className="w-12 border-r">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.size === copies.length}
-                  onChange={() => {
-                    if (selectedIds.size === copies.length) {
-                      setSelectedIds(new Set());
-                    } else {
-                      setSelectedIds(new Set(copies.map((c) => c.id)));
-                    }
-                  }}
+      <div className="border rounded-lg overflow-auto" style={{ maxHeight: "calc(100vh - 300px)" }}>
+        <Table style={{ width: `${totalWidth}px`, tableLayout: "fixed" }}>
+          <TableHeader className="sticky top-0 bg-background z-10">
+            <TableRow className="border-b-2">
+              <TableHead className="h-10 w-[50px] border-r">
+                <Checkbox
+                  checked={selected.length === copies.length && copies.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                  disabled={isGuest}
                 />
               </TableHead>
-              <TableHead className="w-[100px] border-r">
-                <Button variant="ghost" size="sm" onClick={() => toggleSort("region")} className="h-8 px-2 text-xs">
-                  Region <ArrowUpDown className="ml-1 h-3 w-3" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[140px] border-r text-xs">Campaign</TableHead>
-              <TableHead className="w-[100px] border-r">
-                <Button variant="ghost" size="sm" onClick={() => toggleSort("element_type")} className="h-8 px-2 text-xs">
-                  Type <ArrowUpDown className="ml-1 h-3 w-3" />
-                </Button>
-              </TableHead>
-              
-              <TableHead className="w-[250px] border-r text-xs">English</TableHead>
-              <TableHead className="w-[60px] border-r text-right text-xs">EN Cnt</TableHead>
-              <TableHead className="w-[80px] border-r text-xs">EN Limit</TableHead>
-              <TableHead className="w-[140px] border-r text-xs">EN Status</TableHead>
-
-              <TableHead className="w-[250px] border-r text-xs">Arabic</TableHead>
-              <TableHead className="w-[60px] border-r text-right text-xs">AR Cnt</TableHead>
-              <TableHead className="w-[80px] border-r text-xs">AR Limit</TableHead>
-              <TableHead className="w-[140px] border-r text-xs">AR Status</TableHead>
-
-              <TableHead className="w-[250px] border-r text-xs">Azerice</TableHead>
-              <TableHead className="w-[60px] border-r text-right text-xs">AZ Cnt</TableHead>
-              <TableHead className="w-[80px] border-r text-xs">AZ Limit</TableHead>
-              <TableHead className="w-[140px] border-r text-xs">AZ Status</TableHead>
-
-              <TableHead className="w-[100px] text-xs">Actions</TableHead>
+              <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Entity</TableHead>
+              <TableHead className="h-10 w-[140px] border-r text-xs font-semibold">Campaign</TableHead>
+              <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Type</TableHead>
+              {allLanguages.map((lang) => (
+                <>
+                  <TableHead key={`${lang}-content`} className="h-10 w-[250px] border-r text-xs font-semibold">
+                    {LANGUAGE_LABELS[lang]}
+                  </TableHead>
+                  <TableHead key={`${lang}-count`} className="h-10 w-[60px] border-r text-xs font-semibold text-center">
+                    Count
+                  </TableHead>
+                  <TableHead key={`${lang}-limit`} className="h-10 w-[80px] border-r text-xs font-semibold text-center">
+                    Limit
+                  </TableHead>
+                  <TableHead key={`${lang}-status`} className="h-10 w-[140px] border-r text-xs font-semibold">
+                    Status
+                  </TableHead>
+                </>
+              ))}
+              <TableHead className="h-10 w-[100px] text-xs font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedCopies.map((copy, idx) => {
-              const defaultLimit = getCharLimit(copy.element_type, copy.platform);
-              const enCount = stripHtml(copy.content_en).length;
-              const arCount = stripHtml(copy.content_ar).length;
-              const azCount = stripHtml(copy.content_az).length;
-              const enLimit = copy.char_limit_en || defaultLimit;
-              const arLimit = copy.char_limit_ar || defaultLimit;
-              const azLimit = copy.char_limit_az || defaultLimit;
-
-              return (
-                <TableRow key={copy.id} className={`h-[44px] max-h-[44px] border-b ${idx % 2 === 0 ? "bg-muted/30" : ""}`}>
+            {newRow && (
+              <TableRow className="h-[44px] border-b bg-primary/5">
+                <TableCell className="h-[44px] border-r" />
+                <TableCell className="h-[44px] border-r p-2">
+                  <Select value={newRow.entity} onValueChange={(v) => setNewRow({ ...newRow, entity: v })}>
+                    <SelectTrigger className="h-8 text-xs border-0">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ENTITIES.map((e) => (
+                        <SelectItem key={e} value={e}>{e}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="h-[44px] border-r p-2">
+                  <CampaignsTagsInput
+                    value={newRow.campaigns}
+                    onChange={(v) => setNewRow({ ...newRow, campaigns: v })}
+                  />
+                </TableCell>
+                <TableCell className="h-[44px] border-r p-2">
+                  <Select value={newRow.element_type} onValueChange={(v) => setNewRow({ ...newRow, element_type: v })}>
+                    <SelectTrigger className="h-8 text-xs border-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ELEMENT_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                {allLanguages.map((lang) => renderLanguageColumns(null, lang, true))}
+                <TableCell className="h-[44px] p-2">
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs px-2"
+                      onClick={handleSaveNewRow}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSaveNewRow();
+                        } else if (e.key === "Escape") {
+                          e.preventDefault();
+                          handleCancelNewRow();
+                        }
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs px-2"
+                      onClick={handleCancelNewRow}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+            {copies.length === 0 && !newRow ? (
+              <TableRow>
+                <TableCell colSpan={4 + allLanguages.length * 4 + 1} className="text-center py-8 text-muted-foreground">
+                  No copies found. Click "Add Row" to create one.
+                </TableCell>
+              </TableRow>
+            ) : (
+              copies.map((copy, idx) => (
+                <TableRow
+                  key={copy.id}
+                  className={cn(
+                    "h-[44px] border-b",
+                    idx % 2 === 0 && "bg-muted/30",
+                    isAnyEditing ? "transition-none" : "transition-colors hover:bg-muted/50"
+                  )}
+                >
                   <TableCell className="h-[44px] border-r">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(copy.id)}
-                      onChange={() => toggleSelect(copy.id)}
+                    <Checkbox
+                      checked={selected.includes(copy.id)}
+                      onCheckedChange={() => toggleSelect(copy.id)}
+                      disabled={isGuest}
                     />
                   </TableCell>
-                  <TableCell className="h-[44px] border-r">
+                  <TableCell className="h-[44px] border-r p-2">
                     <Select
-                      value={copy.region || ""}
-                      onValueChange={(value) => handleUpdateField(copy.id, "region", value)}
+                      value={copy.entity[0] || ""}
+                      onValueChange={(v) => handleUpdateField(copy.id, "entity", [v])}
+                      disabled={isGuest}
                     >
                       <SelectTrigger className="h-8 text-xs border-0">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="MENA">MENA</SelectItem>
-                        <SelectItem value="LATAM">LATAM</SelectItem>
-                        <SelectItem value="Global">Global</SelectItem>
+                        {ENTITIES.map((e) => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs">
-                      <CampaignsTagsInput
-                        value={copy.campaigns}
-                        onChange={(campaigns) => handleUpdateField(copy.id, "campaigns", campaigns)}
+                  <TableCell className="h-[44px] border-r p-2">
+                    <div className="flex flex-wrap gap-1 max-h-[40px] overflow-hidden">
+                      {copy.campaigns.slice(0, 2).map((c) => (
+                        <Badge key={c} variant="outline" className="text-xs px-1 py-0">
+                          {c}
+                        </Badge>
+                      ))}
+                      {copy.campaigns.length > 2 && (
+                        <Badge variant="outline" className="text-xs px-1 py-0">
+                          +{copy.campaigns.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="h-[44px] border-r p-2">
+                    <Select
+                      value={copy.element_type}
+                      onValueChange={(v) => handleUpdateField(copy.id, "element_type", v)}
+                      disabled={isGuest}
+                    >
+                      <SelectTrigger className="h-8 text-xs border-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ELEMENT_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  {allLanguages.map((lang) => renderLanguageColumns(copy, lang, false))}
+                  <TableCell className="h-[44px] p-2">
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => handleSync(copy)}
+                        disabled={isGuest}
+                        title="Sync to planners"
+                      >
+                        <Upload className="h-3 w-3" />
+                      </Button>
+                      <ConfirmPopover
+                        open={confirmDelete === copy.id}
+                        onOpenChange={(open) => setConfirmDelete(open ? copy.id : null)}
+                        onConfirm={() => handleDelete(copy.id)}
+                        title="Delete this copy?"
+                        description="This action cannot be undone."
+                        trigger={
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            disabled={isGuest}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        }
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Badge variant="outline" className="text-xs">{copy.element_type}</Badge>
-                  </TableCell>
-
-                  {/* English */}
-                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_en")}</TableCell>
-                  <TableCell className="h-[44px] border-r text-right">
-                    <span className={`text-xs font-mono ${enCount > enLimit ? "text-destructive font-bold" : ""}`}>
-                      {enCount}
-                    </span>
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Input
-                      type="number"
-                      value={enLimit}
-                      onChange={(e) => handleUpdateField(copy.id, "char_limit_en", parseInt(e.target.value) || defaultLimit)}
-                      className="h-8 w-16 text-xs border-0"
-                    />
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Badge variant={getStatusColor(enCount, enLimit)} className="text-xs whitespace-nowrap">
-                      {getStatusText(enCount, enLimit)}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Arabic */}
-                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_ar")}</TableCell>
-                  <TableCell className="h-[44px] border-r text-right">
-                    <span className={`text-xs font-mono ${arCount > arLimit ? "text-destructive font-bold" : ""}`}>
-                      {arCount}
-                    </span>
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Input
-                      type="number"
-                      value={arLimit}
-                      onChange={(e) => handleUpdateField(copy.id, "char_limit_ar", parseInt(e.target.value) || defaultLimit)}
-                      className="h-8 w-16 text-xs border-0"
-                    />
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Badge variant={getStatusColor(arCount, arLimit)} className="text-xs whitespace-nowrap">
-                      {getStatusText(arCount, arLimit)}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Azerice */}
-                  <TableCell className="h-[44px] border-r">{renderContentCell(copy, "content_az")}</TableCell>
-                  <TableCell className="h-[44px] border-r text-right">
-                    <span className={`text-xs font-mono ${azCount > azLimit ? "text-destructive font-bold" : ""}`}>
-                      {azCount}
-                    </span>
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Input
-                      type="number"
-                      value={azLimit}
-                      onChange={(e) => handleUpdateField(copy.id, "char_limit_az", parseInt(e.target.value) || defaultLimit)}
-                      className="h-8 w-16 text-xs border-0"
-                    />
-                  </TableCell>
-                  <TableCell className="h-[44px] border-r">
-                    <Badge variant={getStatusColor(azCount, azLimit)} className="text-xs whitespace-nowrap">
-                      {getStatusText(azCount, azLimit)}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell className="h-[44px]">
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSync(copy)}
-                        disabled={copy.is_synced_to_planner}
-                        className="h-7 px-2"
-                      >
-                        <CheckCircle2 className={`h-3 w-3 ${copy.is_synced_to_planner ? "text-green-500" : ""}`} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(copy.id)}
-                        className="h-7 px-2"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
