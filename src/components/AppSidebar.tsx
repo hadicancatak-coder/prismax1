@@ -60,25 +60,25 @@ export function AppSidebar() {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl bg-primary/10 text-primary ${open ? 'border-l-4 border-l-primary ml-[-4px]' : ''} font-semibold shadow-[0_0_15px_rgba(0,87,255,0.15)] transition-colors`
-      : `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-2.5 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors`;
+      ? `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-primary ml-[-4px]' : 'justify-center px-0 border-l-4 border-primary ml-[-4px]'} py-3 text-primary font-medium transition-smooth`
+      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent ml-[-4px]' : 'justify-center px-0'} py-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:border-l-sidebar-foreground/20 transition-smooth`;
 
   return (
     <TooltipProvider delayDuration={0}>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarContent className={`bg-gradient-sidebar overflow-y-auto sidebar-scroll ${open ? 'px-4 py-6 space-y-8' : 'px-2 py-4 space-y-4'}`}>
+        <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo */}
-          <div className={`flex ${open ? 'items-center gap-3 px-2' : 'flex-col items-center justify-center'}`}>
+          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'}`}>
             <img 
               src={logoImage} 
               alt="Prisma" 
-              className={`transition-all ${open ? 'h-10' : 'h-8'}`}
+              className={`transition-smooth ${open ? 'h-10' : 'h-8'}`}
             />
             {open && (
               <div className="flex flex-col">
-                <span className="font-bold text-xl text-sidebar-primary-foreground tracking-tight leading-none">Prisma</span>
+                <span className="text-section-title text-sidebar-foreground font-semibold">Prisma</span>
                 {userName && (
-                  <span className="text-xs text-sidebar-foreground/70 uppercase tracking-wider mt-0.5">
+                  <span className="text-metadata text-sidebar-foreground/60 mt-0.5">
                     {userName}
                   </span>
                 )}
@@ -88,8 +88,8 @@ export function AppSidebar() {
 
           {/* Core Features */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">Core</SidebarGroupLabel>}
-            <SidebarMenu>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -97,17 +97,17 @@ export function AppSidebar() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <NavLink to={item.url} end className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                          <p className="font-medium">{item.title}</p>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (
                       <NavLink to={item.url} end className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-medium">{item.title}</span>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
                       </NavLink>
                     )}
                   </SidebarMenuButton>
@@ -118,8 +118,8 @@ export function AppSidebar() {
 
           {/* Operations */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">Operations</SidebarGroupLabel>}
-            <SidebarMenu>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -127,17 +127,17 @@ export function AppSidebar() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <NavLink to={item.url} className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                          <p className="font-medium">{item.title}</p>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (
                       <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-medium">{item.title}</span>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
                       </NavLink>
                     )}
                   </SidebarMenuButton>
@@ -148,8 +148,8 @@ export function AppSidebar() {
 
           {/* Team */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">Team</SidebarGroupLabel>}
-            <SidebarMenu>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Team</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
               {teamItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -157,17 +157,17 @@ export function AppSidebar() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <NavLink to={item.url} className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                          <p className="font-medium">{item.title}</p>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (
                       <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm font-medium">{item.title}</span>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
                       </NavLink>
                     )}
                   </SidebarMenuButton>
@@ -178,7 +178,7 @@ export function AppSidebar() {
 
 
           {/* Sign Out */}
-          <SidebarMenu className={open ? '' : 'flex justify-center'}>
+          <SidebarMenu className={`${open ? 'mt-auto pt-6 border-t border-sidebar-border' : 'mt-auto pt-4 border-t border-sidebar-border flex justify-center'}`}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 {!open ? (
@@ -186,22 +186,22 @@ export function AppSidebar() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={signOut}
-                        className="flex items-center justify-center w-12 h-12 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        className="flex items-center justify-center py-3 text-sidebar-foreground hover:text-destructive transition-smooth border-l-4 border-transparent hover:border-destructive ml-[-4px]"
                       >
-                        <LogOut className="h-5 w-5 shrink-0" strokeWidth={2} />
+                        <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-gray-900 text-white border-gray-800">
-                      <p className="font-medium">Sign Out</p>
+                    <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                      <p className="text-body font-medium">Sign Out</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
                   <button
                     onClick={signOut}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors w-full"
+                    className="flex items-center gap-3 px-3 py-3 text-sidebar-foreground hover:text-destructive transition-smooth w-full border-l-4 border-transparent hover:border-destructive ml-[-4px]"
                   >
-                    <LogOut className="h-5 w-5 shrink-0" strokeWidth={2} />
-                    <span className="text-sm font-medium">Sign Out</span>
+                    <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                    <span className="text-body">Sign Out</span>
                   </button>
                 )}
               </SidebarMenuButton>
