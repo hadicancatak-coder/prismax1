@@ -11,6 +11,9 @@ import { UpcomingCampaigns } from "@/components/dashboard/UpcomingCampaigns";
 import { MyKPIsProgress } from "@/components/dashboard/MyKPIsProgress";
 import { getDashboardStats } from "@/lib/dashboardQueries";
 import { NewsTicker } from "@/components/NewsTicker";
+import { StatsSkeleton } from "@/components/skeletons/StatsSkeleton";
+import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
+import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -99,31 +102,46 @@ export default function Dashboard() {
       <NewsTicker />
 
       {loading ? (
-        <div className="flex items-center gap-6 lg:gap-8 py-6 border-b border-border overflow-x-auto">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="animate-pulse flex-1 min-w-[120px]">
-              <div className="h-3 bg-muted rounded w-24 mb-3"></div>
-              <div className="h-10 bg-muted rounded w-16"></div>
-            </div>
-          ))}
-        </div>
+        <StatsSkeleton count={4} />
       ) : (
         <StatsCards stats={stats} onStatClick={handleStatClick} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <div className="space-y-6 lg:space-y-8">
-          <MyKPIsProgress />
-          <OverdueTasks />
+          {loading ? (
+            <>
+              <CardSkeleton count={1} />
+              <ListSkeleton items={3} />
+            </>
+          ) : (
+            <>
+              <MyKPIsProgress />
+              <OverdueTasks />
+            </>
+          )}
         </div>
         
         <div className="space-y-6 lg:space-y-8">
-          <UpcomingCampaigns />
-          <ActivityFeed />
+          {loading ? (
+            <>
+              <CardSkeleton count={1} />
+              <ListSkeleton items={5} />
+            </>
+          ) : (
+            <>
+              <UpcomingCampaigns />
+              <ActivityFeed />
+            </>
+          )}
         </div>
       </div>
 
-      <WhatsNext />
+      {loading ? (
+        <ListSkeleton items={4} />
+      ) : (
+        <WhatsNext />
+      )}
 
       {selectedTaskId && (
         <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />

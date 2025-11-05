@@ -14,6 +14,7 @@ import { TaskDialog } from "@/components/TaskDialog";
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns";
 import { AnnouncementsSection } from "@/components/AnnouncementsSection";
 import { NotificationDetailDialog } from "@/components/NotificationDetailDialog";
+import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 
 export default function Notifications() {
   const { user, userRole } = useAuth();
@@ -377,19 +378,20 @@ export default function Notifications() {
               </div>
             </div>
           )
-        ))}
+          ))}
 
-        {filteredNotifications.length === 0 && (
-          <div className="py-12 text-center">
-            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-body text-muted-foreground">
-              {searchQuery || typeFilter !== "all" || readFilter !== "all"
-                ? "No notifications match your filters"
-                : "No notifications yet"}
-            </p>
-          </div>
-        )}
-      </div>
+          {filteredNotifications.length === 0 && !loading && (
+            <div className="py-12 text-center">
+              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-body text-muted-foreground">
+                {searchQuery || typeFilter !== "all" || readFilter !== "all"
+                  ? "No notifications match your filters"
+                  : "No notifications yet"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {selectedTaskId && (
         <TaskDialog

@@ -23,6 +23,9 @@ import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TaskDialog } from "@/components/TaskDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { StatsSkeleton } from "@/components/skeletons/StatsSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);

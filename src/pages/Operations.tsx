@@ -10,6 +10,8 @@ import { DeleteAuditLogDialog } from "@/components/operations/DeleteAuditLogDial
 import { useOperationLogs, useOperationStats } from "@/hooks/useOperationLogs";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatsSkeleton } from "@/components/skeletons/StatsSkeleton";
+import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
 
 const ppcPlatforms = ["Google", "Search", "DGen", "PMax", "Display", "GDN", "YouTube"];
 const socialPlatforms = ["Meta", "Facebook", "Instagram", "X", "TikTok", "Snap", "Reddit"];
@@ -134,11 +136,7 @@ export default function Operations() {
         </div>
         <div className="p-4">
           {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
+            <CardSkeleton count={3} />
           ) : logs.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
