@@ -113,8 +113,8 @@ export default function ErrorLogs() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-border">
         <Select value={severityFilter || "all"} onValueChange={setSeverityFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Severity" />
@@ -165,11 +165,9 @@ export default function ErrorLogs() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Error Logs ({errors.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div>
+        <h2 className="text-section-title mb-6">Error Logs ({errors.length})</h2>
+        <div className="bg-card border border-border rounded">
           <Table>
             <TableHeader>
               <TableRow>
@@ -243,8 +241,8 @@ export default function ErrorLogs() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Dialog open={!!selectedError} onOpenChange={() => setSelectedError(null)}>
         <DialogContent className="max-w-3xl">

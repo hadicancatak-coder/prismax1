@@ -55,14 +55,15 @@ export default function AuditLog() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Admin Audit Log</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-section-title">Admin Audit Log</h2>
+        <p className="text-metadata mt-2">
           Audit logging captures administrative actions automatically. View history of user management, role changes, and system modifications.
         </p>
-      </CardHeader>
-      <CardContent>
+      </div>
+      
+      <div className="bg-card border border-border rounded">
         <ScrollArea className="h-[600px]">
           <Table>
             <TableHeader>
@@ -130,7 +131,7 @@ export default function AuditLog() {
             </TableBody>
           </Table>
         </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

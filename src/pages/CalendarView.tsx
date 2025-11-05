@@ -139,12 +139,12 @@ export default function CalendarView() {
   const upcomingCount = tasks.filter(t => t.status === 'Pending').length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background px-12 py-8">
       {!focusMode && (
         <>
           <header className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Agenda</h1>
-            <p className="text-gray-600">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
+            <h1 className="text-page-title mb-2">Agenda</h1>
+            <p className="text-muted-foreground">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
             
             {userRole === 'admin' && users.length > 0 && (
               <div className="mt-4 max-w-xs">
@@ -225,32 +225,32 @@ export default function CalendarView() {
         </div>
       )}
 
-      <div className={`grid gap-6 mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
-        <Card className={focusMode ? '' : 'lg:col-span-2'}>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>
+      <div className={`grid gap-8 mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
+        <div className={focusMode ? '' : 'lg:col-span-2'}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-section-title">
               {dateView === "today" && "Today's Tasks"} 
               {dateView === "yesterday" && "Yesterday's Tasks"}
               {dateView === "tomorrow" && "Tomorrow's Tasks"}
               {dateView === "week" && "This Week's Tasks"}
               {dateView === "custom" && "Custom Range Tasks"}
               ({todayTasks.length})
-            </CardTitle>
+            </h2>
             {focusMode && (
               <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
-                Exit Focus Mode
+              Exit Focus Mode
               </Button>
             )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          </div>
+          <div>
+            <div className="space-y-2">
               {todayTasks.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">No tasks for today</p>
               ) : (
                 todayTasks.map((task) => (
                   <div 
                     key={task.id}
-                    className="flex items-start gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="flex items-start gap-3 py-4 border-b border-border hover:bg-muted/50 transition-smooth cursor-pointer group"
                     onClick={() => {
                       setSelectedTaskId(task.id);
                       setTaskDialogOpen(true);
@@ -264,48 +264,46 @@ export default function CalendarView() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className={`font-semibold ${task.status === 'Completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                        <h4 className={`text-body font-medium ${task.status === 'Completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                           {task.title}
                         </h4>
                         <Badge variant="outline" className={
-                          task.priority === 'High' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
-                          task.priority === 'Medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                          'bg-green-500/10 text-green-600 border-green-500/20'
+                          task.priority === 'High' ? 'border-destructive text-destructive' :
+                          task.priority === 'Medium' ? 'border-primary text-primary' :
+                          'border-border text-muted-foreground'
                         }>
                           {task.priority}
                         </Badge>
                       </div>
                       {task.description && (
-                        <p className="text-sm text-gray-600 line-clamp-1">{task.description}</p>
+                        <p className="text-metadata line-clamp-1">{task.description}</p>
                       )}
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         
         {!focusMode && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Completed</span>
-                <span className="font-bold text-lg">{completedToday}/{totalToday}</span>
+          <div>
+            <h2 className="text-section-title mb-6">Quick Stats</h2>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center pb-4 border-b border-border">
+                <span className="text-metadata">Completed</span>
+                <span className="text-2xl font-semibold">{completedToday}/{totalToday}</span>
+              </div>
+              <div className="flex justify-between items-center pb-4 border-b border-border">
+                <span className="text-metadata">High Priority</span>
+                <span className="text-2xl font-semibold text-destructive">{highPriorityCount}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">High Priority</span>
-                <span className="font-bold text-lg text-red-600">{highPriorityCount}</span>
+                <span className="text-metadata">Upcoming</span>
+                <span className="text-2xl font-semibold text-primary">{upcomingCount}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Upcoming</span>
-                <span className="font-bold text-lg text-purple-600">{upcomingCount}</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 

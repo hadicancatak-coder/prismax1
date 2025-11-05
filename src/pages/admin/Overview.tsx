@@ -71,86 +71,58 @@ export default function Overview() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.users}</h3>
-            </div>
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.tasks}</h3>
-            </div>
-            <div className="p-3 bg-blue-500/10 rounded-lg">
-              <ListTodo className="h-6 w-6 text-blue-500" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg border-l-4 border-l-destructive">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Unresolved Errors</p>
-              <h3 className="text-3xl font-bold mt-2 text-destructive">{stats.unresolvedErrors}</h3>
-            </div>
-            <div className="p-3 bg-destructive/10 rounded-lg">
-              <AlertCircle className="h-6 w-6 text-destructive" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 transition-shadow duration-200 hover:shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Pending Approvals</p>
-              <h3 className="text-3xl font-bold mt-2">{stats.pendingApprovals}</h3>
-            </div>
-            <div className="p-3 bg-amber-500/10 rounded-lg">
-              <CheckSquare className="h-6 w-6 text-amber-500" />
-            </div>
-          </div>
-        </Card>
+    <div className="space-y-8">
+      <div className="flex items-center gap-8 py-6 border-b border-border">
+        <div>
+          <div className="text-metadata">Total Users</div>
+          <div className="text-4xl font-semibold text-foreground mt-1">{stats.users}</div>
+        </div>
+        <div className="w-px h-12 bg-border" />
+        <div>
+          <div className="text-metadata">Total Tasks</div>
+          <div className="text-4xl font-semibold text-foreground mt-1">{stats.tasks}</div>
+        </div>
+        <div className="w-px h-12 bg-border" />
+        <div>
+          <div className="text-metadata">Unresolved Errors</div>
+          <div className="text-4xl font-semibold text-destructive mt-1">{stats.unresolvedErrors}</div>
+        </div>
+        <div className="w-px h-12 bg-border" />
+        <div>
+          <div className="text-metadata">Pending Approvals</div>
+          <div className="text-4xl font-semibold text-foreground mt-1">{stats.pendingApprovals}</div>
+        </div>
       </div>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <div>
+        <h3 className="text-section-title mb-4 flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-green-500" />
           System Health
         </h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
             <div className="flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-medium">Database</span>
+              <span className="text-body font-medium">Database</span>
             </div>
-            <span className="text-sm text-green-700 font-medium">Operational</span>
+            <span className="text-metadata">Operational</span>
           </div>
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
             <div className="flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-medium">Authentication</span>
+              <span className="text-body font-medium">Authentication</span>
             </div>
-            <span className="text-sm text-green-700 font-medium">Operational</span>
+            <span className="text-metadata">Operational</span>
           </div>
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg transition-colors hover:bg-green-100">
+          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
             <div className="flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-medium">API</span>
+              <span className="text-body font-medium">API</span>
             </div>
-            <span className="text-sm text-green-700 font-medium">Operational</span>
+            <span className="text-metadata">Operational</span>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Team KPIs Section */}
       <TeamKPIsManager />

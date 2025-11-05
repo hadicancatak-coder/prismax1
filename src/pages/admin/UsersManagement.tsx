@@ -220,9 +220,9 @@ export default function UsersManagement() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="flex-1 relative">
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 pb-4 border-b border-border">
+        <div className="flex-1 relative max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
@@ -251,7 +251,7 @@ export default function UsersManagement() {
         )}
       </div>
 
-      <div className="border rounded-lg">
+      <div className="bg-card border border-border rounded">
         <Table>
           <TableHeader>
             <TableRow>

@@ -40,9 +40,12 @@ function CopyWriter() {
 
   return (
     <>
-      <div className="p-6 space-y-6">
+      <div className="px-12 py-8 space-y-8 bg-background">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Copy Writer</h1>
+          <div>
+            <h1 className="text-page-title">Copy Writer</h1>
+            <p className="text-muted-foreground mt-1">Manage and organize your marketing copy</p>
+          </div>
           <div className="flex gap-2">
             <LanguageColumnToggle
               activeLanguages={activeLanguages}
@@ -55,18 +58,18 @@ function CopyWriter() {
           </div>
         </div>
 
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex gap-3 items-center flex-wrap border-b border-border pb-4">
+          <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search copies..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-9"
+              className="pl-10"
             />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[120px] h-9 text-sm">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -79,7 +82,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-[120px] h-9 text-sm">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
             <SelectContent>
@@ -92,7 +95,7 @@ function CopyWriter() {
             </SelectContent>
           </Select>
           <Select value={entityFilter} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-[120px] h-9 text-sm">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Entity" />
             </SelectTrigger>
             <SelectContent>

@@ -14,53 +14,35 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-10 -mx-6 -mt-6 px-6 py-6 mb-6 shadow-sm">
-        <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Manage system settings and monitor activity</p>
+    <div className="px-12 py-8 bg-background min-h-screen space-y-8">
+      <div>
+        <h1 className="text-page-title">Admin Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Manage system settings and monitor activity</p>
       </div>
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto bg-white border shadow-sm">
-          <TabsTrigger 
-            value="overview" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-8">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto border-b border-border">
+          <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="users" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+          <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="approvals" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+          <TabsTrigger value="approvals" className="gap-2">
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Approvals</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="errors" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+          <TabsTrigger value="errors" className="gap-2">
             <AlertCircle className="h-4 w-4" />
             <span className="hidden sm:inline">Errors</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="activity" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+          <TabsTrigger value="activity" className="gap-2">
             <Activity className="h-4 w-4" />
             <span className="hidden sm:inline">Activity</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="audit" 
-            className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
+          <TabsTrigger value="audit" className="gap-2">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Audit Log</span>
           </TabsTrigger>

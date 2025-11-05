@@ -93,10 +93,10 @@ export default function SocialUAPlanner() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="px-12 py-8 space-y-8 bg-background">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Social Media Planner</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-page-title">Social Media Planner</h1>
+        <p className="text-muted-foreground mt-1">
           Create and preview ads for all social platforms
         </p>
       </div>
@@ -135,91 +135,91 @@ export default function SocialUAPlanner() {
 
         {/* Facebook */}
         <TabsContent value="facebook">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <MetaAdCreator
                 adData={metaData}
                 setAdData={setMetaData}
                 platform="facebook"
               />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <FacebookPreview adData={metaData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 
         {/* Instagram */}
         <TabsContent value="instagram">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <MetaAdCreator
                 adData={metaData}
                 setAdData={setMetaData}
                 platform="instagram"
               />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <InstagramPreview adData={metaData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 
         {/* WhatsApp */}
         <TabsContent value="whatsapp">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <MetaAdCreator
                 adData={metaData}
                 setAdData={setMetaData}
                 platform="whatsapp"
               />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <WhatsAppPreview adData={metaData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 
         {/* TikTok */}
         <TabsContent value="tiktok">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <TikTokAdCreator adData={tiktokData} setAdData={setTiktokData} />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <TikTokPreview adData={tiktokData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 
         {/* Snap */}
         <TabsContent value="snap">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <SnapAdCreator adData={snapData} setAdData={setSnapData} />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <SnapPreview adData={snapData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 
         {/* Reddit */}
         <TabsContent value="reddit">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-card border border-border rounded p-6">
               <RedditAdCreator adData={redditData} setAdData={setRedditData} />
-            </Card>
-            <Card className="p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
+            </div>
+            <div className="bg-card border border-border rounded p-6 sticky top-6">
+              <h3 className="text-section-title mb-4">Preview</h3>
               <RedditPreview adData={redditData} />
-            </Card>
+            </div>
           </div>
         </TabsContent>
 

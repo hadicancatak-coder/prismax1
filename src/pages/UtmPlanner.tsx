@@ -15,12 +15,12 @@ const UtmPlanner = () => {
   const { data: utmLinks = [], isLoading } = useUtmLinks(filters);
 
   return (
-    <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
+    <div className="px-12 py-8 space-y-8 bg-background min-h-screen">
       <div className="flex items-center gap-3">
-        <Link2 className="h-8 w-8" />
+        <Link2 className="h-6 w-6 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold text-foreground">UTM Planner</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-page-title">UTM Planner</h1>
+          <p className="text-muted-foreground mt-1">
             Create, manage, and track your UTM campaign links
           </p>
         </div>
@@ -50,15 +50,13 @@ const UtmPlanner = () => {
           <CampaignLibrary />
         </TabsContent>
 
-        <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="space-y-4">
+        <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="space-y-6">
           <UtmInlineFilters filters={filters} onFiltersChange={setFilters} />
 
           {isLoading ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Loading UTM links...
-              </CardContent>
-            </Card>
+            <div className="py-12 text-center text-muted-foreground">
+              Loading UTM links...
+            </div>
           ) : (
             <UtmTableGroupedView links={utmLinks} />
           )}
