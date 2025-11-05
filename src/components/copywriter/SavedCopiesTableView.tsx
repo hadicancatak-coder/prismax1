@@ -23,6 +23,13 @@ import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 
 const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 
+const formatElementType = (type: string): string => {
+  return type
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 interface SavedCopiesTableViewProps {
   copies: CopywriterCopy[];
   activeLanguages: string[];
@@ -226,7 +233,7 @@ export function SavedCopiesTableView({
 
     return (
       <>
-        <TableCell className={cn("h-[44px] border-r p-2", lang === "ar" && "text-right")}>
+        <TableCell className={cn("min-h-[44px] border-r p-2", lang === "ar" && "text-right")}>
           {isEditing ? (
             <RichTextEditor
               value={content}
@@ -245,21 +252,21 @@ export function SavedCopiesTableView({
           ) : (
             <div
               className={cn(
-                "text-xs cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 min-h-[32px]",
-                "line-clamp-2 overflow-hidden",
+                "text-xs cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 min-h-[32px] max-h-[120px] overflow-y-auto",
                 !content && "text-muted-foreground italic"
               )}
               onClick={() => !isGuest && setEditingCell(cellId)}
               dangerouslySetInnerHTML={{ __html: content || (lang === "en" ? "Click to edit..." : "") }}
+              title={content ? (new DOMParser().parseFromString(content, 'text/html')).body.textContent || '' : ''}
             />
           )}
         </TableCell>
-        <TableCell className="h-[44px] border-r p-2 text-center">
+        <TableCell className="min-h-[44px] border-r p-2 text-center">
           <span className={cn("text-xs font-mono", count > (limit || Infinity) && "text-destructive font-semibold")}>
             {count}
           </span>
         </TableCell>
-        <TableCell className="h-[44px] border-r p-2">
+        <TableCell className="min-h-[44px] border-r p-2">
           <Input
             type="number"
             value={limit ?? ""}
@@ -276,7 +283,7 @@ export function SavedCopiesTableView({
             disabled={isGuest}
           />
         </TableCell>
-        <TableCell className="h-[44px] border-r p-2">
+        <TableCell className="min-h-[44px] border-r p-2">
           {getStatusBadge(count, limit)}
         </TableCell>
       </>
@@ -342,9 +349,9 @@ export function SavedCopiesTableView({
           </TableHeader>
           <TableBody>
             {newRow && (
-              <TableRow className="h-[44px] border-b bg-primary/5">
-                <TableCell className="h-[44px] border-r" />
-                <TableCell className="h-[44px] border-r p-2">
+              <TableRow className="min-h-[44px] border-b bg-primary/5">
+                <TableCell className="min-h-[44px] border-r" />
+                <TableCell className="min-h-[44px] border-r p-2">
                   <Select value={newRow.entity} onValueChange={(v) => setNewRow({ ...newRow, entity: v })}>
                     <SelectTrigger className="h-8 text-xs border-0">
                       <SelectValue placeholder="Select..." />
@@ -356,26 +363,28 @@ export function SavedCopiesTableView({
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="h-[44px] border-r p-2">
+                <TableCell className="min-h-[44px] border-r p-2">
                   <CampaignsTagsInput
                     value={newRow.campaigns}
                     onChange={(v) => setNewRow({ ...newRow, campaigns: v })}
                   />
                 </TableCell>
-                <TableCell className="h-[44px] border-r p-2">
+                <TableCell className="min-h-[44px] border-r p-2">
                   <Select value={newRow.element_type} onValueChange={(v) => setNewRow({ ...newRow, element_type: v })}>
                     <SelectTrigger className="h-8 text-xs border-0">
-                      <SelectValue />
+                      <SelectValue>
+                        {newRow.element_type ? formatElementType(newRow.element_type) : "Select type..."}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {ELEMENT_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                        <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </TableCell>
                 {allLanguages.map((lang) => renderLanguageColumns(null, lang, true))}
-                <TableCell className="h-[44px] p-2">
+                <TableCell className="min-h-[44px] p-2">
                   <div className="flex gap-1">
                     <Button
                       size="sm"
@@ -417,19 +426,19 @@ export function SavedCopiesTableView({
                 <TableRow
                   key={copy.id}
                   className={cn(
-                    "h-[44px] border-b",
+                    "min-h-[44px] border-b",
                     idx % 2 === 0 && "bg-muted/30",
                     isAnyEditing ? "transition-none" : "transition-colors hover:bg-muted/50"
                   )}
                 >
-                  <TableCell className="h-[44px] border-r">
+                  <TableCell className="min-h-[44px] border-r">
                     <Checkbox
                       checked={selected.includes(copy.id)}
                       onCheckedChange={() => toggleSelect(copy.id)}
                       disabled={isGuest}
                     />
                   </TableCell>
-                  <TableCell className="h-[44px] border-r p-2">
+                  <TableCell className="min-h-[44px] border-r p-2">
                     <Select
                       value={copy.entity[0] || ""}
                       onValueChange={(v) => handleUpdateField(copy.id, "entity", [v])}
@@ -445,7 +454,7 @@ export function SavedCopiesTableView({
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell className="h-[44px] border-r p-2">
+                  <TableCell className="min-h-[44px] border-r p-2">
                     <div className="flex flex-wrap gap-1 max-h-[40px] overflow-hidden">
                       {copy.campaigns.slice(0, 2).map((c) => (
                         <Badge key={c} variant="outline" className="text-xs px-1 py-0">
@@ -459,24 +468,26 @@ export function SavedCopiesTableView({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="h-[44px] border-r p-2">
+                  <TableCell className="min-h-[44px] border-r p-2">
                     <Select
                       value={copy.element_type}
                       onValueChange={(v) => handleUpdateField(copy.id, "element_type", v)}
                       disabled={isGuest}
                     >
                       <SelectTrigger className="h-8 text-xs border-0">
-                        <SelectValue />
+                        <SelectValue>
+                          {formatElementType(copy.element_type)}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {ELEMENT_TYPES.map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                          <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </TableCell>
                   {allLanguages.map((lang) => renderLanguageColumns(copy, lang, false))}
-                  <TableCell className="h-[44px] p-2">
+                  <TableCell className="min-h-[44px] p-2">
                     <div className="flex gap-1">
                       <Button
                         size="sm"
