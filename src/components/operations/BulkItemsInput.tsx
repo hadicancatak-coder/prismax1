@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ListPlus } from "lucide-react";
 import { useCreateBulkOperationItems } from "@/hooks/useOperationLogs";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 interface BulkItemsInputProps {
   auditLogId: string;
@@ -53,16 +53,14 @@ export function BulkItemsInput({ auditLogId, defaultAssignee }: BulkItemsInputPr
             <Label htmlFor="bulk-items">
               Enter items (one per line)
             </Label>
-            <InlineRichTextField
+            <RichTextEditor
               value={bulkText}
               onChange={setBulkText}
               placeholder="Fix disapproved ads in SA campaign
 Update negative keywords list
 Budget allocation needs review
-...
-(Paste URLs to create links)"
+..."
               minHeight="300px"
-              className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-2">
               {bulkText.split('\n').filter(l => l.trim()).length} items

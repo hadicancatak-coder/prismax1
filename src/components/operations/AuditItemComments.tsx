@@ -9,7 +9,7 @@ import {
   useDeleteAuditItemComment,
 } from "@/hooks/useAuditItemComments";
 import { useAuth } from "@/hooks/useAuth";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 interface AuditItemCommentsProps {
   itemId: string;
@@ -60,11 +60,9 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
                     {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                   </span>
                 </div>
-                <InlineRichTextField
-                  value={comment.body}
-                  onChange={() => {}}
-                  readOnly
-                  className="text-sm"
+                <div 
+                  className="text-sm prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: comment.body }}
                 />
               </div>
               {user?.id === comment.author_id && (
@@ -85,10 +83,10 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-2">
-        <InlineRichTextField
+        <RichTextEditor
           value={newComment}
           onChange={setNewComment}
-          placeholder="Add a comment... (Paste URLs to create links)"
+          placeholder="Add a comment..."
           minHeight="60px"
         />
         <div className="flex justify-end">

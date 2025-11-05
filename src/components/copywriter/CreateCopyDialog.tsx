@@ -11,7 +11,7 @@ import { CopywriterCopy, useCreateCopywriterCopy, useUpdateCopywriterCopy } from
 import { ENTITIES } from "@/lib/constants";
 import { syncCopyToPlanners } from "@/lib/copywriterSync";
 import { useToast } from "@/hooks/use-toast";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 interface CreateCopyDialogProps {
   open: boolean;
@@ -213,49 +213,44 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
               <TabsTrigger value="es">Spanish</TabsTrigger>
             </TabsList>
             <TabsContent value="en" className="space-y-2">
-              <InlineRichTextField
+              <RichTextEditor
                 value={contentEn}
                 onChange={setContentEn}
-                placeholder="Enter English content... (Paste URLs to create links)"
-                className="min-h-[100px]"
-                maxLength={charLimit}
+                placeholder="Enter English content..."
+                minHeight="100px"
               />
               <div className="text-xs text-right text-muted-foreground">
                 {contentEn.length}/{charLimit}
               </div>
             </TabsContent>
             <TabsContent value="ar" className="space-y-2">
-              <InlineRichTextField
+              <RichTextEditor
                 value={contentAr}
                 onChange={setContentAr}
                 placeholder="أدخل المحتوى العربي..."
-                className="min-h-[100px]"
-                dir="rtl"
-                maxLength={charLimit}
+                minHeight="100px"
               />
               <div className="text-xs text-left text-muted-foreground">
                 {contentAr.length}/{charLimit}
               </div>
             </TabsContent>
             <TabsContent value="az" className="space-y-2">
-              <InlineRichTextField
+              <RichTextEditor
                 value={contentAz}
                 onChange={setContentAz}
                 placeholder="Azərbaycan məzmunu daxil edin..."
-                className="min-h-[100px]"
-                maxLength={charLimit}
+                minHeight="100px"
               />
               <div className="text-xs text-right text-muted-foreground">
                 {contentAz.length}/{charLimit}
               </div>
             </TabsContent>
             <TabsContent value="es" className="space-y-2">
-              <InlineRichTextField
+              <RichTextEditor
                 value={contentEs}
                 onChange={setContentEs}
                 placeholder="Ingrese contenido en español..."
-                className="min-h-[100px]"
-                maxLength={charLimit}
+                minHeight="100px"
               />
               <div className="text-xs text-right text-muted-foreground">
                 {contentEs.length}/{charLimit}

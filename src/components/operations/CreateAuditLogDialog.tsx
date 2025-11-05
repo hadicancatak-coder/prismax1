@@ -9,7 +9,7 @@ import { useCreateOperationLog, useDefaultAssignees } from "@/hooks/useOperation
 import { ENTITIES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 export function CreateAuditLogDialog() {
   const [open, setOpen] = useState(false);
@@ -85,10 +85,10 @@ export function CreateAuditLogDialog() {
 
           <div>
             <Label htmlFor="description">Description</Label>
-            <InlineRichTextField
+            <RichTextEditor
               value={description}
               onChange={setDescription}
-              placeholder="Overall audit notes... (Paste URLs to create links)"
+              placeholder="Overall audit notes..."
               minHeight="80px"
             />
           </div>

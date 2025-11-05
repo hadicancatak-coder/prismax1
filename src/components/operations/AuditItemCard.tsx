@@ -10,7 +10,7 @@ import { OperationAuditItem } from "@/lib/operationsService";
 import { useUpdateOperationItem, useDeleteOperationItem } from "@/hooks/useOperationLogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { InlineRichTextField } from "@/components/InlineRichTextField";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { AuditItemComments } from "./AuditItemComments";
 import { useAuditItemComments } from "@/hooks/useAuditItemComments";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -100,11 +100,10 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
                 <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
                 {getStatusBadge()}
               </div>
-              <InlineRichTextField
+              <RichTextEditor
                 value={localContent}
                 onChange={setLocalContent}
                 placeholder="Action item details..."
-                className="text-sm"
                 minHeight="60px"
               />
             </div>
