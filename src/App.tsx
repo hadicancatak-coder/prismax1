@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
@@ -53,6 +54,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <GlobalBubbleMenu />
         <BrowserRouter>
           <AuthProvider>
             <Routes>

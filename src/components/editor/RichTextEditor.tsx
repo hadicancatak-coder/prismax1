@@ -8,7 +8,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { EditorBubbleMenu } from './EditorBubbleMenu';
+import { setGlobalActiveEditor, clearGlobalActiveEditor } from './GlobalBubbleMenu';
 
 interface RichTextEditorProps {
   value: string;
@@ -96,13 +96,38 @@ export function RichTextEditor({
     }
   }, [editor, autoFocus]);
 
+  // Register with global bubble menu
+  useEffect(() => {
+    if (!editor || disabled) return;
+
+    const handleFocus = () => setGlobalActiveEditor(editor);
+    const handleBlur = () => {
+      // Small delay to allow bubble menu interaction
+      setTimeout(() => {
+        const activeElement = document.activeElement;
+        const isBubbleMenu = activeElement?.closest('[class*="bubble"]');
+        if (!isBubbleMenu) {
+          clearGlobalActiveEditor(editor);
+        }
+      }, 100);
+    };
+
+    editor.on('focus', handleFocus);
+    editor.on('blur', handleBlur);
+
+    return () => {
+      editor.off('focus', handleFocus);
+      editor.off('blur', handleBlur);
+      clearGlobalActiveEditor(editor);
+    };
+  }, [editor, disabled]);
+
   if (!editor) {
     return null;
   }
 
   return (
     <div className={cn('border border-input rounded-md bg-background', className)}>
-      {!disabled && <EditorBubbleMenu editor={editor} />}
       <div
         className="px-3 py-2"
         style={{ minHeight }}
