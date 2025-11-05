@@ -212,11 +212,11 @@ export default function Tasks() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="px-48 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Tasks</h1>
-          <p className="text-muted-foreground">Manage and track your team's tasks</p>
+          <h1 className="text-page-title text-foreground">Tasks</h1>
+          <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setTemplateDialogOpen(true)} variant="outline">
@@ -277,17 +277,17 @@ export default function Tasks() {
       </div>
 
       {/* Filters with Accordion */}
-      <Card className="p-4">
+      <div className="border border-border rounded">
         <Accordion type="multiple" defaultValue={[]}>
-          <AccordionItem value="quick" className="border-0">
-            <AccordionTrigger className="font-semibold hover:no-underline">
+          <AccordionItem value="quick" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
                 Quick Filters
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="flex gap-2 flex-wrap pt-2">
+              <div className="flex gap-2 flex-wrap pt-2 pb-4">
                 {quickFilters.map(({ label, Icon }) => {
                   const count = filteredTasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
                   return (
@@ -311,15 +311,15 @@ export default function Tasks() {
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="assignee" className="border-0">
-            <AccordionTrigger className="font-semibold hover:no-underline">
+          <AccordionItem value="assignee" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Assignees & Teams
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="pt-2">
+              <div className="pt-2 pb-4">
                 <AssigneeFilterBar
                   selectedAssignees={selectedAssignees}
                   onAssigneesChange={setSelectedAssignees}
@@ -330,15 +330,15 @@ export default function Tasks() {
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="date" className="border-0">
-            <AccordionTrigger className="font-semibold hover:no-underline">
+          <AccordionItem value="date" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4" />
                 Date & Status
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="pt-2">
+              <div className="pt-2 pb-4">
                 <TaskDateFilterBar
                   onFilterChange={setDateFilter}
                   onStatusChange={setStatusFilter}
@@ -347,17 +347,17 @@ export default function Tasks() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </Card>
+      </div>
 
       {/* Task Views */}
       {filteredTasks.length === 0 ? (
-        <Card className="p-12 text-center">
+        <div className="py-12 text-center">
           <div className="flex flex-col items-center">
-            <div className="bg-primary/10 p-6 rounded-full mb-4">
+            <div className="bg-muted p-6 rounded-full mb-4">
               <CheckCircle2 className="h-16 w-16 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">All Clear! 🎉</h2>
-            <p className="text-muted-foreground mb-6 max-w-md">
+            <h2 className="text-section-title mb-2">All Clear! 🎉</h2>
+            <p className="text-body text-muted-foreground mb-6 max-w-md">
               {tasks.length === 0 
                 ? "You don't have any tasks yet. Create your first task to get started on achieving your goals."
                 : "No tasks found matching your filters. Try adjusting your search criteria."}
@@ -369,7 +369,7 @@ export default function Tasks() {
               </Button>
             )}
           </div>
-        </Card>
+        </div>
       ) : (
         <>
           {/* Pagination Controls */}

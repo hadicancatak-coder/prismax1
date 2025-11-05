@@ -17,58 +17,38 @@ export const TaskStatsCards = ({
   onCardClick 
 }: TaskStatsCardsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card 
-        className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 cursor-pointer hover:scale-[1.02] transition-transform"
+    <div className="flex items-center gap-8 py-6 border-b border-border">
+      <div 
+        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
         onClick={() => onCardClick('all')}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Tasks</p>
-            <h3 className="text-2xl font-bold">{totalTasks}</h3>
-          </div>
-          <ListTodo className="h-8 w-8 text-primary" />
-        </div>
-      </Card>
-      
-      <Card 
-        className="p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        <div className="text-metadata mb-1">Total Tasks</div>
+        <div className="text-4xl font-semibold text-foreground">{totalTasks}</div>
+      </div>
+      <div className="w-px h-12 bg-border" />
+      <div 
+        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
         onClick={() => onCardClick('overdue')}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Overdue</p>
-            <h3 className="text-2xl font-bold text-destructive">{overdueCount}</h3>
-          </div>
-          <AlertCircle className="h-8 w-8 text-destructive" />
-        </div>
-      </Card>
-      
-      <Card 
-        className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        <div className="text-metadata mb-1">Overdue</div>
+        <div className="text-4xl font-semibold text-destructive">{overdueCount}</div>
+      </div>
+      <div className="w-px h-12 bg-border" />
+      <div 
+        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
         onClick={() => onCardClick('ongoing')}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">In Progress</p>
-            <h3 className="text-2xl font-bold text-purple-600 dark:text-purple-400">{ongoingCount}</h3>
-          </div>
-          <Clock className="h-8 w-8 text-purple-500" />
-        </div>
-      </Card>
-      
-      <Card 
-        className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:scale-[1.02] transition-transform"
+        <div className="text-metadata mb-1">In Progress</div>
+        <div className="text-4xl font-semibold text-foreground">{ongoingCount}</div>
+      </div>
+      <div className="w-px h-12 bg-border" />
+      <div 
+        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
         onClick={() => onCardClick('completed')}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Completed</p>
-            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">{completedCount}</h3>
-          </div>
-          <CheckCircle2 className="h-8 w-8 text-green-500" />
-        </div>
-      </Card>
+        <div className="text-metadata mb-1">Completed</div>
+        <div className="text-4xl font-semibold text-foreground">{completedCount}</div>
+      </div>
     </div>
   );
 };

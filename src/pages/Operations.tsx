@@ -52,11 +52,11 @@ export default function Operations() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="px-48 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Operations Audit Logs</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-page-title">Operations Audit Logs</h1>
+          <p className="text-body text-muted-foreground">
             Document and track account optimizations and action items
           </p>
         </div>
@@ -64,53 +64,33 @@ export default function Operations() {
       </div>
 
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalLogs}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <ListChecks className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.inProgress}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Items</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingItems}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed Items</CardTitle>
-              <ListChecks className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completedItems}</div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-8 py-6 border-b border-border">
+          <div className="flex-1">
+            <div className="text-metadata mb-1">Total Logs</div>
+            <div className="text-4xl font-semibold text-foreground">{stats.totalLogs}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div className="flex-1">
+            <div className="text-metadata mb-1">In Progress</div>
+            <div className="text-4xl font-semibold text-foreground">{stats.inProgress}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div className="flex-1">
+            <div className="text-metadata mb-1">Pending Items</div>
+            <div className="text-4xl font-semibold text-foreground">{stats.pendingItems}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div className="flex-1">
+            <div className="text-metadata mb-1">Completed Items</div>
+            <div className="text-4xl font-semibold text-foreground">{stats.completedItems}</div>
+          </div>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
+      <div className="border border-border rounded">
+        <div className="border-b border-border p-4">
           <div className="flex items-center justify-between">
-            <CardTitle>Audit Logs</CardTitle>
+            <h2 className="text-section-title">Audit Logs</h2>
             <div className="flex gap-2">
               <Select value={teamFilter} onValueChange={setTeamFilter}>
                 <SelectTrigger className="w-[160px]">
@@ -151,8 +131,8 @@ export default function Operations() {
               </Select>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="p-4">
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => (
@@ -162,8 +142,8 @@ export default function Operations() {
           ) : logs.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">No audit logs yet</p>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-section-title mb-2">No audit logs yet</p>
+              <p className="text-body text-muted-foreground mb-4">
                 Create your first audit log to start tracking optimizations
               </p>
               <CreateAuditLogDialog />
@@ -173,80 +153,73 @@ export default function Operations() {
               {logs.map(log => {
                 const isPPC = ppcPlatforms.includes(log.platform);
                 return (
-                  <Card
+                  <div
                     key={log.id}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="border border-border rounded p-4 hover:border-primary transition-smooth cursor-pointer"
+                    onClick={() => navigate(`/operations/${log.id}`)}
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1" onClick={() => navigate(`/operations/${log.id}`)}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge 
-                              variant="outline" 
-                              className={isPPC 
-                                ? "bg-blue-500/10 text-blue-600 border-blue-200" 
-                                : "bg-purple-500/10 text-purple-600 border-purple-200"
-                              }
-                            >
-                              {isPPC ? "PPC" : "SocialUA"}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">{log.platform}</span>
-                          </div>
-                          <CardTitle className="text-lg">{log.title}</CardTitle>
-                          {log.description && (
-                            <CardDescription className="mt-1">
-                              {log.description}
-                            </CardDescription>
-                          )}
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <Badge variant={getStatusColor(log.status)}>
-                            {log.status.replace('_', ' ')}
-                          </Badge>
-                          {isAdmin && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <DeleteAuditLogDialog
-                                logId={log.id}
-                                logTitle={log.title}
-                                hasLinkedTask={!!log.task_id}
-                                variant="icon"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {log.entity && log.entity.length > 0 && (
-                          <>
-                            {log.entity.map(e => (
-                              <Badge key={e} variant="secondary">
-                                {e}
-                              </Badge>
-                            ))}
-                          </>
-                        )}
-                        {log.deadline && (
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(log.deadline).toLocaleDateString()}
+                            {isPPC ? "PPC" : "SocialUA"}
                           </Badge>
-                        )}
-                        {log.task_id && (
-                          <Badge variant="default" className="gap-1">
-                            <ExternalLink className="h-3 w-3" />
-                            Task Linked
-                          </Badge>
+                          <span className="text-metadata">{log.platform}</span>
+                        </div>
+                        <h3 className="text-body font-medium mb-1">{log.title}</h3>
+                        {log.description && (
+                          <p className="text-body text-muted-foreground">
+                            {log.description}
+                          </p>
                         )}
                       </div>
-                    </CardHeader>
-                  </Card>
+                      <div className="flex items-start gap-2">
+                        <Badge variant={getStatusColor(log.status)}>
+                          {log.status.replace('_', ' ')}
+                        </Badge>
+                        {isAdmin && (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DeleteAuditLogDialog
+                              logId={log.id}
+                              logTitle={log.title}
+                              hasLinkedTask={!!log.task_id}
+                              variant="icon"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {log.entity && log.entity.length > 0 && (
+                        <>
+                          {log.entity.map(e => (
+                            <Badge key={e} variant="secondary">
+                              {e}
+                            </Badge>
+                          ))}
+                        </>
+                      )}
+                      {log.deadline && (
+                        <Badge variant="outline">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(log.deadline).toLocaleDateString()}
+                        </Badge>
+                      )}
+                      {log.task_id && (
+                        <Badge variant="default" className="gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          Task Linked
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

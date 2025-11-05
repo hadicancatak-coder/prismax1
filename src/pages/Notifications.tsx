@@ -247,25 +247,23 @@ export default function Notifications() {
   }
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground text-sm">
+    <div className="px-48 py-8 space-y-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-page-title">Notifications</h1>
+          <p className="text-body text-muted-foreground">
             Stay updated with your tasks, mentions, and important updates
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
-            {notifications.filter(n => !n.read_at).length} Unread
-          </Badge>
-        </div>
+        <Badge variant="outline" className="text-xs">
+          {notifications.filter(n => !n.read_at).length} Unread
+        </Badge>
       </div>
 
       <AnnouncementsSection />
 
       {/* Filters and Actions */}
-      <Card className="p-4">
+      <div className="border border-border rounded p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <Tabs value={readFilter} onValueChange={(v: any) => setReadFilter(v)} className="w-full md:w-auto">
             <TabsList>
@@ -306,8 +304,8 @@ export default function Notifications() {
         </div>
 
         {selectedIds.length > 0 && (
-          <div className="mt-4 flex items-center gap-2 p-3 bg-muted rounded-md">
-            <span className="text-sm">{selectedIds.length} selected</span>
+          <div className="mt-4 flex items-center gap-2 p-3 bg-muted rounded">
+            <span className="text-body">{selectedIds.length} selected</span>
             <Button onClick={deleteSelected} variant="destructive" size="sm">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Selected
@@ -317,20 +315,20 @@ export default function Notifications() {
             </Button>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Grouped Notifications */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {Object.entries(groupedNotifications).map(([group, notifs]) => (
           notifs.length > 0 && (
             <div key={group}>
-              <h2 className="text-sm font-semibold text-muted-foreground mb-3">{group}</h2>
+              <h2 className="text-metadata uppercase tracking-wide mb-3">{group}</h2>
               <div className="space-y-2">
                 {notifs.map((notification) => (
-                  <Card
+                  <div
                     key={notification.id}
-                    className={`p-4 transition-all hover:shadow-medium cursor-pointer ${
-                      notification.read_at ? "bg-background" : "bg-muted/50 border-primary/20"
+                    className={`p-4 border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
+                      notification.read_at ? "bg-background" : "bg-muted/30 border-l-2 border-l-primary"
                     } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -342,13 +340,11 @@ export default function Notifications() {
                           onClick={(e) => e.stopPropagation()}
                         />
                         <div className="flex-1">
-                          <p className="text-sm text-foreground mb-2">{getNotificationMessage(notification)}</p>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <p className="text-body text-foreground mb-2">{getNotificationMessage(notification)}</p>
+                          <div className="flex items-center gap-3 text-metadata">
                             <span>{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}</span>
                             {!notification.read_at && (
-                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                                New
-                              </Badge>
+                              <Badge variant="outline">New</Badge>
                             )}
                             {getPriorityBadge(notification.type)}
                           </div>
@@ -360,7 +356,6 @@ export default function Notifications() {
                             size="sm"
                             variant="ghost"
                             onClick={() => markAsRead(notification.id)}
-                            className="gap-2"
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -370,14 +365,14 @@ export default function Notifications() {
                             size="sm"
                             variant="ghost"
                             onClick={() => deleteNotification(notification.id)}
-                            className="gap-2 hover:bg-destructive/10 hover:text-destructive"
+                            className="hover:bg-destructive/10 hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             </div>
@@ -385,14 +380,14 @@ export default function Notifications() {
         ))}
 
         {filteredNotifications.length === 0 && (
-          <Card className="p-8 text-center">
+          <div className="py-12 text-center">
             <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
+            <p className="text-body text-muted-foreground">
               {searchQuery || typeFilter !== "all" || readFilter !== "all"
                 ? "No notifications match your filters"
                 : "No notifications yet"}
             </p>
-          </Card>
+          </div>
         )}
       </div>
 

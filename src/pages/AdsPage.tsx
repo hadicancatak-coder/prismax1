@@ -459,14 +459,14 @@ ${landingPage}
   ).sort().reverse();
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="px-48 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-page-title flex items-center gap-2">
             <Sparkles className="h-8 w-8" />
             Google Ads Planner - Search
           </h1>
-          <p className="text-muted-foreground mt-1">Plan your Google Search Ads campaigns following best practices</p>
+          <p className="text-body text-muted-foreground mt-1">Plan your Google Search Ads campaigns following best practices</p>
         </div>
       </div>
 
