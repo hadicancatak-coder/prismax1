@@ -5,9 +5,9 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
+import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { EditorToolbar } from './EditorToolbar';
 import { EditorBubbleMenu } from './EditorBubbleMenu';
 
 interface RichTextEditorProps {
@@ -50,6 +50,9 @@ export function RichTextEditor({
       }),
       Color,
       TextStyle,
+      Placeholder.configure({
+        placeholder,
+      }),
     ],
     content: value || '',
     editable: !disabled,
@@ -62,7 +65,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-sm max-w-none focus:outline-none',
+          'prose prose-sm max-w-none focus:outline-none min-h-[80px]',
           'prose-headings:font-semibold prose-headings:text-foreground',
           'prose-p:text-foreground prose-p:my-2',
           'prose-strong:text-foreground prose-strong:font-bold',
@@ -71,6 +74,11 @@ export function RichTextEditor({
           'prose-ol:list-decimal prose-ol:pl-4 prose-ol:text-foreground',
           'prose-li:text-foreground',
           'prose-a:text-primary prose-a:underline prose-a:cursor-pointer hover:prose-a:text-primary/80',
+          '[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
+          '[&_p.is-editor-empty:first-child]:before:text-muted-foreground',
+          '[&_p.is-editor-empty:first-child]:before:float-left',
+          '[&_p.is-editor-empty:first-child]:before:pointer-events-none',
+          '[&_p.is-editor-empty:first-child]:before:h-0',
         ),
       },
     },
@@ -94,12 +102,10 @@ export function RichTextEditor({
 
   return (
     <div className={cn('border border-input rounded-md bg-background', className)}>
-      {!disabled && <EditorToolbar editor={editor} />}
       {!disabled && <EditorBubbleMenu editor={editor} />}
       <div
         className="px-3 py-2"
         style={{ minHeight }}
-        data-placeholder={placeholder}
       >
         <EditorContent editor={editor} />
       </div>
