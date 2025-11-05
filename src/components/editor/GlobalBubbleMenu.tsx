@@ -74,6 +74,7 @@ export function GlobalBubbleMenu() {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
   const [activeEditor, setActiveEditor] = useState<any>(null);
+  const [savedRange, setSavedRange] = useState<Range | null>(null);
   
   const bubbleRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout>();
@@ -86,6 +87,23 @@ export function GlobalBubbleMenu() {
       globalUpdateCallback = null;
     };
   }, []);
+
+  const saveSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      setSavedRange(selection.getRangeAt(0).cloneRange());
+    }
+  }, []);
+
+  const restoreSelection = useCallback(() => {
+    if (savedRange && activeEditor) {
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(savedRange);
+      }
+    }
+  }, [savedRange, activeEditor]);
 
   const updatePosition = useCallback(() => {
     if (!activeEditor) {
@@ -122,6 +140,9 @@ export function GlobalBubbleMenu() {
         setShow(false);
         return;
       }
+
+      // Save the current selection
+      setSavedRange(range.cloneRange());
 
       // Bubble dimensions (approximate)
       const bubbleHeight = 44;
@@ -230,58 +251,76 @@ export function GlobalBubbleMenu() {
   // Update when editor changes
   useEffect(() => {
     if (activeEditor) {
-      const handleUpdate = () => updatePosition();
+      const handleUpdate = () => {
+        // Don't close menu on transaction updates
+        if (show) {
+          updatePosition();
+        }
+      };
+      
       activeEditor.on('transaction', handleUpdate);
       activeEditor.on('focus', handleUpdate);
-      activeEditor.on('blur', () => {
-        // Delay hide to allow clicking bubble menu buttons
-        setTimeout(() => {
-          if (!bubbleRef.current?.contains(document.activeElement)) {
-            setShow(false);
-          }
-        }, 100);
-      });
 
       return () => {
         activeEditor.off('transaction', handleUpdate);
         activeEditor.off('focus', handleUpdate);
-        activeEditor.off('blur');
       };
     }
-  }, [activeEditor, updatePosition]);
+  }, [activeEditor, updatePosition, show]);
+
+  const applyFormatting = useCallback((command: () => any) => {
+    if (!activeEditor) return;
+
+    // Restore selection before applying formatting
+    restoreSelection();
+    
+    // Focus editor
+    activeEditor.view.focus();
+    
+    // Apply the command
+    command();
+    
+    // Save the new selection state
+    saveSelection();
+  }, [activeEditor, restoreSelection, saveSelection]);
 
   const handleLinkClick = () => {
     if (!activeEditor) return;
     
     const previousUrl = activeEditor.getAttributes('link').href;
     if (previousUrl) {
-      activeEditor.chain().focus().unsetLink().run();
+      applyFormatting(() => activeEditor.chain().focus().unsetLink().run());
     } else {
       setLinkDialogOpen(true);
     }
   };
 
   const handleSetLink = (url: string) => {
-    if (!activeEditor) return;
+    if (!activeEditor || !url) return;
     
-    if (url) {
+    applyFormatting(() => {
       activeEditor
         .chain()
         .focus()
         .extendMarkRange('link')
         .setLink({ href: url })
         .run();
-    }
+    });
+    
+    setLinkDialogOpen(false);
   };
 
   const handleColorChange = (color: string) => {
     if (!activeEditor) return;
     
-    if (color) {
-      activeEditor.chain().focus().setColor(color).run();
-    } else {
-      activeEditor.chain().focus().unsetColor().run();
-    }
+    applyFormatting(() => {
+      if (color) {
+        activeEditor.chain().focus().setColor(color).run();
+      } else {
+        activeEditor.chain().focus().unsetColor().run();
+      }
+    });
+    
     setColorPopoverOpen(false);
   };
 
@@ -313,10 +352,19 @@ export function GlobalBubbleMenu() {
 
   if (!show || !activeEditor) return null;
 
+  // Prevent bubble menu clicks from closing it
+  const handleBubbleMouseDown = (e: React.MouseEvent | React.PointerEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <>
       <div
         ref={bubbleRef}
+        onMouseDown={handleBubbleMouseDown}
+        onPointerDown={handleBubbleMouseDown}
+        onTouchStart={handleBubbleMouseDown}
         className="fixed z-[100] flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg"
         style={{
           top: `${position.top}px`,
@@ -324,7 +372,7 @@ export function GlobalBubbleMenu() {
         }}
       >
         <BubbleButton
-          onClick={() => activeEditor.chain().focus().toggleBold().run()}
+          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleBold().run())}
           isActive={activeEditor.isActive('bold')}
           title="Bold (Ctrl+B)"
         >
@@ -332,7 +380,7 @@ export function GlobalBubbleMenu() {
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => activeEditor.chain().focus().toggleItalic().run()}
+          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleItalic().run())}
           isActive={activeEditor.isActive('italic')}
           title="Italic (Ctrl+I)"
         >
@@ -340,7 +388,7 @@ export function GlobalBubbleMenu() {
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => activeEditor.chain().focus().toggleUnderline().run()}
+          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleUnderline().run())}
           isActive={activeEditor.isActive('underline')}
           title="Underline (Ctrl+U)"
         >
@@ -348,7 +396,7 @@ export function GlobalBubbleMenu() {
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => activeEditor.chain().focus().toggleStrike().run()}
+          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleStrike().run())}
           isActive={activeEditor.isActive('strike')}
           title="Strikethrough"
         >
