@@ -25,15 +25,8 @@ const coreItems = [
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
-  { title: "SocialUA Planner", url: "/socialua", icon: Share2 },
+  { title: "Copy Planner", url: "/copywriter", icon: PenTool },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
-  { title: "Copy Writer", url: "/copywriter", icon: PenTool },
-  { title: "Preview", url: "/campaigns", icon: Target },
-];
-
-const teamItems = [
-  { title: "Base", url: "/team-base", icon: FolderKanban },
-  { title: "Notifications", url: "/notifications", icon: Bell },
 ];
 
 export function AppSidebar() {
@@ -145,37 +138,6 @@ export function AppSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroup>
-
-          {/* Team */}
-          <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Team</SidebarGroupLabel>}
-            <SidebarMenu className="space-y-1">
-              {teamItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    {!open ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <NavLink to={item.url} className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                          </NavLink>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                          <p className="text-body font-medium">{item.title}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                        <span className="text-body">{item.title}</span>
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-
 
           {/* Sign Out */}
           <SidebarMenu className={`${open ? 'mt-auto pt-6 border-t border-sidebar-border' : 'mt-auto pt-4 border-t border-sidebar-border flex justify-center'}`}>

@@ -27,7 +27,6 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
-import SocialUAPlanner from "./pages/SocialUAPlanner";
 import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
@@ -35,6 +34,7 @@ import About from "./pages/About";
 import UtmPlanner from "./pages/UtmPlanner";
 import Operations from "./pages/Operations";
 import CopyWriter from "./pages/CopyWriter";
+import KPIManagement from "./pages/KPIManagement";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
@@ -76,8 +76,8 @@ function AnimatedRoutes() {
           <Route path="/profile/:userId?" element={<Profile />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/activity-log" element={<ActivityLog />} />
-          <Route path="/socialua" element={<SocialUAPlanner />} />
           <Route path="/utm-planner" element={<UtmPlanner />} />
+          <Route path="/kpi" element={<KPIManagement />} />
           <Route path="/operations" element={<Operations />} />
           <Route path="/operations/:id" element={<AuditLogDetail />} />
           <Route path="/copywriter" element={<CopyWriter />} />

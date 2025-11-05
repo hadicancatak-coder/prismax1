@@ -138,6 +138,19 @@ All colors MUST be HSL.
     --gray-100: 220 25% 10%;
     --gray-50: 222 47% 8%;
   }
+
+  .text-page-title {
+    @apply text-[28px] font-semibold leading-tight;
+  }
+  .text-section-title {
+    @apply text-[20px] font-medium leading-tight;
+  }
+  .text-body {
+    @apply text-[16px] font-normal leading-relaxed;
+  }
+  .text-metadata {
+    @apply text-[13px] font-medium leading-snug text-muted-foreground;
+  }
 }
 
 @layer base {
