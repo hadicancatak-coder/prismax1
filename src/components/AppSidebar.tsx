@@ -87,16 +87,9 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     {!open ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <NavLink to={item.url} end className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                          </NavLink>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                          <p className="text-body font-medium">{item.title}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <NavLink to={item.url} end className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
                     ) : (
                       <NavLink to={item.url} end className={getNavLinkClass}>
                         <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
@@ -117,16 +110,9 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     {!open ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <NavLink to={item.url} className={getNavLinkClass}>
-                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                          </NavLink>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                          <p className="text-body font-medium">{item.title}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
                     ) : (
                       <NavLink to={item.url} className={getNavLinkClass}>
                         <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
@@ -144,19 +130,12 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 {!open ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={signOut}
-                        className="flex items-center justify-center py-3 text-sidebar-foreground hover:text-destructive transition-smooth border-l-4 border-transparent hover:border-destructive ml-[-4px]"
-                      >
-                        <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
-                      <p className="text-body font-medium">Sign Out</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <button
+                    onClick={signOut}
+                    className="flex items-center justify-center py-3 text-sidebar-foreground hover:text-destructive transition-smooth border-l-4 border-transparent hover:border-destructive ml-[-4px]"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                  </button>
                 ) : (
                   <button
                     onClick={signOut}
