@@ -4,7 +4,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Layout = () => {
   const navigate = useNavigate();
@@ -14,9 +14,15 @@ export const Layout = () => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
+      {/* AppShell: flex container with sidebar + main as siblings */}
+      <div className="flex min-h-screen w-full bg-background">
+        
+        {/* Sidebar: Fixed 72px rail, never resizes */}
         <AppSidebar />
-        <SidebarInset className="flex-1 overflow-auto w-full transition-all duration-300 ease-in-out">
+        
+        {/* Main Content: flex-1, independent scroll */}
+        <main className="flex-1 min-w-0 overflow-auto">
+          {/* Top Header Bar */}
           <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="mr-2" />
@@ -37,8 +43,10 @@ export const Layout = () => {
               <UserMenu />
             </div>
           </div>
+          
+          {/* Page Content */}
           <Outlet />
-        </SidebarInset>
+        </main>
       </div>
     </SidebarProvider>
   );
