@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TaskDialog } from "./TaskDialog";
 import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 import {
@@ -36,12 +37,53 @@ interface TasksTableProps {
 export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   const { toast } = useToast();
   const { user, userRole } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+      if (error) throw error;
+    },
+    onMutate: async (taskId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      // Snapshot previous value
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      // Optimistically update
+      queryClient.setQueryData(['tasks'], (old: any) => 
+        old?.filter((task: any) => task.id !== taskId)
+      );
+      
+      return { previousTasks };
+    },
+    onError: (error: any, taskId, context) => {
+      // Rollback on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({ 
+        title: "Error deleting task", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Task deleted successfully" });
+      setConfirmDeleteId(null);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    }
+  });
 
   useEffect(() => {
     fetchProfiles();
@@ -91,30 +133,22 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (taskId: string) => {
-    try {
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-      if (error) throw error;
-      toast({ title: "Task deleted successfully" });
-      onTaskUpdate();
-      setConfirmDeleteId(null);
-    } catch (error: any) {
-      toast({ title: "Error deleting task", description: error.message, variant: "destructive" });
-    }
+  const handleDelete = (taskId: string) => {
+    deleteMutation.mutate(taskId);
   };
 
   return (
     <>
-      <Card className="border-0 shadow-sm overflow-hidden rounded-2xl">
-        <Table>
-          <TableHeader className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
-            <TableRow className="hover:bg-gray-50">
-              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[350px]">Task</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[120px]">Status</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[110px] hidden md:table-cell">Priority</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[150px] hidden lg:table-cell">Assignee</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700 py-2 min-w-[110px]">Due Date</TableHead>
-              <TableHead className="w-10 py-2"></TableHead>
+      <div className="overflow-x-auto">
+        <Table className="table-auto w-full">
+          <TableHeader className="bg-muted/50 sticky top-0 z-10">
+            <TableRow>
+              <TableHead className="font-semibold text-xs w-auto">Task</TableHead>
+              <TableHead className="font-semibold text-xs w-[100px]">Status</TableHead>
+              <TableHead className="font-semibold text-xs w-[90px] hidden md:table-cell">Priority</TableHead>
+              <TableHead className="font-semibold text-xs w-[120px] hidden lg:table-cell">Assignee</TableHead>
+              <TableHead className="font-semibold text-xs w-[100px]">Due Date</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -217,28 +251,40 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                     <DropdownMenuContent align="end">
                       {userRole === 'admin' && (
                         <>
-                          <DropdownMenuItem onClick={async (e) => {
-                            e.stopPropagation();
-                            await supabase.from('tasks').update({ status: 'Completed' }).eq('id', task.id);
-                            onTaskUpdate();
-                          }}>
+                          <DropdownMenuItem 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await supabase.from('tasks').update({ status: 'Completed' }).eq('id', task.id);
+                              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                            }}
+                            disabled={deleteMutation.isPending}
+                          >
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark Completed
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={async (e) => {
-                            e.stopPropagation();
-                            const { id, created_at, updated_at, ...taskData } = task;
-                            await supabase.from('tasks').insert({ ...taskData, title: `${task.title} (Copy)` });
-                            onTaskUpdate();
-                          }}>
+                          <DropdownMenuItem 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const { id, created_at, updated_at, ...taskData } = task;
+                              await supabase.from('tasks').insert({ ...taskData, title: `${task.title} (Copy)` });
+                              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                            }}
+                            disabled={deleteMutation.isPending}
+                          >
                             <Copy className="mr-2 h-4 w-4" />
                             Duplicate
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>
+                      <DropdownMenuItem 
+                         onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setConfirmDeleteId(task.id); 
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -253,7 +299,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
             No tasks found
           </div>
         )}
-      </Card>
+      </div>
 
       {selectedTaskId && (
         <TaskDialog
@@ -273,4 +319,4 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
       />
     </>
   );
-}
+};

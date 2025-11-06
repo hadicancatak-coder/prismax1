@@ -1,14 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, Filter, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2 } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
@@ -22,10 +18,9 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TaskDialog } from "@/components/TaskDialog";
-import { useAuth } from "@/hooks/useAuth";
-import { StatsSkeleton } from "@/components/skeletons/StatsSkeleton";
+import { useTasks } from "@/hooks/useTasks";
+import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
-import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,69 +49,12 @@ export default function Tasks() {
     localStorage.setItem('tasksItemsPerPage', String(itemsPerPage));
   }, [itemsPerPage]);
 
-  const { user, userRole } = useAuth();
-
-  const fetchTasks = async () => {
-    if (!user) return [];
-
-    // Get current user's profile with teams
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('id, user_id, teams')
-      .eq('user_id', user.id)
-      .single();
-
-    const { data, error } = await supabase
-      .from("tasks")
-      .select(`
-        *,
-        task_assignees(
-          profiles:user_id(id, user_id, name, avatar_url, teams)
-        ),
-        task_comment_counts(comment_count)
-      `)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    // Map tasks and filter by team membership
-    const allTasks = (data || []).map((task: any) => {
-      return {
-        ...task,
-        assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
-        comments_count: task.task_comment_counts?.[0]?.comment_count || 0
-      };
-    });
-
-    // Filter tasks where user is either:
-    // 1. Direct assignee OR
-    // 2. Member of an assigned team
-    return allTasks.filter((task: any) => {
-      // Check direct assignment
-      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
-      
-      // Check team membership
-      const userTeams = currentProfile?.teams || [];
-      const taskTeams = Array.isArray(task.teams) 
-        ? task.teams 
-        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
-      
-      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
-      
-      // Show if user is admin, direct assignee, or team member
-      return userRole === 'admin' || isDirectAssignee || isTeamMember;
-    });
-  };
-
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setTaskDialogOpen(true);
   };
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: fetchTasks,
-  });
+  const { data, isLoading, refetch } = useTasks();
 
   const quickFilters = [
     {
@@ -214,8 +152,19 @@ export default function Tasks() {
     );
   }
 
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilter !== "all" || activeQuickFilter || searchQuery;
+
+  const clearAllFilters = () => {
+    setSelectedAssignees([]);
+    setSelectedTeams([]);
+    setDateFilter(null);
+    setStatusFilter("all");
+    setActiveQuickFilter(null);
+    setSearchQuery("");
+  };
+
   return (
-    <div className="px-48 py-8 space-y-8">
+    <div className="px-6 md:px-12 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>
@@ -244,119 +193,100 @@ export default function Tasks() {
           setFilteredDialogOpen(true);
         }}
       />
-      
 
-      {/* Search and View Switcher - Responsive */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center sm:justify-between">
-        <Input
-          placeholder="Search tasks..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:max-w-sm min-h-[44px]"
-        />
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('table')}
-            className="min-h-[44px] min-w-[44px]"
-            title="Table View"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-            className="min-h-[44px] min-w-[44px]"
-            title="Grid View"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'board' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('board')}
-            className="min-h-[44px] min-w-[44px]"
-            title="Board View"
-          >
-            <Columns3 className="h-4 w-4" />
-          </Button>
+      {/* Consolidated Filters in Single Row */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          {/* Top Row: Search and View Switcher */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <Input
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full sm:max-w-sm"
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4 mr-2" />
+                Table
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === 'board' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('board')}
+              >
+                <Columns3 className="h-4 w-4 mr-2" />
+                Board
+              </Button>
+            </div>
+          </div>
+
+          {/* Second Row: Quick Filters */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <span className="text-sm text-muted-foreground font-medium">Quick:</span>
+            {quickFilters.map(({ label, Icon }) => {
+              const count = data?.filter(quickFilters.find(f => f.label === label)!.filter).length || 0;
+              return (
+                <Button
+                  key={label}
+                  variant={activeQuickFilter === label ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
+                >
+                  <Icon className="h-3.5 w-3.5 mr-1.5" />
+                  {label}
+                  <Badge variant="secondary" className="ml-1.5 text-xs">{count}</Badge>
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Third Row: Assignees, Teams, Date, Status */}
+          <div className="flex gap-3 flex-wrap items-center">
+            <AssigneeFilterBar
+              selectedAssignees={selectedAssignees}
+              onAssigneesChange={setSelectedAssignees}
+              selectedTeams={selectedTeams}
+              onTeamsChange={setSelectedTeams}
+            />
+            <div className="h-6 w-px bg-border" />
+            <TaskDateFilterBar
+              onFilterChange={setDateFilter}
+              onStatusChange={setStatusFilter}
+            />
+          </div>
+
+          {/* Clear All Filters */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                Clear All Filters
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Showing {filteredTasks.length} of {data?.length || 0} tasks
+              </span>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Filters with Accordion */}
-      <div className="border border-border rounded">
-        <Accordion type="multiple" defaultValue={[]}>
-          <AccordionItem value="quick" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Quick Filters
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="flex gap-2 flex-wrap pt-2 pb-4">
-                {quickFilters.map(({ label, Icon }) => {
-                  const count = filteredTasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
-                  return (
-                    <Button
-                      key={label}
-                      variant={activeQuickFilter === label ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
-                      className={cn(
-                        "gap-2",
-                        activeQuickFilter === label && "ring-2 ring-offset-2 ring-primary"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                      <span className="ml-1 text-xs font-bold">({count})</span>
-                    </Button>
-                  );
-                })}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="assignee" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Assignees & Teams
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2 pb-4">
-                <AssigneeFilterBar
-                  selectedAssignees={selectedAssignees}
-                  onAssigneesChange={setSelectedAssignees}
-                  selectedTeams={selectedTeams}
-                  onTeamsChange={setSelectedTeams}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="date" className="border-0 px-4">
-            <AccordionTrigger className="font-medium hover:no-underline">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Date & Status
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2 pb-4">
-                <TaskDateFilterBar
-                  onFilterChange={setDateFilter}
-                  onStatusChange={setStatusFilter}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      </Card>
 
       {/* Task Views */}
       {filteredTasks.length === 0 ? (

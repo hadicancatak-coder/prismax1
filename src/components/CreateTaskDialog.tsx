@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,7 @@ interface CreateTaskDialogProps {
 export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) => {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
   const [title, setTitle] = useState("");
@@ -232,6 +234,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
         attached_ads: attachedAds.length > 0 ? attachedAds.map(ad => ({ id: ad.id, headline: ad.headline, ad_type: ad.ad_type })) : null,
+        task_type: taskType as "task" | "operations" | "campaign_launch",
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
@@ -248,12 +251,11 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         .single();
 
       // Insert multiple assignees into task_assignees table
-      // assigneesToUse already contains profiles.id values
       if (assigneesToUse.length > 0 && creatorProfile) {
         const assigneeInserts = assigneesToUse.map(profileId => ({
           task_id: createdTask.id,
-          user_id: profileId,  // This is profiles.id
-          assigned_by: creatorProfile.id,  // This is also profiles.id
+          user_id: profileId,
+          assigned_by: creatorProfile.id,
         }));
 
         const { error: assignError } = await supabase.from("task_assignees").insert(assigneeInserts);
@@ -268,10 +270,13 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         }
       }
 
+      // Invalidate tasks query to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
       toast({
-        title: userRole === "member" ? "Task submitted for approval" : "Task created",
+        title: userRole === "member" ? "Task submitted" : "Task created",
         description: userRole === "member" 
-          ? "Your task has been submitted and is awaiting admin approval." 
+          ? "Your task has been submitted successfully." 
           : "Task has been successfully created.",
       });
 

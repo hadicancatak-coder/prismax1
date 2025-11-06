@@ -8,7 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Calendar } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { 
   startOfToday, 
   endOfToday, 
@@ -21,6 +24,7 @@ import {
   endOfMonth,
   addMonths
 } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export interface DateFilter {
   label: string;
@@ -50,6 +54,8 @@ export function TaskDateFilterBar({
 }: TaskDateFilterBarProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleFilterClick = (filterType: string) => {
     setSelectedFilter(filterType);
@@ -80,6 +86,15 @@ export function TaskDateFilterBar({
         break;
       case "backlog":
         filter = { label: "Backlog", startDate: new Date(0), endDate: new Date(0) };
+        break;
+      case "custom":
+        if (customRange) {
+          filter = { 
+            label: `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}`, 
+            startDate: customRange.from, 
+            endDate: customRange.to 
+          };
+        }
         break;
       case "all":
       default:
@@ -152,6 +167,35 @@ export function TaskDateFilterBar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
+          <Button 
+            variant={selectedFilter === "custom" ? "default" : "outline"} 
+            size="sm"
+            onClick={() => setCalendarOpen(true)}
+          >
+            <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+            {customRange ? `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}` : 'Custom Range'}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
+            onSelect={(range) => {
+              if (range?.from && range?.to) {
+                setCustomRange({ from: range.from, to: range.to });
+                setSelectedFilter("custom");
+                handleFilterClick("custom");
+                setCalendarOpen(false);
+              }
+            }}
+            numberOfMonths={2}
+            className="pointer-events-auto"
+          />
+        </PopoverContent>
+      </Popover>
 
       <div className="h-6 w-px bg-border mx-2" />
 

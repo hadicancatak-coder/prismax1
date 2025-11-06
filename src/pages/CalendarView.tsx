@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTasks } from "@/hooks/useTasks";
+import { useQueryClient } from "@tanstack/react-query";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TodayCommandCenter } from "@/components/calendar/TodayCommandCenter";
@@ -19,7 +20,8 @@ import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
   const { user, userRole } = useAuth();
-  const [tasks, setTasks] = useState<any[]>([]);
+  const queryClient = useQueryClient();
+  const { data: allTasks, isLoading } = useTasks();
   const [users, setUsers] = useState<any[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -28,15 +30,13 @@ export default function CalendarView() {
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "custom">("today");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [focusMode, setFocusMode] = useState(false);
-  const [loading, setLoading] = useState(true);
   const currentDate = new Date();
 
   useEffect(() => {
     if (userRole === 'admin') {
       fetchUsers();
     }
-    fetchTasks();
-  }, [userRole, user?.id, selectedUserId, dateView, customDateRange]);
+  }, [userRole]);
 
   const fetchUsers = async () => {
     const { data } = await supabase
@@ -45,21 +45,9 @@ export default function CalendarView() {
     setUsers(data || []);
   };
 
-  const fetchTasks = async () => {
-    if (!user?.id) return;
-    setLoading(true);
-
-    // Get current user's profile with teams
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('id, user_id, teams')
-      .eq('user_id', selectedUserId || user.id)
-      .single();
-
-    let query = supabase.from("tasks").select(`
-      *,
-      task_assignees(user_id)
-    `);
+  // Filter tasks by date range
+  const filteredTasks = useMemo(() => {
+    if (!allTasks) return [];
 
     // Calculate date range based on selected view
     let startDate: Date;
@@ -94,38 +82,12 @@ export default function CalendarView() {
         break;
     }
 
-    query = query
-      .gte("due_at", startDate.toISOString())
-      .lte("due_at", endDate.toISOString())
-      .order("due_at", { ascending: true });
-
-    const { data: allTasks } = await query;
-
-    // Filter tasks by direct assignment OR team membership
-    const filteredTasks = (allTasks || []).filter((task: any) => {
-      // Admin sees all tasks if no specific user selected
-      if (userRole === 'admin' && !selectedUserId) {
-        return true;
-      }
-
-      // Check direct assignment
-      const assigneeIds = task.task_assignees?.map((a: any) => a.user_id) || [];
-      const isDirectAssignee = assigneeIds.includes(currentProfile?.id);
-      
-      // Check team membership
-      const userTeams = currentProfile?.teams || [];
-      const taskTeams = Array.isArray(task.teams) 
-        ? task.teams 
-        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
-      
-      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
-      
-      return isDirectAssignee || isTeamMember;
+    return allTasks.filter((task: any) => {
+      if (!task.due_at) return false;
+      const dueDate = new Date(task.due_at);
+      return dueDate >= startDate && dueDate <= endDate;
     });
-
-    setTasks(filteredTasks);
-    setLoading(false);
-  };
+  }, [allTasks, dateView, customDateRange]);
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     await supabase
@@ -133,14 +95,14 @@ export default function CalendarView() {
       .update({ status: completed ? 'Completed' : 'Pending' })
       .eq('id', taskId);
     
-    fetchTasks();
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
-  const todayTasks = tasks;
-  const completedToday = tasks.filter(t => t.status === 'Completed').length;
-  const totalToday = tasks.length;
-  const highPriorityCount = tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
-  const upcomingCount = tasks.filter(t => t.status === 'Pending').length;
+  const todayTasks = filteredTasks;
+  const completedToday = filteredTasks.filter(t => t.status === 'Completed').length;
+  const totalToday = filteredTasks.length;
+  const highPriorityCount = filteredTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
+  const upcomingCount = filteredTasks.filter(t => t.status === 'Pending').length;
 
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
@@ -247,7 +209,7 @@ export default function CalendarView() {
             )}
           </div>
           <div>
-            {loading ? (
+            {isLoading ? (
               <ListSkeleton items={5} />
             ) : (
             <div className="space-y-2">
