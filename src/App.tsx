@@ -24,9 +24,7 @@ import AdsPage from "./pages/AdsPage";
 import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Campaigns from "./pages/Campaigns";
 import ActivityLog from "./pages/ActivityLog";
-import SocialUAPlanner from "./pages/SocialUAPlanner";
 import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
@@ -77,9 +75,7 @@ const App = () => (
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
-            <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/activity-log" element={<ActivityLog />} />
-            <Route path="/socialua" element={<SocialUAPlanner />} />
             <Route path="/utm-planner" element={<UtmPlanner />} />
             <Route path="/operations" element={<Operations />} />
             <Route path="/operations/:id" element={<AuditLogDetail />} />
