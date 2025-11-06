@@ -162,7 +162,7 @@ export const useCreateTaskFromItem = () => {
       operationsService.createTaskFromItem(itemId, auditLogId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["operation-items"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      // Realtime subscription in useTasks.ts handles tasks invalidation
       toast({
         title: "Success",
         description: "Task created successfully",

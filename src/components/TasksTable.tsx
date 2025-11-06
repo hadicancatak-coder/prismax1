@@ -81,7 +81,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
       setConfirmDeleteId(null);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Realtime subscription in useTasks.ts handles invalidation
     }
   });
 
@@ -255,7 +255,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                             onClick={async (e) => {
                               e.stopPropagation();
                               await supabase.from('tasks').update({ status: 'Completed' }).eq('id', task.id);
-                              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                              // Realtime subscription in useTasks.ts handles invalidation
                             }}
                             disabled={deleteMutation.isPending}
                           >
@@ -267,7 +267,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                               e.stopPropagation();
                               const { id, created_at, updated_at, ...taskData } = task;
                               await supabase.from('tasks').insert({ ...taskData, title: `${task.title} (Copy)` });
-                              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                              // Realtime subscription in useTasks.ts handles invalidation
                             }}
                             disabled={deleteMutation.isPending}
                           >

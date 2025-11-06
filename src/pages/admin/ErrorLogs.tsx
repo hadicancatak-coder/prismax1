@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { resolveAllFixedErrors } from "@/utils/resolveErrorLogs";
 
 interface ErrorLog {
   id: string;
@@ -33,7 +32,6 @@ export default function ErrorLogs() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [resolvedFilter, setResolvedFilter] = useState<string>("unresolved");
   const [selectedError, setSelectedError] = useState<ErrorLog | null>(null);
-  const [isResolvingAll, setIsResolvingAll] = useState(false);
 
   useEffect(() => {
     fetchErrors();
@@ -70,23 +68,6 @@ export default function ErrorLogs() {
       }
     } catch (error) {
       toast.error('Failed to resolve error');
-    }
-  };
-
-  const handleResolveAllFixed = async () => {
-    setIsResolvingAll(true);
-    try {
-      const result = await resolveAllFixedErrors();
-      toast.success(`Resolved ${result.successful} errors successfully`);
-      if (result.failed > 0) {
-        toast.warning(`${result.failed} errors failed to resolve`);
-      }
-      fetchErrors();
-    } catch (error) {
-      toast.error('Failed to resolve errors');
-      console.error(error);
-    } finally {
-      setIsResolvingAll(false);
     }
   };
 
@@ -154,14 +135,6 @@ export default function ErrorLogs() {
 
         <Button onClick={fetchErrors} variant="outline">
           Refresh
-        </Button>
-        
-        <Button 
-          onClick={handleResolveAllFixed} 
-          variant="secondary"
-          disabled={isResolvingAll}
-        >
-          {isResolvingAll ? 'Resolving...' : 'Resolve All Fixed'}
         </Button>
       </div>
 

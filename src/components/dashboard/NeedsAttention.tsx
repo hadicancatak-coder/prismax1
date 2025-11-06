@@ -24,9 +24,7 @@ export function NeedsAttention() {
     setError(null);
     
     try {
-      console.log('NeedsAttention: Fetching data for user', user.id);
       const result = await getNeedsAttention(user.id);
-      console.log('NeedsAttention: Received data', result);
       setData(result);
     } catch (err) {
       console.error('NeedsAttention: Error fetching data', err);

@@ -33,13 +33,10 @@ export default function Reports() {
           table: "reports" 
         },
         (payload) => {
-          console.log("Report change detected:", payload);
           fetchReports();
         }
       )
-      .subscribe((status) => {
-        console.log("Reports subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -55,7 +52,6 @@ export default function Reports() {
     if (error) {
       console.error("Error fetching reports:", error);
     } else {
-      console.log("Fetched reports:", data);
       setReports(data || []);
     }
   };

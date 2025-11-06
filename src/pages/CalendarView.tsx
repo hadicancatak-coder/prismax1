@@ -94,7 +94,7 @@ export default function CalendarView() {
       .update({ status: completed ? 'Completed' : 'Pending' })
       .eq('id', taskId);
     
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    // Realtime subscription in useTasks.ts handles invalidation
   };
 
   const todayTasks = filteredTasks;

@@ -61,7 +61,6 @@ export function OverdueTasks() {
         .order("due_at", { ascending: true })
         .limit(5);
 
-      console.log('OverdueTasks data:', tasks);
       setOverdueTasks(tasks || []);
     } catch (err) {
       console.error('Error fetching overdue tasks:', err);

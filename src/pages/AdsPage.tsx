@@ -112,7 +112,6 @@ export default function AdsPage() {
         });
         setSavedAds([]);
       } else {
-        console.log("Fetched ads:", data);
         setSavedAds(data || []);
       }
     } catch (err) {

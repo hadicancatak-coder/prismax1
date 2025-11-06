@@ -271,7 +271,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       }
 
       // Invalidate tasks query to trigger refetch
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Realtime subscription in useTasks.ts handles invalidation
 
       toast({
         title: userRole === "member" ? "Task submitted" : "Task created",
