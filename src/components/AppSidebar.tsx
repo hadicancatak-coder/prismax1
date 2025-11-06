@@ -30,9 +30,12 @@ const operationsItems = [
 ];
 
 export function AppSidebar() {
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const { signOut, userRole, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
+  const [isHovered, setIsHovered] = useState(false);
+
+  const isExpanded = open || isHovered;
 
   useEffect(() => {
     if (user) {
@@ -52,7 +55,7 @@ export function AppSidebar() {
   }, [user]);
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) => {
-    const base = `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-lg relative transition-all duration-150 ease-in-out`;
+    const base = `flex items-center ${isExpanded ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-lg relative transition-all duration-150 ease-in-out`;
     
     if (isActive) {
       return `${base} text-white font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[2px] before:h-8 before:bg-[#CF0A0A] before:rounded-r`;
@@ -66,17 +69,19 @@ export function AppSidebar() {
       <Sidebar 
         collapsible="icon" 
         className="h-full rounded-[10px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25),0_4px_12px_-4px_rgba(0,0,0,0.15),0_2px_6px_-2px_rgba(0,0,0,0.1)] border border-white/20 backdrop-blur-sm transition-all duration-200 ease-in-out relative overflow-hidden"
-        style={{ background: 'rgba(11, 18, 32, 0.95)', width: open ? '260px' : '72px' }}
+        style={{ background: 'rgba(11, 18, 32, 0.95)', width: isExpanded ? '260px' : '72px' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <SidebarContent className={`overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+        <SidebarContent className={`overflow-y-auto sidebar-scroll ${isExpanded ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo */}
-          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6' : 'flex-col items-center justify-center pb-4'}`}>
+          <div className={`flex ${isExpanded ? 'items-center gap-3 px-3 pb-6' : 'flex-col items-center justify-center pb-4'}`}>
             <img 
               src={logoImage} 
               alt="Prisma" 
-              className={`transition-all duration-150 ease-in-out ${open ? 'h-10' : 'h-8'}`}
+              className={`transition-all duration-150 ease-in-out ${isExpanded ? 'h-10' : 'h-8'}`}
             />
-            {open && (
+            {isExpanded && (
               <div className="flex flex-col">
                 <span className="text-section-title text-white font-semibold">Prisma</span>
                 {userName && (
@@ -94,7 +99,7 @@ export function AppSidebar() {
               {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    {!open ? (
+                    {!isExpanded ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <NavLink to={item.url} end className={getNavLinkClass}>
@@ -123,7 +128,7 @@ export function AppSidebar() {
               {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    {!open ? (
+                    {!isExpanded ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <NavLink to={item.url} className={getNavLinkClass}>
@@ -147,10 +152,10 @@ export function AppSidebar() {
           </SidebarGroup>
 
           {/* Sign Out */}
-          <SidebarMenu className={`${open ? 'mt-auto pt-6' : 'mt-auto pt-4 flex justify-center'}`}>
+          <SidebarMenu className={`${isExpanded ? 'mt-auto pt-6' : 'mt-auto pt-4 flex justify-center'}`}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                {!open ? (
+                {!isExpanded ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
