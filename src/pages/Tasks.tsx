@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, Filter, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
@@ -237,7 +239,7 @@ export default function Tasks() {
   }
 
   return (
-    <div className="px-48 py-8 space-y-8">
+    <div className="px-6 lg:px-12 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>
@@ -307,21 +309,36 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* Inline Filters - Compact */}
-      <TaskInlineFilters
-        selectedAssignees={selectedAssignees}
-        onAssigneesChange={setSelectedAssignees}
-        selectedTeams={selectedTeams}
-        onTeamsChange={setSelectedTeams}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        activeQuickFilter={activeQuickFilter}
-        onQuickFilterChange={setActiveQuickFilter}
-        quickFilters={quickFilters}
-        filteredTasks={filteredTasks}
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
+      {/* Inline Filters - Collapsible */}
+      <Collapsible defaultOpen={false}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between min-h-[44px]">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {(selectedAssignees.length > 0 || selectedTeams.length > 0 || statusFilter !== 'all' || activeQuickFilter || dateRange.from || dateRange.to) && (
+                <Badge variant="secondary" className="ml-1">Active</Badge>
+              )}
+            </div>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <TaskInlineFilters
+            selectedAssignees={selectedAssignees}
+            onAssigneesChange={setSelectedAssignees}
+            selectedTeams={selectedTeams}
+            onTeamsChange={setSelectedTeams}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            activeQuickFilter={activeQuickFilter}
+            onQuickFilterChange={setActiveQuickFilter}
+            quickFilters={quickFilters}
+            filteredTasks={filteredTasks}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Task Views */}
       {filteredTasks.length === 0 ? (

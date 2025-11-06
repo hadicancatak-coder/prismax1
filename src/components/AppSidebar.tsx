@@ -58,7 +58,13 @@ export function AppSidebar() {
     const base = `flex items-center ${isExpanded ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-lg relative transition-all duration-150 ease-in-out`;
     
     if (isActive) {
-      return `${base} text-white font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[2px] before:h-8 before:bg-[#CF0A0A] before:rounded-r`;
+      // When expanded: show red line on left
+      // When collapsed: show background highlight instead
+      if (isExpanded) {
+        return `${base} text-white font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[2px] before:h-8 before:bg-[#CF0A0A] before:rounded-r`;
+      } else {
+        return `${base} text-white font-medium bg-white/10`;
+      }
     }
     
     return `${base} text-[#E5E7EB] font-normal hover:bg-white/5 hover:text-white`;
