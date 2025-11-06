@@ -136,7 +136,7 @@ const SignOutButton = ({ isExpanded, signOut }: SignOutButtonProps) => {
 };
 
 export function AppSidebar() {
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const { signOut, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
 
@@ -159,8 +159,29 @@ export function AppSidebar() {
     }
   }, [user]);
 
+  // Close sidebar on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isExpanded) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isExpanded, setOpen]);
+
   return (
     <TooltipProvider delayDuration={150}>
+      {/* Backdrop - click to close */}
+      {isExpanded && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+          style={{ zIndex: 55 }}
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Base Rail: Always 72px, sticky positioning */}
       <aside
         className="sticky top-4 h-[calc(100vh-32px)] self-start m-4 ml-4 flex-shrink-0"
