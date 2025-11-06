@@ -75,20 +75,20 @@ export function AssigneeFilterBar({
   const teams = ["SocialUA", "PPC", "PerMar"];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <Label className="mb-2 block">Filter by Assignee</Label>
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground font-medium">Assignee:</span>
         <Select
           value={selectedAssignees.length > 0 ? "selected" : "all"}
           onValueChange={(value) => {
             if (value === "all") clearAssigneeFilters();
           }}
         >
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background w-[180px]">
             <SelectValue>
               {selectedAssignees.length > 0
                 ? `${selectedAssignees.length} selected`
-                : "All Assignees"}
+                : "All"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
@@ -113,41 +113,21 @@ export function AssigneeFilterBar({
             ))}
           </SelectContent>
         </Select>
-        {selectedUserNames.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {selectedUserNames.map((name) => (
-              <Badge key={name} variant="secondary" className="gap-1 text-xs">
-                {name}
-                <button
-                  onClick={() => {
-                    const user = users.find(
-                      (u) => u.username === name || u.name === name
-                    );
-                    if (user) toggleAssignee(user.user_id);
-                  }}
-                  className="hover:bg-background/50 rounded-full"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
 
-      <div>
-        <Label className="mb-2 block">Filter by Team</Label>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground font-medium">Team:</span>
         <Select
           value={selectedTeams.length > 0 ? "selected" : "all"}
           onValueChange={(value) => {
             if (value === "all") clearTeamFilters();
           }}
         >
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background w-[180px]">
             <SelectValue>
               {selectedTeams.length > 0
                 ? `${selectedTeams.length} selected`
-                : "All Teams"}
+                : "All"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
@@ -172,21 +152,6 @@ export function AssigneeFilterBar({
             ))}
           </SelectContent>
         </Select>
-        {selectedTeams.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {selectedTeams.map((team) => (
-              <Badge key={team} variant="secondary" className="gap-1 text-xs">
-                {team}
-                <button
-                  onClick={() => toggleTeam(team)}
-                  className="hover:bg-background/50 rounded-full"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

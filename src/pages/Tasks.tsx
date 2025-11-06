@@ -196,76 +196,77 @@ export default function Tasks() {
 
       {/* Consolidated Filters in Single Row */}
       <Card className="p-4">
-        <div className="space-y-4">
-          {/* Top Row: Search and View Switcher */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="space-y-3">
+          {/* Main Filter Row - Single Line */}
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:max-w-sm"
+              className="w-full sm:w-64"
             />
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-              >
-                <List className="h-4 w-4 mr-2" />
-                Table
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === 'board' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('board')}
-              >
-                <Columns3 className="h-4 w-4 mr-2" />
-                Board
-              </Button>
+            
+            <div className="h-6 w-px bg-border hidden sm:block" />
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground font-medium">Quick:</span>
+              {quickFilters.map(({ label, Icon }) => {
+                const count = data?.filter(quickFilters.find(f => f.label === label)!.filter).length || 0;
+                return (
+                  <Button
+                    key={label}
+                    variant={activeQuickFilter === label ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
+                  >
+                    <Icon className="h-3.5 w-3.5 mr-1.5" />
+                    {label}
+                    <Badge variant="secondary" className="ml-1.5 text-xs">{count}</Badge>
+                  </Button>
+                );
+              })}
             </div>
-          </div>
 
-          {/* Second Row: Quick Filters */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <span className="text-sm text-muted-foreground font-medium">Quick:</span>
-            {quickFilters.map(({ label, Icon }) => {
-              const count = data?.filter(quickFilters.find(f => f.label === label)!.filter).length || 0;
-              return (
-                <Button
-                  key={label}
-                  variant={activeQuickFilter === label ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
-                >
-                  <Icon className="h-3.5 w-3.5 mr-1.5" />
-                  {label}
-                  <Badge variant="secondary" className="ml-1.5 text-xs">{count}</Badge>
-                </Button>
-              );
-            })}
-          </div>
+            <div className="h-6 w-px bg-border hidden lg:block" />
 
-          {/* Third Row: Assignees, Teams, Date, Status */}
-          <div className="flex gap-3 flex-wrap items-center">
             <AssigneeFilterBar
               selectedAssignees={selectedAssignees}
               onAssigneesChange={setSelectedAssignees}
               selectedTeams={selectedTeams}
               onTeamsChange={setSelectedTeams}
             />
-            <div className="h-6 w-px bg-border" />
+
+            <div className="h-6 w-px bg-border hidden lg:block" />
+
             <TaskDateFilterBar
               onFilterChange={setDateFilter}
               onStatusChange={setStatusFilter}
+              selectedStatus={statusFilter}
             />
+
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'board' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('board')}
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Clear All Filters */}

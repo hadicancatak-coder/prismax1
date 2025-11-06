@@ -35,6 +35,7 @@ export interface DateFilter {
 interface TaskDateFilterBarProps {
   onFilterChange: (filter: DateFilter | null) => void;
   onStatusChange: (status: string) => void;
+  selectedStatus: string;
   taskCounts?: {
     all: number;
     today: number;
@@ -49,11 +50,11 @@ interface TaskDateFilterBarProps {
 
 export function TaskDateFilterBar({ 
   onFilterChange, 
-  onStatusChange, 
+  onStatusChange,
+  selectedStatus,
   taskCounts 
 }: TaskDateFilterBarProps) {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -88,7 +89,7 @@ export function TaskDateFilterBar({
         filter = { label: "Backlog", startDate: new Date(0), endDate: new Date(0) };
         break;
       case "custom":
-        if (customRange) {
+        if (customRange?.from && customRange?.to) {
           filter = { 
             label: `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}`, 
             startDate: customRange.from, 
@@ -104,17 +105,18 @@ export function TaskDateFilterBar({
     onFilterChange(filter);
   };
 
-  const handleStatusClick = (status: string) => {
-    setSelectedStatus(status);
-    onStatusChange(status);
-  };
+  const statusOptions = [
+    { value: "all", label: "All" },
+    { value: "Pending", label: "Pending" },
+    { value: "Ongoing", label: "Ongoing" },
+    { value: "Completed", label: "Completed" },
+    { value: "Failed", label: "Failed" },
+    { value: "Blocked", label: "Blocked" },
+  ];
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground font-medium">When:</span>
-      </div>
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-sm text-muted-foreground font-medium">Date:</span>
       
       <Button
         variant={selectedFilter === "all" ? "default" : "outline"}
@@ -173,75 +175,55 @@ export function TaskDateFilterBar({
           <Button 
             variant={selectedFilter === "custom" ? "default" : "outline"} 
             size="sm"
-            onClick={() => setCalendarOpen(true)}
           >
             <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
-            {customRange ? `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}` : 'Custom Range'}
+            {customRange?.from && customRange?.to 
+              ? `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}` 
+              : 'Custom'}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 z-[200]" align="start">
           <Calendar
             mode="range"
             selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
             onSelect={(range) => {
               if (range?.from && range?.to) {
-                setCustomRange({ from: range.from, to: range.to });
+                const newRange = { from: range.from, to: range.to };
+                setCustomRange(newRange);
                 setSelectedFilter("custom");
-                handleFilterClick("custom");
+                onFilterChange({ 
+                  label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
+                  startDate: range.from, 
+                  endDate: range.to 
+                });
                 setCalendarOpen(false);
               }
             }}
-            numberOfMonths={2}
             className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
 
-      <div className="h-6 w-px bg-border mx-2" />
+      <div className="h-6 w-px bg-border" />
 
-      <span className="text-sm text-muted-foreground font-medium">Status:</span>
-      <Button
-        variant={selectedStatus === "all" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("all")}
-      >
-        All
-      </Button>
-      <Button
-        variant={selectedStatus === "Pending" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("Pending")}
-      >
-        Pending
-      </Button>
-      <Button
-        variant={selectedStatus === "Ongoing" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("Ongoing")}
-      >
-        Ongoing
-      </Button>
-      <Button
-        variant={selectedStatus === "Completed" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("Completed")}
-      >
-        Completed
-      </Button>
-      <Button
-        variant={selectedStatus === "Failed" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("Failed")}
-      >
-        Failed
-      </Button>
-      <Button
-        variant={selectedStatus === "Blocked" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleStatusClick("Blocked")}
-      >
-        Blocked
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            {statusOptions.find(s => s.value === selectedStatus)?.label || "Status"}
+            <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-background">
+          {statusOptions.map((status) => (
+            <DropdownMenuItem 
+              key={status.value}
+              onClick={() => onStatusChange(status.value)}
+            >
+              {status.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
