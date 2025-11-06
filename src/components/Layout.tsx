@@ -13,7 +13,7 @@ export const Layout = () => {
   const showBackButton = location.pathname !== "/" && location.pathname !== "/dashboard";
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <AppSidebar />
         <SidebarInset className="flex-1 overflow-auto w-full transition-all duration-300 ease-in-out">

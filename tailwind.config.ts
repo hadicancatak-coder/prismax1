@@ -157,11 +157,16 @@ export default {
             opacity: "0"
           }
         },
+        "fadeIn": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 150ms ease-in-out",
         "accordion-up": "accordion-up 150ms ease-in-out",
         "fade-in": "fade-in 300ms ease-out",
+        "fade-in-150": "fadeIn 150ms ease-in-out",
         "shimmer": "shimmer 2s infinite linear",
         "slide-in-from-right": "slide-in-from-right 300ms ease-out",
         "slide-out-to-left": "slide-out-to-left 300ms ease-out",
