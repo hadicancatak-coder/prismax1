@@ -5,7 +5,6 @@ import { useTasks } from "@/hooks/useTasks";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
-import { TodayCommandCenter } from "@/components/calendar/TodayCommandCenter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
@@ -169,16 +168,6 @@ export default function CalendarView() {
               )}
             </div>
           </header>
-
-          <TodayCommandCenter 
-            currentDate={currentDate}
-            highPriorityCount={highPriorityCount}
-            upcomingCount={upcomingCount}
-            completedToday={completedToday}
-            totalToday={totalToday}
-            onAddTask={() => setCreateTaskOpen(true)}
-            onFocusMode={() => setFocusMode(true)}
-          />
         </>
       )}
 
