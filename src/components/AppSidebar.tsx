@@ -81,7 +81,6 @@ export function AppSidebar() {
 
           {/* Core Features */}
           <SidebarGroup className="pt-0">
-            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -111,7 +110,6 @@ export function AppSidebar() {
 
           {/* Operations */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
