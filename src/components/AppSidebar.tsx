@@ -34,9 +34,8 @@ export function AppSidebar() {
   const { open, setOpen, toggleSidebar } = useSidebar();
   const { signOut, userRole, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
-  const [isHovered, setIsHovered] = useState(false);
 
-  const isExpanded = open || isHovered;
+  const isExpanded = open;
 
   useEffect(() => {
     if (user) {
@@ -69,10 +68,8 @@ export function AppSidebar() {
     <TooltipProvider delayDuration={0}>
       <Sidebar 
         collapsible="icon" 
-        className="h-screen border-r border-border/40 backdrop-blur-sm transition-all duration-200 ease-in-out"
+        className="h-screen border-r border-border/40 backdrop-blur-sm transition-all duration-300 ease-in-out"
         style={{ background: 'rgba(11, 18, 32, 0.95)' }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <SidebarContent className={`${isExpanded ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Toggle Button */}
