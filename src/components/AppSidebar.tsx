@@ -51,27 +51,36 @@ export function AppSidebar() {
     }
   }, [user]);
 
-  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    isActive
-      ? `flex items-center ${open ? 'gap-3 px-3 ml-[-4px] border-l-4 border-primary' : 'justify-center px-0 ml-[-4px] border-l-4 border-primary'} py-3 text-primary font-medium transition-smooth`
-      : `flex items-center ${open ? 'gap-3 px-3 ml-[-4px] border-l-4 border-transparent' : 'justify-center px-0 ml-[-4px] border-l-4 border-transparent'} py-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:border-l-sidebar-foreground/20 transition-smooth`;
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) => {
+    const base = `flex items-center ${open ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-lg relative transition-all duration-150 ease-in-out`;
+    
+    if (isActive) {
+      return `${base} text-white font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[2px] before:h-8 before:bg-[#CF0A0A] before:rounded-r`;
+    }
+    
+    return `${base} text-[#E5E7EB] font-normal hover:bg-white/5 hover:text-white`;
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Sidebar collapsible="icon" variant="floating">
-        <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+      <Sidebar 
+        collapsible="icon" 
+        className="sticky top-4 h-[calc(100vh-32px)] rounded-[10px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] border border-white/10"
+        style={{ background: '#0B1220', width: open ? '260px' : '72px' }}
+      >
+        <SidebarContent className={`overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo */}
-          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'}`}>
+          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6' : 'flex-col items-center justify-center pb-4'}`}>
             <img 
               src={logoImage} 
               alt="Prisma" 
-              className={`transition-smooth ${open ? 'h-10' : 'h-8'}`}
+              className={`transition-all duration-150 ease-in-out ${open ? 'h-10' : 'h-8'}`}
             />
             {open && (
               <div className="flex flex-col">
-                <span className="text-section-title text-sidebar-foreground font-semibold">Prisma</span>
+                <span className="text-section-title text-white font-semibold">Prisma</span>
                 {userName && (
-                  <span className="text-metadata text-sidebar-foreground/60 mt-0.5">
+                  <span className="text-metadata text-[#9CA3AF] mt-0.5">
                     {userName}
                   </span>
                 )}
@@ -92,7 +101,7 @@ export function AppSidebar() {
                             <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                        <TooltipContent side="right" sideOffset={12} className="bg-[#0B1220] text-white border border-white/20 shadow-xl px-3 py-2 rounded-md">
                           <p className="text-sm font-medium whitespace-nowrap">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -121,7 +130,7 @@ export function AppSidebar() {
                             <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                           </NavLink>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                        <TooltipContent side="right" sideOffset={12} className="bg-[#0B1220] text-white border border-white/20 shadow-xl px-3 py-2 rounded-md">
                           <p className="text-sm font-medium whitespace-nowrap">{item.title}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -138,7 +147,7 @@ export function AppSidebar() {
           </SidebarGroup>
 
           {/* Sign Out */}
-          <SidebarMenu className={`${open ? 'mt-auto pt-6 border-t border-sidebar-border' : 'mt-auto pt-4 border-t border-sidebar-border flex justify-center'}`}>
+          <SidebarMenu className={`${open ? 'mt-auto pt-6' : 'mt-auto pt-4 flex justify-center'}`}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 {!open ? (
@@ -146,19 +155,19 @@ export function AppSidebar() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={signOut}
-                        className="flex items-center justify-center px-0 ml-[-4px] border-l-4 border-transparent py-3 text-sidebar-foreground hover:text-destructive transition-smooth"
+                        className="flex items-center justify-center px-0 py-3 rounded-lg text-[#E5E7EB] hover:bg-white/5 hover:text-[#CF0A0A] transition-all duration-150 ease-in-out"
                       >
                         <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700">
+                    <TooltipContent side="right" sideOffset={12} className="bg-[#0B1220] text-white border border-white/20 shadow-xl px-3 py-2 rounded-md">
                       <p className="text-sm font-medium whitespace-nowrap">Sign Out</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
                   <button
                     onClick={signOut}
-                    className="flex items-center gap-3 px-3 ml-[-4px] border-l-4 border-transparent py-3 text-sidebar-foreground hover:text-destructive transition-smooth w-full"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#E5E7EB] hover:bg-white/5 hover:text-[#CF0A0A] transition-all duration-150 ease-in-out w-full"
                   >
                     <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                     <span className="text-body">Sign Out</span>
