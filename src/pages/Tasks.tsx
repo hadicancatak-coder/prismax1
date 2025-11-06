@@ -8,8 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, Filter, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
@@ -20,7 +18,6 @@ import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
 import { TaskGridView } from "@/components/tasks/TaskGridView";
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
-import { TaskInlineFilters } from "@/components/tasks/TaskInlineFilters";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -36,10 +33,6 @@ export default function Tasks() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<any>(null);
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
-  });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
@@ -181,35 +174,18 @@ export default function Tasks() {
     
     const statusMatch = statusFilter === "all" || task.status === statusFilter;
     
-    // Date range filter
-    let dateRangeMatch = true;
-    if (dateRange.from || dateRange.to) {
-      if (!task.due_at) {
-        dateRangeMatch = false;
-      } else {
-        const dueDate = new Date(task.due_at);
-        if (dateRange.from && dateRange.to) {
-          dateRangeMatch = dueDate >= dateRange.from && dueDate <= dateRange.to;
-        } else if (dateRange.from) {
-          dateRangeMatch = dueDate >= dateRange.from;
-        } else if (dateRange.to) {
-          dateRangeMatch = dueDate <= dateRange.to;
-        }
-      }
-    }
-    
     const searchMatch = debouncedSearch === "" || 
       task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
-    return assigneeMatch && teamMatch && dateMatch && statusMatch && dateRangeMatch && searchMatch;
+    return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
   });
 
   // Apply filter recalculation when dependencies change
   useEffect(() => {
     // Force re-render when filters change
     setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, dateRange, debouncedSearch]);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, debouncedSearch]);
 
   if (activeQuickFilter) {
     const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
@@ -239,7 +215,7 @@ export default function Tasks() {
   }
 
   return (
-    <div className="px-6 lg:px-12 py-8 space-y-8">
+    <div className="px-48 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>
@@ -270,13 +246,13 @@ export default function Tasks() {
       />
       
 
-      {/* Search and Filters - Single Row */}
-      <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center lg:justify-between">
+      {/* Search and View Switcher - Responsive */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center sm:justify-between">
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full lg:max-w-sm min-h-[44px]"
+          className="w-full sm:max-w-sm min-h-[44px]"
         />
         <div className="flex items-center gap-2">
           <Button
@@ -309,36 +285,78 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* Inline Filters - Collapsible */}
-      <Collapsible defaultOpen={false}>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between min-h-[44px]">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-              {(selectedAssignees.length > 0 || selectedTeams.length > 0 || statusFilter !== 'all' || activeQuickFilter || dateRange.from || dateRange.to) && (
-                <Badge variant="secondary" className="ml-1">Active</Badge>
-              )}
-            </div>
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-4">
-          <TaskInlineFilters
-            selectedAssignees={selectedAssignees}
-            onAssigneesChange={setSelectedAssignees}
-            selectedTeams={selectedTeams}
-            onTeamsChange={setSelectedTeams}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            activeQuickFilter={activeQuickFilter}
-            onQuickFilterChange={setActiveQuickFilter}
-            quickFilters={quickFilters}
-            filteredTasks={filteredTasks}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-          />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Filters with Accordion */}
+      <div className="border border-border rounded">
+        <Accordion type="multiple" defaultValue={[]}>
+          <AccordionItem value="quick" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Quick Filters
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="flex gap-2 flex-wrap pt-2 pb-4">
+                {quickFilters.map(({ label, Icon }) => {
+                  const count = filteredTasks.filter(quickFilters.find(f => f.label === label)!.filter).length;
+                  return (
+                    <Button
+                      key={label}
+                      variant={activeQuickFilter === label ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
+                      className={cn(
+                        "gap-2",
+                        activeQuickFilter === label && "ring-2 ring-offset-2 ring-primary"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                      <span className="ml-1 text-xs font-bold">({count})</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="assignee" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Assignees & Teams
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-2 pb-4">
+                <AssigneeFilterBar
+                  selectedAssignees={selectedAssignees}
+                  onAssigneesChange={setSelectedAssignees}
+                  selectedTeams={selectedTeams}
+                  onTeamsChange={setSelectedTeams}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="date" className="border-0 px-4">
+            <AccordionTrigger className="font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Date & Status
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-2 pb-4">
+                <TaskDateFilterBar
+                  onFilterChange={setDateFilter}
+                  onStatusChange={setStatusFilter}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
 
       {/* Task Views */}
       {filteredTasks.length === 0 ? (

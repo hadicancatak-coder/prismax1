@@ -239,9 +239,9 @@ export default function TeamBase() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-page-title text-foreground">🏢 Base</h1>
-        <p className="text-muted-foreground mt-1">Manage blockers, projects, team directory, and shared resources</p>
+      <div className="bg-gradient-primary p-4 rounded-lg mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">🏢 Base</h1>
+        <p className="text-white/90">Manage blockers, projects, team directory, and shared resources</p>
       </div>
 
       <Tabs defaultValue="team" className="w-full">

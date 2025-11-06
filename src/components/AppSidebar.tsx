@@ -1,23 +1,23 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  CheckSquare,
-  Calendar,
-  FileText,
-  Megaphone,
-  PenTool,
-  Link2,
-  LogOut,
-} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import logoImage from "@/assets/cfi-logo.png";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 const coreItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/", icon: DashboardIcon },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Agenda", url: "/calendar", icon: Calendar },
 ];
@@ -25,198 +25,190 @@ const coreItems = [
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
   { title: "PPC Planner", url: "/ads", icon: Megaphone },
-  { title: "Copy Planner", url: "/copywriter", icon: PenTool },
+  { title: "SocialUA Planner", url: "/socialua", icon: Share2 },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
+  { title: "Copy Writer", url: "/copywriter", icon: PenTool },
+  { title: "Preview", url: "/campaigns", icon: Target },
 ];
 
-interface AppSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
+const teamItems = [
+  { title: "Base", url: "/team-base", icon: FolderKanban },
+  { title: "Notifications", url: "/notifications", icon: Bell },
+];
 
-export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
-  const { signOut, user } = useAuth();
+export function AppSidebar() {
+  const { open } = useSidebar();
+  const { signOut, userRole, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
+    if (user) {
+      supabase
         .from("profiles")
         .select("name")
         .eq("user_id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
-
-      if (data?.name) {
-        setUserName(data.name);
-      } else {
-        setUserName(user.user_metadata?.name || user.email?.split('@')[0] || "User");
-      }
+        .single()
+        .then(({ data }) => {
+          if (data?.name) {
+            setUserName(data.name);
+          } else {
+            setUserName(user.user_metadata?.name || user.email?.split('@')[0] || "User");
+          }
+        });
     }
-
-    fetchProfile();
   }, [user]);
 
-  // Close sidebar on Escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onToggle();
-      }
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onToggle]);
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    isActive
+      ? `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-primary ml-[-4px]' : 'justify-center px-0 border-l-4 border-primary ml-[-4px]'} py-3 text-primary font-medium transition-smooth`
+      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent ml-[-4px]' : 'justify-center px-0'} py-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:border-l-sidebar-foreground/20 transition-smooth`;
 
   return (
-    <TooltipProvider delayDuration={150}>
-      <aside
-        className={cn(
-          "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border shadow-sm transition-all duration-[150ms] ease-in-out z-40",
-          isOpen ? "w-[260px]" : "w-[72px]"
-        )}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo/Brand */}
-          <div className={cn(
-            "flex items-center gap-3 px-4 py-6 border-b border-sidebar-border",
-            !isOpen && "justify-center px-0"
-          )}>
-            <img src={logoImage} alt="CFI" className="h-8 flex-shrink-0" />
-            {isOpen && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-sidebar-foreground font-semibold text-sm tracking-tight truncate">Prisma</span>
-                {userName && <span className="text-sidebar-foreground/60 text-xs truncate">{userName}</span>}
+    <TooltipProvider delayDuration={0}>
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+          {/* Logo */}
+          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'}`}>
+            <img 
+              src={logoImage} 
+              alt="Prisma" 
+              className={`transition-smooth ${open ? 'h-10' : 'h-8'}`}
+            />
+            {open && (
+              <div className="flex flex-col">
+                <span className="text-section-title text-sidebar-foreground font-semibold">Prisma</span>
+                {userName && (
+                  <span className="text-metadata text-sidebar-foreground/60 mt-0.5">
+                    {userName}
+                  </span>
+                )}
               </div>
             )}
           </div>
 
-          {/* Core Navigation */}
-          <div className="py-4">
-            {isOpen && (
-              <div className="px-4 mb-2">
-                <span className="text-sidebar-foreground/60 text-xs font-medium uppercase tracking-wider">Core</span>
-              </div>
-            )}
-            <nav className="space-y-0.5 px-3">
+          {/* Core Features */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
-                <Tooltip key={item.url}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150",
-                          isActive
-                            ? "bg-primary text-primary-foreground font-medium shadow-sm"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                          !isOpen && "justify-center"
-                        )
-                      }
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2.5} />
-                      {isOpen && <span className="text-sm">{item.title}</span>}
-                    </NavLink>
-                  </TooltipTrigger>
-                  {!isOpen && (
-                    <TooltipContent 
-                      side="right" 
-                      sideOffset={12}
-                      className="bg-popover text-popover-foreground border shadow-md"
-                    >
-                      {item.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <NavLink to={item.url} end className={getNavLinkClass}>
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                          </NavLink>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <NavLink to={item.url} end className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               ))}
-            </nav>
-          </div>
+            </SidebarMenu>
+          </SidebarGroup>
 
-          {/* Separator */}
-          <div className="border-t border-sidebar-border mx-3" />
-
-          {/* Operations Navigation */}
-          <div className="py-4">
-            {isOpen && (
-              <div className="px-4 mb-2">
-                <span className="text-sidebar-foreground/60 text-xs font-medium uppercase tracking-wider">Operations</span>
-              </div>
-            )}
-            <nav className="space-y-0.5 px-3">
+          {/* Operations */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
-                <Tooltip key={item.url}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150",
-                          isActive
-                            ? "bg-primary text-primary-foreground font-medium shadow-sm"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                          !isOpen && "justify-center"
-                        )
-                      }
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={2.5} />
-                      {isOpen && <span className="text-sm">{item.title}</span>}
-                    </NavLink>
-                  </TooltipTrigger>
-                  {!isOpen && (
-                    <TooltipContent 
-                      side="right" 
-                      sideOffset={12}
-                      className="bg-popover text-popover-foreground border shadow-md"
-                    >
-                      {item.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <NavLink to={item.url} className={getNavLinkClass}>
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                          </NavLink>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               ))}
-            </nav>
-          </div>
+            </SidebarMenu>
+          </SidebarGroup>
 
-          {/* Spacer */}
-          <div className="flex-1" />
+          {/* Team */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Team</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
+              {teamItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <NavLink to={item.url} className={getNavLinkClass}>
+                            <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                          </NavLink>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                          <p className="text-body font-medium">{item.title}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
 
-          {/* Bottom divider */}
-          <div className="border-t border-sidebar-border mx-3" />
 
-          {/* Sign Out at bottom */}
-          <div className="px-3 py-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={signOut}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive w-full",
-                    !isOpen && "justify-center"
-                  )}
-                >
-                  <LogOut className="h-5 w-5 flex-shrink-0" strokeWidth={2.5} />
-                  {isOpen && <span className="text-sm font-medium">Sign Out</span>}
-                </button>
-              </TooltipTrigger>
-              {!isOpen && (
-                <TooltipContent 
-                  side="right" 
-                  sideOffset={12}
-                  className="bg-popover text-popover-foreground border shadow-md"
-                >
-                  Sign Out
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </div>
-        </div>
-      </aside>
+          {/* Sign Out */}
+          <SidebarMenu className={`${open ? 'mt-auto pt-6 border-t border-sidebar-border' : 'mt-auto pt-4 border-t border-sidebar-border flex justify-center'}`}>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                {!open ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={signOut}
+                        className="flex items-center justify-center py-3 text-sidebar-foreground hover:text-destructive transition-smooth border-l-4 border-transparent hover:border-destructive ml-[-4px]"
+                      >
+                        <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-sidebar-background text-sidebar-foreground border-sidebar-border">
+                      <p className="text-body font-medium">Sign Out</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={signOut}
+                    className="flex items-center gap-3 px-3 py-3 text-sidebar-foreground hover:text-destructive transition-smooth w-full border-l-4 border-transparent hover:border-destructive ml-[-4px]"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                    <span className="text-body">Sign Out</span>
+                  </button>
+                )}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
     </TooltipProvider>
   );
 }

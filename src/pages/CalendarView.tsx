@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
-
+import { TodayCommandCenter } from "@/components/calendar/TodayCommandCenter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
@@ -137,6 +137,10 @@ export default function CalendarView() {
   };
 
   const todayTasks = tasks;
+  const completedToday = tasks.filter(t => t.status === 'Completed').length;
+  const totalToday = tasks.length;
+  const highPriorityCount = tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
+  const upcomingCount = tasks.filter(t => t.status === 'Pending').length;
 
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
@@ -204,6 +208,15 @@ export default function CalendarView() {
             </div>
           </header>
 
+          <TodayCommandCenter 
+            currentDate={currentDate}
+            highPriorityCount={highPriorityCount}
+            upcomingCount={upcomingCount}
+            completedToday={completedToday}
+            totalToday={totalToday}
+            onAddTask={() => setCreateTaskOpen(true)}
+            onFocusMode={() => setFocusMode(true)}
+          />
         </>
       )}
 
@@ -287,15 +300,15 @@ export default function CalendarView() {
             <div className="space-y-6">
               <div className="flex justify-between items-center pb-4 border-b border-border">
                 <span className="text-metadata">Completed</span>
-                <span className="text-2xl font-semibold">{tasks.filter(t => t.status === 'Completed').length}/{tasks.length}</span>
+                <span className="text-2xl font-semibold">{completedToday}/{totalToday}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-border">
                 <span className="text-metadata">High Priority</span>
-                <span className="text-2xl font-semibold text-destructive">{tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length}</span>
+                <span className="text-2xl font-semibold text-destructive">{highPriorityCount}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-metadata">Upcoming</span>
-                <span className="text-2xl font-semibold text-primary">{tasks.filter(t => t.status === 'Pending').length}</span>
+                <span className="text-2xl font-semibold text-primary">{upcomingCount}</span>
               </div>
             </div>
           </div>

@@ -462,7 +462,7 @@ ${landingPage}
     <div className="px-48 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-page-title text-foreground flex items-center gap-2">
+          <h1 className="text-page-title flex items-center gap-2">
             <Sparkles className="h-8 w-8" />
             Google Ads Planner - Search
           </h1>
