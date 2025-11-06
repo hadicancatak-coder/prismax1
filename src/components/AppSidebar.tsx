@@ -72,22 +72,6 @@ export function AppSidebar() {
         style={{ background: 'rgba(11, 18, 32, 0.95)' }}
       >
         <SidebarContent className={`${isExpanded ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
-          {/* Toggle Button */}
-          <div className={`flex ${isExpanded ? 'justify-end px-2' : 'justify-center'} pb-2`}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="h-8 w-8 text-[#E5E7EB] hover:bg-white/5 hover:text-white"
-            >
-              {isExpanded ? (
-                <PanelLeftClose className="h-4 w-4" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
           {/* Logo */}
           <div className={`flex ${isExpanded ? 'items-center gap-3 px-3 pb-6' : 'flex-col items-center justify-center pb-4'}`}>
             <img 
