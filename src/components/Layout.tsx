@@ -14,7 +14,7 @@ export const Layout = () => {
   return (
     <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
       <FloatingSidebar />
-      <main className="flex-1 overflow-auto w-full ml-[88px]">
+      <main className="flex-1 overflow-auto w-full ml-[104px] relative">
         <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center gap-2">
             {showBackButton && (

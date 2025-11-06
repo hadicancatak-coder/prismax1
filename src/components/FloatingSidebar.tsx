@@ -12,7 +12,7 @@ import {
 import logoImage from "@/assets/cfi-logo.png";
 
 const coreItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Dashboard", url: "/", icon: Home },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Agenda", url: "/calendar", icon: Calendar },
 ];
@@ -21,7 +21,7 @@ const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: ClipboardList },
   { title: "PPC Planner", url: "/utm-planner", icon: Link2 },
   { title: "Copywriter", url: "/copywriter", icon: FileText },
-  { title: "Team", url: "/team", icon: Users },
+  { title: "Team", url: "/team-base", icon: Users },
   { title: "Ads", url: "/ads", icon: Zap },
 ];
 
@@ -58,10 +58,11 @@ export function FloatingSidebar() {
   return (
     <TooltipProvider>
       <div
-        className="fixed top-4 left-4 h-[calc(100vh-32px)] z-50 transition-all duration-300 ease-in-out rounded-[10px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25),0_4px_12px_-4px_rgba(0,0,0,0.15),0_2px_6px_-2px_rgba(0,0,0,0.1)] border border-white/20 backdrop-blur-sm overflow-hidden"
+        className="fixed top-4 left-4 h-[calc(100vh-32px)] z-[100] transition-all duration-300 ease-in-out rounded-[10px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4),0_8px_20px_-8px_rgba(0,0,0,0.3),0_4px_10px_-4px_rgba(0,0,0,0.25)] border border-white/30 backdrop-blur-sm overflow-hidden pointer-events-auto"
         style={{ 
           background: 'rgba(11, 18, 32, 0.95)', 
-          width: isHovered ? '260px' : '72px' 
+          width: isHovered ? '260px' : '72px',
+          boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
