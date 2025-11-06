@@ -15,7 +15,9 @@ export const Layout = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
-        <AppSidebar />
+        <div className="sticky top-4 h-[calc(100vh-32px)] m-4">
+          <AppSidebar />
+        </div>
         <main className="flex-1 overflow-auto w-full">
           <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-2">

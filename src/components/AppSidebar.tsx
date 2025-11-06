@@ -65,7 +65,7 @@ export function AppSidebar() {
     <TooltipProvider delayDuration={0}>
       <Sidebar 
         collapsible="icon" 
-        className="sticky top-4 h-[calc(100vh-32px)] rounded-[10px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] border border-white/10"
+        className="h-full rounded-[10px] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] border border-white/10"
         style={{ background: '#0B1220', width: open ? '260px' : '72px' }}
       >
         <SidebarContent className={`overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
