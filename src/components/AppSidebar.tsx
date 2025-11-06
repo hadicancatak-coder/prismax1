@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText, PenTool } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText, PenTool, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/cfi-logo.png";
@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 const coreItems = [
   { title: "Dashboard", url: "/", icon: DashboardIcon },
@@ -30,7 +31,7 @@ const operationsItems = [
 ];
 
 export function AppSidebar() {
-  const { open, setOpen } = useSidebar();
+  const { open, setOpen, toggleSidebar } = useSidebar();
   const { signOut, userRole, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
   const [isHovered, setIsHovered] = useState(false);
@@ -73,7 +74,23 @@ export function AppSidebar() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <SidebarContent className={`overflow-y-auto sidebar-scroll ${isExpanded ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+        <SidebarContent className={`${isExpanded ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+          {/* Toggle Button */}
+          <div className={`flex ${isExpanded ? 'justify-end px-2' : 'justify-center'} pb-2`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-8 w-8 text-[#E5E7EB] hover:bg-white/5 hover:text-white"
+            >
+              {isExpanded ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
           {/* Logo */}
           <div className={`flex ${isExpanded ? 'items-center gap-3 px-3 pb-6' : 'flex-col items-center justify-center pb-4'}`}>
             <img 
