@@ -28,6 +28,7 @@ export default function CalendarView() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "custom">("today");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [rangeSelectionState, setRangeSelectionState] = useState<'start' | 'end'>('start');
   const [focusMode, setFocusMode] = useState(false);
   const currentDate = new Date();
 
@@ -158,18 +159,69 @@ export default function CalendarView() {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <div className="p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Click one date for a single day, or click two dates to select a range.
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {!customDateRange ? (
+                            "Click to select start date"
+                          ) : customDateRange.from.getTime() === customDateRange.to.getTime() ? (
+                            "Click to select end date and create a range"
+                          ) : (
+                            `Next click will modify the ${rangeSelectionState} date`
+                          )}
+                        </p>
+                        {customDateRange && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              setCustomDateRange(null);
+                              setRangeSelectionState('start');
+                              setDateView("today");
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
                       <Calendar
                         mode="range"
                         selected={customDateRange ? { from: customDateRange.from, to: customDateRange.to } : undefined}
                         onSelect={(range) => {
                           if (range?.from) {
-                            if (!range.to) {
+                            // Case 1: First click or starting new selection
+                            if (!customDateRange || !range.to) {
                               setCustomDateRange({ from: range.from, to: range.from });
-                            } else {
-                              setCustomDateRange({ from: range.from, to: range.to });
+                              setRangeSelectionState('end');
+                              setDateView("custom");
+                            } 
+                            // Case 2: Second click - completing the range
+                            else if (range.to && rangeSelectionState === 'end') {
+                              const newRange = range.from <= range.to 
+                                ? { from: range.from, to: range.to }
+                                : { from: range.to, to: range.from };
+                              setCustomDateRange(newRange);
+                              setRangeSelectionState('start');
+                              setDateView("custom");
+                            }
+                            // Case 3: Third+ click - modify start or end based on state
+                            else if (range.to) {
+                              if (rangeSelectionState === 'start') {
+                                // Keep end date, update start date
+                                const newRange = range.from <= customDateRange.to
+                                  ? { from: range.from, to: customDateRange.to }
+                                  : { from: customDateRange.to, to: range.from };
+                                setCustomDateRange(newRange);
+                                setRangeSelectionState('end');
+                              } else {
+                                // Keep start date, update end date  
+                                const newRange = range.to >= customDateRange.from
+                                  ? { from: customDateRange.from, to: range.to }
+                                  : { from: range.to, to: customDateRange.from };
+                                setCustomDateRange(newRange);
+                                setRangeSelectionState('start');
+                              }
+                              setDateView("custom");
                             }
                           }
                         }}
