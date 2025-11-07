@@ -234,7 +234,9 @@ export default function CalendarView() {
                         </Badge>
                       </div>
                       {task.description && (
-                        <p className="text-metadata line-clamp-1">{task.description}</p>
+                        <p className="text-metadata line-clamp-1">
+                          {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+                        </p>
                       )}
                     </div>
                   </div>

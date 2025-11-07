@@ -153,16 +153,31 @@ export function TaskDateFilterBar({
             mode="range"
             selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
             onSelect={(range) => {
-              if (range?.from && range?.to) {
-                const newRange = { from: range.from, to: range.to };
-                setCustomRange(newRange);
-                setSelectedFilter("custom");
-                onFilterChange({ 
-                  label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
-                  startDate: range.from, 
-                  endDate: range.to 
-                });
-                setCalendarOpen(false);
+              if (range?.from) {
+                // Single date selection - treat as same day
+                if (!range.to) {
+                  const newRange = { from: range.from, to: range.from };
+                  setCustomRange(newRange);
+                  setSelectedFilter("custom");
+                  onFilterChange({ 
+                    label: format(range.from, 'MMM d'), 
+                    startDate: range.from, 
+                    endDate: range.from 
+                  });
+                  setCalendarOpen(false);
+                } 
+                // Date range selection
+                else if (range.to) {
+                  const newRange = { from: range.from, to: range.to };
+                  setCustomRange(newRange);
+                  setSelectedFilter("custom");
+                  onFilterChange({ 
+                    label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
+                    startDate: range.from, 
+                    endDate: range.to 
+                  });
+                  setCalendarOpen(false);
+                }
               }
             }}
             className="pointer-events-auto"
