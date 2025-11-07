@@ -39,20 +39,12 @@ class ApprovalService {
         requesterId = changeRequest?.requester_id;
       }
 
-      // Log approval history
-      const { error: historyError } = await supabase
-        .from('approval_history')
-        .insert({
-          entity_type: entityType,
-          entity_id: entityId,
-          requester_id: requesterId,
-          approver_id: user.id,
-          status: 'approved',
-          changes,
-          comment,
-        });
-
-      if (historyError) throw historyError;
+      // Note: Ad approval now uses approval_history table with stages
+      // This is legacy code for task approvals only
+      if (entityType === 'task') {
+        // For tasks, just update status
+        // Task approval history uses a different system
+      }
 
       // Handle entity-specific approval logic
       if (entityType === 'ad') {
@@ -88,20 +80,12 @@ class ApprovalService {
         requesterId = changeRequest?.requester_id;
       }
 
-      // Log approval history
-      const { error: historyError } = await supabase
-        .from('approval_history')
-        .insert({
-          entity_type: entityType,
-          entity_id: entityId,
-          requester_id: requesterId,
-          approver_id: user.id,
-          status: 'rejected',
-          changes,
-          comment,
-        });
-
-      if (historyError) throw historyError;
+      // Note: Ad approval now uses approval_history table with stages
+      // This is legacy code for task approvals only
+      if (entityType === 'task') {
+        // For tasks, just update status
+        // Task approval history uses a different system
+      }
 
       // Handle entity-specific rejection logic
       if (entityType === 'ad') {
@@ -121,40 +105,16 @@ class ApprovalService {
 
   async getApprovalHistory(filters: ApprovalFilters = {}) {
     try {
-      // Fetch approval history and manually join profiles using user_id
-      const { data: historyData, error: historyError } = await supabase
+      // Note: This returns ads approval history only
+      // The new approval_history table is ad-specific with stages
+      const { data, error } = await supabase
         .from('approval_history')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (historyError) throw historyError;
+      if (error) throw error;
       
-      // Manually join profiles by fetching all at once
-      const userIds = [...new Set(historyData.flatMap(h => [h.requester_id, h.approver_id].filter(Boolean)))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name, email, avatar_url')
-        .in('user_id', userIds);
-      
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      
-      const data = historyData.map(h => ({
-        ...h,
-        requester: h.requester_id ? profileMap.get(h.requester_id) : null,
-        approver: h.approver_id ? profileMap.get(h.approver_id) : null,
-      }));
-      
-      let query = data;
-
-      // Apply filters
-      if (filters.entityType) query = query.filter(h => h.entity_type === filters.entityType);
-      if (filters.status) query = query.filter(h => h.status === filters.status);
-      if (filters.requesterId) query = query.filter(h => h.requester_id === filters.requesterId);
-      if (filters.approverId) query = query.filter(h => h.approver_id === filters.approverId);
-      if (filters.startDate) query = query.filter(h => new Date(h.created_at) >= filters.startDate);
-      if (filters.endDate) query = query.filter(h => new Date(h.created_at) <= filters.endDate);
-
-      return query;
+      return data || [];
     } catch (err) {
       logger.error('Error fetching approval history', err);
       return [];

@@ -412,11 +412,13 @@ export type Database = {
       ads: {
         Row: {
           ad_group_id: string | null
+          ad_group_name: string | null
           ad_strength: number | null
           ad_type: string | null
           approval_status: string | null
           business_name: string | null
           callouts: Json
+          campaign_name: string | null
           compliance_issues: Json | null
           created_at: string
           created_by: string
@@ -439,11 +441,13 @@ export type Database = {
         }
         Insert: {
           ad_group_id?: string | null
+          ad_group_name?: string | null
           ad_strength?: number | null
           ad_type?: string | null
           approval_status?: string | null
           business_name?: string | null
           callouts?: Json
+          campaign_name?: string | null
           compliance_issues?: Json | null
           created_at?: string
           created_by: string
@@ -466,11 +470,13 @@ export type Database = {
         }
         Update: {
           ad_group_id?: string | null
+          ad_group_name?: string | null
           ad_strength?: number | null
           ad_type?: string | null
           approval_status?: string | null
           business_name?: string | null
           callouts?: Json
+          campaign_name?: string | null
           compliance_issues?: Json | null
           created_at?: string
           created_by?: string
@@ -536,39 +542,44 @@ export type Database = {
       }
       approval_history: {
         Row: {
+          ad_id: string
           approver_id: string | null
-          changes: Json
           comment: string | null
-          created_at: string | null
-          entity_id: string
-          entity_type: string
+          created_at: string
           id: string
-          requester_id: string | null
+          stage: string
           status: string
+          updated_at: string
         }
         Insert: {
+          ad_id: string
           approver_id?: string | null
-          changes?: Json
           comment?: string | null
-          created_at?: string | null
-          entity_id: string
-          entity_type: string
+          created_at?: string
           id?: string
-          requester_id?: string | null
+          stage: string
           status: string
+          updated_at?: string
         }
         Update: {
+          ad_id?: string
           approver_id?: string | null
-          changes?: Json
           comment?: string | null
-          created_at?: string | null
-          entity_id?: string
-          entity_type?: string
+          created_at?: string
           id?: string
-          requester_id?: string | null
+          stage?: string
           status?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "approval_history_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       auth_events: {
         Row: {
@@ -988,6 +999,74 @@ export type Database = {
           severity?: string
           stack_trace?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      kpi_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          kpi_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          kpi_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          kpi_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_assignments_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpis: {
+        Row: {
+          created_at: string
+          created_by: string
+          deadline: string | null
+          description: string | null
+          id: string
+          metric_type: string
+          target: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          metric_type: string
+          target: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          metric_type?: string
+          target?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
