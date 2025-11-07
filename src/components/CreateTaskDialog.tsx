@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -346,12 +347,12 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter task description"
-                className={cn("min-h-[100px]", validationErrors.description && "border-destructive")}
+              <RichTextEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(value) => setDescription(value)}
+                placeholder="Enter task description"
+                minHeight="100px"
+                className={cn(validationErrors.description && "border-destructive")}
               />
               {validationErrors.description && (
                 <p className="text-sm text-destructive">{validationErrors.description}</p>

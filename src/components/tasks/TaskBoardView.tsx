@@ -125,7 +125,9 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
     }
   };
 
-  const handleDelete = async (task: any) => {
+  const handleDelete = async (task: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setProcessingAction({ taskId: task.id, action: 'delete' });
     try {
       if (userRole === 'admin') {
@@ -162,6 +164,7 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
 
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setShowDeleteConfirm(null);
+      setOpenDropdown(null);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -170,7 +173,6 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
       });
     } finally {
       setProcessingAction(null);
-      setOpenDropdown(null);
     }
   };
 
@@ -287,7 +289,7 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
       ))}
 
       <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -297,13 +299,19 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={processingAction?.action === 'delete'}>
+            <AlertDialogCancel 
+              disabled={processingAction?.action === 'delete'}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
+              onClick={(e) => {
                 const task = tasks.find(t => t.id === showDeleteConfirm);
-                if (task) handleDelete(task);
+                if (task) handleDelete(task, e);
               }}
               disabled={processingAction?.action === 'delete'}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

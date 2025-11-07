@@ -131,7 +131,9 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setProcessingAction('delete');
     try {
       if (userRole === 'admin') {
@@ -168,6 +170,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
 
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setShowDeleteConfirm(false);
+      setOpenDropdown(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -176,7 +179,6 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       });
     } finally {
       setProcessingAction(null);
-      setOpenDropdown(false);
     }
   };
 
@@ -285,7 +287,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -295,7 +297,13 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={processingAction === 'delete'}>
+            <AlertDialogCancel 
+              disabled={processingAction === 'delete'}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
