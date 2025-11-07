@@ -10,7 +10,7 @@ import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
-import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
+
 import { TaskGridView } from "@/components/tasks/TaskGridView";
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
@@ -181,18 +181,6 @@ export default function Tasks() {
           </Button>
         </div>
       </div>
-      
-      {/* Statistics Dashboard */}
-      <TaskStatsCards
-        totalTasks={totalTasks}
-        overdueCount={overdueCount}
-        ongoingCount={ongoingCount}
-        completedCount={completedCount}
-        onCardClick={(type) => {
-          setFilteredDialogType(type);
-          setFilteredDialogOpen(true);
-        }}
-      />
 
       {/* Consolidated Filters in Single Row */}
       <Card className="p-4">

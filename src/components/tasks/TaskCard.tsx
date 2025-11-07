@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquare, Calendar } from "lucide-react";
+import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskCardProps {
   task: any;
@@ -11,6 +17,11 @@ interface TaskCardProps {
 }
 
 export const TaskCard = ({ task, onClick }: TaskCardProps) => {
+  const { userRole } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | 'delete' | null>(null);
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
     return new Date(dueDate) < new Date();
@@ -39,36 +50,201 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     Low: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
   };
 
+  const handleComplete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setProcessingAction('complete');
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: 'Completed' })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Task marked as completed",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingAction(null);
+      setOpenDropdown(false);
+    }
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setProcessingAction('duplicate');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data: duplicatedTask, error } = await supabase
+        .from('tasks')
+        .insert({
+          ...task,
+          id: undefined,
+          title: `${task.title} (Copy)`,
+          created_by: user.id,
+          created_at: undefined,
+          updated_at: undefined,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (task.assignees?.length > 0 && duplicatedTask) {
+        const assigneeInserts = task.assignees.map((assignee: any) => ({
+          task_id: duplicatedTask.id,
+          user_id: assignee.user_id,
+          assigned_by: user.id,
+        }));
+
+        await supabase.from('task_assignees').insert(assigneeInserts);
+      }
+
+      toast({
+        title: "Success",
+        description: "Task duplicated successfully",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingAction(null);
+      setOpenDropdown(false);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setProcessingAction('delete');
+    try {
+      if (userRole === 'admin') {
+        const { error } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('id', task.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Task deleted successfully",
+        });
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            delete_requested_by: user.id,
+            delete_requested_at: new Date().toISOString(),
+          })
+          .eq('id', task.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Delete Request Sent",
+          description: "Admin will review your request",
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingAction(null);
+      setOpenDropdown(false);
+    }
+  };
+
   return (
     <Card 
-      className="p-5 cursor-pointer hover:shadow-lg transition-shadow duration-200 border-l-4"
+      className="p-5 hover:shadow-lg transition-shadow duration-200 border-l-4 relative group"
       style={{ borderLeftColor: getPriorityColor(task.priority) }}
-      onClick={onClick}
     >
       {/* Priority and Status badges */}
       <div className="flex items-start justify-between mb-3">
-        <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
-          {task.priority}
-        </Badge>
-        <Badge variant="outline" className={statusColors[task.status as keyof typeof statusColors]}>
-          {task.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
+            {task.priority}
+          </Badge>
+          <Badge variant="outline" className={statusColors[task.status as keyof typeof statusColors]}>
+            {task.status}
+          </Badge>
+        </div>
+
+        <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
+          <DropdownMenuTrigger 
+            onClick={(e) => e.stopPropagation()}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleComplete} disabled={processingAction !== null}>
+              {processingAction === 'complete' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle className="mr-2 h-4 w-4" />
+              )}
+              Mark Completed
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDuplicate} disabled={processingAction !== null}>
+              {processingAction === 'duplicate' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Copy className="mr-2 h-4 w-4" />
+              )}
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleDelete} disabled={processingAction !== null} className="text-destructive">
+              {processingAction === 'delete' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {userRole === 'admin' ? 'Delete' : 'Request Delete'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       {/* Task title */}
-      <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+      <h3 className="font-semibold text-lg mb-2 line-clamp-2 cursor-pointer" onClick={onClick}>
         {task.title}
       </h3>
       
       {/* Task description */}
       {task.description && (
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2 cursor-pointer" onClick={onClick}>
           {task.description}
         </p>
       )}
       
       {/* Footer with metadata */}
-      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+      <div className="flex items-center justify-between mt-4 pt-4 border-t cursor-pointer" onClick={onClick}>
         <div className="flex items-center -space-x-2">
           {task.assignees?.slice(0, 3).map((assignee: any) => (
             <Avatar key={assignee.user_id} className="h-6 w-6 border-2 border-background">
