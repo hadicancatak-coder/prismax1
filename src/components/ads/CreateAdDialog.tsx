@@ -1,23 +1,22 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { DisplayAdCreator } from "./DisplayAdCreator";
-import { ElementQuickInsert } from "./ElementQuickInsert";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { Copy, Save } from "lucide-react";
-import { useSaveSocialElement } from "@/hooks/useSocialAdElements";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { DisplayAdCreator } from './DisplayAdCreator';
+import { ElementQuickInsert } from './ElementQuickInsert';
+import { useSaveSocialElement } from '@/hooks/useSocialAdElements';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { Copy, Save, Sparkles } from 'lucide-react';
+import { SearchAdPreview } from './SearchAdPreview';
+import { DisplayAdPreview } from './DisplayAdPreview';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 interface CreateAdDialogProps {
   open: boolean;
@@ -25,64 +24,49 @@ interface CreateAdDialogProps {
   onComplete: () => void;
 }
 
-const AD_ENTITIES = [
-  "CFI",
-  "Fortrade",
-  "Libertex",
-  "Plus500",
-  "Trade360",
-  "Trading212",
-  "eToro",
-  "XTB",
-];
+const AD_ENTITIES = ['CFI', 'Fortrade', 'Libertex', 'Plus500', 'Trade360', 'Trading212', 'eToro', 'XTB'];
 
 export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialogProps) {
-  const [adType, setAdType] = useState<"search" | "display">("search");
-  const [entity, setEntity] = useState("");
-  const [campaignName, setCampaignName] = useState("");
-  const [adGroupName, setAdGroupName] = useState("");
-  const [adName, setAdName] = useState("");
+  const [adType, setAdType] = useState<'search' | 'display'>('search');
+  const [entity, setEntity] = useState('');
+  const [campaignName, setCampaignName] = useState('');
+  const [adGroupName, setAdGroupName] = useState('');
+  const [adName, setAdName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { copy } = useCopyToClipboard();
   const saveElementMutation = useSaveSocialElement();
 
   // Search ad fields
-  const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
-  const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
-  const [landingPage, setLandingPage] = useState("");
-  const [sitelinks, setSitelinks] = useState<{ title: string; description: string }[]>(
-    Array(4).fill({ title: "", description: "" })
-  );
-  const [callouts, setCallouts] = useState<string[]>(Array(10).fill(""));
+  const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(''));
+  const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(''));
+  const [landingPage, setLandingPage] = useState('');
+  const [sitelinks, setSitelinks] = useState<string[]>(Array(4).fill(''));
+  const [callouts, setCallouts] = useState<string[]>(Array(10).fill(''));
+  const [businessName, setBusinessName] = useState('');
 
   // Display ad fields
-  const [businessName, setBusinessName] = useState("");
-  const [longHeadline, setLongHeadline] = useState("");
-  const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(""));
-  const [displayDescriptions, setDisplayDescriptions] = useState<string[]>(Array(5).fill(""));
-  const [ctaText, setCtaText] = useState("");
-  const [displayLandingPage, setDisplayLandingPage] = useState("");
+  const [longHeadline, setLongHeadline] = useState('');
+  const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(''));
+  const [ctaText, setCtaText] = useState('');
 
   const resetForm = () => {
-    setAdType("search");
-    setEntity("");
-    setCampaignName("");
-    setAdGroupName("");
-    setAdName("");
-    setHeadlines(Array(15).fill(""));
-    setDescriptions(Array(4).fill(""));
-    setLandingPage("");
-    setSitelinks(Array(4).fill({ title: "", description: "" }));
-    setCallouts(Array(10).fill(""));
-    setBusinessName("");
-    setLongHeadline("");
-    setShortHeadlines(Array(5).fill(""));
-    setDisplayDescriptions(Array(5).fill(""));
-    setCtaText("");
-    setDisplayLandingPage("");
+    setAdType('search');
+    setEntity('');
+    setCampaignName('');
+    setAdGroupName('');
+    setAdName('');
+    setHeadlines(Array(15).fill(''));
+    setDescriptions(Array(4).fill(''));
+    setLandingPage('');
+    setSitelinks(Array(4).fill(''));
+    setCallouts(Array(10).fill(''));
+    setBusinessName('');
+    setLongHeadline('');
+    setShortHeadlines(Array(5).fill(''));
+    setCtaText('');
   };
 
-  const handleSaveAsElement = async (content: string, elementType: 'headline' | 'description' | 'sitelink' | 'callout') => {
+  const handleSaveAsElement = async (elementType: 'headline' | 'description' | 'sitelink' | 'callout', content: string) => {
     if (!content.trim()) {
       toast({ title: 'Error', description: 'Cannot save empty text', variant: 'destructive' });
       return;
@@ -105,9 +89,9 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
   const handleCreate = async () => {
     if (!entity || !campaignName || !adGroupName || !adName) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in entity, campaign name, ad group name, and ad name.",
-        variant: "destructive",
+        title: 'Missing Information',
+        description: 'Please fill in entity, campaign name, ad group name, and ad name.',
+        variant: 'destructive',
       });
       return;
     }
@@ -117,50 +101,34 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
     try {
       const adData: any = {
         name: adName,
+        ad_name: adName,
         entity,
         campaign_name: campaignName,
         ad_group_name: adGroupName,
         ad_type: adType,
+        landing_page: landingPage,
+        business_name: businessName,
       };
 
-      if (adType === "search") {
-        adData.headlines = JSON.stringify(headlines);
-        adData.descriptions = JSON.stringify(descriptions);
-        adData.landing_page = landingPage;
-        adData.sitelinks = JSON.stringify(sitelinks);
-        adData.callouts = JSON.stringify(callouts);
+      if (adType === 'search') {
+        adData.headlines = headlines.filter(h => h.trim());
+        adData.descriptions = descriptions.filter(d => d.trim());
+        adData.sitelinks = sitelinks.filter(s => s.trim());
+        adData.callouts = callouts.filter(c => c.trim());
       } else {
-        adData.business_name = businessName;
         adData.long_headline = longHeadline;
-        adData.short_headlines = JSON.stringify(shortHeadlines);
-        adData.descriptions = JSON.stringify(displayDescriptions);
+        adData.short_headlines = shortHeadlines.filter(h => h.trim());
+        adData.descriptions = descriptions.filter(d => d.trim());
         adData.cta_text = ctaText;
-        adData.landing_page = displayLandingPage;
       }
 
-      const { data: newAd, error: adError } = await supabase
-        .from("ads")
-        .insert(adData)
-        .select()
-        .single();
+      const { error } = await supabase.from('ads').insert(adData);
 
-      if (adError) throw adError;
-
-      // Create initial version (optional - only if ad_versions table supports it)
-      try {
-        await supabase.from("ad_versions").insert({
-          ad_id: newAd.id,
-          version_number: 1,
-          snapshot_data: adData,
-        });
-      } catch (versionError) {
-        // Silently fail if versions not supported
-        console.log('Ad versions not supported:', versionError);
-      }
+      if (error) throw error;
 
       toast({
-        title: "Success",
-        description: `${adType === "search" ? "Search" : "Display"} ad created successfully!`,
+        title: 'Success',
+        description: `${adType === 'search' ? 'Search' : 'Display'} ad created successfully!`,
       });
 
       resetForm();
@@ -168,9 +136,9 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
       onOpenChange(false);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -179,224 +147,383 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
+        <DialogHeader className="p-6 pb-4">
           <DialogTitle>Create New Ad</DialogTitle>
           <DialogDescription>
-            Choose ad type and fill in the required information
+            Create a new search or display ad with live preview
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Ad Type Selection */}
-          <div className="space-y-2">
-            <Label>Ad Type</Label>
-            <Tabs value={adType} onValueChange={(v) => setAdType(v as "search" | "display")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="search">Search Ad</TabsTrigger>
-                <TabsTrigger value="display">Display Ad</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          {/* Left Panel - Form Inputs */}
+          <ResizablePanel defaultSize={50} minSize={40}>
+            <ScrollArea className="h-[calc(95vh-180px)] px-6">
+              <Tabs value={adType} onValueChange={(value) => setAdType(value as 'search' | 'display')} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="search">Search Ad</TabsTrigger>
+                  <TabsTrigger value="display">Display Ad</TabsTrigger>
+                </TabsList>
 
-          {/* Common Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Entity *</Label>
-              <Select value={entity} onValueChange={setEntity}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AD_ENTITIES.map((e) => (
-                    <SelectItem key={e} value={e}>
-                      {e}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ad Name *</Label>
-              <Input
-                value={adName}
-                onChange={(e) => setAdName(e.target.value)}
-                placeholder="e.g., Q4 Promo Ad"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Campaign Name *</Label>
-              <Input
-                value={campaignName}
-                onChange={(e) => setCampaignName(e.target.value)}
-                placeholder="e.g., Black Friday 2024"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ad Group Name *</Label>
-              <Input
-                value={adGroupName}
-                onChange={(e) => setAdGroupName(e.target.value)}
-                placeholder="e.g., Signup Offers"
-              />
-            </div>
-          </div>
-
-          {/* Ad Type Specific Fields */}
-          {adType === "search" ? (
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold">Search Ad Content</h3>
-              
-              <div className="space-y-2">
-                <Label>Landing Page URL</Label>
-                <Input
-                  value={landingPage}
-                  onChange={(e) => setLandingPage(e.target.value)}
-                  placeholder="https://example.com/landing-page"
-                  type="url"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Headlines (up to 15, max 30 chars each)</Label>
-                <div className="grid gap-2">
-                  {headlines.slice(0, 5).map((h, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        value={h}
-                        onChange={(e) => {
-                          const newHeadlines = [...headlines];
-                          newHeadlines[i] = e.target.value.slice(0, 30);
-                          setHeadlines(newHeadlines);
-                        }}
-                        placeholder={`Headline ${i + 1}`}
-                        maxLength={30}
-                        className="flex-1"
-                      />
-                      <ElementQuickInsert 
-                        elementType="headline"
-                        onInsert={(content) => {
-                          const newHeadlines = [...headlines];
-                          newHeadlines[i] = content.slice(0, 30);
-                          setHeadlines(newHeadlines);
-                        }}
-                      />
-                      {h && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => copy(h, 'Headline copied')}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSaveAsElement(h, 'headline')}
-                          >
-                            <Save className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
+                <TabsContent value="search" className="space-y-4 mt-0">
+                  {/* Common Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Entity</Label>
+                      <Select value={entity} onValueChange={setEntity}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select entity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AD_ENTITIES.map((ent) => (
+                            <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Descriptions (up to 4, max 90 chars each)</Label>
-                <div className="grid gap-2">
-                  {descriptions.map((d, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        value={d}
-                        onChange={(e) => {
-                          const newDescriptions = [...descriptions];
-                          newDescriptions[i] = e.target.value.slice(0, 90);
-                          setDescriptions(newDescriptions);
-                        }}
-                        placeholder={`Description ${i + 1}`}
-                        maxLength={90}
-                        className="flex-1"
-                      />
-                      <ElementQuickInsert 
-                        elementType="description"
-                        onInsert={(content) => {
-                          const newDescriptions = [...descriptions];
-                          newDescriptions[i] = content.slice(0, 90);
-                          setDescriptions(newDescriptions);
-                        }}
-                      />
-                      {d && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => copy(d, 'Description copied')}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSaveAsElement(d, 'description')}
-                          >
-                            <Save className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
+                    <div>
+                      <Label>Ad Name</Label>
+                      <Input value={adName} onChange={(e) => setAdName(e.target.value)} />
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold">Display Ad Content</h3>
-              <DisplayAdCreator
-                businessName={businessName}
-                setBusinessName={setBusinessName}
-                longHeadline={longHeadline}
-                setLongHeadline={setLongHeadline}
-                shortHeadlines={shortHeadlines}
-                setShortHeadlines={setShortHeadlines}
-                descriptions={displayDescriptions}
-                setDescriptions={setDisplayDescriptions}
-                ctaText={ctaText}
-                setCtaText={setCtaText}
-                landingPage={displayLandingPage}
-                setLandingPage={setDisplayLandingPage}
-                adEntity={entity}
-              />
-            </div>
-          )}
-        </div>
+                  </div>
 
-        <div className="flex gap-2 pt-4 border-t">
-          <Button onClick={handleCreate} disabled={isSubmitting} className="flex-1">
-            {isSubmitting ? "Creating..." : "Create Ad"}
-          </Button>
-          <Button
-            onClick={() => {
-              resetForm();
-              onOpenChange(false);
-            }}
-            variant="outline"
-            className="flex-1"
-          >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Campaign Name</Label>
+                      <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Ad Group Name</Label>
+                      <Input value={adGroupName} onChange={(e) => setAdGroupName(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Landing Page URL</Label>
+                    <Input 
+                      type="url" 
+                      value={landingPage} 
+                      onChange={(e) => setLandingPage(e.target.value)} 
+                      placeholder="https://example.com"
+                    />
+                  </div>
+
+                  {/* Headlines */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Headlines</Label>
+                      <Badge variant="outline" className="text-xs">Max 30 chars each</Badge>
+                    </div>
+                    {headlines.slice(0, 5).map((headline, index) => (
+                      <div key={index} className="flex gap-1 mt-2">
+                        <ElementQuickInsert 
+                          elementType="headline"
+                          onInsert={(content) => {
+                            const newHeadlines = [...headlines];
+                            newHeadlines[index] = content;
+                            setHeadlines(newHeadlines);
+                          }}
+                        />
+                        <div className="flex-1 relative">
+                          <Input
+                            value={headline}
+                            onChange={(e) => {
+                              const newHeadlines = [...headlines];
+                              newHeadlines[index] = e.target.value;
+                              setHeadlines(newHeadlines);
+                            }}
+                            placeholder={`Headline ${index + 1}`}
+                            maxLength={30}
+                            className={headline.length > 30 ? 'border-destructive' : headline.length > 25 ? 'border-amber-500' : ''}
+                          />
+                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs ${headline.length > 30 ? 'text-destructive' : headline.length > 25 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                            {headline.length}/30
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copy(headline, 'Headline copied')}
+                          disabled={!headline.trim()}
+                          title="Copy"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSaveAsElement('headline', headline)}
+                          disabled={!headline.trim()}
+                          title="Save as element"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Descriptions */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Descriptions</Label>
+                      <Badge variant="outline" className="text-xs">Max 90 chars each</Badge>
+                    </div>
+                    {descriptions.map((description, index) => (
+                      <div key={index} className="flex gap-1 mt-2">
+                        <ElementQuickInsert 
+                          elementType="description"
+                          onInsert={(content) => {
+                            const newDescriptions = [...descriptions];
+                            newDescriptions[index] = content;
+                            setDescriptions(newDescriptions);
+                          }}
+                        />
+                        <div className="flex-1 relative">
+                          <Input
+                            value={description}
+                            onChange={(e) => {
+                              const newDescriptions = [...descriptions];
+                              newDescriptions[index] = e.target.value;
+                              setDescriptions(newDescriptions);
+                            }}
+                            placeholder={`Description ${index + 1}`}
+                            maxLength={90}
+                            className={description.length > 90 ? 'border-destructive' : description.length > 80 ? 'border-amber-500' : ''}
+                          />
+                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs ${description.length > 90 ? 'text-destructive' : description.length > 80 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                            {description.length}/90
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copy(description, 'Description copied')}
+                          disabled={!description.trim()}
+                          title="Copy"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSaveAsElement('description', description)}
+                          disabled={!description.trim()}
+                          title="Save as element"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sitelinks */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Sitelinks (optional)</Label>
+                      <Badge variant="outline" className="text-xs">Max 25 chars each</Badge>
+                    </div>
+                    {sitelinks.map((sitelink, index) => (
+                      <div key={index} className="flex gap-1 mt-2">
+                        <ElementQuickInsert 
+                          elementType="sitelink"
+                          onInsert={(content) => {
+                            const newSitelinks = [...sitelinks];
+                            newSitelinks[index] = content;
+                            setSitelinks(newSitelinks);
+                          }}
+                        />
+                        <div className="flex-1 relative">
+                          <Input
+                            value={sitelink}
+                            onChange={(e) => {
+                              const newSitelinks = [...sitelinks];
+                              newSitelinks[index] = e.target.value;
+                              setSitelinks(newSitelinks);
+                            }}
+                            placeholder={`Sitelink ${index + 1}`}
+                            maxLength={25}
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                            {sitelink.length}/25
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copy(sitelink, 'Sitelink copied')}
+                          disabled={!sitelink.trim()}
+                          title="Copy"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSaveAsElement('sitelink', sitelink)}
+                          disabled={!sitelink.trim()}
+                          title="Save as element"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Callouts */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Callouts (optional)</Label>
+                      <Badge variant="outline" className="text-xs">Max 25 chars each</Badge>
+                    </div>
+                    {callouts.slice(0, 4).map((callout, index) => (
+                      <div key={index} className="flex gap-1 mt-2">
+                        <ElementQuickInsert 
+                          elementType="callout"
+                          onInsert={(content) => {
+                            const newCallouts = [...callouts];
+                            newCallouts[index] = content;
+                            setCallouts(newCallouts);
+                          }}
+                        />
+                        <div className="flex-1 relative">
+                          <Input
+                            value={callout}
+                            onChange={(e) => {
+                              const newCallouts = [...callouts];
+                              newCallouts[index] = e.target.value;
+                              setCallouts(newCallouts);
+                            }}
+                            placeholder={`Callout ${index + 1}`}
+                            maxLength={25}
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                            {callout.length}/25
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copy(callout, 'Callout copied')}
+                          disabled={!callout.trim()}
+                          title="Copy"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSaveAsElement('callout', callout)}
+                          disabled={!callout.trim()}
+                          title="Save as element"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <Label>Business Name</Label>
+                    <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="display" className="space-y-4 mt-0">
+                  {/* Common Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Entity</Label>
+                      <Select value={entity} onValueChange={setEntity}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select entity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AD_ENTITIES.map((ent) => (
+                            <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Ad Name</Label>
+                      <Input value={adName} onChange={(e) => setAdName(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Campaign Name</Label>
+                      <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Ad Group Name</Label>
+                      <Input value={adGroupName} onChange={(e) => setAdGroupName(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <DisplayAdCreator
+                    businessName={businessName}
+                    setBusinessName={setBusinessName}
+                    longHeadline={longHeadline}
+                    setLongHeadline={setLongHeadline}
+                    shortHeadlines={shortHeadlines}
+                    setShortHeadlines={setShortHeadlines}
+                    descriptions={descriptions}
+                    setDescriptions={setDescriptions}
+                    ctaText={ctaText}
+                    setCtaText={setCtaText}
+                    landingPage={landingPage}
+                    setLandingPage={setLandingPage}
+                    adEntity={entity}
+                  />
+                </TabsContent>
+              </Tabs>
+            </ScrollArea>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel - Live Preview */}
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <ScrollArea className="h-[calc(95vh-180px)] px-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 sticky top-0 bg-background py-4 border-b">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Live Preview</h3>
+                </div>
+
+                {adType === 'search' ? (
+                  <SearchAdPreview
+                    headlines={headlines}
+                    descriptions={descriptions}
+                    landingPage={landingPage}
+                    businessName={businessName}
+                    sitelinks={sitelinks}
+                    callouts={callouts}
+                  />
+                ) : (
+                  <DisplayAdPreview
+                    businessName={businessName}
+                    longHeadline={longHeadline}
+                    shortHeadlines={shortHeadlines}
+                    descriptions={descriptions}
+                    ctaText={ctaText}
+                    landingPage={landingPage}
+                  />
+                )}
+              </div>
+            </ScrollArea>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+
+        <DialogFooter className="px-6 py-4 border-t">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-        </div>
+          <Button onClick={handleCreate} disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Ad'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
