@@ -222,7 +222,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         title: title.trim(),
         description: description.trim() || null,
         priority: recurrence !== "none" ? "High" : priority,
-        status: status as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
+        status: "Pending" as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
         due_at: recurrence !== "none" ? null : date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
@@ -233,7 +233,6 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_day_of_week: recurrenceDayOfWeek,
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
-        attached_ads: attachedAds.length > 0 ? attachedAds.map(ad => ({ id: ad.id, headline: ad.headline, ad_type: ad.ad_type })) : null,
         task_type: taskType as "task" | "operations" | "campaign_launch",
       };
 
@@ -358,38 +357,18 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
               )}
             </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={priority} onValueChange={(val) => setPriority(val as "High" | "Medium" | "Low")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {userRole === "admin" && (
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={status} onValueChange={(val) => setStatus(val as typeof status)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Ongoing">Ongoing</SelectItem>
-                    <SelectItem value="Blocked">Blocked</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={(val) => setPriority(val as "High" | "Medium" | "Low")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

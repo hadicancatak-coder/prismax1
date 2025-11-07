@@ -277,14 +277,15 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                         </>
                       )}
                       <DropdownMenuItem 
-                         onClick={(e) => { 
+                        onClick={(e) => { 
                           e.stopPropagation(); 
                           setConfirmDeleteId(task.id); 
                         }}
                         disabled={deleteMutation.isPending}
+                        className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
