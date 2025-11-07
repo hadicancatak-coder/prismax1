@@ -1,25 +1,27 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Sparkles, Upload, Download, CheckCircle2 } from "lucide-react";
+import { Plus, Sparkles, Upload, Download, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { SavedAdDialog } from "@/components/SavedAdDialog";
+import { CreateAdDialog } from "@/components/ads/CreateAdDialog";
 import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
 import { BulkCSVImportDialog } from "@/components/ads/BulkCSVImportDialog";
 import { BulkCSVExportDialog } from "@/components/ads/BulkCSVExportDialog";
 import { ApprovalWorkflowDialog } from "@/components/ads/ApprovalWorkflowDialog";
 import { CampaignGroupingFilters } from "@/components/ads/CampaignGroupingFilters";
-import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
+import { DisplayAdPreview } from "@/components/ads/DisplayAdPreview";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function AdsPage() {
-  const [selectedTab, setSelectedTab] = useState('search');
+  const [activeTab, setActiveTab] = useState("search");
   const [selectedAd, setSelectedAd] = useState<any>(null);
-  const [showSavedAdDialog, setShowSavedAdDialog] = useState(false);
+  const [showAdDialog, setShowAdDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showElementsLibrary, setShowElementsLibrary] = useState(false);
-  const [adToEdit, setAdToEdit] = useState<any>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showBulkExport, setShowBulkExport] = useState(false);
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
@@ -27,9 +29,16 @@ export default function AdsPage() {
   const [adGroupFilter, setAdGroupFilter] = useState('all');
 
   const { data: ads = [], isLoading, refetch } = useQuery({
-    queryKey: ['ads', campaignFilter, adGroupFilter],
+    queryKey: ['ads', campaignFilter, adGroupFilter, activeTab],
     queryFn: async () => {
       let query = supabase.from('ads').select('*');
+      
+      // Filter by ad type based on active tab
+      if (activeTab === 'search') {
+        query = query.or('ad_type.eq.search,ad_type.is.null');
+      } else if (activeTab === 'display') {
+        query = query.eq('ad_type', 'display');
+      }
       
       if (campaignFilter && campaignFilter !== 'all') {
         query = query.eq('campaign_name', campaignFilter);
@@ -41,13 +50,11 @@ export default function AdsPage() {
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
-    },
+    }
   });
 
-  // Get unique campaigns and ad groups for filters
-  const allAds = ads || [];
-  const campaigns = Array.from(new Set(allAds.map(ad => ad.campaign_name).filter(Boolean))) as string[];
-  const adGroups = Array.from(new Set(allAds.map(ad => ad.ad_group_name).filter(Boolean))) as string[];
+  const campaigns = Array.from(new Set(ads.map(ad => ad.campaign_name).filter(Boolean)));
+  const adGroups = Array.from(new Set(ads.map(ad => ad.ad_group_name).filter(Boolean)));
 
   return (
     <div className="px-4 md:px-8 lg:px-48 py-8 space-y-8">
@@ -61,13 +68,13 @@ export default function AdsPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-2 md:gap-4">
-          <Button onClick={() => setShowSavedAdDialog(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
             Create New Ad
           </Button>
           <Button variant="outline" onClick={() => setShowElementsLibrary(true)}>
             <Sparkles className="mr-2 h-4 w-4" />
-            Saved Elements Library
+            Elements Library
           </Button>
           <Button variant="outline" onClick={() => setShowBulkImport(true)}>
             <Upload className="mr-2 h-4 w-4" />
@@ -90,123 +97,158 @@ export default function AdsPage() {
         adGroups={adGroups}
       />
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="search">Search Ads</TabsTrigger>
           <TabsTrigger value="display">Display Ads</TabsTrigger>
-          <TabsTrigger value="social">Social Ads</TabsTrigger>
         </TabsList>
 
-        {/* Search Ads Tab */}
         <TabsContent value="search" className="space-y-4">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <CardSkeleton key={i} />)}
-            </div>
-          ) : ads.filter(ad => ad.ad_type === 'search' || !ad.ad_type).length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No search ads yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">Create your first search ad or import from CSV</p>
-                <Button onClick={() => setShowSavedAdDialog(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Search Ad
-                </Button>
-              </CardContent>
+            <div className="text-center py-12">Loading ads...</div>
+          ) : ads.length === 0 ? (
+            <Card className="p-12 text-center">
+              <h3 className="text-lg font-semibold mb-2">No search ads yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first search ad or import from Google Ads Editor
+              </p>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Search Ad
+              </Button>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {ads.filter(ad => ad.ad_type === 'search' || !ad.ad_type).map((ad) => (
-                <Card key={ad.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{ad.name}</CardTitle>
-                    <CardDescription>
-                      {ad.campaign_name && <div className="text-xs">Campaign: {ad.campaign_name}</div>}
-                      {ad.ad_group_name && <div className="text-xs">Ad Group: {ad.ad_group_name}</div>}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Entity:</span>
-                      <span>{ad.entity || 'N/A'}</span>
+              {ads.map((ad) => (
+                <Card
+                  key={ad.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    setSelectedAd(ad);
+                    setShowAdDialog(true);
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm mb-1">{ad.name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {ad.entity} • {ad.campaign_name || 'No campaign'} • {ad.ad_group_name || 'No ad group'}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Status:</span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        ad.approval_status === 'approved' ? 'bg-green-100 text-green-800' :
-                        ad.approval_status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {ad.approval_status || 'pending'}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedAd(ad)}
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAd(ad);
-                          setShowApprovalWorkflow(true);
-                        }}
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Approval
-                      </Button>
-                    </div>
-                  </CardContent>
+                    <Badge 
+                      variant={
+                        ad.approval_status === 'approved' ? 'default' :
+                        ad.approval_status === 'rejected' ? 'destructive' :
+                        ad.approval_status === 'changes_requested' ? 'secondary' :
+                        'outline'
+                      }
+                      className="ml-2 shrink-0"
+                    >
+                      {ad.approval_status || 'draft'}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Created: {new Date(ad.created_at).toLocaleDateString()}
+                  </div>
                 </Card>
               ))}
             </div>
           )}
         </TabsContent>
 
-        {/* Display Ads Tab */}
-        <TabsContent value="display">
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Display ads coming soon
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Social Ads Tab */}
-        <TabsContent value="social">
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Social ads coming soon
-            </CardContent>
-          </Card>
+        <TabsContent value="display" className="space-y-4">
+          {isLoading ? (
+            <div className="text-center py-12">Loading ads...</div>
+          ) : ads.length === 0 ? (
+            <Card className="p-12 text-center">
+              <h3 className="text-lg font-semibold mb-2">No display ads yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first display ad with rich media content
+              </p>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Display Ad
+              </Button>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ads.map((ad) => (
+                <Card
+                  key={ad.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    setSelectedAd(ad);
+                    setShowAdDialog(true);
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm mb-1">{ad.name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {ad.entity} • {ad.campaign_name || 'No campaign'} • {ad.ad_group_name || 'No ad group'}
+                      </p>
+                    </div>
+                    <Badge 
+                      variant={
+                        ad.approval_status === 'approved' ? 'default' :
+                        ad.approval_status === 'rejected' ? 'destructive' :
+                        ad.approval_status === 'changes_requested' ? 'secondary' :
+                        'outline'
+                      }
+                      className="ml-2 shrink-0"
+                    >
+                      {ad.approval_status || 'draft'}
+                    </Badge>
+                  </div>
+                  
+                  {/* Display Ad Preview */}
+                  <div className="mt-3 border rounded p-2 bg-muted/30">
+                    <DisplayAdPreview
+                      businessName={ad.business_name || ''}
+                      longHeadline={ad.long_headline || ''}
+                      descriptions={ad.descriptions ? (typeof ad.descriptions === 'string' ? JSON.parse(ad.descriptions) : ad.descriptions) : []}
+                      ctaText={ad.cta_text || ''}
+                      landingPage={ad.landing_page || ''}
+                    />
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Created: {new Date(ad.created_at).toLocaleDateString()}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
+      <CreateAdDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onComplete={refetch}
+      />
+
       <SavedAdDialog
-        open={showSavedAdDialog}
+        open={showAdDialog}
         onOpenChange={(open) => {
-          setShowSavedAdDialog(open);
-          if (!open) {
-            setAdToEdit(null);
-            refetch();
-          }
+          setShowAdDialog(open);
+          if (!open) setSelectedAd(null);
         }}
-        ad={adToEdit}
+        ad={selectedAd}
         onUpdate={refetch}
       />
 
-      {showElementsLibrary && <SavedElementsLibrary />}
+      <Dialog open={showElementsLibrary} onOpenChange={setShowElementsLibrary}>
+        <DialogContent className="max-w-7xl max-h-[90vh]">
+          <SavedElementsLibrary />
+        </DialogContent>
+      </Dialog>
 
       <BulkCSVImportDialog
         open={showBulkImport}
         onOpenChange={setShowBulkImport}
-        onImportComplete={() => refetch()}
+        onImportComplete={refetch}
       />
 
       <BulkCSVExportDialog

@@ -131,6 +131,8 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
           </DialogTitle>
           <DialogDescription>
             {ad.entity && `Entity: ${ad.entity} • `}
+            {ad.campaign_name && `Campaign: ${ad.campaign_name} • `}
+            {ad.ad_group_name && `Ad Group: ${ad.ad_group_name} • `}
             Created: {new Date(ad.created_at).toLocaleDateString()}
           </DialogDescription>
         </DialogHeader>
