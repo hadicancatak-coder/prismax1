@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, X, AlertCircle } from "lucide-react";
+import { Loader2, Save, X, AlertCircle, Sparkles } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchAdPreview } from "./SearchAdPreview";
@@ -13,10 +13,12 @@ import { DisplayAdPreview } from "./DisplayAdPreview";
 import { ElementQuickInsert } from "./ElementQuickInsert";
 import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
 import { AdComplianceChecker } from "@/components/AdComplianceChecker";
+import { AdVariationGeneratorDialog } from "./AdVariationGeneratorDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { AdVariation } from "@/lib/adVariationGenerator";
 
 interface AdEditorPanelProps {
   ad: any | null;
@@ -29,6 +31,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
   const [adType, setAdType] = useState<"search" | "display">(ad?.ad_type || "search");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showVariationGenerator, setShowVariationGenerator] = useState(false);
 
   // Form state
   const [adName, setAdName] = useState("");
@@ -187,6 +190,23 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
     }
   };
 
+  const handleApplyVariation = (variation: AdVariation) => {
+    handleFieldChange(setHeadlines)(variation.headlines);
+    handleFieldChange(setDescriptions)(variation.descriptions);
+    
+    // Convert sitelinks to proper format
+    const formattedSitelinks = variation.sitelinks.map(text => ({
+      text,
+      url: '',
+      desc1: '',
+      desc2: '',
+    }));
+    handleFieldChange(setSitelinks)(formattedSitelinks);
+    handleFieldChange(setCallouts)(variation.callouts);
+    
+    toast.success(`Applied variation with ${variation.score}/100 quality score`);
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -203,6 +223,14 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowVariationGenerator(true)}
+            disabled={isSaving}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate Variations
+          </Button>
           <Button variant="outline" onClick={onCancel} disabled={isSaving}>
             <X className="h-4 w-4 mr-2" />
             Cancel
@@ -503,6 +531,14 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
           </ScrollArea>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Variation Generator Dialog */}
+      <AdVariationGeneratorDialog
+        open={showVariationGenerator}
+        onOpenChange={setShowVariationGenerator}
+        entity={entity}
+        onSelectVariation={handleApplyVariation}
+      />
     </div>
   );
 }
