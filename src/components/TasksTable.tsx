@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, Trash2, CheckCircle, Copy } from "lucide-react";
+import { MoreVertical, Trash2, CheckCircle, Copy, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +44,9 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   const [editValue, setEditValue] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [processingTaskId, setProcessingTaskId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | null>(null);
 
   // Delete mutation with optimistic updates
   const deleteMutation = useMutation({
@@ -242,7 +245,14 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                   {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
                 </TableCell>
                 <TableCell className="py-1.5 px-2">
-                  <DropdownMenu>
+                  <DropdownMenu 
+                    open={openDropdownId === task.id}
+                    onOpenChange={(open) => {
+                      if (!processingTaskId) {
+                        setOpenDropdownId(open ? task.id : null);
+                      }
+                    }}
+                  >
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                         <MoreVertical className="h-3 w-3" />
@@ -253,35 +263,114 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                         <>
                           <DropdownMenuItem 
                             onClick={async (e) => {
+                              e.preventDefault();
                               e.stopPropagation();
-                              await supabase.from('tasks').update({ status: 'Completed' }).eq('id', task.id);
-                              // Realtime subscription in useTasks.ts handles invalidation
+                              setProcessingTaskId(task.id);
+                              setProcessingAction('complete');
+                              
+                              const { error } = await supabase
+                                .from('tasks')
+                                .update({ status: 'Completed' })
+                                .eq('id', task.id);
+                              
+                              if (error) {
+                                toast({
+                                  title: "Error",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
+                              } else {
+                                toast({ title: "Task marked as completed" });
+                              }
+                              
+                              setProcessingTaskId(null);
+                              setProcessingAction(null);
+                              setOpenDropdownId(null);
                             }}
-                            disabled={deleteMutation.isPending}
+                            disabled={processingTaskId !== null}
                           >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Mark Completed
+                            {processingTaskId === task.id && processingAction === 'complete' ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Completing...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Mark Completed
+                              </>
+                            )}
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={async (e) => {
+                              e.preventDefault();
                               e.stopPropagation();
-                              const { id, created_at, updated_at, ...taskData } = task;
-                              await supabase.from('tasks').insert({ ...taskData, title: `${task.title} (Copy)` });
-                              // Realtime subscription in useTasks.ts handles invalidation
+                              setProcessingTaskId(task.id);
+                              setProcessingAction('duplicate');
+                              
+                              const { data: originalTask, error: fetchError } = await supabase
+                                .from('tasks')
+                                .select('*')
+                                .eq('id', task.id)
+                                .single();
+                              
+                              if (fetchError) {
+                                toast({
+                                  title: "Error",
+                                  description: fetchError.message,
+                                  variant: "destructive",
+                                });
+                                setProcessingTaskId(null);
+                                setProcessingAction(null);
+                                setOpenDropdownId(null);
+                                return;
+                              }
+                              
+                              const { id, created_at, updated_at, ...taskData } = originalTask;
+                              const { error } = await supabase
+                                .from('tasks')
+                                .insert({
+                                  ...taskData,
+                                  title: `${taskData.title} (Copy)`,
+                                });
+                              
+                              if (error) {
+                                toast({
+                                  title: "Error",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
+                              } else {
+                                toast({ title: "Task duplicated successfully" });
+                              }
+                              
+                              setProcessingTaskId(null);
+                              setProcessingAction(null);
+                              setOpenDropdownId(null);
                             }}
-                            disabled={deleteMutation.isPending}
+                            disabled={processingTaskId !== null}
                           >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
+                            {processingTaskId === task.id && processingAction === 'duplicate' ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Duplicating...
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicate
+                              </>
+                            )}
                           </DropdownMenuItem>
                         </>
                       )}
                       <DropdownMenuItem 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          setConfirmDeleteId(task.id); 
+                          setConfirmDeleteId(task.id);
+                          setOpenDropdownId(null);
                         }}
-                        disabled={deleteMutation.isPending}
+                        disabled={deleteMutation.isPending || processingTaskId !== null}
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
