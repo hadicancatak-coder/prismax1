@@ -90,13 +90,7 @@ export default function Tasks() {
       task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
     
     // Fix team filtering - check task.teams directly AND assignee teams
-    const taskTeams = Array.isArray(task.teams) && task.teams.length > 0
-      ? task.teams 
-      : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
-    
     const teamMatch = selectedTeams.length === 0 || 
-      (taskTeams.length === 0) || // Show legacy tasks with no teams
-      taskTeams.some((team: string) => selectedTeams.includes(team)) ||
       task.assignees?.some((assignee: any) => 
         assignee.teams?.some((team: string) => selectedTeams.includes(team))
       );

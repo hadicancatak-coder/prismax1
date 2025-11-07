@@ -149,39 +149,36 @@ export function TaskDateFilterBar({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 z-[200]" align="start">
-          <Calendar
-            mode="range"
-            selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
-            onSelect={(range) => {
-              if (range?.from) {
-                // Single date selection - treat as same day
-                if (!range.to) {
-                  const newRange = { from: range.from, to: range.from };
-                  setCustomRange(newRange);
-                  setSelectedFilter("custom");
-                  onFilterChange({ 
-                    label: format(range.from, 'MMM d'), 
-                    startDate: range.from, 
-                    endDate: range.from 
-                  });
-                  setCalendarOpen(false);
-                } 
-                // Date range selection
-                else if (range.to) {
-                  const newRange = { from: range.from, to: range.to };
-                  setCustomRange(newRange);
-                  setSelectedFilter("custom");
-                  onFilterChange({ 
-                    label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
-                    startDate: range.from, 
-                    endDate: range.to 
-                  });
-                  setCalendarOpen(false);
+          <div className="p-3 space-y-2">
+            <p className="text-xs text-muted-foreground text-center">
+              Click one date for a single day, or click two dates to select a range.
+            </p>
+            <Calendar
+              mode="range"
+              selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
+              onSelect={(range) => {
+                if (range?.from) {
+                  // Update visual state immediately
+                  setCustomRange(range as any);
+                  
+                  // Only apply filter when range is complete
+                  if (range.to) {
+                    setSelectedFilter("custom");
+                    const isSingleDay = range.from.getTime() === range.to.getTime();
+                    onFilterChange({ 
+                      label: isSingleDay 
+                        ? format(range.from, 'MMM d')
+                        : `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
+                      startDate: range.from, 
+                      endDate: range.to 
+                    });
+                    setCalendarOpen(false);
+                  }
                 }
-              }
-            }}
-            className="pointer-events-auto"
-          />
+              }}
+              className="pointer-events-auto"
+            />
+          </div>
         </PopoverContent>
       </Popover>
     </div>

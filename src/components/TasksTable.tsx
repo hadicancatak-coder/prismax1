@@ -224,15 +224,69 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="py-1.5 px-3">
-                  <Badge variant="outline" className={cn(statusColors[task.status as keyof typeof statusColors], "text-[10px] px-1.5 py-0")}>
-                    {task.status}
-                  </Badge>
+                <TableCell className="py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={task.status}
+                    onValueChange={async (newStatus: any) => {
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ status: newStatus as any })
+                        .eq("id", task.id);
+                      
+                      if (error) {
+                        toast({
+                          title: "Error updating status",
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      } else {
+                        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                        toast({ title: "Status updated" });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-6 w-[100px] text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Ongoing">Ongoing</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Failed">Failed</SelectItem>
+                      <SelectItem value="Blocked">Blocked</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
-                <TableCell className="hidden md:table-cell py-1.5 px-3">
-                  <Badge variant="outline" className={cn(priorityColors[task.priority as keyof typeof priorityColors], "text-[10px] px-1.5 py-0")}>
-                    {task.priority}
-                  </Badge>
+                <TableCell className="hidden md:table-cell py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={task.priority}
+                    onValueChange={async (newPriority: any) => {
+                      const { error } = await supabase
+                        .from("tasks")
+                        .update({ priority: newPriority as any })
+                        .eq("id", task.id);
+                      
+                      if (error) {
+                        toast({
+                          title: "Error updating priority",
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      } else {
+                        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                        toast({ title: "Priority updated" });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-6 w-[90px] text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-1.5 px-3">
                   {task.assignees && task.assignees.length > 0 ? (
