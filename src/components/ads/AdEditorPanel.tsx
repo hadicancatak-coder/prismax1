@@ -1,0 +1,508 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Save, X, AlertCircle } from "lucide-react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchAdPreview } from "./SearchAdPreview";
+import { DisplayAdPreview } from "./DisplayAdPreview";
+import { ElementQuickInsert } from "./ElementQuickInsert";
+import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
+import { AdComplianceChecker } from "@/components/AdComplianceChecker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+interface AdEditorPanelProps {
+  ad: any | null;
+  onSave: (adData: any) => void;
+  onCancel: () => void;
+  isCreating: boolean;
+}
+
+export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEditorPanelProps) {
+  const [adType, setAdType] = useState<"search" | "display">(ad?.ad_type || "search");
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Form state
+  const [adName, setAdName] = useState("");
+  const [campaign, setCampaign] = useState("");
+  const [adGroup, setAdGroup] = useState("");
+  const [entity, setEntity] = useState("");
+  const [headlines, setHeadlines] = useState<string[]>(["", "", ""]);
+  const [descriptions, setDescriptions] = useState<string[]>(["", ""]);
+  const [finalUrl, setFinalUrl] = useState("");
+  const [path1, setPath1] = useState("");
+  const [path2, setPath2] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [sitelinks, setSitelinks] = useState<Array<{ text: string; url: string; desc1?: string; desc2?: string }>>([]);
+  const [callouts, setCallouts] = useState<string[]>([]);
+
+  // Display ad state
+  const [longHeadline, setLongHeadline] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [logoUrl, setLogoUrl] = useState("");
+
+  // Fetch campaigns and entities
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["campaigns"],
+    queryFn: async () => {
+      const { data } = await supabase.from("utm_campaigns").select("*");
+      return data || [];
+    },
+  });
+
+  const { data: entities = [] } = useQuery({
+    queryKey: ["entities"],
+    queryFn: async () => {
+      const { data } = await supabase.from("entity_presets").select("*");
+      return data || [];
+    },
+  });
+
+  // Load ad data when editing
+  useEffect(() => {
+    if (ad) {
+      setAdType(ad.ad_type || "search");
+      setAdName(ad.name || "");
+      setCampaign(ad.campaign || "");
+      setAdGroup(ad.ad_group || "");
+      setEntity(ad.entity || "");
+      setHeadlines(ad.headlines || ["", "", ""]);
+      setDescriptions(ad.descriptions || ["", ""]);
+      setFinalUrl(ad.final_url || "");
+      setPath1(ad.path1 || "");
+      setPath2(ad.path2 || "");
+      setBusinessName(ad.business_name || "");
+      setSitelinks(ad.sitelinks || []);
+      setCallouts(ad.callouts || []);
+      setLongHeadline(ad.long_headline || "");
+      setImages(ad.images || []);
+      setLogoUrl(ad.logo_url || "");
+      setHasChanges(false);
+    } else if (isCreating) {
+      // Reset form for new ad
+      setAdName("");
+      setCampaign("");
+      setAdGroup("");
+      setEntity("");
+      setHeadlines(["", "", ""]);
+      setDescriptions(["", ""]);
+      setFinalUrl("");
+      setPath1("");
+      setPath2("");
+      setBusinessName("");
+      setSitelinks([]);
+      setCallouts([]);
+      setLongHeadline("");
+      setImages([]);
+      setLogoUrl("");
+      setHasChanges(false);
+    }
+  }, [ad, isCreating]);
+
+  const handleFieldChange = (setter: Function) => (value: any) => {
+    setter(value);
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (!adName.trim()) {
+      toast.error("Please enter an ad name");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const adData = {
+        name: adName,
+        ad_type: adType,
+        campaign,
+        ad_group: adGroup,
+        entity,
+        headlines,
+        descriptions,
+        final_url: finalUrl,
+        path1,
+        path2,
+        business_name: businessName,
+        sitelinks,
+        callouts,
+        long_headline: longHeadline,
+        images,
+        logo_url: logoUrl,
+        approval_status: ad?.approval_status || "draft",
+      };
+
+      await onSave(adData);
+      setHasChanges(false);
+      toast.success(isCreating ? "Ad created successfully" : "Ad updated successfully");
+    } catch (error) {
+      console.error("Error saving ad:", error);
+      toast.error("Failed to save ad");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateHeadline = (index: number, value: string) => {
+    const newHeadlines = [...headlines];
+    newHeadlines[index] = value;
+    handleFieldChange(setHeadlines)(newHeadlines);
+  };
+
+  const updateDescription = (index: number, value: string) => {
+    const newDescriptions = [...descriptions];
+    newDescriptions[index] = value;
+    handleFieldChange(setDescriptions)(newDescriptions);
+  };
+
+  const addHeadline = () => {
+    if (headlines.length < 15) {
+      handleFieldChange(setHeadlines)([...headlines, ""]);
+    }
+  };
+
+  const addDescription = () => {
+    if (descriptions.length < 4) {
+      handleFieldChange(setDescriptions)([...descriptions, ""]);
+    }
+  };
+
+  const removeHeadline = (index: number) => {
+    if (headlines.length > 3) {
+      handleFieldChange(setHeadlines)(headlines.filter((_, i) => i !== index));
+    }
+  };
+
+  const removeDescription = (index: number) => {
+    if (descriptions.length > 2) {
+      handleFieldChange(setDescriptions)(descriptions.filter((_, i) => i !== index));
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="border-b p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold">
+            {isCreating ? "Create New Ad" : `Edit: ${adName || "Untitled Ad"}`}
+          </h2>
+          {hasChanges && (
+            <Badge variant="outline" className="gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Unsaved changes
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Left Panel - Form */}
+        <ResizablePanel defaultSize={50} minSize={40}>
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-6">
+              {/* Ad Type Tabs */}
+              <Tabs value={adType} onValueChange={(v) => handleFieldChange(setAdType)(v as "search" | "display")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="search">Search Ad</TabsTrigger>
+                  <TabsTrigger value="display">Display Ad</TabsTrigger>
+                </TabsList>
+
+                {/* Basic Info */}
+                <Card className="mt-4">
+                  <CardContent className="pt-6 space-y-4">
+                    <div>
+                      <Label htmlFor="adName">Ad Name *</Label>
+                      <Input
+                        id="adName"
+                        value={adName}
+                        onChange={(e) => handleFieldChange(setAdName)(e.target.value)}
+                        placeholder="e.g., CFI Trading Platform - UK"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="campaign">Campaign</Label>
+                        <Select value={campaign} onValueChange={handleFieldChange(setCampaign)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select campaign" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {campaigns.map((c: any) => (
+                              <SelectItem key={c.id} value={c.name}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="adGroup">Ad Group</Label>
+                        <Input
+                          id="adGroup"
+                          value={adGroup}
+                          onChange={(e) => handleFieldChange(setAdGroup)(e.target.value)}
+                          placeholder="e.g., Trading Platforms"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="entity">Entity</Label>
+                      <Select value={entity} onValueChange={handleFieldChange(setEntity)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select entity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {entities.map((e: any) => (
+                            <SelectItem key={e.id} value={e.entity_code}>
+                              {e.entity_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Search Ad Fields */}
+                <TabsContent value="search" className="space-y-4">
+                  {/* Headlines */}
+                  <Card>
+                    <CardContent className="pt-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Headlines (3-15)</Label>
+                        <Button size="sm" variant="outline" onClick={addHeadline} disabled={headlines.length >= 15}>
+                          Add Headline
+                        </Button>
+                      </div>
+                      {headlines.map((headline, index) => (
+                        <div key={index} className="flex gap-2 items-start">
+                          <div className="flex-1">
+                            <Input
+                              value={headline}
+                              onChange={(e) => updateHeadline(index, e.target.value)}
+                              placeholder={`Headline ${index + 1}`}
+                              maxLength={30}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {headline.length}/30 characters
+                            </p>
+                          </div>
+                          <ElementQuickInsert
+                            elementType="headline"
+                            onInsert={(content) => updateHeadline(index, content)}
+                          />
+                          {headlines.length > 3 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeHeadline(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Descriptions */}
+                  <Card>
+                    <CardContent className="pt-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Descriptions (2-4)</Label>
+                        <Button size="sm" variant="outline" onClick={addDescription} disabled={descriptions.length >= 4}>
+                          Add Description
+                        </Button>
+                      </div>
+                      {descriptions.map((description, index) => (
+                        <div key={index} className="flex gap-2 items-start">
+                          <div className="flex-1">
+                            <Input
+                              value={description}
+                              onChange={(e) => updateDescription(index, e.target.value)}
+                              placeholder={`Description ${index + 1}`}
+                              maxLength={90}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {description.length}/90 characters
+                            </p>
+                          </div>
+                          <ElementQuickInsert
+                            elementType="description"
+                            onInsert={(content) => updateDescription(index, content)}
+                          />
+                          {descriptions.length > 2 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeDescription(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* URL Fields */}
+                  <Card>
+                    <CardContent className="pt-6 space-y-4">
+                      <div>
+                        <Label htmlFor="finalUrl">Final URL</Label>
+                        <Input
+                          id="finalUrl"
+                          value={finalUrl}
+                          onChange={(e) => handleFieldChange(setFinalUrl)(e.target.value)}
+                          placeholder="https://example.com/landing-page"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="path1">Path 1</Label>
+                          <Input
+                            id="path1"
+                            value={path1}
+                            onChange={(e) => handleFieldChange(setPath1)(e.target.value)}
+                            placeholder="trading"
+                            maxLength={15}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="path2">Path 2</Label>
+                          <Input
+                            id="path2"
+                            value={path2}
+                            onChange={(e) => handleFieldChange(setPath2)(e.target.value)}
+                            placeholder="platform"
+                            maxLength={15}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="businessName">Business Name</Label>
+                        <Input
+                          id="businessName"
+                          value={businessName}
+                          onChange={(e) => handleFieldChange(setBusinessName)(e.target.value)}
+                          placeholder="Your Business"
+                          maxLength={25}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Display Ad Fields */}
+                <TabsContent value="display" className="space-y-4">
+                  <Card>
+                    <CardContent className="pt-6 space-y-4">
+                      <div>
+                        <Label htmlFor="longHeadline">Long Headline</Label>
+                        <Input
+                          id="longHeadline"
+                          value={longHeadline}
+                          onChange={(e) => handleFieldChange(setLongHeadline)(e.target.value)}
+                          placeholder="Enter long headline"
+                          maxLength={90}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {longHeadline.length}/90 characters
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="logoUrl">Logo URL</Label>
+                        <Input
+                          id="logoUrl"
+                          value={logoUrl}
+                          onChange={(e) => handleFieldChange(setLogoUrl)(e.target.value)}
+                          placeholder="https://example.com/logo.png"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              {/* Ad Strength & Compliance */}
+              <div className="grid grid-cols-2 gap-4">
+                <AdStrengthIndicator
+                  headlines={headlines.filter(h => h.trim())}
+                  descriptions={descriptions.filter(d => d.trim())}
+                  sitelinks={sitelinks.map(s => s.text).filter(Boolean)}
+                  callouts={callouts.filter(Boolean)}
+                />
+                <AdComplianceChecker
+                  headlines={headlines}
+                  descriptions={descriptions}
+                  sitelinks={sitelinks.map(s => s.text).filter(Boolean)}
+                  callouts={callouts.filter(Boolean)}
+                  entity={entity}
+                />
+              </div>
+            </div>
+          </ScrollArea>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Right Panel - Preview */}
+        <ResizablePanel defaultSize={50} minSize={30}>
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
+              {adType === "search" ? (
+                <SearchAdPreview
+                  headlines={headlines.filter(h => h.trim())}
+                  descriptions={descriptions.filter(d => d.trim())}
+                  landingPage={finalUrl}
+                  businessName={businessName}
+                />
+              ) : (
+                <DisplayAdPreview
+                  businessName={businessName}
+                  longHeadline={longHeadline}
+                  shortHeadlines={headlines.filter(h => h.trim())}
+                  descriptions={descriptions.filter(d => d.trim())}
+                  ctaText="Learn More"
+                  landingPage={finalUrl}
+                />
+              )}
+            </div>
+          </ScrollArea>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
+  );
+}
