@@ -54,7 +54,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [attachedAds, setAttachedAds] = useState<any[]>([]);
-  const [taskType, setTaskType] = useState<string>("general");
+  const [taskType, setTaskType] = useState<string>("task");
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -293,6 +293,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setValidationErrors({});
       setSelectedTeams([]);
       setAttachedAds([]);
+      setTaskType("task");
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -336,9 +337,9 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     <SelectValue placeholder="Select task type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="general">General Task</SelectItem>
-                    <SelectItem value="operations">Operations Task</SelectItem>
-                    <SelectItem value="campaign">Campaign</SelectItem>
+                    <SelectItem value="task">General Task</SelectItem>
+                    <SelectItem value="operations">Operations</SelectItem>
+                    <SelectItem value="campaign_launch">Campaign</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -633,7 +634,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
           )}
 
               {/* Attached Ads Section - Only show for Campaign type */}
-              {taskType === "campaign" && (
+              {taskType === "campaign_launch" && (
                 <div className="space-y-2 pt-2 border-t">
                   <AttachedAdsSection
                     attachedAds={attachedAds}

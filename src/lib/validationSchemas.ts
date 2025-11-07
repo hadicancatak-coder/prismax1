@@ -53,6 +53,7 @@ export const taskSchema = z.object({
   assignee_id: z.string().uuid().optional().nullable(),
   project_id: z.string().uuid().optional().nullable(),
   due_at: z.string().datetime().optional().nullable(),
+  task_type: z.enum(["task", "operations", "campaign_launch"]).optional(),
 });
 
 // Working days validation schema
