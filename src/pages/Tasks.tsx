@@ -31,7 +31,8 @@ export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'board'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'kanban-status' | 'kanban-date'>('table');
+  const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date'>('status');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -196,26 +197,20 @@ export default function Tasks() {
             
             <div className="h-6 w-px bg-border hidden sm:block" />
             
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-muted-foreground font-medium">Quick:</span>
-              {quickFilters.map(({ label, Icon }) => {
-                const count = data?.filter(quickFilters.find(f => f.label === label)!.filter).length || 0;
-                return (
-                  <Button
-                    key={label}
-                    variant={activeQuickFilter === label ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveQuickFilter(activeQuickFilter === label ? null : label)}
-                  >
-                    <Icon className="h-3.5 w-3.5 mr-1.5" />
-                    {label}
-                    <Badge variant="secondary" className="ml-1.5 text-xs">{count}</Badge>
-                  </Button>
-                );
-              })}
-            </div>
-
-            <div className="h-6 w-px bg-border hidden lg:block" />
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Ongoing">Ongoing</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+                <SelectItem value="Blocked">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
 
             <AssigneeFilterBar
               selectedAssignees={selectedAssignees}
@@ -224,36 +219,31 @@ export default function Tasks() {
               onTeamsChange={setSelectedTeams}
             />
 
-            <div className="h-6 w-px bg-border hidden lg:block" />
-
             <TaskDateFilterBar
               onFilterChange={setDateFilter}
-              onStatusChange={setStatusFilter}
-              selectedStatus={statusFilter}
+              onStatusChange={() => {}}
+              selectedStatus="all"
             />
 
             <div className="ml-auto flex items-center gap-2">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('table')}
+              <Select 
+                value={viewMode} 
+                onValueChange={(v) => {
+                  setViewMode(v as any);
+                  if (v === 'kanban-status') setBoardGroupBy('status');
+                  if (v === 'kanban-date') setBoardGroupBy('date');
+                }}
               >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'board' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('board')}
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="table">Table View</SelectItem>
+                  <SelectItem value="grid">Grid View</SelectItem>
+                  <SelectItem value="kanban-status">Kanban by Status</SelectItem>
+                  <SelectItem value="kanban-date">Kanban by Date</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -333,7 +323,13 @@ export default function Tasks() {
               <>
                 {viewMode === 'table' && <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} />}
                 {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
-                {viewMode === 'board' && <TaskBoardView tasks={filteredTasks} onTaskClick={handleTaskClick} />}
+                {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && (
+                  <TaskBoardView 
+                    tasks={filteredTasks} 
+                    onTaskClick={handleTaskClick}
+                    groupBy={boardGroupBy}
+                  />
+                )}
 
                 {/* Pagination */}
                 {totalPages > 1 && (

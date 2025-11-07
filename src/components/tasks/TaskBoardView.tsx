@@ -16,20 +16,50 @@ import { useQueryClient } from "@tanstack/react-query";
 interface TaskBoardViewProps {
   tasks: any[];
   onTaskClick: (taskId: string) => void;
+  groupBy?: 'status' | 'date';
 }
 
-export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
+export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBoardViewProps) => {
   const { userRole } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<{ taskId: string; action: 'complete' | 'duplicate' | 'delete' } | null>(null);
-  const statuses = ['Pending', 'Ongoing', 'Blocked', 'Completed', 'Failed'];
+  
+  const statusGroups = ['Pending', 'Ongoing', 'Blocked', 'Completed', 'Failed'];
+  const dateGroups = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'Later'];
+  
+  const groups = groupBy === 'status' ? statusGroups : dateGroups;
 
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
     return new Date(dueDate) < new Date();
+  };
+
+  const getDateGroup = (task: any): string => {
+    if (!task.due_at) return 'Later';
+    const dueDate = new Date(task.due_at);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekFromNow = new Date(today);
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+    if (dueDate < today && task.status !== 'Completed') return 'Overdue';
+    if (dueDate.toDateString() === today.toDateString()) return 'Today';
+    if (dueDate.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    if (dueDate <= weekFromNow) return 'This Week';
+    return 'Later';
+  };
+
+  const filterTasksByGroup = (group: string) => {
+    if (groupBy === 'status') {
+      return tasks.filter(t => t.status === group);
+    } else {
+      return tasks.filter(t => getDateGroup(t) === group);
+    }
   };
 
   const priorityColors = {
@@ -178,21 +208,24 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-      {statuses.map(status => (
-        <div key={status} className="flex flex-col min-h-[600px]">
-          <div className={cn("rounded-t-lg p-3 border-b", statusColors[status])}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{status}</h3>
-              <Badge variant="secondary">
-                {tasks.filter(t => t.status === status).length}
-              </Badge>
+      {groups.map(group => {
+        const groupTasks = filterTasksByGroup(group);
+        const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
+        
+        return (
+          <div key={group} className="flex flex-col min-h-[600px]">
+            <div className={cn("rounded-t-lg p-3 border-b", color)}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">{group}</h3>
+                <Badge variant="secondary">
+                  {groupTasks.length}
+                </Badge>
+              </div>
             </div>
-          </div>
-          
-          <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
-            <div className="space-y-2">
-              {tasks
-                .filter(t => t.status === status)
+            
+            <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
+              <div className="space-y-2">
+                {groupTasks
                 .map(task => (
                   <Card 
                     key={task.id}
@@ -282,11 +315,12 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
                       )}
                     </div>
                   </Card>
-                ))}
-            </div>
-          </ScrollArea>
-        </div>
-      ))}
+                  ))}
+              </div>
+            </ScrollArea>
+          </div>
+        );
+      })}
 
       <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
         <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>

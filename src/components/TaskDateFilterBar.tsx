@@ -8,6 +8,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
@@ -22,7 +29,9 @@ import {
   addWeeks,
   startOfMonth,
   endOfMonth,
-  addMonths
+  addMonths,
+  startOfYesterday,
+  endOfYesterday
 } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +76,9 @@ export function TaskDateFilterBar({
     switch (filterType) {
       case "today":
         filter = { label: "Today", startDate: startOfToday(), endDate: endOfToday() };
+        break;
+      case "yesterday":
+        filter = { label: "Yesterday", startDate: startOfYesterday(), endDate: endOfYesterday() };
         break;
       case "tomorrow":
         filter = { label: "Tomorrow", startDate: startOfTomorrow(), endDate: endOfTomorrow() };
@@ -115,60 +127,23 @@ export function TaskDateFilterBar({
   ];
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-sm text-muted-foreground font-medium">Date:</span>
-      
-      <Button
-        variant={selectedFilter === "all" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleFilterClick("all")}
-      >
-        All
-        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.all}</Badge>}
-      </Button>
-
-      <Button
-        variant={selectedFilter === "today" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleFilterClick("today")}
-      >
-        Today
-        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.today}</Badge>}
-      </Button>
-
-      <Button
-        variant={selectedFilter === "tomorrow" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleFilterClick("tomorrow")}
-      >
-        Tomorrow
-        {taskCounts && <Badge variant="secondary" className="ml-1.5">{taskCounts.tomorrow}</Badge>}
-      </Button>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            More <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-background">
-          <DropdownMenuItem onClick={() => handleFilterClick("thisWeek")}>
-            This Week {taskCounts && `(${taskCounts.thisWeek})`}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("nextWeek")}>
-            Next Week {taskCounts && `(${taskCounts.nextWeek})`}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("thisMonth")}>
-            This Month {taskCounts && `(${taskCounts.thisMonth})`}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("nextMonth")}>
-            Next Month {taskCounts && `(${taskCounts.nextMonth})`}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("backlog")}>
-            Backlog {taskCounts && `(${taskCounts.backlog})`}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="flex items-center gap-2">
+      <Select value={selectedFilter} onValueChange={handleFilterClick}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Date" />
+        </SelectTrigger>
+        <SelectContent>
+          <DropdownMenuItem onClick={() => handleFilterClick("all")}>All Dates</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("today")}>Today</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("yesterday")}>Yesterday</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("tomorrow")}>Tomorrow</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("thisWeek")}>This Week</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("nextWeek")}>Next Week</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("thisMonth")}>This Month</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("nextMonth")}>Next Month</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleFilterClick("backlog")}>Backlog</DropdownMenuItem>
+        </SelectContent>
+      </Select>
 
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger asChild>
@@ -176,10 +151,7 @@ export function TaskDateFilterBar({
             variant={selectedFilter === "custom" ? "default" : "outline"} 
             size="sm"
           >
-            <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
-            {customRange?.from && customRange?.to 
-              ? `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}` 
-              : 'Custom'}
+            <CalendarIcon className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 z-[200]" align="start">
@@ -203,27 +175,6 @@ export function TaskDateFilterBar({
           />
         </PopoverContent>
       </Popover>
-
-      <div className="h-6 w-px bg-border" />
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            {statusOptions.find(s => s.value === selectedStatus)?.label || "Status"}
-            <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="bg-background">
-          {statusOptions.map((status) => (
-            <DropdownMenuItem 
-              key={status.value}
-              onClick={() => onStatusChange(status.value)}
-            >
-              {status.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }

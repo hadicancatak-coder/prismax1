@@ -45,6 +45,11 @@ export function WhatsNext() {
             >
               <div className="flex-1">
                 <h3 className="font-medium text-body text-foreground mb-1">{task.title}</h3>
+                {task.description && (
+                  <p className="text-metadata text-muted-foreground line-clamp-1 mb-1">
+                    {task.description.replace(/<[^>]*>/g, '')}
+                  </p>
+                )}
                 <p className="text-metadata">
                   {task.assignees && task.assignees.length > 0 
                     ? task.assignees.map((a: any) => a.name).join(", ")

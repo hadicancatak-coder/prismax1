@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loader2, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -24,6 +24,8 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | 'delete' | null>(null);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
     return new Date(dueDate) < new Date();
@@ -78,6 +80,58 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     } finally {
       setProcessingAction(null);
       setOpenDropdown(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus as any })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Task status updated to ${newStatus}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setStatusOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePriorityChange = async (newPriority: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ priority: newPriority as any })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Task priority updated to ${newPriority}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setPriorityOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -190,12 +244,38 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       {/* Priority and Status badges */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
-            {task.priority}
-          </Badge>
-          <Badge variant="outline" className={statusColors[task.status as keyof typeof statusColors]}>
-            {task.status}
-          </Badge>
+          {/* Priority Dropdown */}
+          <DropdownMenu open={priorityOpen} onOpenChange={setPriorityOpen}>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Badge variant="outline" className={cn(priorityColors[task.priority as keyof typeof priorityColors], "cursor-pointer hover:opacity-80")}>
+                {task.priority}
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Badge>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={(e) => handlePriorityChange('High', e)}>High</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handlePriorityChange('Medium', e)}>Medium</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handlePriorityChange('Low', e)}>Low</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Status Dropdown */}
+          <DropdownMenu open={statusOpen} onOpenChange={setStatusOpen}>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Badge variant="outline" className={cn(statusColors[task.status as keyof typeof statusColors], "cursor-pointer hover:opacity-80")}>
+                {task.status}
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Badge>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Pending', e)}>Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Ongoing', e)}>Ongoing</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Blocked', e)}>Blocked</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Completed', e)}>Completed</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Failed', e)}>Failed</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {task.visibility && (
             <Badge variant={task.visibility === 'global' ? 'default' : 'secondary'} className="text-xs">
               {task.visibility === 'global' ? 'Global' : 'Private'}
