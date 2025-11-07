@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Upload, Download, CheckCircle2 } from "lucide-react";
+import { Plus, Sparkles, Upload, Download, CheckCircle2, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { ApprovalWorkflowDialog } from "@/components/ads/ApprovalWorkflowDialog"
 import { CampaignGroupingFilters } from "@/components/ads/CampaignGroupingFilters";
 import { DisplayAdPreview } from "@/components/ads/DisplayAdPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { SavedAdsTableView } from "@/components/ads/SavedAdsTableView";
 
 export default function AdsPage() {
   const [activeTab, setActiveTab] = useState("search");
@@ -27,6 +28,7 @@ export default function AdsPage() {
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
   const [campaignFilter, setCampaignFilter] = useState('all');
   const [adGroupFilter, setAdGroupFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
   const { data: ads = [], isLoading, refetch } = useQuery({
     queryKey: ['ads', campaignFilter, adGroupFilter, activeTab],
@@ -68,6 +70,22 @@ export default function AdsPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+          <div className="flex items-center border rounded-lg">
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              <TableIcon className="w-4 h-4" />
+            </Button>
+          </div>
           <Button onClick={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create New Ad
@@ -117,6 +135,23 @@ export default function AdsPage() {
                 Create Search Ad
               </Button>
             </Card>
+          ) : viewMode === 'table' ? (
+            <SavedAdsTableView
+              ads={ads}
+              onViewAd={(ad) => {
+                setSelectedAd(ad);
+                setShowAdDialog(true);
+              }}
+              onEditAd={(ad) => {
+                setSelectedAd(ad);
+                setShowAdDialog(true);
+              }}
+              onDeleteAd={async (adId) => {
+                await supabase.from('ads').delete().eq('id', adId);
+                refetch();
+              }}
+              onRefresh={() => refetch()}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {ads.map((ad) => (
@@ -170,6 +205,23 @@ export default function AdsPage() {
                 Create Display Ad
               </Button>
             </Card>
+          ) : viewMode === 'table' ? (
+            <SavedAdsTableView
+              ads={ads}
+              onViewAd={(ad) => {
+                setSelectedAd(ad);
+                setShowAdDialog(true);
+              }}
+              onEditAd={(ad) => {
+                setSelectedAd(ad);
+                setShowAdDialog(true);
+              }}
+              onDeleteAd={async (adId) => {
+                await supabase.from('ads').delete().eq('id', adId);
+                refetch();
+              }}
+              onRefresh={() => refetch()}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {ads.map((ad) => (

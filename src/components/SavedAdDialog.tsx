@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight, MessageSquare, History } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Save, X, ChevronLeft, ChevronRight, MessageSquare, History, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AdStrengthIndicator } from "./AdStrengthIndicator";
@@ -20,6 +20,7 @@ import { AdComplianceChecker } from "./AdComplianceChecker";
 import { AdVersionHistory } from "./ads/AdVersionHistory";
 import { AdComments } from "./ads/AdComments";
 import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 interface SavedAdDialogProps {
   open: boolean;
@@ -38,6 +39,26 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const [callouts, setCallouts] = useState<string[]>([]);
   const [combinationIndex, setCombinationIndex] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { copy } = useCopyToClipboard();
+
+  const handleDuplicate = async () => {
+    try {
+      const { error } = await supabase.from('ads').insert({
+        ...ad,
+        id: undefined,
+        name: `${ad.name} (Copy)`,
+        created_at: undefined,
+        updated_at: undefined,
+      });
+
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Ad duplicated successfully' });
+      onOpenChange(false);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to duplicate ad', variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     if (ad) {
@@ -118,23 +139,31 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle className="flex items-center justify-between">
-            {isEditing ? (
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-xl font-semibold"
-              />
-            ) : (
-              <span>{ad.name}</span>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {ad.entity && `Entity: ${ad.entity} • `}
-            {ad.campaign_name && `Campaign: ${ad.campaign_name} • `}
-            {ad.ad_group_name && `Ad Group: ${ad.ad_group_name} • `}
-            Created: {new Date(ad.created_at).toLocaleDateString()}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <DialogTitle className="flex items-center justify-between">
+                {isEditing ? (
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="text-xl font-semibold"
+                  />
+                ) : (
+                  <span>{ad.name}</span>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {ad.entity && `Entity: ${ad.entity} • `}
+                {ad.campaign_name && `Campaign: ${ad.campaign_name} • `}
+                {ad.ad_group_name && `Ad Group: ${ad.ad_group_name} • `}
+                Created: {new Date(ad.created_at).toLocaleDateString()}
+              </DialogDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleDuplicate}>
+              <Copy className="w-4 h-4 mr-2" />
+              Duplicate
+            </Button>
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="preview" className="flex-1 flex flex-col min-h-0">

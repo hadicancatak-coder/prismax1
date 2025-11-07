@@ -14,6 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DisplayAdCreator } from "./DisplayAdCreator";
+import { ElementQuickInsert } from "./ElementQuickInsert";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { Copy, Save } from "lucide-react";
+import { useSaveSocialElement } from "@/hooks/useSocialAdElements";
 
 interface CreateAdDialogProps {
   open: boolean;
@@ -39,6 +43,8 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
   const [adGroupName, setAdGroupName] = useState("");
   const [adName, setAdName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { copy } = useCopyToClipboard();
+  const saveElementMutation = useSaveSocialElement();
 
   // Search ad fields
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
@@ -74,6 +80,26 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
     setDisplayDescriptions(Array(5).fill(""));
     setCtaText("");
     setDisplayLandingPage("");
+  };
+
+  const handleSaveAsElement = async (content: string, elementType: 'headline' | 'description' | 'sitelink' | 'callout') => {
+    if (!content.trim()) {
+      toast({ title: 'Error', description: 'Cannot save empty text', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      await saveElementMutation.mutateAsync({
+        content,
+        elementType,
+        entity: entity ? [entity] : [],
+        language: 'EN',
+      });
+      
+      toast({ title: 'Success', description: `Saved as ${elementType}` });
+    } catch (error) {
+      console.error('Error saving element:', error);
+    }
   };
 
   const handleCreate = async () => {
@@ -240,17 +266,47 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                 <Label>Headlines (up to 15, max 30 chars each)</Label>
                 <div className="grid gap-2">
                   {headlines.slice(0, 5).map((h, i) => (
-                    <Input
-                      key={i}
-                      value={h}
-                      onChange={(e) => {
-                        const newHeadlines = [...headlines];
-                        newHeadlines[i] = e.target.value.slice(0, 30);
-                        setHeadlines(newHeadlines);
-                      }}
-                      placeholder={`Headline ${i + 1}`}
-                      maxLength={30}
-                    />
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={h}
+                        onChange={(e) => {
+                          const newHeadlines = [...headlines];
+                          newHeadlines[i] = e.target.value.slice(0, 30);
+                          setHeadlines(newHeadlines);
+                        }}
+                        placeholder={`Headline ${i + 1}`}
+                        maxLength={30}
+                        className="flex-1"
+                      />
+                      <ElementQuickInsert 
+                        elementType="headline"
+                        onInsert={(content) => {
+                          const newHeadlines = [...headlines];
+                          newHeadlines[i] = content.slice(0, 30);
+                          setHeadlines(newHeadlines);
+                        }}
+                      />
+                      {h && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copy(h, 'Headline copied')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSaveAsElement(h, 'headline')}
+                          >
+                            <Save className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -259,17 +315,47 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                 <Label>Descriptions (up to 4, max 90 chars each)</Label>
                 <div className="grid gap-2">
                   {descriptions.map((d, i) => (
-                    <Input
-                      key={i}
-                      value={d}
-                      onChange={(e) => {
-                        const newDescriptions = [...descriptions];
-                        newDescriptions[i] = e.target.value.slice(0, 90);
-                        setDescriptions(newDescriptions);
-                      }}
-                      placeholder={`Description ${i + 1}`}
-                      maxLength={90}
-                    />
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={d}
+                        onChange={(e) => {
+                          const newDescriptions = [...descriptions];
+                          newDescriptions[i] = e.target.value.slice(0, 90);
+                          setDescriptions(newDescriptions);
+                        }}
+                        placeholder={`Description ${i + 1}`}
+                        maxLength={90}
+                        className="flex-1"
+                      />
+                      <ElementQuickInsert 
+                        elementType="description"
+                        onInsert={(content) => {
+                          const newDescriptions = [...descriptions];
+                          newDescriptions[i] = content.slice(0, 90);
+                          setDescriptions(newDescriptions);
+                        }}
+                      />
+                      {d && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copy(d, 'Description copied')}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSaveAsElement(d, 'description')}
+                          >
+                            <Save className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
