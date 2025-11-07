@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import { realtimeService } from "@/lib/realtimeService";
 
 export interface TaskFilters {
   assignees?: string[];
@@ -51,18 +52,23 @@ export function useTasks(filters?: TaskFilters) {
       };
     });
 
-    // Filter tasks where user is either direct assignee or team member
+    // Filter tasks based on visibility settings
     return allTasks.filter((task: any) => {
-      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
+      // Admins always see everything
+      if (userRole === 'admin') return true;
       
+      // Global visibility tasks are visible to everyone
+      if (task.visibility === 'global') return true;
+      
+      // For private tasks, check if user is assigned or part of team
+      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
       const userTeams = currentProfile?.teams || [];
       const taskTeams = Array.isArray(task.teams) 
         ? task.teams 
         : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
-      
       const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
       
-      return userRole === 'admin' || isDirectAssignee || isTeamMember;
+      return isDirectAssignee || isTeamMember;
     });
   };
 
@@ -71,28 +77,16 @@ export function useTasks(filters?: TaskFilters) {
     queryFn: fetchTasks,
   });
 
-  // Setup realtime subscription
+  // Setup realtime subscription using centralized service
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          // Refetch tasks on any change
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        }
-      )
-      .subscribe();
+    const unsubscribe = realtimeService.subscribe('tasks', () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [user, queryClient]);
 

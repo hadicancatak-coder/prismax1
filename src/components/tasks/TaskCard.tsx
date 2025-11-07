@@ -189,13 +189,18 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     >
       {/* Priority and Status badges */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={priorityColors[task.priority as keyof typeof priorityColors]}>
             {task.priority}
           </Badge>
           <Badge variant="outline" className={statusColors[task.status as keyof typeof statusColors]}>
             {task.status}
           </Badge>
+          {task.visibility && (
+            <Badge variant={task.visibility === 'global' ? 'default' : 'secondary'} className="text-xs">
+              {task.visibility === 'global' ? 'Global' : 'Private'}
+            </Badge>
+          )}
         </div>
 
         <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
