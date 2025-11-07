@@ -23,18 +23,18 @@ export default function AdsPage() {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showBulkExport, setShowBulkExport] = useState(false);
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
-  const [campaignFilter, setCampaignFilter] = useState('');
-  const [adGroupFilter, setAdGroupFilter] = useState('');
+  const [campaignFilter, setCampaignFilter] = useState('all');
+  const [adGroupFilter, setAdGroupFilter] = useState('all');
 
   const { data: ads = [], isLoading, refetch } = useQuery({
     queryKey: ['ads', campaignFilter, adGroupFilter],
     queryFn: async () => {
       let query = supabase.from('ads').select('*');
       
-      if (campaignFilter) {
+      if (campaignFilter && campaignFilter !== 'all') {
         query = query.eq('campaign_name', campaignFilter);
       }
-      if (adGroupFilter) {
+      if (adGroupFilter && adGroupFilter !== 'all') {
         query = query.eq('ad_group_name', adGroupFilter);
       }
       

@@ -31,7 +31,7 @@ export function CampaignGroupingFilters({
             <SelectValue placeholder="All campaigns" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All campaigns</SelectItem>
+            <SelectItem value="all">All campaigns</SelectItem>
             {campaigns.map(c => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
@@ -49,7 +49,7 @@ export function CampaignGroupingFilters({
             <SelectValue placeholder="All ad groups" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All ad groups</SelectItem>
+            <SelectItem value="all">All ad groups</SelectItem>
             {adGroups.map(ag => (
               <SelectItem key={ag} value={ag}>{ag}</SelectItem>
             ))}
