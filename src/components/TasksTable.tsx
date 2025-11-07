@@ -161,6 +161,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
           <TableHeader className="bg-muted/50 sticky top-0 z-10">
             <TableRow>
               <TableHead className="font-semibold text-xs w-auto">Task</TableHead>
+              <TableHead className="font-semibold text-xs w-auto hidden xl:table-cell">Description</TableHead>
               <TableHead className="font-semibold text-xs w-[100px]">Status</TableHead>
               <TableHead className="font-semibold text-xs w-[90px] hidden md:table-cell">Priority</TableHead>
               <TableHead className="font-semibold text-xs w-[120px] hidden lg:table-cell">Assignee</TableHead>
@@ -222,6 +223,15 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                         </Badge>
                       )}
                     </div>
+                  )}
+                </TableCell>
+                <TableCell className="py-1.5 px-3 hidden xl:table-cell">
+                  {task.description ? (
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+                    </p>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell className="py-1.5 px-3" onClick={(e) => e.stopPropagation()}>

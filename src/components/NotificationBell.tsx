@@ -48,6 +48,23 @@ export function NotificationBell() {
     setUnreadCount((data || []).length);
   };
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "task_assigned": return "📋";
+      case "campaign_assigned": return "🚀";
+      case "mention": return "💬";
+      case "deadline_reminder_3days": return "⏰";
+      case "deadline_reminder_1day": return "🔔";
+      case "deadline_reminder_overdue": return "❗";
+      case "blocker_resolved": return "✅";
+      case "task_status_changed": return "🔄";
+      case "campaign_status_changed": return "🔄";
+      case "ad_status_changed": return "📢";
+      case "ad_pending_review": return "👀";
+      default: return "🔔";
+    }
+  };
+
   const getNotificationMessage = (notification: any) => {
     const payload = notification.payload_json;
     switch (notification.type) {
@@ -60,21 +77,25 @@ export function NotificationBell() {
       case "task_updated":
         return payload.message || `"${payload.task_title}" updated`;
       case "deadline_reminder_3days":
-        return `⏰ Task "${payload.task_title}" due in 3 days`;
+        return `Task "${payload.task_title}" due in 3 days`;
       case "deadline_reminder_1day":
-        return `🔔 Task "${payload.task_title}" due tomorrow!`;
+        return `Task "${payload.task_title}" due tomorrow!`;
       case "deadline_reminder_overdue":
-        return `❗ Task "${payload.task_title}" is ${payload.days_overdue} days overdue`;
+        return `Task "${payload.task_title}" is ${payload.days_overdue} days overdue`;
       case "campaign_starting_soon":
-        return `🚀 Campaign "${payload.campaign_title}" launches in 3 days`;
+        return `Campaign "${payload.campaign_title}" launches in 3 days`;
       case "task_status_changed":
         return `Task "${payload.task_title}" moved to ${payload.new_status}`;
       case "campaign_status_changed":
         return `Campaign "${payload.campaign_title}" moved to ${payload.new_status}`;
       case "blocker_resolved":
-        return `✅ Blocker resolved for "${payload.task_title}"`;
+        return `Blocker resolved for "${payload.task_title}"`;
       case "approval_pending":
-        return `⏳ Approval pending for "${payload.task_title}" (${payload.days_pending} days)`;
+        return `Approval pending for "${payload.task_title}" (${payload.days_pending} days)`;
+      case "ad_status_changed":
+        return `Ad "${payload.ad_name}" status changed to ${payload.new_status}`;
+      case "ad_pending_review":
+        return `New ad "${payload.ad_name}" pending review`;
       default:
         return "New notification";
     }
@@ -118,10 +139,22 @@ export function NotificationBell() {
                     navigate("/notifications");
                   }}
                 >
-                  <p className="text-foreground mb-1">{getNotificationMessage(notification)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(notification.created_at).toLocaleString()}
-                  </p>
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg flex-shrink-0">{getNotificationIcon(notification.type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-foreground font-medium mb-1 line-clamp-2">
+                        {getNotificationMessage(notification)}
+                      </p>
+                      {notification.payload_json?.message && (
+                        <p className="text-xs text-muted-foreground line-clamp-1 mb-1">
+                          {notification.payload_json.message}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

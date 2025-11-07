@@ -484,8 +484,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                     const { error } = await supabase
                       .from('tasks')
                       .update({ 
-                        status: 'Completed',
-                        completed_at: new Date().toISOString()
+                        status: 'Completed'
                       })
                       .eq('id', taskId);
                       
@@ -1307,8 +1306,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         {/* View Mode: Delete Button (Admin Only) */}
         {!editMode && userRole === 'admin' && (
           <>
-            <Separator />
-            <DialogFooter>
+            <Separator className="mt-8" />
+            <DialogFooter className="mt-6 bg-destructive/5 p-4 rounded-lg">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="gap-2">

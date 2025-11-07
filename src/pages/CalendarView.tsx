@@ -146,23 +146,37 @@ export default function CalendarView() {
                     <Button variant="outline" className="justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {customDateRange ? (
-                        `${format(customDateRange.from, "MMM d")} - ${format(customDateRange.to, "MMM d")}`
+                        customDateRange.from.getTime() === customDateRange.to.getTime() ? (
+                          format(customDateRange.from, "MMM d")
+                        ) : (
+                          `${format(customDateRange.from, "MMM d")} - ${format(customDateRange.to, "MMM d")}`
+                        )
                       ) : (
                         "Pick a date range"
                       )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="range"
-                      selected={customDateRange ? { from: customDateRange.from, to: customDateRange.to } : undefined}
-                      onSelect={(range) => {
-                        if (range?.from && range?.to) {
-                          setCustomDateRange({ from: range.from, to: range.to });
-                        }
-                      }}
-                      numberOfMonths={2}
-                    />
+                    <div className="p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Click one date for a single day, or click two dates to select a range.
+                      </p>
+                      <Calendar
+                        mode="range"
+                        selected={customDateRange ? { from: customDateRange.from, to: customDateRange.to } : undefined}
+                        onSelect={(range) => {
+                          if (range?.from) {
+                            if (!range.to) {
+                              setCustomDateRange({ from: range.from, to: range.from });
+                            } else {
+                              setCustomDateRange({ from: range.from, to: range.to });
+                            }
+                          }
+                        }}
+                        numberOfMonths={2}
+                        className="pointer-events-auto"
+                      />
+                    </div>
                   </PopoverContent>
                 </Popover>
               )}
