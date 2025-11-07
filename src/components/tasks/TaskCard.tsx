@@ -6,6 +6,7 @@ import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loade
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | 'delete' | null>(null);
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
@@ -129,8 +131,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleDelete = async () => {
     setProcessingAction('delete');
     try {
       if (userRole === 'admin') {
@@ -166,6 +167,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setShowDeleteConfirm(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -219,12 +221,16 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDelete} disabled={processingAction !== null} className="text-destructive">
-              {processingAction === 'delete' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+              }} 
+              disabled={processingAction !== null} 
+              className="text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
               {userRole === 'admin' ? 'Delete' : 'Request Delete'}
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -277,6 +283,38 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
           )}
         </div>
       </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {userRole === 'admin' 
+                ? 'This will permanently delete this task. This action cannot be undone.'
+                : 'This will send a delete request to an admin for review.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processingAction === 'delete'}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              disabled={processingAction === 'delete'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {processingAction === 'delete' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {userRole === 'admin' ? 'Deleting...' : 'Requesting...'}
+                </>
+              ) : (
+                userRole === 'admin' ? 'Delete Task' : 'Request Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

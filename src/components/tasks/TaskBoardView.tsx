@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MoreVertical, CheckCircle, Copy, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,7 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<{ taskId: string; action: 'complete' | 'duplicate' | 'delete' } | null>(null);
   const statuses = ['Pending', 'Ongoing', 'Blocked', 'Completed', 'Failed'];
 
@@ -123,8 +125,7 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
     }
   };
 
-  const handleDelete = async (task: any, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (task: any) => {
     setProcessingAction({ taskId: task.id, action: 'delete' });
     try {
       if (userRole === 'admin') {
@@ -160,6 +161,7 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setShowDeleteConfirm(null);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -234,15 +236,15 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
-                            onClick={(e) => handleDelete(task, e)} 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setShowDeleteConfirm(task.id);
+                            }} 
                             disabled={processingAction !== null} 
                             className="text-destructive"
                           >
-                            {processingAction?.taskId === task.id && processingAction?.action === 'delete' ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="mr-2 h-4 w-4" />
-                            )}
+                            <Trash2 className="mr-2 h-4 w-4" />
                             {userRole === 'admin' ? 'Delete' : 'Request Delete'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -283,6 +285,41 @@ export const TaskBoardView = ({ tasks, onTaskClick }: TaskBoardViewProps) => {
           </ScrollArea>
         </div>
       ))}
+
+      <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {userRole === 'admin' 
+                ? 'This will permanently delete this task. This action cannot be undone.'
+                : 'This will send a delete request to an admin for review.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processingAction?.action === 'delete'}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                const task = tasks.find(t => t.id === showDeleteConfirm);
+                if (task) handleDelete(task);
+              }}
+              disabled={processingAction?.action === 'delete'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {processingAction?.action === 'delete' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {userRole === 'admin' ? 'Deleting...' : 'Requesting...'}
+                </>
+              ) : (
+                userRole === 'admin' ? 'Delete Task' : 'Request Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
