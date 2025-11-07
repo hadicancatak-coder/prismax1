@@ -6,21 +6,33 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAdVersions, useRestoreAdVersion } from '@/hooks/useAdVersions';
 import { History, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
-import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface AdVersionHistoryProps {
   adId: string;
 }
 
 export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
-  const [confirmRestoreVersion, setConfirmRestoreVersion] = useState<any>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState<any>(null);
   const { data: versions, isLoading } = useAdVersions(adId);
   const restoreVersion = useRestoreAdVersion();
 
-  const handleRestore = (versionData: any) => {
+  const handleRestore = async (versionData: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const { id, created_at, updated_at, version, ...restoreData } = versionData;
     restoreVersion.mutate({ adId, versionData: restoreData });
-    setConfirmRestoreVersion(null);
+    setShowRestoreConfirm(null);
   };
 
   if (isLoading) {
@@ -46,23 +58,36 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
                       {format(new Date(version.created_at), 'MMM dd, yyyy HH:mm')}
                     </p>
                   </div>
-                  <ConfirmPopover
-                    open={confirmRestoreVersion?.id === version.id}
-                    onOpenChange={(open) => !open && setConfirmRestoreVersion(null)}
-                    onConfirm={() => handleRestore(version.snapshot_data)}
-                    title="Restore this version?"
-                    description="This will create a new version with the restored content."
-                    trigger={
+                  <AlertDialog open={showRestoreConfirm?.id === version.id} onOpenChange={(open) => !open && setShowRestoreConfirm(null)}>
+                    <AlertDialogTrigger asChild>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setConfirmRestoreVersion(version)}
+                        onClick={(e) => { e.stopPropagation(); setShowRestoreConfirm(version); }}
                       >
                         <RotateCcw className="w-3 h-3 mr-1" />
                         Restore
                       </Button>
-                    }
-                  />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Restore this version?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will create a new version with the restored content.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={(e) => handleRestore(version.snapshot_data, e)}
+                        >
+                          Restore
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
 
                 {version.changed_fields && version.changed_fields.length > 0 && (

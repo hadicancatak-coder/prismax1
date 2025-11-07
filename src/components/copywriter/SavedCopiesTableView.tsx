@@ -19,7 +19,17 @@ import { CampaignsTagsInput } from "@/components/copywriter/CampaignsTagsInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ENTITIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 
@@ -72,8 +82,8 @@ export function SavedCopiesTableView({
   const [selected, setSelected] = useState<string[]>([]);
   const [newRow, setNewRow] = useState<NewRowData | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isAnyEditing, setIsAnyEditing] = useState(false);
 
   const newRowEnglishRef = useRef<HTMLDivElement>(null);
@@ -158,22 +168,30 @@ export function SavedCopiesTableView({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      onRefresh?.();
-      toast({ title: "Copy deleted successfully" });
-    } catch (error) {
-      toast({ title: "Failed to delete copy", variant: "destructive" });
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      try {
+        await deleteMutation.mutateAsync(showDeleteConfirm);
+        onRefresh?.();
+        toast({ title: "Copy deleted successfully" });
+        setShowDeleteConfirm(null);
+      } catch (error) {
+        toast({ title: "Failed to delete copy", variant: "destructive" });
+      }
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       await Promise.all(selected.map((id) => deleteMutation.mutateAsync(id)));
       setSelected([]);
       onRefresh?.();
       toast({ title: `${selected.length} copies deleted` });
+      setShowBulkDeleteConfirm(false);
     } catch (error) {
       toast({ title: "Failed to delete copies", variant: "destructive" });
     }
@@ -298,19 +316,33 @@ export function SavedCopiesTableView({
       {selected.length > 0 && !isGuest && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{selected.length} selected</span>
-          <ConfirmPopover
-            open={confirmBulkDelete}
-            onOpenChange={setConfirmBulkDelete}
-            onConfirm={handleBulkDelete}
-            title={`Delete ${selected.length} copies?`}
-            description="This action cannot be undone."
-            trigger={
-              <Button variant="destructive" size="sm">
+          <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); setShowBulkDeleteConfirm(true); }}>
                 <Trash2 className="h-3 w-3 mr-1" />
                 Delete Selected
               </Button>
-            }
-          />
+            </AlertDialogTrigger>
+            <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete {selected.length} copies?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleBulkDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
 
@@ -499,23 +531,38 @@ export function SavedCopiesTableView({
                       >
                         <Upload className="h-3 w-3" />
                       </Button>
-                      <ConfirmPopover
-                        open={confirmDelete === copy.id}
-                        onOpenChange={(open) => setConfirmDelete(open ? copy.id : null)}
-                        onConfirm={() => handleDelete(copy.id)}
-                        title="Delete this copy?"
-                        description="This action cannot be undone."
-                        trigger={
+                      <AlertDialog open={showDeleteConfirm === copy.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                        <AlertDialogTrigger asChild>
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-7 w-7 p-0"
                             disabled={isGuest}
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(copy.id); }}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
-                        }
-                      />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this copy?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={handleDelete}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>

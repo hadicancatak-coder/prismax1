@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TaskDialog } from "./TaskDialog";
-import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -43,7 +52,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [processingTaskId, setProcessingTaskId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | null>(null);
@@ -81,7 +90,8 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     },
     onSuccess: () => {
       toast({ title: "Task deleted successfully" });
-      setConfirmDeleteId(null);
+      setShowDeleteConfirm(null);
+      setOpenDropdownId(null);
     },
     onSettled: () => {
       // Realtime subscription in useTasks.ts handles invalidation
@@ -136,8 +146,12 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (taskId: string) => {
-    deleteMutation.mutate(taskId);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      deleteMutation.mutate(showDeleteConfirm);
+    }
   };
 
   return (
@@ -367,8 +381,7 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                       <DropdownMenuItem 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          setConfirmDeleteId(task.id);
-                          setOpenDropdownId(null);
+                          setShowDeleteConfirm(task.id);
                         }}
                         disabled={deleteMutation.isPending || processingTaskId !== null}
                         className="text-destructive focus:text-destructive"
@@ -399,14 +412,32 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
         />
       )}
       
-      <ConfirmPopover
-        open={!!confirmDeleteId}
-        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-        onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
-        title="Delete this task?"
-        description="This action cannot be undone."
-        trigger={<span />}
-      />
+      <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this task.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

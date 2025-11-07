@@ -6,14 +6,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAdComments, useCreateAdComment, useDeleteAdComment } from '@/hooks/useAdComments';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 interface AdCommentsProps {
   adId: string;
 }
 
 export function AdComments({ adId }: AdCommentsProps) {
   const [newComment, setNewComment] = useState('');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const { data: comments, isLoading } = useAdComments(adId);
   const createComment = useCreateAdComment();
   const deleteComment = useDeleteAdComment();
@@ -29,9 +39,13 @@ export function AdComments({ adId }: AdCommentsProps) {
     });
   };
 
-  const handleDelete = (commentId: string) => {
-    deleteComment.mutate(commentId);
-    setConfirmDeleteId(null);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      deleteComment.mutate(showDeleteConfirm);
+      setShowDeleteConfirm(null);
+    }
   };
 
   return (
@@ -62,22 +76,36 @@ export function AdComments({ adId }: AdCommentsProps) {
                       {format(new Date(comment.created_at), 'MMM dd, yyyy HH:mm')}
                     </p>
                   </div>
-                  <ConfirmPopover
-                    open={confirmDeleteId === comment.id}
-                    onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-                    onConfirm={() => handleDelete(comment.id)}
-                    title="Delete this comment?"
-                    description="This action cannot be undone."
-                    trigger={
+                  <AlertDialog open={showDeleteConfirm === comment.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                    <AlertDialogTrigger asChild>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => setConfirmDeleteId(comment.id)}
+                        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(comment.id); }}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
-                    }
-                  />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 <p className="text-sm mt-1">{comment.body}</p>
               </div>

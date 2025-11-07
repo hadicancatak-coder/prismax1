@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -149,7 +149,12 @@ export function CampaignDetailDialog({ open, onOpenChange, campaignId, onUpdate 
             
             <div>
               <Label>Description</Label>
-              <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} />
+              <RichTextEditor 
+                value={editDescription} 
+                onChange={(value) => setEditDescription(value)} 
+                placeholder="Project description"
+                minHeight="100px"
+              />
             </div>
 
             <div>

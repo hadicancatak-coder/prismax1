@@ -7,7 +7,17 @@ import { Copy, Trash, Edit2, Star, ArrowUpDown } from "lucide-react";
 import { useUpdateAdElement, useDeleteAdElement } from "@/hooks/useAdElements";
 import { toast } from "@/hooks/use-toast";
 import { UpdateGoogleStatusDialog } from "./UpdateGoogleStatusDialog";
-import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SavedElementsTableViewProps {
   elements: any[];
@@ -20,8 +30,8 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedElement, setSelectedElement] = useState<any>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
@@ -67,15 +77,21 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
     });
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteElement.mutateAsync(id);
-    setConfirmDeleteId(null);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      await deleteElement.mutateAsync(showDeleteConfirm);
+      setShowDeleteConfirm(null);
+    }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     await Promise.all(selectedIds.map(id => deleteElement.mutateAsync(id)));
     setSelectedIds([]);
-    setConfirmBulkDelete(false);
+    setShowBulkDeleteConfirm(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -92,19 +108,33 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
           <span className="text-sm font-medium">{selectedIds.length} selected</span>
-          <ConfirmPopover
-            open={confirmBulkDelete}
-            onOpenChange={setConfirmBulkDelete}
-            onConfirm={handleBulkDelete}
-            title={`Delete ${selectedIds.length} elements?`}
-            description="This action cannot be undone."
-            trigger={
-              <Button variant="destructive" size="sm" onClick={() => setConfirmBulkDelete(true)}>
+          <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); setShowBulkDeleteConfirm(true); }}>
                 <Trash className="h-4 w-4 mr-1" />
                 Delete
               </Button>
-            }
-          />
+            </AlertDialogTrigger>
+            <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete {selectedIds.length} elements?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleBulkDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
 
@@ -199,23 +229,37 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    <ConfirmPopover
-                      open={confirmDeleteId === element.id}
-                      onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-                      onConfirm={() => handleDelete(element.id)}
-                      title="Delete this element?"
-                      description="This action cannot be undone."
-                      trigger={
+                    <AlertDialog open={showDeleteConfirm === element.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                      <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => setConfirmDeleteId(element.id)}
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(element.id); }}
                         >
                           <Trash className="h-3 w-3" />
                         </Button>
-                      }
-                    />
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this element?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>

@@ -19,7 +19,17 @@ import { AdStrengthIndicator } from "./AdStrengthIndicator";
 import { AdComplianceChecker } from "./AdComplianceChecker";
 import { AdVersionHistory } from "./ads/AdVersionHistory";
 import { AdComments } from "./ads/AdComments";
-import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 interface SavedAdDialogProps {
@@ -38,7 +48,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   const [sitelinks, setSitelinks] = useState<{ title: string; description: string }[]>([]);
   const [callouts, setCallouts] = useState<string[]>([]);
   const [combinationIndex, setCombinationIndex] = useState(0);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { copy } = useCopyToClipboard();
 
   const handleDuplicate = async () => {
@@ -94,16 +104,18 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const { error } = await supabase.from("ads").delete().eq("id", ad.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Ad deleted" });
+      setShowDeleteConfirm(false);
       onOpenChange(false);
       onUpdate();
-      setConfirmDelete(false);
     }
   };
 
@@ -504,19 +516,33 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
               </Button>
-              <ConfirmPopover
-                open={confirmDelete}
-                onOpenChange={setConfirmDelete}
-                onConfirm={handleDelete}
-                title="Delete this ad?"
-                description="This action cannot be undone."
-                trigger={
-                  <Button onClick={() => setConfirmDelete(true)} variant="destructive" className="flex-1">
+              <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogTrigger asChild>
+                  <Button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} variant="destructive" className="flex-1">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </Button>
-                }
-              />
+                </AlertDialogTrigger>
+                <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this ad?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           )}
         </div>

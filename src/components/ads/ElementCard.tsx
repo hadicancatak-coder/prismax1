@@ -11,7 +11,17 @@ import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ENTITIES } from '@/lib/constants';
-import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ElementCardProps {
   element: AdElement;
@@ -23,7 +33,7 @@ export function ElementCard({ element }: ElementCardProps) {
   const [editedContent, setEditedContent] = useState('');
   const [editingEntity, setEditingEntity] = useState(false);
   const [selectedEntities, setSelectedEntities] = useState<string[]>(element.entity || []);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const updateElement = useUpdateAdElement();
   const deleteElement = useDeleteAdElement();
   const { toast } = useToast();
@@ -40,9 +50,11 @@ export function ElementCard({ element }: ElementCardProps) {
     updateElement.mutate({ id: element.id, updates: { is_favorite: !element.is_favorite } });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     deleteElement.mutate(element.id);
-    setConfirmDelete(false);
+    setShowDeleteConfirm(false);
   };
 
   const handleEdit = () => {
@@ -234,18 +246,32 @@ export function ElementCard({ element }: ElementCardProps) {
               <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
                 <Edit className="w-3 h-3" />
               </Button>
-              <ConfirmPopover
-                open={confirmDelete}
-                onOpenChange={setConfirmDelete}
-                onConfirm={handleDelete}
-                title="Delete this element?"
-                description="This action cannot be undone."
-                trigger={
-                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}>
+              <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
-                }
-              />
+                </AlertDialogTrigger>
+                <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this element?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </>
         )}

@@ -5,7 +5,17 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdTemplates, useDeleteAdTemplate } from '@/hooks/useAdTemplates';
 import { Trash2 } from 'lucide-react';
-import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface TemplateSelectorProps {
   open: boolean;
@@ -14,13 +24,17 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelectorProps) {
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const { data: templates, isLoading } = useAdTemplates();
   const deleteTemplate = useDeleteAdTemplate();
 
-  const handleDelete = (id: string) => {
-    deleteTemplate.mutate(id);
-    setConfirmDeleteId(null);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      deleteTemplate.mutate(showDeleteConfirm);
+      setShowDeleteConfirm(null);
+    }
   };
 
   return (
@@ -50,22 +64,36 @@ export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelec
                       <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
                     )}
                   </div>
-                  <ConfirmPopover
-                    open={confirmDeleteId === template.id}
-                    onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-                    onConfirm={() => handleDelete(template.id)}
-                    title="Delete this template?"
-                    description="This action cannot be undone."
-                    trigger={
+                  <AlertDialog open={showDeleteConfirm === template.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                    <AlertDialogTrigger asChild>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(template.id); }}
+                        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(template.id); }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    }
-                  />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this template?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 
                  <div className="flex gap-2 mt-3">

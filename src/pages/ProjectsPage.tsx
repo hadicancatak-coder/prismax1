@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar, Edit, Trash2, Users } from "lucide-react";
 import { format } from "date-fns";
@@ -175,7 +175,12 @@ export default function ProjectsPage() {
                 </div>
                 <div>
                   <Label>Description</Label>
-                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Project description" />
+                  <RichTextEditor 
+                    value={description} 
+                    onChange={(value) => setDescription(value)} 
+                    placeholder="Project description"
+                    minHeight="100px"
+                  />
                 </div>
                 <div>
                   <Label>Project Members</Label>
@@ -355,7 +360,12 @@ export default function ProjectsPage() {
             </div>
             <div>
               <Label>Description (optional)</Label>
-              <Textarea value={phaseDescription} onChange={(e) => setPhaseDescription(e.target.value)} placeholder="Phase description" />
+              <RichTextEditor 
+                value={phaseDescription} 
+                onChange={(value) => setPhaseDescription(value)} 
+                placeholder="Phase description"
+                minHeight="100px"
+              />
             </div>
             <Button onClick={handleAddTimeline} className="w-full">Add Phase</Button>
           </div>

@@ -10,7 +10,17 @@ import {
 } from "@/hooks/useAuditItemComments";
 import { useAuth } from "@/hooks/useAuth";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
-import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AuditItemCommentsProps {
   itemId: string;
@@ -18,7 +28,7 @@ interface AuditItemCommentsProps {
 
 export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
   const [newComment, setNewComment] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const { data: comments, isLoading } = useAuditItemComments(itemId);
   const createComment = useCreateAuditItemComment();
   const deleteComment = useDeleteAuditItemComment();
@@ -35,9 +45,13 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
     setNewComment("");
   };
 
-  const handleDelete = async (commentId: string) => {
-    await deleteComment.mutateAsync(commentId);
-    setConfirmDeleteId(null);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showDeleteConfirm) {
+      await deleteComment.mutateAsync(showDeleteConfirm);
+      setShowDeleteConfirm(null);
+    }
   };
 
   return (
@@ -67,23 +81,37 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
                 />
               </div>
               {user?.id === comment.author_id && (
-                <ConfirmPopover
-                  open={confirmDeleteId === comment.id}
-                  onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-                  onConfirm={() => handleDelete(comment.id)}
-                  title="Delete this comment?"
-                  description="This action cannot be undone."
-                  trigger={
+                <AlertDialog open={showDeleteConfirm === comment.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                  <AlertDialogTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setConfirmDeleteId(comment.id)}
+                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(comment.id); }}
                       className="flex-shrink-0 h-8 w-8 p-0"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                  }
-                />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           ))

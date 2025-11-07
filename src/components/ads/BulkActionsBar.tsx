@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Download, Copy, Trash2 } from 'lucide-react';
-import { ConfirmPopover } from '@/components/ui/ConfirmPopover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
@@ -21,7 +31,14 @@ export function BulkActionsBar({
   onDuplicate,
   onDelete,
 }: BulkActionsBarProps) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.();
+    setShowDeleteConfirm(false);
+  };
   
   if (selectedIds.length === 0) return null;
 
@@ -80,26 +97,37 @@ export function BulkActionsBar({
           )}
 
           {onDelete && (
-            <ConfirmPopover
-              open={confirmDelete}
-              onOpenChange={setConfirmDelete}
-              onConfirm={() => {
-                onDelete();
-                setConfirmDelete(false);
-              }}
-              title={`Delete ${selectedIds.length} items?`}
-              description="This action cannot be undone."
-              trigger={
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <AlertDialogTrigger asChild>
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => setConfirmDelete(true)}
+                  onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Delete
                 </Button>
-              }
-            />
+              </AlertDialogTrigger>
+              <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {selectedIds.length} items?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>

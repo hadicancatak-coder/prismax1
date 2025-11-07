@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Plus, ExternalLink, Trash2, Calendar, Users, AlertCircle, CheckCircle } from "lucide-react";
@@ -357,7 +357,12 @@ export default function TeamBase() {
                     </div>
                     <div>
                       <Label>Description</Label>
-                      <Textarea value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
+                      <RichTextEditor 
+                        value={projectDescription} 
+                        onChange={(value) => setProjectDescription(value)} 
+                        placeholder="Project description"
+                        minHeight="100px"
+                      />
                     </div>
                     <div>
                       <Label>Team Members</Label>
@@ -545,7 +550,12 @@ export default function TeamBase() {
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea value={phaseDescription} onChange={(e) => setPhaseDescription(e.target.value)} />
+              <RichTextEditor 
+                value={phaseDescription} 
+                onChange={(value) => setPhaseDescription(value)} 
+                placeholder="Phase description"
+                minHeight="100px"
+              />
             </div>
             <Button onClick={handleAddTimeline} className="w-full">Add Phase</Button>
           </div>
