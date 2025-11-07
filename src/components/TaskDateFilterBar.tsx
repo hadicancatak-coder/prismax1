@@ -3,12 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -17,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { 
   startOfToday, 
@@ -133,15 +127,15 @@ export function TaskDateFilterBar({
           <SelectValue placeholder="Date" />
         </SelectTrigger>
         <SelectContent>
-          <DropdownMenuItem onClick={() => handleFilterClick("all")}>All Dates</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("today")}>Today</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("yesterday")}>Yesterday</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("tomorrow")}>Tomorrow</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("thisWeek")}>This Week</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("nextWeek")}>Next Week</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("thisMonth")}>This Month</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("nextMonth")}>Next Month</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterClick("backlog")}>Backlog</DropdownMenuItem>
+          <SelectItem value="all">All Dates</SelectItem>
+          <SelectItem value="today">Today</SelectItem>
+          <SelectItem value="yesterday">Yesterday</SelectItem>
+          <SelectItem value="tomorrow">Tomorrow</SelectItem>
+          <SelectItem value="thisWeek">This Week</SelectItem>
+          <SelectItem value="nextWeek">Next Week</SelectItem>
+          <SelectItem value="thisMonth">This Month</SelectItem>
+          <SelectItem value="nextMonth">Next Month</SelectItem>
+          <SelectItem value="backlog">Backlog</SelectItem>
         </SelectContent>
       </Select>
 
