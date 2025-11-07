@@ -188,12 +188,20 @@ export default function CalendarView() {
                               from: range.from, 
                               to: range.to || range.from
                             });
-                            setDateView("custom");
                           }
                         }}
                         numberOfMonths={2}
                         className="pointer-events-auto"
                       />
+                      <div className="px-3 pb-3">
+                        <Button 
+                          onClick={() => setDateView("custom")} 
+                          className="w-full"
+                          disabled={!customDateRange}
+                        >
+                          Apply Range
+                        </Button>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
