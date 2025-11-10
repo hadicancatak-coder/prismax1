@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, ChevronLeft, Copy, BookmarkPlus } from "lucide-react";
+import { Save, ChevronLeft, Copy, BookmarkPlus, Download } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateAdStrength, checkCompliance } from "@/lib/adQualityScore";
@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SavedElementsSelector } from "./SavedElementsSelector";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 
@@ -27,6 +28,7 @@ interface SearchAdEditorProps {
 
 export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel }: SearchAdEditorProps) {
   const { user } = useAuth();
+  const { copy } = useCopyToClipboard();
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
   const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
@@ -181,6 +183,65 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     toast.success("Ad copied! You can now edit and save as a new ad.");
   };
 
+  // Field Actions Component
+  interface FieldActionsProps {
+    value: string;
+    elementType: 'headline' | 'description' | 'sitelink' | 'callout';
+    onSelect: (content: string) => void;
+    onSave: () => void;
+    isEmpty: boolean;
+  }
+
+  const FieldActions = ({ value, elementType, onSelect, onSave, isEmpty }: FieldActionsProps) => {
+    return (
+      <div className="flex gap-1">
+        <SavedElementsSelector
+          elementType={elementType}
+          entity={entity}
+          language={language}
+          onSelect={onSelect}
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Use saved element"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          }
+        />
+        
+        {!isEmpty && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onSave}
+              title="Save to library"
+            >
+              <BookmarkPlus className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => copy(value)}
+              title="Copy to clipboard"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   const handleSave = async () => {
     if (!user?.id) {
       toast.error("You must be logged in to create ads");
@@ -222,7 +283,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         ad_type: "search",
         ad_strength: adStrength.score,
         compliance_issues: complianceIssues.map(issue => ({ ...issue })),
-        approval_status: "pending"
+        approval_status: "approved"
       };
 
       if (ad?.id) {
@@ -325,22 +386,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Headlines (15 max, 30 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="headline"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = headlines.findIndex(h => !h.trim());
-                    if (emptyIndex !== -1) {
-                      updateHeadline(emptyIndex, content);
-                    } else {
-                      toast.info("All headline slots are filled");
-                    }
-                  }}
-                />
-              </div>
+              <Label>Headlines (15 max, 30 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {headlines.map((headline, index) => (
                   <div key={index} className="flex gap-2">
@@ -351,39 +397,20 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                       maxLength={30}
                       className="flex-1"
                     />
-                    {headline.trim() && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSaveElement('headline', headline)}
-                        title="Save to library"
-                      >
-                        <BookmarkPlus className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <FieldActions
+                      value={headline}
+                      elementType="headline"
+                      onSelect={(content) => updateHeadline(index, content)}
+                      onSave={() => handleSaveElement('headline', headline)}
+                      isEmpty={!headline.trim()}
+                    />
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Descriptions (4 max, 90 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="description"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = descriptions.findIndex(d => !d.trim());
-                    if (emptyIndex !== -1) {
-                      updateDescription(emptyIndex, content);
-                    } else {
-                      toast.info("All description slots are filled");
-                    }
-                  }}
-                />
-              </div>
+              <Label>Descriptions (4 max, 90 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {descriptions.map((description, index) => (
                   <div key={index} className="flex gap-2">
@@ -394,39 +421,20 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                       maxLength={90}
                       className="flex-1"
                     />
-                    {description.trim() && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSaveElement('description', description)}
-                        title="Save to library"
-                      >
-                        <BookmarkPlus className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <FieldActions
+                      value={description}
+                      elementType="description"
+                      onSelect={(content) => updateDescription(index, content)}
+                      onSave={() => handleSaveElement('description', description)}
+                      isEmpty={!description.trim()}
+                    />
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Sitelinks (5 max, 25 chars for description)</Label>
-                <SavedElementsSelector
-                  elementType="sitelink"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = sitelinks.findIndex(s => !s.description.trim() && !s.link.trim());
-                    if (emptyIndex !== -1) {
-                      updateSitelink(emptyIndex, 'description', content);
-                    } else {
-                      toast.info("All sitelink slots are filled");
-                    }
-                  }}
-                />
-              </div>
+              <Label>Sitelinks (5 max, 25 chars for description)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {sitelinks.map((sitelink, index) => (
                   <div key={index} className="flex gap-2">
@@ -444,40 +452,20 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                         className="text-sm"
                       />
                     </div>
-                    {(sitelink.description.trim() || sitelink.link.trim()) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSaveElement('sitelink', sitelink)}
-                        title="Save to library"
-                        className="mt-0"
-                      >
-                        <BookmarkPlus className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <FieldActions
+                      value={sitelink.description}
+                      elementType="sitelink"
+                      onSelect={(content) => updateSitelink(index, 'description', content)}
+                      onSave={() => handleSaveElement('sitelink', sitelink)}
+                      isEmpty={!sitelink.description.trim() && !sitelink.link.trim()}
+                    />
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Callouts (4 max, 25 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="callout"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = callouts.findIndex(c => !c.trim());
-                    if (emptyIndex !== -1) {
-                      updateCallout(emptyIndex, content);
-                    } else {
-                      toast.info("All callout slots are filled");
-                    }
-                  }}
-                />
-              </div>
+              <Label>Callouts (4 max, 25 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {callouts.map((callout, index) => (
                   <div key={index} className="flex gap-2">
@@ -488,17 +476,13 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                       maxLength={25}
                       className="flex-1"
                     />
-                    {callout.trim() && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSaveElement('callout', callout)}
-                        title="Save to library"
-                      >
-                        <BookmarkPlus className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <FieldActions
+                      value={callout}
+                      elementType="callout"
+                      onSelect={(content) => updateCallout(index, content)}
+                      onSave={() => handleSaveElement('callout', callout)}
+                      isEmpty={!callout.trim()}
+                    />
                   </div>
                 ))}
               </div>

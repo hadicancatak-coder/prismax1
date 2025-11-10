@@ -12,13 +12,15 @@ interface SavedElementsSelectorProps {
   entity?: string;
   language?: string;
   onSelect: (content: string) => void;
+  trigger?: React.ReactNode;
 }
 
 export function SavedElementsSelector({ 
   elementType, 
   entity, 
   language = "EN", 
-  onSelect 
+  onSelect,
+  trigger
 }: SavedElementsSelectorProps) {
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -39,15 +41,17 @@ export function SavedElementsSelector({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="sm"
-          className="h-8"
-        >
-          <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-          Use Saved
-        </Button>
+        {trigger || (
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            className="h-8"
+          >
+            <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+            Use Saved
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="start">
         <div className="p-3 border-b space-y-2">
