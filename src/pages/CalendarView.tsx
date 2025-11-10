@@ -279,8 +279,12 @@ export default function CalendarView() {
         from = to = new Date();
     }
     
-    setDateRange({ from, to });
-    setDateView("custom");
+    // Clear first, then set new range to ensure clean state
+    setDateRange(undefined);
+    setTimeout(() => {
+      setDateRange({ from, to });
+      setDateView("custom");
+    }, 0);
   };
 
   return (
@@ -368,9 +372,18 @@ export default function CalendarView() {
                       <Calendar
                         mode="range"
                         selected={dateRange}
-                        onSelect={setDateRange}
+                        onSelect={(range) => {
+                          setDateRange(range);
+                          // When user completes a range selection (both from and to are set), 
+                          // automatically apply it
+                          if (range?.from && range?.to) {
+                            setDateView("custom");
+                          }
+                        }}
                         numberOfMonths={2}
                         className="pointer-events-auto"
+                        key={dateView}
+                        defaultMonth={dateRange?.from || new Date()}
                       />
                       <div className="flex gap-2">
                         <Button
