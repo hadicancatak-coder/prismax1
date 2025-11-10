@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit, ChevronUp, ChevronDown } from "lucide-react";
+import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateAdStrength, checkCompliance } from "@/lib/adQualityScore";
@@ -29,8 +29,8 @@ interface SearchAdEditorProps {
 export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel }: SearchAdEditorProps) {
   const { user } = useAuth();
   const { copy } = useCopyToClipboard();
-  const previewScrollRef = useRef<HTMLDivElement>(null);
   const [isEditMode, setIsEditMode] = useState(!ad?.id); // New ads start in edit mode
+  const [previewCombination, setPreviewCombination] = useState(0);
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
   const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
@@ -313,16 +313,63 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     }
   };
 
-  const scrollToTop = () => {
-    previewScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  const generatePreviewCombinations = () => {
+    const validHeadlines = headlines.filter(h => h.trim());
+    const validDescriptions = descriptions.filter(d => d.trim());
+    
+    if (validHeadlines.length === 0) return [{
+      headlines: [],
+      descriptions: validDescriptions.slice(0, 2)
+    }];
+    
+    const combinations = [];
+    
+    // Combination 1: First 3 headlines, first 2 descriptions
+    combinations.push({
+      headlines: validHeadlines.slice(0, 3),
+      descriptions: validDescriptions.slice(0, 2)
+    });
+    
+    // Combination 2: Headlines 2-4, descriptions 1-2
+    if (validHeadlines.length >= 4) {
+      combinations.push({
+        headlines: validHeadlines.slice(1, 4),
+        descriptions: validDescriptions.slice(0, 2)
+      });
+    }
+    
+    // Combination 3: Headlines with variety (1, 3, 5), descriptions 2-3
+    if (validHeadlines.length >= 5) {
+      combinations.push({
+        headlines: [validHeadlines[0], validHeadlines[2], validHeadlines[4]],
+        descriptions: validDescriptions.slice(1, 3)
+      });
+    }
+    
+    // Combination 4: Last 3 headlines, last 2 descriptions
+    if (validHeadlines.length >= 3) {
+      combinations.push({
+        headlines: validHeadlines.slice(-3),
+        descriptions: validDescriptions.slice(-2)
+      });
+    }
+    
+    // Combination 5: Random mix
+    if (validHeadlines.length >= 6) {
+      combinations.push({
+        headlines: [validHeadlines[1], validHeadlines[3], validHeadlines[5]],
+        descriptions: validDescriptions.slice(0, 2)
+      });
+    }
+    
+    return combinations;
   };
 
-  const scrollToBottom = () => {
-    const el = previewScrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  const combinations = generatePreviewCombinations();
+  const currentCombination = combinations[previewCombination] || {
+    headlines: headlines.filter(h => h),
+    descriptions: descriptions.filter(d => d)
   };
-
-
 
   return (
     <div className="flex h-full">
@@ -601,22 +648,46 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       </ScrollArea>
 
       <div className="w-[400px] border-l bg-muted/30 flex flex-col">
-        <div className="sticky top-0 z-10 flex gap-2 p-3 border-b bg-background">
-          <Button size="icon" variant="outline" onClick={scrollToTop} title="Scroll to top">
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="outline" onClick={scrollToBottom} title="Scroll to bottom">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <div className="flex-1 text-sm font-semibold flex items-center">Live Preview</div>
+        <div className="sticky top-0 z-10 p-3 border-b bg-background">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold">Live Preview</span>
+            <Badge variant="outline" className="text-xs">
+              RSA Combination {previewCombination + 1}/{combinations.length}
+            </Badge>
+          </div>
+          
+          {combinations.length > 1 && (
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setPreviewCombination(prev => 
+                  prev === 0 ? combinations.length - 1 : prev - 1
+                )}
+              >
+                ← Previous
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setPreviewCombination(prev => 
+                  (prev + 1) % combinations.length
+                )}
+              >
+                Next →
+              </Button>
+            </div>
+          )}
         </div>
         
-        <ScrollArea className="flex-1 p-6" ref={previewScrollRef}>
+        <ScrollArea className="flex-1 p-6">
           <div className="space-y-6">
             <div>
               <SearchAdPreview
-                headlines={headlines.filter(h => h)}
-                descriptions={descriptions.filter(d => d)}
+                headlines={currentCombination.headlines}
+                descriptions={currentCombination.descriptions}
                 landingPage={landingPage}
                 businessName={businessName}
                 sitelinks={sitelinks.filter(s => s.description || s.link)}

@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Plus, Folder, FolderOpen, FileText, Trash2, Copy } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Folder, FileText, Trash2, Copy } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreateCampaignDialog } from "../ads/CreateCampaignDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -147,11 +147,11 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b space-y-4">
+      <div className="p-4 border-b bg-background space-y-4">
         <div className="space-y-2">
-          <Label>Select Entity</Label>
+          <Label className="text-xs font-medium text-muted-foreground">Entity</Label>
           <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-            <SelectTrigger>
+            <SelectTrigger className="h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -161,9 +161,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setShowCreateCampaign(true)} className="w-full">
+        <Button onClick={() => setShowCreateCampaign(true)} className="w-full h-9" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Create Campaign
+          New Campaign
         </Button>
       </div>
 
@@ -180,66 +180,71 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
               return (
                 <Collapsible key={campaign.id} open={isExpanded} onOpenChange={() => toggleCampaign(campaign.id)}>
-                  <div className="mb-3">
-                    <div className="flex items-center gap-3 p-2 pl-2 hover:bg-blue-50/30 rounded-md transition-colors border-l-2 border-blue-400">
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </Button>
-                      </CollapsibleTrigger>
-                      {isExpanded ? <FolderOpen className="h-[18px] w-[18px] text-blue-600" /> : <Folder className="h-[18px] w-[18px] text-blue-600" />}
-                      <span className="flex-1 font-semibold text-sm">{campaign.name}</span>
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                        {campaignAdGroups.length} groups
+                  <div className="flex items-center gap-2">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-accent">
+                        {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                    
+                    <div className="group flex items-center gap-3 flex-1 p-2.5 pl-3 hover:bg-accent/50 rounded-lg transition-all border border-transparent hover:border-border hover:shadow-sm">
+                      <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="flex-1 font-medium text-sm">{campaign.name}</span>
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {campaignAdGroups.length}
                       </Badge>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDuplicateCampaignDialog({ 
-                            campaign, 
-                            adGroupsCount: campaignAdGroups.length, 
-                            adsCount: getTotalAdsForCampaign(campaign.id) 
-                          });
-                        }}
-                        title="Duplicate campaign"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteCampaignDialog({ 
-                            campaign, 
-                            adGroupsCount: campaignAdGroups.length, 
-                            adsCount: getTotalAdsForCampaign(campaign.id) 
-                          });
-                        }}
-                        title="Delete campaign"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
-                        }}
-                        title="Create ad group"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7 hover:bg-background"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
+                          }}
+                          title="Create ad group"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7 hover:bg-background"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDuplicateCampaignDialog({ 
+                              campaign, 
+                              adGroupsCount: campaignAdGroups.length, 
+                              adsCount: getTotalAdsForCampaign(campaign.id) 
+                            });
+                          }}
+                          title="Duplicate"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteCampaignDialog({ 
+                              campaign, 
+                              adGroupsCount: campaignAdGroups.length, 
+                              adsCount: getTotalAdsForCampaign(campaign.id) 
+                            });
+                          }}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
-
-                    <CollapsibleContent>
-                      <div className="space-y-1.5 ml-6">
+                  </div>
+                  
+                  <CollapsibleContent>
+                    <div className="space-y-0.5 mt-1">
                         {campaignAdGroups.length === 0 ? (
                           <div className="text-xs text-muted-foreground py-2 px-2">
                             No ad groups yet
@@ -251,58 +256,63 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded} onOpenChange={() => toggleAdGroup(adGroup.id)}>
-                                <div className="ml-6">
-                                  <div className="flex items-center gap-3 p-2 hover:bg-purple-50/30 rounded-md transition-colors border-l-2 border-purple-400">
-                                    <CollapsibleTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                                        {isAdGroupExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                      </Button>
-                                    </CollapsibleTrigger>
-                                    {isAdGroupExpanded ? <FolderOpen className="h-4 w-4 text-purple-600" /> : <Folder className="h-4 w-4 text-purple-600" />}
-                                    <span className="flex-1 text-sm font-medium">{adGroup.name}</span>
-                                    <Badge variant="outline" className="text-xs border-purple-300 bg-purple-50/50">
-                                      {adGroupAds.length} ads
+                                <div className="flex items-center gap-2 ml-6">
+                                  <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-accent">
+                                      {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                                    </Button>
+                                  </CollapsibleTrigger>
+                                  
+                                  <div className="group flex items-center gap-3 flex-1 p-2 pl-3 hover:bg-accent/30 rounded-lg transition-all">
+                                    <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                    <span className="flex-1 text-sm">{adGroup.name}</span>
+                                    <Badge variant="outline" className="text-xs font-normal">
+                                      {adGroupAds.length}
                                     </Badge>
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-6 w-6"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
-                                      }}
-                                      title="Duplicate ad group"
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-6 w-6"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
-                                      }}
-                                      title="Delete ad group"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                    </Button>
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-6 w-6"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onCreateAd(adGroup, campaign, selectedEntity);
-                                      }}
-                                      title="Create ad"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </Button>
+                                    
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 hover:bg-background"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onCreateAd(adGroup, campaign, selectedEntity);
+                                        }}
+                                        title="Create ad"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 hover:bg-background"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                        }}
+                                        title="Duplicate"
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                        }}
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   </div>
-
-                                  <CollapsibleContent>
-                                    <div className="space-y-1 ml-6">
+                                </div>
+                                
+                                <CollapsibleContent>
+                                  <div className="space-y-0.5 mt-1 ml-6">
                                       {adGroupAds.length === 0 ? (
                                         <div className="text-xs text-muted-foreground py-2 px-2">
                                           No ads yet
@@ -311,31 +321,54 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                                         adGroupAds.map(ad => (
                                           <div 
                                             key={ad.id} 
-                                            className="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-md cursor-pointer transition-colors ml-6"
-                                            onClick={() => {
-                                              onEditAd(ad, adGroup, campaign, selectedEntity);
-                                            }}
+                                            className="group flex items-center gap-3 p-2 pl-14 hover:bg-accent/20 rounded-lg cursor-pointer transition-all"
+                                            onClick={() => onEditAd(ad, adGroup, campaign, selectedEntity)}
                                           >
-                                            <FileText className="h-4 w-4 text-green-600" />
-                                            <span className="flex-1 text-sm">{ad.name}</span>
+                                            <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                            <span className="flex-1 text-sm truncate">{ad.name}</span>
                                             {ad.approval_status && (
-                                              <Badge variant="outline" className="text-xs h-5 border-green-300">
+                                              <Badge variant="outline" className="text-xs font-normal">
                                                 {ad.approval_status}
                                               </Badge>
                                             )}
+                                            
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="h-6 w-6"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setDuplicateAdDialog({ ad });
+                                                }}
+                                                title="Duplicate"
+                                              >
+                                                <Copy className="h-3 w-3" />
+                                              </Button>
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="h-6 w-6 hover:bg-destructive/10 text-destructive"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setDeleteAdDialog({ ad });
+                                                }}
+                                                title="Delete"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </Button>
+                                            </div>
                                           </div>
                                         ))
                                       )}
                                     </div>
                                   </CollapsibleContent>
-                                </div>
-                              </Collapsible>
+                                </Collapsible>
                             );
                           })
                         )}
                       </div>
                     </CollapsibleContent>
-                  </div>
                 </Collapsible>
               );
             })
