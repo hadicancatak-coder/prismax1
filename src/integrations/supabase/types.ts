@@ -184,6 +184,44 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_group_versions: {
+        Row: {
+          ad_group_id: string | null
+          changed_fields: string[] | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Insert: {
+          ad_group_id?: string | null
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Update: {
+          ad_group_id?: string | null
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_group_versions_ad_group_id_fkey"
+            columns: ["ad_group_id"]
+            isOneToOne: false
+            referencedRelation: "ad_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_groups: {
         Row: {
           campaign_id: string
@@ -758,6 +796,44 @@ export type Database = {
           },
         ]
       }
+      campaign_versions: {
+        Row: {
+          campaign_id: string | null
+          changed_fields: string[] | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Insert: {
+          campaign_id?: string | null
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Update: {
+          campaign_id?: string | null
+          changed_fields?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          snapshot_data?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_versions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           created_at: string
@@ -932,6 +1008,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      entity_campaigns: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          entity: string
+          id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          entity: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          entity?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entity_presets: {
         Row: {

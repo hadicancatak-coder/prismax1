@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Upload, Download, TestTube, Folder } from "lucide-react";
 import AdEditorPanel from "@/components/ads/AdEditorPanel";
 import AdListPanel from "@/components/ads/AdListPanel";
+import { AccountStructureTree } from "@/components/ads/AccountStructureTree";
 import BulkActionsToolbar from "@/components/ads/BulkActionsToolbar";
 import { BulkImportDialog } from "@/components/ads/BulkImportDialog";
 import { BulkCSVImportDialog } from "@/components/ads/BulkCSVImportDialog";
@@ -35,6 +36,7 @@ export default function AdsPage() {
   const [showGoogleStatusDialog, setShowGoogleStatusDialog] = useState(false);
   const [campaignFilter, setCampaignFilter] = useState("");
   const [adGroupFilter, setAdGroupFilter] = useState("");
+  const [selectedTreeNode, setSelectedTreeNode] = useState<any>(null);
 
   const { data: ads = [], isLoading, refetch } = useQuery({
     queryKey: ["ads", campaignFilter, adGroupFilter, activeTab],
@@ -237,13 +239,34 @@ export default function AdsPage() {
             </Tabs>
           </div>
 
-          {/* Split-Screen Layout */}
+          {/* Three-Panel Layout */}
           <ResizablePanelGroup
             direction="horizontal"
             className="min-h-[calc(100vh-280px)] rounded-lg border"
           >
-            {/* Left Panel - Ad List */}
-            <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
+            {/* Left Panel - Account Structure Tree */}
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+              <AccountStructureTree
+                selectedNodeId={selectedTreeNode?.id}
+                onSelectNode={(node) => {
+                  setSelectedTreeNode(node);
+                  // If an ad node is selected, open it in editor
+                  if (node.type === 'ad') {
+                    const adId = node.id.replace('ad-', '');
+                    const ad = ads.find((a: any) => a.id === adId);
+                    if (ad) {
+                      setSelectedAdForEdit(ad);
+                      setIsCreatingNew(false);
+                    }
+                  }
+                }}
+              />
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Middle Panel - Ad List */}
+            <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
               <AdListPanel
                 ads={ads || []}
                 selectedAdId={selectedAdForEdit?.id || null}
@@ -260,7 +283,7 @@ export default function AdsPage() {
             <ResizableHandle withHandle />
 
             {/* Right Panel - Ad Editor */}
-            <ResizablePanel defaultSize={60} minSize={50}>
+            <ResizablePanel defaultSize={50} minSize={40}>
               {selectedAdForEdit || isCreatingNew ? (
                 <AdEditorPanel
                   ad={selectedAdForEdit}

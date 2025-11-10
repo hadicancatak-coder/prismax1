@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, X, AlertCircle, Sparkles } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -11,9 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchAdPreview } from "./SearchAdPreview";
 import { DisplayAdPreview } from "./DisplayAdPreview";
 import { ElementQuickInsert } from "./ElementQuickInsert";
-import { AdStrengthIndicator } from "@/components/AdStrengthIndicator";
-import { AdComplianceChecker } from "@/components/AdComplianceChecker";
 import { AdVariationGeneratorDialog } from "./AdVariationGeneratorDialog";
+import { QualityMetricsPanel } from "./QualityMetricsPanel";
+import { AdVersionHistory } from "./AdVersionHistory";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -51,6 +51,9 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
   const [longHeadline, setLongHeadline] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
+  const [ctaText, setCtaText] = useState("Learn More");
+  const [language, setLanguage] = useState("EN");
+  const [adStrength, setAdStrength] = useState(5);
 
   // Fetch campaigns and entities
   const { data: campaigns = [] } = useQuery({
@@ -311,13 +314,15 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                           <SelectValue placeholder="Select entity" />
                         </SelectTrigger>
                         <SelectContent>
-                          {entities.flatMap((preset: any) => 
-                            preset.entities.map((entityName: string) => (
-                              <SelectItem key={`${preset.id}-${entityName}`} value={entityName}>
-                                {entityName}
-                              </SelectItem>
-                            ))
-                          )}
+                          <ScrollArea className="max-h-[200px]">
+                            {entities.flatMap((preset: any) => 
+                              preset.entities.map((entityName: string) => (
+                                <SelectItem key={`${preset.id}-${entityName}`} value={entityName}>
+                                  {entityName}
+                                </SelectItem>
+                              ))
+                            )}
+                          </ScrollArea>
                         </SelectContent>
                       </Select>
                     </div>
@@ -491,49 +496,64 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                 </TabsContent>
               </Tabs>
 
-              {/* Ad Strength & Compliance */}
-              <div className="grid grid-cols-2 gap-4">
-                <AdStrengthIndicator
-                  headlines={headlines.filter(h => h.trim())}
-                  descriptions={descriptions.filter(d => d.trim())}
-                  sitelinks={sitelinks.map(s => s.text).filter(Boolean)}
-                  callouts={callouts.filter(Boolean)}
-                />
-                <AdComplianceChecker
-                  headlines={headlines}
-                  descriptions={descriptions}
-                  sitelinks={sitelinks.map(s => s.text).filter(Boolean)}
-                  callouts={callouts.filter(Boolean)}
-                  entity={entity}
-                />
-              </div>
             </div>
           </ScrollArea>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Right Panel - Preview */}
+        {/* Right Panel - Preview + Quality Metrics */}
         <ResizablePanel defaultSize={45} minSize={30}>
           <ScrollArea className="h-full">
-            <div className="p-6 max-w-4xl mx-auto">
-              <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
-              {adType === "search" ? (
-                <SearchAdPreview
-                  headlines={headlines.filter(h => h.trim())}
-                  descriptions={descriptions.filter(d => d.trim())}
-                  landingPage={finalUrl}
-                  businessName={businessName}
-                />
-              ) : (
-                <DisplayAdPreview
-                  businessName={businessName}
-                  longHeadline={longHeadline}
-                  shortHeadlines={headlines.filter(h => h.trim())}
-                  descriptions={descriptions.filter(d => d.trim())}
-                  ctaText="Learn More"
-                  landingPage={finalUrl}
-                />
+            <div className="p-6 space-y-4">
+              {/* Live Preview */}
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold mb-3">Live Preview</h3>
+                <div className="scale-95 origin-top">
+                  {adType === "search" ? (
+                    <SearchAdPreview
+                      headlines={headlines.filter(h => h.trim())}
+                      descriptions={descriptions.filter(d => d.trim())}
+                      landingPage={finalUrl}
+                      businessName={businessName}
+                      sitelinks={sitelinks.map(s => s.text)}
+                      callouts={callouts}
+                    />
+                  ) : (
+                    <DisplayAdPreview
+                      businessName={businessName}
+                      longHeadline={longHeadline}
+                      shortHeadlines={headlines.filter(h => h.trim())}
+                      descriptions={descriptions.filter(d => d.trim())}
+                      ctaText={ctaText}
+                      landingPage={finalUrl}
+                      language={language}
+                    />
+                  )}
+                </div>
+              </Card>
+
+              {/* Quality Metrics Panel */}
+              <QualityMetricsPanel
+                adStrength={adStrength}
+                headlines={headlines.map(h => ({ text: h }))}
+                descriptions={descriptions.map(d => ({ text: d }))}
+                sitelinks={sitelinks}
+                callouts={callouts}
+                finalUrl={finalUrl}
+                businessName={businessName}
+              />
+
+              {/* Version History */}
+              {ad?.id && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold">Version History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AdVersionHistory adId={ad.id} />
+                  </CardContent>
+                </Card>
               )}
             </div>
           </ScrollArea>
