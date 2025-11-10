@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { calculateAdStrength, checkCompliance } from "@/lib/adQualityScore";
+import { calculateAdStrength, checkCompliance, detectHeadlinePattern } from "@/lib/adQualityScore";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -289,14 +290,26 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       };
 
       if (ad?.id) {
+        // Get current auth user directly to ensure correct ID
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (!authUser) {
+          throw new Error('Not authenticated');
+        }
+        
         const { error } = await supabase
           .from("ads")
           .update({
             ...baseData,
-            updated_by: user.id
+            updated_by: authUser.id
           })
           .eq("id", ad.id);
-        if (error) throw error;
+          
+        if (error) {
+          console.error('Ad update error:', error);
+          throw error;
+        }
+        
         toast.success("Ad updated successfully");
         onSave(ad.id);
       } else {
@@ -463,40 +476,133 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Headlines (15 max, 30 chars each)</Label>
-              {isEditMode ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {headlines.map((headline, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
-                        value={headline}
-                        onChange={(e) => updateHeadline(index, e.target.value)}
-                        maxLength={30}
-                        className="flex-1"
-                      />
-                      <FieldActions
-                        value={headline}
-                        elementType="headline"
-                        onSelect={(content) => updateHeadline(index, content)}
-                        onSave={() => handleSaveElement('headline', headline)}
-                        isEmpty={!headline.trim()}
-                      />
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-2">
+                <Label>Headlines (15 max, 30 chars each)</Label>
+                {isEditMode ? (
+                  <div className="grid grid-cols-1 gap-2">
+                    {headlines.map((headline, index) => {
+                      const pattern = detectHeadlinePattern(headline);
+                      const hasPattern = pattern.type !== 'none';
+                      
+                      return (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
+                            value={headline}
+                            onChange={(e) => updateHeadline(index, e.target.value)}
+                            maxLength={30}
+                            className={`flex-1 ${hasPattern ? 'ring-1 ring-yellow-400/50' : ''}`}
+                          />
+                          
+                          {hasPattern && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs cursor-help bg-yellow-50 border-yellow-300 text-yellow-900 shrink-0"
+                                  >
+                                    {pattern.indicator} +{pattern.boost}%
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-sm">{pattern.description}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          
+                          <FieldActions
+                            value={headline}
+                            elementType="headline"
+                            onSelect={(content) => updateHeadline(index, content)}
+                            onSave={() => handleSaveElement('headline', headline)}
+                            isEmpty={!headline.trim()}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
               ) : (
                 <div className="space-y-1">
-                  {headlines.filter(h => h.trim()).map((headline, index) => (
-                    <div key={index} className="text-sm p-2 bg-muted/30 rounded">• {headline}</div>
-                  ))}
+                  {headlines.filter(h => h.trim()).map((headline, index) => {
+                    const pattern = detectHeadlinePattern(headline);
+                    const hasPattern = pattern.type !== 'none';
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className={`text-sm p-2 rounded flex items-center gap-2 ${
+                          hasPattern ? 'bg-yellow-50/50 border border-yellow-200' : 'bg-muted/30'
+                        }`}
+                      >
+                        <span className="flex-1">• {headline}</span>
+                        {hasPattern && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs cursor-help bg-yellow-100 border-yellow-400 text-yellow-900 shrink-0"
+                                >
+                                  {pattern.indicator} +{pattern.boost}%
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-sm">{pattern.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    );
+                  })}
                   {headlines.filter(h => h.trim()).length === 0 && (
                     <div className="text-sm text-muted-foreground">No headlines</div>
                   )}
                 </div>
               )}
-              </div>
+              
+              {/* Pattern Distribution Summary */}
+              {headlines.filter(h => h.trim()).length > 0 && (
+                <div className="p-3 bg-muted/30 rounded-lg space-y-2 mt-2">
+                  <div className="text-xs font-medium text-muted-foreground">Headline Pattern Mix:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const patterns = headlines
+                        .filter(h => h.trim())
+                        .map(h => detectHeadlinePattern(h))
+                        .filter(p => p.type !== 'none');
+                      
+                      const counts = patterns.reduce((acc, p) => {
+                        acc[p.type] = (acc[p.type] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>);
+                      
+                      const genericCount = headlines.filter(h => h.trim()).filter(h => detectHeadlinePattern(h).type === 'none').length;
+                      
+                      return (
+                        <>
+                          {Object.entries(counts).map(([type, count]) => {
+                            const pattern = patterns.find(p => p.type === type)!;
+                            return (
+                              <Badge key={type} variant="secondary" className="text-xs">
+                                {pattern.indicator} {type}: {count}
+                              </Badge>
+                            );
+                          })}
+                          {genericCount > 0 && (
+                            <Badge variant="outline" className="text-xs text-muted-foreground">
+                              Generic: {genericCount}
+                            </Badge>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label>Descriptions (4 max, 90 chars each)</Label>

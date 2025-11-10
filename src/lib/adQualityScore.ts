@@ -149,6 +149,75 @@ export interface ComplianceIssue {
   field: string;
 }
 
+export interface HeadlinePattern {
+  type: 'question' | 'cta' | 'number' | 'benefit' | 'emotional' | 'none';
+  indicator: string;
+  description: string;
+  boost: number; // CTR boost percentage
+}
+
+export const detectHeadlinePattern = (headline: string): HeadlinePattern => {
+  const text = headline.toLowerCase().trim();
+  
+  // Check for questions (20% CTR boost)
+  if (/^(what|how|why|when|where|who|can|do|does|is|are)\b/i.test(text) || text.endsWith('?')) {
+    return {
+      type: 'question',
+      indicator: '❓',
+      description: 'Question pattern - 20% higher CTR',
+      boost: 20
+    };
+  }
+  
+  // Check for CTAs (25% boost when in position 1)
+  if (/\b(buy|get|try|start|shop|save|join|subscribe|download|claim|discover|learn)\b/i.test(text)) {
+    return {
+      type: 'cta',
+      indicator: '👆',
+      description: 'Call-to-action - 25% higher CTR',
+      boost: 25
+    };
+  }
+  
+  // Check for numbers (15% CTR boost)
+  if (/\d/.test(text)) {
+    return {
+      type: 'number',
+      indicator: '🔢',
+      description: 'Contains numbers - 15% higher CTR',
+      boost: 15
+    };
+  }
+  
+  // Check for benefit words (10% boost)
+  if (/\b(free|save|best|top|new|exclusive|guaranteed|easy|fast|simple)\b/i.test(text)) {
+    return {
+      type: 'benefit',
+      indicator: '💎',
+      description: 'Benefit-focused - 10% higher CTR',
+      boost: 10
+    };
+  }
+  
+  // Check for emotional words (10% boost)
+  if (/\b(love|amazing|perfect|incredible|trusted|popular|proven|award)\b/i.test(text)) {
+    return {
+      type: 'emotional',
+      indicator: '❤️',
+      description: 'Emotional appeal - 10% higher CTR',
+      boost: 10
+    };
+  }
+  
+  return {
+    type: 'none',
+    indicator: '',
+    description: '',
+    boost: 0
+  };
+};
+
+
 const PROHIBITED_WORDS = [
   '#1', 'guaranteed profits', 'no risk', 'free money', 'get rich quick',
   'scam', 'ponzi', 'pyramid', 'mlm', 'unlimited returns', 'risk-free',
