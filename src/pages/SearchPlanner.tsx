@@ -2,6 +2,8 @@ import { useState } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
 import SearchAdEditor from "@/components/search/SearchAdEditor";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -15,12 +17,43 @@ interface EditorContext {
 export default function SearchPlanner() {
   const [view, setView] = useState<ViewState>('hierarchy');
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
+  const [showHierarchy, setShowHierarchy] = useState(false);
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
-      <ResizablePanelGroup direction="horizontal">
+    <div className="h-[calc(100vh-4rem)] relative">
+      {/* Mobile Toggle Button */}
+      <div className="md:hidden fixed top-20 left-4 z-50">
+        <Button
+          size="icon"
+          onClick={() => setShowHierarchy(!showHierarchy)}
+          className="shadow-lg"
+        >
+          {showHierarchy ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Mobile Overlay Panel */}
+      {showHierarchy && (
+        <div className="md:hidden fixed inset-0 bg-background z-40 overflow-auto pt-16">
+          <SearchHierarchyPanel
+            onEditAd={(ad, adGroup, campaign, entity) => {
+              setEditorContext({ ad, adGroup, campaign, entity });
+              setView('ad-editor');
+              setShowHierarchy(false);
+            }}
+            onCreateAd={(adGroup, campaign, entity) => {
+              setEditorContext({ ad: {}, adGroup, campaign, entity });
+              setView('ad-editor');
+              setShowHierarchy(false);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Desktop Layout */}
+      <ResizablePanelGroup direction="horizontal" className="hidden md:flex">
         {/* Left Panel: Hierarchy Tree */}
-        <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
           <SearchHierarchyPanel
             onEditAd={(ad, adGroup, campaign, entity) => {
               setEditorContext({ ad, adGroup, campaign, entity });
@@ -36,7 +69,7 @@ export default function SearchPlanner() {
         <ResizableHandle withHandle />
 
         {/* Right Panel: Ad Editor or Empty State */}
-        <ResizablePanel defaultSize={70} minSize={60}>
+        <ResizablePanel defaultSize={70} minSize={50}>
           {view === 'ad-editor' && editorContext ? (
             <SearchAdEditor
               ad={editorContext.ad}
@@ -59,6 +92,30 @@ export default function SearchPlanner() {
           )}
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden h-full">
+        {view === 'ad-editor' && editorContext ? (
+          <SearchAdEditor
+            ad={editorContext.ad}
+            adGroup={editorContext.adGroup}
+            campaign={editorContext.campaign}
+            entity={editorContext.entity}
+            onSave={(adId) => {
+              setView('hierarchy');
+              setEditorContext(null);
+            }}
+            onCancel={() => {
+              setView('hierarchy');
+              setEditorContext(null);
+            }}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center text-muted-foreground px-4 text-center">
+            Tap the menu button to select an ad or create a new one
+          </div>
+        )}
+      </div>
     </div>
   );
 }

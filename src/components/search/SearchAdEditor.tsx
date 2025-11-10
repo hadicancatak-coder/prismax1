@@ -16,6 +16,7 @@ import { SavedElementsSelector } from "./SavedElementsSelector";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 interface SearchAdEditorProps {
   ad: any;
@@ -268,9 +269,8 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     setIsSaving(true);
 
     try {
-      const adData: any = {
+      const baseData = {
         name,
-        created_by: user.id,
         ad_group_id: adGroup.id,
         campaign_name: campaign.name,
         ad_group_name: adGroup.name,
@@ -291,7 +291,10 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       if (ad?.id) {
         const { error } = await supabase
           .from("ads")
-          .update(adData)
+          .update({
+            ...baseData,
+            updated_by: user.id
+          })
           .eq("id", ad.id);
         if (error) throw error;
         toast.success("Ad updated successfully");
@@ -299,7 +302,10 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       } else {
         const { data, error } = await supabase
           .from("ads")
-          .insert(adData)
+          .insert({
+            ...baseData,
+            created_by: user.id
+          })
           .select()
           .single();
         if (error) throw error;
@@ -372,10 +378,12 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   };
 
   return (
-    <div className="flex h-full">
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6">
-          <div>
+    <ResizablePanelGroup direction="horizontal" className="flex-col lg:flex-row">
+      {/* Form Panel */}
+      <ResizablePanel defaultSize={50} minSize={40} className="min-h-[50vh] lg:min-h-0">
+        <ScrollArea className="h-full">
+          <div className="p-4 lg:p-6 space-y-6">
+            <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold">
                 {ad?.id ? "Edit Ad" : "Create New Ad"}
@@ -646,87 +654,93 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
           </div>
         </div>
       </ScrollArea>
+      </ResizablePanel>
 
-      <div className="w-[400px] border-l bg-muted/30 flex flex-col">
-        <div className="sticky top-0 z-10 p-3 border-b bg-background">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Live Preview</span>
-            <Badge variant="outline" className="text-xs">
-              RSA Combination {previewCombination + 1}/{combinations.length}
-            </Badge>
+      <ResizableHandle withHandle className="hidden lg:flex" />
+
+      {/* Preview Panel */}
+      <ResizablePanel defaultSize={50} minSize={40} className="min-h-[50vh] lg:min-h-0">
+        <div className="h-full border-l bg-muted/30 flex flex-col">
+          <div className="sticky top-0 z-10 p-3 border-b bg-background">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold">Live Preview</span>
+              <Badge variant="outline" className="text-xs">
+                RSA Combination {previewCombination + 1}/{combinations.length}
+              </Badge>
+            </div>
+            
+            {combinations.length > 1 && (
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setPreviewCombination(prev => 
+                    prev === 0 ? combinations.length - 1 : prev - 1
+                  )}
+                >
+                  ← Previous
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setPreviewCombination(prev => 
+                    (prev + 1) % combinations.length
+                  )}
+                >
+                  Next →
+                </Button>
+              </div>
+            )}
           </div>
           
-          {combinations.length > 1 && (
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setPreviewCombination(prev => 
-                  prev === 0 ? combinations.length - 1 : prev - 1
-                )}
-              >
-                ← Previous
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setPreviewCombination(prev => 
-                  (prev + 1) % combinations.length
-                )}
-              >
-                Next →
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-6">
-            <div>
-              <SearchAdPreview
-                headlines={currentCombination.headlines}
-                descriptions={currentCombination.descriptions}
-                landingPage={landingPage}
-                businessName={businessName}
-                sitelinks={sitelinks.filter(s => s.description || s.link)}
-                callouts={callouts.filter(c => c)}
-              />
-            </div>
+          <ScrollArea className="flex-1 p-4 lg:p-6">
+            <div className="space-y-6">
+              <div>
+                <SearchAdPreview
+                  headlines={currentCombination.headlines}
+                  descriptions={currentCombination.descriptions}
+                  landingPage={landingPage}
+                  businessName={businessName}
+                  sitelinks={sitelinks.filter(s => s.description || s.link)}
+                  callouts={callouts.filter(c => c)}
+                />
+              </div>
 
-        {/* Ad Strength */}
-        <div className="space-y-2 p-4 border rounded-lg bg-background">
-          <div className="flex items-center justify-between">
-            <Label>Ad Strength</Label>
-            <Badge variant={adStrength.strength === 'excellent' ? 'default' : adStrength.strength === 'good' ? 'secondary' : 'outline'}>
-              {adStrength.strength.toUpperCase()} ({adStrength.score}/100)
-            </Badge>
-          </div>
-          <Progress value={adStrength.score} className="h-2" />
-          {adStrength.suggestions.length > 0 && (
-            <div className="text-xs text-muted-foreground space-y-1 mt-2">
-              {adStrength.suggestions.slice(0, 3).map((suggestion, i) => (
-                <div key={i}>• {suggestion}</div>
-              ))}
-            </div>
-          )}
-        </div>
+              {/* Ad Strength */}
+              <div className="space-y-2 p-4 border rounded-lg bg-background">
+                <div className="flex items-center justify-between">
+                  <Label>Ad Strength</Label>
+                  <Badge variant={adStrength.strength === 'excellent' ? 'default' : adStrength.strength === 'good' ? 'secondary' : 'outline'}>
+                    {adStrength.strength.toUpperCase()} ({adStrength.score}/100)
+                  </Badge>
+                </div>
+                <Progress value={adStrength.score} className="h-2" />
+                {adStrength.suggestions.length > 0 && (
+                  <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                    {adStrength.suggestions.slice(0, 3).map((suggestion, i) => (
+                      <div key={i}>• {suggestion}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-        {/* Compliance Issues */}
-        {complianceIssues.length > 0 && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              <div className="font-semibold mb-1">Compliance Issues:</div>
-              {complianceIssues.map((issue, i) => (
-                <div key={i} className="text-sm">• {issue.message}</div>
-              ))}
-            </AlertDescription>
-          </Alert>
-        )}
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+              {/* Compliance Issues */}
+              {complianceIssues.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    <div className="font-semibold mb-1">Compliance Issues:</div>
+                    {complianceIssues.map((issue, i) => (
+                      <div key={i} className="text-sm">• {issue.message}</div>
+                    ))}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
