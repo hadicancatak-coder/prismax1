@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TreeNode } from "@/hooks/useAccountStructure";
-import { SAMPLE_ADS } from "@/lib/adSampleData";
+import { insertSampleAds } from "@/lib/adSampleData";
 
 export default function AdsPage() {
   const [activeTab, setActiveTab] = useState("search");
@@ -136,13 +136,10 @@ export default function AdsPage() {
   };
 
   const handleSampleAds = async () => {
-    const { error } = await supabase.from("ads").insert(SAMPLE_ADS);
-    if (error) {
-      toast.error("Failed to add sample ads");
-      return;
+    const success = await insertSampleAds();
+    if (success) {
+      refetch();
     }
-    toast.success("Sample ads added successfully");
-    refetch();
   };
 
   return (
