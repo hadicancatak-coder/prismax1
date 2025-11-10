@@ -323,52 +323,45 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     const validHeadlines = headlines.filter(h => h.trim());
     const validDescriptions = descriptions.filter(d => d.trim());
     
-    if (validHeadlines.length === 0) return [{
-      headlines: [],
-      descriptions: validDescriptions.slice(0, 2)
-    }];
+    if (validHeadlines.length === 0) {
+      return [{
+        headlines: [],
+        descriptions: validDescriptions.slice(0, 2)
+      }];
+    }
+    
+    // Helper to get random unique elements
+    const getRandomElements = (arr: string[], count: number) => {
+      const shuffled = [...arr].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, Math.min(count, arr.length));
+    };
     
     const combinations = [];
+    const maxCombinations = 10;
     
-    // Combination 1: First 3 headlines, first 2 descriptions
-    combinations.push({
-      headlines: validHeadlines.slice(0, 3),
-      descriptions: validDescriptions.slice(0, 2)
+    // Generate up to 10 unique combinations
+    for (let i = 0; i < maxCombinations; i++) {
+      const comboHeadlines = getRandomElements(validHeadlines, 3);
+      const comboDescriptions = getRandomElements(validDescriptions, 2);
+      
+      combinations.push({
+        headlines: comboHeadlines,
+        descriptions: comboDescriptions
+      });
+    }
+    
+    // Remove duplicate combinations
+    const uniqueCombinations = combinations.filter((combo, index, self) => {
+      const key = combo.headlines.join('|') + '::' + combo.descriptions.join('|');
+      return index === self.findIndex(c => 
+        (c.headlines.join('|') + '::' + c.descriptions.join('|')) === key
+      );
     });
     
-    // Combination 2: Headlines 2-4, descriptions 1-2
-    if (validHeadlines.length >= 4) {
-      combinations.push({
-        headlines: validHeadlines.slice(1, 4),
-        descriptions: validDescriptions.slice(0, 2)
-      });
-    }
-    
-    // Combination 3: Headlines with variety (1, 3, 5), descriptions 2-3
-    if (validHeadlines.length >= 5) {
-      combinations.push({
-        headlines: [validHeadlines[0], validHeadlines[2], validHeadlines[4]],
-        descriptions: validDescriptions.slice(1, 3)
-      });
-    }
-    
-    // Combination 4: Last 3 headlines, last 2 descriptions
-    if (validHeadlines.length >= 3) {
-      combinations.push({
-        headlines: validHeadlines.slice(-3),
-        descriptions: validDescriptions.slice(-2)
-      });
-    }
-    
-    // Combination 5: Random mix
-    if (validHeadlines.length >= 6) {
-      combinations.push({
-        headlines: [validHeadlines[1], validHeadlines[3], validHeadlines[5]],
-        descriptions: validDescriptions.slice(0, 2)
-      });
-    }
-    
-    return combinations;
+    return uniqueCombinations.length > 0 ? uniqueCombinations : [{
+      headlines: validHeadlines.slice(0, 3),
+      descriptions: validDescriptions.slice(0, 2)
+    }];
   };
 
   const combinations = generatePreviewCombinations();

@@ -42,17 +42,34 @@ export const calculateAdStrength = (
     suggestions.push('Add more headlines (minimum 5, recommended 15)');
   }
 
-  // Check for unique headlines
+  // Check for uniqueness (Google's #1 priority)
   const uniqueHeadlines = new Set(validHeadlines.map(h => h.toLowerCase()));
   if (uniqueHeadlines.size < validHeadlines.length) {
-    suggestions.push('Remove duplicate headlines for better variety');
+    suggestions.push('Remove duplicate headlines - Google prioritizes unique variations');
     breakdown.headlines = Math.max(0, breakdown.headlines - 5);
   }
 
-  // Check for numbers in headlines (boost CTR)
-  const headlinesWithNumbers = validHeadlines.filter(h => /\d/.test(h));
-  if (headlinesWithNumbers.length === 0 && validHeadlines.length > 0) {
-    suggestions.push('Include numbers in some headlines (e.g., "Save 20%", "2000+ Traders")');
+  // Check character utilization - Google favors well-utilized headlines
+  const shortHeadlines = validHeadlines.filter(h => h.length < 20);
+  if (shortHeadlines.length > validHeadlines.length / 2) {
+    suggestions.push('Use more characters in headlines (25-30 optimal) for better performance');
+  }
+
+  // Check for variety in headline types
+  const hasQuestions = validHeadlines.some(h => /^(what|how|why|when|where|who)/i.test(h.trim()));
+  const hasCTAs = validHeadlines.some(h => /(get|try|start|buy|learn|discover|find|shop)/i.test(h));
+  const hasNumbers = validHeadlines.some(h => /\d/.test(h));
+  const hasBenefits = validHeadlines.some(h => /(free|save|best|top|trusted|award|guarantee)/i.test(h));
+  
+  const varietyCount = [hasQuestions, hasCTAs, hasNumbers, hasBenefits].filter(Boolean).length;
+  if (varietyCount < 2 && validHeadlines.length >= 5) {
+    suggestions.push('Add variety: mix questions, CTAs, benefits, and specific numbers');
+  }
+
+  // Context-aware number suggestion (only if relevant)
+  const hasPricing = validHeadlines.some(h => /\$|price|cost|save|discount|%/i.test(h));
+  if (!hasNumbers && hasPricing && validHeadlines.length >= 5) {
+    suggestions.push('Add specific numbers to pricing headlines (e.g., "Save 20%")');
   }
 
   // Descriptions scoring (30 points max)
@@ -104,11 +121,11 @@ export const calculateAdStrength = (
   // Calculate total score
   const score = breakdown.headlines + breakdown.descriptions + breakdown.sitelinks + breakdown.callouts;
 
-  // Determine strength level
+  // Determine strength level (aligned with Google's tiers)
   let strength: 'poor' | 'average' | 'good' | 'excellent';
-  if (score >= 85) {
+  if (score >= 80) {
     strength = 'excellent';
-  } else if (score >= 65) {
+  } else if (score >= 60) {
     strength = 'good';
   } else if (score >= 40) {
     strength = 'average';
