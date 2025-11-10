@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -19,7 +19,9 @@ import AuditLog from "./pages/admin/AuditLog";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
-import AdsPage from "./pages/AdsPage";
+import SearchPlanner from "./pages/SearchPlanner";
+import DisplayPlanner from "./pages/DisplayPlanner";
+import SavedElementsPage from "./pages/SavedElementsPage";
 import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -58,7 +60,10 @@ const App = () => (
               <Route path="audit" element={<AuditLog />} />
             </Route>
             <Route path="/team-base" element={<TeamBase />} />
-            <Route path="/ads" element={<AdsPage />} />
+              <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
+              <Route path="/ads/search" element={<SearchPlanner />} />
+              <Route path="/ads/display" element={<DisplayPlanner />} />
+              <Route path="/ads/library" element={<SavedElementsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />
             <Route path="/activity-log" element={<ActivityLog />} />

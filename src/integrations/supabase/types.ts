@@ -62,10 +62,12 @@ export type Database = {
           google_campaign_id: string | null
           google_campaign_url: string | null
           id: string
+          is_template: boolean | null
           languages: string[] | null
           name: string
           objective: string | null
           status: string | null
+          template_name: string | null
           updated_at: string | null
         }
         Insert: {
@@ -76,10 +78,12 @@ export type Database = {
           google_campaign_id?: string | null
           google_campaign_url?: string | null
           id?: string
+          is_template?: boolean | null
           languages?: string[] | null
           name: string
           objective?: string | null
           status?: string | null
+          template_name?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -90,10 +94,12 @@ export type Database = {
           google_campaign_id?: string | null
           google_campaign_url?: string | null
           id?: string
+          is_template?: boolean | null
           languages?: string[] | null
           name?: string
           objective?: string | null
           status?: string | null
+          template_name?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -231,11 +237,13 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          is_template: boolean | null
           keywords: Json | null
           match_types: Json | null
           max_cpc: number | null
           name: string
           status: string | null
+          template_name: string | null
           updated_at: string | null
         }
         Insert: {
@@ -243,11 +251,13 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          is_template?: boolean | null
           keywords?: Json | null
           match_types?: Json | null
           max_cpc?: number | null
           name: string
           status?: string | null
+          template_name?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -255,11 +265,13 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          is_template?: boolean | null
           keywords?: Json | null
           match_types?: Json | null
           max_cpc?: number | null
           name?: string
           status?: string | null
+          template_name?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2003,9 +2015,11 @@ export type Database = {
           ad_type: string
           campaign: string | null
           campaign_id: string | null
+          compliance_score: number | null
           content: Json
           created_at: string | null
           entity: string
+          google_approval_status: string | null
           id: string
           is_template: boolean | null
           name: string
@@ -2021,9 +2035,11 @@ export type Database = {
           ad_type?: string
           campaign?: string | null
           campaign_id?: string | null
+          compliance_score?: number | null
           content: Json
           created_at?: string | null
           entity: string
+          google_approval_status?: string | null
           id?: string
           is_template?: boolean | null
           name: string
@@ -2039,9 +2055,11 @@ export type Database = {
           ad_type?: string
           campaign?: string | null
           campaign_id?: string | null
+          compliance_score?: number | null
           content?: Json
           created_at?: string | null
           entity?: string
+          google_approval_status?: string | null
           id?: string
           is_template?: boolean | null
           name?: string
@@ -2893,6 +2911,19 @@ export type Database = {
           title?: string | null
           user_id?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      saved_elements_unified: {
+        Row: {
+          ad_group_id: string | null
+          approval_status: string | null
+          campaign_id: string | null
+          created_at: string | null
+          element_type: string | null
+          entity: string | null
+          id: string | null
+          name: string | null
         }
         Relationships: []
       }
