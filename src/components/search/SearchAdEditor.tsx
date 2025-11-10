@@ -154,7 +154,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       created_by: user.id,
       entity: entity,
       language: language,
-      approval_status: 'approved',
+      google_status: 'approved',
       use_count: 0
     });
   };

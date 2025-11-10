@@ -147,8 +147,8 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
               return (
                 <Collapsible key={campaign.id} open={isExpanded} onOpenChange={() => toggleCampaign(campaign.id)}>
-                  <div className="border-2 border-blue-200 rounded-lg mb-3 overflow-hidden">
-                    <div className="flex items-center gap-3 p-3 bg-blue-50/50 hover:bg-blue-50 transition-colors">
+                  <div className="mb-3">
+                    <div className="flex items-center gap-3 p-2 pl-2 hover:bg-blue-50/30 rounded-md transition-colors border-l-2 border-blue-400">
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7">
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -173,7 +173,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                     </div>
 
                     <CollapsibleContent>
-                      <div className="pl-10 pr-3 pb-3 space-y-2 bg-white">
+                      <div className="space-y-1.5 ml-6">
                         {campaignAdGroups.length === 0 ? (
                           <div className="text-xs text-muted-foreground py-2 px-2">
                             No ad groups yet
@@ -185,8 +185,8 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded} onOpenChange={() => toggleAdGroup(adGroup.id)}>
-                                <div className="rounded-md bg-purple-50/30">
-                                  <div className="flex items-center gap-3 p-2.5 hover:bg-purple-50/60 transition-colors">
+                                <div className="ml-6">
+                                  <div className="flex items-center gap-3 p-2 hover:bg-purple-50/30 rounded-md transition-colors border-l-2 border-purple-400">
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-6 w-6">
                                         {isAdGroupExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -211,7 +211,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                                   </div>
 
                                   <CollapsibleContent>
-                                    <div className="pl-9 pr-2 pb-2 space-y-1">
+                                    <div className="space-y-1 ml-6">
                                       {adGroupAds.length === 0 ? (
                                         <div className="text-xs text-muted-foreground py-2 px-2">
                                           No ads yet
@@ -220,7 +220,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                                         adGroupAds.map(ad => (
                                           <div 
                                             key={ad.id} 
-                                            className="flex items-center gap-3 p-2 hover:bg-green-50/50 rounded-md cursor-pointer transition-colors"
+                                            className="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-md cursor-pointer transition-colors ml-6"
                                             onClick={() => {
                                               onEditAd(ad, adGroup, campaign, selectedEntity);
                                             }}
