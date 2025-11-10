@@ -16,7 +16,7 @@ interface SearchAdEditorProps {
   adGroup: any;
   campaign: any;
   entity: string;
-  onSave: () => void;
+  onSave: (adId?: string) => void;
   onCancel: () => void;
 }
 
@@ -104,15 +104,17 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
           .eq("id", ad.id);
         if (error) throw error;
         toast.success("Ad updated successfully");
+        onSave(ad.id);
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("ads")
-          .insert(adData);
+          .insert(adData)
+          .select()
+          .single();
         if (error) throw error;
         toast.success("Ad created successfully");
+        onSave(data.id);
       }
-
-      onSave();
     } catch (error: any) {
       toast.error(error.message || "Failed to save ad");
     } finally {

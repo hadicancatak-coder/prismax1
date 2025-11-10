@@ -11,7 +11,7 @@ interface SearchAdGroupAdsViewProps {
   campaign: any;
   entity: string;
   onAdSelected: (ad: any) => void;
-  onAdCreated: () => void;
+  onAdCreated: (adId?: string) => void;
 }
 
 export function SearchAdGroupAdsView({

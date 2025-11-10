@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SearchCampaignFormProps {
   entity: string;
-  onCampaignCreated: () => void;
+  onCampaignCreated: (campaignId: string) => void;
 }
 
 const LANGUAGES = [
@@ -61,12 +61,16 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
     setIsCreating(true);
 
     try {
-      const { error } = await supabase.from("ad_campaigns").insert({
-        name: name.trim(),
-        entity,
-        languages: selectedLanguages,
-        status: "active"
-      });
+      const { data, error } = await supabase
+        .from("ad_campaigns")
+        .insert({
+          name: name.trim(),
+          entity,
+          languages: selectedLanguages,
+          status: "active"
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -74,7 +78,7 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
       setName("");
       setSelectedLanguages(["EN"]);
       refetch();
-      onCampaignCreated();
+      onCampaignCreated(data.id);
     } catch (error: any) {
       toast.error(error.message || "Failed to create campaign");
     } finally {

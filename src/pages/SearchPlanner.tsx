@@ -3,8 +3,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { AccountStructureTree } from "@/components/ads/AccountStructureTree";
 import { SearchBuilderArea } from "@/components/search/SearchBuilderArea";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SearchPlanner() {
+  const queryClient = useQueryClient();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
@@ -63,17 +65,72 @@ export default function SearchPlanner() {
     }
   };
 
-  const handleCampaignCreated = () => {
-    // Refresh will happen via react-query
+  const handleCampaignCreated = async (campaignId: string) => {
+    // Invalidate queries to refresh tree
+    queryClient.invalidateQueries({ queryKey: ['ad-campaigns-tree'] });
+    queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    
+    // Auto-select the newly created campaign
+    const { data } = await supabase
+      .from('ad_campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .single();
+    
+    if (data) {
+      setSelectedCampaign(data);
+      setSelectedEntity(data.entity);
+      setSelectedNodeId(`campaign-${campaignId}`);
+      setSelectedAdGroup(null);
+      setSelectedAd(null);
+    }
   };
 
-  const handleAdGroupCreated = () => {
-    // Refresh will happen via react-query
+  const handleAdGroupCreated = async (adGroupId: string) => {
+    // Invalidate queries to refresh tree
+    queryClient.invalidateQueries({ queryKey: ['ad-campaigns-tree'] });
+    queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
+    
+    // Auto-select the newly created ad group
+    const { data } = await supabase
+      .from('ad_groups')
+      .select('*, ad_campaigns(*)')
+      .eq('id', adGroupId)
+      .single();
+    
+    if (data) {
+      setSelectedAdGroup(data);
+      setSelectedCampaign(data.ad_campaigns);
+      setSelectedEntity(data.ad_campaigns?.entity || null);
+      setSelectedNodeId(`adgroup-${adGroupId}`);
+      setSelectedAd(null);
+    }
   };
 
-  const handleAdCreated = () => {
-    // Go back to ad group view
-    setSelectedAd(null);
+  const handleAdCreated = async (adId?: string) => {
+    // Invalidate queries to refresh tree
+    queryClient.invalidateQueries({ queryKey: ['ad-campaigns-tree'] });
+    queryClient.invalidateQueries({ queryKey: ['ads'] });
+    
+    if (adId) {
+      // Auto-select the newly created ad
+      const { data } = await supabase
+        .from('ads')
+        .select('*, ad_groups(*, ad_campaigns(*))')
+        .eq('id', adId)
+        .single();
+      
+      if (data) {
+        setSelectedAd(data);
+        setSelectedAdGroup(data.ad_groups);
+        setSelectedCampaign(data.ad_groups?.ad_campaigns);
+        setSelectedEntity(data.ad_groups?.ad_campaigns?.entity || null);
+        setSelectedNodeId(`ad-${adId}`);
+      }
+    } else {
+      // Just go back to ad group view
+      setSelectedAd(null);
+    }
   };
 
   const handleAdSelected = (ad: any) => {

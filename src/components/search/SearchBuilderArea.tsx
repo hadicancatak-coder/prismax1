@@ -9,9 +9,9 @@ interface SearchBuilderAreaProps {
   selectedCampaign: any | null;
   selectedAdGroup: any | null;
   selectedAd: any | null;
-  onCampaignCreated: () => void;
-  onAdGroupCreated: () => void;
-  onAdCreated: () => void;
+  onCampaignCreated: (campaignId: string) => void;
+  onAdGroupCreated: (adGroupId: string) => void;
+  onAdCreated: (adId?: string) => void;
   onAdSelected: (ad: any) => void;
   onBack: () => void;
 }

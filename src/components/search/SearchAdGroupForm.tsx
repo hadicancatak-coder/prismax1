@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 interface SearchAdGroupFormProps {
   campaign: any;
   entity: string;
-  onAdGroupCreated: () => void;
+  onAdGroupCreated: (adGroupId: string) => void;
 }
 
 export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: SearchAdGroupFormProps) {
@@ -43,12 +43,16 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
     setIsCreating(true);
 
     try {
-      const { error } = await supabase.from("ad_groups").insert({
-        name: name.trim(),
-        campaign_id: campaign.id,
-        max_cpc: maxCpc ? parseFloat(maxCpc) : null,
-        status: "active"
-      });
+      const { data, error } = await supabase
+        .from("ad_groups")
+        .insert({
+          name: name.trim(),
+          campaign_id: campaign.id,
+          max_cpc: maxCpc ? parseFloat(maxCpc) : null,
+          status: "active"
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -56,7 +60,7 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
       setName("");
       setMaxCpc("");
       refetch();
-      onAdGroupCreated();
+      onAdGroupCreated(data.id);
     } catch (error: any) {
       toast.error(error.message || "Failed to create ad group");
     } finally {
