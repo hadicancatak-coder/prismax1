@@ -88,6 +88,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setRoleLoading(true);
           fetchUserRole(session.user.id);
+          
+          // Restore MFA verification status from localStorage
+          const verified = getMfaVerificationStatus();
+          setMfaVerified(verified);
         } else {
           setUserRole(null);
           setRoleLoading(false);
