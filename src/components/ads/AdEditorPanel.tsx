@@ -14,6 +14,7 @@ import { ElementQuickInsert } from "./ElementQuickInsert";
 import { AdVariationGeneratorDialog } from "./AdVariationGeneratorDialog";
 import { QualityMetricsPanel } from "./QualityMetricsPanel";
 import { AdVersionHistory } from "./AdVersionHistory";
+import { AdBreadcrumbs } from "./AdBreadcrumbs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -212,6 +213,14 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
 
   return (
     <div className="h-full flex flex-col">
+      {/* Breadcrumbs */}
+      <AdBreadcrumbs 
+        entity={entity}
+        campaign={campaign}
+        adGroup={adGroup}
+        adName={adName}
+      />
+      
       {/* Header */}
       <div className="border-b p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

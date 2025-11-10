@@ -3,9 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Download, Database, LayoutGrid, LayoutDashboard, Columns, Maximize } from "lucide-react";
+import { Plus, Upload, Download, Database } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AdEditorPanel from "@/components/ads/AdEditorPanel";
 import AdListPanel from "@/components/ads/AdListPanel";
 import { AccountStructureTree } from "@/components/ads/AccountStructureTree";
@@ -19,7 +18,10 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PanelHeader } from "@/components/ads/PanelHeader";
 import { SavedAdsManager } from "@/components/ads/SavedAdsManager";
+import { MoveAdDialog } from "@/components/ads/MoveAdDialog";
+import { DuplicateAdDialog } from "@/components/ads/DuplicateAdDialog";
 import { usePanelCollapse } from "@/hooks/usePanelCollapse";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,9 +42,18 @@ export default function AdsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createCampaignDialog, setCreateCampaignDialog] = useState<{open: boolean, entityName: string} | null>(null);
   const [createAdGroupDialog, setCreateAdGroupDialog] = useState<{open: boolean, campaignId: string, campaignName: string} | null>(null);
+  const [moveDialogState, setMoveDialogState] = useState<{open: boolean, ids: string[]} | null>(null);
+  const [duplicateDialogState, setDuplicateDialogState] = useState<{open: boolean, ids: string[]} | null>(null);
   
   const { collapsed, togglePanel } = usePanelCollapse();
   const queryClient = useQueryClient();
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    { key: 'n', ctrl: true, callback: () => { setSelectedAdForEdit(null); setIsCreatingNew(true); } },
+    { key: 'd', ctrl: true, callback: () => selectedIds.length > 0 && setDuplicateDialogState({ open: true, ids: selectedIds }) },
+    { key: 'f', ctrl: true, callback: () => document.querySelector<HTMLInputElement>('[placeholder="Search..."]')?.focus() },
+  ]);
 
   const { data: entities } = useQuery({
     queryKey: ['entity-presets-filter'],
@@ -405,6 +416,34 @@ export default function AdsPage() {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['ad-groups-structure'] });
             setCreateAdGroupDialog(null);
+          }}
+        />
+      )}
+
+      {/* Move Dialog for Bulk Operations */}
+      {moveDialogState && moveDialogState.ids.length > 0 && (
+        <MoveAdDialog
+          open={moveDialogState.open}
+          onOpenChange={(open) => !open && setMoveDialogState(null)}
+          adId={moveDialogState.ids[0]}
+          onSuccess={() => {
+            setMoveDialogState(null);
+            setSelectedIds([]);
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Duplicate Dialog for Bulk Operations */}
+      {duplicateDialogState && duplicateDialogState.ids.length > 0 && (
+        <DuplicateAdDialog
+          open={duplicateDialogState.open}
+          onOpenChange={(open) => !open && setDuplicateDialogState(null)}
+          adId={duplicateDialogState.ids[0]}
+          onSuccess={() => {
+            setDuplicateDialogState(null);
+            setSelectedIds([]);
+            refetch();
           }}
         />
       )}

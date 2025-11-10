@@ -9,6 +9,7 @@ export interface TreeNode {
   versionCount?: number;
   status?: string;
   parentId?: string;
+  languages?: string[];
 }
 
 export function useAccountStructure() {

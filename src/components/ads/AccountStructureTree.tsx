@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Layers, Plus } from "lucide-react";
+import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Layers, Plus, Search, ChevronsRight, ChevronsDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AdContextMenu } from "./AdContextMenu";
+import { MoveAdDialog } from "./MoveAdDialog";
+import { DuplicateAdDialog } from "./DuplicateAdDialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-interface TreeNode {
-  id: string;
-  type: 'entity' | 'campaign' | 'adgroup' | 'ad';
-  name: string;
-  children?: TreeNode[];
-  versionCount?: number;
-  status?: string;
-  parentId?: string;
-}
+import { TreeNode } from "@/hooks/useAccountStructure";
 
 interface AccountStructureTreeProps {
   selectedNodeId?: string;
@@ -34,6 +31,9 @@ export function AccountStructureTree({
 }: AccountStructureTreeProps) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [moveDialogState, setMoveDialogState] = useState<{open: boolean, adId: string, currentAdGroupId?: string} | null>(null);
+  const [duplicateDialogState, setDuplicateDialogState] = useState<{open: boolean, adId: string} | null>(null);
 
   // Fetch entities from entity_presets
   const { data: entityPresets } = useQuery({
@@ -114,6 +114,40 @@ export function AccountStructureTree({
     setExpandedNodes(newExpanded);
   };
 
+  const expandAll = () => {
+    const allNodeIds = new Set<string>();
+    const collectIds = (nodes: TreeNode[]) => {
+      nodes.forEach(node => {
+        if (node.children && node.children.length > 0) {
+          allNodeIds.add(node.id);
+          collectIds(node.children);
+        }
+      });
+    };
+    collectIds(buildTree());
+    setExpandedNodes(allNodeIds);
+  };
+
+  const collapseAll = () => {
+    setExpandedNodes(new Set());
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    if (!confirm("Are you sure you want to delete this ad?")) return;
+    
+    const { error } = await supabase
+      .from('ads')
+      .delete()
+      .eq('id', adId);
+    
+    if (error) {
+      toast.error("Failed to delete ad");
+      return;
+    }
+    
+    toast.success("Ad deleted successfully");
+  };
+
   const buildTree = (): TreeNode[] => {
     if (!entityPresets || !campaigns) return [];
 
@@ -138,7 +172,8 @@ export function AccountStructureTree({
             name: campaign.name,
             status: campaign.status,
             parentId: entityNode.id,
-            children: []
+            children: [],
+            languages: campaign.languages || []
           };
 
           // Find ad groups for this campaign
@@ -188,6 +223,24 @@ export function AccountStructureTree({
     return tree;
   };
 
+  const filterTree = (nodes: TreeNode[]): TreeNode[] => {
+    if (!searchQuery) return nodes;
+
+    return nodes.reduce<TreeNode[]>((acc, node) => {
+      const matchesSearch = node.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const filteredChildren = node.children ? filterTree(node.children) : [];
+      
+      if (matchesSearch || filteredChildren.length > 0) {
+        acc.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children
+        });
+      }
+      
+      return acc;
+    }, []);
+  };
+
   const renderNode = (node: TreeNode, level = 0) => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
@@ -227,7 +280,7 @@ export function AccountStructureTree({
       );
     };
 
-    return (
+    const nodeContent = (
       <div key={node.id}>
         <div
           className={cn(
@@ -281,6 +334,17 @@ export function AccountStructureTree({
           
           {getStatusBadge()}
           
+          {/* Language badges for campaigns */}
+          {node.type === 'campaign' && (node as any).languages && (node as any).languages.length > 0 && (
+            <div className="flex gap-1 shrink-0">
+              {(node as any).languages.map((lang: string) => (
+                <Badge key={lang} variant="outline" className="text-xs h-5 px-1">
+                  {lang}
+                </Badge>
+              ))}
+            </div>
+          )}
+          
           {hasChildren && (
             <Badge variant="outline" className="text-xs h-5 shrink-0">
               {node.children?.length}
@@ -295,30 +359,120 @@ export function AccountStructureTree({
         )}
       </div>
     );
+
+    // Wrap ads in context menu
+    if (node.type === 'ad') {
+      const adId = node.id.replace('ad-', '');
+      const adGroupId = node.parentId?.replace('adgroup-', '');
+      
+      return (
+        <AdContextMenu
+          key={node.id}
+          node={node}
+          onMove={() => setMoveDialogState({ open: true, adId, currentAdGroupId: adGroupId })}
+          onDuplicate={() => setDuplicateDialogState({ open: true, adId })}
+          onDelete={() => handleDeleteAd(adId)}
+          onEdit={() => onSelectNode(node)}
+        >
+          {nodeContent}
+        </AdContextMenu>
+      );
+    }
+
+    return nodeContent;
   };
 
   const tree = buildTree();
+  const filteredTree = filterTree(tree);
+
+  const totalCampaigns = campaigns?.length || 0;
+  const totalAdGroups = adGroups?.length || 0;
+  const totalAds = ads?.length || 0;
 
   return (
     <div className="flex flex-col h-full border-r border-border bg-card">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold text-sm">Account Structure</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {tree.length} entities
-        </p>
+      <div className="p-3 border-b border-border space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm">Account Structure</h3>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={expandAll}
+              title="Expand All"
+            >
+              <ChevronsDown className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={collapseAll}
+              title="Collapse All"
+            >
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex gap-2 text-xs text-muted-foreground">
+          <span>{tree.length} entities</span>
+          <span>•</span>
+          <span>{totalCampaigns} campaigns</span>
+          <span>•</span>
+          <span>{totalAdGroups} groups</span>
+          <span>•</span>
+          <span>{totalAds} ads</span>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
+            className="h-8 pl-8 text-xs"
+          />
+        </div>
       </div>
       
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {tree.length === 0 ? (
+          {filteredTree.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No campaigns found. Create a campaign to get started.
+              {searchQuery ? "No matches found" : "No campaigns found. Create a campaign to get started."}
             </div>
           ) : (
-            tree.map(node => renderNode(node))
+            filteredTree.map(node => renderNode(node))
           )}
         </div>
       </ScrollArea>
+
+      {/* Move and Duplicate Dialogs */}
+      {moveDialogState && (
+        <MoveAdDialog
+          open={moveDialogState.open}
+          onOpenChange={(open) => !open && setMoveDialogState(null)}
+          adId={moveDialogState.adId}
+          currentAdGroupId={moveDialogState.currentAdGroupId}
+          onSuccess={() => {
+            setMoveDialogState(null);
+            // Refresh queries will happen automatically via React Query
+          }}
+        />
+      )}
+
+      {duplicateDialogState && (
+        <DuplicateAdDialog
+          open={duplicateDialogState.open}
+          onOpenChange={(open) => !open && setDuplicateDialogState(null)}
+          adId={duplicateDialogState.adId}
+          onSuccess={() => {
+            setDuplicateDialogState(null);
+          }}
+        />
+      )}
     </div>
   );
 }
