@@ -29,8 +29,7 @@ export function SavedElementsSelector({
     elementType,
     entity,
     language,
-    search,
-    googleStatus: "approved"
+    search
   });
 
   const handleSelect = (content: string) => {

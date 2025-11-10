@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Plus, Folder, FolderOpen, FileText } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Folder, FolderOpen, FileText, Trash2, Copy } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreateCampaignDialog } from "../ads/CreateCampaignDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ENTITIES } from "@/lib/constants";
+import { DeleteAdDialog } from "./DeleteAdDialog";
+import { DeleteAdGroupDialog } from "./DeleteAdGroupDialog";
+import { DeleteCampaignDialog } from "./DeleteCampaignDialog";
+import { DuplicateAdDialog } from "./DuplicateAdDialog";
+import { DuplicateAdGroupDialog } from "./DuplicateAdGroupDialog";
+import { DuplicateCampaignDialog } from "./DuplicateCampaignDialog";
 
 interface SearchHierarchyPanelProps {
   onEditAd: (ad: any, adGroup: any, campaign: any, entity: string) => void;
@@ -26,6 +32,16 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
   const [expandedAdGroups, setExpandedAdGroups] = useState<Set<string>>(new Set());
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
   const [showCreateAdGroup, setShowCreateAdGroup] = useState<{campaignId: string; campaignName: string} | null>(null);
+  
+  // Delete dialogs
+  const [deleteAdDialog, setDeleteAdDialog] = useState<{ad: any} | null>(null);
+  const [deleteAdGroupDialog, setDeleteAdGroupDialog] = useState<{adGroup: any; adsCount: number} | null>(null);
+  const [deleteCampaignDialog, setDeleteCampaignDialog] = useState<{campaign: any; adGroupsCount: number; adsCount: number} | null>(null);
+  
+  // Duplicate dialogs
+  const [duplicateAdDialog, setDuplicateAdDialog] = useState<{ad: any} | null>(null);
+  const [duplicateAdGroupDialog, setDuplicateAdGroupDialog] = useState<{adGroup: any; adsCount: number} | null>(null);
+  const [duplicateCampaignDialog, setDuplicateCampaignDialog] = useState<{campaign: any; adGroupsCount: number; adsCount: number} | null>(null);
 
   // Fetch campaigns for selected entity
   const { data: campaigns = [] } = useQuery({
@@ -104,12 +120,29 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
     queryClient.invalidateQueries({ queryKey: ['ad-groups-tree'] });
   };
 
+  const handleDeleteSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns-hierarchy'] });
+    queryClient.invalidateQueries({ queryKey: ['ad-groups-hierarchy'] });
+    queryClient.invalidateQueries({ queryKey: ['ads-hierarchy'] });
+  };
+
+  const handleDuplicateSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['campaigns-hierarchy'] });
+    queryClient.invalidateQueries({ queryKey: ['ad-groups-hierarchy'] });
+    queryClient.invalidateQueries({ queryKey: ['ads-hierarchy'] });
+  };
+
   const getAdGroupsForCampaign = (campaignId: string) => {
     return adGroups.filter(ag => ag.campaign_id === campaignId);
   };
 
   const getAdsForAdGroup = (adGroupId: string) => {
     return ads.filter(ad => ad.ad_group_id === adGroupId);
+  };
+
+  const getTotalAdsForCampaign = (campaignId: string) => {
+    const campaignAdGroups = getAdGroupsForCampaign(campaignId);
+    return ads.filter(ad => campaignAdGroups.some(ag => ag.id === ad.ad_group_id)).length;
   };
 
   return (
@@ -165,8 +198,41 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                         className="h-7 w-7"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setDuplicateCampaignDialog({ 
+                            campaign, 
+                            adGroupsCount: campaignAdGroups.length, 
+                            adsCount: getTotalAdsForCampaign(campaign.id) 
+                          });
+                        }}
+                        title="Duplicate campaign"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteCampaignDialog({ 
+                            campaign, 
+                            adGroupsCount: campaignAdGroups.length, 
+                            adsCount: getTotalAdsForCampaign(campaign.id) 
+                          });
+                        }}
+                        title="Delete campaign"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
                         }}
+                        title="Create ad group"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -203,8 +269,33 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
                                       className="h-6 w-6"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                      }}
+                                      title="Duplicate ad group"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button 
+                                      size="icon" 
+                                      variant="ghost" 
+                                      className="h-6 w-6"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                      }}
+                                      title="Delete ad group"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                    </Button>
+                                    <Button 
+                                      size="icon" 
+                                      variant="ghost" 
+                                      className="h-6 w-6"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
+                                      title="Create ad"
                                     >
                                       <Plus className="h-4 w-4" />
                                     </Button>
@@ -268,6 +359,68 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
           campaignId={showCreateAdGroup.campaignId}
           campaignName={showCreateAdGroup.campaignName}
           onSuccess={handleAdGroupCreated}
+        />
+      )}
+
+      {/* Delete Dialogs */}
+      {deleteAdDialog && (
+        <DeleteAdDialog
+          open={!!deleteAdDialog}
+          onOpenChange={(open) => !open && setDeleteAdDialog(null)}
+          ad={deleteAdDialog.ad}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
+
+      {deleteAdGroupDialog && (
+        <DeleteAdGroupDialog
+          open={!!deleteAdGroupDialog}
+          onOpenChange={(open) => !open && setDeleteAdGroupDialog(null)}
+          adGroup={deleteAdGroupDialog.adGroup}
+          adsCount={deleteAdGroupDialog.adsCount}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
+
+      {deleteCampaignDialog && (
+        <DeleteCampaignDialog
+          open={!!deleteCampaignDialog}
+          onOpenChange={(open) => !open && setDeleteCampaignDialog(null)}
+          campaign={deleteCampaignDialog.campaign}
+          adGroupsCount={deleteCampaignDialog.adGroupsCount}
+          adsCount={deleteCampaignDialog.adsCount}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
+
+      {/* Duplicate Dialogs */}
+      {duplicateAdDialog && (
+        <DuplicateAdDialog
+          open={!!duplicateAdDialog}
+          onOpenChange={(open) => !open && setDuplicateAdDialog(null)}
+          ad={duplicateAdDialog.ad}
+          onSuccess={handleDuplicateSuccess}
+        />
+      )}
+
+      {duplicateAdGroupDialog && (
+        <DuplicateAdGroupDialog
+          open={!!duplicateAdGroupDialog}
+          onOpenChange={(open) => !open && setDuplicateAdGroupDialog(null)}
+          adGroup={duplicateAdGroupDialog.adGroup}
+          adsCount={duplicateAdGroupDialog.adsCount}
+          onSuccess={handleDuplicateSuccess}
+        />
+      )}
+
+      {duplicateCampaignDialog && (
+        <DuplicateCampaignDialog
+          open={!!duplicateCampaignDialog}
+          onOpenChange={(open) => !open && setDuplicateCampaignDialog(null)}
+          campaign={duplicateCampaignDialog.campaign}
+          adGroupsCount={duplicateCampaignDialog.adGroupsCount}
+          adsCount={duplicateCampaignDialog.adsCount}
+          onSuccess={handleDuplicateSuccess}
         />
       )}
     </div>

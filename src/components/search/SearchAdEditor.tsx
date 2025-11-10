@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, ChevronLeft, Copy, BookmarkPlus, Download } from "lucide-react";
+import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit, ChevronUp, ChevronDown } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateAdStrength, checkCompliance } from "@/lib/adQualityScore";
@@ -29,6 +29,8 @@ interface SearchAdEditorProps {
 export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel }: SearchAdEditorProps) {
   const { user } = useAuth();
   const { copy } = useCopyToClipboard();
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+  const [isEditMode, setIsEditMode] = useState(!ad?.id); // New ads start in edit mode
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
   const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
@@ -311,6 +313,16 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     }
   };
 
+  const scrollToTop = () => {
+    previewScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    const el = previewScrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  };
+
+
 
   return (
     <div className="flex h-full">
@@ -326,6 +338,16 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   Back
                 </Button>
+                {!isEditMode ? (
+                  <Button variant="default" size="sm" onClick={() => setIsEditMode(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setIsEditMode(false)}>
+                    Cancel Edit
+                  </Button>
+                )}
                 {ad?.id && (
                   <Button variant="outline" size="sm" onClick={handleCopyAd}>
                     <Copy className="mr-2 h-4 w-4" />
@@ -364,198 +386,245 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="ad-name">Ad Name *</Label>
-              <Input
-                id="ad-name"
-                placeholder="e.g., Summer Sale - Main Ad"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              {isEditMode ? (
+                <Input
+                  id="ad-name"
+                  placeholder="e.g., Summer Sale - Main Ad"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              ) : (
+                <div className="text-xl font-semibold">{name || "Untitled Ad"}</div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="language">Language *</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger id="language">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EN">English</SelectItem>
-                  <SelectItem value="AR">Arabic</SelectItem>
-                </SelectContent>
-              </Select>
+              {isEditMode ? (
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EN">English</SelectItem>
+                    <SelectItem value="AR">Arabic</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm">{language === "EN" ? "English" : "Arabic"}</div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label>Headlines (15 max, 30 chars each)</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {headlines.map((headline, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
-                      value={headline}
-                      onChange={(e) => updateHeadline(index, e.target.value)}
-                      maxLength={30}
-                      className="flex-1"
-                    />
-                    <FieldActions
-                      value={headline}
-                      elementType="headline"
-                      onSelect={(content) => updateHeadline(index, content)}
-                      onSave={() => handleSaveElement('headline', headline)}
-                      isEmpty={!headline.trim()}
-                    />
-                  </div>
-                ))}
+              {isEditMode ? (
+                <div className="grid grid-cols-1 gap-2">
+                  {headlines.map((headline, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
+                        value={headline}
+                        onChange={(e) => updateHeadline(index, e.target.value)}
+                        maxLength={30}
+                        className="flex-1"
+                      />
+                      <FieldActions
+                        value={headline}
+                        elementType="headline"
+                        onSelect={(content) => updateHeadline(index, content)}
+                        onSave={() => handleSaveElement('headline', headline)}
+                        isEmpty={!headline.trim()}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {headlines.filter(h => h.trim()).map((headline, index) => (
+                    <div key={index} className="text-sm p-2 bg-muted/30 rounded">• {headline}</div>
+                  ))}
+                  {headlines.filter(h => h.trim()).length === 0 && (
+                    <div className="text-sm text-muted-foreground">No headlines</div>
+                  )}
+                </div>
+              )}
               </div>
-            </div>
 
             <div className="space-y-2">
               <Label>Descriptions (4 max, 90 chars each)</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {descriptions.map((description, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
-                      value={description}
-                      onChange={(e) => updateDescription(index, e.target.value)}
-                      maxLength={90}
-                      className="flex-1"
-                    />
-                    <FieldActions
-                      value={description}
-                      elementType="description"
-                      onSelect={(content) => updateDescription(index, content)}
-                      onSave={() => handleSaveElement('description', description)}
-                      isEmpty={!description.trim()}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Sitelinks (5 max, 25 chars for description)</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {sitelinks.map((sitelink, index) => (
-                  <div key={index} className="flex gap-2">
-                    <div className="flex-1 space-y-1">
+              {isEditMode ? (
+                <div className="grid grid-cols-1 gap-2">
+                  {descriptions.map((description, index) => (
+                    <div key={index} className="flex gap-2">
                       <Input
-                        placeholder={`Link description ${index + 1}`}
-                        value={sitelink.description}
-                        onChange={(e) => updateSitelink(index, 'description', e.target.value)}
-                        maxLength={25}
+                        placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
+                        value={description}
+                        onChange={(e) => updateDescription(index, e.target.value)}
+                        maxLength={90}
+                        className="flex-1"
                       />
-                      <Input
-                        placeholder={`Link URL ${index + 1}`}
-                        value={sitelink.link}
-                        onChange={(e) => updateSitelink(index, 'link', e.target.value)}
-                        className="text-sm"
+                      <FieldActions
+                        value={description}
+                        elementType="description"
+                        onSelect={(content) => updateDescription(index, content)}
+                        onSave={() => handleSaveElement('description', description)}
+                        isEmpty={!description.trim()}
                       />
                     </div>
-                    <FieldActions
-                      value={sitelink.description}
-                      elementType="sitelink"
-                      onSelect={(content) => updateSitelink(index, 'description', content)}
-                      onSave={() => handleSaveElement('sitelink', sitelink)}
-                      isEmpty={!sitelink.description.trim() && !sitelink.link.trim()}
-                    />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {descriptions.filter(d => d.trim()).map((description, index) => (
+                    <div key={index} className="text-sm p-2 bg-muted/30 rounded">• {description}</div>
+                  ))}
+                  {descriptions.filter(d => d.trim()).length === 0 && (
+                    <div className="text-sm text-muted-foreground">No descriptions</div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Callouts (4 max, 25 chars each)</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {callouts.map((callout, index) => (
-                  <div key={index} className="flex gap-2">
+            {isEditMode && (
+              <>
+                <div className="space-y-2">
+                  <Label>Sitelinks (5 max, 25 chars for description)</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {sitelinks.map((sitelink, index) => (
+                      <div key={index} className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Input
+                            placeholder={`Link description ${index + 1}`}
+                            value={sitelink.description}
+                            onChange={(e) => updateSitelink(index, 'description', e.target.value)}
+                            maxLength={25}
+                          />
+                          <Input
+                            placeholder={`Link URL ${index + 1}`}
+                            value={sitelink.link}
+                            onChange={(e) => updateSitelink(index, 'link', e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <FieldActions
+                          value={sitelink.description}
+                          elementType="sitelink"
+                          onSelect={(content) => updateSitelink(index, 'description', content)}
+                          onSave={() => handleSaveElement('sitelink', sitelink)}
+                          isEmpty={!sitelink.description.trim() && !sitelink.link.trim()}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Callouts (4 max, 25 chars each)</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {callouts.map((callout, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
+                          value={callout}
+                          onChange={(e) => updateCallout(index, e.target.value)}
+                          maxLength={25}
+                          className="flex-1"
+                        />
+                        <FieldActions
+                          value={callout}
+                          elementType="callout"
+                          onSelect={(content) => updateCallout(index, content)}
+                          onSave={() => handleSaveElement('callout', callout)}
+                          isEmpty={!callout.trim()}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="landing-page">Final URL</Label>
+                  <Input
+                    id="landing-page"
+                    type="url"
+                    placeholder="https://example.com"
+                    value={landingPage}
+                    onChange={(e) => setLandingPage(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="path1">Path 1 (Max 15 chars)</Label>
                     <Input
-                      placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
-                      value={callout}
-                      onChange={(e) => updateCallout(index, e.target.value)}
-                      maxLength={25}
-                      className="flex-1"
-                    />
-                    <FieldActions
-                      value={callout}
-                      elementType="callout"
-                      onSelect={(content) => updateCallout(index, content)}
-                      onSave={() => handleSaveElement('callout', callout)}
-                      isEmpty={!callout.trim()}
+                      id="path1"
+                      placeholder="path1"
+                      value={path1}
+                      onChange={(e) => setPath1(e.target.value)}
+                      maxLength={15}
                     />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
+                    <Input
+                      id="path2"
+                      placeholder="path2"
+                      value={path2}
+                      onChange={(e) => setPath2(e.target.value)}
+                      maxLength={15}
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="landing-page">Final URL</Label>
-              <Input
-                id="landing-page"
-                type="url"
-                placeholder="https://example.com"
-                value={landingPage}
-                onChange={(e) => setLandingPage(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="business-name">Business Name</Label>
+                  <Input
+                    id="business-name"
+                    placeholder="Your Business Name"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    maxLength={25}
+                  />
+                </div>
+              </>
+            )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="path1">Path 1 (Max 15 chars)</Label>
-                <Input
-                  id="path1"
-                  placeholder="path1"
-                  value={path1}
-                  onChange={(e) => setPath1(e.target.value)}
-                  maxLength={15}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
-                <Input
-                  id="path2"
-                  placeholder="path2"
-                  value={path2}
-                  onChange={(e) => setPath2(e.target.value)}
-                  maxLength={15}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="business-name">Business Name</Label>
-              <Input
-                id="business-name"
-                placeholder="Your Business Name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                maxLength={25}
-              />
-            </div>
-
-            <Button onClick={handleSave} disabled={isSaving} className="w-full">
-              {isSaving && <span className="mr-2">⏳</span>}
-              <Save className="mr-2 h-4 w-4" />
-              {ad?.id ? "Update Ad" : "Create Ad"}
-            </Button>
+            {isEditMode && (
+              <Button onClick={handleSave} disabled={isSaving} className="w-full">
+                {isSaving && <span className="mr-2">⏳</span>}
+                <Save className="mr-2 h-4 w-4" />
+                {ad?.id ? "Update Ad" : "Create Ad"}
+              </Button>
+            )}
           </div>
         </div>
       </ScrollArea>
 
-      <div className="w-[400px] border-l bg-muted/30 p-6 space-y-6">
-        <div>
-          <h3 className="font-semibold mb-4">Live Preview</h3>
-          <SearchAdPreview
-            headlines={headlines.filter(h => h)}
-            descriptions={descriptions.filter(d => d)}
-            landingPage={landingPage}
-            businessName={businessName}
-            sitelinks={sitelinks.filter(s => s.description || s.link)}
-            callouts={callouts.filter(c => c)}
-          />
+      <div className="w-[400px] border-l bg-muted/30 flex flex-col">
+        <div className="sticky top-0 z-10 flex gap-2 p-3 border-b bg-background">
+          <Button size="icon" variant="outline" onClick={scrollToTop} title="Scroll to top">
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="outline" onClick={scrollToBottom} title="Scroll to bottom">
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 text-sm font-semibold flex items-center">Live Preview</div>
         </div>
+        
+        <ScrollArea className="flex-1 p-6" ref={previewScrollRef}>
+          <div className="space-y-6">
+            <div>
+              <SearchAdPreview
+                headlines={headlines.filter(h => h)}
+                descriptions={descriptions.filter(d => d)}
+                landingPage={landingPage}
+                businessName={businessName}
+                sitelinks={sitelinks.filter(s => s.description || s.link)}
+                callouts={callouts.filter(c => c)}
+              />
+            </div>
 
-        {/* Ad Strength - MOVED HERE */}
+        {/* Ad Strength */}
         <div className="space-y-2 p-4 border rounded-lg bg-background">
           <div className="flex items-center justify-between">
             <Label>Ad Strength</Label>
@@ -584,6 +653,8 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             </AlertDescription>
           </Alert>
         )}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
