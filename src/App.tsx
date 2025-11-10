@@ -36,12 +36,12 @@ import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 const App = () => (
   <ErrorBoundary>
     <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <GlobalBubbleMenu />
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
+      <BrowserRouter>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <GlobalBubbleMenu />
+          <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
             <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
@@ -70,10 +70,10 @@ const App = () => (
             <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
   </ErrorBoundary>
 );
 
