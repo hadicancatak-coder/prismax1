@@ -17,6 +17,10 @@ import { BulkCSVImportDialog } from "@/components/ads/BulkCSVImportDialog";
 import { BulkCSVExportDialog } from "@/components/ads/BulkCSVExportDialog";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PanelHeader } from "@/components/ads/PanelHeader";
+import { SavedAdsManager } from "@/components/ads/SavedAdsManager";
+import { usePanelCollapse } from "@/hooks/usePanelCollapse";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -34,10 +38,10 @@ export default function AdsPage() {
   const [selectedTreeNode, setSelectedTreeNode] = useState<TreeNode | null>(null);
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [layoutMode, setLayoutMode] = useState<'tree-list-editor' | 'list-editor' | 'editor-only'>('tree-list-editor');
   const [createCampaignDialog, setCreateCampaignDialog] = useState<{open: boolean, entityName: string} | null>(null);
   const [createAdGroupDialog, setCreateAdGroupDialog] = useState<{open: boolean, campaignId: string, campaignName: string} | null>(null);
   
+  const { collapsed, togglePanel } = usePanelCollapse();
   const queryClient = useQueryClient();
 
   const { data: entities } = useQuery({
@@ -185,29 +189,6 @@ export default function AdsPage() {
               </SelectContent>
             </Select>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <LayoutDashboard className="h-4 w-4 mr-2" />
-                  Layout
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setLayoutMode('tree-list-editor')}>
-                  <LayoutGrid className="h-4 w-4 mr-2" />
-                  Tree + List + Editor
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLayoutMode('list-editor')}>
-                  <Columns className="h-4 w-4 mr-2" />
-                  List + Editor
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLayoutMode('editor-only')}>
-                  <Maximize className="h-4 w-4 mr-2" />
-                  Editor Only
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <Button onClick={() => { setSelectedAdForEdit(null); setIsCreatingNew(true); }} size="sm">
               <Plus className="w-4 h-4 mr-2" />
               New Ad
@@ -242,80 +223,143 @@ export default function AdsPage() {
         </Tabs>
 
         <ResizablePanelGroup direction="horizontal" className="flex-1">
-          {/* Conditional: Left Panel - Account Structure Tree */}
-          {layoutMode === 'tree-list-editor' && (
-            <>
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                <AccountStructureTree
-                  selectedNodeId={selectedTreeNode?.id}
-                  onSelectNode={(node) => {
-                    setSelectedTreeNode(node);
-                    if (node.type === 'ad') {
-                      const ad = ads?.find(a => a.id === node.id.replace('ad-', ''));
-                      if (ad) {
-                        setSelectedAdForEdit(ad);
-                        setIsCreatingNew(false);
-                      }
-                    }
-                  }}
-                  onCreateCampaign={(entityName) => setCreateCampaignDialog({open: true, entityName})}
-                  onCreateAdGroup={(campaignId, campaignName) => setCreateAdGroupDialog({open: true, campaignId, campaignName})}
-                  onCreateAd={(adGroupId, adGroupName) => {
-                    setSelectedAdForEdit({ ad_group_id: adGroupId, ad_group_name: adGroupName });
-                    setIsCreatingNew(true);
-                  }}
-                />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-
-          {/* Conditional: Middle Panel - Ad List */}
-          {(layoutMode === 'tree-list-editor' || layoutMode === 'list-editor') && (
-            <>
-              <ResizablePanel defaultSize={layoutMode === 'tree-list-editor' ? 30 : 40} minSize={25}>
-                <AdListPanel
-                  ads={ads || []}
-                  selectedAdId={selectedAdForEdit?.id || null}
-                  onSelectAd={(ad) => {
-                    setSelectedAdForEdit(ad);
-                    setIsCreatingNew(false);
-                  }}
-                  selectedIds={selectedIds}
-                  onToggleSelection={toggleSelection}
-                  onBulkAction={handleBulkAction}
-                />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-
-          {/* Right Panel - Ad Editor (Always visible) */}
+          {/* Left Panel - Account Structure Tree + Saved Ads */}
           <ResizablePanel 
-            defaultSize={
-              layoutMode === 'tree-list-editor' ? 50 :
-              layoutMode === 'list-editor' ? 60 : 100
-            } 
-            minSize={40}
+            defaultSize={collapsed.left ? 0 : 20} 
+            minSize={collapsed.left ? 0 : 15} 
+            maxSize={30}
+            collapsible={true}
           >
-            {selectedAdForEdit || isCreatingNew ? (
-              <AdEditorPanel
-                ad={selectedAdForEdit}
-                onSave={handleSaveAd}
-                onCancel={() => {
-                  setSelectedAdForEdit(null);
-                  setIsCreatingNew(false);
-                }}
-                isCreating={isCreatingNew}
+            {collapsed.left ? (
+              <PanelHeader 
+                title="Structure" 
+                collapsed={true} 
+                onToggle={() => togglePanel('left')} 
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <p>Select an ad to edit or create a new one</p>
-                  <Button onClick={() => setIsCreatingNew(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create New Ad
-                  </Button>
+              <div className="flex flex-col h-full">
+                <PanelHeader 
+                  title="Account Structure" 
+                  collapsed={false} 
+                  onToggle={() => togglePanel('left')} 
+                />
+                <div className="flex-1 overflow-auto">
+                  <AccountStructureTree
+                    selectedNodeId={selectedTreeNode?.id}
+                    onSelectNode={(node) => {
+                      setSelectedTreeNode(node);
+                      if (node.type === 'ad') {
+                        const ad = ads?.find(a => a.id === node.id.replace('ad-', ''));
+                        if (ad) {
+                          setSelectedAdForEdit(ad);
+                          setIsCreatingNew(false);
+                        }
+                      }
+                    }}
+                    onCreateCampaign={(entityName) => setCreateCampaignDialog({open: true, entityName})}
+                    onCreateAdGroup={(campaignId, campaignName) => setCreateAdGroupDialog({open: true, campaignId, campaignName})}
+                    onCreateAd={(adGroupId, adGroupName) => {
+                      setSelectedAdForEdit({ ad_group_id: adGroupId, ad_group_name: adGroupName });
+                      setIsCreatingNew(true);
+                    }}
+                  />
+                  <Separator className="my-2" />
+                  <div className="px-2 py-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground mb-2 px-2">SAVED ADS LIBRARY</h4>
+                    <SavedAdsManager
+                      onSelectAd={(adId) => {
+                        const ad = ads?.find(a => a.id === adId);
+                        if (ad) {
+                          setSelectedAdForEdit(ad);
+                          setIsCreatingNew(false);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+
+          {/* Middle Panel - Ad List */}
+          <ResizablePanel 
+            defaultSize={collapsed.middle ? 0 : 30} 
+            minSize={collapsed.middle ? 0 : 25}
+            collapsible={true}
+          >
+            {collapsed.middle ? (
+              <PanelHeader 
+                title="Ad List" 
+                collapsed={true} 
+                onToggle={() => togglePanel('middle')} 
+              />
+            ) : (
+              <div className="flex flex-col h-full">
+                <PanelHeader 
+                  title="Ad List" 
+                  collapsed={false} 
+                  onToggle={() => togglePanel('middle')} 
+                />
+                <div className="flex-1 overflow-auto">
+                  <AdListPanel
+                    ads={ads || []}
+                    selectedAdId={selectedAdForEdit?.id || null}
+                    onSelectAd={(ad) => {
+                      setSelectedAdForEdit(ad);
+                      setIsCreatingNew(false);
+                    }}
+                    selectedIds={selectedIds}
+                    onToggleSelection={toggleSelection}
+                    onBulkAction={handleBulkAction}
+                  />
+                </div>
+              </div>
+            )}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+
+          {/* Right Panel - Ad Editor */}
+          <ResizablePanel 
+            defaultSize={collapsed.right ? 0 : 50} 
+            minSize={collapsed.right ? 0 : 40}
+            collapsible={true}
+          >
+            {collapsed.right ? (
+              <PanelHeader 
+                title="Ad Editor" 
+                collapsed={true} 
+                onToggle={() => togglePanel('right')} 
+              />
+            ) : (
+              <div className="flex flex-col h-full">
+                <PanelHeader 
+                  title="Ad Editor" 
+                  collapsed={false} 
+                  onToggle={() => togglePanel('right')} 
+                />
+                <div className="flex-1 overflow-auto">
+                  {selectedAdForEdit || isCreatingNew ? (
+                    <AdEditorPanel
+                      ad={selectedAdForEdit}
+                      onSave={handleSaveAd}
+                      onCancel={() => {
+                        setSelectedAdForEdit(null);
+                        setIsCreatingNew(false);
+                      }}
+                      isCreating={isCreatingNew}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <div className="text-center space-y-2">
+                        <p>Select an ad to edit or create a new one</p>
+                        <Button onClick={() => setIsCreatingNew(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create New Ad
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

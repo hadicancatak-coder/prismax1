@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export function SavedElementsLibrary() {
-  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout' | 'ads'>('headline');
+  const [activeTab, setActiveTab] = useState<'headline' | 'description' | 'sitelink' | 'callout'>('headline');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<any>({});
   const [entityFilter, setEntityFilter] = useState<string>('all');
@@ -32,36 +32,12 @@ export function SavedElementsLibrary() {
   const debouncedSearch = useDebouncedValue(search, 500);
   
   const { data: elements, isLoading } = useAdElements({
-    elementType: activeTab === 'ads' ? 'headline' : activeTab,
+    elementType: activeTab,
     search: debouncedSearch,
     entity: entityFilter === 'all' ? undefined : entityFilter,
     language: languageFilter,
     platform: platformFilter,
     ...filters,
-  });
-
-  // Fetch saved ads for the new "Saved Ads" tab
-  const { data: savedAds, isLoading: isLoadingSavedAds } = useQuery({
-    queryKey: ['saved-ads-library', entityFilter, debouncedSearch],
-    queryFn: async () => {
-      let query = supabase
-        .from('saved_ads_library')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (entityFilter !== 'all') {
-        query = query.eq('entity', entityFilter);
-      }
-
-      if (debouncedSearch) {
-        query = query.ilike('name', `%${debouncedSearch}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: activeTab === 'ads',
   });
 
   const exportToCSV = () => {
@@ -171,12 +147,11 @@ export function SavedElementsLibrary() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="headline">Headlines</TabsTrigger>
           <TabsTrigger value="description">Descriptions</TabsTrigger>
           <TabsTrigger value="sitelink">Sitelinks</TabsTrigger>
           <TabsTrigger value="callout">Callouts</TabsTrigger>
-          <TabsTrigger value="ads">Full Ads</TabsTrigger>
         </TabsList>
 
         {['headline', 'description', 'sitelink', 'callout'].map((type) => (
@@ -204,32 +179,18 @@ export function SavedElementsLibrary() {
             )}
           </TabsContent>
         ))}
-
-        {/* NEW: Full Ads Tab */}
-        <TabsContent value="ads" className="space-y-4 mt-4">
-          {isLoadingSavedAds ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : savedAds && savedAds.length > 0 ? (
-            <SavedAdsTableView ads={savedAds} />
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground mb-4">No saved ads yet</p>
-              <p className="text-sm text-muted-foreground">Save complete ads from the editor to access them here</p>
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
 
       <CreateElementDialog 
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog}
-        elementType={activeTab === 'ads' ? 'headline' : activeTab}
+        elementType={activeTab}
       />
       
       <BulkImportDialog 
         open={showBulkImport} 
         onOpenChange={setShowBulkImport}
-        elementType={activeTab === 'ads' ? 'headline' : activeTab}
+        elementType={activeTab}
       />
     </div>
   );

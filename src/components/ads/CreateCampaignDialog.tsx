@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -19,8 +20,15 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
   const [name, setName] = useState('');
   const [objective, setObjective] = useState('');
   const [budgetMonthly, setBudgetMonthly] = useState('');
+  const [languages, setLanguages] = useState<string[]>(['EN']);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const toggleLanguage = (lang: string) => {
+    setLanguages(prev =>
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    );
+  };
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -37,6 +45,7 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
           entity: entityName,
           objective: objective || null,
           budget_monthly: budgetMonthly ? parseFloat(budgetMonthly) : null,
+          languages: languages,
           status: 'draft',
         });
 
@@ -46,6 +55,7 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
       setName('');
       setObjective('');
       setBudgetMonthly('');
+      setLanguages(['EN']);
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
@@ -98,6 +108,32 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
               value={budgetMonthly}
               onChange={(e) => setBudgetMonthly(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Languages *</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="lang-en"
+                  checked={languages.includes('EN')}
+                  onCheckedChange={() => toggleLanguage('EN')}
+                />
+                <label htmlFor="lang-en" className="text-sm font-medium cursor-pointer">
+                  English
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="lang-ar"
+                  checked={languages.includes('AR')}
+                  onCheckedChange={() => toggleLanguage('AR')}
+                />
+                <label htmlFor="lang-ar" className="text-sm font-medium cursor-pointer">
+                  Arabic
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 

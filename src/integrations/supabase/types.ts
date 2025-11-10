@@ -62,6 +62,7 @@ export type Database = {
           google_campaign_id: string | null
           google_campaign_url: string | null
           id: string
+          languages: string[] | null
           name: string
           objective: string | null
           status: string | null
@@ -75,6 +76,7 @@ export type Database = {
           google_campaign_id?: string | null
           google_campaign_url?: string | null
           id?: string
+          languages?: string[] | null
           name: string
           objective?: string | null
           status?: string | null
@@ -88,6 +90,7 @@ export type Database = {
           google_campaign_id?: string | null
           google_campaign_url?: string | null
           id?: string
+          languages?: string[] | null
           name?: string
           objective?: string | null
           status?: string | null
@@ -265,6 +268,44 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_move_history: {
+        Row: {
+          action_type: string
+          ad_id: string | null
+          from_ad_group_id: string | null
+          id: string
+          moved_at: string | null
+          moved_by: string | null
+          to_ad_group_id: string | null
+        }
+        Insert: {
+          action_type: string
+          ad_id?: string | null
+          from_ad_group_id?: string | null
+          id?: string
+          moved_at?: string | null
+          moved_by?: string | null
+          to_ad_group_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          ad_id?: string | null
+          from_ad_group_id?: string | null
+          id?: string
+          moved_at?: string | null
+          moved_by?: string | null
+          to_ad_group_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_move_history_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
             referencedColumns: ["id"]
           },
         ]
@@ -1958,8 +1999,10 @@ export type Database = {
       saved_ads_library: {
         Row: {
           ad_group: string | null
+          ad_group_id: string | null
           ad_type: string
           campaign: string | null
+          campaign_id: string | null
           content: Json
           created_at: string | null
           entity: string
@@ -1974,8 +2017,10 @@ export type Database = {
         }
         Insert: {
           ad_group?: string | null
+          ad_group_id?: string | null
           ad_type?: string
           campaign?: string | null
+          campaign_id?: string | null
           content: Json
           created_at?: string | null
           entity: string
@@ -1990,8 +2035,10 @@ export type Database = {
         }
         Update: {
           ad_group?: string | null
+          ad_group_id?: string | null
           ad_type?: string
           campaign?: string | null
+          campaign_id?: string | null
           content?: Json
           created_at?: string | null
           entity?: string
@@ -2004,7 +2051,22 @@ export type Database = {
           use_count?: number | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saved_ads_library_ad_group_id_fkey"
+            columns: ["ad_group_id"]
+            isOneToOne: false
+            referencedRelation: "ad_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_ads_library_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_assignees: {
         Row: {
