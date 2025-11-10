@@ -254,7 +254,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
       {/* Content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Left Panel - Form */}
-        <ResizablePanel defaultSize={50} minSize={40}>
+        <ResizablePanel defaultSize={55} minSize={40}>
           <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
               {/* Ad Type Tabs */}
@@ -311,11 +311,13 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                           <SelectValue placeholder="Select entity" />
                         </SelectTrigger>
                         <SelectContent>
-                          {entities.map((e: any) => (
-                            <SelectItem key={e.id} value={e.entity_code}>
-                              {e.entity_name}
-                            </SelectItem>
-                          ))}
+                          {entities.flatMap((preset: any) => 
+                            preset.entities.map((entityName: string) => (
+                              <SelectItem key={`${preset.id}-${entityName}`} value={entityName}>
+                                {entityName}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -414,7 +416,13 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                           value={finalUrl}
                           onChange={(e) => handleFieldChange(setFinalUrl)(e.target.value)}
                           placeholder="https://example.com/landing-page"
+                          className={finalUrl && !finalUrl.match(/^https?:\/\//) ? 'border-amber-500' : ''}
                         />
+                        {finalUrl && !finalUrl.match(/^https?:\/\//) && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            💡 Tip: URL should start with https:// or http://
+                          </p>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -506,9 +514,9 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
         <ResizableHandle withHandle />
 
         {/* Right Panel - Preview */}
-        <ResizablePanel defaultSize={50} minSize={30}>
+        <ResizablePanel defaultSize={45} minSize={30}>
           <ScrollArea className="h-full">
-            <div className="p-6">
+            <div className="p-6 max-w-4xl mx-auto">
               <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
               {adType === "search" ? (
                 <SearchAdPreview

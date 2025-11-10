@@ -11,9 +11,26 @@ interface SearchAdPreviewProps {
   callouts?: string[];
 }
 
+const parseUrlSafely = (url: string | null | undefined): { hostname: string; pathname: string } => {
+  if (!url || !url.trim()) {
+    return { hostname: 'example.com', pathname: '' };
+  }
+  
+  try {
+    const urlWithProtocol = url.startsWith('http') ? url : `https://${url}`;
+    const parsedUrl = new URL(urlWithProtocol);
+    return {
+      hostname: parsedUrl.hostname.replace('www.', ''),
+      pathname: parsedUrl.pathname
+    };
+  } catch (error) {
+    console.warn('Invalid URL provided:', url);
+    return { hostname: url.split('/')[0] || 'example.com', pathname: '' };
+  }
+};
+
 export function SearchAdPreview(props: SearchAdPreviewProps) {
-  const displayUrl = props.landingPage ? new URL(props.landingPage).hostname.replace('www.', '') : 'example.com';
-  const pathUrl = props.landingPage ? new URL(props.landingPage).pathname : '';
+  const { hostname: displayUrl, pathname: pathUrl } = parseUrlSafely(props.landingPage);
   
   // Get first 3 headlines and 2 descriptions (Google Ads limit)
   const activeHeadlines = props.headlines.filter(h => h.trim()).slice(0, 3);
