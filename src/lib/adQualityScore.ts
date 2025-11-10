@@ -156,6 +156,33 @@ export interface HeadlinePattern {
   boost: number; // CTR boost percentage
 }
 
+interface PositionRecommendation {
+  message: string;
+  isOptimal: boolean;
+}
+
+export const getHeadlinePositionRecommendation = (
+  patternType: HeadlinePattern['type'],
+  position: number
+): PositionRecommendation | null => {
+  const positionRecommendations: Record<number, Record<string, PositionRecommendation>> = {
+    0: {
+      cta: { message: 'CTAs get 25% better CTR in position 1', isOptimal: true },
+      question: { message: 'Questions perform well in position 1', isOptimal: false },
+    },
+    1: {
+      benefit: { message: 'Benefits resonate well in position 2', isOptimal: false },
+      number: { message: 'Social proof works great here', isOptimal: false },
+    },
+    2: {
+      emotional: { message: 'Emotional appeals close the sale', isOptimal: false },
+      number: { message: 'Specific numbers increase credibility', isOptimal: false },
+    },
+  };
+
+  return positionRecommendations[position]?.[patternType] || null;
+};
+
 export const detectHeadlinePattern = (headline: string): HeadlinePattern => {
   const text = headline.toLowerCase().trim();
   

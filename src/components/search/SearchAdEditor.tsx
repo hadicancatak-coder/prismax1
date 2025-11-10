@@ -7,13 +7,18 @@ import { toast } from "sonner";
 import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { calculateAdStrength, checkCompliance, detectHeadlinePattern } from "@/lib/adQualityScore";
+import { calculateAdStrength, checkCompliance, detectHeadlinePattern, getHeadlinePositionRecommendation } from "@/lib/adQualityScore";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SavedElementsSelector } from "./SavedElementsSelector";
+import { SortableHeadlineInput } from "./SortableHeadlineInput";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
@@ -35,6 +40,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [previewCombination, setPreviewCombination] = useState(0);
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
+  const [dkiEnabled, setDkiEnabled] = useState<boolean[]>(Array(15).fill(false));
   const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
   const [sitelinks, setSitelinks] = useState<{description: string; link: string}[]>(Array(5).fill({description: "", link: ""}));
   const [callouts, setCallouts] = useState<string[]>(Array(4).fill(""));
@@ -44,6 +50,13 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [businessName, setBusinessName] = useState("");
   const [language, setLanguage] = useState("EN");
   const [isSaving, setIsSaving] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const createElementMutation = useMutation({
     mutationFn: async (elementData: any) => {
@@ -114,6 +127,24 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     const newHeadlines = [...headlines];
     newHeadlines[index] = value;
     setHeadlines(newHeadlines);
+  };
+
+  const toggleDKI = (index: number) => {
+    const updated = [...dkiEnabled];
+    updated[index] = !updated[index];
+    setDkiEnabled(updated);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = headlines.findIndex((_, i) => `headline-${i}` === active.id);
+      const newIndex = headlines.findIndex((_, i) => `headline-${i}` === over.id);
+      
+      setHeadlines(arrayMove(headlines, oldIndex, newIndex));
+      setDkiEnabled(arrayMove(dkiEnabled, oldIndex, newIndex));
+    }
   };
 
   const updateDescription = (index: number, value: string) => {
@@ -276,7 +307,10 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         campaign_name: campaign.name,
         ad_group_name: adGroup.name,
         entity,
-        headlines: headlines.filter(h => h.trim()),
+        headlines: headlines.filter(h => h.trim()).map((h, i) => {
+          const originalIndex = headlines.indexOf(h);
+          return dkiEnabled[originalIndex] ? `{Keyword:${h}}` : h;
+        }),
         descriptions: descriptions.filter(d => d.trim()),
         sitelinks: sitelinks.filter(s => s.description.trim() || s.link.trim()),
         callouts: callouts.filter(c => c.trim()),
@@ -477,52 +511,41 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             </div>
 
               <div className="space-y-2">
-                <Label>Headlines (15 max, 30 chars each)</Label>
+                <Label>Headlines (15 max, 30 chars each) - Drag to reorder</Label>
                 {isEditMode ? (
-                  <div className="grid grid-cols-1 gap-2">
-                    {headlines.map((headline, index) => {
-                      const pattern = detectHeadlinePattern(headline);
-                      const hasPattern = pattern.type !== 'none';
-                      
-                      return (
-                        <div key={index} className="flex gap-2 items-center">
-                          <Input
-                            placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
-                            value={headline}
-                            onChange={(e) => updateHeadline(index, e.target.value)}
-                            maxLength={30}
-                            className={`flex-1 ${hasPattern ? 'ring-1 ring-yellow-400/50' : ''}`}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={headlines.map((_, i) => `headline-${i}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-3">
+                        {headlines.map((headline, index) => (
+                          <SortableHeadlineInput
+                            key={`headline-${index}`}
+                            id={`headline-${index}`}
+                            index={index}
+                            headline={headline}
+                            isDkiEnabled={dkiEnabled[index]}
+                            onUpdate={(value) => updateHeadline(index, value)}
+                            onToggleDki={() => toggleDKI(index)}
+                            renderActions={() => (
+                              <FieldActions
+                                value={headline}
+                                elementType="headline"
+                                onSelect={(content) => updateHeadline(index, content)}
+                                onSave={() => handleSaveElement('headline', headline)}
+                                isEmpty={!headline.trim()}
+                              />
+                            )}
                           />
-                          
-                          {hasPattern && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant="outline" 
-                                    className="text-xs cursor-help bg-yellow-50 border-yellow-300 text-yellow-900 shrink-0"
-                                  >
-                                    {pattern.indicator} +{pattern.boost}%
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-sm">{pattern.description}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          
-                          <FieldActions
-                            value={headline}
-                            elementType="headline"
-                            onSelect={(content) => updateHeadline(index, content)}
-                            onSave={() => handleSaveElement('headline', headline)}
-                            isEmpty={!headline.trim()}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
               ) : (
                 <div className="space-y-1">
                   {headlines.filter(h => h.trim()).map((headline, index) => {

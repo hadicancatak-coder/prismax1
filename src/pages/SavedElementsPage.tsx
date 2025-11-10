@@ -20,71 +20,65 @@ export default function SavedElementsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: entities } = useQuery({
-    queryKey: ['entity-presets-filter'],
+  // Get unique entities from ad_elements
+  const { data: entityOptions } = useQuery({
+    queryKey: ['element-entities'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('entity_presets').select('*').order('name');
-      if (error) throw error;
-      return data;
+      const { data } = await supabase.from('ad_elements').select('entity');
+      const allEntities = data?.flatMap(el => el.entity || []) || [];
+      return [...new Set(allEntities)].filter(Boolean).sort();
     }
   });
 
-  const { data: savedCampaigns = [] } = useQuery({
-    queryKey: ['saved-campaigns', entityFilter],
+  // Query ad_elements table - THIS IS WHERE YOUR SAVED ELEMENTS ARE! 🎯
+  const { data: savedElements = [] } = useQuery({
+    queryKey: ['saved-elements', typeFilter, entityFilter],
     queryFn: async () => {
-      let query = supabase.from('ad_campaigns').select('*').eq('is_template', true);
-      if (entityFilter !== 'all') query = query.eq('entity', entityFilter);
+      let query = supabase.from('ad_elements').select('*');
+      
+      // Filter by element type
+      if (typeFilter !== 'all') {
+        query = query.eq('element_type', typeFilter);
+      }
+      
+      // Filter by entity (array contains check)
+      if (entityFilter !== 'all') {
+        query = query.contains('entity', [entityFilter]);
+      }
+      
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
   });
 
-  const { data: savedAdGroups = [] } = useQuery({
-    queryKey: ['saved-ad-groups'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('ad_groups').select('*').eq('is_template', true).order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const { data: savedAds = [] } = useQuery({
-    queryKey: ['saved-ads-library', entityFilter, approvalFilter],
-    queryFn: async () => {
-      let query = supabase.from('saved_ads_library').select('*');
-      if (entityFilter !== 'all') query = query.eq('entity', entityFilter);
-      if (approvalFilter !== 'all') query = query.eq('google_approval_status', approvalFilter);
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const filteredCampaigns = savedCampaigns.filter(c => 
-    (typeFilter === 'all' || typeFilter === 'campaign') &&
-    (searchQuery === '' || c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Filter elements by search query
+  const filteredElements = savedElements.filter(el =>
+    searchQuery === '' || 
+    (typeof el.content === 'string' && el.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const filteredAdGroups = savedAdGroups.filter(ag =>
-    (typeFilter === 'all' || typeFilter === 'ad_group') &&
-    (searchQuery === '' || ag.name?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Group elements by type
+  const elementsByType = {
+    headline: filteredElements.filter(el => el.element_type === 'headline'),
+    description: filteredElements.filter(el => el.element_type === 'description'),
+    sitelink: filteredElements.filter(el => el.element_type === 'sitelink'),
+    callout: filteredElements.filter(el => el.element_type === 'callout'),
+  };
 
-  const filteredAds = savedAds.filter(ad =>
-    (typeFilter === 'all' || typeFilter === 'ad') &&
-    (searchQuery === '' || ad.name?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const handleDelete = async (type: string, id: string) => {
-    const table = type === 'campaign' ? 'ad_campaigns' : type === 'ad_group' ? 'ad_groups' : 'saved_ads_library';
-    const { error } = await supabase.from(table).delete().eq('id', id);
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('ad_elements').delete().eq('id', id);
     if (error) {
-      toast.error(`Failed to delete ${type}`);
+      toast.error('Failed to delete element');
       return;
     }
-    toast.success(`${type} deleted successfully`);
-    queryClient.invalidateQueries({ queryKey: [`saved-${type}s`] });
+    toast.success('Element deleted successfully');
+    queryClient.invalidateQueries({ queryKey: ['saved-elements'] });
+  };
+
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success('Copied to clipboard');
   };
 
   const getApprovalBadge = (status: string) => {
@@ -134,16 +128,20 @@ export default function SavedElementsPage() {
                   <label className="text-sm">All Types</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={typeFilter === 'campaign'} onCheckedChange={() => setTypeFilter('campaign')} />
-                  <label className="text-sm">Campaigns</label>
+                  <Checkbox checked={typeFilter === 'headline'} onCheckedChange={() => setTypeFilter('headline')} />
+                  <label className="text-sm">Headlines</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={typeFilter === 'ad_group'} onCheckedChange={() => setTypeFilter('ad_group')} />
-                  <label className="text-sm">Ad Groups</label>
+                  <Checkbox checked={typeFilter === 'description'} onCheckedChange={() => setTypeFilter('description')} />
+                  <label className="text-sm">Descriptions</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={typeFilter === 'ad'} onCheckedChange={() => setTypeFilter('ad')} />
-                  <label className="text-sm">Ads</label>
+                  <Checkbox checked={typeFilter === 'sitelink'} onCheckedChange={() => setTypeFilter('sitelink')} />
+                  <label className="text-sm">Sitelinks</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox checked={typeFilter === 'callout'} onCheckedChange={() => setTypeFilter('callout')} />
+                  <label className="text-sm">Callouts</label>
                 </div>
               </div>
             </div>
@@ -156,8 +154,8 @@ export default function SavedElementsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Entities</SelectItem>
-                  {entities?.map(entity => (
-                    <SelectItem key={entity.id} value={entity.name}>{entity.name}</SelectItem>
+                  {entityOptions?.map(entity => (
+                    <SelectItem key={entity} value={entity}>{entity}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -202,95 +200,32 @@ export default function SavedElementsPage() {
             </CardHeader>
           </Card>
 
-          {(typeFilter === 'all' || typeFilter === 'campaign') && filteredCampaigns.length > 0 && (
+          {(typeFilter === 'all' || typeFilter === 'headline') && elementsByType.headline.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Campaigns ({filteredCampaigns.length})</h3>
+              <h3 className="text-lg font-semibold">Headlines ({elementsByType.headline.length})</h3>
               <div className="grid grid-cols-2 gap-4">
-                {filteredCampaigns.map(campaign => (
-                  <Card key={campaign.id} className="hover:shadow-md transition-shadow">
+                {elementsByType.headline.map(element => (
+                  <Card key={element.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h4 className="font-semibold">{campaign.name || campaign.template_name}</h4>
-                          {campaign.entity && <p className="text-sm text-muted-foreground">Entity: {campaign.entity}</p>}
-                        </div>
-                        <Star className="h-4 w-4 text-yellow-500" />
-                      </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button size="sm" variant="outline" onClick={() => navigate('/ads/search')}>
-                          <Copy className="h-3 w-3 mr-1" />
-                          Use
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete('campaign', campaign.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(typeFilter === 'all' || typeFilter === 'ad_group') && filteredAdGroups.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Ad Groups ({filteredAdGroups.length})</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {filteredAdGroups.map(adGroup => (
-                  <Card key={adGroup.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{adGroup.name || adGroup.template_name}</h4>
-                          {adGroup.status && getApprovalBadge(adGroup.status)}
-                        </div>
-                        <Star className="h-4 w-4 text-yellow-500" />
-                      </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button size="sm" variant="outline" onClick={() => navigate('/ads/search')}>
-                          <Copy className="h-3 w-3 mr-1" />
-                          Use
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete('ad_group', adGroup.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(typeFilter === 'all' || typeFilter === 'ad') && filteredAds.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Ads ({filteredAds.length})</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {filteredAds.map(ad => (
-                  <Card key={ad.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{ad.name}</h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2">{ad.name}</p>
-                          {ad.entity && <p className="text-xs text-muted-foreground mt-1">Entity: {ad.entity}</p>}
-                        </div>
-                        <Star className="h-4 w-4 text-yellow-500" />
-                      </div>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex gap-2">
-                          {ad.google_approval_status && getApprovalBadge(ad.google_approval_status)}
-                          {ad.quality_score && (
-                            <Badge variant="outline">Score: {ad.quality_score}/10</Badge>
+                          <p className="font-medium">{String(element.content)}</p>
+                          {element.entity && Array.isArray(element.entity) && element.entity.length > 0 && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Entity: {(element.entity as string[]).join(', ')}
+                            </p>
+                          )}
+                          {element.google_status && (
+                            <Badge variant="outline" className="mt-2">{element.google_status}</Badge>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        <Button size="sm" variant="outline" onClick={() => navigate('/ads/search')}>
+                        <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
                           <Copy className="h-3 w-3 mr-1" />
-                          Use
+                          Copy
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete('ad', ad.id)}>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(element.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
@@ -301,10 +236,118 @@ export default function SavedElementsPage() {
             </div>
           )}
 
-          {filteredCampaigns.length === 0 && filteredAdGroups.length === 0 && filteredAds.length === 0 && (
+          {(typeFilter === 'all' || typeFilter === 'description') && elementsByType.description.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Descriptions ({elementsByType.description.length})</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {elementsByType.description.map(element => (
+                  <Card key={element.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{String(element.content)}</p>
+                          {element.entity && Array.isArray(element.entity) && element.entity.length > 0 && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Entity: {(element.entity as string[]).join(', ')}
+                            </p>
+                          )}
+                          {element.google_status && (
+                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(element.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(typeFilter === 'all' || typeFilter === 'sitelink') && elementsByType.sitelink.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Sitelinks ({elementsByType.sitelink.length})</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {elementsByType.sitelink.map(element => (
+                  <Card key={element.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{String(element.content)}</p>
+                          {element.entity && Array.isArray(element.entity) && element.entity.length > 0 && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Entity: {(element.entity as string[]).join(', ')}
+                            </p>
+                          )}
+                          {element.google_status && (
+                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(element.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(typeFilter === 'all' || typeFilter === 'callout') && elementsByType.callout.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Callouts ({elementsByType.callout.length})</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {elementsByType.callout.map(element => (
+                  <Card key={element.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{String(element.content)}</p>
+                          {element.entity && Array.isArray(element.entity) && element.entity.length > 0 && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Entity: {(element.entity as string[]).join(', ')}
+                            </p>
+                          )}
+                          {element.google_status && (
+                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(element.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {Object.values(elementsByType).every(arr => arr.length === 0) && (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No saved elements found. Start creating templates in the Search or Display planners!</p>
+                <p className="text-muted-foreground">No saved elements found. Start saving headlines, descriptions, sitelinks, and callouts from the Search or Display planners!</p>
               </CardContent>
             </Card>
           )}
