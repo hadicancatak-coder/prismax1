@@ -60,8 +60,8 @@ const App = () => (
             </Route>
             <Route path="/team-base" element={<TeamBase />} />
               <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
-              <Route path="/ads/search" element={<SearchPlanner key="search" />} />
-              <Route path="/ads/display" element={<SearchPlanner key="display" />} />
+              <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
+              <Route path="/ads/display" element={<SearchPlanner adType="display" key="display" />} />
               <Route path="/ads/library" element={<SavedElementsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile/:userId?" element={<Profile />} />

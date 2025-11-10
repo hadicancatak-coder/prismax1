@@ -23,9 +23,10 @@ import { DuplicateCampaignDialog } from "./DuplicateCampaignDialog";
 interface SearchHierarchyPanelProps {
   onEditAd: (ad: any, adGroup: any, campaign: any, entity: string) => void;
   onCreateAd: (adGroup: any, campaign: any, entity: string) => void;
+  adType?: "search" | "display";
 }
 
-export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPanelProps) {
+export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }: SearchHierarchyPanelProps) {
   const queryClient = useQueryClient();
   const [selectedEntity, setSelectedEntity] = useState<string>("UAE");
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
@@ -45,7 +46,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
   // Fetch campaigns for selected entity
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns-hierarchy', selectedEntity],
+    queryKey: ['campaigns-hierarchy', selectedEntity, adType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ad_campaigns')
@@ -73,11 +74,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
   // Fetch all ads for efficiency
   const { data: ads = [] } = useQuery({
-    queryKey: ['ads-hierarchy'],
+    queryKey: ['ads-hierarchy', adType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ads')
         .select('*')
+        .eq('ad_type', adType)
         .order('name');
       if (error) throw error;
       return data || [];
@@ -355,6 +357,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
         open={showCreateCampaign}
         onOpenChange={setShowCreateCampaign}
         defaultEntity={selectedEntity}
+        defaultAdType={adType}
         onSuccess={handleCampaignCreated}
       />
 

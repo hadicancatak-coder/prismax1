@@ -14,7 +14,11 @@ interface EditorContext {
   entity: string;
 }
 
-export default function SearchPlanner() {
+interface SearchPlannerProps {
+  adType?: "search" | "display";
+}
+
+export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
   const [view, setView] = useState<ViewState>('hierarchy');
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
   const [showHierarchy, setShowHierarchy] = useState(false);
@@ -36,6 +40,7 @@ export default function SearchPlanner() {
       {showHierarchy && (
         <div className="md:hidden fixed inset-0 bg-background z-40 overflow-auto pt-16">
           <SearchHierarchyPanel
+            adType={adType}
             onEditAd={(ad, adGroup, campaign, entity) => {
               setEditorContext({ ad, adGroup, campaign, entity });
               setView('ad-editor');
@@ -55,6 +60,7 @@ export default function SearchPlanner() {
         {/* Left Panel: Hierarchy Tree */}
         <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
           <SearchHierarchyPanel
+            adType={adType}
             onEditAd={(ad, adGroup, campaign, entity) => {
               setEditorContext({ ad, adGroup, campaign, entity });
               setView('ad-editor');
@@ -76,6 +82,7 @@ export default function SearchPlanner() {
               adGroup={editorContext.adGroup}
               campaign={editorContext.campaign}
               entity={editorContext.entity}
+              adType={adType}
               onSave={(adId) => {
                 setView('hierarchy');
                 setEditorContext(null);
@@ -101,6 +108,7 @@ export default function SearchPlanner() {
             adGroup={editorContext.adGroup}
             campaign={editorContext.campaign}
             entity={editorContext.entity}
+            adType={adType}
             onSave={(adId) => {
               setView('hierarchy');
               setEditorContext(null);

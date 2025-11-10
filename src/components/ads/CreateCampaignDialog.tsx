@@ -14,10 +14,11 @@ interface CreateCampaignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultEntity?: string;
+  defaultAdType?: "search" | "display";
   onSuccess?: () => void;
 }
 
-export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, onSuccess }: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaultAdType = "search", onSuccess }: CreateCampaignDialogProps) {
   const [name, setName] = useState("");
   const [entity, setEntity] = useState(defaultEntity || "UAE");
   const [languages, setLanguages] = useState<string[]>(["EN"]);
@@ -48,13 +49,17 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, onSucc
     setIsLoading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase
         .from("ad_campaigns")
         .insert({
           name: name.trim(),
           entity: entity.trim(),
           languages,
-          status: "active"
+          status: "active",
+          created_by: user.id
         });
 
       if (error) throw error;

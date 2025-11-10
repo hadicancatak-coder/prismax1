@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { calculateAdStrength, checkCompliance, detectHeadlinePattern, getHeadlinePositionRecommendation } from "@/lib/adQualityScore";
+import { calculateAdStrength, checkCompliance, detectHeadlinePattern, getHeadlinePositionRecommendation, checkDisplayAdCompliance } from "@/lib/adQualityScore";
+import { DisplayAdCreator } from "@/components/ads/DisplayAdCreator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -31,9 +32,11 @@ interface SearchAdEditorProps {
   entity: string;
   onSave: (adId?: string) => void;
   onCancel: () => void;
+  adType?: "search" | "display";
 }
 
-export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel }: SearchAdEditorProps) {
+export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType }: SearchAdEditorProps) {
+  const adType = ad?.ad_type || propAdType || "search";
   const { user } = useAuth();
   const { copy } = useCopyToClipboard();
   const [isEditMode, setIsEditMode] = useState(!ad?.id); // New ads start in edit mode
@@ -50,6 +53,12 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [businessName, setBusinessName] = useState("");
   const [language, setLanguage] = useState("EN");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Display ad specific state
+  const [longHeadline, setLongHeadline] = useState("");
+  const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(""));
+  const [displayDescriptions, setDisplayDescriptions] = useState<string[]>(Array(5).fill(""));
+  const [ctaText, setCtaText] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -96,6 +105,20 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     );
   }, [headlines, descriptions, sitelinks, callouts, entity]);
 
+  // Display ad compliance
+  const displayCompliance = useMemo(() => {
+    if (adType === "display") {
+      return checkDisplayAdCompliance(
+        longHeadline,
+        shortHeadlines,
+        displayDescriptions,
+        ctaText,
+        entity
+      );
+    }
+    return [];
+  }, [adType, longHeadline, shortHeadlines, displayDescriptions, ctaText, entity]);
+
   useEffect(() => {
     if (ad && ad.id) {
       setName(ad.name || "");
@@ -118,6 +141,14 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       setLandingPage(ad.landing_page || "");
       setBusinessName(ad.business_name || "");
       setLanguage(ad.language || "EN");
+      
+      // Load display-specific fields
+      if (ad.ad_type === "display") {
+        setLongHeadline(ad.long_headline || "");
+        setShortHeadlines([...(ad.short_headlines || []), ...Array(5).fill("")].slice(0, 5));
+        setDisplayDescriptions([...(ad.descriptions || []), ...Array(5).fill("")].slice(0, 5));
+        setCtaText(ad.cta_text || "");
+      }
     } else {
       setLanguage(campaign?.languages?.[0] || "EN");
     }
@@ -301,27 +332,39 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     setIsSaving(true);
 
     try {
-      const baseData = {
+      const baseData: any = {
         name,
         ad_group_id: adGroup.id,
         campaign_name: campaign.name,
         ad_group_name: adGroup.name,
         entity,
-        headlines: headlines.filter(h => h.trim()).map((h, i) => {
-          const originalIndex = headlines.indexOf(h);
-          return dkiEnabled[originalIndex] ? `{Keyword:${h}}` : h;
-        }),
-        descriptions: descriptions.filter(d => d.trim()),
-        sitelinks: sitelinks.filter(s => s.description.trim() || s.link.trim()),
-        callouts: callouts.filter(c => c.trim()),
         landing_page: landingPage,
         business_name: businessName,
         language,
-        ad_type: "search",
-        ad_strength: adStrength.score,
-        compliance_issues: complianceIssues.map(issue => ({ ...issue })),
+        ad_type: adType,
         approval_status: "approved"
       };
+
+      if (adType === "display") {
+        // Display ad specific data
+        baseData.long_headline = longHeadline;
+        baseData.short_headlines = shortHeadlines.filter(h => h.trim());
+        baseData.descriptions = displayDescriptions.filter(d => d.trim());
+        baseData.cta_text = ctaText;
+        baseData.ad_strength = 0;
+        baseData.compliance_issues = displayCompliance.map(issue => ({ message: issue }));
+      } else {
+        // Search ad specific data
+        baseData.headlines = headlines.filter(h => h.trim()).map((h, i) => {
+          const originalIndex = headlines.indexOf(h);
+          return dkiEnabled[originalIndex] ? `{Keyword:${h}}` : h;
+        });
+        baseData.descriptions = descriptions.filter(d => d.trim());
+        baseData.sitelinks = sitelinks.filter(s => s.description.trim() || s.link.trim());
+        baseData.callouts = callouts.filter(c => c.trim());
+        baseData.ad_strength = adStrength.score;
+        baseData.compliance_issues = complianceIssues.map(issue => ({ ...issue }));
+      }
 
       if (ad?.id) {
         // Get current auth user directly to ensure correct ID
@@ -417,6 +460,61 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     descriptions: descriptions.filter(d => d)
   };
 
+  // Display ad editing not yet supported with full UI - show basic message
+  if (adType === "display") {
+    return (
+      <div className="h-full p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-semibold">
+            {ad?.id ? "Edit Display Ad" : "Create Display Ad"}
+          </h2>
+          <Button variant="ghost" onClick={onCancel}>
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
+
+        {displayCompliance.length > 0 && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              <ul className="list-disc pl-4 space-y-1">
+                {displayCompliance.map((issue, idx) => (
+                  <li key={idx}>{issue}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <DisplayAdCreator
+          businessName={businessName}
+          setBusinessName={setBusinessName}
+          longHeadline={longHeadline}
+          setLongHeadline={setLongHeadline}
+          shortHeadlines={shortHeadlines}
+          setShortHeadlines={setShortHeadlines}
+          descriptions={displayDescriptions}
+          setDescriptions={setDisplayDescriptions}
+          ctaText={ctaText}
+          setCtaText={setCtaText}
+          landingPage={landingPage}
+          setLandingPage={setLandingPage}
+          adEntity={entity}
+        />
+
+        <div className="flex gap-2 mt-6">
+          <Button onClick={handleSave} disabled={isSaving || !ctaText}>
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : ad?.id ? "Update Ad" : "Create Ad"}
+          </Button>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ResizablePanelGroup direction="horizontal" className="flex-col lg:flex-row">
       {/* Form Panel */}
@@ -426,7 +524,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold">
-                {ad?.id ? "Edit Ad" : "Create New Ad"}
+                {ad?.id ? "Edit Search Ad" : "Create Search Ad"}
               </h2>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={onCancel}>

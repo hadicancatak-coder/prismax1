@@ -5,20 +5,36 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Copy, Edit, Trash2, Star } from "lucide-react";
+import { Search, Copy, Edit, Trash2, Star, Upload } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ENTITIES } from "@/lib/constants";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SavedElementsPage() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Edit dialog state
+  const [editDialog, setEditDialog] = useState<{element: any} | null>(null);
+  const [editedContent, setEditedContent] = useState("");
+  const [editedEntity, setEditedEntity] = useState<string[]>([]);
+  
+  // Import dialog state
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<any[]>([]);
 
   // Get unique entities from ad_elements
   const { data: entityOptions } = useQuery({
@@ -91,6 +107,108 @@ export default function SavedElementsPage() {
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
+  const handleEdit = (element: any) => {
+    setEditDialog({ element });
+    setEditedContent(String(element.content));
+    setEditedEntity(element.entity || []);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editDialog) return;
+    
+    const { error } = await supabase
+      .from('ad_elements')
+      .update({
+        content: editedContent,
+        entity: editedEntity,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', editDialog.element.id);
+    
+    if (error) {
+      toast.error('Failed to update element');
+      return;
+    }
+    
+    toast.success('Element updated successfully');
+    queryClient.invalidateQueries({ queryKey: ['saved-elements'] });
+    setEditDialog(null);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadedFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const rows = text.split('\n').map(row => row.split(','));
+      
+      const parsed = rows.slice(1).map((row, idx) => {
+        const [type, content, entity] = row.map(cell => cell.trim().replace(/^"|"$/g, ''));
+        
+        const validTypes = ['headline', 'description', 'sitelink', 'callout'];
+        const isValidType = validTypes.includes(type?.toLowerCase());
+        const hasContent = content && content.length > 0;
+        const hasEntity = entity && entity.length > 0;
+        
+        return {
+          type: type?.toLowerCase(),
+          content,
+          entity,
+          valid: isValidType && hasContent && hasEntity,
+          error: !isValidType ? 'Invalid type' : 
+                 !hasContent ? 'Empty content' : 
+                 !hasEntity ? 'Missing entity' : null
+        };
+      }).filter(row => row.type || row.content);
+      
+      setImportPreview(parsed);
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    const validRows = importPreview.filter(row => row.valid);
+    
+    if (validRows.length === 0) {
+      toast.error('No valid rows to import');
+      return;
+    }
+    
+    if (!user?.id) {
+      toast.error('Not authenticated');
+      return;
+    }
+    
+    const elements = validRows.map(row => ({
+      element_type: row.type,
+      content: row.content,
+      entity: [row.entity],
+      created_by: user.id,
+      tags: [row.entity, row.type],
+      google_status: 'pending'
+    }));
+    
+    const { error } = await supabase
+      .from('ad_elements')
+      .insert(elements);
+    
+    if (error) {
+      toast.error('Import failed: ' + error.message);
+      return;
+    }
+    
+    toast.success(`Successfully imported ${elements.length} elements`);
+    queryClient.invalidateQueries({ queryKey: ['saved-elements'] });
+    setShowUploadDialog(false);
+    setImportPreview([]);
+    setUploadedFile(null);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -99,19 +217,26 @@ export default function SavedElementsPage() {
           <p className="text-muted-foreground">Manage and reuse your saved campaigns, ad groups, and ads</p>
         </div>
         
-        <Tabs value="library" className="w-auto">
-          <TabsList>
-            <TabsTrigger value="search" asChild>
-              <Link to="/ads/search">Search</Link>
-            </TabsTrigger>
-            <TabsTrigger value="display" asChild>
-              <Link to="/ads/display">Display</Link>
-            </TabsTrigger>
-            <TabsTrigger value="library" asChild>
-              <Link to="/ads/library">Library</Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex gap-2 items-center">
+          <Button onClick={() => setShowUploadDialog(true)} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Import from Sheets
+          </Button>
+          
+          <Tabs value="library" className="w-auto">
+            <TabsList>
+              <TabsTrigger value="search" asChild>
+                <Link to="/ads/search">Search</Link>
+              </TabsTrigger>
+              <TabsTrigger value="display" asChild>
+                <Link to="/ads/display">Display</Link>
+              </TabsTrigger>
+              <TabsTrigger value="library" asChild>
+                <Link to="/ads/library">Library</Link>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
@@ -221,6 +346,10 @@ export default function SavedElementsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(element)}>
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
                           <Copy className="h-3 w-3 mr-1" />
                           Copy
@@ -257,6 +386,10 @@ export default function SavedElementsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(element)}>
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
                           <Copy className="h-3 w-3 mr-1" />
                           Copy
@@ -293,6 +426,10 @@ export default function SavedElementsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(element)}>
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
                           <Copy className="h-3 w-3 mr-1" />
                           Copy
@@ -329,6 +466,10 @@ export default function SavedElementsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(element)}>
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => handleCopy(String(element.content))}>
                           <Copy className="h-3 w-3 mr-1" />
                           Copy
@@ -353,6 +494,126 @@ export default function SavedElementsPage() {
           )}
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      {editDialog && (
+        <Dialog open={!!editDialog} onOpenChange={(open) => !open && setEditDialog(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit {editDialog.element.element_type}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label>Content</Label>
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <Label>Entity</Label>
+                <Select 
+                  value={editedEntity[0] || "all"} 
+                  onValueChange={(val) => setEditedEntity([val])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ENTITIES.map(entity => (
+                      <SelectItem key={entity} value={entity}>{entity}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button onClick={handleSaveEdit}>Save Changes</Button>
+                <Button variant="outline" onClick={() => setEditDialog(null)}>Cancel</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Import Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Import Elements from Google Sheets</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with 3 columns: Type, Content, Entity
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Upload File (CSV)</Label>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Format: Column A = Type (headline/description/sitelink/callout), 
+                Column B = Content, Column C = Entity
+              </p>
+            </div>
+            
+            {importPreview.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Preview ({importPreview.length} rows)</h4>
+                <div className="border rounded max-h-60 overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="p-2 text-left">Type</th>
+                        <th className="p-2 text-left">Content</th>
+                        <th className="p-2 text-left">Entity</th>
+                        <th className="p-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importPreview.slice(0, 10).map((row, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="p-2">{row.type}</td>
+                          <td className="p-2">{row.content}</td>
+                          <td className="p-2">{row.entity}</td>
+                          <td className="p-2">
+                            {row.valid ? 
+                              <Badge variant="default">✓ Valid</Badge> : 
+                              <Badge variant="destructive">✗ Invalid</Badge>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleImport} 
+                disabled={importPreview.length === 0}
+              >
+                Import {importPreview.filter(r => r.valid).length} Elements
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setShowUploadDialog(false);
+                setImportPreview([]);
+                setUploadedFile(null);
+              }}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

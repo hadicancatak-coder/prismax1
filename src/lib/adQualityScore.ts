@@ -337,3 +337,47 @@ export const checkCompliance = (
 
   return issues;
 };
+
+// Display Ad Compliance Checker
+export const checkDisplayAdCompliance = (
+  longHeadline: string,
+  shortHeadlines: string[],
+  descriptions: string[],
+  ctaText: string,
+  entity: string
+) => {
+  const issues: string[] = [];
+  
+  // CTA is REQUIRED for Display ads
+  if (!ctaText || ctaText.trim() === '') {
+    issues.push('⚠️ CRITICAL: Call-to-Action (CTA) is required for Google Display ads');
+  }
+  
+  // Check if headlines are CTA-focused
+  const validShortHeadlines = shortHeadlines.filter(h => h.trim());
+  const ctaHeadlineCount = validShortHeadlines.filter(h => 
+    /\b(buy|get|try|start|shop|save|join|subscribe|download|claim|discover|learn|book|apply)\b/i.test(h)
+  ).length;
+  
+  if (validShortHeadlines.length > 0 && ctaHeadlineCount === 0) {
+    issues.push('⚠️ WARNING: Consider adding CTA-focused headlines (e.g., "Get Started", "Shop Now", "Learn More")');
+  }
+  
+  // Long headline should be compelling
+  if (longHeadline.trim() && longHeadline.length < 30) {
+    issues.push('💡 TIP: Long headline is short. Use 60-90 characters for better impact.');
+  }
+  
+  // At least 3 short headlines recommended
+  if (validShortHeadlines.length < 3) {
+    issues.push('💡 TIP: Add at least 3 short headlines for better ad variations');
+  }
+  
+  // At least 3 descriptions recommended
+  const validDescriptions = descriptions.filter(d => d.trim());
+  if (validDescriptions.length < 3) {
+    issues.push('💡 TIP: Add at least 3 descriptions for better ad combinations');
+  }
+  
+  return issues;
+};
