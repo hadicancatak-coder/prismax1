@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AdContextMenu } from "./AdContextMenu";
 import { MoveAdDialog } from "./MoveAdDialog";
 import { DuplicateAdDialog } from "./DuplicateAdDialog";
+import { CreateEntityDialog } from "./CreateEntityDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ export function AccountStructureTree({
   const [searchQuery, setSearchQuery] = useState("");
   const [moveDialogState, setMoveDialogState] = useState<{open: boolean, adId: string, currentAdGroupId?: string} | null>(null);
   const [duplicateDialogState, setDuplicateDialogState] = useState<{open: boolean, adId: string} | null>(null);
+  const [createEntityDialogOpen, setCreateEntityDialogOpen] = useState(false);
 
   // Fetch entities from entity_presets
   const { data: entityPresets } = useQuery({
@@ -149,7 +151,7 @@ export function AccountStructureTree({
   };
 
   const buildTree = (): TreeNode[] => {
-    if (!entityPresets || !campaigns) return [];
+    if (!entityPresets) return [];
 
     const tree: TreeNode[] = [];
 
@@ -163,7 +165,7 @@ export function AccountStructureTree({
         };
 
         // Find campaigns for this entity
-        const entityCampaigns = campaigns.filter(c => c.entity === entityName);
+        const entityCampaigns = campaigns?.filter(c => c.entity === entityName) || [];
         
         entityCampaigns.forEach(campaign => {
           const campaignNode: TreeNode = {
@@ -204,19 +206,14 @@ export function AccountStructureTree({
               adGroupNode.children?.push(adNode);
             });
 
-            if (adGroupNode.children && adGroupNode.children.length > 0) {
-              campaignNode.children?.push(adGroupNode);
-            }
+            campaignNode.children?.push(adGroupNode);
           });
 
-          if (campaignNode.children && campaignNode.children.length > 0) {
-            entityNode.children?.push(campaignNode);
-          }
+          entityNode.children?.push(campaignNode);
         });
 
-        if (entityNode.children && entityNode.children.length > 0) {
-          tree.push(entityNode);
-        }
+        // Always add entity to tree, even if it has no campaigns
+        tree.push(entityNode);
       });
     });
 
@@ -396,6 +393,15 @@ export function AccountStructureTree({
           <h3 className="font-semibold text-sm">Account Structure</h3>
           <div className="flex gap-1">
             <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setCreateEntityDialogOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              New Entity
+            </Button>
+            <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7"
@@ -473,6 +479,14 @@ export function AccountStructureTree({
           }}
         />
       )}
+
+      <CreateEntityDialog
+        open={createEntityDialogOpen}
+        onOpenChange={setCreateEntityDialogOpen}
+        onSuccess={() => {
+          // React Query will automatically refresh the entity presets
+        }}
+      />
     </div>
   );
 }
