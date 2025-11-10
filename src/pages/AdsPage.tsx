@@ -3,43 +3,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Download, TestTube, Folder } from "lucide-react";
+import { Plus, Upload, Download, Database, LayoutGrid, LayoutDashboard, Columns, Maximize } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AdEditorPanel from "@/components/ads/AdEditorPanel";
 import AdListPanel from "@/components/ads/AdListPanel";
 import { AccountStructureTree } from "@/components/ads/AccountStructureTree";
+import { CreateCampaignDialog } from "@/components/ads/CreateCampaignDialog";
+import { CreateAdGroupDialog } from "@/components/ads/CreateAdGroupDialog";
+import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
 import BulkActionsToolbar from "@/components/ads/BulkActionsToolbar";
-import { BulkImportDialog } from "@/components/ads/BulkImportDialog";
 import { BulkCSVImportDialog } from "@/components/ads/BulkCSVImportDialog";
 import { BulkCSVExportDialog } from "@/components/ads/BulkCSVExportDialog";
-import { SavedElementsLibrary } from "@/components/ads/SavedElementsLibrary";
-import { ApprovalWorkflowDialog } from "@/components/ads/ApprovalWorkflowDialog";
-import { UpdateGoogleStatusDialog } from "@/components/ads/UpdateGoogleStatusDialog";
-import { CampaignGroupingFilters } from "@/components/ads/CampaignGroupingFilters";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { insertSampleAds } from "@/lib/adSampleData";
-import { useAdKeyboardShortcuts } from "@/hooks/useAdKeyboardShortcuts";
+import { TreeNode } from "@/hooks/useAccountStructure";
+import { SAMPLE_ADS } from "@/lib/adSampleData";
 
 export default function AdsPage() {
   const [activeTab, setActiveTab] = useState("search");
   const [selectedAdForEdit, setSelectedAdForEdit] = useState<any | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [showImportDialog, setShowImportDialog] = useState(false);
   const [showCSVImportDialog, setShowCSVImportDialog] = useState(false);
   const [showCSVExportDialog, setShowCSVExportDialog] = useState(false);
   const [showElementsLibrary, setShowElementsLibrary] = useState(false);
-  const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
-  const [showGoogleStatusDialog, setShowGoogleStatusDialog] = useState(false);
-  const [campaignFilter, setCampaignFilter] = useState("");
-  const [adGroupFilter, setAdGroupFilter] = useState("");
-  const [selectedTreeNode, setSelectedTreeNode] = useState<any>(null);
+  const [selectedTreeNode, setSelectedTreeNode] = useState<TreeNode | null>(null);
+  const [entityFilter, setEntityFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [layoutMode, setLayoutMode] = useState<'tree-list-editor' | 'list-editor' | 'editor-only'>('tree-list-editor');
+  const [createCampaignDialog, setCreateCampaignDialog] = useState<{open: boolean, entityName: string} | null>(null);
+  const [createAdGroupDialog, setCreateAdGroupDialog] = useState<{open: boolean, campaignId: string, campaignName: string} | null>(null);
+  
+  const queryClient = useQueryClient();
+
+  const { data: entities } = useQuery({
+    queryKey: ['entity-presets-filter'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('entity_presets')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const { data: ads = [], isLoading, refetch } = useQuery({
-    queryKey: ["ads", campaignFilter, adGroupFilter, activeTab],
+    queryKey: ["ads", activeTab, entityFilter, statusFilter],
     queryFn: async () => {
       let query = supabase.from("ads").select("*");
 
@@ -49,11 +63,12 @@ export default function AdsPage() {
         query = query.eq("ad_type", "display");
       }
 
-      if (campaignFilter) {
-        query = query.eq("campaign_name", campaignFilter);
+      if (entityFilter !== 'all') {
+        query = query.eq('entity', entityFilter);
       }
-      if (adGroupFilter) {
-        query = query.eq("ad_group_name", adGroupFilter);
+
+      if (statusFilter !== 'all') {
+        query = query.eq('approval_status', statusFilter);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });
@@ -62,296 +77,296 @@ export default function AdsPage() {
     },
   });
 
-  const campaigns = Array.from(new Set(ads.map((ad) => ad.campaign_name).filter(Boolean)));
-  const adGroups = Array.from(new Set(ads.map((ad) => ad.ad_group_name).filter(Boolean)));
-
   const handleSaveAd = async (adData: any) => {
     if (selectedAdForEdit?.id) {
       // Update existing ad
-      const { error } = await supabase
-        .from("ads")
-        .update(adData)
-        .eq("id", selectedAdForEdit.id);
-
-      if (error) throw error;
+      const { error } = await supabase.from("ads").update(adData).eq("id", selectedAdForEdit.id);
+      if (error) {
+        toast.error("Failed to update ad");
+        return;
+      }
+      toast.success("Ad updated successfully");
     } else {
       // Create new ad
       const { error } = await supabase.from("ads").insert(adData);
-      if (error) throw error;
+      if (error) {
+        toast.error("Failed to create ad");
+        return;
+      }
+      toast.success("Ad created successfully");
     }
-
     refetch();
-    setSelectedAdForEdit(null);
     setIsCreatingNew(false);
+    setSelectedAdForEdit(null);
   };
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((selId) => selId !== id) : [...prev, id]
     );
   };
 
-  const handleBulkAction = async (
-    action: "approve" | "reject" | "export" | "delete",
-    ids: string[]
-  ) => {
-    switch (action) {
-      case "approve":
-        await supabase.from("ads").update({ approval_status: "approved" }).in("id", ids);
-        toast.success(`${ids.length} ads approved`);
-        break;
-      case "reject":
-        await supabase.from("ads").update({ approval_status: "rejected" }).in("id", ids);
-        toast.success(`${ids.length} ads rejected`);
-        break;
-      case "export":
-        setShowCSVExportDialog(true);
-        break;
-      case "delete":
-        await supabase.from("ads").delete().in("id", ids);
-        toast.success(`${ids.length} ads deleted`);
-        setSelectedIds([]);
-        break;
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    if (action === "delete") {
+      const { error } = await supabase.from("ads").delete().in("id", ids);
+      if (error) {
+        toast.error("Failed to delete ads");
+        return;
+      }
+      toast.success(`Deleted ${ids.length} ads`);
+      setSelectedIds([]);
+      refetch();
     }
-    refetch();
   };
 
-  const handleDuplicate = async () => {
-    if (selectedIds.length === 0) return;
-
-    const adsToDuplicate = ads?.filter((ad) => selectedIds.includes(ad.id));
-
-    for (const ad of adsToDuplicate || []) {
-      const { id, created_at, updated_at, ...adData } = ad;
-      await supabase.from("ads").insert({
-        ...adData,
-        name: `${adData.name} (Copy)`,
-      });
+  const handleDuplicate = async (ids: string[]) => {
+    const adsToDuplicate = ads.filter((ad: any) => ids.includes(ad.id));
+    const duplicates = adsToDuplicate.map((ad: any) => {
+      const { id, created_at, updated_at, ...rest } = ad;
+      return { ...rest, name: `${ad.name} (Copy)` };
+    });
+    const { error } = await supabase.from("ads").insert(duplicates);
+    if (error) {
+      toast.error("Failed to duplicate ads");
+      return;
     }
-
-    toast.success(`${selectedIds.length} ads duplicated`);
+    toast.success(`Duplicated ${ids.length} ads`);
     setSelectedIds([]);
     refetch();
   };
 
   const handleSampleAds = async () => {
-    try {
-      await insertSampleAds();
-      toast.success("Sample ads added successfully!");
-      refetch();
-    } catch (error) {
-      console.error("Error inserting sample ads:", error);
+    const { error } = await supabase.from("ads").insert(SAMPLE_ADS);
+    if (error) {
       toast.error("Failed to add sample ads");
+      return;
     }
+    toast.success("Sample ads added successfully");
+    refetch();
   };
 
-  // Keyboard shortcuts
-  useAdKeyboardShortcuts({
-    onSave: () => {
-      if (selectedAdForEdit || isCreatingNew) {
-        document.querySelector<HTMLButtonElement>('[type="button"]')?.click();
-      }
-    },
-    onNew: () => {
-      setIsCreatingNew(true);
-      setSelectedAdForEdit(null);
-    },
-    onCancel: () => {
-      setSelectedAdForEdit(null);
-      setIsCreatingNew(false);
-    },
-    onNext: () => {
-      if (ads && selectedAdForEdit) {
-        const currentIndex = ads.findIndex((ad) => ad.id === selectedAdForEdit.id);
-        if (currentIndex < ads.length - 1) {
-          setSelectedAdForEdit(ads[currentIndex + 1]);
-        }
-      }
-    },
-    onPrevious: () => {
-      if (ads && selectedAdForEdit) {
-        const currentIndex = ads.findIndex((ad) => ad.id === selectedAdForEdit.id);
-        if (currentIndex > 0) {
-          setSelectedAdForEdit(ads[currentIndex - 1]);
-        }
-      }
-    },
-  });
-
   return (
-    <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Google Ads Planner</CardTitle>
-              <CardDescription>
-                Mass campaign preparation with split-screen workflow
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setIsCreatingNew(true);
-                  setSelectedAdForEdit(null);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Ad
-              </Button>
-              <Button variant="outline" onClick={() => setShowCSVImportDialog(true)}>
-                <Upload className="mr-2 h-4 w-4" />
-                Import
-              </Button>
-              <Button variant="outline" onClick={() => setShowCSVExportDialog(true)}>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-          <Button variant="outline" onClick={() => setShowElementsLibrary(true)}>
-            <Folder className="mr-2 h-4 w-4" />
-            Elements Library
-          </Button>
-              <Button variant="outline" onClick={handleSampleAds}>
-                <TestTube className="mr-2 h-4 w-4" />
-                Add Sample Ads
-              </Button>
-            </div>
+    <Card className="flex flex-col h-[calc(100vh-8rem)]">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              Google Ads Planner
+              <Badge variant="outline" className="ml-2">
+                {ads.length} {ads.length === 1 ? "Ad" : "Ads"}
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Create, manage, and optimize your Google Ads campaigns with hierarchical structure
+            </CardDescription>
           </div>
-        </CardHeader>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={entityFilter} onValueChange={setEntityFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Entities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Entities</SelectItem>
+                {entities?.flatMap(preset => 
+                  preset.entities.map((ent: string) => (
+                    <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
 
-        <CardContent className="space-y-4">
-          {/* Filters */}
-          <CampaignGroupingFilters
-            campaignName={campaignFilter}
-            onCampaignNameChange={setCampaignFilter}
-            adGroupName={adGroupFilter}
-            onAdGroupNameChange={setAdGroupFilter}
-            campaigns={campaigns}
-            adGroups={adGroups}
-          />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="mb-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="search">Search Ads</TabsTrigger>
-                <TabsTrigger value="display">Display Ads</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  Layout
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setLayoutMode('tree-list-editor')}>
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Tree + List + Editor
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLayoutMode('list-editor')}>
+                  <Columns className="h-4 w-4 mr-2" />
+                  List + Editor
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLayoutMode('editor-only')}>
+                  <Maximize className="h-4 w-4 mr-2" />
+                  Editor Only
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button onClick={() => { setSelectedAdForEdit(null); setIsCreatingNew(true); }} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              New Ad
+            </Button>
+            <Button onClick={() => setShowCSVImportDialog(true)} variant="outline" size="sm">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+            <Button onClick={() => setShowCSVExportDialog(true)} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Dialog open={showElementsLibrary} onOpenChange={setShowElementsLibrary}>
+              <Button variant="outline" size="sm" onClick={() => setShowElementsLibrary(true)}>
+                <Database className="w-4 h-4 mr-2" />
+                Elements Library
+              </Button>
+              <DialogContent className="max-w-[95vw] h-[90vh]">
+                <SavedElementsLibrary />
+              </DialogContent>
+            </Dialog>
           </div>
+        </div>
+      </CardHeader>
 
-          {/* Three-Panel Layout */}
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="min-h-[calc(100vh-280px)] rounded-lg border"
-          >
-            {/* Left Panel - Account Structure Tree */}
-            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-              <AccountStructureTree
-                selectedNodeId={selectedTreeNode?.id}
-                onSelectNode={(node) => {
-                  setSelectedTreeNode(node);
-                  // If an ad node is selected, open it in editor
-                  if (node.type === 'ad') {
-                    const adId = node.id.replace('ad-', '');
-                    const ad = ads.find((a: any) => a.id === adId);
-                    if (ad) {
-                      setSelectedAdForEdit(ad);
-                      setIsCreatingNew(false);
+      <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="search">Search Ads</TabsTrigger>
+            <TabsTrigger value="display">Display Ads</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          {/* Conditional: Left Panel - Account Structure Tree */}
+          {layoutMode === 'tree-list-editor' && (
+            <>
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <AccountStructureTree
+                  selectedNodeId={selectedTreeNode?.id}
+                  onSelectNode={(node) => {
+                    setSelectedTreeNode(node);
+                    if (node.type === 'ad') {
+                      const ad = ads?.find(a => a.id === node.id.replace('ad-', ''));
+                      if (ad) {
+                        setSelectedAdForEdit(ad);
+                        setIsCreatingNew(false);
+                      }
                     }
-                  }
-                }}
-              />
-            </ResizablePanel>
+                  }}
+                  onCreateCampaign={(entityName) => setCreateCampaignDialog({open: true, entityName})}
+                  onCreateAdGroup={(campaignId, campaignName) => setCreateAdGroupDialog({open: true, campaignId, campaignName})}
+                  onCreateAd={(adGroupId, adGroupName) => {
+                    setSelectedAdForEdit({ ad_group_id: adGroupId, ad_group_name: adGroupName });
+                    setIsCreatingNew(true);
+                  }}
+                />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
 
-            <ResizableHandle withHandle />
-
-            {/* Middle Panel - Ad List */}
-            <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
-              <AdListPanel
-                ads={ads || []}
-                selectedAdId={selectedAdForEdit?.id || null}
-                onSelectAd={(ad) => {
-                  setSelectedAdForEdit(ad);
-                  setIsCreatingNew(false);
-                }}
-                selectedIds={selectedIds}
-                onToggleSelection={toggleSelection}
-                onBulkAction={handleBulkAction}
-              />
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Right Panel - Ad Editor */}
-            <ResizablePanel defaultSize={50} minSize={40}>
-              {selectedAdForEdit || isCreatingNew ? (
-                <AdEditorPanel
-                  ad={selectedAdForEdit}
-                  onSave={handleSaveAd}
-                  onCancel={() => {
-                    setSelectedAdForEdit(null);
+          {/* Conditional: Middle Panel - Ad List */}
+          {(layoutMode === 'tree-list-editor' || layoutMode === 'list-editor') && (
+            <>
+              <ResizablePanel defaultSize={layoutMode === 'tree-list-editor' ? 30 : 40} minSize={25}>
+                <AdListPanel
+                  ads={ads || []}
+                  selectedAdId={selectedAdForEdit?.id || null}
+                  onSelectAd={(ad) => {
+                    setSelectedAdForEdit(ad);
                     setIsCreatingNew(false);
                   }}
-                  isCreating={isCreatingNew}
+                  selectedIds={selectedIds}
+                  onToggleSelection={toggleSelection}
+                  onBulkAction={handleBulkAction}
                 />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center space-y-4">
-                    <div className="text-muted-foreground">
-                      <p className="text-lg font-medium mb-2">Select an ad to edit</p>
-                      <p className="text-sm">or click "+ Create New Ad" to create one</p>
-                    </div>
-                    {ads && ads.length === 0 && (
-                      <div className="pt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setIsCreatingNew(true);
-                            setSelectedAdForEdit(null);
-                          }}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Your First Ad
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
+
+          {/* Right Panel - Ad Editor (Always visible) */}
+          <ResizablePanel 
+            defaultSize={
+              layoutMode === 'tree-list-editor' ? 50 :
+              layoutMode === 'list-editor' ? 60 : 100
+            } 
+            minSize={40}
+          >
+            {selectedAdForEdit || isCreatingNew ? (
+              <AdEditorPanel
+                ad={selectedAdForEdit}
+                onSave={handleSaveAd}
+                onCancel={() => {
+                  setSelectedAdForEdit(null);
+                  setIsCreatingNew(false);
+                }}
+                isCreating={isCreatingNew}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <div className="text-center space-y-2">
+                  <p>Select an ad to edit or create a new one</p>
+                  <Button onClick={() => setIsCreatingNew(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Ad
+                  </Button>
                 </div>
-              )}
-            </ResizablePanel>
-          </ResizablePanelGroup>
+              </div>
+            )}
+          </ResizablePanel>
+        </ResizablePanelGroup>
 
-          {/* Bulk Actions Toolbar */}
-          <BulkActionsToolbar
-            selectedCount={selectedIds.length}
-            onClearSelection={() => setSelectedIds([])}
-            onExport={() => handleBulkAction("export", selectedIds)}
-            onDuplicate={handleDuplicate}
-            onDelete={() => handleBulkAction("delete", selectedIds)}
-            onApprove={() => handleBulkAction("approve", selectedIds)}
-            onReject={() => handleBulkAction("reject", selectedIds)}
-          />
-        </CardContent>
-      </Card>
+        <BulkActionsToolbar
+          selectedCount={selectedIds.length}
+          onClearSelection={() => setSelectedIds([])}
+          onExport={() => handleBulkAction("export", selectedIds)}
+          onDuplicate={() => handleDuplicate(selectedIds)}
+          onDelete={() => handleBulkAction("delete", selectedIds)}
+        />
+      </CardContent>
 
-      {/* Dialogs */}
-      <Dialog open={showElementsLibrary} onOpenChange={setShowElementsLibrary}>
-        <DialogContent className="max-w-7xl max-h-[90vh]">
-          <SavedElementsLibrary />
-        </DialogContent>
-      </Dialog>
-
-      <BulkCSVImportDialog
-        open={showCSVImportDialog}
-        onOpenChange={setShowCSVImportDialog}
-        onImportComplete={refetch}
-      />
-
+      <BulkCSVImportDialog open={showCSVImportDialog} onOpenChange={setShowCSVImportDialog} />
       <BulkCSVExportDialog
         open={showCSVExportDialog}
         onOpenChange={setShowCSVExportDialog}
-        ads={selectedIds.length > 0 ? ads.filter((ad) => selectedIds.includes(ad.id)) : ads}
+        ads={selectedIds.map(id => ads?.find(a => a.id === id)).filter(Boolean) as any[]}
       />
-    </div>
+
+      {/* Campaign Creation Dialog */}
+      {createCampaignDialog && (
+        <CreateCampaignDialog
+          open={createCampaignDialog.open}
+          onOpenChange={(open) => !open && setCreateCampaignDialog(null)}
+          entityName={createCampaignDialog.entityName}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['ad-campaigns-structure'] });
+            setCreateCampaignDialog(null);
+          }}
+        />
+      )}
+
+      {/* Ad Group Creation Dialog */}
+      {createAdGroupDialog && (
+        <CreateAdGroupDialog
+          open={createAdGroupDialog.open}
+          onOpenChange={(open) => !open && setCreateAdGroupDialog(null)}
+          campaignId={createAdGroupDialog.campaignId}
+          campaignName={createAdGroupDialog.campaignName}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['ad-groups-structure'] });
+            setCreateAdGroupDialog(null);
+          }}
+        />
+      )}
+    </Card>
   );
 }

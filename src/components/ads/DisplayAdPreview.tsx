@@ -56,14 +56,14 @@ export function DisplayAdPreview(props: DisplayAdPreviewProps) {
         </TabsList>
 
         <TabsContent value="mobile" className="mt-4 flex justify-center">
-          {/* Phone Frame Mockup */}
-          <div className="relative w-[400px] h-[800px]">
+          {/* Phone Frame Mockup - Responsive */}
+          <div className="relative w-full max-w-[360px] mx-auto aspect-[9/19]">
             {/* Phone bezel */}
-            <div className="absolute inset-0 rounded-[3rem] bg-gray-900 shadow-2xl p-3">
+            <div className="absolute inset-0 rounded-[2.5rem] bg-gray-900 shadow-2xl p-2.5">
               {/* Screen */}
-              <div className="h-full w-full rounded-[2.5rem] bg-white overflow-hidden relative">
+              <div className="h-full w-full rounded-[2rem] bg-white overflow-hidden relative">
                 {/* Status bar */}
-                <div className="h-8 bg-gray-50 flex items-center justify-between px-6 text-xs text-gray-600">
+                <div className="h-7 bg-gray-50 flex items-center justify-between px-4 text-[10px] text-gray-600">
                   <span>9:41</span>
                   <div className="flex items-center gap-1">
                     <div className="w-4 h-3 border border-gray-400 rounded-sm" />

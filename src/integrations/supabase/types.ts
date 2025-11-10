@@ -1955,6 +1955,57 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_ads_library: {
+        Row: {
+          ad_group: string | null
+          ad_type: string
+          campaign: string | null
+          content: Json
+          created_at: string | null
+          entity: string
+          id: string
+          is_template: boolean | null
+          name: string
+          quality_score: number | null
+          tags: string[] | null
+          updated_at: string | null
+          use_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          ad_group?: string | null
+          ad_type?: string
+          campaign?: string | null
+          content: Json
+          created_at?: string | null
+          entity: string
+          id?: string
+          is_template?: boolean | null
+          name: string
+          quality_score?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          ad_group?: string | null
+          ad_type?: string
+          campaign?: string | null
+          content?: Json
+          created_at?: string | null
+          entity?: string
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          quality_score?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       task_assignees: {
         Row: {
           assigned_at: string

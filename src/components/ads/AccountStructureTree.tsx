@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Layers } from "lucide-react";
+import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Layers, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface TreeNode {
@@ -19,10 +20,20 @@ interface TreeNode {
 interface AccountStructureTreeProps {
   selectedNodeId?: string;
   onSelectNode: (node: TreeNode) => void;
+  onCreateCampaign?: (entityName: string) => void;
+  onCreateAdGroup?: (campaignId: string, campaignName: string) => void;
+  onCreateAd?: (adGroupId: string, adGroupName: string) => void;
 }
 
-export function AccountStructureTree({ selectedNodeId, onSelectNode }: AccountStructureTreeProps) {
+export function AccountStructureTree({ 
+  selectedNodeId, 
+  onSelectNode,
+  onCreateCampaign,
+  onCreateAdGroup,
+  onCreateAd 
+}: AccountStructureTreeProps) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   // Fetch entities from entity_presets
   const { data: entityPresets } = useQuery({
@@ -220,11 +231,13 @@ export function AccountStructureTree({ selectedNodeId, onSelectNode }: AccountSt
       <div key={node.id}>
         <div
           className={cn(
-            "flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
+            "group flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
             isSelected && "bg-muted"
           )}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => onSelectNode(node)}
+          onMouseEnter={() => setHoveredNode(node.id)}
+          onMouseLeave={() => setHoveredNode(null)}
         >
           {hasChildren && (
             <button
@@ -243,8 +256,25 @@ export function AccountStructureTree({ selectedNodeId, onSelectNode }: AccountSt
           
           <span className="flex-1 text-sm truncate">{node.name}</span>
           
+          {/* Quick Action Button - only on hover */}
+          {hoveredNode === node.id && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (node.type === 'entity') onCreateCampaign?.(node.name);
+                if (node.type === 'campaign') onCreateAdGroup?.(node.id.replace('campaign-', ''), node.name);
+                if (node.type === 'adgroup') onCreateAd?.(node.id.replace('adgroup-', ''), node.name);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+          
           {node.versionCount && node.versionCount > 0 && (
-            <Badge variant="secondary" className="text-xs h-5">
+            <Badge variant="secondary" className="text-xs h-5 shrink-0">
               v{node.versionCount}
             </Badge>
           )}
@@ -252,7 +282,7 @@ export function AccountStructureTree({ selectedNodeId, onSelectNode }: AccountSt
           {getStatusBadge()}
           
           {hasChildren && (
-            <Badge variant="outline" className="text-xs h-5">
+            <Badge variant="outline" className="text-xs h-5 shrink-0">
               {node.children?.length}
             </Badge>
           )}
