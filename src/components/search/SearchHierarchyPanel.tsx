@@ -147,33 +147,35 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
               return (
                 <Collapsible key={campaign.id} open={isExpanded} onOpenChange={() => toggleCampaign(campaign.id)}>
-                  <div className="border rounded-lg">
-                    <div className="flex items-center gap-2 p-3 hover:bg-muted/50">
+                  <div className="border-2 border-blue-200 rounded-lg mb-3 overflow-hidden">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50/50 hover:bg-blue-50 transition-colors">
                       <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </CollapsibleTrigger>
-                      {isExpanded ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-500" />}
-                      <span className="flex-1 font-medium text-sm">{campaign.name}</span>
-                      <Badge variant="outline" className="text-xs">{campaignAdGroups.length} groups</Badge>
+                      {isExpanded ? <FolderOpen className="h-[18px] w-[18px] text-blue-600" /> : <Folder className="h-[18px] w-[18px] text-blue-600" />}
+                      <span className="flex-1 font-semibold text-sm">{campaign.name}</span>
+                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                        {campaignAdGroups.length} groups
+                      </Badge>
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="h-6 w-6"
+                        className="h-7 w-7"
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
                         }}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
 
                     <CollapsibleContent>
-                      <div className="pl-8 pr-3 pb-3 space-y-2">
+                      <div className="pl-10 pr-3 pb-3 space-y-2 bg-white">
                         {campaignAdGroups.length === 0 ? (
-                          <div className="text-xs text-muted-foreground py-2">
+                          <div className="text-xs text-muted-foreground py-2 px-2">
                             No ad groups yet
                           </div>
                         ) : (
@@ -183,48 +185,50 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
 
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded} onOpenChange={() => toggleAdGroup(adGroup.id)}>
-                                <div className="border rounded-lg">
-                                  <div className="flex items-center gap-2 p-2 hover:bg-muted/50">
+                                <div className="rounded-md bg-purple-50/30">
+                                  <div className="flex items-center gap-3 p-2.5 hover:bg-purple-50/60 transition-colors">
                                     <CollapsibleTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
-                                        {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        {isAdGroupExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                       </Button>
                                     </CollapsibleTrigger>
-                                    {isAdGroupExpanded ? <FolderOpen className="h-3.5 w-3.5 text-purple-500" /> : <Folder className="h-3.5 w-3.5 text-purple-500" />}
-                                    <span className="flex-1 text-sm">{adGroup.name}</span>
-                                    <Badge variant="outline" className="text-xs">{adGroupAds.length} ads</Badge>
+                                    {isAdGroupExpanded ? <FolderOpen className="h-4 w-4 text-purple-600" /> : <Folder className="h-4 w-4 text-purple-600" />}
+                                    <span className="flex-1 text-sm font-medium">{adGroup.name}</span>
+                                    <Badge variant="outline" className="text-xs border-purple-300 bg-purple-50/50">
+                                      {adGroupAds.length} ads
+                                    </Badge>
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-5 w-5"
+                                      className="h-6 w-6"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
                                     >
-                                      <Plus className="h-3 w-3" />
+                                      <Plus className="h-4 w-4" />
                                     </Button>
                                   </div>
 
                                   <CollapsibleContent>
-                                    <div className="pl-6 pr-2 pb-2 space-y-1">
+                                    <div className="pl-9 pr-2 pb-2 space-y-1">
                                       {adGroupAds.length === 0 ? (
-                                        <div className="text-xs text-muted-foreground py-2">
+                                        <div className="text-xs text-muted-foreground py-2 px-2">
                                           No ads yet
                                         </div>
                                       ) : (
                                         adGroupAds.map(ad => (
                                           <div 
                                             key={ad.id} 
-                                            className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded cursor-pointer"
+                                            className="flex items-center gap-3 p-2 hover:bg-green-50/50 rounded-md cursor-pointer transition-colors"
                                             onClick={() => {
                                               onEditAd(ad, adGroup, campaign, selectedEntity);
                                             }}
                                           >
-                                            <FileText className="h-3.5 w-3.5 text-green-500" />
-                                            <span className="flex-1 text-xs">{ad.name}</span>
+                                            <FileText className="h-4 w-4 text-green-600" />
+                                            <span className="flex-1 text-sm">{ad.name}</span>
                                             {ad.approval_status && (
-                                              <Badge variant="outline" className="text-xs h-4">
+                                              <Badge variant="outline" className="text-xs h-5 border-green-300">
                                                 {ad.approval_status}
                                               </Badge>
                                             )}
