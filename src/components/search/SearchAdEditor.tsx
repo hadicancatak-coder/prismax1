@@ -182,27 +182,29 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         <div className="p-6 space-y-6">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <Button variant="ghost" size="sm" onClick={onCancel}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Ad Group
-              </Button>
-              {ad?.id && (
-                <Button variant="outline" size="sm" onClick={handleCopyAd}>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy Ad
+              <h2 className="text-2xl font-semibold">
+                {ad?.id ? "Edit Ad" : "Create New Ad"}
+              </h2>
+              <div className="flex gap-2">
+                {ad?.id && (
+                  <Button variant="outline" size="sm" onClick={handleCopyAd}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Ad
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={onCancel}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
                 </Button>
-              )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{entity}</span>
               <span>›</span>
               <span>{campaign.name}</span>
               <span>›</span>
               <span>{adGroup.name}</span>
             </div>
-            <h2 className="text-2xl font-semibold">
-              {ad?.id ? "Edit Ad" : "Create New Ad"}
-            </h2>
           </div>
 
           <Card>

@@ -12,21 +12,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import SearchAdEditor from "./SearchAdEditor";
 import { ENTITIES } from "@/lib/constants";
 
 interface SearchHierarchyPanelProps {
-  onAdCreated?: (adId: string) => void;
+  onEditAd: (ad: any, adGroup: any, campaign: any, entity: string) => void;
+  onCreateAd: (adGroup: any, campaign: any, entity: string) => void;
 }
 
-export function SearchHierarchyPanel({ onAdCreated }: SearchHierarchyPanelProps) {
+export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPanelProps) {
   const queryClient = useQueryClient();
   const [selectedEntity, setSelectedEntity] = useState<string>("UAE");
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
   const [expandedAdGroups, setExpandedAdGroups] = useState<Set<string>>(new Set());
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
   const [showCreateAdGroup, setShowCreateAdGroup] = useState<{campaignId: string; campaignName: string} | null>(null);
-  const [showCreateAd, setShowCreateAd] = useState<{adGroupId: string; adGroupName: string; campaignId: string; campaign: any; entity: string} | null>(null);
 
   // Fetch campaigns for selected entity
   const { data: campaigns = [] } = useQuery({
@@ -103,15 +102,6 @@ export function SearchHierarchyPanel({ onAdCreated }: SearchHierarchyPanelProps)
     setShowCreateAdGroup(null);
     queryClient.invalidateQueries({ queryKey: ['ad-groups-hierarchy'] });
     queryClient.invalidateQueries({ queryKey: ['ad-groups-tree'] });
-  };
-
-  const handleAdCreatedInternal = (adId?: string) => {
-    setShowCreateAd(null);
-    queryClient.invalidateQueries({ queryKey: ['ads-hierarchy'] });
-    queryClient.invalidateQueries({ queryKey: ['ads-tree'] });
-    if (adId && onAdCreated) {
-      onAdCreated(adId);
-    }
   };
 
   const getAdGroupsForCampaign = (campaignId: string) => {
@@ -209,13 +199,7 @@ export function SearchHierarchyPanel({ onAdCreated }: SearchHierarchyPanelProps)
                                       className="h-5 w-5"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setShowCreateAd({ 
-                                          adGroupId: adGroup.id, 
-                                          adGroupName: adGroup.name,
-                                          campaignId: campaign.id,
-                                          campaign,
-                                          entity: selectedEntity
-                                        });
+                                        onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
                                     >
                                       <Plus className="h-3 w-3" />
@@ -234,13 +218,7 @@ export function SearchHierarchyPanel({ onAdCreated }: SearchHierarchyPanelProps)
                                             key={ad.id} 
                                             className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded cursor-pointer"
                                             onClick={() => {
-                                              setShowCreateAd({ 
-                                                adGroupId: adGroup.id, 
-                                                adGroupName: adGroup.name,
-                                                campaignId: campaign.id,
-                                                campaign,
-                                                entity: selectedEntity
-                                              });
+                                              onEditAd(ad, adGroup, campaign, selectedEntity);
                                             }}
                                           >
                                             <FileText className="h-3.5 w-3.5 text-green-500" />
@@ -287,22 +265,6 @@ export function SearchHierarchyPanel({ onAdCreated }: SearchHierarchyPanelProps)
           campaignName={showCreateAdGroup.campaignName}
           onSuccess={handleAdGroupCreated}
         />
-      )}
-
-      {/* Create/Edit Ad Dialog */}
-      {showCreateAd && (
-        <Dialog open={!!showCreateAd} onOpenChange={(open) => !open && setShowCreateAd(null)}>
-          <DialogContent className="max-w-7xl h-[90vh] p-0">
-            <SearchAdEditor
-              ad={{}}
-              adGroup={{ id: showCreateAd.adGroupId, name: showCreateAd.adGroupName }}
-              campaign={showCreateAd.campaign}
-              entity={showCreateAd.entity}
-              onSave={handleAdCreatedInternal}
-              onCancel={() => setShowCreateAd(null)}
-            />
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );
