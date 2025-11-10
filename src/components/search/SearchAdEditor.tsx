@@ -5,11 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Save } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Copy, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchAdPreview } from "../ads/SearchAdPreview";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SavedElementsSelector } from "./SavedElementsSelector";
+import { useCreateAdElement } from "@/hooks/useAdElements";
 
 interface SearchAdEditorProps {
   ad: any;
@@ -22,6 +24,7 @@ interface SearchAdEditorProps {
 
 export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel }: SearchAdEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const createElementMutation = useCreateAdElement();
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(["", "", ""]);
   const [descriptions, setDescriptions] = useState<string[]>(["", ""]);
@@ -122,15 +125,74 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     }
   };
 
+  const handleCopyAd = async () => {
+    if (!ad?.id) return;
+
+    try {
+      const copyData = {
+        ...ad,
+        name: `${ad.name} (Copy)`,
+        approval_status: "draft"
+      };
+      delete copyData.id;
+      delete copyData.created_at;
+      delete copyData.updated_at;
+
+      const { data, error } = await supabase
+        .from("ads")
+        .insert(copyData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Ad copied successfully");
+      onSave(data.id);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to copy ad");
+    }
+  };
+
+  const handleSaveElement = async (content: string, type: "headline" | "description") => {
+    if (!content.trim()) {
+      toast.error("Cannot save empty element");
+      return;
+    }
+
+    try {
+      await createElementMutation.mutateAsync({
+        element_type: type,
+        content,
+        entity: [entity],
+        language,
+        platform: "ppc",
+        google_status: "pending",
+        tags: [],
+        is_favorite: false
+      });
+      toast.success(`${type} saved to library`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save element");
+    }
+  };
+
   return (
     <div className="flex h-full">
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
           <div>
-            <Button variant="ghost" size="sm" onClick={onCancel} className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Ad Group
-            </Button>
+            <div className="flex items-center justify-between mb-4">
+              <Button variant="ghost" size="sm" onClick={onCancel}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Ad Group
+              </Button>
+              {ad?.id && (
+                <Button variant="outline" size="sm" onClick={handleCopyAd}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Ad
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
               <span>{entity}</span>
               <span>›</span>
@@ -176,28 +238,84 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               <Separator />
 
               <div className="space-y-2">
-                <Label>Headlines * (Max 30 characters each)</Label>
-                {headlines.map((headline, index) => (
-                  <Input
-                    key={index}
-                    placeholder={`Headline ${index + 1}`}
-                    value={headline}
-                    onChange={(e) => updateHeadline(index, e.target.value)}
-                    maxLength={30}
+                <div className="flex items-center justify-between">
+                  <Label>Headlines * (Max 30 characters each)</Label>
+                  <SavedElementsSelector
+                    elementType="headline"
+                    entity={entity}
+                    language={language}
+                    onSelect={(content) => {
+                      const emptyIndex = headlines.findIndex(h => !h.trim());
+                      if (emptyIndex !== -1) {
+                        updateHeadline(emptyIndex, content);
+                      } else {
+                        toast.info("All headline slots are filled");
+                      }
+                    }}
                   />
+                </div>
+                {headlines.map((headline, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder={`Headline ${index + 1}`}
+                      value={headline}
+                      onChange={(e) => updateHeadline(index, e.target.value)}
+                      maxLength={30}
+                      className="flex-1"
+                    />
+                    {headline.trim() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSaveElement(headline, "headline")}
+                        title="Save to library"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
 
               <div className="space-y-2">
-                <Label>Descriptions * (Max 90 characters each)</Label>
-                {descriptions.map((description, index) => (
-                  <Input
-                    key={index}
-                    placeholder={`Description ${index + 1}`}
-                    value={description}
-                    onChange={(e) => updateDescription(index, e.target.value)}
-                    maxLength={90}
+                <div className="flex items-center justify-between">
+                  <Label>Descriptions * (Max 90 characters each)</Label>
+                  <SavedElementsSelector
+                    elementType="description"
+                    entity={entity}
+                    language={language}
+                    onSelect={(content) => {
+                      const emptyIndex = descriptions.findIndex(d => !d.trim());
+                      if (emptyIndex !== -1) {
+                        updateDescription(emptyIndex, content);
+                      } else {
+                        toast.info("All description slots are filled");
+                      }
+                    }}
                   />
+                </div>
+                {descriptions.map((description, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder={`Description ${index + 1}`}
+                      value={description}
+                      onChange={(e) => updateDescription(index, e.target.value)}
+                      maxLength={90}
+                      className="flex-1"
+                    />
+                    {description.trim() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSaveElement(description, "description")}
+                        title="Save to library"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
 

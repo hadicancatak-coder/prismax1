@@ -18,7 +18,6 @@ interface SearchAdGroupFormProps {
 
 export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: SearchAdGroupFormProps) {
   const [name, setName] = useState("");
-  const [maxCpc, setMaxCpc] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   // Fetch existing ad groups for this campaign
@@ -48,7 +47,6 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
         .insert({
           name: name.trim(),
           campaign_id: campaign.id,
-          max_cpc: maxCpc ? parseFloat(maxCpc) : null,
           status: "active"
         })
         .select()
@@ -58,7 +56,6 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
 
       toast.success("Ad group created successfully");
       setName("");
-      setMaxCpc("");
       refetch();
       onAdGroupCreated(data.id);
     } catch (error: any) {
@@ -101,21 +98,6 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="max-cpc">Max CPC (Optional)</Label>
-              <Input
-                id="max-cpc"
-                type="number"
-                step="0.01"
-                placeholder="e.g., 2.50"
-                value={maxCpc}
-                onChange={(e) => setMaxCpc(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Maximum cost-per-click bid for this ad group
-              </p>
-            </div>
-
             <Button 
               onClick={handleCreate} 
               disabled={isCreating}
@@ -146,11 +128,6 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
                         <div className="font-medium">{adGroup.name}</div>
                         <Badge variant="secondary">{adCount} {adCount === 1 ? 'ad' : 'ads'}</Badge>
                       </div>
-                      {adGroup.max_cpc && (
-                        <div className="text-sm text-muted-foreground">
-                          Max CPC: ${adGroup.max_cpc}
-                        </div>
-                      )}
                     </div>
                   );
                 })}

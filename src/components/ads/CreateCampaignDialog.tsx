@@ -1,26 +1,27 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { ENTITIES } from "@/lib/constants";
 
 interface CreateCampaignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entityName: string;
+  entityName?: string;
   onSuccess?: () => void;
 }
 
 export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess }: CreateCampaignDialogProps) {
-  const [name, setName] = useState('');
-  const [languages, setLanguages] = useState<string[]>(['EN']);
+  const [name, setName] = useState("");
+  const [entity, setEntity] = useState(entityName || "UAE");
+  const [languages, setLanguages] = useState<string[]>(["EN"]);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const toggleLanguage = (lang: string) => {
     setLanguages(prev =>
@@ -29,31 +30,43 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
   };
 
   const handleCreate = async () => {
+    if (!entity.trim()) {
+      toast.error("Please select an entity");
+      return;
+    }
+
     if (!name.trim()) {
-      toast({ title: "Campaign name is required", variant: "destructive" });
+      toast.error("Please enter a campaign name");
+      return;
+    }
+
+    if (languages.length === 0) {
+      toast.error("Please select at least one language");
       return;
     }
 
     setIsLoading(true);
+
     try {
       const { error } = await supabase
-        .from('ad_campaigns')
+        .from("ad_campaigns")
         .insert({
           name: name.trim(),
-          entity: entityName,
-          languages: languages,
-          status: 'draft',
+          entity: entity.trim(),
+          languages,
+          status: "active"
         });
 
       if (error) throw error;
 
-      toast({ title: "Campaign created successfully" });
-      setName('');
-      setLanguages(['EN']);
-      onOpenChange(false);
+      toast.success("Campaign created successfully");
+      setName("");
+      setEntity(entityName || "UAE");
+      setLanguages(["EN"]);
       onSuccess?.();
+      onOpenChange(false);
     } catch (error: any) {
-      toast({ title: "Failed to create campaign", description: error.message, variant: "destructive" });
+      toast.error(error.message || "Failed to create campaign");
     } finally {
       setIsLoading(false);
     }
@@ -61,12 +74,28 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Campaign for {entityName}</DialogTitle>
+          <DialogTitle>Create Campaign</DialogTitle>
+          <DialogDescription>
+            Create a new ad campaign
+          </DialogDescription>
         </DialogHeader>
-        
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="entity">Entity *</Label>
+            <Select value={entity} onValueChange={setEntity}>
+              <SelectTrigger id="entity">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ENTITIES.map(ent => (
+                  <SelectItem key={ent} value={ent}>{ent}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="campaign-name">Campaign Name *</Label>
             <Input
@@ -83,8 +112,8 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="lang-en"
-                  checked={languages.includes('EN')}
-                  onCheckedChange={() => toggleLanguage('EN')}
+                  checked={languages.includes("EN")}
+                  onCheckedChange={() => toggleLanguage("EN")}
                 />
                 <label htmlFor="lang-en" className="text-sm font-medium cursor-pointer">
                   English
@@ -93,8 +122,8 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="lang-ar"
-                  checked={languages.includes('AR')}
-                  onCheckedChange={() => toggleLanguage('AR')}
+                  checked={languages.includes("AR")}
+                  onCheckedChange={() => toggleLanguage("AR")}
                 />
                 <label htmlFor="lang-ar" className="text-sm font-medium cursor-pointer">
                   Arabic
@@ -102,17 +131,17 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
               </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Campaign
-          </Button>
-        </DialogFooter>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={isLoading} className="flex-1">
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Campaign
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
