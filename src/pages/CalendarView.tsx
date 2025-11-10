@@ -100,6 +100,7 @@ export default function CalendarView() {
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "month" | "custom">("today");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [focusMode, setFocusMode] = useState(false);
+  const [calendarKey, setCalendarKey] = useState(0);
   const [sortOption, setSortOption] = useState<SortOption>(() => {
     return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
   });
@@ -281,6 +282,7 @@ export default function CalendarView() {
     
     // Clear first, then set new range to ensure clean state
     setDateRange(undefined);
+    setCalendarKey(prev => prev + 1);
     setTimeout(() => {
       setDateRange({ from, to });
       setDateView("custom");
@@ -373,16 +375,25 @@ export default function CalendarView() {
                         mode="range"
                         selected={dateRange}
                         onSelect={(range) => {
-                          setDateRange(range);
-                          // When user completes a range selection (both from and to are set), 
-                          // automatically apply it
-                          if (range?.from && range?.to) {
-                            setDateView("custom");
+                          // If user had a complete range and is starting fresh
+                          if (dateRange?.from && dateRange?.to && range?.from && !range?.to) {
+                            // Clear old selection first
+                            setDateRange(undefined);
+                            setCalendarKey(prev => prev + 1);
+                            setTimeout(() => {
+                              setDateRange({ from: range.from, to: range.from });
+                            }, 0);
+                          } else {
+                            setDateRange(range);
+                            // When user completes a range selection, automatically apply it
+                            if (range?.from && range?.to) {
+                              setDateView("custom");
+                            }
                           }
                         }}
                         numberOfMonths={2}
                         className="pointer-events-auto"
-                        key={dateView}
+                        key={calendarKey}
                         defaultMonth={dateRange?.from || new Date()}
                       />
                       <div className="flex gap-2">
@@ -393,6 +404,7 @@ export default function CalendarView() {
                           onClick={() => {
                             setDateRange(undefined);
                             setDateView("today");
+                            setCalendarKey(prev => prev + 1);
                           }}
                         >
                           Clear

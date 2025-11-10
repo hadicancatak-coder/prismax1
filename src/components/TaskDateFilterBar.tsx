@@ -60,9 +60,12 @@ export function TaskDateFilterBar({
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarKey, setCalendarKey] = useState(0);
 
   const handleFilterClick = (filterType: string) => {
     setSelectedFilter(filterType);
+    setCustomRange(null);
+    setCalendarKey(prev => prev + 1);
     
     const now = new Date();
     let filter: DateFilter | null = null;
@@ -158,26 +161,37 @@ export function TaskDateFilterBar({
               selected={customRange ? { from: customRange.from, to: customRange.to } : undefined}
               onSelect={(range) => {
                 if (range?.from) {
-                  // Update visual state immediately
-                  setCustomRange(range as any);
-                  
-                  // Only apply filter when range is complete
-                  if (range.to) {
-                    setSelectedFilter("custom");
-                    const isSingleDay = range.from.getTime() === range.to.getTime();
-                    onFilterChange({ 
-                      label: isSingleDay 
-                        ? format(range.from, 'MMM d')
-                        : `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
-                      startDate: range.from, 
-                      endDate: range.to 
-                    });
-                    setCalendarOpen(false);
+                  // If user already had a complete range and is starting a new selection
+                  if (customRange?.from && customRange?.to && !range.to) {
+                    // User is starting a fresh selection - clear old range first
+                    setCustomRange(null);
+                    setCalendarKey(prev => prev + 1);
+                    // Then set the new starting point
+                    setTimeout(() => {
+                      setCustomRange({ from: range.from, to: range.from });
+                    }, 0);
+                  } else {
+                    // Normal flow - update range
+                    setCustomRange(range as any);
+                    
+                    // Only apply filter when range is complete
+                    if (range.to) {
+                      setSelectedFilter("custom");
+                      const isSingleDay = range.from.getTime() === range.to.getTime();
+                      onFilterChange({ 
+                        label: isSingleDay 
+                          ? format(range.from, 'MMM d')
+                          : `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`, 
+                        startDate: range.from, 
+                        endDate: range.to 
+                      });
+                      setCalendarOpen(false);
+                    }
                   }
                 }
               }}
               className="pointer-events-auto"
-              key={selectedFilter}
+              key={calendarKey}
               defaultMonth={customRange?.from || new Date()}
             />
           </div>
