@@ -13,13 +13,13 @@ import { ENTITIES } from "@/lib/constants";
 interface CreateCampaignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entityName?: string;
+  defaultEntity?: string;
   onSuccess?: () => void;
 }
 
-export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess }: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, onSuccess }: CreateCampaignDialogProps) {
   const [name, setName] = useState("");
-  const [entity, setEntity] = useState(entityName || "UAE");
+  const [entity, setEntity] = useState(defaultEntity || "UAE");
   const [languages, setLanguages] = useState<string[]>(["EN"]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -61,7 +61,7 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
 
       toast.success("Campaign created successfully");
       setName("");
-      setEntity(entityName || "UAE");
+      setEntity(defaultEntity || "UAE");
       setLanguages(["EN"]);
       onSuccess?.();
       onOpenChange(false);

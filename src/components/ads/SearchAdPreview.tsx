@@ -6,8 +6,8 @@ interface SearchAdPreviewProps {
   headlines: string[];
   descriptions: string[];
   landingPage: string;
-  businessName: string;
-  sitelinks?: string[];
+  businessName?: string;
+  sitelinks?: ({ text: string; url: string } | string)[];
   callouts?: string[];
 }
 
@@ -35,8 +35,10 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
   // Get first 3 headlines and 2 descriptions (Google Ads limit)
   const activeHeadlines = props.headlines.filter(h => h.trim()).slice(0, 3);
   const activeDescriptions = props.descriptions.filter(d => d.trim()).slice(0, 2);
-  const activeSitelinks = props.sitelinks?.filter(s => s.trim()).slice(0, 4) || [];
-  const activeCallouts = props.callouts?.filter(c => c.trim()).slice(0, 4) || [];
+  const activeSitelinks = (props.sitelinks || [])
+    .filter(s => typeof s === 'string' ? s.trim() : s.text.trim())
+    .slice(0, 4);
+  const activeCallouts = (props.callouts || []).filter(c => c.trim()).slice(0, 4);
 
   return (
     <div className="space-y-4">
@@ -85,7 +87,9 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
               <div className="grid grid-cols-2 gap-2 pt-2 border-t mt-3">
                 {activeSitelinks.map((link, idx) => (
                   <div key={idx} className="text-sm">
-                    <p className="text-primary hover:underline cursor-pointer truncate">{link}</p>
+                    <p className="text-primary hover:underline cursor-pointer truncate">
+                      {typeof link === 'string' ? link : link.text}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -138,7 +142,7 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
               <div className="grid grid-cols-2 gap-2 pt-2 border-t mt-2">
                 {activeSitelinks.slice(0, 2).map((link, idx) => (
                   <p key={idx} className="text-xs text-primary hover:underline cursor-pointer truncate">
-                    {link}
+                    {typeof link === 'string' ? link : link.text}
                   </p>
                 ))}
               </div>

@@ -525,7 +525,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                       descriptions={descriptions.filter(d => d.trim())}
                       landingPage={finalUrl}
                       businessName={businessName}
-                      sitelinks={sitelinks.map(s => s.text)}
+                      sitelinks={sitelinks.map(s => ({ text: s.text, url: s.url || '' }))}
                       callouts={callouts}
                     />
                   ) : (

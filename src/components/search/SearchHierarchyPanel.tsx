@@ -252,7 +252,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd }: SearchHierarchyPa
       <CreateCampaignDialog
         open={showCreateCampaign}
         onOpenChange={setShowCreateCampaign}
-        entityName={selectedEntity}
+        defaultEntity={selectedEntity}
         onSuccess={handleCampaignCreated}
       />
 

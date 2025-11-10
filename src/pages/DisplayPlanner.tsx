@@ -228,7 +228,7 @@ export default function DisplayPlanner() {
         <CreateCampaignDialog
           open={createCampaignDialog.open}
           onOpenChange={(open) => !open && setCreateCampaignDialog(null)}
-          entityName={createCampaignDialog.entityName}
+          defaultEntity={createCampaignDialog.entityName}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ["ad_campaigns"] })}
         />
       )}

@@ -398,7 +398,7 @@ export default function AdsPage() {
         <CreateCampaignDialog
           open={createCampaignDialog.open}
           onOpenChange={(open) => !open && setCreateCampaignDialog(null)}
-          entityName={createCampaignDialog.entityName}
+          defaultEntity={createCampaignDialog.entityName}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['ad-campaigns-structure'] });
             setCreateCampaignDialog(null);
