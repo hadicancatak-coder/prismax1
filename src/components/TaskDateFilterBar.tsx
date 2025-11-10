@@ -177,6 +177,8 @@ export function TaskDateFilterBar({
                 }
               }}
               className="pointer-events-auto"
+              key={selectedFilter}
+              defaultMonth={customRange?.from || new Date()}
             />
           </div>
         </PopoverContent>
