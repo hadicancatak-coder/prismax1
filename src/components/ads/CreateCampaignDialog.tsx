@@ -18,8 +18,6 @@ interface CreateCampaignDialogProps {
 
 export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess }: CreateCampaignDialogProps) {
   const [name, setName] = useState('');
-  const [objective, setObjective] = useState('');
-  const [budgetMonthly, setBudgetMonthly] = useState('');
   const [languages, setLanguages] = useState<string[]>(['EN']);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -43,8 +41,6 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
         .insert({
           name: name.trim(),
           entity: entityName,
-          objective: objective || null,
-          budget_monthly: budgetMonthly ? parseFloat(budgetMonthly) : null,
           languages: languages,
           status: 'draft',
         });
@@ -53,8 +49,6 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
 
       toast({ title: "Campaign created successfully" });
       setName('');
-      setObjective('');
-      setBudgetMonthly('');
       setLanguages(['EN']);
       onOpenChange(false);
       onSuccess?.();
@@ -80,33 +74,6 @@ export function CreateCampaignDialog({ open, onOpenChange, entityName, onSuccess
               placeholder="e.g., Q4 Brand Campaign"
               value={name}
               onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="objective">Objective</Label>
-            <Select value={objective} onValueChange={setObjective}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select objective" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="brand_awareness">Brand Awareness</SelectItem>
-                <SelectItem value="lead_generation">Lead Generation</SelectItem>
-                <SelectItem value="conversions">Conversions</SelectItem>
-                <SelectItem value="traffic">Website Traffic</SelectItem>
-                <SelectItem value="app_promotion">App Promotion</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="budget">Monthly Budget (Optional)</Label>
-            <Input
-              id="budget"
-              type="number"
-              placeholder="e.g., 5000"
-              value={budgetMonthly}
-              onChange={(e) => setBudgetMonthly(e.target.value)}
             />
           </div>
 

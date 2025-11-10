@@ -16,15 +16,6 @@ interface SearchCampaignFormProps {
   onCampaignCreated: () => void;
 }
 
-const CAMPAIGN_OBJECTIVES = [
-  "Sales",
-  "Leads",
-  "Website Traffic",
-  "Product and Brand Consideration",
-  "Brand Awareness and Reach",
-  "App Promotion"
-];
-
 const LANGUAGES = [
   { code: "EN", name: "English" },
   { code: "AR", name: "Arabic" }
@@ -32,8 +23,6 @@ const LANGUAGES = [
 
 export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaignFormProps) {
   const [name, setName] = useState("");
-  const [objective, setObjective] = useState("");
-  const [monthlyBudget, setMonthlyBudget] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["EN"]);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -64,11 +53,6 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
       return;
     }
 
-    if (!objective) {
-      toast.error("Please select a campaign objective");
-      return;
-    }
-
     if (selectedLanguages.length === 0) {
       toast.error("Please select at least one language");
       return;
@@ -80,8 +64,6 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
       const { error } = await supabase.from("ad_campaigns").insert({
         name: name.trim(),
         entity,
-        objective,
-        monthly_budget: monthlyBudget ? parseFloat(monthlyBudget) : null,
         languages: selectedLanguages,
         status: "active"
       });
@@ -90,8 +72,6 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
 
       toast.success("Campaign created successfully");
       setName("");
-      setObjective("");
-      setMonthlyBudget("");
       setSelectedLanguages(["EN"]);
       refetch();
       onCampaignCreated();
@@ -127,31 +107,6 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
                 placeholder="e.g., Q4 Brand Campaign"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="objective">Campaign Objective *</Label>
-              <Select value={objective} onValueChange={setObjective}>
-                <SelectTrigger id="objective">
-                  <SelectValue placeholder="Select objective" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CAMPAIGN_OBJECTIVES.map(obj => (
-                    <SelectItem key={obj} value={obj}>{obj}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="budget">Monthly Budget (Optional)</Label>
-              <Input
-                id="budget"
-                type="number"
-                placeholder="e.g., 5000"
-                value={monthlyBudget}
-                onChange={(e) => setMonthlyBudget(e.target.value)}
               />
             </div>
 
@@ -202,7 +157,7 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
                   >
                     <div className="font-medium">{campaign.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {campaign.objective} • {campaign.languages?.join(", ")}
+                      {campaign.languages?.join(", ")}
                     </div>
                   </div>
                 ))}
