@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2 } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -28,13 +28,14 @@ import { MultiAssigneeSelector } from "./MultiAssigneeSelector";
 import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 import { PromptDialog } from "@/components/ui/PromptDialog";
+import { useTaskChangeLogs } from "@/hooks/useTaskChangeLogs";
 
 interface TaskDialogProps {
   open: boolean;
@@ -70,6 +71,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
+  const { data: changeLogs = [], isLoading: changeLogsLoading } = useTaskChangeLogs(taskId);
 
   // Validate taskId
   if (!taskId || taskId === "undefined") {
@@ -193,6 +195,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       console.error("Error fetching comments:", error);
     }
   };
+
+  // Merge comments and change logs, sorted by timestamp
+  const activityFeed = [
+    ...comments.map((c) => ({ ...c, type: "comment", timestamp: c.created_at })),
+    ...changeLogs.map((l) => ({ ...l, type: "log", timestamp: l.changed_at })),
+  ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   const fetchProfiles = async () => {
     const { data } = await supabase.from("profiles").select("user_id, name, username");
@@ -1137,13 +1145,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
             )}
           </div>
 
-          {/* Comments Section - Messaging Style */}
+          {/* Activity Feed - Comments & Change Logs */}
           {showComments && (
             <>
               <Separator orientation="vertical" className="h-auto" />
               <div className="w-1/2 flex flex-col h-[600px]">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Comments ({comments.length})</h3>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Activity ({activityFeed.length})
+                  </h3>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1153,80 +1164,108 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   </Button>
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
-                  {comments.length > 0 ? (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3 animate-fade-in group">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarImage src={comment.profiles?.avatar_url} />
-                          <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 bg-muted rounded-lg p-3 relative">
-                          {comment.author_id === user?.id && (
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0"
-                                onClick={() => setEditingComment({id: comment.id, body: comment.body})}
-                              >
-                                ✏️
-                              </Button>
-                              <ConfirmPopover
-                                open={confirmDeleteComment === comment.id}
-                                onOpenChange={(open) => !open && setConfirmDeleteComment(null)}
-                                onConfirm={async () => {
-                                  await supabase.from('comments').delete().eq('id', comment.id);
-                                  fetchComments();
-                                  toast({ title: "Comment deleted" });
-                                  setConfirmDeleteComment(null);
-                                }}
-                                title="Delete this comment?"
-                                description="This action cannot be undone."
-                                trigger={
+                  {activityFeed.length > 0 ? (
+                    activityFeed.map((item: any) => {
+                      if (item.type === "comment") {
+                        const comment = item;
+                        return (
+                          <div key={`comment-${comment.id}`} className="flex gap-3 animate-fade-in group">
+                            <Avatar className="h-8 w-8 flex-shrink-0">
+                              <AvatarImage src={comment.profiles?.avatar_url} />
+                              <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 bg-muted rounded-lg p-3 relative">
+                              {comment.author_id === user?.id && (
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-6 w-6 p-0 text-destructive"
-                                    onClick={() => setConfirmDeleteComment(comment.id)}
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => setEditingComment({id: comment.id, body: comment.body})}
                                   >
-                                    🗑️
+                                    ✏️
                                   </Button>
-                                }
-                              />
+                                  <ConfirmPopover
+                                    open={confirmDeleteComment === comment.id}
+                                    onOpenChange={(open) => !open && setConfirmDeleteComment(null)}
+                                    onConfirm={async () => {
+                                      await supabase.from('comments').delete().eq('id', comment.id);
+                                      fetchComments();
+                                      toast({ title: "Comment deleted" });
+                                      setConfirmDeleteComment(null);
+                                    }}
+                                    title="Delete this comment?"
+                                    description="This action cannot be undone."
+                                    trigger={
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0 text-destructive"
+                                        onClick={() => setConfirmDeleteComment(comment.id)}
+                                      >
+                                        🗑️
+                                      </Button>
+                                    }
+                                  />
+                                </div>
+                              )}
+                              
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-semibold text-sm">{comment.profiles?.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(comment.created_at).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {comment.body.split(/(@\w+)/g).map((part: string, i: number) => {
+                                  if (part.startsWith('@')) {
+                                    const username = part.substring(1);
+                                    const mentioned = profiles.find(
+                                      p => p.name?.toLowerCase() === username.toLowerCase() ||
+                                           p.username?.toLowerCase() === username.toLowerCase()
+                                    );
+                                    return mentioned ? (
+                                      <span key={i} className="text-primary font-semibold cursor-pointer hover:underline">
+                                        {part}
+                                      </span>
+                                    ) : part;
+                                  }
+                                  return part;
+                                })}
+                              </p>
                             </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">{comment.profiles?.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(comment.created_at).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
                           </div>
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {comment.body.split(/(@\w+)/g).map((part: string, i: number) => {
-                              if (part.startsWith('@')) {
-                                const username = part.substring(1);
-                                const mentioned = profiles.find(
-                                  p => p.name?.toLowerCase() === username.toLowerCase() ||
-                                       p.username?.toLowerCase() === username.toLowerCase()
-                                );
-                                return mentioned ? (
-                                  <span key={i} className="text-primary font-semibold cursor-pointer hover:underline">
-                                    {part}
-                                  </span>
-                                ) : part;
-                              }
-                              return part;
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))
+                        );
+                      } else {
+                        // Change log entry
+                        const log = item;
+                        return (
+                          <div key={`log-${log.id}`} className="flex gap-3 animate-fade-in">
+                            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+                              <Activity className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 bg-muted/30 rounded-lg p-3 border border-border/50">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {log.profiles?.name || "System"}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(log.changed_at), { addSuffix: true })}
+                                </span>
+                              </div>
+                              <p className="text-sm text-foreground/80">
+                                {log.description}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })
                   ) : (
-                    <div className="text-center text-muted-foreground py-8">No comments yet. Start the conversation!</div>
+                    <div className="text-center text-muted-foreground py-8">No activity yet. Start the conversation!</div>
                   )}
                   <div ref={messagesEndRef} />
                 </div>

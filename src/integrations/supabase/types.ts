@@ -1896,6 +1896,53 @@ export type Database = {
           },
         ]
       }
+      task_change_logs: {
+        Row: {
+          change_type: string
+          changed_at: string
+          changed_by: string
+          created_at: string
+          description: string | null
+          field_name: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          task_id: string
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string
+          changed_by: string
+          created_at?: string
+          description?: string | null
+          field_name: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          task_id: string
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string
+          changed_by?: string
+          created_at?: string
+          description?: string | null
+          field_name?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_change_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_change_requests: {
         Row: {
           created_at: string

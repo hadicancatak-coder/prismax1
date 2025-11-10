@@ -7,14 +7,85 @@ import { TaskDialog } from "@/components/TaskDialog";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, GripVertical } from "lucide-react";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
+import { CompletedTasksSection } from "@/components/tasks/CompletedTasksSection";
+import { TaskSortDropdown, SortOption } from "@/components/tasks/TaskSortDropdown";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
+
+// Sortable Task Item Component
+function SortableTaskItem({ task, onTaskClick, onTaskComplete }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-start gap-3 py-4 border-b border-border hover:bg-muted/50 transition-smooth cursor-pointer group",
+        isDragging && "z-50"
+      )}
+      onClick={() => onTaskClick(task.id)}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="w-5 h-5 text-muted-foreground" />
+      </div>
+      <Checkbox
+        checked={task.status === 'Completed'}
+        onCheckedChange={(checked) => onTaskComplete(task.id, checked as boolean)}
+        onClick={(e) => e.stopPropagation()}
+        className="mt-1"
+      />
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <h4 className={`text-body font-medium ${task.status === 'Completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+            {task.title}
+          </h4>
+          <Badge variant="outline" className={
+            task.priority === 'High' ? 'border-destructive text-destructive' :
+            task.priority === 'Medium' ? 'border-primary text-primary' :
+            'border-border text-muted-foreground'
+          }>
+            {task.priority}
+          </Badge>
+        </div>
+        {task.description && (
+          <p className="text-metadata line-clamp-1">
+            {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function CalendarView() {
   document.title = "Agenda - Prisma";
@@ -26,16 +97,31 @@ export default function CalendarView() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "custom">("today");
-  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "month" | "custom">("today");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [focusMode, setFocusMode] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>(() => {
+    return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
+  });
   const currentDate = new Date();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     if (userRole === 'admin') {
       fetchUsers();
     }
   }, [userRole]);
+
+  useEffect(() => {
+    localStorage.setItem("agenda-sort", sortOption);
+  }, [sortOption]);
 
   const fetchUsers = async () => {
     const { data } = await supabase
@@ -48,7 +134,6 @@ export default function CalendarView() {
   const filteredTasks = useMemo(() => {
     if (!allTasks) return [];
 
-    // Calculate date range based on selected view
     let startDate: Date;
     let endDate: Date;
 
@@ -65,10 +150,14 @@ export default function CalendarView() {
         startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
         endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
         break;
+      case "month":
+        startDate = startOfMonth(new Date());
+        endDate = endOfMonth(new Date());
+        break;
       case "custom":
-        if (customDateRange) {
-          startDate = startOfDay(customDateRange.from);
-          endDate = endOfDay(customDateRange.to);
+        if (dateRange?.from) {
+          startDate = startOfDay(dateRange.from);
+          endDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
         } else {
           startDate = startOfDay(new Date());
           endDate = endOfDay(new Date());
@@ -86,22 +175,113 @@ export default function CalendarView() {
       const dueDate = new Date(task.due_at);
       return dueDate >= startDate && dueDate <= endDate;
     });
-  }, [allTasks, dateView, customDateRange]);
+  }, [allTasks, dateView, dateRange]);
+
+  // Sort tasks based on selected option
+  const sortedTasks = useMemo(() => {
+    const tasks = [...filteredTasks];
+    
+    switch (sortOption) {
+      case "priority":
+        const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+        return tasks.sort((a, b) => priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]);
+      
+      case "due_time":
+        return tasks.sort((a, b) => new Date(a.due_at).getTime() - new Date(b.due_at).getTime());
+      
+      case "status":
+        const statusOrder = { Pending: 0, Ongoing: 1, Blocked: 2, Completed: 3, Failed: 4 };
+        return tasks.sort((a, b) => statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]);
+      
+      case "alphabetical":
+        return tasks.sort((a, b) => a.title.localeCompare(b.title));
+      
+      case "manual":
+        return tasks.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      
+      default:
+        return tasks;
+    }
+  }, [filteredTasks, sortOption]);
+
+  // Split tasks into active and completed
+  const activeTasks = sortedTasks.filter(t => t.status !== 'Completed');
+  const completedTasks = sortedTasks.filter(t => t.status === 'Completed');
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     await supabase
       .from('tasks')
       .update({ status: completed ? 'Completed' : 'Pending' })
       .eq('id', taskId);
-    
-    // Realtime subscription in useTasks.ts handles invalidation
   };
 
-  const todayTasks = filteredTasks;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = activeTasks.findIndex(t => t.id === active.id);
+    const newIndex = activeTasks.findIndex(t => t.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Create new order
+    const reorderedTasks = [...activeTasks];
+    const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+    reorderedTasks.splice(newIndex, 0, movedTask);
+
+    // Update order_index for all affected tasks
+    const updates = reorderedTasks.map((task, index) => 
+      supabase
+        .from('tasks')
+        .update({ order_index: index })
+        .eq('id', task.id)
+    );
+
+    await Promise.all(updates);
+    
+    // Invalidate query to refresh
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  };
+
   const completedToday = filteredTasks.filter(t => t.status === 'Completed').length;
   const totalToday = filteredTasks.length;
   const highPriorityCount = filteredTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
   const upcomingCount = filteredTasks.filter(t => t.status === 'Pending').length;
+
+  // Preset date range functions
+  const setPresetRange = (preset: string) => {
+    let from: Date, to: Date;
+    
+    switch (preset) {
+      case "today":
+        from = to = new Date();
+        break;
+      case "yesterday":
+        from = to = subDays(new Date(), 1);
+        break;
+      case "tomorrow":
+        from = to = addDays(new Date(), 1);
+        break;
+      case "this-week":
+        from = startOfWeek(new Date(), { weekStartsOn: 1 });
+        to = endOfWeek(new Date(), { weekStartsOn: 1 });
+        break;
+      case "last-7":
+        from = subDays(new Date(), 7);
+        to = new Date();
+        break;
+      case "this-month":
+        from = startOfMonth(new Date());
+        to = endOfMonth(new Date());
+        break;
+      default:
+        from = to = new Date();
+    }
+    
+    setDateRange({ from, to });
+    setDateView("custom");
+  };
 
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
@@ -129,27 +309,34 @@ export default function CalendarView() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <Tabs value={dateView} onValueChange={(v) => setDateView(v as any)} className="w-full sm:w-auto">
-                <TabsList className="grid grid-cols-2 sm:flex w-full sm:w-auto">
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+              <Tabs value={dateView} onValueChange={(v) => {
+                const newView = v as typeof dateView;
+                setDateView(newView);
+                if (newView !== "custom") {
+                  setDateRange(undefined);
+                }
+              }} className="w-full sm:w-auto">
+                <TabsList className="grid grid-cols-3 sm:flex w-full sm:w-auto">
                   <TabsTrigger value="yesterday" className="min-h-[44px]">Yesterday</TabsTrigger>
                   <TabsTrigger value="today" className="min-h-[44px]">Today</TabsTrigger>
                   <TabsTrigger value="tomorrow" className="min-h-[44px]">Tomorrow</TabsTrigger>
                   <TabsTrigger value="week" className="min-h-[44px] hidden sm:inline-flex">This Week</TabsTrigger>
-                  <TabsTrigger value="custom" className="min-h-[44px] hidden sm:inline-flex">Custom</TabsTrigger>
+                  <TabsTrigger value="month" className="min-h-[44px] hidden sm:inline-flex">This Month</TabsTrigger>
+                  <TabsTrigger value="custom" className="min-h-[44px]">Custom</TabsTrigger>
                 </TabsList>
               </Tabs>
 
               {dateView === "custom" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start text-left font-normal">
+                    <Button variant="outline" className="justify-start text-left font-normal min-w-[260px]">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {customDateRange ? (
-                        customDateRange.from.getTime() === customDateRange.to.getTime() ? (
-                          format(customDateRange.from, "MMM d")
+                      {dateRange?.from ? (
+                        dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? (
+                          `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
                         ) : (
-                          `${format(customDateRange.from, "MMM d")} - ${format(customDateRange.to, "MMM d")}`
+                          format(dateRange.from, "MMM d, yyyy")
                         )
                       ) : (
                         "Pick a date range"
@@ -157,55 +344,53 @@ export default function CalendarView() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          {!customDateRange 
-                            ? "Click a date to select, or drag to select a range"
-                            : "Click again to reset and select new dates"
-                          }
-                        </p>
-                        {customDateRange && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-6 px-2 text-xs"
-                            onClick={() => {
-                              setCustomDateRange(null);
-                              setDateView("today");
-                            }}
-                          >
-                            Clear
-                          </Button>
-                        )}
+                    <div className="p-4 space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("today")}>
+                          Today
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("yesterday")}>
+                          Yesterday
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("tomorrow")}>
+                          Tomorrow
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("this-week")}>
+                          This Week
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("last-7")}>
+                          Last 7 Days
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPresetRange("this-month")}>
+                          This Month
+                        </Button>
                       </div>
                       <Calendar
                         mode="range"
-                        selected={customDateRange ? { from: customDateRange.from, to: customDateRange.to } : undefined}
-                        onSelect={(range) => {
-                          if (range?.from) {
-                            setCustomDateRange({ 
-                              from: range.from, 
-                              to: range.to || range.from
-                            });
-                          }
-                        }}
+                        selected={dateRange}
+                        onSelect={setDateRange}
                         numberOfMonths={2}
                         className="pointer-events-auto"
                       />
-                      <div className="px-3 pb-3">
-                        <Button 
-                          onClick={() => setDateView("custom")} 
-                          className="w-full"
-                          disabled={!customDateRange}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setDateRange(undefined);
+                            setDateView("today");
+                          }}
                         >
-                          Apply Range
+                          Clear
                         </Button>
                       </div>
                     </div>
                   </PopoverContent>
                 </Popover>
               )}
+
+              <TaskSortDropdown value={sortOption} onChange={setSortOption} />
             </div>
           </header>
         </>
@@ -228,8 +413,9 @@ export default function CalendarView() {
               {dateView === "yesterday" && "Yesterday's Tasks"}
               {dateView === "tomorrow" && "Tomorrow's Tasks"}
               {dateView === "week" && "This Week's Tasks"}
+              {dateView === "month" && "This Month's Tasks"}
               {dateView === "custom" && "Custom Range Tasks"}
-              ({todayTasks.length})
+              ({activeTasks.length})
             </h2>
             {focusMode && (
               <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
@@ -241,48 +427,46 @@ export default function CalendarView() {
             {isLoading ? (
               <ListSkeleton items={5} />
             ) : (
-            <div className="space-y-2">
-              {todayTasks.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No tasks for today</p>
-              ) : (
-                todayTasks.map((task) => (
-                  <div 
-                    key={task.id}
-                    className="flex items-start gap-3 py-4 border-b border-border hover:bg-muted/50 transition-smooth cursor-pointer group"
-                    onClick={() => {
-                      setSelectedTaskId(task.id);
-                      setTaskDialogOpen(true);
-                    }}
-                  >
-                    <Checkbox 
-                      checked={task.status === 'Completed'}
-                      onCheckedChange={(checked) => handleTaskComplete(task.id, checked as boolean)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className={`text-body font-medium ${task.status === 'Completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                          {task.title}
-                        </h4>
-                        <Badge variant="outline" className={
-                          task.priority === 'High' ? 'border-destructive text-destructive' :
-                          task.priority === 'Medium' ? 'border-primary text-primary' :
-                          'border-border text-muted-foreground'
-                        }>
-                          {task.priority}
-                        </Badge>
-                      </div>
-                      {task.description && (
-                        <p className="text-metadata line-clamp-1">
-                          {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
-                        </p>
-                      )}
-                    </div>
+            <>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={activeTasks.map(t => t.id)}
+                  strategy={verticalListSortingStrategy}
+                  disabled={sortOption !== "manual"}
+                >
+                  <div className="space-y-2">
+                    {activeTasks.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">No active tasks for this period</p>
+                    ) : (
+                      activeTasks.map((task) => (
+                        <SortableTaskItem
+                          key={task.id}
+                          task={task}
+                          onTaskClick={(id: string) => {
+                            setSelectedTaskId(id);
+                            setTaskDialogOpen(true);
+                          }}
+                          onTaskComplete={handleTaskComplete}
+                        />
+                      ))
+                    )}
                   </div>
-                ))
-              )}
-            </div>
+                </SortableContext>
+              </DndContext>
+
+              <CompletedTasksSection
+                tasks={completedTasks}
+                onTaskClick={(id: string) => {
+                  setSelectedTaskId(id);
+                  setTaskDialogOpen(true);
+                }}
+                onTaskComplete={handleTaskComplete}
+              />
+            </>
             )}
           </div>
         </div>
