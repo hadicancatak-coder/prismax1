@@ -4,10 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Copy, Save, ChevronLeft, BookmarkPlus } from "lucide-react";
+import { Save, ChevronLeft } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
-import { SavedElementsSelector } from "./SavedElementsSelector";
-import { useCreateAdElement } from "@/hooks/useAdElements";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateAdStrength, checkCompliance } from "@/lib/adQualityScore";
 import { Progress } from "@/components/ui/progress";
@@ -28,7 +26,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
   const [descriptions, setDescriptions] = useState<string[]>(Array(4).fill(""));
-  const [sitelinks, setSitelinks] = useState<{text: string; url: string}[]>(Array(5).fill({text: "", url: ""}));
+  const [sitelinks, setSitelinks] = useState<{description: string; link: string}[]>(Array(5).fill({description: "", link: ""}));
   const [callouts, setCallouts] = useState<string[]>(Array(4).fill(""));
   const [landingPage, setLandingPage] = useState("");
   const [path1, setPath1] = useState("");
@@ -37,14 +35,12 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [language, setLanguage] = useState("EN");
   const [isSaving, setIsSaving] = useState(false);
 
-  const createElementMutation = useCreateAdElement();
-
   // Auto-calculate ad strength and compliance
   const adStrength = useMemo(() => {
     return calculateAdStrength(
       headlines.filter(h => h.trim()),
       descriptions.filter(d => d.trim()),
-      sitelinks.filter(s => s.text.trim()).map(s => s.text),
+      sitelinks.filter(s => s.description.trim()).map(s => s.description),
       callouts.filter(c => c.trim())
     );
   }, [headlines, descriptions, sitelinks, callouts]);
@@ -53,7 +49,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     return checkCompliance(
       headlines.filter(h => h.trim()),
       descriptions.filter(d => d.trim()),
-      sitelinks.filter(s => s.text.trim()).map(s => s.text),
+      sitelinks.filter(s => s.description.trim()).map(s => s.description),
       callouts.filter(c => c.trim()),
       entity
     );
@@ -64,7 +60,19 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
       setName(ad.name || "");
       setHeadlines([...(ad.headlines || []), ...Array(15).fill("")].slice(0, 15));
       setDescriptions([...(ad.descriptions || []), ...Array(4).fill("")].slice(0, 4));
-      setSitelinks([...(ad.sitelinks || []), ...Array(5).fill({text: "", url: ""})].slice(0, 5));
+      
+      // Load sitelinks with backward compatibility
+      if (ad.sitelinks && Array.isArray(ad.sitelinks)) {
+        const loadedSitelinks = ad.sitelinks.map((s: any) => ({
+          description: s.description || s.text || "",
+          link: s.link || s.url || ""
+        }));
+        setSitelinks([
+          ...loadedSitelinks,
+          ...Array(Math.max(0, 5 - loadedSitelinks.length)).fill({description: "", link: ""})
+        ]);
+      }
+      
       setCallouts([...(ad.callouts || []), ...Array(4).fill("")].slice(0, 4));
       setLandingPage(ad.landing_page || "");
       setBusinessName(ad.business_name || "");
@@ -86,7 +94,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     setDescriptions(newDescriptions);
   };
 
-  const updateSitelink = (index: number, field: 'text' | 'url', value: string) => {
+  const updateSitelink = (index: number, field: 'description' | 'link', value: string) => {
     const newSitelinks = [...sitelinks];
     newSitelinks[index] = { ...newSitelinks[index], [field]: value };
     setSitelinks(newSitelinks);
@@ -125,7 +133,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         entity,
         headlines: headlines.filter(h => h.trim()),
         descriptions: descriptions.filter(d => d.trim()),
-        sitelinks: sitelinks.filter(s => s.text.trim() || s.url.trim()),
+        sitelinks: sitelinks.filter(s => s.description.trim() || s.link.trim()),
         callouts: callouts.filter(c => c.trim()),
         landing_page: landingPage,
         business_name: businessName,
@@ -161,43 +169,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     }
   };
 
-  const handleCopyAd = async () => {
-    if (!ad?.id) {
-      setName(`${ad.name} (Copy)`);
-      setHeadlines([...(ad.headlines || []), ...Array(15).fill("")].slice(0, 15));
-      setDescriptions([...(ad.descriptions || []), ...Array(4).fill("")].slice(0, 4));
-      setSitelinks([...(ad.sitelinks || []), ...Array(5).fill({text: "", url: ""})].slice(0, 5));
-      setCallouts([...(ad.callouts || []), ...Array(4).fill("")].slice(0, 4));
-      setLandingPage(ad.landing_page || "");
-      setBusinessName(ad.business_name || "");
-      setLanguage(ad.language || "EN");
-      toast.success("Ad copied to editor. Make changes and save.");
-      return;
-    }
-  };
-
-  const handleSaveElement = async (content: string, type: "headline" | "description" | "sitelink" | "callout") => {
-    if (!content.trim()) {
-      toast.error("Cannot save empty element");
-      return;
-    }
-
-    try {
-      await createElementMutation.mutateAsync({
-        element_type: type,
-        content,
-        entity: [entity],
-        language,
-        platform: "ppc",
-        google_status: "pending",
-        tags: [],
-        is_favorite: false
-      });
-      toast.success(`${type} saved to library`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save element");
-    }
-  };
 
   return (
     <div className="flex h-full">
@@ -209,12 +180,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                 {ad?.id ? "Edit Ad" : "Create New Ad"}
               </h2>
               <div className="flex gap-2">
-                {ad?.id && (
-                  <Button variant="outline" size="sm" onClick={handleCopyAd}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Ad
-                  </Button>
-                )}
                 <Button variant="ghost" size="sm" onClick={onCancel}>
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   Back
@@ -272,154 +237,51 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               </Select>
             </div>
 
-            {/* Ad Strength Display */}
-            <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center justify-between">
-                <Label>Ad Strength</Label>
-                <Badge variant={adStrength.strength === 'excellent' ? 'default' : adStrength.strength === 'good' ? 'secondary' : 'outline'}>
-                  {adStrength.strength.toUpperCase()} ({adStrength.score}/100)
-                </Badge>
-              </div>
-              <Progress value={adStrength.score} className="h-2" />
-              {adStrength.suggestions.length > 0 && (
-                <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                  {adStrength.suggestions.slice(0, 3).map((suggestion, i) => (
-                    <div key={i}>• {suggestion}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Compliance Issues */}
-            {complianceIssues.length > 0 && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  <div className="font-semibold mb-1">Compliance Issues:</div>
-                  {complianceIssues.map((issue, i) => (
-                    <div key={i} className="text-sm">• {issue.message}</div>
-                  ))}
-                </AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Headlines (15 max, 30 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="headline"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = headlines.findIndex(h => !h);
-                    if (emptyIndex !== -1) {
-                      updateHeadline(emptyIndex, content);
-                    }
-                  }}
-                />
-              </div>
+              <Label>Headlines (15 max, 30 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {headlines.map((headline, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
-                      value={headline}
-                      onChange={(e) => updateHeadline(index, e.target.value)}
-                      maxLength={30}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleSaveElement(headline, "headline")}
-                      disabled={!headline.trim() || createElementMutation.isPending}
-                      title="Save as reusable element"
-                    >
-                      <BookmarkPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    key={index}
+                    placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
+                    value={headline}
+                    onChange={(e) => updateHeadline(index, e.target.value)}
+                    maxLength={30}
+                  />
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Descriptions (4 max, 90 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="description"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = descriptions.findIndex(d => !d);
-                    if (emptyIndex !== -1) {
-                      updateDescription(emptyIndex, content);
-                    }
-                  }}
-                />
-              </div>
+              <Label>Descriptions (4 max, 90 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {descriptions.map((description, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
-                      value={description}
-                      onChange={(e) => updateDescription(index, e.target.value)}
-                      maxLength={90}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleSaveElement(description, "description")}
-                      disabled={!description.trim() || createElementMutation.isPending}
-                      title="Save as reusable element"
-                    >
-                      <BookmarkPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    key={index}
+                    placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
+                    value={description}
+                    onChange={(e) => updateDescription(index, e.target.value)}
+                    maxLength={90}
+                  />
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Sitelinks (5 max, 25 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="sitelink"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = sitelinks.findIndex(s => !s.text);
-                    if (emptyIndex !== -1) {
-                      updateSitelink(emptyIndex, 'text', content);
-                    }
-                  }}
-                />
-              </div>
+              <Label>Sitelinks (5 max, 25 chars for description)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {sitelinks.map((sitelink, index) => (
                   <div key={index} className="space-y-1">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder={`Sitelink ${index + 1} text`}
-                        value={sitelink.text}
-                        onChange={(e) => updateSitelink(index, 'text', e.target.value)}
-                        maxLength={25}
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSaveElement(sitelink.text, "sitelink")}
-                        disabled={!sitelink.text.trim() || createElementMutation.isPending}
-                        title="Save as reusable element"
-                      >
-                        <BookmarkPlus className="h-4 w-4" />
-                      </Button>
-                    </div>
                     <Input
-                      placeholder={`Sitelink ${index + 1} URL`}
-                      value={sitelink.url}
-                      onChange={(e) => updateSitelink(index, 'url', e.target.value)}
+                      placeholder={`Link description ${index + 1}`}
+                      value={sitelink.description}
+                      onChange={(e) => updateSitelink(index, 'description', e.target.value)}
+                      maxLength={25}
+                    />
+                    <Input
+                      placeholder={`Link URL ${index + 1}`}
+                      value={sitelink.link}
+                      onChange={(e) => updateSitelink(index, 'link', e.target.value)}
                       className="text-sm"
                     />
                   </div>
@@ -428,40 +290,16 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Callouts (4 max, 25 chars each)</Label>
-                <SavedElementsSelector
-                  elementType="callout"
-                  entity={entity}
-                  language={language}
-                  onSelect={(content) => {
-                    const emptyIndex = callouts.findIndex(c => !c);
-                    if (emptyIndex !== -1) {
-                      updateCallout(emptyIndex, content);
-                    }
-                  }}
-                />
-              </div>
+              <Label>Callouts (4 max, 25 chars each)</Label>
               <div className="grid grid-cols-1 gap-2">
                 {callouts.map((callout, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
-                      value={callout}
-                      onChange={(e) => updateCallout(index, e.target.value)}
-                      maxLength={25}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleSaveElement(callout, "callout")}
-                      disabled={!callout.trim() || createElementMutation.isPending}
-                      title="Save as reusable element"
-                    >
-                      <BookmarkPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    key={index}
+                    placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
+                    value={callout}
+                    onChange={(e) => updateCallout(index, e.target.value)}
+                    maxLength={25}
+                  />
                 ))}
               </div>
             </div>
@@ -520,16 +358,48 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         </div>
       </ScrollArea>
 
-      <div className="w-[400px] border-l bg-muted/30 p-6">
-        <h3 className="font-semibold mb-4">Live Preview</h3>
-        <SearchAdPreview
-          headlines={headlines.filter(h => h)}
-          descriptions={descriptions.filter(d => d)}
-          landingPage={landingPage}
-          businessName={businessName}
-          sitelinks={sitelinks.filter(s => s.text || s.url)}
-          callouts={callouts.filter(c => c)}
-        />
+      <div className="w-[400px] border-l bg-muted/30 p-6 space-y-6">
+        <div>
+          <h3 className="font-semibold mb-4">Live Preview</h3>
+          <SearchAdPreview
+            headlines={headlines.filter(h => h)}
+            descriptions={descriptions.filter(d => d)}
+            landingPage={landingPage}
+            businessName={businessName}
+            sitelinks={sitelinks.filter(s => s.description || s.link)}
+            callouts={callouts.filter(c => c)}
+          />
+        </div>
+
+        {/* Ad Strength - MOVED HERE */}
+        <div className="space-y-2 p-4 border rounded-lg bg-background">
+          <div className="flex items-center justify-between">
+            <Label>Ad Strength</Label>
+            <Badge variant={adStrength.strength === 'excellent' ? 'default' : adStrength.strength === 'good' ? 'secondary' : 'outline'}>
+              {adStrength.strength.toUpperCase()} ({adStrength.score}/100)
+            </Badge>
+          </div>
+          <Progress value={adStrength.score} className="h-2" />
+          {adStrength.suggestions.length > 0 && (
+            <div className="text-xs text-muted-foreground space-y-1 mt-2">
+              {adStrength.suggestions.slice(0, 3).map((suggestion, i) => (
+                <div key={i}>• {suggestion}</div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Compliance Issues */}
+        {complianceIssues.length > 0 && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              <div className="font-semibold mb-1">Compliance Issues:</div>
+              {complianceIssues.map((issue, i) => (
+                <div key={i} className="text-sm">• {issue.message}</div>
+              ))}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );

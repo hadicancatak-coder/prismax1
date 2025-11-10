@@ -7,7 +7,7 @@ interface SearchAdPreviewProps {
   descriptions: string[];
   landingPage: string;
   businessName?: string;
-  sitelinks?: ({ text: string; url: string } | string)[];
+  sitelinks?: ({ description: string; link: string } | { text: string; url: string } | string)[];
   callouts?: string[];
 }
 
@@ -36,7 +36,11 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
   const activeHeadlines = props.headlines.filter(h => h.trim()).slice(0, 3);
   const activeDescriptions = props.descriptions.filter(d => d.trim()).slice(0, 2);
   const activeSitelinks = (props.sitelinks || [])
-    .filter(s => typeof s === 'string' ? s.trim() : s.text.trim())
+    .filter(s => {
+      if (typeof s === 'string') return s.trim();
+      if ('description' in s) return s.description.trim() || s.link.trim();
+      return s.text.trim();
+    })
     .slice(0, 4);
   const activeCallouts = (props.callouts || []).filter(c => c.trim()).slice(0, 4);
 
@@ -88,7 +92,11 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
                 {activeSitelinks.map((link, idx) => (
                   <div key={idx} className="text-sm">
                     <p className="text-primary hover:underline cursor-pointer truncate">
-                      {typeof link === 'string' ? link : link.text}
+                      {typeof link === 'string' 
+                        ? link 
+                        : 'description' in link 
+                          ? link.description 
+                          : link.text}
                     </p>
                   </div>
                 ))}
@@ -142,7 +150,11 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
               <div className="grid grid-cols-2 gap-2 pt-2 border-t mt-2">
                 {activeSitelinks.slice(0, 2).map((link, idx) => (
                   <p key={idx} className="text-xs text-primary hover:underline cursor-pointer truncate">
-                    {typeof link === 'string' ? link : link.text}
+                    {typeof link === 'string' 
+                      ? link 
+                      : 'description' in link 
+                        ? link.description 
+                        : link.text}
                   </p>
                 ))}
               </div>
