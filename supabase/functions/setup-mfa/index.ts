@@ -29,6 +29,22 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json();
       verifyOtp = body.verifyOtp;
+      
+      // Validate OTP format if provided
+      if (verifyOtp !== undefined) {
+        if (typeof verifyOtp !== 'string') {
+          return new Response(
+            JSON.stringify({ error: 'OTP code must be a string' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (!/^\d{6}$/.test(verifyOtp)) {
+          return new Response(
+            JSON.stringify({ error: 'OTP code must be 6 digits' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
     } catch {
       // No body provided - this is the initial QR code request
       verifyOtp = undefined;

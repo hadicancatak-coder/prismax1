@@ -26,6 +26,37 @@ Deno.serve(async (req) => {
 
     const { otpCode, isBackupCode } = await req.json();
 
+    // Validate input types
+    if (typeof isBackupCode !== 'boolean') {
+      return new Response(
+        JSON.stringify({ error: 'isBackupCode must be a boolean' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof otpCode !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'OTP code must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate OTP format
+    if (!isBackupCode && !/^\d{6}$/.test(otpCode)) {
+      return new Response(
+        JSON.stringify({ error: 'OTP code must be 6 digits' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate backup code format
+    if (isBackupCode && (otpCode.length < 6 || otpCode.length > 20)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid backup code format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Rate limiting: Check failed attempts in last 15 minutes
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     

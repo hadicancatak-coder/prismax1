@@ -69,6 +69,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate UUID format
+    if (typeof userId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'userId must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid userId format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Prevent deleting yourself
     if (userId === user.id) {
       return new Response(

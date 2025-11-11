@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import Dashboard from "./pages/Dashboard";
@@ -54,7 +55,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="approvals" element={<ApprovalsCenter />} />
