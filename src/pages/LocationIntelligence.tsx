@@ -6,22 +6,27 @@ import { LocationMap } from "@/components/location/LocationMap";
 import { LocationListView } from "@/components/location/LocationListView";
 import { LocationDetailPopup } from "@/components/location/LocationDetailPopup";
 import { LocationFormDialog } from "@/components/location/LocationFormDialog";
+import { CampaignsSection } from "@/components/location/CampaignsSection";
+import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Map, List, Plus } from "lucide-react";
+import { Map, List, Plus, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function LocationIntelligence() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
   const { locations, isLoading, deleteLocation, getLocationWithDetails } = useMediaLocations();
 
-  const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [viewMode, setViewMode] = useState<"map" | "list" | "campaigns">("map");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<MediaLocation | null>(null);
   const [editingLocation, setEditingLocation] = useState<MediaLocation | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [plannerOpen, setPlannerOpen] = useState(false);
+  const [clickedCoordinates, setClickedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(
     localStorage.getItem("mapbox_token")
   );
@@ -42,8 +47,15 @@ export default function LocationIntelligence() {
     setDetailOpen(true);
   };
 
+  const handleMapClick = (coords: { lat: number; lng: number }) => {
+    setClickedCoordinates(coords);
+    setFormOpen(true);
+    toast.success(`Location selected at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
+  };
+
   const handleEdit = (location?: MediaLocation) => {
     setEditingLocation(location || selectedLocation);
+    setClickedCoordinates(null);
     setFormOpen(true);
     setDetailOpen(false);
   };
@@ -67,6 +79,10 @@ export default function LocationIntelligence() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setPlannerOpen(true)}>
+            <Target className="h-4 w-4 mr-2" />
+            Plan Campaign
+          </Button>
           {isAdmin && (
             <Button onClick={() => handleEdit()}>
               <Plus className="h-4 w-4 mr-2" />
@@ -105,6 +121,13 @@ export default function LocationIntelligence() {
                 <List className="h-4 w-4 mr-2" />
                 List View
               </Button>
+              <Button
+                variant={viewMode === "campaigns" ? "default" : "outline"}
+                onClick={() => setViewMode("campaigns")}
+              >
+                <Target className="h-4 w-4 mr-2" />
+                Campaigns
+              </Button>
             </div>
 
             {viewMode === "map" && (
@@ -142,8 +165,9 @@ export default function LocationIntelligence() {
               onLocationClick={handleLocationClick}
               mapboxToken={mapboxToken}
               onTokenSubmit={handleTokenSubmit}
+              onMapClick={handleMapClick}
             />
-          ) : (
+          ) : viewMode === "list" ? (
             <LocationListView
               locations={locations}
               onView={handleView}
@@ -151,6 +175,8 @@ export default function LocationIntelligence() {
               onDelete={handleDelete}
               isAdmin={isAdmin}
             />
+          ) : (
+            <CampaignsSection />
           )}
         </>
       )}
@@ -172,7 +198,15 @@ export default function LocationIntelligence() {
         onClose={() => {
           setFormOpen(false);
           setEditingLocation(null);
+          setClickedCoordinates(null);
         }}
+        initialCoordinates={clickedCoordinates}
+      />
+
+      <CampaignPlannerDialog
+        open={plannerOpen}
+        onClose={() => setPlannerOpen(false)}
+        locations={locations}
       />
     </div>
   );

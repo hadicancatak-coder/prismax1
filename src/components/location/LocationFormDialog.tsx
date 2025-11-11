@@ -13,11 +13,32 @@ interface LocationFormDialogProps {
   location: LocationWithDetails | null;
   open: boolean;
   onClose: () => void;
+  initialCoordinates?: { lat: number; lng: number } | null;
 }
 
-const LOCATION_TYPES = ['Billboard', 'LED Screen', 'Bus Shelter', 'Street Furniture', 'Transit', 'Other'];
+const LOCATION_TYPES = [
+  'Billboard',
+  'LED Screen',
+  'LED',
+  'Digital Screen',
+  'Unipoles/Megacorns',
+  'Lampposts',
+  'Mupis',
+  'Bus Shelter',
+  'Street Furniture',
+  'In-Mall Media',
+  'Hoardings',
+  'Wall Wraps',
+  'Roof Top Screens',
+  'Transit',
+  'Airport',
+  'Tram',
+  'Metro',
+  'Elevator Screen',
+  'Other'
+];
 
-export function LocationFormDialog({ location, open, onClose }: LocationFormDialogProps) {
+export function LocationFormDialog({ location, open, onClose, initialCoordinates }: LocationFormDialogProps) {
   const { createLocation, updateLocation, upsertPrices, upsertCampaigns, uploadImage } = useMediaLocations();
   
   const [formData, setFormData] = useState({
@@ -28,6 +49,8 @@ export function LocationFormDialog({ location, open, onClose }: LocationFormDial
     longitude: 0,
     notes: "",
     manual_score: undefined as number | undefined,
+    agency: "",
+    price_per_month: undefined as number | undefined,
   });
 
   const [prices, setPrices] = useState<Array<{ year: number; price: number }>>([]);
@@ -46,6 +69,8 @@ export function LocationFormDialog({ location, open, onClose }: LocationFormDial
         longitude: Number(location.longitude),
         notes: location.notes || "",
         manual_score: location.manual_score,
+        agency: location.agency || "",
+        price_per_month: location.price_per_month,
       });
       setPrices(location.historic_prices.map(p => ({ year: p.year, price: Number(p.price) })));
       setCampaigns(location.past_campaigns.map(c => ({
@@ -55,23 +80,40 @@ export function LocationFormDialog({ location, open, onClose }: LocationFormDial
         notes: c.notes || "",
       })));
       setImagePreview(location.image_url || null);
-    } else {
-      // Reset form
+    } else if (initialCoordinates) {
       setFormData({
         name: "",
         city: "",
-        type: "Billboard" as LocationType,
+        type: "Billboard",
+        latitude: initialCoordinates.lat,
+        longitude: initialCoordinates.lng,
+        notes: "",
+        manual_score: undefined,
+        agency: "",
+        price_per_month: undefined,
+      });
+      setPrices([]);
+      setCampaigns([]);
+      setImageFile(null);
+      setImagePreview(null);
+    } else {
+      setFormData({
+        name: "",
+        city: "",
+        type: "Billboard",
         latitude: 0,
         longitude: 0,
         notes: "",
         manual_score: undefined,
+        agency: "",
+        price_per_month: undefined,
       });
       setPrices([]);
       setCampaigns([]);
       setImageFile(null);
       setImagePreview(null);
     }
-  }, [location, open]);
+  }, [location, open, initialCoordinates]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,6 +242,27 @@ export function LocationFormDialog({ location, open, onClose }: LocationFormDial
                 max={10}
                 value={formData.manual_score || ""}
                 onChange={(e) => setFormData({ ...formData, manual_score: e.target.value ? Number(e.target.value) : undefined })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="agency">Agency</Label>
+              <Input
+                id="agency"
+                value={formData.agency}
+                onChange={(e) => setFormData({ ...formData, agency: e.target.value })}
+                placeholder="e.g., Mediahub, Starcom"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price_per_month">Price per Month (AED)</Label>
+              <Input
+                id="price_per_month"
+                type="number"
+                value={formData.price_per_month || ""}
+                onChange={(e) => setFormData({ ...formData, price_per_month: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="Monthly rental price"
               />
             </div>
 

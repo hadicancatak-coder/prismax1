@@ -2,7 +2,26 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type LocationType = 'Billboard' | 'LED Screen' | 'Bus Shelter' | 'Street Furniture' | 'Transit' | 'Other';
+export type LocationType = 
+  | 'Billboard'
+  | 'LED Screen'
+  | 'LED'
+  | 'Digital Screen'
+  | 'Unipoles/Megacorns'
+  | 'Lampposts'
+  | 'Mupis'
+  | 'Bus Shelter'
+  | 'Street Furniture'
+  | 'In-Mall Media'
+  | 'Hoardings'
+  | 'Wall Wraps'
+  | 'Roof Top Screens'
+  | 'Transit'
+  | 'Airport'
+  | 'Tram'
+  | 'Metro'
+  | 'Elevator Screen'
+  | 'Other';
 
 export interface MediaLocation {
   id: string;
@@ -14,6 +33,8 @@ export interface MediaLocation {
   notes?: string;
   manual_score?: number;
   image_url?: string;
+  agency?: string;
+  price_per_month?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;

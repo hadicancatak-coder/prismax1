@@ -14,9 +14,10 @@ interface LocationMapProps {
   onLocationClick: (location: MediaLocation) => void;
   mapboxToken: string | null;
   onTokenSubmit: (token: string) => void;
+  onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
 
-export function LocationMap({ locations, selectedCity, onLocationClick, mapboxToken, onTokenSubmit }: LocationMapProps) {
+export function LocationMap({ locations, selectedCity, onLocationClick, mapboxToken, onTokenSubmit, onMapClick }: LocationMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -41,10 +42,26 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
 
     map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
+    // Add click handler for adding new locations
+    if (onMapClick) {
+      map.current.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        onMapClick({ lat, lng });
+        
+        // Show temporary marker
+        const tempMarker = new mapboxgl.Marker({ color: '#22c55e' })
+          .setLngLat([lng, lat])
+          .addTo(map.current!);
+        
+        // Remove after 3 seconds
+        setTimeout(() => tempMarker.remove(), 3000);
+      });
+    }
+
     return () => {
       map.current?.remove();
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, onMapClick]);
 
   useEffect(() => {
     if (!map.current) return;
@@ -59,14 +76,38 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
       el.className = 'location-marker';
       
       // Different colors based on type
-      const colorMap: Record<string, string> = {
-        'Billboard': '#ef4444',
-        'LED Screen': '#3b82f6',
-        'Bus Shelter': '#10b981',
-        'Street Furniture': '#f59e0b',
-        'Transit': '#8b5cf6',
-        'Other': '#6b7280',
-      };
+    const colorMap: Record<string, string> = {
+      // Outdoor Static (Red tones)
+      'Billboard': '#ef4444',
+      'Unipoles/Megacorns': '#dc2626',
+      'Hoardings': '#f87171',
+      'Wall Wraps': '#fca5a5',
+      
+      // Digital Displays (Blue tones)
+      'LED Screen': '#3b82f6',
+      'LED': '#2563eb',
+      'Digital Screen': '#60a5fa',
+      'Roof Top Screens': '#93c5fd',
+      'Elevator Screen': '#1e40af',
+      
+      // Street Furniture (Green tones)
+      'Bus Shelter': '#10b981',
+      'Street Furniture': '#059669',
+      'Lampposts': '#34d399',
+      'Mupis': '#6ee7b7',
+      
+      // Indoor/Mall (Orange)
+      'In-Mall Media': '#f59e0b',
+      
+      // Transit (Purple tones)
+      'Transit': '#8b5cf6',
+      'Airport': '#a855f7',
+      'Tram': '#c084fc',
+      'Metro': '#7c3aed',
+      
+      // Other
+      'Other': '#6b7280',
+    };
       
       el.style.backgroundColor = colorMap[location.type] || '#6b7280';
       el.style.width = '24px';

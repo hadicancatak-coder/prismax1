@@ -849,6 +849,48 @@ export type Database = {
           },
         ]
       }
+      campaign_placements: {
+        Row: {
+          allocated_budget: number
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          location_id: string | null
+          notes: string | null
+        }
+        Insert: {
+          allocated_budget: number
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+        }
+        Update: {
+          allocated_budget?: number
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_placements_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "planned_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_placements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "media_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_versions: {
         Row: {
           campaign_id: string | null
@@ -1427,6 +1469,7 @@ export type Database = {
       }
       media_locations: {
         Row: {
+          agency: string | null
           city: string
           created_at: string
           created_by: string | null
@@ -1437,10 +1480,12 @@ export type Database = {
           manual_score: number | null
           name: string
           notes: string | null
+          price_per_month: number | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
         Insert: {
+          agency?: string | null
           city: string
           created_at?: string
           created_by?: string | null
@@ -1451,10 +1496,12 @@ export type Database = {
           manual_score?: number | null
           name: string
           notes?: string | null
+          price_per_month?: number | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
         Update: {
+          agency?: string | null
           city?: string
           created_at?: string
           created_by?: string | null
@@ -1465,6 +1512,7 @@ export type Database = {
           manual_score?: number | null
           name?: string
           notes?: string | null
+          price_per_month?: number | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -1837,6 +1885,51 @@ export type Database = {
           token_hash?: string
           used_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      planned_campaigns: {
+        Row: {
+          agency: string | null
+          budget: number
+          cities: string[]
+          created_at: string | null
+          created_by: string | null
+          end_date: string
+          id: string
+          name: string
+          notes: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency?: string | null
+          budget: number
+          cities: string[]
+          created_at?: string | null
+          created_by?: string | null
+          end_date: string
+          id?: string
+          name: string
+          notes?: string | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency?: string | null
+          budget?: number
+          cities?: string[]
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
