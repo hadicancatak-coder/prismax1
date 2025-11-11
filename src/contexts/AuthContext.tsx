@@ -127,8 +127,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRoleLoading(true);
         fetchUserRole(session.user.id);
         
-        // Validate MFA session if token exists
-        validateMfaSession();
+        // Check if we have a valid session token in localStorage
+        const sessionToken = getMfaSessionToken();
+        if (sessionToken) {
+          console.log('✅ Found MFA session token in localStorage, setting verified=true');
+          // Optimistically set to verified if we have a token
+          setMfaVerified(true);
+          // Then validate in the background
+          validateMfaSession();
+        } else {
+          console.log('❌ No MFA session token found');
+          validateMfaSession();
+        }
       }
       
       setLoading(false);

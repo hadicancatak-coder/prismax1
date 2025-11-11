@@ -65,8 +65,7 @@ export default function MfaVerify() {
         }
 
         console.log('✅ MFA session created:', { 
-          token: sessionData.sessionToken.substring(0, 10) + '...',
-          expiresAt: sessionData.expiresAt 
+          token: sessionData.sessionToken.substring(0, 10) + '...'
         });
 
         // Calculate expiry (6 hours from now)
@@ -80,11 +79,9 @@ export default function MfaVerify() {
           description: "You have been successfully authenticated",
         });
 
-        // Longer delay to ensure state propagates
-        setTimeout(() => {
-          console.log('🚀 Navigating to home page');
-          navigate("/", { replace: true });
-        }, 250); // Increased from 100ms to 250ms
+        // Navigate immediately - state is now properly managed
+        console.log('🚀 Navigating to home page');
+        navigate("/", { replace: true });
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
