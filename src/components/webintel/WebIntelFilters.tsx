@@ -73,6 +73,113 @@ export function WebIntelFilters({
           </Button>
         )}
       </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Country Filter */}
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!filters.countries.includes(value)) {
+              onFiltersChange({ ...filters, countries: [...filters.countries, value] });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Country" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableCountries
+              .filter(c => !filters.countries.includes(c))
+              .map(country => (
+                <SelectItem key={country} value={country}>{country}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+
+        {/* Type Filter */}
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!filters.types.includes(value)) {
+              onFiltersChange({ ...filters, types: [...filters.types, value] });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Type" />
+          </SelectTrigger>
+          <SelectContent>
+            {SITE_TYPES
+              .filter(t => !filters.types.includes(t))
+              .map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+
+        {/* Category Filter */}
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!filters.categories.includes(value)) {
+              onFiltersChange({ ...filters, categories: [...filters.categories, value] });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableCategories
+              .filter(c => !filters.categories.includes(c))
+              .map(category => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+
+        {/* Tags Filter */}
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!filters.tags.includes(value)) {
+              onFiltersChange({ ...filters, tags: [...filters.tags, value] });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Tags" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableTags
+              .filter(t => !filters.tags.includes(t))
+              .map(tag => (
+                <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+
+        {/* Entity Filter */}
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!filters.entities.includes(value)) {
+              onFiltersChange({ ...filters, entities: [...filters.entities, value] });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Entity" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableEntities
+              .filter(e => !filters.entities.includes(e))
+              .map(entity => (
+                <SelectItem key={entity} value={entity}>{entity}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      </div>
       
       {hasActiveFilters && (
         <div className="flex gap-2 flex-wrap">

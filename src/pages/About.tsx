@@ -3,9 +3,25 @@ import { Badge } from "@/components/ui/badge";
 import { Info, Sparkles, Mail } from "lucide-react";
 
 export default function About() {
-  const currentVersion = "1.3.0";
+  const currentVersion = "1.4.0";
 
   const versionHistory = [
+    {
+      version: "1.4.0",
+      date: "November 2024",
+      features: [
+        "Web Intel system launch - comprehensive platform for direct media deals and programmatic targeting",
+        "Support for websites, apps, portals, and forums with metadata tracking",
+        "Auto-enrichment of URLs with category and traffic detection",
+        "Historic pricing and past campaign performance tracking",
+        "Entity/Publisher filtering with fixed category taxonomy (Trading, Generic, Business, App)",
+        "CSV import/export with bulk operations (up to 10,000 sites)",
+        "Enhanced Location Intel with historical pricing-based campaign placement",
+        "Optimized placement algorithm to maximize impressions with minimal budget",
+        "Efficiency-based scoring: (impressions × score) / cost",
+        "Fixed saved elements status update bug",
+      ],
+    },
     {
       version: "1.3.0",
       date: "October 25",
