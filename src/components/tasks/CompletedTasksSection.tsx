@@ -15,7 +15,7 @@ export const CompletedTasksSection = ({
   onTaskClick,
   onTaskComplete,
 }: CompletedTasksSectionProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   if (tasks.length === 0) return null;
 
@@ -23,23 +23,23 @@ export const CompletedTasksSection = ({
     <div className="mt-6">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 w-full py-3 px-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-smooth group"
+        className="flex items-center gap-2 w-full py-3 px-4 rounded-lg bg-success/10 hover:bg-success/20 border border-success/30 transition-smooth group"
       >
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-success" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="w-4 h-4 text-success" />
         )}
-        <span className="text-sm font-medium text-muted-foreground">
-          Completed Tasks
+        <span className="text-sm font-medium text-success">
+          Completed Tasks ({tasks.length})
         </span>
-        <Badge variant="secondary" className="ml-auto">
+        <Badge variant="secondary" className="ml-auto bg-success/20 text-success border-success/30">
           {tasks.length}
         </Badge>
       </button>
 
       {isExpanded && (
-        <div className="mt-2 space-y-2 opacity-70">
+        <div className="mt-2 space-y-2 opacity-85">
           {tasks.map((task) => (
             <div
               key={task.id}

@@ -404,24 +404,27 @@ export default function CalendarView() {
                           This Month
                         </Button>
                       </div>
+                      <div className="flex justify-between items-center mb-2 px-3">
+                        <span className="text-sm font-medium">Select Date Range</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDateRange(undefined);
+                            setCalendarKey(prev => prev + 1);
+                          }}
+                        >
+                          Start Over
+                        </Button>
+                      </div>
                       <Calendar
                         mode="range"
                         selected={dateRange}
                         onSelect={(range) => {
-                          // If user had a complete range and is starting fresh
-                          if (dateRange?.from && dateRange?.to && range?.from && !range?.to) {
-                            // Clear old selection first
-                            setDateRange(undefined);
-                            setCalendarKey(prev => prev + 1);
-                            setTimeout(() => {
-                              setDateRange({ from: range.from, to: range.from });
-                            }, 0);
-                          } else {
-                            setDateRange(range);
-                            // When user completes a range selection, automatically apply it
-                            if (range?.from && range?.to) {
-                              setDateView("custom");
-                            }
+                          setDateRange(range);
+                          // Auto-apply when range is complete
+                          if (range?.from && range?.to) {
+                            setDateView("custom");
                           }
                         }}
                         numberOfMonths={2}
