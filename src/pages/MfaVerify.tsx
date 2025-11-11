@@ -75,7 +75,10 @@ export default function MfaVerify() {
           description: "You have been successfully authenticated",
         });
 
-        navigate("/");
+        // Use setTimeout to ensure state updates before navigation
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 100);
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
