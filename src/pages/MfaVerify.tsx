@@ -76,9 +76,21 @@ export default function MfaVerify() {
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
+      
+      let description = "Invalid code. Please try again.";
+      if (error.message?.includes("Invalid code")) {
+        description = useBackupCode 
+          ? "Invalid backup code. Please check and try again."
+          : "Invalid code. TOTP codes expire every 30 seconds - try a fresh code from your authenticator app.";
+      } else if (error.message?.includes("Too many failed attempts")) {
+        description = "Too many failed attempts. Please wait 15 minutes and try again.";
+      } else if (error.message?.includes("must be")) {
+        description = error.message; // Show validation errors directly
+      }
+      
       toast({
         title: "Verification failed",
-        description: error.message || "Invalid code. Please try again.",
+        description,
         variant: "destructive",
       });
       setOtp("");
