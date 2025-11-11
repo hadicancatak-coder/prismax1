@@ -109,7 +109,7 @@ export const useMediaLocations = () => {
     mutationFn: async (location: Omit<MediaLocation, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
         .from("media_locations")
-        .insert([location])
+        .insert([location as any])
         .select()
         .single();
 
@@ -129,7 +129,7 @@ export const useMediaLocations = () => {
     mutationFn: async ({ id, ...updates }: Partial<MediaLocation> & { id: string }) => {
       const { data, error } = await supabase
         .from("media_locations")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
