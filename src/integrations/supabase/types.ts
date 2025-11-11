@@ -3227,25 +3227,37 @@ export type Database = {
         | "referral"
         | "organic"
       location_type:
-        | "Billboard"
+        | "Airport Media"
+        | "LED Tower"
+        | "3D Digital Vessel"
+        | "Building Wrap"
+        | "Iconic Art (Station Wrap)"
+        | "Station Wrap (Generic)"
+        | "Digital Unipole"
+        | "LED Unipole"
+        | "Megacom"
+        | "Megacom Board"
+        | "Hoarding"
+        | "TPS / Hoarding"
+        | "Bridge"
+        | "Bridge Banner"
+        | "Static Bridge Banner"
         | "LED Screen"
-        | "Bus Shelter"
-        | "Street Furniture"
-        | "Transit"
-        | "Other"
-        | "LED"
         | "Digital Screen"
-        | "Unipoles/Megacorns"
-        | "Lampposts"
-        | "Mupis"
-        | "In-Mall Media"
-        | "Hoardings"
-        | "Wall Wraps"
-        | "Roof Top Screens"
-        | "Airport"
-        | "Tram"
-        | "Metro"
+        | "Destination Display"
+        | "Light Box"
+        | "Vertical Light Box"
+        | "Piers (Backlit Lightbox)"
+        | "Lamppost"
+        | "Mupi"
+        | "Mupi Board"
+        | "Mupi Digital"
+        | "Bus Shelter"
+        | "Metro Pillars (Backlit Lightbox)"
+        | "In-Mall Screen"
         | "Elevator Screen"
+        | "Wall Banner"
+        | "Glass Wrap"
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
@@ -3391,25 +3403,37 @@ export const Constants = {
         "organic",
       ],
       location_type: [
-        "Billboard",
+        "Airport Media",
+        "LED Tower",
+        "3D Digital Vessel",
+        "Building Wrap",
+        "Iconic Art (Station Wrap)",
+        "Station Wrap (Generic)",
+        "Digital Unipole",
+        "LED Unipole",
+        "Megacom",
+        "Megacom Board",
+        "Hoarding",
+        "TPS / Hoarding",
+        "Bridge",
+        "Bridge Banner",
+        "Static Bridge Banner",
         "LED Screen",
-        "Bus Shelter",
-        "Street Furniture",
-        "Transit",
-        "Other",
-        "LED",
         "Digital Screen",
-        "Unipoles/Megacorns",
-        "Lampposts",
-        "Mupis",
-        "In-Mall Media",
-        "Hoardings",
-        "Wall Wraps",
-        "Roof Top Screens",
-        "Airport",
-        "Tram",
-        "Metro",
+        "Destination Display",
+        "Light Box",
+        "Vertical Light Box",
+        "Piers (Backlit Lightbox)",
+        "Lamppost",
+        "Mupi",
+        "Mupi Board",
+        "Mupi Digital",
+        "Bus Shelter",
+        "Metro Pillars (Backlit Lightbox)",
+        "In-Mall Screen",
         "Elevator Screen",
+        "Wall Banner",
+        "Glass Wrap",
       ],
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],

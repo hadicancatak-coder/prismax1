@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LocationWithDetails, useMediaLocations, LocationType } from "@/hooks/useMediaLocations";
+import { LocationWithDetails, useMediaLocations, LocationType, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,27 +16,6 @@ interface LocationFormDialogProps {
   initialCoordinates?: { lat: number; lng: number } | null;
 }
 
-const LOCATION_TYPES = [
-  'Billboard',
-  'LED Screen',
-  'LED',
-  'Digital Screen',
-  'Unipoles/Megacorns',
-  'Lampposts',
-  'Mupis',
-  'Bus Shelter',
-  'Street Furniture',
-  'In-Mall Media',
-  'Hoardings',
-  'Wall Wraps',
-  'Roof Top Screens',
-  'Transit',
-  'Airport',
-  'Tram',
-  'Metro',
-  'Elevator Screen',
-  'Other'
-];
 
 export function LocationFormDialog({ location, open, onClose, initialCoordinates }: LocationFormDialogProps) {
   const { createLocation, updateLocation, upsertPrices, upsertCampaigns, uploadImage } = useMediaLocations();
@@ -44,7 +23,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
   const [formData, setFormData] = useState({
     name: "",
     city: "",
-    type: "Billboard" as LocationType,
+    type: "Hoarding" as LocationType,
     latitude: 0,
     longitude: 0,
     notes: "",
@@ -84,7 +63,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
       setFormData({
         name: "",
         city: "",
-        type: "Billboard",
+        type: "Hoarding",
         latitude: initialCoordinates.lat,
         longitude: initialCoordinates.lng,
         notes: "",
@@ -100,7 +79,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
       setFormData({
         name: "",
         city: "",
-        type: "Billboard",
+        type: "Hoarding",
         latitude: 0,
         longitude: 0,
         notes: "",
@@ -223,11 +202,18 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {LOCATION_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
+                <SelectContent className="max-h-96">
+                  {Object.entries(LOCATION_CATEGORIES).map(([category, config]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {config.emoji} {category}
+                      </div>
+                      {config.types.map((type) => (
+                        <SelectItem key={type} value={type} className="pl-6">
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>

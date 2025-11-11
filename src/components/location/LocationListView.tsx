@@ -57,16 +57,16 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
     });
 
   const exportToCSV = () => {
-    const headers = ["Name", "City", "Type", "Score", "Agency", "Price per Month", "Latitude", "Longitude", "Notes"];
+    const headers = ["City", "Type", "Name", "Latitude", "Longitude", "Manual Score", "Agency", "Price Per Month", "Notes"];
     const rows = filteredLocations.map(loc => [
-      loc.name,
       loc.city,
       loc.type,
+      loc.name,
+      loc.latitude,
+      loc.longitude,
       loc.manual_score || "",
       loc.agency || "",
       loc.price_per_month || "",
-      loc.latitude,
-      loc.longitude,
       loc.notes || "",
     ]);
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MediaLocation } from "@/hooks/useMediaLocations";
+import { MediaLocation, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,41 +75,11 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
       const el = document.createElement('div');
       el.className = 'location-marker';
       
-      // Different colors based on type
-    const colorMap: Record<string, string> = {
-      // Outdoor Static (Red tones)
-      'Billboard': '#ef4444',
-      'Unipoles/Megacorns': '#dc2626',
-      'Hoardings': '#f87171',
-      'Wall Wraps': '#fca5a5',
+      // Use category-based colors
+      const category = getLocationCategory(location.type);
+      const color = category ? LOCATION_CATEGORIES[category].color : '#6b7280';
       
-      // Digital Displays (Blue tones)
-      'LED Screen': '#3b82f6',
-      'LED': '#2563eb',
-      'Digital Screen': '#60a5fa',
-      'Roof Top Screens': '#93c5fd',
-      'Elevator Screen': '#1e40af',
-      
-      // Street Furniture (Green tones)
-      'Bus Shelter': '#10b981',
-      'Street Furniture': '#059669',
-      'Lampposts': '#34d399',
-      'Mupis': '#6ee7b7',
-      
-      // Indoor/Mall (Orange)
-      'In-Mall Media': '#f59e0b',
-      
-      // Transit (Purple tones)
-      'Transit': '#8b5cf6',
-      'Airport': '#a855f7',
-      'Tram': '#c084fc',
-      'Metro': '#7c3aed',
-      
-      // Other
-      'Other': '#6b7280',
-    };
-      
-      el.style.backgroundColor = colorMap[location.type] || '#6b7280';
+      el.style.backgroundColor = color;
       el.style.width = '24px';
       el.style.height = '24px';
       el.style.borderRadius = '50%';
@@ -198,23 +168,16 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
         </div>
       )}
       
-      <div className="absolute top-4 left-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border">
-        <div className="text-xs font-semibold mb-2">Location Types</div>
+      <div className="absolute top-4 left-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border max-w-xs">
+        <div className="text-xs font-semibold mb-2">Location Categories</div>
         <div className="space-y-1">
-          {Object.entries({
-            'Billboard': '#ef4444',
-            'LED Screen': '#3b82f6',
-            'Bus Shelter': '#10b981',
-            'Street Furniture': '#f59e0b',
-            'Transit': '#8b5cf6',
-            'Other': '#6b7280',
-          }).map(([type, color]) => (
-            <div key={type} className="flex items-center gap-2 text-xs">
+          {Object.entries(LOCATION_CATEGORIES).map(([category, config]) => (
+            <div key={category} className="flex items-center gap-2 text-xs">
               <div 
-                className="w-3 h-3 rounded-full border border-white" 
-                style={{ backgroundColor: color }}
+                className="w-3 h-3 rounded-full border border-white flex-shrink-0" 
+                style={{ backgroundColor: config.color }}
               />
-              <span>{type}</span>
+              <span className="truncate">{config.emoji} {category}</span>
             </div>
           ))}
         </div>

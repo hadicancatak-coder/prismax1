@@ -3,25 +3,114 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type LocationType = 
-  | 'Billboard'
+  // Iconic / Landmark Assets
+  | 'Airport Media'
+  | 'LED Tower'
+  | '3D Digital Vessel'
+  | 'Building Wrap'
+  | 'Iconic Art (Station Wrap)'
+  | 'Station Wrap (Generic)'
+  // Premium Large-Format Roadside
+  | 'Digital Unipole'
+  | 'LED Unipole'
+  | 'Megacom'
+  | 'Megacom Board'
+  | 'Hoarding'
+  | 'TPS / Hoarding'
+  // Bridges & Gateways
+  | 'Bridge'
+  | 'Bridge Banner'
+  | 'Static Bridge Banner'
+  // Urban Digital Screens
   | 'LED Screen'
-  | 'LED'
   | 'Digital Screen'
-  | 'Unipoles/Megacorns'
-  | 'Lampposts'
-  | 'Mupis'
+  | 'Destination Display'
+  | 'Light Box'
+  | 'Vertical Light Box'
+  | 'Piers (Backlit Lightbox)'
+  // Street Furniture
+  | 'Lamppost'
+  | 'Mupi'
+  | 'Mupi Board'
+  | 'Mupi Digital'
   | 'Bus Shelter'
-  | 'Street Furniture'
-  | 'In-Mall Media'
-  | 'Hoardings'
-  | 'Wall Wraps'
-  | 'Roof Top Screens'
-  | 'Transit'
-  | 'Airport'
-  | 'Tram'
-  | 'Metro'
+  // Transit / Metro
+  | 'Metro Pillars (Backlit Lightbox)'
+  // Retail & Indoor Media
+  | 'In-Mall Screen'
   | 'Elevator Screen'
-  | 'Other';
+  // Glass & Wall Treatments
+  | 'Wall Banner'
+  | 'Glass Wrap';
+
+export type LocationCategory = 
+  | 'Iconic / Landmark Assets'
+  | 'Premium Large-Format Roadside'
+  | 'Bridges & Gateways'
+  | 'Urban Digital Screens'
+  | 'Street Furniture'
+  | 'Transit / Metro'
+  | 'Retail & Indoor Media'
+  | 'Glass & Wall Treatments';
+
+export const LOCATION_CATEGORIES: Record<LocationCategory, {
+  emoji: string;
+  types: LocationType[];
+  color: string;
+}> = {
+  'Iconic / Landmark Assets': {
+    emoji: '🏙',
+    types: ['Airport Media', 'LED Tower', '3D Digital Vessel', 'Building Wrap', 
+            'Iconic Art (Station Wrap)', 'Station Wrap (Generic)'],
+    color: '#f59e0b',
+  },
+  'Premium Large-Format Roadside': {
+    emoji: '🚗',
+    types: ['Digital Unipole', 'LED Unipole', 'Megacom', 'Megacom Board', 
+            'Hoarding', 'TPS / Hoarding'],
+    color: '#ef4444',
+  },
+  'Bridges & Gateways': {
+    emoji: '🌉',
+    types: ['Bridge', 'Bridge Banner', 'Static Bridge Banner'],
+    color: '#8b5cf6',
+  },
+  'Urban Digital Screens': {
+    emoji: '💡',
+    types: ['LED Screen', 'Digital Screen', 'Destination Display', 
+            'Light Box', 'Vertical Light Box', 'Piers (Backlit Lightbox)'],
+    color: '#3b82f6',
+  },
+  'Street Furniture': {
+    emoji: '🪧',
+    types: ['Lamppost', 'Mupi', 'Mupi Board', 'Mupi Digital', 'Bus Shelter'],
+    color: '#10b981',
+  },
+  'Transit / Metro': {
+    emoji: '🚆',
+    types: ['Metro Pillars (Backlit Lightbox)'],
+    color: '#6366f1',
+  },
+  'Retail & Indoor Media': {
+    emoji: '🛍',
+    types: ['In-Mall Screen', 'Elevator Screen'],
+    color: '#f97316',
+  },
+  'Glass & Wall Treatments': {
+    emoji: '🧱',
+    types: ['Wall Banner', 'Glass Wrap'],
+    color: '#64748b',
+  },
+};
+
+export const getLocationCategory = (type: LocationType): LocationCategory | null => {
+  for (const [category, config] of Object.entries(LOCATION_CATEGORIES)) {
+    if (config.types.includes(type)) {
+      return category as LocationCategory;
+    }
+  }
+  return null;
+};
 
 export interface MediaLocation {
   id: string;

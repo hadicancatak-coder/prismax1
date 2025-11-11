@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useMediaLocations, LocationType } from "@/hooks/useMediaLocations";
-import { Upload, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { useMediaLocations, LocationType, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
+import { Upload, AlertCircle, CheckCircle2, X, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -31,11 +31,8 @@ interface ParsedRow {
   historicPrices?: Array<{ year: number; price: number }>;
 }
 
-const VALID_LOCATION_TYPES: LocationType[] = [
-  "Billboard", "Bus Shelter", "Street Furniture", "Transit", "LED Screen", "Other",
-  "LED", "Digital Screen", "Unipoles/Megacorns", "Lampposts", "Mupis", "In-Mall Media",
-  "Hoardings", "Wall Wraps", "Roof Top Screens", "Airport", "Tram", "Metro", "Elevator Screen"
-];
+const VALID_LOCATION_TYPES: LocationType[] = Object.values(LOCATION_CATEGORIES)
+  .flatMap(config => config.types);
 
 export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDialogProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -57,8 +54,20 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
     if (isNaN(lat) || lat < -90 || lat > 90) errors.push('Invalid Latitude');
     if (isNaN(lng) || lng < -180 || lng > 180) errors.push('Invalid Longitude');
 
+    // Validate type
     if (row.Type && !VALID_LOCATION_TYPES.includes(row.Type as LocationType)) {
-      errors.push(`Invalid Type: ${row.Type}`);
+      const category = Object.entries(LOCATION_CATEGORIES).find(([_, config]) => 
+        config.types.some(t => t.toLowerCase().includes(row.Type.toLowerCase()))
+      );
+      
+      if (category) {
+        const suggestion = category[1].types.find(t => 
+          t.toLowerCase().includes(row.Type.toLowerCase())
+        );
+        errors.push(`Did you mean: ${suggestion}?`);
+      } else {
+        errors.push(`Invalid Type: "${row.Type}". Must be one of the 31 valid types.`);
+      }
     }
 
     if (row["Manual Score"]) {
@@ -225,6 +234,30 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
     }
   };
 
+  const downloadTemplate = () => {
+    const headers = ['City', 'Type', 'Name', 'Latitude', 'Longitude', 'Manual Score', 
+                     'Agency', 'Price Per Month', 'Historic Prices'];
+    const exampleRows = [
+      ['Dubai', 'LED Screen', 'Sheikh Zayed Road LED 1', '25.2048', '55.2708', '8', 
+       'Mediahub', '7500', '2023:7000;2024:7500'],
+      ['Abu Dhabi', 'Megacom', 'Corniche Megacom', '24.4539', '54.3773', '9', 
+       'Starcom', '12000', '2023:11000;2024:12000'],
+      ['Dubai', 'Airport Media', 'DXB Terminal 3', '25.2532', '55.3657', '10',
+       'Clear Channel', '25000', '2023:24000;2024:25000'],
+    ];
+    
+    const csv = [headers, ...exampleRows]
+      .map(row => row.join(','))
+      .join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'location-upload-template.csv';
+    a.click();
+  };
+
   const handleClose = () => {
     setFile(null);
     setParsedData([]);
@@ -239,10 +272,18 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Bulk Upload Locations</DialogTitle>
-          <DialogDescription>
-            Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Historic Prices
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>Bulk Upload Locations</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Historic Prices
+              </DialogDescription>
+            </div>
+            <Button onClick={downloadTemplate} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Download Template
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-auto">
