@@ -18,6 +18,7 @@ import { TreeNode } from "@/hooks/useAccountStructure";
 import { usePanelCollapse } from "@/hooks/usePanelCollapse";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Monitor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -203,12 +204,26 @@ export default function DisplayPlanner() {
 
             <ResizablePanel defaultSize={35} minSize={25}>
               <div className="h-full pl-4">
-                <AdEditorPanel
-                  ad={selectedAdForEdit}
-                  isCreating={isCreatingNew}
-                  onSave={handleSaveAd}
-                  onCancel={() => { setSelectedAdForEdit(null); setIsCreatingNew(false); }}
-                />
+                {!selectedAdForEdit && !isCreatingNew ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center space-y-4">
+                      <Monitor className="h-16 w-16 mx-auto text-muted-foreground" />
+                      <div>
+                        <p className="text-lg font-medium">Select an ad to edit</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Or click "New Display Ad" to create one
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <AdEditorPanel
+                    ad={selectedAdForEdit}
+                    isCreating={isCreatingNew}
+                    onSave={handleSaveAd}
+                    onCancel={() => { setSelectedAdForEdit(null); setIsCreatingNew(false); }}
+                  />
+                )}
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>

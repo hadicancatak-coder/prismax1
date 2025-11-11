@@ -15,6 +15,7 @@ import { AdVariationGeneratorDialog } from "./AdVariationGeneratorDialog";
 import { QualityMetricsPanel } from "./QualityMetricsPanel";
 import { AdVersionHistory } from "./AdVersionHistory";
 import { AdBreadcrumbs } from "./AdBreadcrumbs";
+import { DisplayAdCreator } from "./DisplayAdCreator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -99,8 +100,16 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
       setCampaign("");
       setAdGroup("");
       setEntity("");
-      setHeadlines(["", "", ""]);
-      setDescriptions(["", ""]);
+      
+      // Initialize with 5 headlines/descriptions for display ads, 3/2 for search ads
+      if (adType === "display") {
+        setHeadlines(["", "", "", "", ""]);
+        setDescriptions(["", "", "", "", ""]);
+      } else {
+        setHeadlines(["", "", ""]);
+        setDescriptions(["", ""]);
+      }
+      
       setFinalUrl("");
       setPath1("");
       setPath2("");
@@ -110,6 +119,8 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
       setLongHeadline("");
       setImages([]);
       setLogoUrl("");
+      setCtaText("Learn More");
+      setLanguage("EN");
       setHasChanges(false);
     }
   }, [ad, isCreating]);
@@ -477,29 +488,22 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                 {/* Display Ad Fields */}
                 <TabsContent value="display" className="space-y-4">
                   <Card>
-                    <CardContent className="pt-6 space-y-4">
-                      <div>
-                        <Label htmlFor="longHeadline">Long Headline</Label>
-                        <Input
-                          id="longHeadline"
-                          value={longHeadline}
-                          onChange={(e) => handleFieldChange(setLongHeadline)(e.target.value)}
-                          placeholder="Enter long headline"
-                          maxLength={90}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {longHeadline.length}/90 characters
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="logoUrl">Logo URL</Label>
-                        <Input
-                          id="logoUrl"
-                          value={logoUrl}
-                          onChange={(e) => handleFieldChange(setLogoUrl)(e.target.value)}
-                          placeholder="https://example.com/logo.png"
-                        />
-                      </div>
+                    <CardContent className="pt-6">
+                      <DisplayAdCreator
+                        businessName={businessName}
+                        setBusinessName={(val) => handleFieldChange(setBusinessName)(val)}
+                        longHeadline={longHeadline}
+                        setLongHeadline={(val) => handleFieldChange(setLongHeadline)(val)}
+                        shortHeadlines={headlines}
+                        setShortHeadlines={(val) => handleFieldChange(setHeadlines)(val)}
+                        descriptions={descriptions}
+                        setDescriptions={(val) => handleFieldChange(setDescriptions)(val)}
+                        ctaText={ctaText}
+                        setCtaText={(val) => handleFieldChange(setCtaText)(val)}
+                        landingPage={finalUrl}
+                        setLandingPage={(val) => handleFieldChange(setFinalUrl)(val)}
+                        adEntity={entity}
+                      />
                     </CardContent>
                   </Card>
                 </TabsContent>
