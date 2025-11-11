@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { usePlannedCampaigns, calculateDuration, suggestPlacements } from "@/hooks/usePlannedCampaigns";
+import { usePlannedCampaigns, calculateDuration, suggestPlacements, calculateReach } from "@/hooks/usePlannedCampaigns";
 import { useMediaLocations } from "@/hooks/useMediaLocations";
 import { MediaLocation } from "@/hooks/useMediaLocations";
-import { Calendar, DollarSign, MapPin } from "lucide-react";
+import { Calendar, DollarSign, MapPin, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface CampaignPlannerDialogProps {
@@ -36,14 +36,50 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
   const [suggestedPlacements, setSuggestedPlacements] = useState<Array<{ location: MediaLocation; cost: number }>>([]);
   const [manualSelections, setManualSelections] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [showAllLocations, setShowAllLocations] = useState(false);
+  const [agencyFilter, setAgencyFilter] = useState<string[]>([]);
+  const [reachMetrics, setReachMetrics] = useState<{
+    totalReach: number;
+    cpm: number;
+    seasonalInfo: any;
+  } | null>(null);
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
+  
+  const availableLocations = locations
+    .filter(loc => selectedCities.includes(loc.city))
+    .filter(loc => agencyFilter.length === 0 || agencyFilter.includes(loc.agency || ''));
+
+  const availableAgencies = Array.from(
+    new Set(
+      locations
+        .filter(loc => selectedCities.includes(loc.city))
+        .map(loc => loc.agency)
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+
+  // Calculate derived values first
+  const selectedPlacements = suggestedPlacements.filter(p => manualSelections.has(p.location.id));
+  const totalCost = selectedPlacements.reduce((sum, p) => sum + p.cost, 0);
+  const remainingBudget = formData.budget - totalCost;
+  const duration = formData.start_date && formData.end_date 
+    ? calculateDuration(formData.start_date, formData.end_date) 
+    : 0;
 
   // Auto-suggest placements when budget/cities/dates change
   useEffect(() => {
     if (formData.budget > 0 && selectedCities.length > 0 && formData.start_date && formData.end_date) {
       const duration = calculateDuration(formData.start_date, formData.end_date);
-      const suggestions = suggestPlacements(locations, formData.budget, duration, selectedCities, allPrices);
+      const suggestions = suggestPlacements(
+        locations, 
+        formData.budget, 
+        duration, 
+        selectedCities, 
+        allPrices,
+        formData.start_date,
+        formData.end_date
+      );
       setSuggestedPlacements(suggestions);
       setManualSelections(new Set(suggestions.map(s => s.location.id)));
     } else {
@@ -51,6 +87,21 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
       setManualSelections(new Set());
     }
   }, [formData.budget, formData.start_date, formData.end_date, selectedCities, locations, allPrices]);
+  
+  // Calculate reach metrics when placements change
+  useEffect(() => {
+    if (selectedPlacements.length > 0 && formData.start_date && formData.end_date) {
+      const metrics = calculateReach(
+        selectedPlacements,
+        duration,
+        formData.start_date,
+        formData.end_date
+      );
+      setReachMetrics(metrics);
+    } else {
+      setReachMetrics(null);
+    }
+  }, [selectedPlacements, duration, formData.start_date, formData.end_date]);
 
   const toggleCity = (city: string) => {
     setSelectedCities(prev =>
@@ -69,13 +120,6 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
       return newSet;
     });
   };
-
-  const selectedPlacements = suggestedPlacements.filter(p => manualSelections.has(p.location.id));
-  const totalCost = selectedPlacements.reduce((sum, p) => sum + p.cost, 0);
-  const remainingBudget = formData.budget - totalCost;
-  const duration = formData.start_date && formData.end_date 
-    ? calculateDuration(formData.start_date, formData.end_date) 
-    : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,45 +262,181 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
             {/* Right: Placement Suggestions */}
             <div className="space-y-4">
               <div className="p-4 border rounded-lg space-y-3">
-                <h3 className="font-semibold">Suggested Placements</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    {showAllLocations ? 'All Available Locations' : (
+                      <>
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        AI Suggested Placements
+                      </>
+                    )}
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowAllLocations(!showAllLocations);
+                      setAgencyFilter([]);
+                    }}
+                  >
+                    {showAllLocations ? 'Show AI Suggestions' : 'Browse All'}
+                  </Button>
+                </div>
                 
-                {suggestedPlacements.length === 0 && selectedCities.length > 0 && formData.budget > 0 ? (
+                {showAllLocations && availableAgencies.length > 0 && (
+                  <div className="mb-3">
+                    <Label className="text-xs mb-1">Filter by Agency</Label>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge
+                        variant={agencyFilter.length === 0 ? "default" : "outline"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => setAgencyFilter([])}
+                      >
+                        All Agencies
+                      </Badge>
+                      {availableAgencies.map(agency => (
+                        <Badge
+                          key={agency}
+                          variant={agencyFilter.includes(agency) ? "default" : "outline"}
+                          className="cursor-pointer text-xs"
+                          onClick={() => {
+                            setAgencyFilter(prev =>
+                              prev.includes(agency)
+                                ? prev.filter(a => a !== agency)
+                                : [...prev, agency]
+                            );
+                          }}
+                        >
+                          {agency}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {!showAllLocations && suggestedPlacements.length === 0 && selectedCities.length > 0 && formData.budget > 0 ? (
                   <p className="text-sm text-amber-600">
                     No locations with historic pricing found in selected cities. Please add historic prices to locations first.
                   </p>
-                ) : suggestedPlacements.length === 0 ? (
+                ) : !showAllLocations && suggestedPlacements.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Enter budget and select cities to see suggested placements
                   </p>
                 ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {suggestedPlacements.map(({ location, cost }) => (
-                      <div key={location.id} className="flex items-start gap-2 p-2 border rounded hover:bg-accent">
-                        <Checkbox
-                          checked={manualSelections.has(location.id)}
-                          onCheckedChange={() => togglePlacement(location.id)}
-                        />
-                        <div className="flex-1 text-sm">
-                          <div className="font-medium">{location.name}</div>
-                          <div className="text-muted-foreground flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            {location.city} • {location.type}
-                            {location.manual_score && (
-                              <Badge variant="secondary" className="ml-2">
-                                Score: {location.manual_score}/10
-                              </Badge>
-                            )}
+                  <div className={`space-y-2 ${(showAllLocations ? availableLocations : suggestedPlacements).length > 5 ? 'max-h-96 overflow-y-auto' : ''}`}>
+                    {(showAllLocations ? availableLocations : suggestedPlacements.map(s => s.location))
+                      .map(location => {
+                        const suggestedItem = suggestedPlacements.find(s => s.location.id === location.id);
+                        const locationPrices = allPrices.filter(p => p.location_id === location.id);
+                        const avgPrice = locationPrices.length > 0
+                          ? locationPrices.reduce((sum, p) => sum + p.price, 0) / locationPrices.length
+                          : (location.price_per_month || 0);
+                        const cost = suggestedItem?.cost || (avgPrice * duration);
+                        const isSelected = manualSelections.has(location.id);
+                        const isAISuggested = !!suggestedItem && !showAllLocations;
+
+                        return (
+                          <div
+                            key={location.id}
+                            className={`flex items-start gap-2 p-2 border rounded hover:bg-accent ${
+                              isAISuggested ? 'border-primary/30 bg-primary/5' : ''
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => {
+                                if (!isSelected) {
+                                  setManualSelections(prev => new Set([...prev, location.id]));
+                                  if (!suggestedItem) {
+                                    setSuggestedPlacements(prev => [
+                                      ...prev,
+                                      { location, cost }
+                                    ]);
+                                  }
+                                } else {
+                                  setManualSelections(prev => {
+                                    const newSet = new Set(prev);
+                                    newSet.delete(location.id);
+                                    return newSet;
+                                  });
+                                }
+                              }}
+                            />
+                            <div className="flex-1 text-sm">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">{location.name}</span>
+                                {isAISuggested && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Sparkles className="h-3 w-3 mr-1" />
+                                    AI Pick
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-muted-foreground flex items-center gap-2 flex-wrap mt-1">
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {location.city} • {location.type}
+                                </span>
+                                {location.agency && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {location.agency}
+                                  </Badge>
+                                )}
+                                {location.manual_score && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Score: {location.manual_score}/10
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                AED {cost.toLocaleString()} ({duration} months)
+                                {location.est_daily_traffic && (
+                                  <span className="ml-2">
+                                    • ~{(location.est_daily_traffic * duration * 30).toLocaleString()} impressions
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {location.agency && `Agency: ${location.agency} • `}
-                            AED {cost.toLocaleString()} ({duration} months)
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 )}
               </div>
+
+              {/* Reach & CPM Metrics */}
+              {reachMetrics && (
+                <div className="p-4 border rounded-lg space-y-2 bg-primary/5 border-primary/20">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Estimated Performance
+                  </h4>
+                  <div className="flex justify-between text-sm">
+                    <span>Total Reach:</span>
+                    <span className="font-semibold">
+                      {reachMetrics.totalReach.toLocaleString()} impressions
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Estimated CPM:</span>
+                    <span className="font-semibold">
+                      AED {reachMetrics.cpm.toFixed(2)}
+                    </span>
+                  </div>
+                  {reachMetrics.seasonalInfo.season !== 'Regular Season' && (
+                    <div className="text-xs text-primary pt-2 border-t border-primary/20">
+                      <Badge variant="secondary" className="mb-1">
+                        {reachMetrics.seasonalInfo.season}
+                      </Badge>
+                      <p className="mt-1">
+                        Reach adjusted by {((reachMetrics.seasonalInfo.reachMultiplier - 1) * 100).toFixed(0)}% 
+                        based on seasonal trends
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Budget Summary */}
               {selectedPlacements.length > 0 && (
