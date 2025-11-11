@@ -8,9 +8,10 @@ import { LocationDetailPopup } from "@/components/location/LocationDetailPopup";
 import { LocationFormDialog } from "@/components/location/LocationFormDialog";
 import { CampaignsSection } from "@/components/location/CampaignsSection";
 import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDialog";
+import { BulkLocationUploadDialog } from "@/components/location/BulkLocationUploadDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Map, List, Plus, Target } from "lucide-react";
+import { Map, List, Plus, Target, Upload } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ export default function LocationIntelligence() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [plannerOpen, setPlannerOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [clickedCoordinates, setClickedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(
     localStorage.getItem("mapbox_token")
@@ -84,10 +86,16 @@ export default function LocationIntelligence() {
             Plan Campaign
           </Button>
           {isAdmin && (
-            <Button onClick={() => handleEdit()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Location
-            </Button>
+            <>
+              <Button onClick={() => handleEdit()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Location
+              </Button>
+              <Button onClick={() => setUploadOpen(true)} variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload CSV
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -207,6 +215,11 @@ export default function LocationIntelligence() {
         open={plannerOpen}
         onClose={() => setPlannerOpen(false)}
         locations={locations}
+      />
+
+      <BulkLocationUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
       />
     </div>
   );

@@ -3233,6 +3233,19 @@ export type Database = {
         | "Street Furniture"
         | "Transit"
         | "Other"
+        | "LED"
+        | "Digital Screen"
+        | "Unipoles/Megacorns"
+        | "Lampposts"
+        | "Mupis"
+        | "In-Mall Media"
+        | "Hoardings"
+        | "Wall Wraps"
+        | "Roof Top Screens"
+        | "Airport"
+        | "Tram"
+        | "Metro"
+        | "Elevator Screen"
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
@@ -3384,6 +3397,19 @@ export const Constants = {
         "Street Furniture",
         "Transit",
         "Other",
+        "LED",
+        "Digital Screen",
+        "Unipoles/Megacorns",
+        "Lampposts",
+        "Mupis",
+        "In-Mall Media",
+        "Hoardings",
+        "Wall Wraps",
+        "Roof Top Screens",
+        "Airport",
+        "Tram",
+        "Metro",
+        "Elevator Screen",
       ],
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],

@@ -38,14 +38,23 @@ const coreItems = [
   { title: "Agenda", url: "/calendar", icon: Calendar },
 ];
 
-const operationsItems = [
-  { title: "Audit Logs", url: "/operations", icon: FileText },
+const adsItems = [
   { title: "Search Planner", url: "/ads/search", icon: Megaphone },
   { title: "Display Planner", url: "/ads/display", icon: Monitor },
-  { title: "Saved Elements", url: "/ads/library", icon: Database },
-  { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Copy Writer", url: "/copywriter", icon: PenTool },
+  { title: "Saved Elements", url: "/ads/library", icon: Database },
+];
+
+const webItems = [
+  { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
+];
+
+const offlineItems = [
   { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
+];
+
+const operationsItems = [
+  { title: "Audit Logs", url: "/operations", icon: FileText },
 ];
 
 export function AppSidebar() {
@@ -111,6 +120,75 @@ export function AppSidebar() {
                       </NavLink>
                     ) : (
                       <NavLink to={item.url} end className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {/* Ads */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Ads</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
+              {adsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {/* Web */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Web</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
+              {webItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {/* Offline */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Offline</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
+              {offlineItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
                         <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
                         <span className="text-body">{item.title}</span>
                       </NavLink>

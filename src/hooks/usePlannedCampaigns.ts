@@ -41,8 +41,14 @@ export const suggestPlacements = (
   duration: number,
   cities: string[]
 ): Array<{ location: MediaLocation; cost: number }> => {
-  // Filter by selected cities
-  const filteredLocations = locations.filter(loc => cities.includes(loc.city));
+  // Filter by selected cities AND locations with prices
+  const filteredLocations = locations.filter(loc => 
+    cities.includes(loc.city) && loc.price_per_month && loc.price_per_month > 0
+  );
+  
+  if (filteredLocations.length === 0 || budget <= 0 || duration <= 0) {
+    return [];
+  }
   
   // Calculate cost for each location
   const locationsWithCost = filteredLocations

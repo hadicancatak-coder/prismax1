@@ -218,10 +218,14 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
               <div className="p-4 border rounded-lg space-y-3">
                 <h3 className="font-semibold">Suggested Placements</h3>
                 
-                {selectedCities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Select cities to see suggestions</p>
+                {suggestedPlacements.length === 0 && selectedCities.length > 0 && formData.budget > 0 ? (
+                  <p className="text-sm text-amber-600">
+                    No locations with pricing found in selected cities. Please add prices to locations first.
+                  </p>
                 ) : suggestedPlacements.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Enter budget and dates to see suggestions</p>
+                  <p className="text-sm text-muted-foreground">
+                    Enter budget and select cities to see suggested placements
+                  </p>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {suggestedPlacements.map(({ location, cost }) => (
