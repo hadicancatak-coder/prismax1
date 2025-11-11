@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { usePlannedCampaigns, calculateDuration, suggestPlacements, calculateReach } from "@/hooks/usePlannedCampaigns";
+import { usePlannedCampaigns, PlannedCampaign, calculateDuration, suggestPlacements, calculateReach } from "@/hooks/usePlannedCampaigns";
+import { supabase } from "@/integrations/supabase/client";
 import { useMediaLocations } from "@/hooks/useMediaLocations";
 import { MediaLocation } from "@/hooks/useMediaLocations";
 import { Calendar, DollarSign, MapPin, Sparkles } from "lucide-react";
@@ -16,23 +17,25 @@ interface CampaignPlannerDialogProps {
   open: boolean;
   onClose: () => void;
   locations: MediaLocation[];
+  campaign?: PlannedCampaign | null;
+  mode?: 'create' | 'edit';
 }
 
-export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlannerDialogProps) {
-  const { createCampaign } = usePlannedCampaigns();
+export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode = 'create' }: CampaignPlannerDialogProps) {
+  const { createCampaign, updateCampaign, getPlacementsForCampaign } = usePlannedCampaigns();
   const { allPrices } = useMediaLocations();
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
-    name: "",
-    budget: 0,
-    start_date: "",
-    end_date: "",
-    agency: "",
-    notes: "",
+    name: campaign?.name || "",
+    budget: campaign?.budget || 0,
+    start_date: campaign?.start_date || "",
+    end_date: campaign?.end_date || "",
+    agency: campaign?.agency || "",
+    notes: campaign?.notes || "",
   });
   
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>(campaign?.cities || []);
   const [suggestedPlacements, setSuggestedPlacements] = useState<Array<{ location: MediaLocation; cost: number }>>([]);
   const [manualSelections, setManualSelections] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -43,6 +46,33 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
     cpm: number;
     seasonalInfo: any;
   } | null>(null);
+
+  // Initialize form data when editing
+  useEffect(() => {
+    if (mode === 'edit' && campaign) {
+      setFormData({
+        name: campaign.name,
+        budget: campaign.budget,
+        start_date: campaign.start_date,
+        end_date: campaign.end_date,
+        agency: campaign.agency || "",
+        notes: campaign.notes || "",
+      });
+      setSelectedCities(campaign.cities);
+      
+      // Load existing placements
+      const existingPlacements = getPlacementsForCampaign(campaign.id);
+      const placementsWithLocations = existingPlacements
+        .map(p => {
+          const location = locations.find(l => l.id === p.location_id);
+          return location ? { location, cost: p.allocated_budget } : null;
+        })
+        .filter(Boolean) as Array<{ location: MediaLocation; cost: number }>;
+      
+      setSuggestedPlacements(placementsWithLocations);
+      setManualSelections(new Set(placementsWithLocations.map(p => p.location.id)));
+    }
+  }, [mode, campaign, locations, getPlacementsForCampaign]);
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
   
@@ -126,29 +156,61 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
     setLoading(true);
 
     try {
-      await createCampaign.mutateAsync({
-        campaign: {
+      if (mode === 'edit' && campaign) {
+        // Update existing campaign
+        await updateCampaign.mutateAsync({
+          id: campaign.id,
           ...formData,
           cities: selectedCities,
-          status: 'draft',
-          created_by: user?.id,
-        },
-        placements: selectedPlacements.map(p => ({
-          location_id: p.location.id,
-          allocated_budget: p.cost,
-        })),
-      });
+        });
+        
+        // Delete existing placements and recreate
+        const { error: deleteError } = await supabase
+          .from('campaign_placements')
+          .delete()
+          .eq('campaign_id', campaign.id);
+        
+        if (deleteError) throw deleteError;
+        
+        const { error: insertError } = await supabase
+          .from('campaign_placements')
+          .insert(selectedPlacements.map(p => ({
+            campaign_id: campaign.id,
+            location_id: p.location.id,
+            allocated_budget: p.cost,
+          })));
+        
+        if (insertError) throw insertError;
+      } else {
+        // Create new campaign
+        await createCampaign.mutateAsync({
+          campaign: {
+            ...formData,
+            cities: selectedCities,
+            status: 'draft',
+            created_by: user?.id,
+          },
+          placements: selectedPlacements.map(p => ({
+            location_id: p.location.id,
+            allocated_budget: p.cost,
+          })),
+        });
+      }
+      
       onClose();
-      // Reset form
-      setFormData({
-        name: "",
-        budget: 0,
-        start_date: "",
-        end_date: "",
-        agency: "",
-        notes: "",
-      });
-      setSelectedCities([]);
+      
+      // Reset form only for create mode
+      if (mode === 'create') {
+        setFormData({
+          name: "",
+          budget: 0,
+          start_date: "",
+          end_date: "",
+          agency: "",
+          notes: "",
+        });
+        setSelectedCities([]);
+      }
     } catch (error) {
       // Error handling done in hook
     } finally {
@@ -160,7 +222,7 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Plan New Campaign</DialogTitle>
+          <DialogTitle>{mode === 'edit' ? 'Edit Campaign' : 'Plan New Campaign'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -472,7 +534,10 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
               type="submit" 
               disabled={loading || selectedPlacements.length === 0 || remainingBudget < 0}
             >
-              {loading ? "Creating..." : "Create Campaign"}
+              {loading 
+                ? (mode === 'edit' ? "Updating..." : "Creating...") 
+                : (mode === 'edit' ? "Update Campaign" : "Create Campaign")
+              }
             </Button>
           </div>
         </form>

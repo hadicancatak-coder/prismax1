@@ -3472,6 +3472,7 @@ export type Database = {
       cleanup_old_mfa_attempts: { Args: never; Returns: undefined }
       cleanup_rate_limit: { Args: never; Returns: undefined }
       detect_language: { Args: { content_text: string }; Returns: string }
+      extract_client_ip: { Args: { ip_chain: string }; Returns: string }
       get_admin_user_ids: {
         Args: never
         Returns: {

@@ -6,6 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to extract client IP only (first IP from x-forwarded-for)
+const getClientIp = (req: Request): string => {
+  const forwardedFor = req.headers.get('x-forwarded-for') || '';
+  const cfConnectingIp = req.headers.get('cf-connecting-ip') || '';
+  
+  // Extract first IP from x-forwarded-for (the client IP)
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(',')[0].trim();
+    return firstIp || 'unknown';
+  }
+  
+  return cfConnectingIp || 'unknown';
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,7 +43,7 @@ Deno.serve(async (req) => {
     if (action === 'create') {
       // Create new MFA session after successful verification
       const sessionTokenValue = randomBytes(32).toString('hex');
-      const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
+      const ipAddress = getClientIp(req);
       const userAgent = req.headers.get('user-agent') || 'unknown';
 
       const { error: insertError } = await supabase
@@ -60,9 +74,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const currentIp = req.headers.get('x-forwarded-for') || 
-                        req.headers.get('cf-connecting-ip') || 
-                        'unknown';
+      const currentIp = getClientIp(req);
 
       const { data: session } = await supabase
         .from('mfa_sessions')

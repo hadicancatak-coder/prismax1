@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlannedCampaigns, PlannedCampaign, calculateDuration } from "@/hooks/usePlannedCampaigns";
+import { usePlannedCampaigns, PlannedCampaign, calculateDuration, calculateReach } from "@/hooks/usePlannedCampaigns";
 import { useMediaLocations } from "@/hooks/useMediaLocations";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CampaignPlannerDialog } from "./CampaignPlannerDialog";
 
 interface CampaignDetailDialogProps {
   campaign: PlannedCampaign | null;
@@ -18,6 +19,7 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
   const { getPlacementsForCampaign, deleteCampaign } = usePlannedCampaigns();
   const { locations } = useMediaLocations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const placementsData = useMemo(() => {
     if (!campaign) return [];
@@ -36,6 +38,32 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
   }, [campaign, locations, getPlacementsForCampaign]);
 
   const totalCost = placementsData.reduce((sum, p) => sum + p.placement.allocated_budget, 0);
+
+  // Calculate impressions and CPM
+  const campaignMetrics = useMemo(() => {
+    if (!campaign || placementsData.length === 0) {
+      return { totalReach: 0, cpm: 0, season: 'Regular Season' };
+    }
+    
+    const duration = calculateDuration(campaign.start_date, campaign.end_date);
+    const placementsWithLocations = placementsData.map(p => ({
+      location: p.location!,
+      cost: p.placement.allocated_budget
+    }));
+    
+    const { totalReach, cpm, seasonalInfo } = calculateReach(
+      placementsWithLocations,
+      duration,
+      campaign.start_date,
+      campaign.end_date
+    );
+    
+    return {
+      totalReach,
+      cpm: cpm.toFixed(2),
+      season: seasonalInfo.season
+    };
+  }, [campaign, placementsData]);
 
   const exportToCSV = () => {
     if (!campaign) return;
@@ -117,6 +145,10 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
                 </div>
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
                 <Button variant="outline" size="sm" onClick={exportToCSV}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
@@ -131,7 +163,7 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
 
           <div className="space-y-6">
             {/* Campaign Info */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-accent/50">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 border rounded-lg bg-accent/50">
               <div>
                 <div className="text-sm text-muted-foreground">Budget</div>
                 <div className="text-lg font-semibold">AED {campaign.budget.toLocaleString()}</div>
@@ -141,14 +173,30 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
                 <div className="text-lg font-semibold">AED {totalCost.toLocaleString()}</div>
               </div>
               <div>
+                <div className="text-sm text-muted-foreground">Est. Impressions</div>
+                <div className="text-lg font-semibold">{campaignMetrics.totalReach.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">CPM</div>
+                <div className="text-lg font-semibold">AED {campaignMetrics.cpm}</div>
+              </div>
+              <div>
                 <div className="text-sm text-muted-foreground">Duration</div>
                 <div className="text-lg font-semibold">{duration} month{duration !== 1 ? 's' : ''}</div>
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Placements</div>
-                <div className="text-lg font-semibold">{placementsData.length}</div>
-              </div>
             </div>
+
+            {/* Season info badge */}
+            {campaignMetrics.season !== 'Regular Season' && (
+              <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                <Badge variant="outline" className="bg-primary/10">
+                  {campaignMetrics.season}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Campaign runs during seasonal period
+                </span>
+              </div>
+            )}
 
             {campaign.agency && (
               <div className="text-sm">
@@ -259,6 +307,14 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CampaignPlannerDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        locations={locations}
+        campaign={campaign}
+        mode="edit"
+      />
     </>
   );
 }
