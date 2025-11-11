@@ -186,6 +186,7 @@ export function WebIntelFormDialog({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Gulf News"
+                  autoFocus
                 />
               </div>
               <div className="space-y-2">

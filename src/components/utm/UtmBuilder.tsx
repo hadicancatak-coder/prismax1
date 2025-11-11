@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
 import { AddCampaignDialog } from "./AddCampaignDialog";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
@@ -52,6 +53,8 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
   const [utmContent, setUtmContent] = useState("");
   const [utmTerm, setUtmTerm] = useState("");
   const [notes, setNotes] = useState("");
+  const [isExtension, setIsExtension] = useState(false);
+  const [deviceType, setDeviceType] = useState<'web' | 'mobile'>('web');
   const [showAddCampaign, setShowAddCampaign] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
@@ -137,6 +140,16 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
     setAutoMonthYear(formatMonthYearReadable());
   }, [selectedCampaign, selectedPlatform]);
 
+  // Auto-populate utm_content when Extensions mode is enabled
+  useEffect(() => {
+    if (isExtension && autoUtmCampaign) {
+      // Format: campaign_monthyear_Extension_device
+      // Example: gold_oct2025_Extension_web
+      const extensionContent = `${autoUtmCampaign}_Extension_${deviceType}`;
+      setUtmContent(extensionContent);
+    }
+  }, [isExtension, autoUtmCampaign, deviceType]);
+
   // Build full URL
   useEffect(() => {
     if (baseUrl && autoUtmSource && autoUtmMedium && autoUtmCampaign) {
@@ -215,6 +228,8 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
       setUtmTerm("");
       setNotes("");
       setDynamicLanguage('EN');
+      setIsExtension(false);
+      setDeviceType('web');
       
       if (onSave) {
         onSave();
@@ -600,14 +615,72 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
             </>
           )}
 
+          {/* Extensions Controls */}
+          <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="extensions-check"
+                checked={isExtension}
+                onCheckedChange={(checked) => {
+                  setIsExtension(!!checked);
+                  if (!checked) {
+                    // Clear utm_content when unchecking
+                    setUtmContent("");
+                  }
+                }}
+              />
+              <Label htmlFor="extensions-check" className="font-semibold cursor-pointer">
+                Extensions (Sitelinks, Callouts, etc.)
+              </Label>
+            </div>
+
+            {isExtension && (
+              <div className="space-y-2 pl-6">
+                <Label>Device Type</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={deviceType === 'web' ? 'default' : 'outline'}
+                    onClick={() => setDeviceType('web')}
+                  >
+                    Web
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={deviceType === 'mobile' ? 'default' : 'outline'}
+                    onClick={() => setDeviceType('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </div>
+                
+                {autoUtmCampaign && (
+                  <Alert className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Will generate: <strong>{autoUtmCampaign}_Extension_{deviceType}</strong>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* UTM Content Field - Always visible in both modes */}
           <div className="space-y-2">
-            <Label htmlFor="utm-content">UTM Content</Label>
+            <Label htmlFor="utm-content">
+              UTM Content
+              {isExtension && <Badge variant="secondary" className="ml-2">Auto-generated</Badge>}
+            </Label>
             <Input
               id="utm-content"
               value={utmContent}
               onChange={(e) => setUtmContent(e.target.value)}
-              placeholder="e.g., banner-top, sidebar-cta"
+              placeholder={isExtension ? "Auto-generated from Extensions" : "e.g., banner-top, sidebar-cta"}
+              readOnly={isExtension}
+              className={isExtension ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
 
