@@ -21,30 +21,56 @@ export function DateRangePicker({
   onApply,
   presets = 'full' 
 }: DateRangePickerProps) {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(
-    value ? { from: value.from, to: value.to } : undefined
-  );
+  // Internal tracking - what the user has selected
+  const [tempFrom, setTempFrom] = useState<Date | undefined>(value?.from);
+  const [tempTo, setTempTo] = useState<Date | undefined>(value?.to);
   const [calendarKey, setCalendarKey] = useState(0);
 
+  // What we show to the Calendar - ONLY complete ranges
+  const displayRange = (tempFrom && tempTo) ? { from: tempFrom, to: tempTo } : undefined;
+
   const handlePreset = (from: Date, to: Date) => {
-    setDateRange({ from, to });
+    setTempFrom(from);
+    setTempTo(to);
     onChange({ from, to });
     onApply?.();
   };
 
   const handleDateSelect = (range: DateRange | undefined) => {
-    setDateRange(range);
+    if (!range?.from) {
+      // User clicked to deselect - clear everything
+      setTempFrom(undefined);
+      setTempTo(undefined);
+      return;
+    }
+    
+    // First click OR starting a new selection
+    if (!tempFrom || (tempFrom && tempTo)) {
+      setTempFrom(range.from);
+      setTempTo(undefined);
+    } 
+    // Second click - complete the range
+    else if (tempFrom && !tempTo) {
+      // If clicked date is before first date, swap them
+      if (range.from < tempFrom) {
+        setTempTo(tempFrom);
+        setTempFrom(range.from);
+      } else {
+        setTempTo(range.from);
+      }
+    }
   };
 
   const handleClear = () => {
-    setDateRange(undefined);
+    setTempFrom(undefined);
+    setTempTo(undefined);
     setCalendarKey(prev => prev + 1); // Force complete remount
     onChange(null);
   };
 
   const handleApply = () => {
-    if (dateRange?.from && dateRange?.to) {
-      onChange(dateRange);
+    if (tempFrom && tempTo) {
+      onChange({ from: tempFrom, to: tempTo });
       onApply?.();
     }
   };
@@ -169,7 +195,7 @@ export function DateRangePicker({
         {/* Single Calendar with Range Mode */}
         <Calendar
           mode="range"
-          selected={dateRange}
+          selected={displayRange}
           onSelect={handleDateSelect}
           numberOfMonths={1}
           key={calendarKey}
@@ -177,17 +203,19 @@ export function DateRangePicker({
         />
 
         {/* Selected Range Display */}
-        {dateRange?.from && (
+        {tempFrom && (
           <div className="flex items-center gap-2 text-xs px-2">
-            <span className="text-muted-foreground">Range:</span>
+            <span className="text-muted-foreground">
+              {tempTo ? "Range:" : "From:"}
+            </span>
             <Badge variant="secondary" className="font-mono text-xs">
-              {format(dateRange.from, "MMM d, yyyy")}
+              {format(tempFrom, "MMM d, yyyy")}
             </Badge>
-            {dateRange.to && (
+            {tempTo && (
               <>
                 <span className="text-muted-foreground">→</span>
                 <Badge variant="secondary" className="font-mono text-xs">
-                  {format(dateRange.to, "MMM d, yyyy")}
+                  {format(tempTo, "MMM d, yyyy")}
                 </Badge>
               </>
             )}
@@ -202,7 +230,7 @@ export function DateRangePicker({
           <Button 
             size="sm" 
             onClick={handleApply}
-            disabled={!dateRange?.from || !dateRange?.to}
+            disabled={!tempFrom || !tempTo}
             className="h-7 text-xs"
           >
             Apply Range
