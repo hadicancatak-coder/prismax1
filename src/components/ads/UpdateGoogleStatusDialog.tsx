@@ -13,9 +13,15 @@ interface UpdateGoogleStatusDialogProps {
 }
 
 export function UpdateGoogleStatusDialog({ open, onOpenChange, element }: UpdateGoogleStatusDialogProps) {
-  const [status, setStatus] = useState(element.google_status);
+  const [status, setStatus] = useState(element.google_status || 'pending');
   const [notes, setNotes] = useState(element.google_status_notes || '');
   const updateElement = useUpdateAdElement();
+
+  // Reset state when element changes
+  useState(() => {
+    setStatus(element.google_status || 'pending');
+    setNotes(element.google_status_notes || '');
+  });
 
   const handleSave = () => {
     updateElement.mutate({

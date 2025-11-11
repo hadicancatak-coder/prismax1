@@ -34,6 +34,7 @@ import UtmPlanner from "./pages/UtmPlanner";
 import Operations from "./pages/Operations";
 import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
+import MediaPlanning from "./pages/MediaPlanning";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 const App = () => (
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />
             <Route path="/location-intelligence" element={<LocationIntelligence />} />
+            <Route path="/media-planning" element={<MediaPlanning />} />
             <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />

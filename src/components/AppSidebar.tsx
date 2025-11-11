@@ -16,7 +16,8 @@ import {
   PenTool, 
   Monitor, 
   Database, 
-  MapPin 
+  MapPin,
+  Tv
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,14 +43,15 @@ const adsItems = [
   { title: "Display Planner", url: "/ads/display", icon: Monitor },
   { title: "Copy Writer", url: "/copywriter", icon: PenTool },
   { title: "Saved Elements", url: "/ads/library", icon: Database },
-];
-
-const webItems = [
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
 ];
 
-const offlineItems = [
+const webItems = [
+];
+
+const mediaItems = [
   { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
+  { title: "Media Planning", url: "/media-planning", icon: Tv },
 ];
 
 const operationsItems = [
@@ -156,34 +158,11 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroup>
 
-          {/* Web */}
+          {/* Media */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Web</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Media</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
-              {webItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    {!open ? (
-                      <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                      </NavLink>
-                    ) : (
-                      <NavLink to={item.url} className={getNavLinkClass}>
-                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-                        <span className="text-body">{item.title}</span>
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-
-          {/* Offline */}
-          <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-sidebar-foreground/60 uppercase tracking-wider px-3 mb-3">Offline</SidebarGroupLabel>}
-            <SidebarMenu className="space-y-1">
-              {offlineItems.map((item) => (
+              {mediaItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     {!open ? (
