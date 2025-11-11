@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MediaLocation } from "@/hooks/useMediaLocations";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,15 +31,12 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
 
     mapboxgl.accessToken = mapboxToken;
 
-    const center: [number, number] = filteredLocations.length > 0
-      ? [Number(filteredLocations[0].longitude), Number(filteredLocations[0].latitude)]
-      : [0, 0];
-
+    // Center on UAE coordinates, will adjust when markers are added
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: center,
-      zoom: 10,
+      center: [55.2708, 25.2048], // UAE
+      zoom: 8,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -143,6 +141,22 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
   return (
     <div className="relative">
       <div ref={mapContainer} className="h-[600px] rounded-lg border" />
+      
+      {/* Empty state overlay */}
+      {filteredLocations.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg pointer-events-none">
+          <div className="text-center space-y-2 p-6">
+            <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="text-lg font-semibold">No Locations to Display</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {selectedCity 
+                ? `No locations found in ${selectedCity}. Try selecting a different city.`
+                : "No locations have been added yet. Add your first location to see it on the map."}
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="absolute top-4 left-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border">
         <div className="text-xs font-semibold mb-2">Location Types</div>
         <div className="space-y-1">

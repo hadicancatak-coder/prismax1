@@ -27,6 +27,10 @@ export default function LocationIntelligence() {
   );
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
+  
+  const getCityCount = (city: string) => {
+    return locations.filter(l => l.city === city).length;
+  };
 
   const handleTokenSubmit = (token: string) => {
     localStorage.setItem("mapbox_token", token);
@@ -104,13 +108,13 @@ export default function LocationIntelligence() {
             </div>
 
             {viewMode === "map" && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Badge
                   variant={selectedCity === null ? "default" : "outline"}
                   className="cursor-pointer"
                   onClick={() => setSelectedCity(null)}
                 >
-                  All Cities
+                  All Cities ({locations.length})
                 </Badge>
                 {cities.map(city => (
                   <Badge
@@ -119,9 +123,14 @@ export default function LocationIntelligence() {
                     className="cursor-pointer"
                     onClick={() => setSelectedCity(city)}
                   >
-                    {city}
+                    {city} ({getCityCount(city)})
                   </Badge>
                 ))}
+                {cities.length === 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    Add locations to see city filters
+                  </span>
+                )}
               </div>
             )}
           </div>
