@@ -5,18 +5,9 @@ export interface EnrichmentResult {
 }
 
 const CATEGORY_PATTERNS: Record<string, string[]> = {
-  'News': ['news', 'times', 'post', 'gazette', 'tribune', 'herald', 'journal'],
-  'Shopping': ['shop', 'store', 'buy', 'cart', 'amazon', 'ebay', 'souq', 'noon'],
-  'Tech': ['tech', 'digital', 'software', 'app', 'dev', 'code', 'github'],
-  'Entertainment': ['entertainment', 'movie', 'film', 'music', 'game', 'netflix', 'youtube'],
-  'Sports': ['sport', 'football', 'cricket', 'fifa', 'espn', 'goal'],
-  'Social Media': ['facebook', 'instagram', 'twitter', 'linkedin', 'snapchat', 'tiktok'],
-  'Finance': ['bank', 'finance', 'money', 'invest', 'trade', 'crypto'],
-  'Education': ['edu', 'school', 'university', 'course', 'learn', 'academy'],
-  'Travel': ['travel', 'flight', 'hotel', 'booking', 'trip', 'tour'],
-  'Food': ['food', 'recipe', 'restaurant', 'delivery', 'talabat', 'zomato'],
-  'Health': ['health', 'medical', 'doctor', 'hospital', 'fitness', 'wellness'],
-  'Real Estate': ['property', 'real', 'estate', 'house', 'apartment', 'rent'],
+  'Trading': ['trading', 'forex', 'stock', 'crypto', 'invest', 'broker', 'exchange', 'finance', 'market'],
+  'Business': ['business', 'enterprise', 'company', 'corporate', 'b2b', 'professional', 'services'],
+  'App': ['app', 'mobile', 'android', 'ios', 'application', 'download', 'play', 'store'],
 };
 
 const detectCategory = (domain: string, url: string): string => {
@@ -28,7 +19,7 @@ const detectCategory = (domain: string, url: string): string => {
     }
   }
   
-  return 'Other';
+  return 'Generic';
 };
 
 const detectType = (domain: string, url: string): 'Website' | 'App' | 'Portal' | 'Forum' => {
@@ -100,7 +91,7 @@ export const enrichUrl = async (url: string): Promise<EnrichmentResult> => {
   } catch (error) {
     console.error('URL enrichment failed:', error);
     return {
-      category: 'Other',
+      category: 'Generic',
       detectedType: 'Website',
       estimatedTraffic: null,
     };

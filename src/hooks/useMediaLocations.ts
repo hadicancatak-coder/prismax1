@@ -325,6 +325,8 @@ export const useMediaLocations = () => {
   return {
     locations,
     isLoading,
+    allPrices,
+    allCampaigns,
     createLocation,
     updateLocation,
     deleteLocation,

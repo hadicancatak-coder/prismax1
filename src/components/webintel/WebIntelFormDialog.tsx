@@ -27,6 +27,7 @@ interface WebIntelFormDialogProps {
 
 const COUNTRIES = ['UAE', 'Saudi Arabia', 'Egypt', 'Kuwait', 'Qatar', 'Bahrain', 'Oman', 'Jordan', 'Lebanon', 'Morocco'];
 const SITE_TYPES: ('Website' | 'App' | 'Portal' | 'Forum')[] = ['Website', 'App', 'Portal', 'Forum'];
+const CATEGORIES = ['Trading', 'Generic', 'Business', 'App'];
 const AVAILABLE_TAGS = ['GDN', 'DV360', 'Direct', 'Mobile-only'];
 
 export function WebIntelFormDialog({
@@ -234,12 +235,16 @@ export function WebIntelFormDialog({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="News, Shopping, etc."
-                />
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="traffic">Est. Monthly Traffic</Label>

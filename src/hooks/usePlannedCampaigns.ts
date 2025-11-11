@@ -39,35 +39,63 @@ export const suggestPlacements = (
   locations: MediaLocation[],
   budget: number,
   duration: number,
-  cities: string[]
+  cities: string[],
+  historicPrices: Array<{ id: string; location_id: string; year: number; price: number; created_at: string }>
 ): Array<{ location: MediaLocation; cost: number }> => {
-  // Filter by selected cities AND locations with prices
-  const filteredLocations = locations.filter(loc => 
-    cities.includes(loc.city) && loc.price_per_month && loc.price_per_month > 0
-  );
+  // Filter by selected cities only
+  const filteredLocations = locations.filter(loc => cities.includes(loc.city));
   
   if (filteredLocations.length === 0 || budget <= 0 || duration <= 0) {
     return [];
   }
   
-  // Calculate cost for each location
-  const locationsWithCost = filteredLocations
-    .map(loc => ({
-      location: loc,
-      cost: (loc.price_per_month || 0) * duration,
-      score: loc.manual_score || 0,
-    }))
+  // Calculate efficiency for each location using historical pricing
+  const locationsWithEfficiency = filteredLocations
+    .map(loc => {
+      // Get historic prices for this location
+      const locationPrices = historicPrices.filter(p => p.location_id === loc.id);
+      
+      // Skip if no historic prices
+      if (locationPrices.length === 0) {
+        return null;
+      }
+      
+      // Calculate average historical price
+      const avgHistoricalPrice = locationPrices.reduce((sum, p) => sum + p.price, 0) / locationPrices.length;
+      
+      // Calculate cost for campaign duration
+      const cost = avgHistoricalPrice * duration;
+      
+      // Calculate impressions (daily traffic × days in duration)
+      const impressions = (loc.est_daily_traffic || 0) * duration * 30;
+      
+      // Calculate efficiency: (impressions × score) / cost
+      // Higher score = better value (more impressions per AED spent)
+      const efficiency = impressions > 0 && cost > 0 
+        ? (impressions * (loc.manual_score || 1)) / cost 
+        : 0;
+      
+      return {
+        location: loc,
+        cost,
+        impressions,
+        efficiency,
+        score: loc.manual_score || 0,
+      };
+    })
+    .filter(item => item !== null)
     .sort((a, b) => {
-      // Sort by score (desc) then cost (asc)
-      if (b.score !== a.score) return b.score - a.score;
-      return a.cost - b.cost;
-    });
+      // Sort by efficiency (desc), then score (desc), then cost (asc)
+      if (b!.efficiency !== a!.efficiency) return b!.efficiency - a!.efficiency;
+      if (b!.score !== a!.score) return b!.score - a!.score;
+      return a!.cost - b!.cost;
+    }) as Array<{ location: MediaLocation; cost: number; impressions: number; efficiency: number; score: number }>;
   
-  // Greedy algorithm: select highest scoring that fit budget
+  // Greedy algorithm: maximize impressions within budget
   const selected: Array<{ location: MediaLocation; cost: number }> = [];
   let remainingBudget = budget;
   
-  for (const item of locationsWithCost) {
+  for (const item of locationsWithEfficiency) {
     if (item.cost <= remainingBudget) {
       selected.push({ location: item.location, cost: item.cost });
       remainingBudget -= item.cost;

@@ -31,6 +31,7 @@ export default function WebIntel() {
     types: [],
     categories: [],
     tags: [],
+    entities: [],
   });
 
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -41,8 +42,9 @@ export default function WebIntel() {
 
   // Get unique values for filters
   const availableCountries = Array.from(new Set(sites.map(s => s.country))).sort();
-  const availableCategories = Array.from(new Set(sites.map(s => s.category).filter(Boolean) as string[])).sort();
+  const availableCategories = ['Trading', 'Generic', 'Business', 'App'];
   const availableTags = Array.from(new Set(sites.flatMap(s => s.tags))).sort();
+  const availableEntities = Array.from(new Set(sites.map(s => s.entity).filter(Boolean) as string[])).sort();
 
   // Apply filters
   const filteredSites = sites.filter(site => {
@@ -55,8 +57,9 @@ export default function WebIntel() {
     const matchesType = filters.types.length === 0 || filters.types.includes(site.type);
     const matchesCategory = filters.categories.length === 0 || (site.category && filters.categories.includes(site.category));
     const matchesTags = filters.tags.length === 0 || filters.tags.some(tag => site.tags.includes(tag));
+    const matchesEntity = filters.entities.length === 0 || (site.entity && filters.entities.includes(site.entity));
 
-    return matchesSearch && matchesCountry && matchesType && matchesCategory && matchesTags;
+    return matchesSearch && matchesCountry && matchesType && matchesCategory && matchesTags && matchesEntity;
   });
 
   const handleAdd = () => {
@@ -182,6 +185,7 @@ export default function WebIntel() {
         availableCountries={availableCountries}
         availableCategories={availableCategories}
         availableTags={availableTags}
+        availableEntities={availableEntities}
       />
 
       {/* Table */}

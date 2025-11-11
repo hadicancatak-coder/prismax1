@@ -10,6 +10,7 @@ export interface WebIntelFiltersState {
   types: string[];
   categories: string[];
   tags: string[];
+  entities: string[];
 }
 
 interface WebIntelFiltersProps {
@@ -18,6 +19,7 @@ interface WebIntelFiltersProps {
   availableCountries: string[];
   availableCategories: string[];
   availableTags: string[];
+  availableEntities: string[];
 }
 
 const SITE_TYPES = ['Website', 'App', 'Portal', 'Forum'];
@@ -28,13 +30,15 @@ export function WebIntelFilters({
   availableCountries,
   availableCategories,
   availableTags,
+  availableEntities,
 }: WebIntelFiltersProps) {
   const hasActiveFilters = 
     filters.search || 
     filters.countries.length > 0 || 
     filters.types.length > 0 || 
     filters.categories.length > 0 || 
-    filters.tags.length > 0;
+    filters.tags.length > 0 ||
+    filters.entities.length > 0;
 
   const clearFilters = () => {
     onFiltersChange({
@@ -43,6 +47,7 @@ export function WebIntelFilters({
       types: [],
       categories: [],
       tags: [],
+      entities: [],
     });
   };
 
@@ -104,6 +109,15 @@ export function WebIntelFilters({
               <X 
                 className="h-3 w-3 ml-1 cursor-pointer" 
                 onClick={() => onFiltersChange({ ...filters, tags: filters.tags.filter(x => x !== t) })}
+              />
+            </Badge>
+          ))}
+          {filters.entities.map(e => (
+            <Badge key={e} variant="secondary">
+              {e}
+              <X 
+                className="h-3 w-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, entities: filters.entities.filter(x => x !== e) })}
               />
             </Badge>
           ))}

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { usePlannedCampaigns, calculateDuration, suggestPlacements } from "@/hooks/usePlannedCampaigns";
+import { useMediaLocations } from "@/hooks/useMediaLocations";
 import { MediaLocation } from "@/hooks/useMediaLocations";
 import { Calendar, DollarSign, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +20,7 @@ interface CampaignPlannerDialogProps {
 
 export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlannerDialogProps) {
   const { createCampaign } = usePlannedCampaigns();
+  const { allPrices } = useMediaLocations();
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -41,14 +43,14 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
   useEffect(() => {
     if (formData.budget > 0 && selectedCities.length > 0 && formData.start_date && formData.end_date) {
       const duration = calculateDuration(formData.start_date, formData.end_date);
-      const suggestions = suggestPlacements(locations, formData.budget, duration, selectedCities);
+      const suggestions = suggestPlacements(locations, formData.budget, duration, selectedCities, allPrices);
       setSuggestedPlacements(suggestions);
       setManualSelections(new Set(suggestions.map(s => s.location.id)));
     } else {
       setSuggestedPlacements([]);
       setManualSelections(new Set());
     }
-  }, [formData.budget, formData.start_date, formData.end_date, selectedCities, locations]);
+  }, [formData.budget, formData.start_date, formData.end_date, selectedCities, locations, allPrices]);
 
   const toggleCity = (city: string) => {
     setSelectedCities(prev =>
@@ -220,7 +222,7 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
                 
                 {suggestedPlacements.length === 0 && selectedCities.length > 0 && formData.budget > 0 ? (
                   <p className="text-sm text-amber-600">
-                    No locations with pricing found in selected cities. Please add prices to locations first.
+                    No locations with historic pricing found in selected cities. Please add historic prices to locations first.
                   </p>
                 ) : suggestedPlacements.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
