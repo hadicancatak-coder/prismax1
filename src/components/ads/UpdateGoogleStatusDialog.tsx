@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -18,10 +18,10 @@ export function UpdateGoogleStatusDialog({ open, onOpenChange, element }: Update
   const updateElement = useUpdateAdElement();
 
   // Reset state when element changes
-  useState(() => {
+  useEffect(() => {
     setStatus(element.google_status || 'pending');
     setNotes(element.google_status_notes || '');
-  });
+  }, [element.id, element.google_status, element.google_status_notes]);
 
   const handleSave = () => {
     updateElement.mutate({
