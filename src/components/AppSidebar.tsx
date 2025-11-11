@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   CheckSquare, 
@@ -32,11 +32,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const coreItems = [
-  { title: "Dashboard", url: "/", icon: DashboardIcon },
-  { title: "Tasks", url: "/tasks", icon: CheckSquare },
-  { title: "Agenda", url: "/calendar", icon: Calendar },
-];
+  const coreItems = [
+    { title: "Tasks", url: "/tasks", icon: CheckSquare },
+    { title: "Agenda", url: "/calendar", icon: Calendar },
+  ];
 
 const adsItems = [
   { title: "Search Planner", url: "/ads/search", icon: Megaphone },
@@ -58,6 +57,7 @@ const operationsItems = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
   const { open } = useSidebar();
   const { signOut, userRole, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
@@ -88,8 +88,11 @@ export function AppSidebar() {
     <TooltipProvider delayDuration={0}>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
         <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
-          {/* Logo */}
-          <div className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'}`}>
+          {/* Logo and User Section - Clickable to navigate to Dashboard */}
+          <div 
+            onClick={() => navigate('/')}
+            className={`flex ${open ? 'items-center gap-3 px-3 pb-6 border-b border-sidebar-border' : 'flex-col items-center justify-center pb-4 border-b border-sidebar-border'} transition-smooth cursor-pointer hover:opacity-80`}
+          >
             <img 
               src={logoImage} 
               alt="Prisma" 

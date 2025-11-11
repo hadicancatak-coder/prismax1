@@ -1,0 +1,75 @@
+import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { CheckSquare, Search, Eye, Link2, FileText, MapPin } from "lucide-react";
+
+const links = [
+  {
+    title: "Tasks",
+    description: "Manage your tasks",
+    icon: CheckSquare,
+    url: "/tasks",
+    color: "text-blue-600",
+  },
+  {
+    title: "Search Ads",
+    description: "Plan search campaigns",
+    icon: Search,
+    url: "/ads/search",
+    color: "text-green-600",
+  },
+  {
+    title: "Display Ads",
+    description: "Create display ads",
+    icon: Eye,
+    url: "/ads/display",
+    color: "text-purple-600",
+  },
+  {
+    title: "UTM Builder",
+    description: "Generate UTM links",
+    icon: Link2,
+    url: "/utm-planner",
+    color: "text-orange-600",
+  },
+  {
+    title: "Copy Writer",
+    description: "Manage ad copy",
+    icon: FileText,
+    url: "/copywriter",
+    color: "text-pink-600",
+  },
+  {
+    title: "Location Intel",
+    description: "Location insights",
+    icon: MapPin,
+    url: "/location-intelligence",
+    color: "text-teal-600",
+  },
+];
+
+export function FastLinks() {
+  const navigate = useNavigate();
+
+  return (
+    <div>
+      <h2 className="text-section-title text-foreground mb-4">Quick Access</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {links.map((link) => (
+          <Card
+            key={link.url}
+            onClick={() => navigate(link.url)}
+            className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-smooth group"
+          >
+            <div className="flex flex-col items-center text-center gap-2">
+              <link.icon className={`h-8 w-8 ${link.color} group-hover:scale-110 transition-smooth`} />
+              <div>
+                <p className="text-body font-medium text-foreground">{link.title}</p>
+                <p className="text-metadata text-muted-foreground">{link.description}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
