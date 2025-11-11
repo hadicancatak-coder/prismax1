@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ENTITIES } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
+import { UpdateGoogleStatusDialog } from "@/components/ads/UpdateGoogleStatusDialog";
 
 export default function SavedElementsPage() {
   const { user } = useAuth();
@@ -35,6 +36,9 @@ export default function SavedElementsPage() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any[]>([]);
+  
+  // Status dialog state
+  const [statusDialog, setStatusDialog] = useState<{element: any} | null>(null);
 
   // Get unique entities from ad_elements
   const { data: entityOptions } = useQuery({
@@ -341,7 +345,13 @@ export default function SavedElementsPage() {
                             </p>
                           )}
                           {element.google_status && (
-                            <Badge variant="outline" className="mt-2">{element.google_status}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className="mt-2 cursor-pointer hover:bg-accent transition-colors" 
+                              onClick={() => setStatusDialog({ element })}
+                            >
+                              {element.google_status}
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -381,7 +391,13 @@ export default function SavedElementsPage() {
                             </p>
                           )}
                           {element.google_status && (
-                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className="mt-2 cursor-pointer hover:bg-accent transition-colors" 
+                              onClick={() => setStatusDialog({ element })}
+                            >
+                              {String(element.google_status)}
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -421,7 +437,13 @@ export default function SavedElementsPage() {
                             </p>
                           )}
                           {element.google_status && (
-                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className="mt-2 cursor-pointer hover:bg-accent transition-colors" 
+                              onClick={() => setStatusDialog({ element })}
+                            >
+                              {String(element.google_status)}
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -461,7 +483,13 @@ export default function SavedElementsPage() {
                             </p>
                           )}
                           {element.google_status && (
-                            <Badge variant="outline" className="mt-2">{String(element.google_status)}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className="mt-2 cursor-pointer hover:bg-accent transition-colors" 
+                              onClick={() => setStatusDialog({ element })}
+                            >
+                              {String(element.google_status)}
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -614,6 +642,15 @@ export default function SavedElementsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Status Update Dialog */}
+      {statusDialog && (
+        <UpdateGoogleStatusDialog
+          open={!!statusDialog}
+          onOpenChange={(open) => !open && setStatusDialog(null)}
+          element={statusDialog.element}
+        />
+      )}
     </div>
   );
 }
