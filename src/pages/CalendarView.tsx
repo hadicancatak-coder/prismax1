@@ -13,7 +13,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical } from "lucide-react";
+import { CalendarIcon, GripVertical, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { CompletedTasksSection } from "@/components/tasks/CompletedTasksSection";
 import { TaskSortDropdown, SortOption } from "@/components/tasks/TaskSortDropdown";
@@ -24,7 +26,7 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
 // Sortable Task Item Component
-function SortableTaskItem({ task, onTaskClick, onTaskComplete }: any) {
+function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = false }: any) {
   const {
     attributes,
     listeners,
@@ -32,12 +34,21 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete }: any) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ 
+    id: task.id,
+    disabled: !isManualMode
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    ...(isDragging && {
+      boxShadow: '0 8px 16px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      border: '2px dashed hsl(var(--primary))',
+      backgroundColor: 'hsl(var(--background))',
+    })
   };
 
   return (
@@ -50,14 +61,36 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete }: any) {
       )}
       onClick={() => onTaskClick(task.id)}
     >
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <GripVertical className="w-5 h-5 text-muted-foreground" />
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              {...(isManualMode ? attributes : {})}
+              {...(isManualMode ? listeners : {})}
+              className={cn(
+                "transition-all duration-200",
+                isManualMode 
+                  ? "cursor-grab active:cursor-grabbing opacity-60 hover:opacity-100" 
+                  : "cursor-not-allowed opacity-30"
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className={cn(
+                "w-5 h-5",
+                isManualMode ? "text-muted-foreground" : "text-muted-foreground/40"
+              )} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            {isManualMode ? (
+              <p className="text-xs">Drag to reorder</p>
+            ) : (
+              <p className="text-xs">Switch to "Manual Order" to drag & drop</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      
       <Checkbox
         checked={task.status === 'Completed'}
         onCheckedChange={(checked) => onTaskComplete(task.id, checked as boolean)}
@@ -453,6 +486,15 @@ export default function CalendarView() {
               <ListSkeleton items={5} />
             ) : (
             <>
+              {activeTasks.length > 0 && sortOption !== "manual" && (
+                <Alert className="mb-4 border-primary/50 bg-primary/5">
+                  <Info className="h-4 w-4 text-primary" />
+                  <AlertDescription className="text-sm">
+                    💡 <strong>Tip:</strong> Switch to "Manual Order" in the sort dropdown to drag & drop tasks into your preferred order
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -476,6 +518,7 @@ export default function CalendarView() {
                             setTaskDialogOpen(true);
                           }}
                           onTaskComplete={handleTaskComplete}
+                          isManualMode={sortOption === "manual"}
                         />
                       ))
                     )}
