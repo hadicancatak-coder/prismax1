@@ -25,6 +25,7 @@ interface ParsedRow {
     "Manual Score"?: string;
     Agency?: string;
     "Price Per Month"?: string;
+    "Est. Daily Traffic"?: string;
     "Historic Prices"?: string;
     Notes?: string;
   };
@@ -84,6 +85,13 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
       const price = parseFloat(row["Price Per Month"]);
       if (isNaN(price) || price < 0) {
         errors.push('Invalid Price Per Month');
+      }
+    }
+
+    if (row["Est. Daily Traffic"]) {
+      const traffic = parseInt(row["Est. Daily Traffic"]);
+      if (isNaN(traffic) || traffic < 0) {
+        errors.push('Invalid Est. Daily Traffic');
       }
     }
 
@@ -226,6 +234,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
           manual_score: row.data["Manual Score"] ? parseInt(row.data["Manual Score"]) : undefined,
           agency: row.data.Agency || undefined,
           price_per_month: row.data["Price Per Month"] ? parseFloat(row.data["Price Per Month"]) : undefined,
+          est_daily_traffic: row.data["Est. Daily Traffic"] ? parseInt(row.data["Est. Daily Traffic"]) : undefined,
           notes: row.data.Notes || undefined,
         };
 
@@ -238,6 +247,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
           
           if (!existingLoc?.agency && locationData.agency) updates.agency = locationData.agency;
           if (!existingLoc?.price_per_month && locationData.price_per_month) updates.price_per_month = locationData.price_per_month;
+          if (!existingLoc?.est_daily_traffic && locationData.est_daily_traffic) updates.est_daily_traffic = locationData.est_daily_traffic;
           if (!existingLoc?.manual_score && locationData.manual_score) updates.manual_score = locationData.manual_score;
           if (!existingLoc?.notes && locationData.notes) updates.notes = locationData.notes;
 
@@ -292,14 +302,14 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
 
   const downloadTemplate = () => {
     const headers = ['City', 'Type', 'Name', 'Latitude', 'Longitude', 'Manual Score', 
-                     'Agency', 'Price Per Month', 'Historic Prices', 'Notes'];
+                     'Agency', 'Price Per Month', 'Est. Daily Traffic', 'Historic Prices', 'Notes'];
     const exampleRows = [
       ['Dubai', 'LED Screen', 'Sheikh Zayed Road LED 1', '25.2048', '55.2708', '8', 
-       'Mediahub', '7500', '2023:7000;2024:7500', 'Premium location near DIFC'],
+       'Mediahub', '7500', '50000', '2023:7000;2024:7500', 'Premium location near DIFC'],
       ['Abu Dhabi', 'Megacom', 'Corniche Megacom', '24.4539', '54.3773', '9', 
-       'Starcom', '12000', '2023:11000;2024:12000', 'High visibility location'],
+       'Starcom', '12000', '75000', '2023:11000;2024:12000', 'High visibility location'],
       ['Dubai', 'Airport Media', 'DXB Terminal 3', '25.2532', '55.3657', '10',
-       'Clear Channel', '25000', '2023:24000;2024:25000', 'Terminal 3 arrivals area'],
+       'Clear Channel', '25000', '200000', '2023:24000;2024:25000', 'Terminal 3 arrivals area'],
     ];
     
     const csv = [headers, ...exampleRows]
@@ -332,7 +342,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
             <div>
             <DialogTitle>Bulk Upload Locations</DialogTitle>
               <DialogDescription>
-                Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Historic Prices, Notes
+                Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Est. Daily Traffic, Historic Prices, Notes
               </DialogDescription>
             </div>
             <Button onClick={downloadTemplate} variant="outline" size="sm">

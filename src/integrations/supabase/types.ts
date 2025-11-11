@@ -1473,6 +1473,7 @@ export type Database = {
           city: string
           created_at: string
           created_by: string | null
+          est_daily_traffic: number | null
           id: string
           image_url: string | null
           latitude: number
@@ -1489,6 +1490,7 @@ export type Database = {
           city: string
           created_at?: string
           created_by?: string | null
+          est_daily_traffic?: number | null
           id?: string
           image_url?: string | null
           latitude: number
@@ -1505,6 +1507,7 @@ export type Database = {
           city?: string
           created_at?: string
           created_by?: string | null
+          est_daily_traffic?: number | null
           id?: string
           image_url?: string | null
           latitude?: number

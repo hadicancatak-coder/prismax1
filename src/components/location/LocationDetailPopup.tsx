@@ -35,7 +35,12 @@ export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }
                 )}
                 {location.price_per_month && (
                   <Badge variant="secondary">
-                    AED {location.price_per_month.toLocaleString()}/month
+                    💰 AED {location.price_per_month.toLocaleString()}/mo
+                  </Badge>
+                )}
+                {location.est_daily_traffic && (
+                  <Badge variant="secondary">
+                    👥 {location.est_daily_traffic.toLocaleString()} daily
                   </Badge>
                 )}
                 {getLocationCategory(location.type) && (
@@ -69,6 +74,30 @@ export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }
           <div>
             <h4 className="font-semibold mb-2">Location Details</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
+              {location.agency && (
+                <div>
+                  <span className="text-muted-foreground">Agency:</span>{' '}
+                  <span className="font-medium">{location.agency}</span>
+                </div>
+              )}
+              {location.price_per_month && (
+                <div>
+                  <span className="text-muted-foreground">Price/Month:</span>{' '}
+                  <span className="font-medium">AED {location.price_per_month.toLocaleString()}</span>
+                </div>
+              )}
+              {location.est_daily_traffic && (
+                <div>
+                  <span className="text-muted-foreground">Daily Traffic:</span>{' '}
+                  <span className="font-medium">{location.est_daily_traffic.toLocaleString()}</span>
+                </div>
+              )}
+              {getLocationCategory(location.type) && (
+                <div>
+                  <span className="text-muted-foreground">Category:</span>{' '}
+                  <span className="font-medium">{LOCATION_CATEGORIES[getLocationCategory(location.type)!].emoji} {getLocationCategory(location.type)}</span>
+                </div>
+              )}
               <div>
                 <span className="text-muted-foreground">Latitude:</span> {location.latitude}
               </div>

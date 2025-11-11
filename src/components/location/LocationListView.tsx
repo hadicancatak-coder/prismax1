@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MediaLocation } from "@/hooks/useMediaLocations";
+import { MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,18 +42,23 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
     });
 
   const exportToCSV = () => {
-    const headers = ["Name", "City", "Type", "Agency", "Price Per Month", "Manual Score", "Latitude", "Longitude", "Notes"];
-    const rows = filteredLocations.map(loc => [
-      loc.name,
-      loc.city,
-      loc.type,
-      loc.agency || "",
-      loc.price_per_month || "",
-      loc.manual_score || "",
-      loc.latitude,
-      loc.longitude,
-      loc.notes || "",
-    ]);
+    const headers = ["Name", "City", "Type", "Category", "Agency", "Price/Month", "Est. Daily Traffic", "Manual Score", "Latitude", "Longitude", "Notes"];
+    const rows = filteredLocations.map(loc => {
+      const category = getLocationCategory(loc.type);
+      return [
+        loc.name,
+        loc.city,
+        loc.type,
+        category || "",
+        loc.agency || "",
+        loc.price_per_month || "",
+        loc.est_daily_traffic || "",
+        loc.manual_score || "",
+        loc.latitude,
+        loc.longitude,
+        (loc.notes || "").replace(/,/g, ";"),
+      ];
+    });
 
     const csv = [headers, ...rows]
       .map(row => row.map(cell => `"${cell}"`).join(","))
@@ -107,12 +112,14 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
               <TableHead className="cursor-pointer" onClick={() => toggleSort("type")}>
                 Type {sortBy === "type" && (sortOrder === "asc" ? "↑" : "↓")}
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("score")}>
-                Score {sortBy === "score" && (sortOrder === "asc" ? "↑" : "↓")}
-              </TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Agency</TableHead>
               <TableHead className="cursor-pointer" onClick={() => toggleSort("price")}>
                 Price/Month {sortBy === "price" && (sortOrder === "asc" ? "↑" : "↓")}
+              </TableHead>
+              <TableHead>Daily Traffic</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => toggleSort("score")}>
+                Score {sortBy === "score" && (sortOrder === "asc" ? "↑" : "↓")}
               </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -120,21 +127,23 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
           <TableBody>
             {filteredLocations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   No locations found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredLocations.map((location) => (
+              filteredLocations.map((location) => {
+                const category = getLocationCategory(location.type);
+                return (
                 <TableRow key={location.id}>
                   <TableCell className="font-medium">{location.name}</TableCell>
                   <TableCell>{location.city}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{location.type}</Badge>
                   </TableCell>
-                  <TableCell>
-                    {location.manual_score ? (
-                      <Badge>{location.manual_score}/10</Badge>
+                  <TableCell className="text-sm">
+                    {category ? (
+                      <span className="text-muted-foreground">{category}</span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
@@ -142,9 +151,23 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
                   <TableCell className="text-sm">
                     {location.agency || <span className="text-muted-foreground">-</span>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-sm">
                     {location.price_per_month ? (
                       `AED ${location.price_per_month.toLocaleString()}`
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {location.est_daily_traffic ? (
+                      location.est_daily_traffic.toLocaleString()
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {location.manual_score ? (
+                      <Badge>{location.manual_score}/10</Badge>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
@@ -167,7 +190,8 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+              );
+              })
             )}
           </TableBody>
         </Table>

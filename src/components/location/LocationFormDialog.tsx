@@ -30,6 +30,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
     manual_score: undefined as number | undefined,
     agency: "",
     price_per_month: undefined as number | undefined,
+    est_daily_traffic: undefined as number | undefined,
   });
 
   const [prices, setPrices] = useState<Array<{ year: number; price: number }>>([]);
@@ -50,6 +51,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         manual_score: location.manual_score,
         agency: location.agency || "",
         price_per_month: location.price_per_month,
+        est_daily_traffic: location.est_daily_traffic,
       });
       setPrices(location.historic_prices.map(p => ({ year: p.year, price: Number(p.price) })));
       setCampaigns(location.past_campaigns.map(c => ({
@@ -70,6 +72,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         manual_score: undefined,
         agency: "",
         price_per_month: undefined,
+        est_daily_traffic: undefined,
       });
       setPrices([]);
       setCampaigns([]);
@@ -86,6 +89,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         manual_score: undefined,
         agency: "",
         price_per_month: undefined,
+        est_daily_traffic: undefined,
       });
       setPrices([]);
       setCampaigns([]);
@@ -249,6 +253,17 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 value={formData.price_per_month || ""}
                 onChange={(e) => setFormData({ ...formData, price_per_month: e.target.value ? Number(e.target.value) : undefined })}
                 placeholder="Monthly rental price"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="est_daily_traffic">Est. Daily Traffic</Label>
+              <Input
+                id="est_daily_traffic"
+                type="number"
+                value={formData.est_daily_traffic || ""}
+                onChange={(e) => setFormData({ ...formData, est_daily_traffic: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="Estimated daily impressions"
               />
             </div>
 
