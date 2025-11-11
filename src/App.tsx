@@ -14,6 +14,7 @@ import CalendarView from "./pages/CalendarView";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Overview from "./pages/admin/Overview";
 import UsersManagement from "./pages/admin/UsersManagement";
+import EntitiesManagement from "./pages/admin/EntitiesManagement";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
 import AuditLog from "./pages/admin/AuditLog";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />
+              <Route path="entities" element={<EntitiesManagement />} />
               <Route path="approvals" element={<ApprovalsCenter />} />
               <Route path="errors" element={<ErrorLogs />} />
               <Route path="activity" element={<ActivityLog />} />

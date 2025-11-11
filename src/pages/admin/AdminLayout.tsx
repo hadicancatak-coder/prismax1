@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Shield, AlertCircle, Activity, FileText, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Users, Shield, AlertCircle, Activity, FileText, ShieldCheck, Database } from "lucide-react";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function AdminLayout() {
       </div>
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6 lg:space-y-8">
-        <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full lg:w-auto border-b border-border overflow-x-auto">
+        <TabsList className="grid grid-cols-4 sm:grid-cols-8 w-full lg:w-auto border-b border-border overflow-x-auto">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -29,6 +29,10 @@ export default function AdminLayout() {
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Users</span>
+          </TabsTrigger>
+          <TabsTrigger value="entities" className="gap-2">
+            <Database className="h-4 w-4" />
+            <span className="hidden sm:inline">Entities</span>
           </TabsTrigger>
           <TabsTrigger value="approvals" className="gap-2">
             <Shield className="h-4 w-4" />

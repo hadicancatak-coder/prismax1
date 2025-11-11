@@ -64,8 +64,11 @@ export default function MfaVerify() {
           throw new Error('Failed to create session');
         }
 
-        // Mark MFA as verified with session token
-        setMfaVerifiedStatus(true, sessionData.sessionToken);
+        // Calculate expiry (6 hours from now)
+        const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+
+        // Mark MFA as verified with session token and expiry
+        setMfaVerifiedStatus(true, sessionData.sessionToken, expiresAt);
         
         toast({
           title: "Verified!",
@@ -184,7 +187,7 @@ export default function MfaVerify() {
             variant="outline"
             onClick={async () => {
               await supabase.auth.signOut();
-              sessionStorage.removeItem('mfa_session_token');
+              localStorage.removeItem('mfa_session_data');
               navigate("/auth");
             }}
             className="w-full"

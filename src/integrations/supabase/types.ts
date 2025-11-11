@@ -1133,6 +1133,44 @@ export type Database = {
           },
         ]
       }
+      entity_change_log: {
+        Row: {
+          action: string
+          changed_at: string | null
+          changed_by: string | null
+          entity_id: string | null
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string | null
+          changed_by?: string | null
+          entity_id?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          entity_id?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_change_log_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "system_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_presets: {
         Row: {
           created_at: string | null
@@ -1606,6 +1644,7 @@ export type Database = {
           id: string
           ip_address: string | null
           session_token: string
+          skip_validation_for_ip: boolean | null
           user_agent: string | null
           user_id: string
           verified_at: string
@@ -1616,6 +1655,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           session_token: string
+          skip_validation_for_ip?: boolean | null
           user_agent?: string | null
           user_id: string
           verified_at?: string
@@ -1626,6 +1666,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           session_token?: string
+          skip_validation_for_ip?: boolean | null
           user_agent?: string | null
           user_id?: string
           verified_at?: string
@@ -2402,6 +2443,45 @@ export type Database = {
           severity?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_entities: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          display_order: number | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -3471,6 +3551,10 @@ export type Database = {
           }
       validate_mfa_session: {
         Args: { session_token: string }
+        Returns: boolean
+      }
+      validate_mfa_session_with_ip: {
+        Args: { p_ip_address: string; p_session_token: string }
         Returns: boolean
       }
     }

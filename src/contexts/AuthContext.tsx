@@ -3,18 +3,35 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-// MFA session token storage
-const MFA_SESSION_KEY = 'mfa_session_token';
+// MFA session token storage with expiry
+const MFA_SESSION_KEY = 'mfa_session_data';
 
 const getMfaSessionToken = (): string | null => {
-  return sessionStorage.getItem(MFA_SESSION_KEY);
+  const data = localStorage.getItem(MFA_SESSION_KEY);
+  if (!data) return null;
+  
+  try {
+    const { token, expiresAt } = JSON.parse(data);
+    // Check if expired locally before server validation
+    if (new Date(expiresAt) < new Date()) {
+      localStorage.removeItem(MFA_SESSION_KEY);
+      return null;
+    }
+    return token;
+  } catch {
+    return null;
+  }
 };
 
-const setMfaSessionToken = (token: string | null): void => {
-  if (token) {
-    sessionStorage.setItem(MFA_SESSION_KEY, token);
+const setMfaSessionToken = (token: string | null, expiresAt?: string): void => {
+  if (token && expiresAt) {
+    localStorage.setItem(MFA_SESSION_KEY, JSON.stringify({ 
+      token, 
+      expiresAt,
+      storedAt: new Date().toISOString()
+    }));
   } else {
-    sessionStorage.removeItem(MFA_SESSION_KEY);
+    localStorage.removeItem(MFA_SESSION_KEY);
   }
 };
 
@@ -25,7 +42,7 @@ interface AuthContextType {
   roleLoading: boolean;
   userRole: "admin" | "member" | null;
   mfaVerified: boolean;
-  setMfaVerifiedStatus: (verified: boolean, sessionToken?: string) => void;
+  setMfaVerifiedStatus: (verified: boolean, sessionToken?: string, expiresAt?: string) => void;
   validateMfaSession: () => Promise<boolean>;
   signOut: () => Promise<void>;
 }
@@ -104,8 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setRoleLoading(true);
           fetchUserRole(session.user.id);
           
-          // Validate MFA session
-          validateMfaSession();
+          // Only validate on initial login, not on every state change
+          if (event === 'SIGNED_IN') {
+            validateMfaSession();
+          }
         } else {
           setUserRole(null);
           setRoleLoading(false);
@@ -120,6 +139,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Periodic MFA validation (every 5 minutes)
+  useEffect(() => {
+    if (!user || !mfaVerified) return;
+
+    const interval = setInterval(() => {
+      validateMfaSession();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [user, mfaVerified]);
 
   const fetchUserRole = async (userId: string) => {
     if (roleCache.current.has(userId)) {
@@ -145,10 +175,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRoleLoading(false);
   };
 
-  const setMfaVerifiedStatus = (verified: boolean, sessionToken?: string) => {
+  const setMfaVerifiedStatus = (verified: boolean, sessionToken?: string, expiresAt?: string) => {
     setMfaVerified(verified);
-    if (verified && sessionToken) {
-      setMfaSessionToken(sessionToken);
+    if (verified && sessionToken && expiresAt) {
+      setMfaSessionToken(sessionToken, expiresAt);
     } else {
       setMfaSessionToken(null);
     }

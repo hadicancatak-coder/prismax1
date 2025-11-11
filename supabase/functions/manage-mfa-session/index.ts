@@ -52,24 +52,51 @@ Deno.serve(async (req) => {
       );
 
     } else if (action === 'validate') {
-      // Validate existing MFA session
+      // Validate existing MFA session with IP check
       if (!sessionToken) {
         return new Response(
-          JSON.stringify({ valid: false }),
+          JSON.stringify({ valid: false, reason: 'no_token' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      const currentIp = req.headers.get('x-forwarded-for') || 
+                        req.headers.get('cf-connecting-ip') || 
+                        'unknown';
+
       const { data: session } = await supabase
         .from('mfa_sessions')
-        .select('id, expires_at')
+        .select('id, expires_at, ip_address, skip_validation_for_ip')
         .eq('session_token', sessionToken)
         .eq('user_id', user.id)
         .gt('expires_at', new Date().toISOString())
         .single();
 
+      if (!session) {
+        return new Response(
+          JSON.stringify({ valid: false, reason: 'expired' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check IP match if validation is not skipped
+      const ipMatch = session.skip_validation_for_ip || 
+                      session.ip_address === currentIp;
+
+      if (!ipMatch) {
+        // IP changed - require re-verification
+        return new Response(
+          JSON.stringify({ valid: false, reason: 'ip_mismatch' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ valid: !!session }),
+        JSON.stringify({ 
+          valid: true, 
+          sameIp: ipMatch,
+          expiresAt: session.expires_at 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
