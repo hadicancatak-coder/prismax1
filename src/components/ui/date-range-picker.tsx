@@ -21,56 +21,33 @@ export function DateRangePicker({
   onApply,
   presets = 'full' 
 }: DateRangePickerProps) {
-  // Internal tracking - what the user has selected
-  const [tempFrom, setTempFrom] = useState<Date | undefined>(value?.from);
-  const [tempTo, setTempTo] = useState<Date | undefined>(value?.to);
-  const [calendarKey, setCalendarKey] = useState(0);
-
-  // What we show to the Calendar - ONLY complete ranges
-  const displayRange = (tempFrom && tempTo) ? { from: tempFrom, to: tempTo } : undefined;
+  const [fromDate, setFromDate] = useState<Date | undefined>(value?.from);
+  const [toDate, setToDate] = useState<Date | undefined>(value?.to);
 
   const handlePreset = (from: Date, to: Date) => {
-    setTempFrom(from);
-    setTempTo(to);
+    setFromDate(from);
+    setToDate(to);
     onChange({ from, to });
     onApply?.();
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    if (!range?.from) {
-      // User clicked to deselect - clear everything
-      setTempFrom(undefined);
-      setTempTo(undefined);
-      return;
-    }
-    
-    // First click OR starting a new selection
-    if (!tempFrom || (tempFrom && tempTo)) {
-      setTempFrom(range.from);
-      setTempTo(undefined);
-    } 
-    // Second click - complete the range
-    else if (tempFrom && !tempTo) {
-      // If clicked date is before first date, swap them
-      if (range.from < tempFrom) {
-        setTempTo(tempFrom);
-        setTempFrom(range.from);
-      } else {
-        setTempTo(range.from);
-      }
-    }
+  const handleFromSelect = (date: Date | undefined) => {
+    setFromDate(date);
+  };
+
+  const handleToSelect = (date: Date | undefined) => {
+    setToDate(date);
   };
 
   const handleClear = () => {
-    setTempFrom(undefined);
-    setTempTo(undefined);
-    setCalendarKey(prev => prev + 1); // Force complete remount
+    setFromDate(undefined);
+    setToDate(undefined);
     onChange(null);
   };
 
   const handleApply = () => {
-    if (tempFrom && tempTo) {
-      onChange({ from: tempFrom, to: tempTo });
+    if (fromDate && toDate) {
+      onChange({ from: fromDate, to: toDate });
       onApply?.();
     }
   };
@@ -189,38 +166,44 @@ export function DateRangePicker({
       <div className="w-px bg-border" />
 
       {/* Right: Custom Range Selector */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <span className="text-xs font-medium text-muted-foreground">Custom Range</span>
 
-        {/* Single Calendar with Range Mode */}
-        <Calendar
-          mode="range"
-          selected={displayRange}
-          onSelect={handleDateSelect}
-          numberOfMonths={1}
-          key={calendarKey}
-          className="pointer-events-auto p-0"
-        />
-
-        {/* Selected Range Display */}
-        {tempFrom && (
-          <div className="flex items-center gap-2 text-xs px-2">
-            <span className="text-muted-foreground">
-              {tempTo ? "Range:" : "From:"}
-            </span>
-            <Badge variant="secondary" className="font-mono text-xs">
-              {format(tempFrom, "MMM d, yyyy")}
-            </Badge>
-            {tempTo && (
-              <>
-                <span className="text-muted-foreground">→</span>
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {format(tempTo, "MMM d, yyyy")}
-                </Badge>
-              </>
+        {/* Two Separate Date Pickers */}
+        <div className="flex gap-3">
+          {/* From Date Picker */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs text-muted-foreground">From</span>
+            <Calendar
+              mode="single"
+              selected={fromDate}
+              onSelect={handleFromSelect}
+              className="pointer-events-auto p-0 border rounded-md"
+            />
+            {fromDate && (
+              <Badge variant="secondary" className="font-mono text-xs w-fit">
+                {format(fromDate, "MMM d, yyyy")}
+              </Badge>
             )}
           </div>
-        )}
+
+          {/* To Date Picker */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs text-muted-foreground">To</span>
+            <Calendar
+              mode="single"
+              selected={toDate}
+              onSelect={handleToSelect}
+              disabled={(date) => fromDate ? date < fromDate : false}
+              className="pointer-events-auto p-0 border rounded-md"
+            />
+            {toDate && (
+              <Badge variant="secondary" className="font-mono text-xs w-fit">
+                {format(toDate, "MMM d, yyyy")}
+              </Badge>
+            )}
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex justify-between pt-1 border-t">
@@ -230,7 +213,7 @@ export function DateRangePicker({
           <Button 
             size="sm" 
             onClick={handleApply}
-            disabled={!tempFrom || !tempTo}
+            disabled={!fromDate || !toDate}
             className="h-7 text-xs"
           >
             Apply Range
