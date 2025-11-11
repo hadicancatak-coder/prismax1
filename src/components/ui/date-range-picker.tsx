@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { dateRangePresets } from "@/lib/dateRangePresets";
 import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
-export interface DateRange {
-  from: Date;
-  to: Date;
-}
+export type { DateRange };
 
 interface DateRangePickerProps {
   value?: DateRange | null;
