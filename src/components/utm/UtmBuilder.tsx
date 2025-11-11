@@ -18,7 +18,7 @@ import { useUtmTemplates } from "@/hooks/useUtmTemplates";
 import { useEntityPresets, useCreateEntityPreset, useDeleteEntityPreset } from "@/hooks/useEntityPresets";
 import { calculateUtmMedium, generateUtmCampaign, formatMonthYearReadable, buildUtmUrl, detectEntityFromUrl, generateStaticLpVariants, generateDynamicLpVariants, generateMauritiusLpVariants } from "@/lib/utmHelpers";
 import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2, Maximize2, FileText, X, Trash2 } from "lucide-react";
+import { Copy, Save, AlertCircle, Plus, CheckCircle2, Zap, Settings2, Maximize2, FileText, X, Trash2, Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -140,13 +140,15 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
     setAutoMonthYear(formatMonthYearReadable());
   }, [selectedCampaign, selectedPlatform]);
 
-  // Auto-populate utm_content when Extensions mode is enabled
+  // Auto-populate utm_content based on device type and extension mode
   useEffect(() => {
     if (isExtension && autoUtmCampaign) {
-      // Format: campaign_monthyear_Extension_device
-      // Example: gold_oct2025_Extension_web
+      // Extensions mode: campaign_month_Extension_device
       const extensionContent = `${autoUtmCampaign}_Extension_${deviceType}`;
       setUtmContent(extensionContent);
+    } else {
+      // Regular mode: just device type
+      setUtmContent(deviceType);
     }
   }, [isExtension, autoUtmCampaign, deviceType]);
 
@@ -615,7 +617,40 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
             </>
           )}
 
-          {/* Extensions Controls */}
+          {/* Device Type Selector - Always Visible */}
+          <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+            <div className="space-y-2">
+              <Label className="font-semibold">Device Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={deviceType === 'web' ? 'default' : 'outline'}
+                  onClick={() => setDeviceType('web')}
+                >
+                  <Monitor className="mr-2 h-4 w-4" />
+                  Web
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={deviceType === 'mobile' ? 'default' : 'outline'}
+                  onClick={() => setDeviceType('mobile')}
+                >
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Mobile
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isExtension 
+                  ? `Will generate: ${autoUtmCampaign || 'campaign'}_Extension_${deviceType}`
+                  : `Will set utm_content to: ${deviceType}`
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Extensions Checkbox - Separate Section */}
           <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -623,48 +658,20 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
                 checked={isExtension}
                 onCheckedChange={(checked) => {
                   setIsExtension(!!checked);
-                  if (!checked) {
-                    // Clear utm_content when unchecking
-                    setUtmContent("");
-                  }
                 }}
               />
               <Label htmlFor="extensions-check" className="font-semibold cursor-pointer">
                 Extensions (Sitelinks, Callouts, etc.)
               </Label>
             </div>
-
-            {isExtension && (
-              <div className="space-y-2 pl-6">
-                <Label>Device Type</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={deviceType === 'web' ? 'default' : 'outline'}
-                    onClick={() => setDeviceType('web')}
-                  >
-                    Web
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={deviceType === 'mobile' ? 'default' : 'outline'}
-                    onClick={() => setDeviceType('mobile')}
-                  >
-                    Mobile
-                  </Button>
-                </div>
-                
-                {autoUtmCampaign && (
-                  <Alert className="mt-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      Will generate: <strong>{autoUtmCampaign}_Extension_{deviceType}</strong>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+            
+            {isExtension && autoUtmCampaign && (
+              <Alert className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Extension format: <strong>{autoUtmCampaign}_Extension_{deviceType}</strong>
+                </AlertDescription>
+              </Alert>
             )}
           </div>
 
@@ -672,16 +679,22 @@ export const UtmBuilder = ({ onSave, onExpand }: UtmBuilderProps) => {
           <div className="space-y-2">
             <Label htmlFor="utm-content">
               UTM Content
-              {isExtension && <Badge variant="secondary" className="ml-2">Auto-generated</Badge>}
+              <Badge variant="secondary" className="ml-2">Auto-generated</Badge>
             </Label>
             <Input
               id="utm-content"
               value={utmContent}
               onChange={(e) => setUtmContent(e.target.value)}
-              placeholder={isExtension ? "Auto-generated from Extensions" : "e.g., banner-top, sidebar-cta"}
-              readOnly={isExtension}
-              className={isExtension ? "bg-muted cursor-not-allowed" : ""}
+              placeholder="Auto-generated from device and extension settings"
+              readOnly
+              className="bg-muted cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">
+              {isExtension 
+                ? "Format: campaign_month_Extension_device" 
+                : "Format: device type (web/mobile)"
+              }
+            </p>
           </div>
 
           {/* Auto-Generated Campaign */}
