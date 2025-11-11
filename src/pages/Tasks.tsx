@@ -214,6 +214,7 @@ export default function Tasks() {
             />
 
             <TaskDateFilterBar
+              value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null}
               onFilterChange={setDateFilter}
               onStatusChange={() => {}}
               selectedStatus="all"

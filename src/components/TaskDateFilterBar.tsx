@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -19,6 +19,7 @@ export interface DateFilter {
 }
 
 interface TaskDateFilterBarProps {
+  value?: DateRange | null;
   onFilterChange: (filter: DateFilter | null) => void;
   onStatusChange: (status: string) => void;
   selectedStatus: string;
@@ -35,6 +36,7 @@ interface TaskDateFilterBarProps {
 }
 
 export function TaskDateFilterBar({ 
+  value,
   onFilterChange, 
   onStatusChange,
   selectedStatus,
@@ -42,6 +44,13 @@ export function TaskDateFilterBar({
 }: TaskDateFilterBarProps) {
   const [customRange, setCustomRange] = useState<DateRange | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Reset internal state when parent clears the filter
+  useEffect(() => {
+    if (!value) {
+      setCustomRange(null);
+    }
+  }, [value]);
 
   const statusOptions = [
     { value: "all", label: "All" },
