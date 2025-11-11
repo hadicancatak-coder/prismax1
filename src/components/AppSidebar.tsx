@@ -51,7 +51,7 @@ const webItems = [
 
 const mediaItems = [
   { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
-  { title: "Media Planning", url: "/media-planning", icon: Tv },
+  { title: "Web Intel", url: "/web-intel", icon: Tv },
 ];
 
 const operationsItems = [

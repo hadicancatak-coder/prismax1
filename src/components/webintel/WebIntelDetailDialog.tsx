@@ -1,0 +1,199 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SiteWithDetails } from "@/hooks/useWebIntelSites";
+import { Pencil, Trash2, ExternalLink } from "lucide-react";
+import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
+
+interface WebIntelDetailDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  site: SiteWithDetails | null;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+export function WebIntelDetailDialog({
+  open,
+  onOpenChange,
+  site,
+  onEdit,
+  onDelete,
+}: WebIntelDetailDialogProps) {
+  if (!site) return null;
+
+  const formatTraffic = (traffic?: number): string => {
+    if (!traffic) return 'N/A';
+    if (traffic >= 1000000000) return `${(traffic / 1000000000).toFixed(1)}B/mo`;
+    if (traffic >= 1000000) return `${(traffic / 1000000).toFixed(1)}M/mo`;
+    if (traffic >= 1000) return `${(traffic / 1000).toFixed(1)}K/mo`;
+    return `${traffic}/mo`;
+  };
+
+  const typeColors: Record<string, string> = {
+    'Website': 'bg-blue-100 text-blue-800',
+    'App': 'bg-green-100 text-green-800',
+    'Portal': 'bg-purple-100 text-purple-800',
+    'Forum': 'bg-orange-100 text-orange-800',
+  };
+
+  const tagColors: Record<string, string> = {
+    'GDN': 'bg-blue-100 text-blue-800',
+    'DV360': 'bg-purple-100 text-purple-800',
+    'Direct': 'bg-green-100 text-green-800',
+    'Mobile-only': 'bg-orange-100 text-orange-800',
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl">{site.name}</DialogTitle>
+              <a 
+                href={site.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+              >
+                {site.url}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Pencil className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button variant="destructive" size="sm" onClick={onDelete}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Basic Details */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Country</p>
+              <p className="font-medium">{site.country}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Type</p>
+              <Badge variant="secondary" className={typeColors[site.type]}>
+                {site.type}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Category</p>
+              <p className="font-medium">{site.category || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Monthly Traffic</p>
+              <p className="font-medium">{formatTraffic(site.estimated_monthly_traffic)}</p>
+            </div>
+            {site.entity && (
+              <div className="col-span-2">
+                <p className="text-sm text-muted-foreground">Publisher/Entity</p>
+                <p className="font-medium">{site.entity}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Tags */}
+          {site.tags.length > 0 && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Tags</p>
+              <div className="flex gap-2 flex-wrap">
+                {site.tags.map(tag => (
+                  <Badge 
+                    key={tag} 
+                    variant="secondary"
+                    className={tagColors[tag] || 'bg-gray-100 text-gray-800'}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {site.notes && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Notes</p>
+              <p className="text-sm whitespace-pre-wrap">{site.notes}</p>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Historic Prices */}
+          <div>
+            <h3 className="font-semibold mb-3">Historic Prices</h3>
+            {site.historic_prices.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {site.historic_prices.map(price => (
+                    <TableRow key={price.id}>
+                      <TableCell>{price.year}</TableCell>
+                      <TableCell>${price.price.toLocaleString()}</TableCell>
+                      <TableCell>{price.notes || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-muted-foreground">No historic pricing data</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Past Campaigns */}
+          <div>
+            <h3 className="font-semibold mb-3">Past Campaigns</h3>
+            {site.past_campaigns.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Budget</TableHead>
+                    <TableHead>CTR</TableHead>
+                    <TableHead>Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {site.past_campaigns.map(campaign => (
+                    <TableRow key={campaign.id}>
+                      <TableCell>{campaign.campaign_name}</TableCell>
+                      <TableCell>{format(new Date(campaign.campaign_date), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>${campaign.budget.toLocaleString()}</TableCell>
+                      <TableCell>{campaign.ctr ? `${campaign.ctr}%` : '-'}</TableCell>
+                      <TableCell>{campaign.notes || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-muted-foreground">No past campaigns</p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

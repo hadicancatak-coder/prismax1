@@ -3074,6 +3074,130 @@ export type Database = {
         }
         Relationships: []
       }
+      web_intel_historic_prices: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          price: number
+          site_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price: number
+          site_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          site_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_intel_historic_prices_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      web_intel_past_campaigns: {
+        Row: {
+          budget: number
+          campaign_date: string
+          campaign_name: string
+          created_at: string
+          ctr: number | null
+          id: string
+          notes: string | null
+          site_id: string
+        }
+        Insert: {
+          budget: number
+          campaign_date: string
+          campaign_name: string
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          notes?: string | null
+          site_id: string
+        }
+        Update: {
+          budget?: number
+          campaign_date?: string
+          campaign_name?: string
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          notes?: string | null
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_intel_past_campaigns_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      web_intel_sites: {
+        Row: {
+          category: string | null
+          country: string
+          created_at: string
+          created_by: string | null
+          entity: string | null
+          estimated_monthly_traffic: number | null
+          id: string
+          name: string
+          notes: string | null
+          tags: string[] | null
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          country: string
+          created_at?: string
+          created_by?: string | null
+          entity?: string | null
+          estimated_monthly_traffic?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          tags?: string[] | null
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          entity?: string | null
+          estimated_monthly_traffic?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          tags?: string[] | null
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       launch_campaigns_with_assignees: {
