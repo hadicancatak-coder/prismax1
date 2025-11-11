@@ -40,7 +40,49 @@ Deno.serve(async (req) => {
 
     const { action, sessionToken } = await req.json();
 
-    if (action === 'create') {
+    // Phase 5: Add refresh action for token renewal
+    if (action === 'refresh') {
+      if (!sessionToken) {
+        throw new Error('Session token required for refresh');
+      }
+
+      const { data: session, error: queryError } = await supabase
+        .from('mfa_sessions')
+        .select('id, expires_at')
+        .eq('session_token', sessionToken)
+        .eq('user_id', user.id)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (!session || queryError) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired session' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extend expiry by 6 hours
+      const newExpiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+      
+      const { error: updateError } = await supabase
+        .from('mfa_sessions')
+        .update({ expires_at: newExpiresAt })
+        .eq('id', session.id);
+
+      if (updateError) {
+        throw new Error('Failed to refresh session');
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          sessionToken,
+          expiresAt: newExpiresAt,
+          refreshed: true 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } else if (action === 'create') {
       // Create new MFA session after successful verification
       const sessionTokenValue = randomBytes(32).toString('hex');
       const ipAddress = getClientIp(req);
