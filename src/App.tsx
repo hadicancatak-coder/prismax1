@@ -16,6 +16,7 @@ import UsersManagement from "./pages/admin/UsersManagement";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
 import AuditLog from "./pages/admin/AuditLog";
+import SecurityScans from "./pages/admin/SecurityScans";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="errors" element={<ErrorLogs />} />
               <Route path="activity" element={<ActivityLog />} />
               <Route path="audit" element={<AuditLog />} />
+              <Route path="security" element={<SecurityScans />} />
             </Route>
             <Route path="/team-base" element={<TeamBase />} />
               <Route path="/ads" element={<Navigate to="/ads/search" replace />} />

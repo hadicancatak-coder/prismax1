@@ -2330,6 +2330,81 @@ export type Database = {
           },
         ]
       }
+      security_scan_results: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          findings: Json | null
+          id: string
+          scan_status: string
+          scan_type: string
+          started_at: string
+          summary: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          scan_status?: string
+          scan_type: string
+          started_at?: string
+          summary?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          scan_status?: string
+          scan_type?: string
+          started_at?: string
+          summary?: Json | null
+        }
+        Relationships: []
+      }
+      suspicious_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       task_assignees: {
         Row: {
           assigned_at: string
@@ -3317,6 +3392,12 @@ export type Database = {
       cleanup_old_mfa_attempts: { Args: never; Returns: undefined }
       cleanup_rate_limit: { Args: never; Returns: undefined }
       detect_language: { Args: { content_text: string }; Returns: string }
+      get_admin_user_ids: {
+        Args: never
+        Returns: {
+          user_id: string
+        }[]
+      }
       get_all_users_admin: {
         Args: never
         Returns: {
