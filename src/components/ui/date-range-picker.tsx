@@ -23,46 +23,30 @@ export function DateRangePicker({
   onApply,
   presets = 'full' 
 }: DateRangePickerProps) {
-  const [tempFrom, setTempFrom] = useState<Date | undefined>(value?.from);
-  const [tempTo, setTempTo] = useState<Date | undefined>(value?.to);
-  const [selectingMode, setSelectingMode] = useState<'from' | 'to'>('from');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    value ? { from: value.from, to: value.to } : undefined
+  );
+  const [calendarKey, setCalendarKey] = useState(0);
 
   const handlePreset = (from: Date, to: Date) => {
-    setTempFrom(from);
-    setTempTo(to);
+    setDateRange({ from, to });
     onChange({ from, to });
     onApply?.();
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    if (selectingMode === 'from') {
-      setTempFrom(date);
-      if (tempTo && date > tempTo) {
-        setTempTo(undefined);
-      }
-      setSelectingMode('to');
-    } else {
-      if (tempFrom && date < tempFrom) {
-        setTempTo(tempFrom);
-        setTempFrom(date);
-      } else {
-        setTempTo(date);
-      }
-    }
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
   };
 
   const handleClear = () => {
-    setTempFrom(undefined);
-    setTempTo(undefined);
-    setSelectingMode('from');
+    setDateRange(undefined);
+    setCalendarKey(prev => prev + 1); // Force complete remount
     onChange(null);
   };
 
   const handleApply = () => {
-    if (tempFrom && tempTo) {
-      onChange({ from: tempFrom, to: tempTo });
+    if (dateRange?.from && dateRange?.to) {
+      onChange(dateRange);
       onApply?.();
     }
   };
@@ -182,51 +166,32 @@ export function DateRangePicker({
 
       {/* Right: Custom Range Selector */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">Custom Range</span>
-          <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant={selectingMode === 'from' ? 'default' : 'outline'}
-              className="h-6 px-2 text-xs"
-              onClick={() => setSelectingMode('from')}
-            >
-              From
-            </Button>
-            <Button
-              size="sm"
-              variant={selectingMode === 'to' ? 'default' : 'outline'}
-              className="h-6 px-2 text-xs"
-              onClick={() => setSelectingMode('to')}
-            >
-              To
-            </Button>
-          </div>
-        </div>
+        <span className="text-xs font-medium text-muted-foreground">Custom Range</span>
 
-        {/* Single Calendar */}
+        {/* Single Calendar with Range Mode */}
         <Calendar
-          mode="single"
-          selected={selectingMode === 'from' ? tempFrom : tempTo}
+          mode="range"
+          selected={dateRange}
           onSelect={handleDateSelect}
-          disabled={(date) => selectingMode === 'to' && tempFrom ? date < tempFrom : false}
+          numberOfMonths={1}
+          key={calendarKey}
           className="pointer-events-auto p-0"
         />
 
         {/* Selected Range Display */}
-        {(tempFrom || tempTo) && (
+        {dateRange?.from && (
           <div className="flex items-center gap-2 text-xs px-2">
             <span className="text-muted-foreground">Range:</span>
-            {tempFrom && (
-              <Badge variant="secondary" className="font-mono text-xs">
-                {format(tempFrom, "MMM d, yyyy")}
-              </Badge>
-            )}
-            {tempFrom && tempTo && <span className="text-muted-foreground">→</span>}
-            {tempTo && (
-              <Badge variant="secondary" className="font-mono text-xs">
-                {format(tempTo, "MMM d, yyyy")}
-              </Badge>
+            <Badge variant="secondary" className="font-mono text-xs">
+              {format(dateRange.from, "MMM d, yyyy")}
+            </Badge>
+            {dateRange.to && (
+              <>
+                <span className="text-muted-foreground">→</span>
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {format(dateRange.to, "MMM d, yyyy")}
+                </Badge>
+              </>
             )}
           </div>
         )}
@@ -239,7 +204,7 @@ export function DateRangePicker({
           <Button 
             size="sm" 
             onClick={handleApply}
-            disabled={!tempFrom || !tempTo}
+            disabled={!dateRange?.from || !dateRange?.to}
             className="h-7 text-xs"
           >
             Apply Range
