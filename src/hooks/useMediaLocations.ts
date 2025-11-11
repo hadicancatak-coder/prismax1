@@ -228,7 +228,6 @@ export const useMediaLocations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["media-locations"] });
-      toast.success("Location updated successfully");
     },
     onError: (error: Error) => {
       toast.error(`Failed to update location: ${error.message}`);

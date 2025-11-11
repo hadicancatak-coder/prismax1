@@ -26,9 +26,12 @@ interface ParsedRow {
     Agency?: string;
     "Price Per Month"?: string;
     "Historic Prices"?: string;
+    Notes?: string;
   };
   errors: string[];
   historicPrices?: Array<{ year: number; price: number }>;
+  isUpdate?: boolean;
+  existingLocationId?: string;
 }
 
 const VALID_LOCATION_TYPES: LocationType[] = Object.values(LOCATION_CATEGORIES)
@@ -40,7 +43,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
-  const { createLocation, upsertPrices } = useMediaLocations();
+  const { createLocation, updateLocation, upsertPrices, locations } = useMediaLocations();
 
   const validateRow = (row: any): string[] => {
     const errors: string[] = [];
@@ -84,7 +87,23 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
       }
     }
 
+    if (row.Notes && row.Notes.length > 1000) {
+      errors.push('Notes must be less than 1000 characters');
+    }
+
     return errors;
+  };
+
+  const findExistingLocation = (rowData: ParsedRow['data']) => {
+    const lat = parseFloat(rowData.Latitude);
+    const lng = parseFloat(rowData.Longitude);
+    
+    return locations.find(loc => 
+      loc.name.toLowerCase() === rowData.Name.toLowerCase() &&
+      loc.city.toLowerCase() === rowData.City.toLowerCase() &&
+      Math.abs(loc.latitude - lat) < 0.001 &&
+      Math.abs(loc.longitude - lng) < 0.001
+    );
   };
 
   const parseCSV = (text: string): ParsedRow[] => {
@@ -124,11 +143,15 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
         }
       }
 
+      const existingLocation = findExistingLocation(row);
+
       return {
         lineNumber: index + 2,
         data: row,
         errors: validateRow(row),
         historicPrices,
+        isUpdate: !!existingLocation,
+        existingLocationId: existingLocation?.id,
       };
     });
   };
@@ -186,7 +209,9 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
 
     setIsUploading(true);
     setUploadProgress(0);
-    let successCount = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
     let errorCount = 0;
 
     for (let i = 0; i < validRows.length; i++) {
@@ -201,20 +226,45 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
           manual_score: row.data["Manual Score"] ? parseInt(row.data["Manual Score"]) : undefined,
           agency: row.data.Agency || undefined,
           price_per_month: row.data["Price Per Month"] ? parseFloat(row.data["Price Per Month"]) : undefined,
+          notes: row.data.Notes || undefined,
         };
 
-        const newLocation = await createLocation.mutateAsync(locationData);
+        let locationId: string;
 
-        if (row.historicPrices && row.historicPrices.length > 0 && newLocation) {
+        if (row.isUpdate && row.existingLocationId) {
+          // Update only missing fields
+          const existingLoc = locations.find(l => l.id === row.existingLocationId);
+          const updates: any = {};
+          
+          if (!existingLoc?.agency && locationData.agency) updates.agency = locationData.agency;
+          if (!existingLoc?.price_per_month && locationData.price_per_month) updates.price_per_month = locationData.price_per_month;
+          if (!existingLoc?.manual_score && locationData.manual_score) updates.manual_score = locationData.manual_score;
+          if (!existingLoc?.notes && locationData.notes) updates.notes = locationData.notes;
+
+          if (Object.keys(updates).length > 0) {
+            await updateLocation.mutateAsync({ id: row.existingLocationId, ...updates });
+            locationId = row.existingLocationId;
+            updatedCount++;
+          } else {
+            locationId = row.existingLocationId;
+            skippedCount++;
+          }
+        } else {
+          // Create new location
+          const newLocation = await createLocation.mutateAsync(locationData);
+          locationId = newLocation.id;
+          createdCount++;
+        }
+
+        // Handle historic prices
+        if (row.historicPrices && row.historicPrices.length > 0 && locationId) {
           await upsertPrices.mutateAsync({
-            locationId: newLocation.id,
+            locationId,
             prices: row.historicPrices,
           });
         }
-
-        successCount++;
       } catch (error) {
-        console.error(`Failed to upload row ${row.lineNumber}:`, error);
+        console.error(`Failed to process row ${row.lineNumber}:`, error);
         errorCount++;
       }
       
@@ -223,27 +273,33 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
 
     setIsUploading(false);
     
+    const parts = [];
+    if (createdCount > 0) parts.push(`${createdCount} created`);
+    if (updatedCount > 0) parts.push(`${updatedCount} updated`);
+    if (skippedCount > 0) parts.push(`${skippedCount} skipped (no changes)`);
+    if (errorCount > 0) parts.push(`${errorCount} failed`);
+
     toast({
       title: "Upload complete",
-      description: `Successfully uploaded ${successCount} locations. ${errorCount} failed.`,
+      description: parts.join(", "),
       variant: errorCount > 0 ? "destructive" : "default",
     });
 
-    if (successCount > 0) {
+    if (createdCount > 0 || updatedCount > 0) {
       handleClose();
     }
   };
 
   const downloadTemplate = () => {
     const headers = ['City', 'Type', 'Name', 'Latitude', 'Longitude', 'Manual Score', 
-                     'Agency', 'Price Per Month', 'Historic Prices'];
+                     'Agency', 'Price Per Month', 'Historic Prices', 'Notes'];
     const exampleRows = [
       ['Dubai', 'LED Screen', 'Sheikh Zayed Road LED 1', '25.2048', '55.2708', '8', 
-       'Mediahub', '7500', '2023:7000;2024:7500'],
+       'Mediahub', '7500', '2023:7000;2024:7500', 'Premium location near DIFC'],
       ['Abu Dhabi', 'Megacom', 'Corniche Megacom', '24.4539', '54.3773', '9', 
-       'Starcom', '12000', '2023:11000;2024:12000'],
+       'Starcom', '12000', '2023:11000;2024:12000', 'High visibility location'],
       ['Dubai', 'Airport Media', 'DXB Terminal 3', '25.2532', '55.3657', '10',
-       'Clear Channel', '25000', '2023:24000;2024:25000'],
+       'Clear Channel', '25000', '2023:24000;2024:25000', 'Terminal 3 arrivals area'],
     ];
     
     const csv = [headers, ...exampleRows]
@@ -274,9 +330,9 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle>Bulk Upload Locations</DialogTitle>
+            <DialogTitle>Bulk Upload Locations</DialogTitle>
               <DialogDescription>
-                Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Historic Prices
+                Upload a CSV file with columns: City, Type, Name, Latitude, Longitude, Manual Score, Agency, Price Per Month, Historic Prices, Notes
               </DialogDescription>
             </div>
             <Button onClick={downloadTemplate} variant="outline" size="sm">
@@ -341,7 +397,10 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
                       <TableHead>City</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Lat/Lng</TableHead>
+                      <TableHead>Agency</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Historic Prices</TableHead>
+                      <TableHead>Action</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -352,8 +411,27 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
                         <TableCell>{row.data.City}</TableCell>
                         <TableCell>{row.data.Type}</TableCell>
                         <TableCell>{row.data.Name}</TableCell>
+                        <TableCell className="text-xs">{row.data.Agency || "-"}</TableCell>
                         <TableCell className="text-xs">
-                          {row.data.Latitude}, {row.data.Longitude}
+                          {row.data["Price Per Month"] ? `AED ${parseFloat(row.data["Price Per Month"]).toLocaleString()}` : "-"}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {row.historicPrices && row.historicPrices.length > 0 ? (
+                            <div className="flex gap-1 flex-wrap">
+                              {row.historicPrices.map((hp, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">
+                                  {hp.year}: {hp.price}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {row.isUpdate ? (
+                            <Badge variant="secondary" className="text-xs">Update</Badge>
+                          ) : (
+                            <Badge variant="default" className="text-xs">Create</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           {row.errors.length === 0 ? (
