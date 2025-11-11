@@ -39,6 +39,7 @@ import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
+import TeamKPIs from "./pages/TeamKPIs";
 
 const App = () => (
   <ErrorBoundary>
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/security" element={<Security />} />
             <Route path="/location-intelligence" element={<LocationIntelligence />} />
             <Route path="/web-intel" element={<WebIntel />} />
+            <Route path="/team-kpis" element={<AdminRoute><TeamKPIs /></AdminRoute>} />
             <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />
