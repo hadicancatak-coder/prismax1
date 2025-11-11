@@ -34,7 +34,6 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      console.error('Invalid token:', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -46,7 +45,7 @@ Deno.serve(async (req) => {
       .rpc('has_role', { _user_id: user.id, _role: 'admin' });
 
     if (roleError) {
-      console.error('Error checking role:', roleError);
+      console.error('Error checking role');
       return new Response(
         JSON.stringify({ error: 'Internal server error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,7 +53,6 @@ Deno.serve(async (req) => {
     }
 
     if (!isAdmin) {
-      console.error('User is not an admin:', user.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -79,20 +77,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Admin', user.id, 'deleting user', userId);
-
     // Now safe to delete the user
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      console.error('Error deleting user:', deleteError);
+      console.error('Error deleting user');
       return new Response(
         JSON.stringify({ error: deleteError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('Successfully deleted user:', userId);
 
     return new Response(
       JSON.stringify({ success: true, message: 'User deleted successfully' }),

@@ -92,14 +92,11 @@ Deno.serve(async (req) => {
       });
 
     if (!isValid) {
-      console.log(`Failed MFA attempt for user ${user.id}`);
       return new Response(
         JSON.stringify({ error: 'Invalid code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log(`Successful MFA verification for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ success: true }),

@@ -100,8 +100,6 @@ Deno.serve(async (req) => {
         throw new Error('Failed to save MFA settings');
       }
 
-      console.log(`MFA enabled for user ${user.id}`);
-
       return new Response(
         JSON.stringify({ 
           success: true,

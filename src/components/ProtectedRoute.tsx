@@ -18,15 +18,18 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     if (user && !loading) {
       // Check if user has MFA enabled
-      supabase
-        .from('profiles')
-        .select('mfa_enabled')
-        .eq('user_id', user.id)
-        .single()
-        .then(({ data }) => {
-          setMfaEnabled(data?.mfa_enabled || false);
-          setCheckingMfa(false);
-        });
+      const checkMfaStatus = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('mfa_enabled')
+          .eq('user_id', user.id)
+          .single();
+        
+        setMfaEnabled(data?.mfa_enabled || false);
+        setCheckingMfa(false);
+      };
+      
+      checkMfaStatus();
     }
   }, [user, loading, navigate]);
 

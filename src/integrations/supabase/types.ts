@@ -1599,6 +1599,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       mfa_verification_attempts: {
         Row: {
           attempt_time: string
@@ -3280,6 +3313,7 @@ export type Database = {
     }
     Functions: {
       calculate_actual_hours: { Args: { task_uuid: string }; Returns: number }
+      cleanup_expired_mfa_sessions: { Args: never; Returns: undefined }
       cleanup_old_mfa_attempts: { Args: never; Returns: undefined }
       cleanup_rate_limit: { Args: never; Returns: undefined }
       detect_language: { Args: { content_text: string }; Returns: string }
@@ -3338,9 +3372,25 @@ export type Database = {
       }
       regenerate_backup_codes: { Args: never; Returns: string[] }
       reschedule_overdue_tasks: { Args: never; Returns: undefined }
-      send_notification: {
-        Args: { p_payload_json: Json; p_type: string; p_user_id: string }
-        Returns: undefined
+      send_notification:
+        | {
+            Args: {
+              p_link?: string
+              p_message: string
+              p_metadata?: Json
+              p_title: string
+              p_type: string
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: { p_payload_json: Json; p_type: string; p_user_id: string }
+            Returns: undefined
+          }
+      validate_mfa_session: {
+        Args: { session_token: string }
+        Returns: boolean
       }
     }
     Enums: {

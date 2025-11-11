@@ -44,18 +44,28 @@ export default function MfaVerify() {
     setVerifying(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('verify-mfa-otp', {
+      // Verify OTP with edge function
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-mfa-otp', {
         body: { 
           otpCode: code,
           isBackupCode: useBackupCode
         }
       });
 
-      if (error) throw error;
+      if (verifyError) throw verifyError;
 
-      if (data.success) {
-        // Mark MFA as verified
-        setMfaVerifiedStatus(true);
+      if (verifyData.success) {
+        // Create MFA session on server
+        const { data: sessionData, error: sessionError } = await supabase.functions.invoke('manage-mfa-session', {
+          body: { action: 'create' }
+        });
+
+        if (sessionError || !sessionData?.sessionToken) {
+          throw new Error('Failed to create session');
+        }
+
+        // Mark MFA as verified with session token
+        setMfaVerifiedStatus(true, sessionData.sessionToken);
         
         toast({
           title: "Verified!",
@@ -162,7 +172,7 @@ export default function MfaVerify() {
             variant="outline"
             onClick={async () => {
               await supabase.auth.signOut();
-              localStorage.removeItem('mfa_verified');
+              sessionStorage.removeItem('mfa_session_token');
               navigate("/auth");
             }}
             className="w-full"
