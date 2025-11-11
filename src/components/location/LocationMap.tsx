@@ -10,22 +10,17 @@ import { Card } from "@/components/ui/card";
 
 interface LocationMapProps {
   locations: MediaLocation[];
-  selectedCity: string | null;
   onLocationClick: (location: MediaLocation) => void;
   mapboxToken: string | null;
   onTokenSubmit: (token: string) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
 
-export function LocationMap({ locations, selectedCity, onLocationClick, mapboxToken, onTokenSubmit, onMapClick }: LocationMapProps) {
+export function LocationMap({ locations, onLocationClick, mapboxToken, onTokenSubmit, onMapClick }: LocationMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [tokenInput, setTokenInput] = useState("");
-
-  const filteredLocations = selectedCity
-    ? locations.filter(loc => loc.city === selectedCity)
-    : locations;
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -70,8 +65,8 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Add markers for filtered locations
-    filteredLocations.forEach(location => {
+    // Add markers for locations
+    locations.forEach(location => {
       const el = document.createElement('div');
       el.className = 'location-marker';
       
@@ -109,14 +104,14 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
     });
 
     // Fit bounds to show all markers
-    if (filteredLocations.length > 0) {
+    if (locations.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
-      filteredLocations.forEach(loc => {
+      locations.forEach(loc => {
         bounds.extend([Number(loc.longitude), Number(loc.latitude)]);
       });
       map.current?.fitBounds(bounds, { padding: 50, maxZoom: 12 });
     }
-  }, [filteredLocations, onLocationClick]);
+  }, [locations, onLocationClick]);
 
   if (!mapboxToken) {
     return (
@@ -154,15 +149,13 @@ export function LocationMap({ locations, selectedCity, onLocationClick, mapboxTo
       <div ref={mapContainer} className="h-[600px] rounded-lg border" />
       
       {/* Empty state overlay */}
-      {filteredLocations.length === 0 && (
+      {locations.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg pointer-events-none">
           <div className="text-center space-y-2 p-6">
             <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
             <h3 className="text-lg font-semibold">No Locations to Display</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              {selectedCity 
-                ? `No locations found in ${selectedCity}. Try selecting a different city.`
-                : "No locations have been added yet. Add your first location to see it on the map."}
+              No locations match the current filters. Try adjusting your filter settings.
             </p>
           </div>
         </div>

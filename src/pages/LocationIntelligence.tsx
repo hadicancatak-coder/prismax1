@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useMediaLocations, MediaLocation } from "@/hooks/useMediaLocations";
+import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { LocationStats } from "@/components/location/LocationStats";
 import { LocationMap } from "@/components/location/LocationMap";
 import { LocationListView } from "@/components/location/LocationListView";
@@ -9,6 +9,7 @@ import { LocationFormDialog } from "@/components/location/LocationFormDialog";
 import { CampaignsSection } from "@/components/location/CampaignsSection";
 import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDialog";
 import { BulkLocationUploadDialog } from "@/components/location/BulkLocationUploadDialog";
+import { LocationFilters, LocationFilters as Filters } from "@/components/location/LocationFilters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Map, List, Plus, Target, Upload } from "lucide-react";
@@ -21,7 +22,6 @@ export default function LocationIntelligence() {
   const { locations, isLoading, deleteLocation, getLocationWithDetails } = useMediaLocations();
 
   const [viewMode, setViewMode] = useState<"map" | "list" | "campaigns">("map");
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<MediaLocation | null>(null);
   const [editingLocation, setEditingLocation] = useState<MediaLocation | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -33,11 +33,31 @@ export default function LocationIntelligence() {
     localStorage.getItem("mapbox_token")
   );
 
+  const [filters, setFilters] = useState<Filters>({
+    cities: [],
+    agencies: [],
+    categories: [],
+    priceRange: { min: 0, max: 1000000 },
+    scoreRange: { min: 0, max: 10 },
+  });
+
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
-  
-  const getCityCount = (city: string) => {
-    return locations.filter(l => l.city === city).length;
-  };
+  const agencies = Array.from(new Set(locations.map(l => l.agency).filter(Boolean))).sort() as string[];
+
+  // Apply filters
+  const filteredLocations = locations.filter((loc) => {
+    if (filters.cities.length > 0 && !filters.cities.includes(loc.city)) return false;
+    if (filters.agencies.length > 0 && !filters.agencies.includes(loc.agency || "")) return false;
+    if (filters.categories.length > 0) {
+      const category = getLocationCategory(loc.type);
+      if (!category || !filters.categories.includes(category)) return false;
+    }
+    const price = loc.price_per_month || 0;
+    if (price < filters.priceRange.min || price > filters.priceRange.max) return false;
+    const score = loc.manual_score || 0;
+    if (score < filters.scoreRange.min || score > filters.scoreRange.max) return false;
+    return true;
+  });
 
   const handleTokenSubmit = (token: string) => {
     localStorage.setItem("mapbox_token", token);
@@ -111,7 +131,7 @@ export default function LocationIntelligence() {
         </div>
       ) : (
         <>
-          <LocationStats locations={locations} />
+          <LocationStats locations={filteredLocations} />
 
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
@@ -137,39 +157,18 @@ export default function LocationIntelligence() {
                 Campaigns
               </Button>
             </div>
-
-            {viewMode === "map" && (
-              <div className="flex gap-2 flex-wrap">
-                <Badge
-                  variant={selectedCity === null ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCity(null)}
-                >
-                  All Cities ({locations.length})
-                </Badge>
-                {cities.map(city => (
-                  <Badge
-                    key={city}
-                    variant={selectedCity === city ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedCity(city)}
-                  >
-                    {city} ({getCityCount(city)})
-                  </Badge>
-                ))}
-                {cities.length === 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    Add locations to see city filters
-                  </span>
-                )}
-              </div>
-            )}
           </div>
+
+          <LocationFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            availableCities={cities}
+            availableAgencies={agencies}
+          />
 
           {viewMode === "map" ? (
             <LocationMap
-              locations={locations}
-              selectedCity={selectedCity}
+              locations={filteredLocations}
               onLocationClick={handleLocationClick}
               mapboxToken={mapboxToken}
               onTokenSubmit={handleTokenSubmit}
@@ -177,7 +176,7 @@ export default function LocationIntelligence() {
             />
           ) : viewMode === "list" ? (
             <LocationListView
-              locations={locations}
+              locations={filteredLocations}
               onView={handleView}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -214,7 +213,7 @@ export default function LocationIntelligence() {
       <CampaignPlannerDialog
         open={plannerOpen}
         onClose={() => setPlannerOpen(false)}
-        locations={locations}
+        locations={filteredLocations}
       />
 
       <BulkLocationUploadDialog

@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LocationWithDetails } from "@/hooks/useMediaLocations";
+import { LocationWithDetails, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil } from "lucide-react";
@@ -24,11 +24,25 @@ export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl">{location.name}</DialogTitle>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 flex-wrap">
                 <Badge variant="secondary">{location.city}</Badge>
                 <Badge variant="outline">{location.type}</Badge>
                 {location.manual_score && (
                   <Badge>Score: {location.manual_score}/10</Badge>
+                )}
+                {location.agency && (
+                  <Badge variant="default">🏢 {location.agency}</Badge>
+                )}
+                {location.price_per_month && (
+                  <Badge variant="secondary">
+                    AED {location.price_per_month.toLocaleString()}/month
+                  </Badge>
+                )}
+                {getLocationCategory(location.type) && (
+                  <Badge variant="outline">
+                    {LOCATION_CATEGORIES[getLocationCategory(location.type)!].emoji}{" "}
+                    {getLocationCategory(location.type)}
+                  </Badge>
                 )}
               </div>
             </div>

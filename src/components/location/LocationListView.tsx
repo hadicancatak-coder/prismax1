@@ -20,31 +20,16 @@ interface LocationListViewProps {
 
 export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin }: LocationListViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [cityFilter, setCityFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [agencyFilter, setAgencyFilter] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState<"name" | "score" | "city" | "type" | "price">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const cities = Array.from(new Set(locations.map(l => l.city))).sort();
-  const types = Array.from(new Set(locations.map(l => l.type))).sort();
-  const agencies = Array.from(new Set(locations.map(l => l.agency).filter(Boolean))).sort();
-  const prices = locations.map(l => l.price_per_month || 0);
-  const minPrice = Math.min(...prices, 0);
-  const maxPrice = Math.max(...prices, 100000);
-
   const filteredLocations = locations
     .filter(loc => {
       const matchesSearch = loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           loc.city.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCity = cityFilter === "all" || loc.city === cityFilter;
-      const matchesType = typeFilter === "all" || loc.type === typeFilter;
-      const matchesAgency = agencyFilter.length === 0 || (loc.agency && agencyFilter.includes(loc.agency));
-      const matchesPrice = !loc.price_per_month || 
-                          (loc.price_per_month >= priceRange[0] && loc.price_per_month <= priceRange[1]);
-      return matchesSearch && matchesCity && matchesType && matchesAgency && matchesPrice;
+                           loc.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (loc.agency && loc.agency.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesSearch;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -57,16 +42,16 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
     });
 
   const exportToCSV = () => {
-    const headers = ["City", "Type", "Name", "Latitude", "Longitude", "Manual Score", "Agency", "Price Per Month", "Notes"];
+    const headers = ["Name", "City", "Type", "Agency", "Price Per Month", "Manual Score", "Latitude", "Longitude", "Notes"];
     const rows = filteredLocations.map(loc => [
+      loc.name,
       loc.city,
       loc.type,
-      loc.name,
-      loc.latitude,
-      loc.longitude,
-      loc.manual_score || "",
       loc.agency || "",
       loc.price_per_month || "",
+      loc.manual_score || "",
+      loc.latitude,
+      loc.longitude,
       loc.notes || "",
     ]);
 
@@ -93,62 +78,13 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex gap-3 items-center">
         <Input
-          placeholder="Search locations..."
+          placeholder="Search locations, cities, or agencies..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-xs"
+          className="flex-1 max-w-md"
         />
-
-        <Select value={cityFilter} onValueChange={setCityFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by city" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Cities</SelectItem>
-            {cities.map(city => (
-              <SelectItem key={city} value={city}>{city}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {types.map(type => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <SimpleMultiSelect
-          options={agencies.map(a => ({ value: a as string, label: a as string }))}
-          selected={agencyFilter}
-          onChange={setAgencyFilter}
-          placeholder="Filter by agency"
-        />
-
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            value={priceRange[0]}
-            onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-            className="w-24"
-            placeholder="Min AED"
-          />
-          <span>-</span>
-          <Input
-            type="number"
-            value={priceRange[1]}
-            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-            className="w-24"
-            placeholder="Max AED"
-          />
-        </div>
 
         <div className="ml-auto">
           <Button onClick={exportToCSV} variant="outline">
@@ -184,7 +120,7 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
           <TableBody>
             {filteredLocations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No locations found
                 </TableCell>
               </TableRow>
