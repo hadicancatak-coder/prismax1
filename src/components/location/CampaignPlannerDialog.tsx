@@ -220,15 +220,16 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Edit Campaign' : 'Plan New Campaign'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6 min-h-0">
-            {/* Left: Form Inputs */}
-            <div className="space-y-4 flex flex-col min-h-0">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="grid grid-cols-2 gap-6 min-h-0">
+              {/* Left: Form Inputs */}
+              <div className="space-y-4 flex flex-col min-h-0">
               <div className="space-y-2">
                 <Label htmlFor="name">Campaign Name *</Label>
                 <Input
@@ -525,8 +526,9 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
               )}
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 border-t mt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
