@@ -67,7 +67,13 @@ Deno.serve(async (req) => {
 
     } else if (action === 'validate') {
       // Validate existing MFA session with IP check
+      console.log('🔍 Validation request:', { 
+        hasToken: !!sessionToken, 
+        userId: user.id 
+      });
+
       if (!sessionToken) {
+        console.log('❌ No session token provided');
         return new Response(
           JSON.stringify({ valid: false, reason: 'no_token' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -75,8 +81,9 @@ Deno.serve(async (req) => {
       }
 
       const currentIp = getClientIp(req);
+      console.log('🌐 Current IP:', currentIp);
 
-      const { data: session } = await supabase
+      const { data: session, error: queryError } = await supabase
         .from('mfa_sessions')
         .select('id, expires_at, ip_address, skip_validation_for_ip')
         .eq('session_token', sessionToken)
@@ -84,7 +91,16 @@ Deno.serve(async (req) => {
         .gt('expires_at', new Date().toISOString())
         .single();
 
+      console.log('📋 Session query:', { 
+        found: !!session, 
+        error: queryError?.message,
+        storedIp: session?.ip_address,
+        currentIp,
+        expired: session ? new Date(session.expires_at) < new Date() : 'N/A'
+      });
+
       if (!session) {
+        console.log('❌ Session not found or expired');
         return new Response(
           JSON.stringify({ valid: false, reason: 'expired' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -94,15 +110,24 @@ Deno.serve(async (req) => {
       // Check IP match if validation is not skipped
       const ipMatch = session.skip_validation_for_ip || 
                       session.ip_address === currentIp;
+      
+      console.log('🔐 IP validation:', { 
+        storedIp: session.ip_address, 
+        currentIp, 
+        match: ipMatch,
+        skipValidation: session.skip_validation_for_ip 
+      });
 
       if (!ipMatch) {
         // IP changed - require re-verification
+        console.log('❌ IP mismatch - requiring re-verification');
         return new Response(
           JSON.stringify({ valid: false, reason: 'ip_mismatch' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('✅ Validation successful');
       return new Response(
         JSON.stringify({ 
           valid: true, 

@@ -64,6 +64,11 @@ export default function MfaVerify() {
           throw new Error('Failed to create session');
         }
 
+        console.log('✅ MFA session created:', { 
+          token: sessionData.sessionToken.substring(0, 10) + '...',
+          expiresAt: sessionData.expiresAt 
+        });
+
         // Calculate expiry (6 hours from now)
         const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
 
@@ -75,10 +80,11 @@ export default function MfaVerify() {
           description: "You have been successfully authenticated",
         });
 
-        // Use setTimeout to ensure state updates before navigation
+        // Longer delay to ensure state propagates
         setTimeout(() => {
+          console.log('🚀 Navigating to home page');
           navigate("/", { replace: true });
-        }, 100);
+        }, 250); // Increased from 100ms to 250ms
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);

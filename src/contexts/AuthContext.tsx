@@ -56,13 +56,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
   const [mfaVerified, setMfaVerified] = useState<boolean>(false);
+  const [skipNextValidation, setSkipNextValidation] = useState(false);
   const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
 
   // Validate MFA session with server
   const validateMfaSession = async (): Promise<boolean> => {
+    if (skipNextValidation) {
+      console.log('⏭️ Skipping validation (just verified)');
+      setSkipNextValidation(false);
+      return true;
+    }
+
     const sessionToken = getMfaSessionToken();
+    
+    console.log('🔍 Validating MFA session:', { 
+      hasToken: !!sessionToken, 
+      hasUser: !!user 
+    });
+
     if (!sessionToken || !user) {
+      console.log('❌ No token or user');
       setMfaVerified(false);
       return false;
     }
@@ -75,15 +89,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
 
+      console.log('📋 Validation response:', { 
+        error: error?.message, 
+        valid: data?.valid,
+        reason: data?.reason,
+        sameIp: data?.sameIp 
+      });
+
       if (error || !data?.valid) {
+        console.log('❌ Validation failed:', data?.reason || error?.message);
         setMfaSessionToken(null);
         setMfaVerified(false);
         return false;
       }
 
+      console.log('✅ MFA session valid');
       setMfaVerified(true);
       return true;
-    } catch {
+    } catch (err) {
+      console.error('❌ Validation error:', err);
       setMfaSessionToken(null);
       setMfaVerified(false);
       return false;
@@ -176,9 +200,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setMfaVerifiedStatus = (verified: boolean, sessionToken?: string, expiresAt?: string) => {
+    console.log('🔐 Setting MFA status:', { verified });
     setMfaVerified(verified);
     if (verified && sessionToken && expiresAt) {
       setMfaSessionToken(sessionToken, expiresAt);
+      setSkipNextValidation(true); // Skip immediate re-validation
     } else {
       setMfaSessionToken(null);
     }
