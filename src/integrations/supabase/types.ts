@@ -1355,6 +1355,121 @@ export type Database = {
           },
         ]
       }
+      location_historic_prices: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          price: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          price: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          price?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_historic_prices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "media_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_past_campaigns: {
+        Row: {
+          budget: number
+          campaign_date: string
+          campaign_name: string
+          created_at: string
+          id: string
+          location_id: string
+          notes: string | null
+        }
+        Insert: {
+          budget: number
+          campaign_date: string
+          campaign_name: string
+          created_at?: string
+          id?: string
+          location_id: string
+          notes?: string | null
+        }
+        Update: {
+          budget?: number
+          campaign_date?: string
+          campaign_name?: string
+          created_at?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_past_campaigns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "media_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_locations: {
+        Row: {
+          city: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          latitude: number
+          longitude: number
+          manual_score: number | null
+          name: string
+          notes: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          latitude: number
+          longitude: number
+          manual_score?: number | null
+          name: string
+          notes?: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number
+          longitude?: number
+          manual_score?: number | null
+          name?: string
+          notes?: string | null
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mfa_backup_code_usage: {
         Row: {
           code_hash: string
@@ -3018,6 +3133,13 @@ export type Database = {
         | "affiliate"
         | "referral"
         | "organic"
+      location_type:
+        | "Billboard"
+        | "LED Screen"
+        | "Bus Shelter"
+        | "Street Furniture"
+        | "Transit"
+        | "Other"
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
@@ -3161,6 +3283,14 @@ export const Constants = {
         "affiliate",
         "referral",
         "organic",
+      ],
+      location_type: [
+        "Billboard",
+        "LED Screen",
+        "Bus Shelter",
+        "Street Furniture",
+        "Transit",
+        "Other",
       ],
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],

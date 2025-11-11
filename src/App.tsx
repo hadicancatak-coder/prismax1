@@ -32,6 +32,7 @@ import About from "./pages/About";
 import UtmPlanner from "./pages/UtmPlanner";
 import Operations from "./pages/Operations";
 import CopyWriter from "./pages/CopyWriter";
+import LocationIntelligence from "./pages/LocationIntelligence";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 const App = () => (
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />
+            <Route path="/location-intelligence" element={<LocationIntelligence />} />
             <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />

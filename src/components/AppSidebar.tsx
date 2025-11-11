@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText, PenTool, Monitor, Database } from "lucide-react";
+import { CheckSquare, Calendar, LayoutDashboard as DashboardIcon, LogOut, Megaphone, Target, Bell, FolderKanban, Link2, Share2, FileText, PenTool, Monitor, Database, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/cfi-logo.png";
@@ -29,6 +29,7 @@ const operationsItems = [
   { title: "Saved Elements", url: "/ads/library", icon: Database },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
   { title: "Copy Writer", url: "/copywriter", icon: PenTool },
+  { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
 ];
 
 export function AppSidebar() {
