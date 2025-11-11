@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, GripVertical, Info } from "lucide-react";
@@ -22,7 +21,7 @@ import { TaskSortDropdown, SortOption } from "@/components/tasks/TaskSortDropdow
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DateRange } from "react-day-picker";
+import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
 
 // Sortable Task Item Component
@@ -131,9 +130,8 @@ export default function CalendarView() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "month" | "custom">("today");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [focusMode, setFocusMode] = useState(false);
-  const [calendarKey, setCalendarKey] = useState(0);
   const [sortOption, setSortOption] = useState<SortOption>(() => {
     return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
   });
@@ -283,45 +281,6 @@ export default function CalendarView() {
   const highPriorityCount = filteredTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
   const upcomingCount = filteredTasks.filter(t => t.status === 'Pending').length;
 
-  // Preset date range functions
-  const setPresetRange = (preset: string) => {
-    let from: Date, to: Date;
-    
-    switch (preset) {
-      case "today":
-        from = to = new Date();
-        break;
-      case "yesterday":
-        from = to = subDays(new Date(), 1);
-        break;
-      case "tomorrow":
-        from = to = addDays(new Date(), 1);
-        break;
-      case "this-week":
-        from = startOfWeek(new Date(), { weekStartsOn: 1 });
-        to = endOfWeek(new Date(), { weekStartsOn: 1 });
-        break;
-      case "last-7":
-        from = subDays(new Date(), 7);
-        to = new Date();
-        break;
-      case "this-month":
-        from = startOfMonth(new Date());
-        to = endOfMonth(new Date());
-        break;
-      default:
-        from = to = new Date();
-    }
-    
-    // Clear first, then set new range to ensure clean state
-    setDateRange(undefined);
-    setCalendarKey(prev => prev + 1);
-    setTimeout(() => {
-      setDateRange({ from, to });
-      setDateView("custom");
-    }, 0);
-  };
-
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
       {!focusMode && (
@@ -383,70 +342,16 @@ export default function CalendarView() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-4 space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("today")}>
-                          Today
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("yesterday")}>
-                          Yesterday
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("tomorrow")}>
-                          Tomorrow
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("this-week")}>
-                          This Week
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("last-7")}>
-                          Last 7 Days
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setPresetRange("this-month")}>
-                          This Month
-                        </Button>
-                      </div>
-                      <div className="flex justify-between items-center mb-2 px-3">
-                        <span className="text-sm font-medium">Select Date Range</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setDateRange(undefined);
-                            setCalendarKey(prev => prev + 1);
-                          }}
-                        >
-                          Start Over
-                        </Button>
-                      </div>
-                      <Calendar
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={(range) => {
-                          setDateRange(range);
-                          // Auto-apply when range is complete
-                          if (range?.from && range?.to) {
-                            setDateView("custom");
-                          }
-                        }}
-                        numberOfMonths={2}
-                        className="pointer-events-auto"
-                        key={calendarKey}
-                        defaultMonth={dateRange?.from || new Date()}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setDateRange(undefined);
-                            setDateView("today");
-                            setCalendarKey(prev => prev + 1);
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    </div>
+                    <DateRangePicker
+                      value={dateRange}
+                      onChange={(range) => {
+                        setDateRange(range);
+                        if (range) {
+                          setDateView("custom");
+                        }
+                      }}
+                      presets="full"
+                    />
                   </PopoverContent>
                 </Popover>
               )}
