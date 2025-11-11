@@ -18,7 +18,6 @@ const entityEmojis: Record<string, string> = {
   Azerbaijan: "🇦🇿",
   UAE: "🇦🇪",
   Kuwait: "🇰🇼",
-  Oman: "🇴🇲",
   UK: "🇬🇧",
   Cyprus: "🇨🇾",
   Vanuatu: "🇻🇺",

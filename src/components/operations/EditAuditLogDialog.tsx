@@ -12,19 +12,12 @@ import { CalendarIcon, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { useUpdateAuditLog } from "@/hooks/useOperationLogs";
 import { Badge } from "@/components/ui/badge";
+import { ENTITIES } from "@/lib/constants";
 
 const ppcPlatforms = ["Google", "Search", "DGen", "PMax", "Display", "GDN", "YouTube"];
 const socialPlatforms = ["Meta", "Facebook", "Instagram", "X", "TikTok", "Snap", "Reddit"];
 
-const entities = [
-  "Saudi Arabia",
-  "UAE",
-  "Bahrain",
-  "Jordan",
-  "Qatar",
-  "Kuwait",
-  "Oman",
-];
+const entities = ENTITIES.filter(e => e !== "Global Management");
 
 interface EditAuditLogDialogProps {
   log: any;

@@ -25,7 +25,7 @@ interface WebIntelFormDialogProps {
   ) => void;
 }
 
-const COUNTRIES = ['UAE', 'Saudi Arabia', 'Egypt', 'Kuwait', 'Qatar', 'Bahrain', 'Oman', 'Jordan', 'Lebanon', 'Morocco'];
+const COUNTRIES = ['UAE', 'Saudi Arabia', 'Egypt', 'Kuwait', 'Qatar', 'Bahrain', 'Jordan', 'Lebanon', 'Morocco'];
 const SITE_TYPES: ('Website' | 'App' | 'Portal' | 'Forum')[] = ['Website', 'App', 'Portal', 'Forum'];
 const CATEGORIES = ['Trading', 'Generic', 'Business', 'App'];
 const AVAILABLE_TAGS = ['GDN', 'DV360', 'Direct', 'Mobile-only'];

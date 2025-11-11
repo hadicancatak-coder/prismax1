@@ -9,7 +9,6 @@ export const ENTITIES = [
   "UAE",
   "Lebanon",
   "Kuwait",
-  "Oman",
   "Iraq",
   "UK",
   "Nigeria",

@@ -164,9 +164,9 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-6 min-h-0">
             {/* Left: Form Inputs */}
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col min-h-0">
               <div className="space-y-2">
                 <Label htmlFor="name">Campaign Name *</Label>
                 <Input
@@ -324,7 +324,7 @@ export function CampaignPlannerDialog({ open, onClose, locations }: CampaignPlan
                     Enter budget and select cities to see suggested placements
                   </p>
                 ) : (
-                  <div className={`space-y-2 ${(showAllLocations ? availableLocations : suggestedPlacements).length > 5 ? 'max-h-96 overflow-y-auto' : ''}`}>
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                     {(showAllLocations ? availableLocations : suggestedPlacements.map(s => s.location))
                       .map(location => {
                         const suggestedItem = suggestedPlacements.find(s => s.location.id === location.id);
