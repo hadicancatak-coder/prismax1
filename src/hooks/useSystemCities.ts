@@ -91,28 +91,25 @@ export const useUpdateCity = () => {
   });
 };
 
-export const useToggleCity = () => {
+export const useDeleteCity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { data, error } = await supabase
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
         .from("seminar_cities")
-        .update({ is_active })
-        .eq("id", id)
-        .select()
-        .single();
+        .delete()
+        .eq("id", id);
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-cities"] });
       queryClient.invalidateQueries({ queryKey: ["all-cities"] });
-      toast.success("City status updated");
+      toast.success("City deleted successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to update city status: ${error.message}`);
+      toast.error(`Failed to delete city: ${error.message}`);
     },
   });
 };

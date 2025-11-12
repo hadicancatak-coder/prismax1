@@ -74,27 +74,24 @@ export const useUpdatePlatform = () => {
   });
 };
 
-export const useTogglePlatform = () => {
+export const useDeletePlatform = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { data, error } = await supabase
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
         .from("utm_platforms")
-        .update({ is_active })
-        .eq("id", id)
-        .select()
-        .single();
+        .delete()
+        .eq("id", id);
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["utm-platforms"] });
-      toast.success("Platform status updated");
+      toast.success("Platform deleted successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to update platform status: ${error.message}`);
+      toast.error(`Failed to delete platform: ${error.message}`);
     },
   });
 };

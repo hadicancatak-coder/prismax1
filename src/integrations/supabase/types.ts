@@ -2527,6 +2527,7 @@ export type Database = {
           name: string
           updated_at: string | null
           updated_by: string | null
+          website_param: string | null
         }
         Insert: {
           code: string
@@ -2539,6 +2540,7 @@ export type Database = {
           name: string
           updated_at?: string | null
           updated_by?: string | null
+          website_param?: string | null
         }
         Update: {
           code?: string
@@ -2551,6 +2553,7 @@ export type Database = {
           name?: string
           updated_at?: string | null
           updated_by?: string | null
+          website_param?: string | null
         }
         Relationships: []
       }
@@ -3259,24 +3262,48 @@ export type Database = {
         }
         Relationships: []
       }
+      utm_mediums: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       utm_platforms: {
         Row: {
           created_at: string
           id: string
           is_active: boolean | null
           name: string
+          utm_medium: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_active?: boolean | null
           name: string
+          utm_medium?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           is_active?: boolean | null
           name?: string
+          utm_medium?: string | null
         }
         Relationships: []
       }

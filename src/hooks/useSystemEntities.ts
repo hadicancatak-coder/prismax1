@@ -9,6 +9,7 @@ export interface SystemEntity {
   emoji: string | null;
   is_active: boolean;
   display_order: number;
+  website_param?: string | null;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -105,28 +106,26 @@ export const useUpdateEntity = () => {
   });
 };
 
-export const useToggleEntity = () => {
+export const useDeleteEntity = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('system_entities')
-        .update({ is_active })
+        .delete()
         .eq('id', id);
       
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
       queryClient.invalidateQueries({ queryKey: ['all-entities'] });
-      toast({ 
-        title: variables.is_active ? 'Entity activated' : 'Entity deactivated'
-      });
+      toast({ title: 'Entity deleted successfully' });
     },
     onError: (error: any) => {
       toast({ 
-        title: 'Failed to update entity status', 
+        title: 'Failed to delete entity', 
         description: error.message,
         variant: 'destructive' 
       });
