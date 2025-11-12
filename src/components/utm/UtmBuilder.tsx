@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Sparkles } from "lucide-react";
+import { AlertBanner } from "@/components/ui/AlertBanner";
 import { EnhancedMultiSelect } from "./EnhancedMultiSelect";
 import { GeneratedLinksPreview } from "./GeneratedLinksPreview";
 import { AddCampaignDialog } from "./AddCampaignDialog";
@@ -211,6 +212,12 @@ export function UtmBuilder() {
 
   return (
     <>
+      <AlertBanner
+        variant="warning"
+        message="⚠️ Link Accuracy Responsibility: You are responsible for ensuring all UTM links are correct before use. Always verify the final URL matches your campaign requirements."
+        autoDismiss={false}
+      />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

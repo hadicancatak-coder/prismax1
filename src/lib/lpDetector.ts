@@ -8,6 +8,7 @@ export interface LPDetectionResult {
   warnings: string[];
   extractedCity?: string;
   extractedWebinarName?: string;
+  lpType: 'static' | 'dynamic';
 }
 
 const COUNTRY_CODES: Record<string, string> = {
@@ -89,12 +90,19 @@ export function detectLPMetadata(url: string): LPDetectionResult {
       path: '',
       confidence: 'low',
       warnings: ['Invalid URL format'],
+      lpType: 'static',
     };
   }
   
   const language = detectLanguage(url);
   const purpose = detectPurpose(url);
   const country = detectCountryFromPath(url);
+  
+  // Detect if static or dynamic
+  // Static: has /en/country/ pattern (e.g., campaigns.cfifinancial.com/en/lb/)
+  // Dynamic: cfi.trade with no country path, uses ?lang= param
+  const isStatic = domain.includes('campaigns.cfifinancial.com') || (language !== null && country !== null);
+  const lpType: 'static' | 'dynamic' = isStatic ? 'static' : 'dynamic';
   
   const warnings: string[] = [];
   
@@ -133,5 +141,6 @@ export function detectLPMetadata(url: string): LPDetectionResult {
     warnings,
     extractedCity,
     extractedWebinarName,
+    lpType,
   };
 }
