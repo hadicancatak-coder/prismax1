@@ -1,7 +1,6 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef, useMemo } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import Supercluster from "supercluster";
 import { MediaLocation, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { MapPin } from "lucide-react";
 
@@ -77,16 +76,25 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      // Add click handler for adding new locations
+      // Add right-click handler for adding new locations
       if (onMapClick) {
-        map.current.on('click', (e) => {
+        map.current.on('contextmenu', (e) => {
+          e.preventDefault(); // Prevent browser context menu
+          
           const { lng, lat } = e.lngLat;
           onMapClick({ lat, lng });
 
-          // Show temporary marker
-          const tempMarker = new mapboxgl.Marker({ color: '#22c55e' })
+          // Show temporary marker with pulse animation
+          const tempMarker = new mapboxgl.Marker({ 
+            color: '#22c55e',
+            scale: 1.2 
+          })
             .setLngLat([lng, lat])
             .addTo(map.current!);
+
+          // Add pulse effect
+          const markerEl = tempMarker.getElement();
+          markerEl.style.animation = 'pulse 1s ease-in-out';
 
           // Remove after 3 seconds
           setTimeout(() => tempMarker.remove(), 3000);
@@ -98,33 +106,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
       };
     }, [onMapClick]);
 
-    // Create supercluster instance
-    const cluster = useMemo(() => {
-      const supercluster = new Supercluster({
-        radius: 60,
-        maxZoom: 16,
-        minZoom: 0,
-      });
-
-      // Convert locations to GeoJSON features
-      const points = locations.map(loc => ({
-        type: 'Feature' as const,
-        properties: {
-          cluster: false,
-          locationId: loc.id,
-          location: loc,
-        },
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [Number(loc.longitude), Number(loc.latitude)],
-        },
-      }));
-
-      supercluster.load(points);
-      return supercluster;
-    }, [locations]);
-
-    // Update markers when map moves or zooms
+    // Render individual markers (no clustering)
     const updateMarkers = () => {
       if (!map.current) return;
 
@@ -132,88 +114,47 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
 
-      const bounds = map.current.getBounds();
-      const zoom = Math.floor(map.current.getZoom());
+      // Render individual markers for all locations
+      locations.forEach(location => {
+        const category = getLocationCategory(location.type);
+        const color = category ? LOCATION_CATEGORIES[category].color : '#6b7280';
 
-      // Get clusters for current viewport
-      const clusters = cluster.getClusters(
-        [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
-        zoom
-      );
+        const el = document.createElement('div');
+        el.className = 'location-marker';
+        el.style.backgroundColor = color;
+        el.style.width = '24px';
+        el.style.height = '24px';
+        el.style.borderRadius = '50%';
+        el.style.border = '2px solid white';
+        el.style.cursor = 'pointer';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        el.style.transition = 'all 0.2s ease';
 
-      // Render markers/clusters
-      clusters.forEach((feature) => {
-        const [lng, lat] = feature.geometry.coordinates;
-        const isCluster = feature.properties?.cluster;
-
-        if (isCluster) {
-          // Cluster marker
-          const count = feature.properties.point_count;
-          const size = count < 10 ? 30 : count < 100 ? 40 : 50;
-
-          const el = document.createElement('div');
-          el.className = 'cluster-marker';
-          el.style.width = `${size}px`;
-          el.style.height = `${size}px`;
-          el.innerHTML = `<span>${count}</span>`;
-
-          // Click to expand cluster
-          el.addEventListener('click', () => {
-            const expansionZoom = cluster.getClusterExpansionZoom(feature.properties.cluster_id);
-            map.current?.flyTo({
-              center: [lng, lat],
-              zoom: expansionZoom,
-              duration: 1000,
-            });
-          });
-
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat([lng, lat])
-            .addTo(map.current!);
-
-          markers.current.push(marker);
-        } else {
-          // Individual location marker
-          const location = feature.properties.location as MediaLocation;
-          const category = getLocationCategory(location.type);
-          const color = category ? LOCATION_CATEGORIES[category].color : '#6b7280';
-
-          const el = document.createElement('div');
-          el.className = 'location-marker';
-          el.style.backgroundColor = color;
-          el.style.width = '24px';
-          el.style.height = '24px';
-          el.style.borderRadius = '50%';
-          el.style.border = '2px solid white';
-          el.style.cursor = 'pointer';
-          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-
-          // Highlight if selected
-          if (selectedLocationId === location.id) {
-            el.style.border = '3px solid hsl(var(--primary))';
-            el.style.transform = 'scale(1.3)';
-          }
-
-          const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-            .setHTML(`
-              <div class="p-2">
-                <div class="font-semibold">${location.name}</div>
-                <div class="text-sm text-muted-foreground">${location.type}</div>
-                ${location.manual_score ? `<div class="text-sm">Score: ${location.manual_score}/10</div>` : ''}
-              </div>
-            `);
-
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat([lng, lat])
-            .setPopup(popup)
-            .addTo(map.current!);
-
-          el.addEventListener('click', () => {
-            onLocationClick(location);
-          });
-
-          markers.current.push(marker);
+        // Highlight if selected
+        if (selectedLocationId === location.id) {
+          el.style.border = '3px solid hsl(var(--primary))';
+          el.style.transform = 'scale(1.3)';
         }
+
+        const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
+          .setHTML(`
+            <div class="p-2">
+              <div class="font-semibold">${location.name}</div>
+              <div class="text-sm text-muted-foreground">${location.type}</div>
+              ${location.manual_score ? `<div class="text-sm">Score: ${location.manual_score}/10</div>` : ''}
+            </div>
+          `);
+
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([Number(location.longitude), Number(location.latitude)])
+          .setPopup(popup)
+          .addTo(map.current!);
+
+        el.addEventListener('click', () => {
+          onLocationClick(location);
+        });
+
+        markers.current.push(marker);
       });
     };
 
@@ -222,10 +163,6 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
 
       // Initial render
       map.current.on('load', updateMarkers);
-      
-      // Update on map move/zoom
-      map.current.on('moveend', updateMarkers);
-      map.current.on('zoomend', updateMarkers);
 
       // Initial update if map already loaded
       if (map.current.loaded()) {
@@ -244,8 +181,6 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
       return () => {
         if (map.current) {
           map.current.off('load', updateMarkers);
-          map.current.off('moveend', updateMarkers);
-          map.current.off('zoomend', updateMarkers);
         }
       };
     }, [locations, onLocationClick, selectedLocationId]);
@@ -281,6 +216,14 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
             ))}
           </div>
         </div>
+
+        {onMapClick && (
+          <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border">
+            <p className="text-xs text-muted-foreground">
+              <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded border">Right-Click</kbd> to add location
+            </p>
+          </div>
+        )}
       </div>
     );
   }
