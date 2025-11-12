@@ -63,7 +63,7 @@ export const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/profile#kpis")} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => navigate("/kpis")} className="cursor-pointer">
           <Target className="mr-2 h-4 w-4" />
           My KPIs
         </DropdownMenuItem>
@@ -88,9 +88,9 @@ export const UserMenu = () => {
         {userRole === 'admin' && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/team-kpis")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => navigate("/kpis")} className="cursor-pointer">
               <TrendingUp className="mr-2 h-4 w-4" />
-              Team KPIs
+              KPIs
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/activity-log")} className="cursor-pointer">
               <Activity className="mr-2 h-4 w-4" />

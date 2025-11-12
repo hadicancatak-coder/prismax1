@@ -10,9 +10,7 @@ const MFA_EXEMPT_ROUTES = [
   '/profile',
   '/notifications',
   '/tasks',
-  '/backlog',
   '/calendar',
-  '/projects',
   '/team',
   '/reports',
   '/about'

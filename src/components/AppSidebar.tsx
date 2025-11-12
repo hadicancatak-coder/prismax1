@@ -36,6 +36,7 @@ import {
   const coreItems = [
     { title: "Tasks", url: "/tasks", icon: CheckSquare },
     { title: "Agenda", url: "/calendar", icon: Calendar },
+    { title: "KPIs", url: "/kpis", icon: Target },
   ];
 
 const adsItems = [
@@ -46,8 +47,6 @@ const adsItems = [
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
 ];
 
-const webItems = [
-];
 
 const mediaItems = [
   { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
