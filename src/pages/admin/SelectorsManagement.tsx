@@ -17,6 +17,14 @@ import { useAllCities, useCreateCity, useUpdateCity, useDeleteCity } from "@/hoo
 import { useUtmPlatforms, useCreatePlatform, useUpdatePlatform, useDeletePlatform } from "@/hooks/useUtmPlatforms";
 import { useUtmMediums, useCreateMedium, useUpdateMedium, useDeleteMedium } from "@/hooks/useUtmMediums";
 import { CountryCodeSelect } from "@/components/admin/CountryCodeSelect";
+import { toast } from "sonner";
+import { 
+  checkEntityDependencies, 
+  checkCityDependencies, 
+  checkPlatformDependencies, 
+  checkMediumDependencies,
+  formatDependencyMessage 
+} from "@/lib/selectorDependencyCheck";
 
 function SortableRow({ id, children }: { id: string; children: React.ReactNode }) {
   const {
@@ -52,25 +60,29 @@ export default function SelectorsManagement() {
   const [isEntityDialogOpen, setIsEntityDialogOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<any>(null);
   const [entityForm, setEntityForm] = useState({ name: "", code: "", emoji: "", display_order: 0, website_param: "", customWebsiteParam: "" });
-  const [deleteEntityId, setDeleteEntityId] = useState<string | null>(null);
+  const [isDeleteEntityDialogOpen, setIsDeleteEntityDialogOpen] = useState(false);
+  const [entityToDelete, setEntityToDelete] = useState<{ id: string; code: string } | null>(null);
   
   // City state
   const [isCityDialogOpen, setIsCityDialogOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<any>(null);
   const [cityForm, setCityForm] = useState({ name: "", country: "", display_order: 0 });
-  const [deleteCityId, setDeleteCityId] = useState<string | null>(null);
+  const [isDeleteCityDialogOpen, setIsDeleteCityDialogOpen] = useState(false);
+  const [cityToDelete, setCityToDelete] = useState<{ id: string; name: string } | null>(null);
   
   // Platform state
   const [isPlatformDialogOpen, setIsPlatformDialogOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<any>(null);
   const [platformForm, setPlatformForm] = useState({ name: "", utm_medium: "" });
-  const [deletePlatformId, setDeletePlatformId] = useState<string | null>(null);
+  const [isDeletePlatformDialogOpen, setIsDeletePlatformDialogOpen] = useState(false);
+  const [platformToDelete, setPlatformToDelete] = useState<{ id: string; name: string } | null>(null);
   
   // Medium state
   const [isMediumDialogOpen, setIsMediumDialogOpen] = useState(false);
   const [editingMedium, setEditingMedium] = useState<any>(null);
   const [mediumForm, setMediumForm] = useState({ name: "", display_order: 0 });
-  const [deleteMediumId, setDeleteMediumId] = useState<string | null>(null);
+  const [isDeleteMediumDialogOpen, setIsDeleteMediumDialogOpen] = useState(false);
+  const [mediumToDelete, setMediumToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Hooks
   const { data: entities, isLoading: entitiesLoading } = useAllEntities();
@@ -118,6 +130,29 @@ export default function SelectorsManagement() {
     setEntityForm({ name: "", code: "", emoji: "", display_order: 0, website_param: "", customWebsiteParam: "" });
   };
 
+  const handleDeleteEntity = async (id: string, code: string) => {
+    const { canDelete, dependencies } = await checkEntityDependencies(code);
+    
+    if (!canDelete) {
+      toast.error('Cannot delete entity', {
+        description: formatDependencyMessage(dependencies),
+        duration: 7000,
+      });
+      return;
+    }
+    
+    setEntityToDelete({ id, code });
+    setIsDeleteEntityDialogOpen(true);
+  };
+
+  const confirmDeleteEntity = async () => {
+    if (entityToDelete) {
+      await deleteEntity.mutateAsync(entityToDelete.id);
+      setIsDeleteEntityDialogOpen(false);
+      setEntityToDelete(null);
+    }
+  };
+
   const handleEntityDragEnd = async (event: any) => {
     const { active, over } = event;
     if (active.id !== over.id && entities) {
@@ -125,7 +160,6 @@ export default function SelectorsManagement() {
       const newIndex = entities.findIndex((e) => e.id === over.id);
       const reordered = arrayMove(entities, oldIndex, newIndex);
       
-      // Update display_order for affected items
       for (let i = 0; i < reordered.length; i++) {
         if (reordered[i].display_order !== i) {
           await updateEntity.mutateAsync({ id: reordered[i].id, display_order: i });
@@ -144,6 +178,29 @@ export default function SelectorsManagement() {
     setIsCityDialogOpen(false);
     setEditingCity(null);
     setCityForm({ name: "", country: "", display_order: 0 });
+  };
+
+  const handleDeleteCity = async (id: string, name: string) => {
+    const { canDelete, dependencies } = await checkCityDependencies(name);
+    
+    if (!canDelete) {
+      toast.error('Cannot delete city', {
+        description: formatDependencyMessage(dependencies),
+        duration: 7000,
+      });
+      return;
+    }
+    
+    setCityToDelete({ id, name });
+    setIsDeleteCityDialogOpen(true);
+  };
+
+  const confirmDeleteCity = async () => {
+    if (cityToDelete) {
+      await deleteCity.mutateAsync(cityToDelete.id);
+      setIsDeleteCityDialogOpen(false);
+      setCityToDelete(null);
+    }
   };
 
   const handleCityDragEnd = async (event: any) => {
@@ -173,6 +230,29 @@ export default function SelectorsManagement() {
     setPlatformForm({ name: "", utm_medium: "" });
   };
 
+  const handleDeletePlatform = async (id: string, name: string) => {
+    const { canDelete, dependencies } = await checkPlatformDependencies(name);
+    
+    if (!canDelete) {
+      toast.error('Cannot delete platform', {
+        description: formatDependencyMessage(dependencies),
+        duration: 7000,
+      });
+      return;
+    }
+    
+    setPlatformToDelete({ id, name });
+    setIsDeletePlatformDialogOpen(true);
+  };
+
+  const confirmDeletePlatform = async () => {
+    if (platformToDelete) {
+      await deletePlatform.mutateAsync(platformToDelete.id);
+      setIsDeletePlatformDialogOpen(false);
+      setPlatformToDelete(null);
+    }
+  };
+
   // Medium handlers
   const handleMediumSubmit = async () => {
     if (editingMedium) {
@@ -183,6 +263,29 @@ export default function SelectorsManagement() {
     setIsMediumDialogOpen(false);
     setEditingMedium(null);
     setMediumForm({ name: "", display_order: 0 });
+  };
+
+  const handleDeleteMedium = async (id: string, name: string) => {
+    const { canDelete, dependencies } = await checkMediumDependencies(name);
+    
+    if (!canDelete) {
+      toast.error('Cannot delete UTM medium', {
+        description: formatDependencyMessage(dependencies),
+        duration: 7000,
+      });
+      return;
+    }
+    
+    setMediumToDelete({ id, name });
+    setIsDeleteMediumDialogOpen(true);
+  };
+
+  const confirmDeleteMedium = async () => {
+    if (mediumToDelete) {
+      await deleteMedium.mutateAsync(mediumToDelete.id);
+      setIsDeleteMediumDialogOpen(false);
+      setMediumToDelete(null);
+    }
   };
 
   const handleMediumDragEnd = async (event: any) => {
@@ -310,7 +413,7 @@ export default function SelectorsManagement() {
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => setDeleteEntityId(entity.id)}>
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteEntity(entity.id, entity.code)}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
@@ -390,7 +493,7 @@ export default function SelectorsManagement() {
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => setDeleteCityId(city.id)}>
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteCity(city.id, city.name)}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
@@ -464,7 +567,7 @@ export default function SelectorsManagement() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeletePlatformId(platform.id)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeletePlatform(platform.id, platform.name)}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -539,7 +642,7 @@ export default function SelectorsManagement() {
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => setDeleteMediumId(medium.id)}>
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteMedium(medium.id, medium.name)}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
@@ -681,7 +784,7 @@ export default function SelectorsManagement() {
       </Dialog>
 
       {/* Delete Confirmations */}
-      <AlertDialog open={deleteEntityId !== null} onOpenChange={(open) => !open && setDeleteEntityId(null)}>
+      <AlertDialog open={isDeleteEntityDialogOpen} onOpenChange={setIsDeleteEntityDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Entity</AlertDialogTitle>
@@ -692,12 +795,7 @@ export default function SelectorsManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => {
-                if (deleteEntityId) {
-                  await deleteEntity.mutateAsync(deleteEntityId);
-                  setDeleteEntityId(null);
-                }
-              }}
+              onClick={confirmDeleteEntity}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
@@ -706,7 +804,7 @@ export default function SelectorsManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteCityId !== null} onOpenChange={(open) => !open && setDeleteCityId(null)}>
+      <AlertDialog open={isDeleteCityDialogOpen} onOpenChange={setIsDeleteCityDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete City</AlertDialogTitle>
@@ -717,12 +815,7 @@ export default function SelectorsManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => {
-                if (deleteCityId) {
-                  await deleteCity.mutateAsync(deleteCityId);
-                  setDeleteCityId(null);
-                }
-              }}
+              onClick={confirmDeleteCity}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
@@ -731,7 +824,7 @@ export default function SelectorsManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deletePlatformId !== null} onOpenChange={(open) => !open && setDeletePlatformId(null)}>
+      <AlertDialog open={isDeletePlatformDialogOpen} onOpenChange={setIsDeletePlatformDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Platform</AlertDialogTitle>
@@ -742,12 +835,7 @@ export default function SelectorsManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => {
-                if (deletePlatformId) {
-                  await deletePlatform.mutateAsync(deletePlatformId);
-                  setDeletePlatformId(null);
-                }
-              }}
+              onClick={confirmDeletePlatform}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
@@ -756,7 +844,7 @@ export default function SelectorsManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteMediumId !== null} onOpenChange={(open) => !open && setDeleteMediumId(null)}>
+      <AlertDialog open={isDeleteMediumDialogOpen} onOpenChange={setIsDeleteMediumDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete UTM Medium</AlertDialogTitle>
@@ -767,12 +855,7 @@ export default function SelectorsManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => {
-                if (deleteMediumId) {
-                  await deleteMedium.mutateAsync(deleteMediumId);
-                  setDeleteMediumId(null);
-                }
-              }}
+              onClick={confirmDeleteMedium}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete

@@ -34,7 +34,7 @@ export const useSystemEntities = () => {
 
 export const useAllEntities = () => {
   return useQuery({
-    queryKey: ['all-entities'],
+    queryKey: ['system-entities'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('system_entities')
@@ -43,7 +43,9 @@ export const useAllEntities = () => {
       
       if (error) throw error;
       return data as SystemEntity[];
-    }
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 };
 
@@ -63,7 +65,6 @@ export const useCreateEntity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
-      queryClient.invalidateQueries({ queryKey: ['all-entities'] });
       toast({ title: 'Entity created successfully' });
     },
     onError: (error: any) => {
@@ -93,7 +94,6 @@ export const useUpdateEntity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
-      queryClient.invalidateQueries({ queryKey: ['all-entities'] });
       toast({ title: 'Entity updated successfully' });
     },
     onError: (error: any) => {
@@ -120,7 +120,6 @@ export const useDeleteEntity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
-      queryClient.invalidateQueries({ queryKey: ['all-entities'] });
       toast({ title: 'Entity deleted successfully' });
     },
     onError: (error: any) => {

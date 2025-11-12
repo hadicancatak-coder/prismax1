@@ -22,6 +22,8 @@ export const useUtmPlatforms = () => {
       if (error) throw error;
       return data as UtmPlatform[];
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 };
 

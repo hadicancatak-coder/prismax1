@@ -34,18 +34,10 @@ class ApprovalService {
       });
 
       // Check if user has admin role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) throw new Error('Profile not found');
-
       const { data: userRole, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
         .single();
 
       if (roleError || userRole?.role !== 'admin') {
@@ -150,18 +142,10 @@ class ApprovalService {
       });
 
       // Check if user has admin role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) throw new Error('Profile not found');
-
       const { data: userRole, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
         .single();
 
       if (roleError || userRole?.role !== 'admin') {

@@ -27,7 +27,7 @@ export const useSystemCities = () => {
 
 export const useAllCities = () => {
   return useQuery({
-    queryKey: ["all-cities"],
+    queryKey: ["system-cities"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("seminar_cities")
@@ -37,6 +37,8 @@ export const useAllCities = () => {
       if (error) throw error;
       return data as SeminarCity[];
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 };
 
@@ -56,7 +58,6 @@ export const useCreateCity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-cities"] });
-      queryClient.invalidateQueries({ queryKey: ["all-cities"] });
       toast.success("City created successfully");
     },
     onError: (error) => {
@@ -82,7 +83,6 @@ export const useUpdateCity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-cities"] });
-      queryClient.invalidateQueries({ queryKey: ["all-cities"] });
       toast.success("City updated successfully");
     },
     onError: (error) => {
@@ -105,7 +105,6 @@ export const useDeleteCity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-cities"] });
-      queryClient.invalidateQueries({ queryKey: ["all-cities"] });
       toast.success("City deleted successfully");
     },
     onError: (error) => {

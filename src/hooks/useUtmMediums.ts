@@ -22,6 +22,8 @@ export const useUtmMediums = () => {
       if (error) throw error;
       return data as UtmMedium[];
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0
   });
 };
 
