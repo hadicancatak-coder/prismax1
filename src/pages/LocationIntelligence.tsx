@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { logger } from "@/lib/logger";
 import { LocationStats } from "@/components/location/LocationStats";
-import { LocationMap } from "@/components/location/LocationMap";
+import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
+import { LocationSearch } from "@/components/location/LocationSearch";
 import { LocationListView } from "@/components/location/LocationListView";
 import { LocationDetailPopup } from "@/components/location/LocationDetailPopup";
 import { LocationFormDialog } from "@/components/location/LocationFormDialog";
@@ -21,6 +22,7 @@ export default function LocationIntelligence() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
   const { locations, isLoading, deleteLocation, getLocationWithDetails } = useMediaLocations();
+  const mapRef = useRef<LocationMapRef>(null);
 
   const [viewMode, setViewMode] = useState<"map" | "list" | "campaigns">("map");
   const [selectedLocation, setSelectedLocation] = useState<MediaLocation | null>(null);
@@ -84,6 +86,21 @@ export default function LocationIntelligence() {
     setDetailOpen(true);
   };
 
+  const handleSearchSelect = (location: MediaLocation) => {
+    setViewMode("map"); // Switch to map view
+    setSelectedLocation(location);
+    
+    // Fly to location on map
+    if (mapRef.current) {
+      mapRef.current.flyToLocation(location);
+    }
+    
+    // Open detail popup after a delay to allow map animation
+    setTimeout(() => {
+      setDetailOpen(true);
+    }, 800);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -126,7 +143,11 @@ export default function LocationIntelligence() {
         <>
           <LocationStats locations={filteredLocations} />
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
+            <LocationSearch 
+              locations={filteredLocations} 
+              onLocationSelect={handleSearchSelect}
+            />
             <div className="flex gap-2">
               <Button
                 variant={viewMode === "map" ? "default" : "outline"}
@@ -161,9 +182,11 @@ export default function LocationIntelligence() {
 
           {viewMode === "map" ? (
             <LocationMap
+              ref={mapRef}
               locations={filteredLocations}
               onLocationClick={handleLocationClick}
               onMapClick={handleMapClick}
+              selectedLocationId={selectedLocation?.id}
             />
           ) : viewMode === "list" ? (
             <LocationListView
