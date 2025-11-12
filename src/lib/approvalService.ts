@@ -26,27 +26,52 @@ class ApprovalService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get requester from change request if it's a task
-      let requesterId: string | undefined;
       if (entityType === 'task') {
-        const { data: changeRequest } = await supabase
+        // Get the change request
+        const { data: changeRequest, error: fetchError } = await supabase
           .from('task_change_requests')
-          .select('requester_id')
-          .eq('task_id', entityId)
+          .select('*, payload_json')
+          .eq('id', entityId)
           .eq('status', 'pending')
           .single();
         
-        requesterId = changeRequest?.requester_id;
+        if (fetchError) throw fetchError;
+        if (!changeRequest) throw new Error('Change request not found');
+
+        // Apply the changes to the task
+        const payload = changeRequest.payload_json as any;
+        
+        if (changeRequest.type === 'status_change') {
+          const { error: updateError } = await supabase
+            .from('tasks')
+            .update({ 
+              status: payload.status,
+              failure_reason: payload.failure_reason 
+            })
+            .eq('id', payload.task_id);
+          
+          if (updateError) throw updateError;
+        }
+
+        // Mark request as approved
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        const { error: approveError } = await supabase
+          .from('task_change_requests')
+          .update({ 
+            status: 'approved',
+            decided_by: profile?.id,
+            decided_at: new Date().toISOString()
+          })
+          .eq('id', entityId);
+        
+        if (approveError) throw approveError;
       }
 
-      // Note: Ad approval now uses approval_history table with stages
-      // This is legacy code for task approvals only
-      if (entityType === 'task') {
-        // For tasks, just update status
-        // Task approval history uses a different system
-      }
-
-      // Handle entity-specific approval logic
       if (entityType === 'ad') {
         const { error } = await supabase
           .from('ads')
@@ -67,27 +92,36 @@ class ApprovalService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get requester from change request if it's a task
-      let requesterId: string | undefined;
       if (entityType === 'task') {
-        const { data: changeRequest } = await supabase
+        // Get the change request
+        const { data: changeRequest, error: fetchError } = await supabase
           .from('task_change_requests')
-          .select('requester_id')
-          .eq('task_id', entityId)
+          .select('*')
+          .eq('id', entityId)
           .eq('status', 'pending')
           .single();
         
-        requesterId = changeRequest?.requester_id;
+        if (fetchError) throw fetchError;
+
+        // Mark request as rejected (don't apply changes)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        const { error: rejectError } = await supabase
+          .from('task_change_requests')
+          .update({ 
+            status: 'rejected',
+            decided_by: profile?.id,
+            decided_at: new Date().toISOString()
+          })
+          .eq('id', entityId);
+        
+        if (rejectError) throw rejectError;
       }
 
-      // Note: Ad approval now uses approval_history table with stages
-      // This is legacy code for task approvals only
-      if (entityType === 'task') {
-        // For tasks, just update status
-        // Task approval history uses a different system
-      }
-
-      // Handle entity-specific rejection logic
       if (entityType === 'ad') {
         const { error } = await supabase
           .from('ads')

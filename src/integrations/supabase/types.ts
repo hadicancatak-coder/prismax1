@@ -1308,6 +1308,45 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_page_templates: {
+        Row: {
+          base_url: string
+          country: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          language: string | null
+          lp_type: string | null
+          platform: string | null
+          purpose: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_url: string
+          country?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          language?: string | null
+          lp_type?: string | null
+          platform?: string | null
+          purpose?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_url?: string
+          country?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          language?: string | null
+          lp_type?: string | null
+          platform?: string | null
+          purpose?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       launch_campaign_assignees: {
         Row: {
           assigned_at: string
