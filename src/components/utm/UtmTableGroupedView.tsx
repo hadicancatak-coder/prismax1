@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2, Monitor, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -125,10 +125,11 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="w-10 p-3"></th>
-              <th className="text-left p-3 font-medium">Campaign / Link Name</th>
+              <th className="text-left p-3 font-medium">Campaign</th>
               <th className="text-left p-3 font-medium">Platform</th>
+              <th className="text-left p-3 font-medium">Purpose</th>
               <th className="text-left p-3 font-medium">Entity</th>
-              <th className="text-left p-3 font-medium">Language</th>
+              <th className="text-left p-3 font-medium">Device</th>
               <th className="text-left p-3 font-medium">Date</th>
               <th className="text-right p-3 font-medium">Actions</th>
             </tr>
@@ -161,11 +162,13 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                         )}
                       </Button>
                     </td>
-                    <td className="p-3 font-semibold">{group.campaign}</td>
+                    <td className="p-3">
+                      <Badge className="font-mono text-xs">{group.campaign}</Badge>
+                    </td>
                     <td className="p-3">
                       <Badge variant="outline">{group.platform}</Badge>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground" colSpan={2}>
+                    <td className="p-3 text-sm text-muted-foreground" colSpan={3}>
                       {entitySummary}
                     </td>
                     <td className="p-3 text-sm">{group.monthYear}</td>
@@ -201,16 +204,41 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                 )}
                               </Button>
                             </td>
-                            <td className="p-3 text-sm">{link.name}</td>
+                            <td className="p-3">
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {link.utm_campaign}
+                              </Badge>
+                            </td>
                             <td className="p-3">
                               <Badge variant="secondary" className="text-xs">
                                 {link.utm_source}
                               </Badge>
                             </td>
+                            <td className="p-3">
+                              {link.link_purpose && (
+                                <Badge variant="default" className="text-xs">
+                                  {link.link_purpose}
+                                </Badge>
+                              )}
+                            </td>
                             <td className="p-3 text-sm">
                               {link.entity && link.entity.length > 0 ? link.entity.join(", ") : "-"}
                             </td>
-                            <td className="p-3 text-sm">{link.dynamic_language || "-"}</td>
+                            <td className="p-3">
+                              {link.utm_content?.includes('mobile') ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <Smartphone className="h-3 w-3 mr-1" />
+                                  Mobile
+                                </Badge>
+                              ) : link.utm_content?.includes('web') ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <Monitor className="h-3 w-3 mr-1" />
+                                  Web
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </td>
                             <td className="p-3 text-sm text-muted-foreground">
                               {format(new Date(link.created_at), "MMM d, yyyy")}
                             </td>
@@ -256,7 +284,7 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                           {/* Expanded URL Sub-Row */}
                           {isLinkExpanded && (
                             <tr className="border-b bg-muted/10">
-                              <td colSpan={7} className="p-3 pl-16">
+                              <td colSpan={8} className="p-3 pl-16">
                                 <div className="flex items-center gap-2 text-sm">
                                   <span className="font-medium text-muted-foreground">
                                     URL:

@@ -52,6 +52,52 @@ export const formatMonthYearReadable = (date: Date = new Date()): string => {
 };
 
 /**
+ * Format date as: nov25 (2-digit year)
+ */
+export const formatMonthYear2Digit = (date: Date = new Date()): string => {
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const month = months[date.getMonth()];
+  const year = String(date.getFullYear()).slice(-2);
+  
+  return `${month}${year}`;
+};
+
+/**
+ * Format date as: November25 (full month name + 2-digit year)
+ */
+export const formatFullMonthYear2Digit = (date: Date = new Date()): string => {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  const month = months[date.getMonth()];
+  const year = String(date.getFullYear()).slice(-2);
+  
+  return `${month}${year}`;
+};
+
+/**
+ * Generate utm_campaign based on purpose
+ */
+export const generateUtmCampaignByPurpose = (
+  purpose: 'AO' | 'Webinar' | 'Seminar',
+  campaignName?: string,
+  webinarName?: string,
+  city?: string,
+  date: Date = new Date()
+): string => {
+  if (purpose === 'AO' && campaignName) {
+    return `${campaignName.toLowerCase()}_${formatMonthYear2Digit(date)}`;
+  }
+  if (purpose === 'Webinar' && webinarName) {
+    const cleanName = webinarName.toLowerCase().replace(/\s+/g, '');
+    return `${cleanName}_${formatMonthYear2Digit(date)}`;
+  }
+  if (purpose === 'Seminar' && city) {
+    return `${city}Seminar_${formatFullMonthYear2Digit(date)}`;
+  }
+  return '';
+};
+
+/**
  * Detect entity and LP type from URL
  */
 export const detectEntityFromUrl = (url: string): {
