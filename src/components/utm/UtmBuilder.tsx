@@ -5,14 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Sparkles } from "lucide-react";
-import { SimpleMultiSelect } from "./SimpleMultiSelect";
+import { EnhancedMultiSelect } from "./EnhancedMultiSelect";
 import { GeneratedLinksPreview } from "./GeneratedLinksPreview";
 import { AddCampaignDialog } from "./AddCampaignDialog";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
-import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
+import { useUtmPlatforms, useCreatePlatform } from "@/hooks/useUtmPlatforms";
+import { useSystemEntities, useCreateEntity } from "@/hooks/useSystemEntities";
+import { useSystemCities } from "@/hooks/useSystemCities";
 import { useCreateUtmLink } from "@/hooks/useUtmLinks";
 import { toast } from "sonner";
-import { ENTITIES } from "@/lib/constants";
 import { detectLPMetadata } from "@/lib/lpDetector";
 import { LPDetectionCard } from "./LPDetectionCard";
 import { buildUtmUrl, generateUtmCampaignByPurpose, calculateUtmMedium } from "@/lib/utmHelpers";
@@ -35,16 +36,18 @@ export function UtmBuilder() {
 
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
+  const { data: entities = [] } = useSystemEntities();
+  const { data: cities = [] } = useSystemCities();
+  
   const createUtmLink = useCreateUtmLink();
-
-  const CITIES = [
-    "Amman", "Dubai", "Abu Dhabi", "Beirut", "Kuwait City", 
-    "Baghdad", "London", "Lagos", "Doha", "Mumbai", 
-    "Johannesburg", "Cairo", "Kuala Lumpur", "Santiago", "Hanoi"
-  ];
+  const createPlatform = useCreatePlatform();
+  const createEntity = useCreateEntity();
 
   const platformOptions = platforms.map(p => ({ value: p.name, label: p.name }));
-  const entityOptions = ENTITIES.map(e => ({ value: e, label: e }));
+  const entityOptions = entities.map(e => ({ 
+    value: e.name, 
+    label: e.emoji ? `${e.emoji} ${e.name}` : e.name 
+  }));
 
   const handleLpChange = (value: string) => {
     setLpUrl(value);
@@ -236,22 +239,39 @@ export function UtmBuilder() {
             <>
               <div className="space-y-2">
                 <Label>Platforms *</Label>
-                <SimpleMultiSelect
+                <EnhancedMultiSelect
                   options={platformOptions}
                   selected={selectedPlatforms}
                   onChange={setSelectedPlatforms}
                   placeholder="Select platforms..."
+                  allowCustom={true}
+                  customPlaceholder="Add new platform"
+                  onAddCustom={async (name) => {
+                    await createPlatform.mutateAsync({ name, is_active: true });
+                  }}
                 />
               </div>
 
               {detection.purpose === 'AO' && (
                 <div className="space-y-2">
                   <Label>Entities (Countries) *</Label>
-                  <SimpleMultiSelect
+                  <EnhancedMultiSelect
                     options={entityOptions}
                     selected={selectedEntities}
                     onChange={setSelectedEntities}
                     placeholder="Select entities..."
+                    allowCustom={true}
+                    customPlaceholder="Add new entity"
+                    onAddCustom={async (name) => {
+                      const code = name.toLowerCase().replace(/\s+/g, '_');
+                      await createEntity.mutateAsync({ 
+                        name, 
+                        code, 
+                        is_active: true,
+                        display_order: entities.length,
+                        emoji: null
+                      });
+                    }}
                   />
                 </div>
               )}
@@ -276,9 +296,9 @@ export function UtmBuilder() {
                       <SelectValue placeholder="Select city" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CITIES.map((cityName) => (
-                        <SelectItem key={cityName} value={cityName}>
-                          {cityName}
+                      {cities.map((c) => (
+                        <SelectItem key={c.id} value={c.name}>
+                          {c.name} {c.country && `(${c.country})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -317,14 +337,17 @@ export function UtmBuilder() {
             </>
           )}
 
-          <Button
-            variant="outline"
-            onClick={() => setShowAddCampaign(true)}
-            className="w-full"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Campaign
-          </Button>
+              {/* Only show for AO campaigns */}
+              {detection?.purpose === 'AO' && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddCampaign(true)}
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New Campaign
+                </Button>
+              )}
         </CardContent>
       </Card>
 

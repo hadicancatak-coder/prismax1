@@ -23,7 +23,7 @@ import { Plus, Copy, Trash2, Link as LinkIcon } from "lucide-react";
 import { InlineEditBadge } from "./InlineEditBadge";
 import { InlineEditSelect } from "./InlineEditSelect";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ENTITIES } from "@/lib/constants";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { useUtmLinks, useCreateUtmLink, useUpdateUtmLink, useDeleteUtmLink } from "@/hooks/useUtmLinks";
@@ -52,10 +52,16 @@ export function ReadyLinksBuilder() {
 
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
+  const { data: entities = [] } = useSystemEntities();
   const { data: allLinks = [] } = useUtmLinks({});
   const createUtmLink = useCreateUtmLink();
   const updateUtmLink = useUpdateUtmLink();
   const deleteUtmLink = useDeleteUtmLink();
+
+  const entityOptions = entities.map(e => ({ 
+    value: e.name, 
+    label: e.emoji ? `${e.emoji} ${e.name}` : e.name 
+  }));
 
   // Transform utm_links to SavedLP format
   const savedLPs: SavedLP[] = allLinks
@@ -187,7 +193,7 @@ export function ReadyLinksBuilder() {
                     <TableCell>
                       <InlineEditBadge
                         value={lp.country}
-                        options={ENTITIES}
+                        options={entityOptions}
                         onChange={(val) => updateLP(lp.id, 'country', val)}
                       />
                     </TableCell>

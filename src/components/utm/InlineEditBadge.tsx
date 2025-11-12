@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditBadgeProps {
   value: string;
-  options: string[];
+  options: { value: string; label: string }[];
   onChange: (value: string) => void;
   variant?: "default" | "secondary" | "outline" | "destructive";
 }
@@ -41,20 +41,20 @@ export function InlineEditBadge({ value, options, onChange, variant = "secondary
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
-                  key={option}
-                  value={option}
+                  key={option.value}
+                  value={option.value}
                   onSelect={() => {
-                    onChange(option);
+                    onChange(option.value);
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === option ? "opacity-100" : "opacity-0"
+                      value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option}
+                  {option.label}
                 </CommandItem>
               ))}
             </CommandGroup>
