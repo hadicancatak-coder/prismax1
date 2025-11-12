@@ -152,11 +152,23 @@ export default function SelectorsManagement() {
     const websiteParam = entityForm.website_param === 'custom' 
       ? entityForm.customWebsiteParam 
       : entityForm.website_param;
+    
+    // Destructure to exclude customWebsiteParam (UI-only field)
+    const { customWebsiteParam, ...entityData } = entityForm;
       
     if (editingEntity) {
-      await updateEntity.mutateAsync({ id: editingEntity.id, ...entityForm, website_param: websiteParam });
+      // Only send database columns
+      await updateEntity.mutateAsync({ 
+        id: editingEntity.id, 
+        ...entityData, 
+        website_param: websiteParam 
+      });
     } else {
-      await createEntity.mutateAsync({ ...entityForm, website_param: websiteParam, is_active: true });
+      await createEntity.mutateAsync({ 
+        ...entityData, 
+        website_param: websiteParam, 
+        is_active: true 
+      });
     }
     setIsEntityDialogOpen(false);
     setEditingEntity(null);
