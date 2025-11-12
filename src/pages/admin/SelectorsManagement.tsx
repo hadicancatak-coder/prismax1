@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -722,6 +722,9 @@ export default function SelectorsManagement() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingEntity ? "Edit Entity" : "Add Entity"}</DialogTitle>
+            <DialogDescription>
+              {editingEntity ? "Update the entity details." : "Add a new entity to the system."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -764,6 +767,9 @@ export default function SelectorsManagement() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingCity ? "Edit City" : "Add City"}</DialogTitle>
+            <DialogDescription>
+              {editingCity ? "Update the city details." : "Add a new city to the system."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -791,6 +797,9 @@ export default function SelectorsManagement() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingPlatform ? "Edit Platform" : "Add Platform"}</DialogTitle>
+            <DialogDescription>
+              {editingPlatform ? "Update the platform details." : "Add a new platform to the system."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -823,6 +832,9 @@ export default function SelectorsManagement() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingMedium ? "Edit UTM Medium" : "Add UTM Medium"}</DialogTitle>
+            <DialogDescription>
+              {editingMedium ? "Update the UTM medium details." : "Add a new UTM medium to the system."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

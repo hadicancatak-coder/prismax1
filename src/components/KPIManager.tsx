@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +29,7 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
 
   // Sync local state with props when dialog opens or kpis change
   useEffect(() => {
-    setLocalKPIs(kpis);
+    setLocalKPIs(Array.isArray(kpis) ? kpis : []);
     setValidationError(null);
   }, [kpis, open]);
 
@@ -59,9 +59,9 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
 
   const handleSave = () => {
     // Filter out empty KPIs and validate weights
-    const validKPIs = localKPIs.filter(
-      (kpi) => kpi.description.trim() !== "" && kpi.weight > 0
-    );
+    const validKPIs = Array.isArray(localKPIs) 
+      ? localKPIs.filter((kpi) => kpi.description.trim() !== "" && kpi.weight > 0)
+      : [];
     
     const totalWeight = validKPIs.reduce((sum, kpi) => sum + kpi.weight, 0);
     
@@ -74,13 +74,18 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
     onOpenChange(false);
   };
 
-  const totalWeight = localKPIs.reduce((sum, kpi) => sum + Number(kpi.weight || 0), 0);
+  const totalWeight = Array.isArray(localKPIs) 
+    ? localKPIs.reduce((sum, kpi) => sum + Number(kpi.weight || 0), 0)
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
+          <DialogDescription>
+            Manage your Key Performance Indicators. Total weight must not exceed 100%.
+          </DialogDescription>
           <div className="flex items-center gap-2 pt-2">
             <span className="text-sm text-muted-foreground">Total Weight:</span>
             <Badge variant={totalWeight > 100 ? "destructive" : "secondary"}>
