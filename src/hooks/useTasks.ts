@@ -34,7 +34,7 @@ export function useTasks(filters?: TaskFilters) {
       .from("tasks")
       .select(`
         *,
-        task_assignees!inner(
+        task_assignees(
           user_id,
           profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams)
         ),
