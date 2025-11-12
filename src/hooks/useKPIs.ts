@@ -7,10 +7,10 @@ export function useKPIs() {
   const queryClient = useQueryClient();
 
   const { data: kpis, isLoading } = useQuery({
-    queryKey: ["team-kpis"],
+    queryKey: ["kpis"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("team_kpis" as any)
+        .from("kpis")
         .select(`
           *,
           targets:kpi_targets(*),
@@ -28,7 +28,7 @@ export function useKPIs() {
       const { targets, ...kpiData } = kpi;
       
       const { data: newKPI, error: kpiError } = await supabase
-        .from("team_kpis" as any)
+        .from("kpis")
         .insert(kpiData as any)
         .select()
         .single();
@@ -38,7 +38,7 @@ export function useKPIs() {
       if (targets && targets.length > 0) {
         const targetsData = targets.map(t => ({ ...t, kpi_id: (newKPI as any).id }));
         const { error: targetsError } = await supabase
-          .from("kpi_targets" as any)
+          .from("kpi_targets")
           .insert(targetsData as any);
 
         if (targetsError) throw targetsError;
@@ -47,7 +47,7 @@ export function useKPIs() {
       return newKPI;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["kpis"] });
       toast({ title: "Success", description: "KPI created successfully" });
     },
     onError: (error: Error) => {
@@ -58,14 +58,14 @@ export function useKPIs() {
   const updateKPI = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TeamKPI> & { id: string }) => {
       const { error } = await supabase
-        .from("team_kpis" as any)
+        .from("kpis")
         .update(updates as any)
         .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["kpis"] });
       toast({ title: "Success", description: "KPI updated successfully" });
     },
     onError: (error: Error) => {
@@ -76,14 +76,14 @@ export function useKPIs() {
   const deleteKPI = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("team_kpis" as any)
+        .from("kpis")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["kpis"] });
       toast({ title: "Success", description: "KPI deleted successfully" });
     },
     onError: (error: Error) => {
@@ -103,13 +103,13 @@ export function useKPIs() {
       if (!profile) throw new Error("Profile not found");
 
       const { error } = await supabase
-        .from("kpi_assignments" as any)
+        .from("kpi_assignments")
         .insert({ ...assignment, assigned_by: profile.id } as any);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["kpis"] });
       toast({ title: "Success", description: "KPI assigned successfully" });
     },
     onError: (error: Error) => {
@@ -120,14 +120,14 @@ export function useKPIs() {
   const updateAssignmentStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
-        .from("kpi_assignments" as any)
+        .from("kpi_assignments")
         .update({ status } as any)
         .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["kpis"] });
       toast({ title: "Success", description: "Assignment status updated" });
     },
     onError: (error: Error) => {

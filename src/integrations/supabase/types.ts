@@ -1272,6 +1272,50 @@ export type Database = {
           },
         ]
       }
+      kpi_targets: {
+        Row: {
+          created_at: string
+          current_value: number
+          id: string
+          kpi_id: string
+          target_name: string
+          target_type: string
+          target_value: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          kpi_id: string
+          target_name: string
+          target_type: string
+          target_value: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          kpi_id?: string
+          target_name?: string
+          target_type?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_targets_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpis: {
         Row: {
           created_at: string

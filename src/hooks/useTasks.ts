@@ -34,8 +34,9 @@ export function useTasks(filters?: TaskFilters) {
       .from("tasks")
       .select(`
         *,
-        task_assignees(
-          profiles:user_id(id, user_id, name, avatar_url, teams)
+        task_assignees!inner(
+          user_id,
+          profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams)
         ),
         task_comment_counts(comment_count)
       `)
