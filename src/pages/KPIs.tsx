@@ -10,6 +10,7 @@ import { CreateKPIDialog } from "@/components/kpi/CreateKPIDialog";
 import { AssignKPIDialog } from "@/components/kpi/AssignKPIDialog";
 import { KPICard } from "@/components/kpi/KPICard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 import type { TeamKPI } from "@/types/kpi";
 
 export default function KPIs() {
@@ -62,6 +63,15 @@ export default function KPIs() {
 
   const handleCreateKPI = async (data: any) => {
     try {
+      // Get current user's profile ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
       // Create the KPI first
       const newKPI = await createKPI.mutateAsync({
         name: data.name,
@@ -78,8 +88,8 @@ export default function KPIs() {
         for (const userId of data.assignees) {
           await assignKPI.mutateAsync({
             kpi_id: (newKPI as any).id,
-            user_id: userId,
-            assigned_by: user!.id,
+            user_id: userId, // This is profiles.id from CreateKPIDialog
+            assigned_by: profile.id, // Use profile.id, not auth user id
             status: 'pending',
             notes: null,
           });
@@ -100,12 +110,24 @@ export default function KPIs() {
   const handleAssignSubmit = async (assignments: Array<{ user_id?: string; team_name?: string; notes?: string }>) => {
     if (!selectedKPI) return;
 
+    // Get current user's profile ID  
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user!.id)
+      .single();
+
+    if (!profile) {
+      console.error('Profile not found');
+      return;
+    }
+
     for (const assignment of assignments) {
       await assignKPI.mutateAsync({
         kpi_id: selectedKPI.id,
         user_id: assignment.user_id || null,
         team_name: assignment.team_name || null,
-        assigned_by: user!.id,
+        assigned_by: profile.id, // Use profile.id, not auth user id
         notes: assignment.notes || null,
         status: 'pending',
       });

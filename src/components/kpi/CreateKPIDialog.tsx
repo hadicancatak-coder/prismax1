@@ -38,7 +38,12 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
         .select('id, user_id, name, email')
         .order('name');
       if (error) throw error;
-      return data.map(p => ({ user_id: p.id, name: p.name, username: p.email }));
+      // Return profiles.id as user_id since kpi_assignments.user_id references profiles.id
+      return data.map(p => ({ 
+        user_id: p.id,  // This is profiles.id, which is what kpi_assignments.user_id expects
+        name: p.name, 
+        username: p.email 
+      }));
     }
   });
 

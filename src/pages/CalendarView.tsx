@@ -209,7 +209,7 @@ export default function CalendarView() {
       
       // Filter by selected user if one is selected
       const userMatch = !selectedUserId || 
-        task.assignees?.some((a: any) => a.profiles?.user_id === selectedUserId);
+        task.assignees?.some((a: any) => a.user_id === selectedUserId);
       
       return inDateRange && userMatch;
     });

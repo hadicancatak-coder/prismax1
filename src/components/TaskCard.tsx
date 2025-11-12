@@ -123,7 +123,7 @@ export const TaskCard = ({ task }: { task: Task }) => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <User className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">{task.assignee}</span>
+            <span className="font-medium">{task.assignee || "Unassigned"}</span>
           </div>
           {task.entity && (
             <>

@@ -26,6 +26,34 @@ class ApprovalService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      console.log('🔍 Approval flow started:', {
+        entityType,
+        entityId,
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // Check if user has admin role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (roleError || userRole?.role !== 'admin') {
+        throw new Error('Only administrators can approve requests. Please contact your admin.');
+      }
+
+      console.log('✅ Admin permission verified');
+
       if (entityType === 'task') {
         // Step 1: Fetch change request
         const { data: changeRequest, error: fetchError } = await supabase
@@ -113,6 +141,34 @@ class ApprovalService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      console.log('🔍 Rejection flow started:', {
+        entityType,
+        entityId,
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // Check if user has admin role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (roleError || userRole?.role !== 'admin') {
+        throw new Error('Only administrators can reject requests. Please contact your admin.');
+      }
+
+      console.log('✅ Admin permission verified');
 
       if (entityType === 'task') {
         // Get the change request
