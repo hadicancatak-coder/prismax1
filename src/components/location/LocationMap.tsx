@@ -1,31 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MediaLocation, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+
+const MAPBOX_TOKEN = "pk.eyJ1IjoiaGFkaWNhbiIsImEiOiJjbWh1YjY5bWkwNDI2MmpzYmQ0MmkwaXBnIn0.ScDl8LTtKyGxmLBFC8R4rw";
 
 interface LocationMapProps {
   locations: MediaLocation[];
   onLocationClick: (location: MediaLocation) => void;
-  mapboxToken: string | null;
-  onTokenSubmit: (token: string) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
 
-export function LocationMap({ locations, onLocationClick, mapboxToken, onTokenSubmit, onMapClick }: LocationMapProps) {
+export function LocationMap({ locations, onLocationClick, onMapClick }: LocationMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
-  const [tokenInput, setTokenInput] = useState("");
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
 
     // Center on UAE coordinates, will adjust when markers are added
     map.current = new mapboxgl.Map({
@@ -56,7 +51,7 @@ export function LocationMap({ locations, onLocationClick, mapboxToken, onTokenSu
     return () => {
       map.current?.remove();
     };
-  }, [mapboxToken, onMapClick]);
+  }, [onMapClick]);
 
   useEffect(() => {
     if (!map.current) return;
@@ -112,37 +107,6 @@ export function LocationMap({ locations, onLocationClick, mapboxToken, onTokenSu
       map.current?.fitBounds(bounds, { padding: 50, maxZoom: 12 });
     }
   }, [locations, onLocationClick]);
-
-  if (!mapboxToken) {
-    return (
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Mapbox Token Required</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              To display the map, please enter your Mapbox public token. Get one at{" "}
-              <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                mapbox.com
-              </a>
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mapbox-token">Mapbox Public Token</Label>
-            <div className="flex gap-2">
-              <Input
-                id="mapbox-token"
-                type="password"
-                value={tokenInput}
-                onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="pk.eyJ1..."
-              />
-              <Button onClick={() => onTokenSubmit(tokenInput)}>Submit</Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
 
   return (
     <div className="relative">

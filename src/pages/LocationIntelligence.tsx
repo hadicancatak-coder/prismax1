@@ -30,11 +30,6 @@ export default function LocationIntelligence() {
   const [plannerOpen, setPlannerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [clickedCoordinates, setClickedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(() => {
-    const token = localStorage.getItem("mapbox_token");
-    logger.info("Mapbox token retrieved from localStorage", { token });
-    return token;
-  });
 
   const [filters, setFilters] = useState<Filters>({
     cities: [],
@@ -61,12 +56,6 @@ export default function LocationIntelligence() {
     if (score < filters.scoreRange.min || score > filters.scoreRange.max) return false;
     return true;
   });
-
-  const handleTokenSubmit = (token: string) => {
-    logger.info("Mapbox token submitted and saved", { token });
-    localStorage.setItem("mapbox_token", token);
-    setMapboxToken(token);
-  };
 
   const handleLocationClick = (location: MediaLocation) => {
     setSelectedLocation(location);
@@ -174,8 +163,6 @@ export default function LocationIntelligence() {
             <LocationMap
               locations={filteredLocations}
               onLocationClick={handleLocationClick}
-              mapboxToken={mapboxToken}
-              onTokenSubmit={handleTokenSubmit}
               onMapClick={handleMapClick}
             />
           ) : viewMode === "list" ? (
