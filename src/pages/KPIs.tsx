@@ -61,8 +61,35 @@ export default function KPIs() {
   }, [kpis, isAdmin, user, searchQuery, filterType, filterStatus]);
 
   const handleCreateKPI = async (data: any) => {
-    await createKPI.mutateAsync(data);
-    setShowCreateDialog(false);
+    try {
+      // Create the KPI first
+      const newKPI = await createKPI.mutateAsync({
+        name: data.name,
+        description: data.description,
+        weight: data.weight,
+        type: data.type,
+        period: data.period,
+        status: data.status,
+        targets: data.targets || [],
+      });
+
+      // If assignees were selected, assign them
+      if (data.assignees && data.assignees.length > 0) {
+        for (const userId of data.assignees) {
+          await assignKPI.mutateAsync({
+            kpi_id: (newKPI as any).id,
+            user_id: userId,
+            assigned_by: user!.id,
+            status: 'pending',
+            notes: null,
+          });
+        }
+      }
+      
+      setShowCreateDialog(false);
+    } catch (error) {
+      console.error('Failed to create KPI:', error);
+    }
   };
 
   const handleAssignKPI = (kpi: TeamKPI) => {

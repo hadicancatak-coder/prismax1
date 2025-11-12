@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AdContextMenu } from "./AdContextMenu";
 import { MoveAdDialog } from "./MoveAdDialog";
 import { DuplicateAdDialog } from "./DuplicateAdDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ export function AccountStructureTree({
   const [searchQuery, setSearchQuery] = useState("");
   const [moveDialogState, setMoveDialogState] = useState<{open: boolean, adId: string, currentAdGroupId?: string} | null>(null);
   const [duplicateDialogState, setDuplicateDialogState] = useState<{open: boolean, adId: string} | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Fetch entities from entity_presets
   const { data: entityPresets } = useQuery({
@@ -133,19 +135,24 @@ export function AccountStructureTree({
   };
 
   const handleDeleteAd = async (adId: string) => {
-    if (!confirm("Are you sure you want to delete this ad?")) return;
+    setDeleteConfirmId(adId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
     
     const { error } = await supabase
       .from('ads')
       .delete()
-      .eq('id', adId);
+      .eq('id', deleteConfirmId);
     
     if (error) {
       toast.error("Failed to delete ad");
-      return;
+    } else {
+      toast.success("Ad deleted successfully");
     }
     
-    toast.success("Ad deleted successfully");
+    setDeleteConfirmId(null);
   };
 
   const buildTree = (): TreeNode[] => {
@@ -469,6 +476,22 @@ export function AccountStructureTree({
         />
       )}
 
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ad</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this ad? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -5,13 +5,44 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAllEntities, useCreateEntity, useUpdateEntity, useDeleteEntity } from "@/hooks/useSystemEntities";
 import { useAllCities, useCreateCity, useUpdateCity, useDeleteCity } from "@/hooks/useSystemCities";
 import { useUtmPlatforms, useCreatePlatform, useUpdatePlatform, useDeletePlatform } from "@/hooks/useUtmPlatforms";
 import { useUtmMediums, useCreateMedium, useUpdateMedium, useDeleteMedium } from "@/hooks/useUtmMediums";
+import { CountryCodeSelect } from "@/components/admin/CountryCodeSelect";
+
+function SortableRow({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell>
+        <div {...attributes} {...listeners} className="cursor-move">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </TableCell>
+      {children}
+    </TableRow>
+  );
+}
 
 export default function SelectorsManagement() {
   const [activeTab, setActiveTab] = useState("entities");
@@ -20,22 +51,26 @@ export default function SelectorsManagement() {
   // Entity state
   const [isEntityDialogOpen, setIsEntityDialogOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<any>(null);
-  const [entityForm, setEntityForm] = useState({ name: "", code: "", emoji: "", display_order: 0, website_param: "" });
+  const [entityForm, setEntityForm] = useState({ name: "", code: "", emoji: "", display_order: 0, website_param: "", customWebsiteParam: "" });
+  const [deleteEntityId, setDeleteEntityId] = useState<string | null>(null);
   
   // City state
   const [isCityDialogOpen, setIsCityDialogOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<any>(null);
   const [cityForm, setCityForm] = useState({ name: "", country: "", display_order: 0 });
+  const [deleteCityId, setDeleteCityId] = useState<string | null>(null);
   
   // Platform state
   const [isPlatformDialogOpen, setIsPlatformDialogOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<any>(null);
   const [platformForm, setPlatformForm] = useState({ name: "", utm_medium: "" });
+  const [deletePlatformId, setDeletePlatformId] = useState<string | null>(null);
   
   // Medium state
   const [isMediumDialogOpen, setIsMediumDialogOpen] = useState(false);
   const [editingMedium, setEditingMedium] = useState<any>(null);
   const [mediumForm, setMediumForm] = useState({ name: "", display_order: 0 });
+  const [deleteMediumId, setDeleteMediumId] = useState<string | null>(null);
 
   // Hooks
   const { data: entities, isLoading: entitiesLoading } = useAllEntities();
@@ -59,21 +94,43 @@ export default function SelectorsManagement() {
   const updateMedium = useUpdateMedium();
   const deleteMedium = useDeleteMedium();
 
+  // Drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   // Entity handlers
   const handleEntitySubmit = async () => {
+    const websiteParam = entityForm.website_param === 'custom' 
+      ? entityForm.customWebsiteParam 
+      : entityForm.website_param;
+      
     if (editingEntity) {
-      await updateEntity.mutateAsync({ id: editingEntity.id, ...entityForm });
+      await updateEntity.mutateAsync({ id: editingEntity.id, ...entityForm, website_param: websiteParam });
     } else {
-      await createEntity.mutateAsync({ ...entityForm, is_active: true });
+      await createEntity.mutateAsync({ ...entityForm, website_param: websiteParam, is_active: true });
     }
     setIsEntityDialogOpen(false);
     setEditingEntity(null);
-    setEntityForm({ name: "", code: "", emoji: "", display_order: 0, website_param: "" });
+    setEntityForm({ name: "", code: "", emoji: "", display_order: 0, website_param: "", customWebsiteParam: "" });
   };
 
-  const handleDeleteEntity = async (id: string) => {
-    if (confirm("Are you sure you want to delete this entity?")) {
-      await deleteEntity.mutateAsync(id);
+  const handleEntityDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id && entities) {
+      const oldIndex = entities.findIndex((e) => e.id === active.id);
+      const newIndex = entities.findIndex((e) => e.id === over.id);
+      const reordered = arrayMove(entities, oldIndex, newIndex);
+      
+      // Update display_order for affected items
+      for (let i = 0; i < reordered.length; i++) {
+        if (reordered[i].display_order !== i) {
+          await updateEntity.mutateAsync({ id: reordered[i].id, display_order: i });
+        }
+      }
     }
   };
 
@@ -89,9 +146,18 @@ export default function SelectorsManagement() {
     setCityForm({ name: "", country: "", display_order: 0 });
   };
 
-  const handleDeleteCity = async (id: string) => {
-    if (confirm("Are you sure you want to delete this city?")) {
-      await deleteCity.mutateAsync(id);
+  const handleCityDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id && cities) {
+      const oldIndex = cities.findIndex((c) => c.id === active.id);
+      const newIndex = cities.findIndex((c) => c.id === over.id);
+      const reordered = arrayMove(cities, oldIndex, newIndex);
+      
+      for (let i = 0; i < reordered.length; i++) {
+        if (reordered[i].display_order !== i) {
+          await updateCity.mutateAsync({ id: reordered[i].id, display_order: i });
+        }
+      }
     }
   };
 
@@ -107,12 +173,6 @@ export default function SelectorsManagement() {
     setPlatformForm({ name: "", utm_medium: "" });
   };
 
-  const handleDeletePlatform = async (id: string) => {
-    if (confirm("Are you sure you want to delete this platform?")) {
-      await deletePlatform.mutateAsync(id);
-    }
-  };
-
   // Medium handlers
   const handleMediumSubmit = async () => {
     if (editingMedium) {
@@ -125,9 +185,18 @@ export default function SelectorsManagement() {
     setMediumForm({ name: "", display_order: 0 });
   };
 
-  const handleDeleteMedium = async (id: string) => {
-    if (confirm("Are you sure you want to delete this UTM medium?")) {
-      await deleteMedium.mutateAsync(id);
+  const handleMediumDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id && mediums) {
+      const oldIndex = mediums.findIndex((m) => m.id === active.id);
+      const newIndex = mediums.findIndex((m) => m.id === over.id);
+      const reordered = arrayMove(mediums, oldIndex, newIndex);
+      
+      for (let i = 0; i < reordered.length; i++) {
+        if (reordered[i].display_order !== i) {
+          await updateMedium.mutateAsync({ id: reordered[i].id, display_order: i });
+        }
+      }
     }
   };
 
@@ -151,11 +220,11 @@ export default function SelectorsManagement() {
   ) || [];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Selectors Management</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-page-title font-bold">Selectors Management</h1>
+          <p className="text-body text-muted-foreground mt-1">
             Manage entities, cities, platforms, and UTM mediums
           </p>
         </div>
@@ -172,7 +241,7 @@ export default function SelectorsManagement() {
         {/* Entities Tab */}
         <TabsContent value="entities" className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search entities..."
@@ -181,73 +250,86 @@ export default function SelectorsManagement() {
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => { setEditingEntity(null); setEntityForm({ name: "", code: "", emoji: "", display_order: 0, website_param: "" }); setIsEntityDialogOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingEntity(null); 
+              setEntityForm({ name: "", code: "", emoji: "", display_order: entities?.length || 0, website_param: "", customWebsiteParam: "" }); 
+              setIsEntityDialogOpen(true); 
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Entity
             </Button>
           </div>
 
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Emoji</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Website Param</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entitiesLoading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
-                ) : filteredEntities.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No entities found</TableCell></TableRow>
-                ) : (
-                  filteredEntities.map((entity) => (
-                    <TableRow key={entity.id}>
-                      <TableCell>{entity.display_order}</TableCell>
-                      <TableCell className="text-2xl">{entity.emoji}</TableCell>
-                      <TableCell className="font-medium">{entity.name}</TableCell>
-                      <TableCell><Badge variant="outline">{entity.code}</Badge></TableCell>
-                      <TableCell>{entity.website_param || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingEntity(entity);
-                              setEntityForm({
-                                name: entity.name,
-                                code: entity.code,
-                                emoji: entity.emoji || "",
-                                display_order: entity.display_order,
-                                website_param: entity.website_param || ""
-                              });
-                              setIsEntityDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteEntity(entity.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEntityDragEnd}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Emoji</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Website Param</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {entitiesLoading ? (
+                      <TableRow><TableCell colSpan={7} className="text-center py-8">Loading...</TableCell></TableRow>
+                    ) : filteredEntities.length === 0 ? (
+                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No entities found</TableCell></TableRow>
+                    ) : (
+                      <SortableContext items={filteredEntities.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                        {filteredEntities.map((entity) => (
+                          <SortableRow key={entity.id} id={entity.id}>
+                            <TableCell>{entity.display_order}</TableCell>
+                            <TableCell className="text-2xl">{entity.emoji}</TableCell>
+                            <TableCell className="font-medium">{entity.name}</TableCell>
+                            <TableCell><Badge variant="outline">{entity.code}</Badge></TableCell>
+                            <TableCell><Badge>{entity.website_param || "-"}</Badge></TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingEntity(entity);
+                                    const isCustom = !['ae', 'sa', 'eg', 'kw', 'bh', 'om', 'qa'].includes(entity.website_param || '');
+                                    setEntityForm({
+                                      name: entity.name,
+                                      code: entity.code,
+                                      emoji: entity.emoji || "",
+                                      display_order: entity.display_order,
+                                      website_param: isCustom ? 'custom' : (entity.website_param || ""),
+                                      customWebsiteParam: isCustom ? (entity.website_param || "") : ""
+                                    });
+                                    setIsEntityDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setDeleteEntityId(entity.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </SortableContext>
+                    )}
+                  </TableBody>
+                </Table>
+              </DndContext>
+            </div>
           </div>
         </TabsContent>
 
         {/* Cities Tab */}
         <TabsContent value="cities" className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search cities..."
@@ -256,67 +338,78 @@ export default function SelectorsManagement() {
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => { setEditingCity(null); setCityForm({ name: "", country: "", display_order: 0 }); setIsCityDialogOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingCity(null); 
+              setCityForm({ name: "", country: "", display_order: cities?.length || 0 }); 
+              setIsCityDialogOpen(true); 
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Add City
             </Button>
           </div>
 
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {citiesLoading ? (
-                  <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>
-                ) : filteredCities.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No cities found</TableCell></TableRow>
-                ) : (
-                  filteredCities.map((city) => (
-                    <TableRow key={city.id}>
-                      <TableCell>{city.display_order}</TableCell>
-                      <TableCell className="font-medium">{city.name}</TableCell>
-                      <TableCell>{city.country}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingCity(city);
-                              setCityForm({
-                                name: city.name,
-                                country: city.country,
-                                display_order: city.display_order
-                              });
-                              setIsCityDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteCity(city.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCityDragEnd}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {citiesLoading ? (
+                      <TableRow><TableCell colSpan={5} className="text-center py-8">Loading...</TableCell></TableRow>
+                    ) : filteredCities.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No cities found</TableCell></TableRow>
+                    ) : (
+                      <SortableContext items={filteredCities.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                        {filteredCities.map((city) => (
+                          <SortableRow key={city.id} id={city.id}>
+                            <TableCell>{city.display_order}</TableCell>
+                            <TableCell className="font-medium">{city.name}</TableCell>
+                            <TableCell>{city.country}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingCity(city);
+                                    setCityForm({
+                                      name: city.name,
+                                      country: city.country,
+                                      display_order: city.display_order
+                                    });
+                                    setIsCityDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setDeleteCityId(city.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </SortableContext>
+                    )}
+                  </TableBody>
+                </Table>
+              </DndContext>
+            </div>
           </div>
         </TabsContent>
 
         {/* Platforms Tab */}
         <TabsContent value="platforms" className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search platforms..."
@@ -325,209 +418,233 @@ export default function SelectorsManagement() {
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => { setEditingPlatform(null); setPlatformForm({ name: "", utm_medium: "" }); setIsPlatformDialogOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingPlatform(null); 
+              setPlatformForm({ name: "", utm_medium: "" }); 
+              setIsPlatformDialogOpen(true); 
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Platform
             </Button>
           </div>
 
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>UTM Medium</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {platformsLoading ? (
-                  <TableRow><TableCell colSpan={3} className="text-center">Loading...</TableCell></TableRow>
-                ) : filteredPlatforms.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No platforms found</TableCell></TableRow>
-                ) : (
-                  filteredPlatforms.map((platform: any) => (
-                    <TableRow key={platform.id}>
-                      <TableCell className="font-medium">{platform.name}</TableCell>
-                      <TableCell><Badge>{platform.utm_medium || "Not set"}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingPlatform(platform);
-                              setPlatformForm({
-                                name: platform.name,
-                                utm_medium: platform.utm_medium || ""
-                              });
-                              setIsPlatformDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeletePlatform(platform.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>UTM Medium</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {platformsLoading ? (
+                    <TableRow><TableCell colSpan={3} className="text-center py-8">Loading...</TableCell></TableRow>
+                  ) : filteredPlatforms.length === 0 ? (
+                    <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No platforms found</TableCell></TableRow>
+                  ) : (
+                    filteredPlatforms.map((platform) => (
+                      <TableRow key={platform.id}>
+                        <TableCell className="font-medium">{platform.name}</TableCell>
+                        <TableCell><Badge>{platform.utm_medium || "-"}</Badge></TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingPlatform(platform);
+                                setPlatformForm({
+                                  name: platform.name,
+                                  utm_medium: platform.utm_medium || ""
+                                });
+                                setIsPlatformDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setDeletePlatformId(platform.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </TabsContent>
 
         {/* UTM Mediums Tab */}
         <TabsContent value="mediums" className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search UTM mediums..."
+                placeholder="Search mediums..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => { setEditingMedium(null); setMediumForm({ name: "", display_order: 0 }); setIsMediumDialogOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingMedium(null); 
+              setMediumForm({ name: "", display_order: mediums?.length || 0 }); 
+              setIsMediumDialogOpen(true); 
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Medium
             </Button>
           </div>
 
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mediumsLoading ? (
-                  <TableRow><TableCell colSpan={3} className="text-center">Loading...</TableCell></TableRow>
-                ) : filteredMediums.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No UTM mediums found</TableCell></TableRow>
-                ) : (
-                  filteredMediums.map((medium) => (
-                    <TableRow key={medium.id}>
-                      <TableCell>{medium.display_order}</TableCell>
-                      <TableCell className="font-medium">{medium.name}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingMedium(medium);
-                              setMediumForm({
-                                name: medium.name,
-                                display_order: medium.display_order
-                              });
-                              setIsMediumDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteMedium(medium.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleMediumDragEnd}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {mediumsLoading ? (
+                      <TableRow><TableCell colSpan={4} className="text-center py-8">Loading...</TableCell></TableRow>
+                    ) : filteredMediums.length === 0 ? (
+                      <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No mediums found</TableCell></TableRow>
+                    ) : (
+                      <SortableContext items={filteredMediums.map(m => m.id)} strategy={verticalListSortingStrategy}>
+                        {filteredMediums.map((medium) => (
+                          <SortableRow key={medium.id} id={medium.id}>
+                            <TableCell>{medium.display_order}</TableCell>
+                            <TableCell className="font-medium">{medium.name}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingMedium(medium);
+                                    setMediumForm({
+                                      name: medium.name,
+                                      display_order: medium.display_order
+                                    });
+                                    setIsMediumDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setDeleteMediumId(medium.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </SortableContext>
+                    )}
+                  </TableBody>
+                </Table>
+              </DndContext>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
 
       {/* Entity Dialog */}
       <Dialog open={isEntityDialogOpen} onOpenChange={setIsEntityDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingEntity ? "Edit Entity" : "Add Entity"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="entity-name">Name</Label>
-              <Input id="entity-name" value={entityForm.name} onChange={(e) => setEntityForm({ ...entityForm, name: e.target.value })} />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={entityForm.name} onChange={(e) => setEntityForm({ ...entityForm, name: e.target.value })} placeholder="UAE" />
             </div>
-            <div>
-              <Label htmlFor="entity-code">Code</Label>
-              <Input id="entity-code" value={entityForm.code} onChange={(e) => setEntityForm({ ...entityForm, code: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code</Label>
+                <Input value={entityForm.code} onChange={(e) => setEntityForm({ ...entityForm, code: e.target.value })} placeholder="uae" />
+              </div>
+              <div className="space-y-2">
+                <Label>Emoji</Label>
+                <Input value={entityForm.emoji} onChange={(e) => setEntityForm({ ...entityForm, emoji: e.target.value })} placeholder="🇦🇪" />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="entity-emoji">Emoji</Label>
-              <Input id="entity-emoji" value={entityForm.emoji} onChange={(e) => setEntityForm({ ...entityForm, emoji: e.target.value })} />
+            <div className="space-y-2">
+              <Label>Website Param (Country Code)</Label>
+              <CountryCodeSelect
+                value={entityForm.website_param}
+                onChange={(v) => setEntityForm({ ...entityForm, website_param: v })}
+                customValue={entityForm.customWebsiteParam}
+                onCustomChange={(v) => setEntityForm({ ...entityForm, customWebsiteParam: v })}
+              />
             </div>
-            <div>
-              <Label htmlFor="entity-website">Website Param</Label>
-              <Input id="entity-website" value={entityForm.website_param} onChange={(e) => setEntityForm({ ...entityForm, website_param: e.target.value })} placeholder="e.g., ae, sa, eg" />
-            </div>
-            <div>
-              <Label htmlFor="entity-order">Display Order</Label>
-              <Input id="entity-order" type="number" value={entityForm.display_order} onChange={(e) => setEntityForm({ ...entityForm, display_order: parseInt(e.target.value) || 0 })} />
+            <div className="space-y-2">
+              <Label>Display Order</Label>
+              <Input type="number" value={entityForm.display_order} onChange={(e) => setEntityForm({ ...entityForm, display_order: Number(e.target.value) })} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEntityDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleEntitySubmit}>{editingEntity ? "Update" : "Create"}</Button>
+            <Button onClick={handleEntitySubmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* City Dialog */}
       <Dialog open={isCityDialogOpen} onOpenChange={setIsCityDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingCity ? "Edit City" : "Add City"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="city-name">Name</Label>
-              <Input id="city-name" value={cityForm.name} onChange={(e) => setCityForm({ ...cityForm, name: e.target.value })} />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={cityForm.name} onChange={(e) => setCityForm({ ...cityForm, name: e.target.value })} placeholder="Dubai" />
             </div>
-            <div>
-              <Label htmlFor="city-country">Country</Label>
-              <Input id="city-country" value={cityForm.country} onChange={(e) => setCityForm({ ...cityForm, country: e.target.value })} />
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Input value={cityForm.country} onChange={(e) => setCityForm({ ...cityForm, country: e.target.value })} placeholder="UAE" />
             </div>
-            <div>
-              <Label htmlFor="city-order">Display Order</Label>
-              <Input id="city-order" type="number" value={cityForm.display_order} onChange={(e) => setCityForm({ ...cityForm, display_order: parseInt(e.target.value) || 0 })} />
+            <div className="space-y-2">
+              <Label>Display Order</Label>
+              <Input type="number" value={cityForm.display_order} onChange={(e) => setCityForm({ ...cityForm, display_order: Number(e.target.value) })} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCityDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCitySubmit}>{editingCity ? "Update" : "Create"}</Button>
+            <Button onClick={handleCitySubmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Platform Dialog */}
       <Dialog open={isPlatformDialogOpen} onOpenChange={setIsPlatformDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingPlatform ? "Edit Platform" : "Add Platform"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="platform-name">Name</Label>
-              <Input id="platform-name" value={platformForm.name} onChange={(e) => setPlatformForm({ ...platformForm, name: e.target.value })} />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={platformForm.name} onChange={(e) => setPlatformForm({ ...platformForm, name: e.target.value })} placeholder="Meta Ads" />
             </div>
-            <div>
-              <Label htmlFor="platform-medium">UTM Medium</Label>
-              <Select value={platformForm.utm_medium} onValueChange={(value) => setPlatformForm({ ...platformForm, utm_medium: value })}>
-                <SelectTrigger id="platform-medium">
+            <div className="space-y-2">
+              <Label>UTM Medium</Label>
+              <Select value={platformForm.utm_medium} onValueChange={(v) => setPlatformForm({ ...platformForm, utm_medium: v })}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select medium" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mediums?.map((medium) => (
-                    <SelectItem key={medium.id} value={medium.name}>{medium.name}</SelectItem>
+                  {mediums?.map(m => (
+                    <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -535,33 +652,134 @@ export default function SelectorsManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPlatformDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handlePlatformSubmit}>{editingPlatform ? "Update" : "Create"}</Button>
+            <Button onClick={handlePlatformSubmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Medium Dialog */}
       <Dialog open={isMediumDialogOpen} onOpenChange={setIsMediumDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingMedium ? "Edit UTM Medium" : "Add UTM Medium"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="medium-name">Name</Label>
-              <Input id="medium-name" value={mediumForm.name} onChange={(e) => setMediumForm({ ...mediumForm, name: e.target.value })} placeholder="e.g., paid_social, paid_search" />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={mediumForm.name} onChange={(e) => setMediumForm({ ...mediumForm, name: e.target.value })} placeholder="paid_social" />
             </div>
-            <div>
-              <Label htmlFor="medium-order">Display Order</Label>
-              <Input id="medium-order" type="number" value={mediumForm.display_order} onChange={(e) => setMediumForm({ ...mediumForm, display_order: parseInt(e.target.value) || 0 })} />
+            <div className="space-y-2">
+              <Label>Display Order</Label>
+              <Input type="number" value={mediumForm.display_order} onChange={(e) => setMediumForm({ ...mediumForm, display_order: Number(e.target.value) })} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsMediumDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleMediumSubmit}>{editingMedium ? "Update" : "Create"}</Button>
+            <Button onClick={handleMediumSubmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmations */}
+      <AlertDialog open={deleteEntityId !== null} onOpenChange={(open) => !open && setDeleteEntityId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entity</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entity? This action cannot be undone and will affect all related data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (deleteEntityId) {
+                  await deleteEntity.mutateAsync(deleteEntityId);
+                  setDeleteEntityId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteCityId !== null} onOpenChange={(open) => !open && setDeleteCityId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete City</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this city? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (deleteCityId) {
+                  await deleteCity.mutateAsync(deleteCityId);
+                  setDeleteCityId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deletePlatformId !== null} onOpenChange={(open) => !open && setDeletePlatformId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Platform</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this platform? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (deletePlatformId) {
+                  await deletePlatform.mutateAsync(deletePlatformId);
+                  setDeletePlatformId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteMediumId !== null} onOpenChange={(open) => !open && setDeleteMediumId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete UTM Medium</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this UTM medium? This action cannot be undone and may affect platforms using this medium.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (deleteMediumId) {
+                  await deleteMedium.mutateAsync(deleteMediumId);
+                  setDeleteMediumId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

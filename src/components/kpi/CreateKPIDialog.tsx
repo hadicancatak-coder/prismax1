@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AssigneeMultiSelect } from "@/components/AssigneeMultiSelect";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { KPIType, KPITarget } from "@/types/kpi";
 
 interface CreateKPIDialogProps {
@@ -24,6 +27,20 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
   const [type, setType] = useState<KPIType>("annual");
   const [period, setPeriod] = useState("");
   const [targets, setTargets] = useState<Partial<KPITarget>[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
+
+  // Fetch all users for assignment
+  const { data: users } = useQuery({
+    queryKey: ['users-for-kpi'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, name, email')
+        .order('name');
+      if (error) throw error;
+      return data.map(p => ({ user_id: p.id, name: p.name, username: p.email }));
+    }
+  });
 
   const addTarget = (targetType: 'channel' | 'custom') => {
     setTargets([...targets, {
@@ -60,6 +77,7 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
       period,
       status: 'draft',
       targets,
+      assignees,
     });
 
     // Reset form
@@ -68,17 +86,18 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
     setWeight("");
     setPeriod("");
     setTargets([]);
+    setAssignees([]);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New KPI</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>KPI Name *</Label>
@@ -111,7 +130,7 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Type *</Label>
               <Select value={type} onValueChange={(v) => setType(v as KPIType)}>
@@ -132,6 +151,24 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
                 placeholder="e.g., Q1 2025, FY2025"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Assign To (Optional)
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Select users to assign this KPI to immediately upon creation
+            </p>
+            {users && (
+              <AssigneeMultiSelect
+                users={users}
+                selectedUserIds={assignees}
+                onSelectionChange={setAssignees}
+                placeholder="Select users to assign..."
+              />
+            )}
           </div>
 
           {/* Targets Section */}
@@ -159,7 +196,7 @@ export function CreateKPIDialog({ open, onOpenChange, onSubmit }: CreateKPIDialo
             </div>
 
             {targets.map((target, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
+              <div key={index} className="p-4 border rounded-lg space-y-3 bg-muted/30">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary">
                     {target.target_type === 'channel' ? 'Channel' : 'Custom'}

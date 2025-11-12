@@ -128,45 +128,39 @@ export default function ApprovalsCenter() {
   const handleApprove = async (item: PendingItem) => {
     try {
       const entityType = item.type === 'ad' ? 'ad' : 'task';
-      const success = await approvalService.approveItem({
+      await approvalService.approveItem({
         entityType: entityType as any,
         entityId: item.id,
       });
-
-      if (success) {
-        toast.success('Item approved successfully');
-        fetchPendingApprovals();
-        fetchApprovalHistory();
-      } else {
-        toast.error('Failed to approve item');
-      }
-    } catch (error) {
-      toast.error('Failed to approve item');
+      
+      toast.success('Item approved successfully');
+      fetchPendingApprovals();
+      fetchApprovalHistory();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to approve item');
+      console.error('Approval error:', error);
     }
   };
 
   const handleReject = async (item: PendingItem) => {
     try {
       const entityType = item.type === 'ad' ? 'ad' : 'task';
-      const success = await approvalService.rejectItem({
+      await approvalService.rejectItem({
         entityType: entityType as any,
         entityId: item.id,
       });
-
-      if (success) {
-        toast.success('Item rejected');
-        fetchPendingApprovals();
-        fetchApprovalHistory();
-      } else {
-        toast.error('Failed to reject item');
-      }
-    } catch (error) {
-      toast.error('Failed to reject item');
+      
+      toast.success('Item rejected');
+      fetchPendingApprovals();
+      fetchApprovalHistory();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reject item');
+      console.error('Rejection error:', error);
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       <Tabs defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending" className="flex items-center gap-2">
@@ -181,10 +175,10 @@ export default function ApprovalsCenter() {
 
         <TabsContent value="pending">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle>Pending Approvals</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               {loading ? (
                 <TableSkeleton columns={5} rows={5} />
               ) : (
@@ -250,10 +244,10 @@ export default function ApprovalsCenter() {
 
         <TabsContent value="history">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle>Approval History</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <Table>
                 <TableHeader>
                   <TableRow>

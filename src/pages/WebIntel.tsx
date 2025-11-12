@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Download } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelSites } from "@/hooks/useWebIntelSites";
 import { WebIntelStats } from "@/components/webintel/WebIntelStats";
 import { WebIntelFilters, WebIntelFiltersState } from "@/components/webintel/WebIntelFilters";
@@ -79,9 +80,16 @@ export default function WebIntel() {
     setDetailDialogOpen(true);
   };
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   const handleDelete = async (siteId: string) => {
-    if (confirm("Are you sure you want to delete this site?")) {
-      await deleteSite.mutateAsync(siteId);
+    setDeleteConfirmId(siteId);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirmId) {
+      await deleteSite.mutateAsync(deleteConfirmId);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -230,6 +238,23 @@ export default function WebIntel() {
         onOpenChange={setUploadDialogOpen}
         onImport={handleBulkImport}
       />
+
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Site</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this site? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
