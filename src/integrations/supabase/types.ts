@@ -1161,15 +1161,7 @@ export type Database = {
           new_value?: Json | null
           old_value?: Json | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "entity_change_log_entity_id_fkey"
-            columns: ["entity_id"]
-            isOneToOne: false
-            referencedRelation: "system_entities"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       entity_presets: {
         Row: {
