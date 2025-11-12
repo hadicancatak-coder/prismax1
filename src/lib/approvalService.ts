@@ -22,114 +22,160 @@ interface ApprovalFilters {
 
 class ApprovalService {
   async approveItem({ entityType, entityId, comment, changes = {} }: ApproveItemParams) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    if (entityType === 'task') {
-      // Get the change request
-      const { data: changeRequest, error: fetchError } = await supabase
-        .from('task_change_requests')
-        .select('*, payload_json')
-        .eq('id', entityId)
-        .eq('status', 'pending')
-        .single();
-      
-      if (fetchError) throw new Error(`Failed to fetch change request: ${fetchError.message}`);
-      if (!changeRequest) throw new Error('Change request not found or already processed');
-
-      // Apply the changes to the task
-      const payload = changeRequest.payload_json as any;
-      
-      if (changeRequest.type === 'status_change') {
-        const { error: updateError } = await supabase
-          .from('tasks')
-          .update({ 
-            status: payload.status,
-            failure_reason: payload.failure_reason 
-          })
-          .eq('id', payload.task_id);
+      if (entityType === 'task') {
+        // Step 1: Fetch change request
+        const { data: changeRequest, error: fetchError } = await supabase
+          .from('task_change_requests')
+          .select('*, payload_json')
+          .eq('id', entityId)
+          .eq('status', 'pending')
+          .single();
         
-        if (updateError) throw new Error(`Failed to update task: ${updateError.message}`);
+        if (fetchError) {
+          console.error('❌ Fetch error:', fetchError);
+          throw new Error(`Failed to fetch change request: ${fetchError.message}`);
+        }
+        
+        if (!changeRequest) {
+          throw new Error('Change request not found or already processed');
+        }
+
+        // Step 2: Apply the changes to the task
+        const payload = changeRequest.payload_json as any;
+        
+        if (changeRequest.type === 'status_change') {
+          const { error: updateError } = await supabase
+            .from('tasks')
+            .update({ 
+              status: payload.status,
+              failure_reason: payload.failure_reason 
+            })
+            .eq('id', payload.task_id);
+          
+          if (updateError) {
+            console.error('❌ Task update error:', updateError);
+            throw new Error(`Failed to update task: ${updateError.message}`);
+          }
+          console.log('✅ Task updated successfully');
+        }
+
+        // Step 3: Mark request as approved
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!profile) throw new Error('Profile not found');
+
+        const { error: approveError } = await supabase
+          .from('task_change_requests')
+          .update({ 
+            status: 'approved',
+            decided_by: profile.id,
+            decided_at: new Date().toISOString()
+          })
+          .eq('id', entityId);
+        
+        if (approveError) {
+          console.error('❌ Approval update error:', approveError);
+          throw new Error(`Failed to approve request: ${approveError.message}`);
+        }
+        
+        console.log('✅ Request approved successfully');
       }
 
-      // Mark request as approved
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      if (entityType === 'ad') {
+        const { error } = await supabase
+          .from('ads')
+          .update({ approval_status: 'approved' })
+          .eq('id', entityId);
+        
+        if (error) {
+          console.error('❌ Ad approval error:', error);
+          throw new Error(`Failed to approve ad: ${error.message}`);
+        }
+        console.log('✅ Ad approved successfully');
+      }
 
-      if (!profile) throw new Error('Profile not found');
-
-      const { error: approveError } = await supabase
-        .from('task_change_requests')
-        .update({ 
-          status: 'approved',
-          decided_by: profile.id,
-          decided_at: new Date().toISOString()
-        })
-        .eq('id', entityId);
-      
-      if (approveError) throw new Error(`Failed to approve request: ${approveError.message}`);
+      return { success: true, message: 'Approved successfully' };
+    } catch (error: any) {
+      console.error('❌ Approval failed:', error);
+      throw error; // Re-throw to be caught by caller
     }
-
-    if (entityType === 'ad') {
-      const { error } = await supabase
-        .from('ads')
-        .update({ approval_status: 'approved' })
-        .eq('id', entityId);
-      if (error) throw new Error(`Failed to approve ad: ${error.message}`);
-    }
-
-    return { success: true, message: 'Approved successfully' };
   }
 
   async rejectItem({ entityType, entityId, comment, changes = {} }: ApproveItemParams) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    if (entityType === 'task') {
-      // Get the change request
-      const { data: changeRequest, error: fetchError } = await supabase
-        .from('task_change_requests')
-        .select('*')
-        .eq('id', entityId)
-        .eq('status', 'pending')
-        .single();
-      
-      if (fetchError) throw new Error(`Failed to fetch change request: ${fetchError.message}`);
-      if (!changeRequest) throw new Error('Change request not found or already processed');
+      if (entityType === 'task') {
+        // Get the change request
+        const { data: changeRequest, error: fetchError } = await supabase
+          .from('task_change_requests')
+          .select('*')
+          .eq('id', entityId)
+          .eq('status', 'pending')
+          .single();
+        
+        if (fetchError) {
+          console.error('❌ Fetch error:', fetchError);
+          throw new Error(`Failed to fetch change request: ${fetchError.message}`);
+        }
+        
+        if (!changeRequest) {
+          throw new Error('Change request not found or already processed');
+        }
 
-      // Mark request as rejected (don't apply changes)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+        // Mark request as rejected (don't apply changes)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      if (!profile) throw new Error('Profile not found');
+        if (!profile) throw new Error('Profile not found');
 
-      const { error: rejectError } = await supabase
-        .from('task_change_requests')
-        .update({ 
-          status: 'rejected',
-          decided_by: profile.id,
-          decided_at: new Date().toISOString()
-        })
-        .eq('id', entityId);
-      
-      if (rejectError) throw new Error(`Failed to reject request: ${rejectError.message}`);
+        const { error: rejectError } = await supabase
+          .from('task_change_requests')
+          .update({ 
+            status: 'rejected',
+            decided_by: profile.id,
+            decided_at: new Date().toISOString()
+          })
+          .eq('id', entityId);
+        
+        if (rejectError) {
+          console.error('❌ Rejection error:', rejectError);
+          throw new Error(`Failed to reject request: ${rejectError.message}`);
+        }
+        
+        console.log('✅ Request rejected successfully');
+      }
+
+      if (entityType === 'ad') {
+        const { error } = await supabase
+          .from('ads')
+          .update({ approval_status: 'rejected' })
+          .eq('id', entityId);
+        
+        if (error) {
+          console.error('❌ Ad rejection error:', error);
+          throw new Error(`Failed to reject ad: ${error.message}`);
+        }
+        console.log('✅ Ad rejected successfully');
+      }
+
+      return { success: true, message: 'Rejected successfully' };
+    } catch (error: any) {
+      console.error('❌ Rejection failed:', error);
+      throw error; // Re-throw to be caught by caller
     }
-
-    if (entityType === 'ad') {
-      const { error } = await supabase
-        .from('ads')
-        .update({ approval_status: 'rejected' })
-        .eq('id', entityId);
-      if (error) throw new Error(`Failed to reject ad: ${error.message}`);
-    }
-
-    return { success: true, message: 'Rejected successfully' };
   }
 
   async getApprovalHistory(filters: ApprovalFilters = {}) {
@@ -154,8 +200,12 @@ class ApprovalService {
     const results = [];
     
     for (const item of items) {
-      const success = await this.approveItem(item);
-      results.push({ ...item, success });
+      try {
+        const success = await this.approveItem(item);
+        results.push({ ...item, success });
+      } catch (error) {
+        results.push({ ...item, success: false, error });
+      }
     }
 
     return results;
@@ -165,8 +215,12 @@ class ApprovalService {
     const results = [];
     
     for (const item of items) {
-      const success = await this.rejectItem(item);
-      results.push({ ...item, success });
+      try {
+        const success = await this.rejectItem(item);
+        results.push({ ...item, success });
+      } catch (error) {
+        results.push({ ...item, success: false, error });
+      }
     }
 
     return results;

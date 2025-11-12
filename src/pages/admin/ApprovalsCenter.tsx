@@ -128,34 +128,42 @@ export default function ApprovalsCenter() {
   const handleApprove = async (item: PendingItem) => {
     try {
       const entityType = item.type === 'ad' ? 'ad' : 'task';
-      await approvalService.approveItem({
+      const result = await approvalService.approveItem({
         entityType: entityType as any,
         entityId: item.id,
       });
       
-      toast.success('Item approved successfully');
+      toast.success(result.message || 'Item approved successfully');
       fetchPendingApprovals();
       fetchApprovalHistory();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to approve item');
-      console.error('Approval error:', error);
+      const errorMessage = error.message || 'Failed to approve item';
+      toast.error(errorMessage, {
+        description: 'Check console for details',
+        duration: 5000,
+      });
+      console.error('❌ Approval error details:', error);
     }
   };
 
   const handleReject = async (item: PendingItem) => {
     try {
       const entityType = item.type === 'ad' ? 'ad' : 'task';
-      await approvalService.rejectItem({
+      const result = await approvalService.rejectItem({
         entityType: entityType as any,
         entityId: item.id,
       });
       
-      toast.success('Item rejected');
+      toast.success(result.message || 'Item rejected successfully');
       fetchPendingApprovals();
       fetchApprovalHistory();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to reject item');
-      console.error('Rejection error:', error);
+      const errorMessage = error.message || 'Failed to reject item';
+      toast.error(errorMessage, {
+        description: 'Check console for details',
+        duration: 5000,
+      });
+      console.error('❌ Rejection error details:', error);
     }
   };
 

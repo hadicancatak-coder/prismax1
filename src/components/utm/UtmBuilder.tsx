@@ -106,9 +106,13 @@ export function UtmBuilder() {
       const utmMedium = calculateUtmMedium(platformName);
       
       if (purpose === 'AO') {
-        selectedEntities.forEach((entity) => {
-          const campaignName = campaigns.find(c => c.name === entity)?.name || entity;
+        selectedEntities.forEach((entityName) => {
+          const entity = entities.find(e => e.name === entityName);
+          const campaignName = campaigns.find(c => c.name === entityName)?.name || entityName;
           const utmCampaign = generateUtmCampaignByPurpose('AO', campaignName);
+          
+          // Use entity's website_param if available, otherwise fallback to entity name
+          const websiteParam = entity?.website_param || entity?.code || entityName.toLowerCase();
           
           const url = buildUtmUrl({
             baseUrl: lpUrl,
@@ -116,18 +120,19 @@ export function UtmBuilder() {
             utmMedium,
             utmCampaign,
             utmContent: deviceType,
-            customParams: withExtensions ? { extensions: 'true' } : undefined,
+            customParams: withExtensions ? { extensions: 'true', entity: websiteParam } : { entity: websiteParam },
           });
 
           links.push({
             id: crypto.randomUUID(),
-            name: `${platformName} - ${entity}`,
+            name: `${platformName} - ${entityName}`,
             full_url: url,
             utm_campaign: utmCampaign,
             platform: platformName,
-            entity: [entity],
+            entity: [entityName],
             deviceType,
             purpose: 'AO',
+            websiteParam,
           });
         });
       } else if (purpose === 'Webinar') {

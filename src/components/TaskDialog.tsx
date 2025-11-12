@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity, MoreVertical } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -36,6 +36,9 @@ import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 import { ConfirmPopover } from "@/components/ui/ConfirmPopover";
 import { PromptDialog } from "@/components/ui/PromptDialog";
 import { useTaskChangeLogs } from "@/hooks/useTaskChangeLogs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { TaskPresenceIndicator } from "@/components/tasks/TaskPresenceIndicator";
+import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
 
 interface TaskDialogProps {
   open: boolean;
@@ -484,31 +487,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               )}
             </DialogTitle>
             <div className="flex items-center gap-2">
-              {task.status !== 'Completed' && !editMode && (
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={async () => {
-                    const { error } = await supabase
-                      .from('tasks')
-                      .update({ 
-                        status: 'Completed'
-                      })
-                      .eq('id', taskId);
-                      
-                    if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
-                    } else {
-                      toast({ title: "Success", description: "Task marked as complete" });
-                      fetchTask();
-                    }
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Mark Complete
-                </Button>
-              )}
               {!editMode && !showComments && (
                 <Button variant="outline" size="sm" onClick={() => {
                   setEditMode(true);
@@ -526,8 +504,45 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   className="gap-2"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Show Comments ({comments.length})
+                  Comments ({comments.length})
                 </Button>
+              )}
+              {!editMode && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {task.status !== 'Completed' && (
+                      <DropdownMenuItem onClick={async () => {
+                        const { error } = await supabase
+                          .from('tasks')
+                          .update({ status: 'Completed' })
+                          .eq('id', taskId);
+                        if (error) {
+                          toast({ title: "Error", description: error.message, variant: "destructive" });
+                        } else {
+                          toast({ title: "Success", description: "Task marked as complete" });
+                          fetchTask();
+                        }
+                      }}>
+                        <Check className="h-4 w-4 mr-2" />
+                        Mark Complete
+                      </DropdownMenuItem>
+                    )}
+                    {userRole === 'admin' && (
+                      <DropdownMenuItem 
+                        onClick={handleDelete}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Task
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
@@ -537,6 +552,8 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         <div className="flex gap-4 flex-1 min-h-0">
           {/* Task Details Section */}
           <div className={`space-y-6 overflow-y-auto overflow-x-visible pr-4 flex-1 min-h-0 transition-all duration-300 ${showComments ? "w-1/2" : "w-full"}`}>
+            <TaskPresenceIndicator taskId={taskId} editMode={editMode} />
+            
             <div>
               <Label>Description</Label>
               {editMode ? (
@@ -1240,27 +1257,18 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                           </div>
                         );
                       } else {
-                        // Change log entry
+                        // Activity log entry
                         const log = item;
                         return (
-                          <div key={`log-${log.id}`} className="flex gap-3 animate-fade-in">
-                            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
-                              <Activity className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1 bg-muted/30 rounded-lg p-3 border border-border/50">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  {log.profiles?.name || "System"}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(new Date(log.changed_at), { addSuffix: true })}
-                                </span>
-                              </div>
-                              <p className="text-sm text-foreground/80">
-                                {log.description}
-                              </p>
-                            </div>
-                          </div>
+                          <ActivityLogEntry
+                            key={`log-${log.id}`}
+                            field_name={log.field_name}
+                            old_value={log.old_value}
+                            new_value={log.new_value}
+                            description={log.description}
+                            changed_at={log.changed_at}
+                            profiles={log.profiles}
+                          />
                         );
                       }
                     })
@@ -1338,37 +1346,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 <X className="h-4 w-4" />
                 Discard
               </Button>
-            </DialogFooter>
-          </>
-        )}
-
-        {/* View Mode: Delete Button (Admin Only) */}
-        {!editMode && userRole === 'admin' && (
-          <>
-            <Separator className="mt-8" />
-            <DialogFooter className="mt-6 bg-destructive/5 p-4 rounded-lg">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    Delete Task
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{task?.title}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </DialogFooter>
           </>
         )}

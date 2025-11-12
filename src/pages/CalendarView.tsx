@@ -205,9 +205,15 @@ export default function CalendarView() {
     return allTasks.filter((task: any) => {
       if (!task.due_at) return false;
       const dueDate = new Date(task.due_at);
-      return dueDate >= startDate && dueDate <= endDate;
+      const inDateRange = dueDate >= startDate && dueDate <= endDate;
+      
+      // Filter by selected user if one is selected
+      const userMatch = !selectedUserId || 
+        task.assignees?.some((a: any) => a.profiles?.user_id === selectedUserId);
+      
+      return inDateRange && userMatch;
     });
-  }, [allTasks, dateView, dateRange]);
+  }, [allTasks, dateView, dateRange, selectedUserId]);
 
   // Sort tasks based on selected option
   const sortedTasks = useMemo(() => {

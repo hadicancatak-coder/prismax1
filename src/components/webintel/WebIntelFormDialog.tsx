@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,10 @@ export function WebIntelFormDialog({
   const [campaigns, setCampaigns] = useState<Omit<PastCampaign, "id" | "created_at" | "site_id">[]>([]);
   const [enriching, setEnriching] = useState(false);
 
+  // Initialize form data when dialog opens or site changes
   useEffect(() => {
+    if (!open) return; // Early return if dialog closed
+    
     if (site) {
       setFormData({
         name: site.name,
@@ -90,7 +93,9 @@ export function WebIntelFormDialog({
       setPrices([]);
       setCampaigns([]);
     }
-  }, [site, historicPrices, pastCampaigns, open]);
+  }, [site?.id]); // Only depend on site.id, not 'open'
+
+  const enrichTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleEnrichUrl = async () => {
     if (!formData.url) {
@@ -98,21 +103,25 @@ export function WebIntelFormDialog({
       return;
     }
 
-    setEnriching(true);
-    try {
-      const result = await enrichUrl(formData.url);
-      setFormData(prev => ({
-        ...prev,
-        category: result.category,
-        type: result.detectedType,
-        estimated_monthly_traffic: result.estimatedTraffic || prev.estimated_monthly_traffic,
-      }));
-      toast.success("URL enriched successfully");
-    } catch (error) {
-      toast.error("Failed to enrich URL");
-    } finally {
-      setEnriching(false);
-    }
+    // Debounce enrichment to prevent rapid calls
+    clearTimeout(enrichTimeoutRef.current);
+    enrichTimeoutRef.current = setTimeout(async () => {
+      setEnriching(true);
+      try {
+        const result = await enrichUrl(formData.url);
+        setFormData(prev => ({
+          ...prev,
+          category: result.category,
+          type: result.detectedType,
+          estimated_monthly_traffic: result.estimatedTraffic || prev.estimated_monthly_traffic,
+        }));
+        toast.success("URL enriched successfully");
+      } catch (error) {
+        toast.error("Failed to enrich URL");
+      } finally {
+        setEnriching(false);
+      }
+    }, 500);
   };
 
   const handleSubmit = () => {
