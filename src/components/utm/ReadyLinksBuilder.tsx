@@ -1,382 +1,301 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Info, Zap, Monitor, Smartphone } from "lucide-react";
-import { detectLPMetadata } from "@/lib/lpDetector";
-import { LPDetectionCard } from "./LPDetectionCard";
-import { SimpleMultiSelect } from "./SimpleMultiSelect";
-import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Copy, Trash2, Link as LinkIcon } from "lucide-react";
+import { InlineEditBadge } from "./InlineEditBadge";
+import { InlineEditSelect } from "./InlineEditSelect";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ENTITIES } from "@/lib/constants";
-import { generateUtmCampaignByPurpose, calculateUtmMedium } from "@/lib/utmHelpers";
-import { GeneratedLinksPreview } from "./GeneratedLinksPreview";
-import { useCreateUtmLink } from "@/hooks/useUtmLinks";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
+import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
+import { useUtmLinks, useCreateUtmLink, useUpdateUtmLink, useDeleteUtmLink } from "@/hooks/useUtmLinks";
 import { toast } from "sonner";
+import { buildUtmUrl, calculateUtmMedium, generateUtmCampaignByPurpose } from "@/lib/utmHelpers";
+import { detectLPMetadata } from "@/lib/lpDetector";
+
+interface SavedLP {
+  id: string;
+  url: string;
+  country: string;
+  language: string;
+  campaign: string;
+  platform: string;
+  purpose: string;
+}
 
 export function ReadyLinksBuilder() {
-  const [lpUrl, setLpUrl] = useState("");
-  const [detection, setDetection] = useState<ReturnType<typeof detectLPMetadata> | null>(null);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-  const [seminarCity, setSeminarCity] = useState("");
-  const [webinarName, setWebinarName] = useState("");
-  const [deviceType, setDeviceType] = useState<'web' | 'mobile'>('web');
-  const [isExtension, setIsExtension] = useState(false);
-  const [generatedLinks, setGeneratedLinks] = useState<any[]>([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newLpUrl, setNewLpUrl] = useState("");
+  const [newCountry, setNewCountry] = useState("");
+  const [newLanguage, setNewLanguage] = useState("en");
+  const [newCampaign, setNewCampaign] = useState("");
+  const [newPlatform, setNewPlatform] = useState("");
+  const [newPurpose, setNewPurpose] = useState("");
 
+  const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
+  const { data: allLinks = [] } = useUtmLinks({});
   const createUtmLink = useCreateUtmLink();
+  const updateUtmLink = useUpdateUtmLink();
+  const deleteUtmLink = useDeleteUtmLink();
 
-  const handleLpChange = (value: string) => {
-    setLpUrl(value);
+  // Transform utm_links to SavedLP format
+  const savedLPs: SavedLP[] = allLinks
+    .filter(link => link.is_template)
+    .map(link => ({
+      id: link.id,
+      url: link.full_url || '',
+      country: link.entity?.[0] || 'Global',
+      language: 'en',
+      campaign: link.link_purpose || '',
+      platform: link.platform || '',
+      purpose: link.link_purpose || 'AO',
+    }));
+
+  const handleAddLP = () => {
+    if (!newLpUrl.trim()) {
+      toast.error("Please enter a landing page URL");
+      return;
+    }
+
+    const detection = detectLPMetadata(newLpUrl);
     
-    if (value.trim()) {
-      const detected = detectLPMetadata(value);
-      setDetection(detected);
-      
-      // Pre-fill extracted values
-      if (detected.extractedCity) {
-        setSeminarCity(detected.extractedCity);
-      }
-      if (detected.extractedWebinarName) {
-        setWebinarName(detected.extractedWebinarName);
-      }
-    } else {
-      setDetection(null);
-    }
-  };
-
-  const handleGenerate = () => {
-    if (!lpUrl || !detection) {
-      toast.error("Please enter a valid landing page URL");
-      return;
-    }
-
-    if (selectedPlatforms.length === 0) {
-      toast.error("Please select at least one platform");
-      return;
-    }
-
-    if (detection.purpose === 'AO' && selectedEntities.length === 0) {
-      toast.error("Please select at least one entity for AO links");
-      return;
-    }
-
-    if (detection.purpose === 'Seminar' && !seminarCity) {
-      toast.error("Please enter a seminar city");
-      return;
-    }
-
-    if (detection.purpose === 'Webinar' && !webinarName) {
-      toast.error("Please enter a webinar name");
-      return;
-    }
-
-    const links: any[] = [];
-
-    if (detection.purpose === 'AO') {
-      // AO: Generate for each platform × entity combination
-      selectedPlatforms.forEach(platform => {
-        selectedEntities.forEach(entity => {
-          const utmMedium = calculateUtmMedium(platform);
-          const utmCampaign = generateUtmCampaignByPurpose('AO', 'ao');
-          const utmContent = isExtension 
-            ? `ao_Extension_${deviceType}`
-            : deviceType;
-
-          const url = new URL(lpUrl);
-          url.searchParams.set('utm_source', platform.toLowerCase());
-          url.searchParams.set('utm_medium', utmMedium);
-          url.searchParams.set('utm_campaign', utmCampaign);
-          url.searchParams.set('utm_content', utmContent);
-
-          links.push({
-            full_url: url.toString(),
-            base_url: lpUrl,
-            utm_source: platform.toLowerCase(),
-            utm_medium: utmMedium,
-            utm_campaign: utmCampaign,
-            utm_content: utmContent,
-            platform,
-            entity,
-            link_purpose: 'AO',
-            device_type: deviceType,
-          });
-        });
-      });
-    } else if (detection.purpose === 'Webinar') {
-      // Webinar: Generate for each platform
-      selectedPlatforms.forEach(platform => {
-        const utmMedium = calculateUtmMedium(platform);
-        const utmCampaign = generateUtmCampaignByPurpose('Webinar', undefined, webinarName);
-        const utmContent = isExtension 
-          ? `${webinarName.toLowerCase().replace(/\s+/g, '')}_Extension_${deviceType}`
-          : deviceType;
-
-        const url = new URL(lpUrl);
-        url.searchParams.set('utm_source', platform.toLowerCase());
-        url.searchParams.set('utm_medium', utmMedium);
-        url.searchParams.set('utm_campaign', utmCampaign);
-        url.searchParams.set('utm_content', utmContent);
-
-        links.push({
-          full_url: url.toString(),
-          base_url: lpUrl,
-          utm_source: platform.toLowerCase(),
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
-          utm_content: utmContent,
-          platform,
-          entity: detection.country || 'Global',
-          link_purpose: 'Webinar',
-          device_type: deviceType,
-          webinar_name: webinarName,
-        });
-      });
-    } else if (detection.purpose === 'Seminar') {
-      // Seminar: Generate for each platform
-      selectedPlatforms.forEach(platform => {
-        const utmMedium = calculateUtmMedium(platform);
-        const utmCampaign = generateUtmCampaignByPurpose('Seminar', undefined, undefined, seminarCity);
-        const utmContent = isExtension 
-          ? `${seminarCity.toLowerCase()}seminar_Extension_${deviceType}`
-          : deviceType;
-
-        const url = new URL(lpUrl);
-        url.searchParams.set('utm_source', platform.toLowerCase());
-        url.searchParams.set('utm_medium', utmMedium);
-        url.searchParams.set('utm_campaign', utmCampaign);
-        url.searchParams.set('utm_content', utmContent);
-
-        links.push({
-          full_url: url.toString(),
-          base_url: lpUrl,
-          utm_source: platform.toLowerCase(),
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
-          utm_content: utmContent,
-          platform,
-          entity: detection.country || seminarCity,
-          link_purpose: 'Seminar',
-          device_type: deviceType,
-          seminar_city: seminarCity,
-        });
-      });
-    }
-
-    setGeneratedLinks(links);
-    toast.success(`Generated ${links.length} link${links.length > 1 ? 's' : ''}`);
-  };
-
-  const handleCopyLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
-  };
-
-  const handleSaveLink = (link: any) => {
     createUtmLink.mutate({
-      name: `${link.platform} - ${link.utm_campaign}`,
-      full_url: link.full_url,
-      base_url: link.base_url,
-      utm_source: link.utm_source,
-      utm_medium: link.utm_medium,
-      utm_campaign: link.utm_campaign,
-      utm_content: link.utm_content,
-      utm_term: null,
-      platform: link.platform,
-      entity: link.entity,
-      link_purpose: link.link_purpose,
+      name: `LP - ${newPlatform || 'Facebook'}`,
+      full_url: newLpUrl,
+      base_url: newLpUrl,
+      utm_source: 'manual',
+      utm_medium: 'none',
+      utm_campaign: 'template',
+      entity: [newCountry || detection.country || 'Global'],
+      platform: newPlatform || 'Facebook',
+      link_purpose: newPurpose || detection.purpose || 'AO',
+    }, {
+      onSuccess: () => {
+        toast.success("Landing page added to library");
+        setShowAddDialog(false);
+        setNewLpUrl("");
+        setNewCountry("");
+        setNewLanguage("en");
+        setNewCampaign("");
+        setNewPlatform("");
+        setNewPurpose("");
+      }
     });
   };
 
-  const handleClearPreviews = () => {
-    setGeneratedLinks([]);
+  const updateLP = (id: string, field: string, value: string) => {
+    const lp = savedLPs.find(l => l.id === id);
+    if (!lp) return;
+
+    const updatedData: any = {};
+    if (field === 'country') updatedData.entity = [value];
+    if (field === 'campaign') updatedData.link_purpose = value;
+    if (field === 'platform') updatedData.platform = value;
+
+    updateUtmLink.mutate({ id, ...updatedData });
   };
 
-  const platformOptions = platforms.map(p => ({
-    value: p.name,
-    label: p.name
-  }));
+  const copyUTM = (lp: SavedLP) => {
+    const utmMedium = calculateUtmMedium(lp.platform);
+    const utmCampaign = generateUtmCampaignByPurpose(
+      lp.purpose as 'AO' | 'Webinar' | 'Seminar',
+      lp.campaign
+    );
 
-  const entityOptions = ENTITIES.map(e => ({
-    value: e,
-    label: e
-  }));
+    const url = buildUtmUrl({
+      baseUrl: lp.url,
+      utmSource: lp.platform.toLowerCase().replace(/\s+/g, ''),
+      utmMedium,
+      utmCampaign,
+      utmContent: 'desktop',
+      dynamicLanguage: lp.language,
+    });
+
+    navigator.clipboard.writeText(url);
+    toast.success("UTM link copied to clipboard");
+  };
+
+  const deleteLP = (id: string) => {
+    deleteUtmLink.mutate(id, {
+      onSuccess: () => {
+        toast.success("Landing page removed from library");
+      }
+    });
+  };
 
   return (
-    <div className="space-y-6">
+    <>
       <Card>
         <CardHeader>
-          <CardTitle>Smart UTM Link Generator</CardTitle>
-          <CardDescription>
-            Paste a landing page URL and we'll automatically detect the purpose, country, and language
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          
-          {/* LP URL Input */}
-          <div>
-            <Label htmlFor="lp-url">Landing Page URL</Label>
-            <Input
-              id="lp-url"
-              placeholder="https://campaigns.cfifinancial.com/ar/ps/q3-2025-report"
-              value={lpUrl}
-              onChange={(e) => handleLpChange(e.target.value)}
-              className="font-mono text-sm"
-            />
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5 text-primary" />
+                Ready Links - LP Library
+              </CardTitle>
+            </div>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add LP
+            </Button>
           </div>
-
-          {/* Auto-Detection Display */}
-          {detection && (
-            <LPDetectionCard detection={detection} />
-          )}
-
-          {/* Conditional Fields Based on Purpose */}
-          {detection?.purpose && (
-            <>
-              <div className="border-t pt-6">
-                <h3 className="text-sm font-semibold mb-4">Configure UTM Parameters</h3>
-                
-                {/* Platform Selection (Always shown) */}
-                <div className="mb-4">
-                  <Label>Platform / Channel</Label>
-                  <SimpleMultiSelect
-                    options={platformOptions}
-                    selected={selectedPlatforms}
-                    onChange={setSelectedPlatforms}
-                    placeholder="Select platforms..."
-                  />
-                </div>
-
-                {/* AO-Specific Fields */}
-                {detection.purpose === 'AO' && (
-                  <div className="mb-4">
-                    <Label>Entity / Country</Label>
-                    <SimpleMultiSelect
-                      options={entityOptions}
-                      selected={selectedEntities}
-                      onChange={setSelectedEntities}
-                      placeholder="Select entities..."
-                    />
-                  </div>
-                )}
-
-                {/* Webinar-Specific Fields */}
-                {detection.purpose === 'Webinar' && (
-                  <div className="mb-4 space-y-4">
-                    <div>
-                      <Label htmlFor="webinar-name">Webinar Name</Label>
-                      <Input
-                        id="webinar-name"
-                        value={webinarName}
-                        onChange={(e) => setWebinarName(e.target.value)}
-                        placeholder="e.g., Investment Basics"
+        </CardHeader>
+        <CardContent>
+          {savedLPs.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <LinkIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>No landing pages saved yet</p>
+              <p className="text-sm">Add your first LP to get started</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">LP URL</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Language</TableHead>
+                  <TableHead>Campaign</TableHead>
+                  <TableHead>Platform</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {savedLPs.map((lp) => (
+                  <TableRow key={lp.id}>
+                    <TableCell className="font-mono text-xs max-w-[300px] truncate" title={lp.url}>
+                      {lp.url}
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditBadge
+                        value={lp.country}
+                        options={ENTITIES}
+                        onChange={(val) => updateLP(lp.id, 'country', val)}
                       />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        utm_campaign: {webinarName ? `${webinarName.toLowerCase().replace(/\s+/g, '')}_${new Date().toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).replace(' ', '').toLowerCase()}` : 'webinarname_nov25'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Seminar-Specific Fields */}
-                {detection.purpose === 'Seminar' && (
-                  <div className="mb-4 space-y-4">
-                    <div>
-                      <Label htmlFor="seminar-city">Seminar City</Label>
-                      <Select value={seminarCity} onValueChange={setSeminarCity}>
-                        <SelectTrigger id="seminar-city">
-                          <SelectValue placeholder="Select city..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Amman">Amman</SelectItem>
-                          <SelectItem value="Dubai">Dubai</SelectItem>
-                          <SelectItem value="AD">Abu Dhabi (AD)</SelectItem>
-                          <SelectItem value="Lebanon">Lebanon</SelectItem>
-                          <SelectItem value="Kuwait">Kuwait</SelectItem>
-                          <SelectItem value="Qatar">Qatar</SelectItem>
-                          <SelectItem value="Bahrain">Bahrain</SelectItem>
-                          <SelectItem value="Palestine">Palestine</SelectItem>
-                          <SelectItem value="Aqaba">Aqaba</SelectItem>
-                          <SelectItem value="SA">Saudi Arabia (SA)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        utm_campaign: {seminarCity ? generateUtmCampaignByPurpose('Seminar', undefined, undefined, seminarCity) : 'CitySeminar_November25'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Device Type (Always shown) */}
-                <div className="mb-4">
-                  <Label>Device Type</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      type="button"
-                      variant={deviceType === 'web' ? 'default' : 'outline'}
-                      onClick={() => setDeviceType('web')}
-                      className="flex-1"
-                    >
-                      <Monitor className="mr-2 h-4 w-4" />
-                      Web
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={deviceType === 'mobile' ? 'default' : 'outline'}
-                      onClick={() => setDeviceType('mobile')}
-                      className="flex-1"
-                    >
-                      <Smartphone className="mr-2 h-4 w-4" />
-                      Mobile
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Extensions Checkbox */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="extensions"
-                    checked={isExtension}
-                    onCheckedChange={(checked) => setIsExtension(!!checked)}
-                  />
-                  <Label htmlFor="extensions" className="cursor-pointer">
-                    Extensions (adds "_Extension_" to utm_content)
-                  </Label>
-                </div>
-              </div>
-
-              {/* Generate Button */}
-              <Button onClick={handleGenerate} size="lg" className="w-full">
-                <Zap className="mr-2 h-4 w-4" />
-                Generate Links
-              </Button>
-            </>
-          )}
-
-          {/* Info Alert */}
-          {!detection && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Enter a landing page URL above to automatically detect the purpose, country, and language.
-              </AlertDescription>
-            </Alert>
+                    </TableCell>
+                    <TableCell>
+                      <ToggleGroup
+                        type="single"
+                        value={lp.language}
+                        onValueChange={(val) => val && updateLP(lp.id, 'language', val)}
+                        size="sm"
+                      >
+                        <ToggleGroupItem value="en">EN</ToggleGroupItem>
+                        <ToggleGroupItem value="ar">AR</ToggleGroupItem>
+                      </ToggleGroup>
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={lp.campaign}
+                        options={campaigns.map(c => ({ id: c.id, name: c.name }))}
+                        onChange={(val) => updateLP(lp.id, 'campaign', val)}
+                        placeholder="Select campaign"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={lp.platform}
+                        options={platforms.map(p => ({ id: p.id, name: p.name }))}
+                        onChange={(val) => updateLP(lp.id, 'platform', val)}
+                        placeholder="Select platform"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyUTM(lp)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteLP(lp.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      {/* Generated Links Preview */}
-      <GeneratedLinksPreview
-        links={generatedLinks}
-        onCopy={handleCopyLink}
-        onSave={handleSaveLink}
-        onClear={handleClearPreviews}
-      />
-    </div>
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Landing Page to Library</DialogTitle>
+            <DialogDescription>
+              Add a landing page URL to quickly generate UTM links
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-lp-url">Landing Page URL *</Label>
+              <Input
+                id="new-lp-url"
+                type="url"
+                placeholder="https://cfi.trade/..."
+                value={newLpUrl}
+                onChange={(e) => setNewLpUrl(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-country">Country (optional)</Label>
+                <Input
+                  id="new-country"
+                  placeholder="Auto-detected"
+                  value={newCountry}
+                  onChange={(e) => setNewCountry(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Language</Label>
+                <ToggleGroup
+                  type="single"
+                  value={newLanguage}
+                  onValueChange={(val) => val && setNewLanguage(val)}
+                >
+                  <ToggleGroupItem value="en">EN</ToggleGroupItem>
+                  <ToggleGroupItem value="ar">AR</ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddLP}>
+              Add LP
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -48,7 +48,7 @@ const UtmPlanner = () => {
         </TabsList>
 
         <TabsContent value="builder" forceMount hidden={activeTab !== "builder"} className="space-y-6">
-          <UtmBuilder onSave={() => setActiveTab("links")} />
+          <UtmBuilder />
         </TabsContent>
 
         <TabsContent value="campaigns" forceMount hidden={activeTab !== "campaigns"} className="space-y-4">

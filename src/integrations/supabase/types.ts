@@ -3090,6 +3090,7 @@ export type Database = {
           expansion_group_id: string | null
           full_url: string
           id: string
+          is_template: boolean | null
           is_validated: boolean | null
           last_used_at: string | null
           link_purpose: string | null
@@ -3126,6 +3127,7 @@ export type Database = {
           expansion_group_id?: string | null
           full_url: string
           id?: string
+          is_template?: boolean | null
           is_validated?: boolean | null
           last_used_at?: string | null
           link_purpose?: string | null
@@ -3162,6 +3164,7 @@ export type Database = {
           expansion_group_id?: string | null
           full_url?: string
           id?: string
+          is_template?: boolean | null
           is_validated?: boolean | null
           last_used_at?: string | null
           link_purpose?: string | null
