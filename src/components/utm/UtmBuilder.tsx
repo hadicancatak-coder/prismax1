@@ -303,7 +303,7 @@ export function UtmBuilder() {
               {detection.purpose === 'Seminar' && (
                 <div className="space-y-2">
                   <Label htmlFor="city">City *</Label>
-                  <Select value={city} onValueChange={setCity}>
+                  <Select value={city || undefined} onValueChange={setCity}>
                     <SelectTrigger id="city">
                       <SelectValue placeholder="Select city" />
                     </SelectTrigger>

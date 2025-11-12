@@ -83,7 +83,7 @@ function CopyWriter() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={platformFilter} onValueChange={setPlatformFilter}>
+          <Select value={platformFilter || "all"} onValueChange={setPlatformFilter}>
             <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
@@ -96,7 +96,7 @@ function CopyWriter() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={entityFilter} onValueChange={setEntityFilter}>
+          <Select value={entityFilter || "all"} onValueChange={setEntityFilter}>
             <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Entity" />
             </SelectTrigger>

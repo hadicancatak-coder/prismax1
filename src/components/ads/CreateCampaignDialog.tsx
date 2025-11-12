@@ -89,9 +89,9 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaul
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="entity">Entity *</Label>
-            <Select value={entity} onValueChange={setEntity}>
+            <Select value={entity || undefined} onValueChange={setEntity}>
               <SelectTrigger id="entity">
-                <SelectValue />
+                <SelectValue placeholder="Select entity" />
               </SelectTrigger>
               <SelectContent>
                 {ENTITIES.map(ent => (

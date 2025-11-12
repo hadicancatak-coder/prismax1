@@ -50,7 +50,7 @@ export function BulkImportDialog({ open, onOpenChange, elementType }: BulkImport
         <div className="space-y-4">
           <div>
             <Label htmlFor="entity">Entity (applies to all)</Label>
-            <Select value={entity} onValueChange={setEntity}>
+            <Select value={entity || undefined} onValueChange={setEntity}>
               <SelectTrigger>
                 <SelectValue placeholder="Select entity..." />
               </SelectTrigger>

@@ -152,9 +152,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
       <div className="p-4 border-b bg-background space-y-4">
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">Entity</Label>
-          <Select value={selectedEntity} onValueChange={setSelectedEntity}>
+          <Select value={selectedEntity || undefined} onValueChange={setSelectedEntity}>
             <SelectTrigger className="h-9">
-              <SelectValue />
+              <SelectValue placeholder="Select entity" />
             </SelectTrigger>
             <SelectContent>
               {ENTITIES.map(entity => (

@@ -170,7 +170,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Entity</Label>
-                      <Select value={entity} onValueChange={setEntity}>
+                      <Select value={entity || undefined} onValueChange={setEntity}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select entity" />
                         </SelectTrigger>
@@ -433,7 +433,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Entity</Label>
-                      <Select value={entity} onValueChange={setEntity}>
+                      <Select value={entity || undefined} onValueChange={setEntity}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select entity" />
                         </SelectTrigger>

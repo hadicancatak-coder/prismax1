@@ -277,7 +277,7 @@ export default function SavedElementsPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Entity</label>
-              <Select value={entityFilter} onValueChange={setEntityFilter}>
+              <Select value={entityFilter || "all"} onValueChange={setEntityFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Entities" />
                 </SelectTrigger>

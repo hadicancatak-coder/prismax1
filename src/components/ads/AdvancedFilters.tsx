@@ -62,7 +62,7 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
 
             <div>
               <Label>Entity</Label>
-              <Select value={entity} onValueChange={setEntity}>
+              <Select value={entity || "all"} onValueChange={setEntity}>
                 <SelectTrigger>
                   <SelectValue placeholder="All entities" />
                 </SelectTrigger>
