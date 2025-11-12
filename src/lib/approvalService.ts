@@ -23,13 +23,17 @@ interface ApprovalFilters {
 class ApprovalService {
   async approveItem({ entityType, entityId, comment, changes = {} }: ApproveItemParams) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Force token refresh to ensure we have valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !session) {
+        throw new Error('Session expired. Please log out and log back in.');
+      }
 
-      console.log('🔍 Approval flow started:', {
-        entityType,
-        entityId,
+      const user = session.user;
+
+      console.log('🔍 Auth check (approve):', {
         userId: user.id,
+        userEmail: user.email,
         timestamp: new Date().toISOString()
       });
 
@@ -40,8 +44,19 @@ class ApprovalService {
         .eq('user_id', user.id)
         .single();
 
-      if (roleError || userRole?.role !== 'admin') {
-        throw new Error('Only administrators can approve requests. Please contact your admin.');
+      console.log('🔍 Role query result (approve):', {
+        userRole,
+        roleError,
+        hasAdminRole: userRole?.role === 'admin'
+      });
+
+      if (roleError) {
+        console.error('❌ Role fetch error:', roleError);
+        throw new Error(`Failed to verify admin status: ${roleError.message}`);
+      }
+
+      if (!userRole || userRole.role !== 'admin') {
+        throw new Error(`Access denied. Your role: ${userRole?.role || 'none'}. Required: admin. Please contact support if you believe this is an error.`);
       }
 
       console.log('✅ Admin permission verified');
@@ -131,13 +146,17 @@ class ApprovalService {
 
   async rejectItem({ entityType, entityId, comment, changes = {} }: ApproveItemParams) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Force token refresh to ensure we have valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !session) {
+        throw new Error('Session expired. Please log out and log back in.');
+      }
 
-      console.log('🔍 Rejection flow started:', {
-        entityType,
-        entityId,
+      const user = session.user;
+
+      console.log('🔍 Auth check (reject):', {
         userId: user.id,
+        userEmail: user.email,
         timestamp: new Date().toISOString()
       });
 
@@ -148,8 +167,19 @@ class ApprovalService {
         .eq('user_id', user.id)
         .single();
 
-      if (roleError || userRole?.role !== 'admin') {
-        throw new Error('Only administrators can reject requests. Please contact your admin.');
+      console.log('🔍 Role query result (reject):', {
+        userRole,
+        roleError,
+        hasAdminRole: userRole?.role === 'admin'
+      });
+
+      if (roleError) {
+        console.error('❌ Role fetch error:', roleError);
+        throw new Error(`Failed to verify admin status: ${roleError.message}`);
+      }
+
+      if (!userRole || userRole.role !== 'admin') {
+        throw new Error(`Access denied. Your role: ${userRole?.role || 'none'}. Required: admin. Please contact support if you believe this is an error.`);
       }
 
       console.log('✅ Admin permission verified');

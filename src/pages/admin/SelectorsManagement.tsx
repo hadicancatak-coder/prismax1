@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { useAllCities, useCreateCity, useUpdateCity, useDeleteCity } from "@/hoo
 import { useUtmPlatforms, useCreatePlatform, useUpdatePlatform, useDeletePlatform } from "@/hooks/useUtmPlatforms";
 import { useUtmMediums, useCreateMedium, useUpdateMedium, useDeleteMedium } from "@/hooks/useUtmMediums";
 import { CountryCodeSelect } from "@/components/admin/CountryCodeSelect";
+import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   checkEntityDependencies, 
@@ -53,6 +55,37 @@ function SortableRow({ id, children }: { id: string; children: React.ReactNode }
 }
 
 export default function SelectorsManagement() {
+  // Force session refresh on page load
+  useEffect(() => {
+    const refreshSession = async () => {
+      try {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('Session refresh failed:', error);
+          toast.error('Session expired. Please log out and log back in.');
+        }
+      } catch (err) {
+        console.error('Session refresh error:', err);
+      }
+    };
+
+    refreshSession();
+  }, []);
+
+  const checkAdminSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
+      toast.error('Session expired', {
+        description: 'Please log out and log back in',
+        duration: 7000
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
   const [activeTab, setActiveTab] = useState("entities");
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -131,6 +164,9 @@ export default function SelectorsManagement() {
   };
 
   const handleDeleteEntity = async (id: string, code: string) => {
+    // Check session first
+    if (!await checkAdminSession()) return;
+
     const { canDelete, dependencies } = await checkEntityDependencies(code);
     
     if (!canDelete) {
@@ -181,6 +217,9 @@ export default function SelectorsManagement() {
   };
 
   const handleDeleteCity = async (id: string, name: string) => {
+    // Check session first
+    if (!await checkAdminSession()) return;
+
     const { canDelete, dependencies } = await checkCityDependencies(name);
     
     if (!canDelete) {
@@ -231,6 +270,9 @@ export default function SelectorsManagement() {
   };
 
   const handleDeletePlatform = async (id: string, name: string) => {
+    // Check session first
+    if (!await checkAdminSession()) return;
+
     const { canDelete, dependencies } = await checkPlatformDependencies(name);
     
     if (!canDelete) {
@@ -266,6 +308,9 @@ export default function SelectorsManagement() {
   };
 
   const handleDeleteMedium = async (id: string, name: string) => {
+    // Check session first
+    if (!await checkAdminSession()) return;
+
     const { canDelete, dependencies } = await checkMediumDependencies(name);
     
     if (!canDelete) {
@@ -331,6 +376,7 @@ export default function SelectorsManagement() {
             Manage entities, cities, platforms, and UTM mediums
           </p>
         </div>
+        <AdminStatusBadge />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

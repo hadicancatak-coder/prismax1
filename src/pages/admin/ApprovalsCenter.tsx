@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -36,6 +37,19 @@ export default function ApprovalsCenter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const refreshSession = async () => {
+      try {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('Session refresh failed:', error);
+          toast.error('Session expired. Please log out and log back in.');
+        }
+      } catch (err) {
+        console.error('Session refresh error:', err);
+      }
+    };
+
+    refreshSession();
     fetchPendingApprovals();
     fetchApprovalHistory();
   }, []);
@@ -169,6 +183,16 @@ export default function ApprovalsCenter() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-page-title font-bold">Approvals Center</h1>
+          <p className="text-body text-muted-foreground mt-1">
+            Review and manage pending approval requests
+          </p>
+        </div>
+        <AdminStatusBadge />
+      </div>
+
       <Tabs defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending" className="flex items-center gap-2">
