@@ -6,27 +6,47 @@ import "./index.css";
 import { queryClient } from "./lib/queryClient";
 import { errorLogger } from "./lib/errorLogger";
 
-// Global error handlers
+// Global error handlers with enhanced logging
 window.addEventListener('error', (event) => {
+  // Prevent default error handling
+  event.preventDefault();
+  
+  console.error('Global error:', event.error);
+  
   errorLogger.logError({
     severity: 'critical',
     type: 'frontend',
-    message: event.message,
+    message: event.message || 'Unknown error',
     stack: event.error?.stack,
     metadata: { 
       filename: event.filename, 
       lineno: event.lineno, 
-      colno: event.colno 
+      colno: event.colno,
+      error: event.error
     }
   });
 });
 
 window.addEventListener('unhandledrejection', (event) => {
+  // Prevent default error handling
+  event.preventDefault();
+  
+  console.error('Unhandled promise rejection:', event.reason);
+  
+  const reason = event.reason;
+  const message = reason?.message || reason?.toString() || 'Unknown promise rejection';
+  const stack = reason?.stack;
+  
   errorLogger.logError({
     severity: 'warning',
     type: 'frontend',
-    message: `Unhandled Promise Rejection: ${event.reason}`,
-    metadata: { reason: event.reason }
+    message: `Unhandled Promise Rejection: ${message}`,
+    stack,
+    metadata: { 
+      reason,
+      reasonType: typeof reason,
+      reasonConstructor: reason?.constructor?.name
+    }
   });
 });
 

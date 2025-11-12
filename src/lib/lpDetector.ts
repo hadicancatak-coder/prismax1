@@ -77,10 +77,17 @@ export function detectLPMetadata(url: string): LPDetectionResult {
   let path = '';
   
   try {
-    const urlObj = new URL(url);
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      throw new Error('Invalid URL: URL cannot be empty');
+    }
+    
+    const cleanUrl = url.trim();
+    const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+    const urlObj = new URL(urlWithProtocol);
     domain = urlObj.hostname;
     path = urlObj.pathname;
   } catch (e) {
+    console.error('URL parsing error in detectLPMetadata:', e);
     // Invalid URL
     return {
       country: null,

@@ -76,7 +76,13 @@ const estimateTraffic = (domain: string): number | null => {
 
 export const enrichUrl = async (url: string): Promise<EnrichmentResult> => {
   try {
-    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      throw new Error('Invalid URL: URL cannot be empty');
+    }
+    
+    const cleanUrl = url.trim();
+    const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+    const urlObj = new URL(urlWithProtocol);
     const domain = urlObj.hostname;
     
     const category = detectCategory(domain, url);

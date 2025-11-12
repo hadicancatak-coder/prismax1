@@ -32,9 +32,12 @@ export const validateUtmParameters = (params: {
   // Validate URL format
   if (params.base_url) {
     try {
-      new URL(params.base_url);
-    } catch {
-      errors.push("Base URL is not a valid URL");
+      const cleanUrl = params.base_url.trim();
+      const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+      new URL(urlWithProtocol);
+    } catch (error) {
+      console.error('URL validation error:', error);
+      errors.push("Base URL is not a valid URL format");
     }
   }
 
@@ -102,7 +105,13 @@ export const buildUtmUrl = (params: {
   custom_params?: Record<string, string>;
 }): string => {
   try {
-    const url = new URL(params.base_url);
+    if (!params.base_url || typeof params.base_url !== 'string') {
+      throw new Error('Invalid base URL');
+    }
+    
+    const cleanUrl = params.base_url.trim();
+    const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+    const url = new URL(urlWithProtocol);
     
     url.searchParams.set("utm_source", sanitizeUtmParameter(params.utm_source));
     url.searchParams.set("utm_medium", sanitizeUtmParameter(params.utm_medium));

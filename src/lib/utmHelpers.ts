@@ -151,7 +151,13 @@ export const buildUtmUrl = (params: {
   customParams?: Record<string, string>;
 }): string => {
   try {
-    const url = new URL(params.baseUrl);
+    if (!params.baseUrl || typeof params.baseUrl !== 'string') {
+      throw new Error('Invalid base URL');
+    }
+    
+    const cleanUrl = params.baseUrl.trim();
+    const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+    const url = new URL(urlWithProtocol);
     
     url.searchParams.set('utm_source', params.utmSource.toLowerCase());
     url.searchParams.set('utm_medium', params.utmMedium.toLowerCase());

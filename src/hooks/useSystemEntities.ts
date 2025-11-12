@@ -20,32 +20,45 @@ export const useSystemEntities = () => {
   return useQuery({
     queryKey: ['system-entities'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_entities')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-      
-      if (error) throw error;
-      return data as SystemEntity[];
-    }
+      try {
+        const { data, error } = await supabase
+          .from('system_entities')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (error) throw error;
+        return (data as SystemEntity[]) || [];
+      } catch (error: any) {
+        console.error('Error fetching system entities:', error);
+        throw error;
+      }
+    },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
 export const useAllEntities = () => {
   return useQuery({
-    queryKey: ['system-entities'],
+    queryKey: ['all-system-entities'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_entities')
-        .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) throw error;
-      return data as SystemEntity[];
+      try {
+        const { data, error } = await supabase
+          .from('system_entities')
+          .select('*')
+          .order('display_order', { ascending: true });
+        
+        if (error) throw error;
+        return (data as SystemEntity[]) || [];
+      } catch (error: any) {
+        console.error('Error fetching all entities:', error);
+        throw error;
+      }
     },
     refetchOnWindowFocus: true,
-    staleTime: 0
+    staleTime: 0,
+    retry: 2,
   });
 };
 
@@ -54,25 +67,28 @@ export const useCreateEntity = () => {
   
   return useMutation({
     mutationFn: async (entity: Omit<SystemEntity, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>) => {
-      const { data, error } = await supabase
-        .from('system_entities')
-        .insert(entity)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('system_entities')
+          .insert(entity)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      } catch (error: any) {
+        console.error('Error creating entity:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
+      queryClient.invalidateQueries({ queryKey: ['all-system-entities'] });
       toast({ title: 'Entity created successfully' });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Failed to create entity', 
-        description: error.message,
-        variant: 'destructive' 
-      });
+      console.error('Entity creation failed:', error);
+      // Error already handled by global mutation error handler
     }
   });
 };
@@ -136,24 +152,31 @@ export const useEntityChangeLog = (entityId?: string) => {
   return useQuery({
     queryKey: ['entity-change-log', entityId],
     queryFn: async () => {
-      let query = supabase
-        .from('entity_change_log')
-        .select(`
-          *,
-          changed_by_profile:changed_by(name, email)
-        `)
-        .order('changed_at', { ascending: false })
-        .limit(50);
-      
-      if (entityId) {
-        query = query.eq('entity_id', entityId);
+      try {
+        let query = supabase
+          .from('entity_change_log')
+          .select(`
+            *,
+            changed_by_profile:changed_by(name, email)
+          `)
+          .order('changed_at', { ascending: false })
+          .limit(50);
+        
+        if (entityId) {
+          query = query.eq('entity_id', entityId);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error: any) {
+        console.error('Error fetching entity change log:', error);
+        // Return empty array on error to prevent crashes
+        return [];
       }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data;
     },
-    enabled: !!entityId || entityId === undefined
+    enabled: !!entityId || entityId === undefined,
+    retry: 1,
   });
 };
