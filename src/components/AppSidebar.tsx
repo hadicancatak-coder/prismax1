@@ -13,6 +13,7 @@ import {
   Link2, 
   Share2, 
   FileText, 
+  ClipboardList,
   PenTool, 
   Monitor, 
   Database, 
@@ -54,6 +55,7 @@ const mediaItems = [
 
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
+  { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
 ];
 
 export function AppSidebar() {

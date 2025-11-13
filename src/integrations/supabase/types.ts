@@ -2509,6 +2509,71 @@ export type Database = {
         }
         Relationships: []
       }
+      status_logs: {
+        Row: {
+          campaign_name: string | null
+          converted_at: string | null
+          converted_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entity: string[] | null
+          id: string
+          log_type: string
+          platform: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          task_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_name?: string | null
+          converted_at?: string | null
+          converted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entity?: string[] | null
+          id?: string
+          log_type: string
+          platform?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          task_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string | null
+          converted_at?: string | null
+          converted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entity?: string[] | null
+          id?: string
+          log_type?: string
+          platform?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suspicious_activities: {
         Row: {
           activity_type: string
@@ -3188,8 +3253,11 @@ export type Database = {
       }
       utm_campaigns: {
         Row: {
+          campaign_type: string | null
           created_at: string
           created_by: string | null
+          description: string | null
+          display_order: number | null
           id: string
           is_active: boolean | null
           landing_page: string | null
@@ -3198,8 +3266,11 @@ export type Database = {
           usage_count: number | null
         }
         Insert: {
+          campaign_type?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          display_order?: number | null
           id?: string
           is_active?: boolean | null
           landing_page?: string | null
@@ -3208,8 +3279,11 @@ export type Database = {
           usage_count?: number | null
         }
         Update: {
+          campaign_type?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          display_order?: number | null
           id?: string
           is_active?: boolean | null
           landing_page?: string | null

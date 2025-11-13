@@ -16,6 +16,7 @@ export const useUtmCampaigns = () => {
         .from("utm_campaigns")
         .select("*")
         .eq("is_active", true)
+        .order("display_order", { ascending: true })
         .order("created_at", { ascending: false })
         .order("last_used_at", { ascending: false, nullsFirst: false })
         .order("usage_count", { ascending: false })
@@ -23,6 +24,30 @@ export const useUtmCampaigns = () => {
 
       if (error) throw error;
       return data as UtmCampaign[];
+    },
+  });
+};
+
+export const useUpdateCampaignOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (campaigns: Array<{ id: string; display_order: number }>) => {
+      const promises = campaigns.map(({ id, display_order }) =>
+        supabase
+          .from("utm_campaigns")
+          .update({ display_order })
+          .eq("id", id)
+      );
+      
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["utm-campaigns"] });
+      toast.success("Campaign order updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update order: " + error.message);
     },
   });
 };

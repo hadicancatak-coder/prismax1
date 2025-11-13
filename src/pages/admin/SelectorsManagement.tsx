@@ -16,6 +16,7 @@ import { useAllEntities, useCreateEntity, useUpdateEntity, useDeleteEntity } fro
 import { useAllCities, useCreateCity, useUpdateCity, useDeleteCity } from "@/hooks/useSystemCities";
 import { useUtmPlatforms, useCreatePlatform, useUpdatePlatform, useDeletePlatform } from "@/hooks/useUtmPlatforms";
 import { useUtmMediums, useCreateMedium, useUpdateMedium, useDeleteMedium } from "@/hooks/useUtmMediums";
+import { useUtmCampaigns, useCreateUtmCampaign, useUpdateUtmCampaign, useDeleteUtmCampaign, useUpdateCampaignOrder } from "@/hooks/useUtmCampaigns";
 import { CountryCodeSelect } from "@/components/admin/CountryCodeSelect";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,11 +118,19 @@ export default function SelectorsManagement() {
   const [isDeleteMediumDialogOpen, setIsDeleteMediumDialogOpen] = useState(false);
   const [mediumToDelete, setMediumToDelete] = useState<{ id: string; name: string } | null>(null);
 
+  // Campaign state
+  const [isCampaignDialogOpen, setIsCampaignDialogOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
+  const [campaignForm, setCampaignForm] = useState({ name: "", landing_page: "", campaign_type: "", description: "", display_order: 0 });
+  const [isDeleteCampaignDialogOpen, setIsDeleteCampaignDialogOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<{ id: string; name: string } | null>(null);
+
   // Hooks
   const { data: entities, isLoading: entitiesLoading } = useAllEntities();
   const { data: cities, isLoading: citiesLoading } = useAllCities();
   const { data: platforms, isLoading: platformsLoading } = useUtmPlatforms();
   const { data: mediums, isLoading: mediumsLoading } = useUtmMediums();
+  const { data: campaigns, isLoading: campaignsLoading } = useUtmCampaigns();
 
   const createEntity = useCreateEntity();
   const updateEntity = useUpdateEntity();
@@ -138,6 +147,11 @@ export default function SelectorsManagement() {
   const createMedium = useCreateMedium();
   const updateMedium = useUpdateMedium();
   const deleteMedium = useDeleteMedium();
+
+  const createCampaign = useCreateUtmCampaign();
+  const updateCampaign = useUpdateUtmCampaign();
+  const deleteCampaign = useDeleteUtmCampaign();
+  const updateCampaignOrder = useUpdateCampaignOrder();
 
   // Drag sensors
   const sensors = useSensors(
@@ -345,6 +359,33 @@ export default function SelectorsManagement() {
     }
   };
 
+  // Campaign handlers
+  const handleCampaignSubmit = async () => {
+    if (editingCampaign) {
+      await updateCampaign.mutateAsync({ 
+        id: editingCampaign.id, 
+        name: campaignForm.name,
+        landing_page: campaignForm.landing_page || null,
+      });
+    } else {
+      await createCampaign.mutateAsync({ 
+        name: campaignForm.name, 
+        landingPage: campaignForm.landing_page 
+      });
+    }
+    setIsCampaignDialogOpen(false);
+    setEditingCampaign(null);
+    setCampaignForm({ name: "", landing_page: "", campaign_type: "", description: "", display_order: 0 });
+  };
+
+  const confirmDeleteCampaign = async () => {
+    if (campaignToDelete) {
+      await deleteCampaign.mutateAsync(campaignToDelete.id);
+      setIsDeleteCampaignDialogOpen(false);
+      setCampaignToDelete(null);
+    }
+  };
+
   const handleMediumDragEnd = async (event: any) => {
     const { active, over } = event;
     if (active.id !== over.id && mediums) {
@@ -392,11 +433,12 @@ export default function SelectorsManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="entities">Entities</TabsTrigger>
           <TabsTrigger value="cities">Cities</TabsTrigger>
           <TabsTrigger value="platforms">Platforms</TabsTrigger>
           <TabsTrigger value="mediums">UTM Mediums</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
         </TabsList>
 
         {/* Entities Tab */}
@@ -715,6 +757,49 @@ export default function SelectorsManagement() {
             </div>
           </div>
         </TabsContent>
+
+        {/* Campaigns Tab */}
+        <TabsContent value="campaigns" className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search campaigns..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+            </div>
+            <Button onClick={() => { setEditingCampaign(null); setCampaignForm({ name: "", landing_page: "", campaign_type: "", description: "", display_order: 0 }); setIsCampaignDialogOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Add Campaign
+            </Button>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Landing Page</TableHead>
+                <TableHead>Usage Count</TableHead>
+                <TableHead>Last Used</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {campaigns?.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map((campaign) => (
+                <TableRow key={campaign.id}>
+                  <TableCell className="font-medium">{campaign.name}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{campaign.landing_page || "-"}</TableCell>
+                  <TableCell>{campaign.usage_count || 0}</TableCell>
+                  <TableCell className="text-xs">{campaign.last_used_at ? new Date(campaign.last_used_at).toLocaleDateString() : "-"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => { setEditingCampaign(campaign); setCampaignForm({ name: campaign.name, landing_page: campaign.landing_page || "", campaign_type: campaign.campaign_type || "", description: campaign.description || "", display_order: campaign.display_order || 0 }); setIsCampaignDialogOpen(true); }}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setCampaignToDelete({ id: campaign.id, name: campaign.name }); setIsDeleteCampaignDialogOpen(true); }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
       </Tabs>
 
       {/* Entity Dialog */}
@@ -870,6 +955,42 @@ export default function SelectorsManagement() {
             >
               Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Campaign Dialog */}
+      <Dialog open={isCampaignDialogOpen} onOpenChange={setIsCampaignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCampaign ? "Edit Campaign" : "Add Campaign"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input value={campaignForm.name} onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })} placeholder="Q1 2025 Promo" />
+            </div>
+            <div className="space-y-2">
+              <Label>Landing Page</Label>
+              <Input value={campaignForm.landing_page} onChange={(e) => setCampaignForm({ ...campaignForm, landing_page: e.target.value })} placeholder="https://..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCampaignDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCampaignSubmit}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteCampaignDialogOpen} onOpenChange={setIsDeleteCampaignDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure? This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteCampaign}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
