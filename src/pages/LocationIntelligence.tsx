@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { logger } from "@/lib/logger";
-import { LocationStats } from "@/components/location/LocationStats";
 import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
 import { LocationSearch } from "@/components/location/LocationSearch";
 import { LocationListView } from "@/components/location/LocationListView";
@@ -133,17 +132,10 @@ export default function LocationIntelligence() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-          <Skeleton className="h-[600px]" />
+          <Skeleton className="h-[700px]" />
         </div>
       ) : (
         <>
-          <LocationStats locations={filteredLocations} />
-
           <div className="flex items-center justify-between gap-4">
             <LocationSearch 
               locations={filteredLocations} 
@@ -182,7 +174,7 @@ export default function LocationIntelligence() {
           />
 
         {viewMode === "map" ? (
-          <div className="h-[calc(100vh-400px)] min-h-[600px] rounded-lg overflow-hidden border">
+          <div className="h-[calc(100vh-280px)] min-h-[700px] rounded-lg overflow-hidden border">
             <LocationMap
               ref={mapRef}
               locations={filteredLocations}

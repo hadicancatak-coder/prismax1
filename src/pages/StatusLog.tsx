@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2, CheckCircle, ArrowRight, FileText } from "lucide-re
 import { useStatusLogs, useDeleteStatusLog, useResolveStatusLog } from "@/hooks/useStatusLogs";
 import { CreateStatusLogDialog } from "@/components/statuslog/CreateStatusLogDialog";
 import { ConvertToTaskDialog } from "@/components/statuslog/ConvertToTaskDialog";
+import { StatusLogDetailDialog } from "@/components/statuslog/StatusLogDetailDialog";
 import { StatusLogFilters } from "@/components/statuslog/StatusLogFilters";
 import { EntityShortcuts } from "@/components/statuslog/EntityShortcuts";
 import { StatusLogFilters as Filters, StatusLog as StatusLogType } from "@/lib/statusLogService";
@@ -22,6 +23,8 @@ const StatusLog = () => {
   const [convertingLog, setConvertingLog] = useState<StatusLogType | null>(null);
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<string>("");
+  const [viewingLog, setViewingLog] = useState<StatusLogType | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   const handleEntityClick = (entity: string) => {
     setSelectedEntity(entity);
@@ -72,6 +75,11 @@ const StatusLog = () => {
         onSuccess: () => setDeleteLogId(null),
       });
     }
+  };
+
+  const handleView = (log: StatusLogType) => {
+    setViewingLog(log);
+    setIsDetailDialogOpen(true);
   };
 
   return (
@@ -130,7 +138,11 @@ const StatusLog = () => {
                 </TableRow>
               ) : (
                 logs.map((log) => (
-                  <TableRow key={log.id}>
+                  <TableRow 
+                    key={log.id}
+                    onClick={() => handleView(log)}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
                     <TableCell className="font-medium max-w-xs">
                       <div className="truncate">{log.title}</div>
                       {log.description && (
@@ -152,7 +164,7 @@ const StatusLog = () => {
                       {format(new Date(log.created_at), "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         {!log.task_id && (
                           <Button
                             variant="ghost"
@@ -197,9 +209,24 @@ const StatusLog = () => {
         </Card>
       )}
 
+      <StatusLogDetailDialog
+        log={viewingLog}
+        open={isDetailDialogOpen}
+        onClose={() => {
+          setIsDetailDialogOpen(false);
+          setViewingLog(null);
+        }}
+        onEdit={handleEdit}
+        onConvert={handleConvert}
+        onResolve={handleResolve}
+      />
+
       <CreateStatusLogDialog
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setEditingLog(null);
+        }}
         editingLog={editingLog}
       />
 
