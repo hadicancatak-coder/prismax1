@@ -2593,6 +2593,44 @@ export type Database = {
         }
         Relationships: []
       }
+      task_activity_log: {
+        Row: {
+          action_type: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          task_id: string
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id: string
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id?: string
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_activity_log_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_assignees: {
         Row: {
           assigned_at: string
@@ -3109,6 +3147,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_task_order: {
+        Row: {
+          created_at: string | null
+          date_scope: string
+          id: string
+          order_index: number
+          task_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date_scope: string
+          id?: string
+          order_index: number
+          task_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date_scope?: string
+          id?: string
+          order_index?: number
+          task_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_task_order_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       utm_campaigns: {
         Row: {

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, Info } from "lucide-react";
+import { CalendarIcon, GripVertical, Info, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
@@ -135,6 +135,7 @@ export default function CalendarView() {
   const [sortOption, setSortOption] = useState<SortOption>(() => {
     return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
   });
+  const [userTaskOrder, setUserTaskOrder] = useState<Record<string, number>>({});
   const currentDate = new Date();
 
   const sensors = useSensors(
@@ -154,6 +155,39 @@ export default function CalendarView() {
   useEffect(() => {
     localStorage.setItem("agenda-sort", sortOption);
   }, [sortOption]);
+
+  // Fetch user's custom task order when in manual mode
+  useEffect(() => {
+    if (sortOption === 'manual' && user) {
+      fetchUserTaskOrder();
+    }
+  }, [sortOption, dateView, dateRange, user]);
+
+  const fetchUserTaskOrder = async () => {
+    if (!user) return;
+
+    let dateScope: string = dateView;
+    if (dateView === 'custom' && dateRange?.from) {
+      dateScope = `custom-${format(dateRange.from, 'yyyy-MM-dd')}`;
+    }
+
+    const { data, error } = await supabase
+      .from('user_task_order')
+      .select('task_id, order_index')
+      .eq('user_id', user.id)
+      .eq('date_scope', dateScope);
+
+    if (error) {
+      console.error('Error fetching user task order:', error);
+      return;
+    }
+
+    const orderMap: Record<string, number> = {};
+    data?.forEach(item => {
+      orderMap[item.task_id] = item.order_index;
+    });
+    setUserTaskOrder(orderMap);
+  };
 
   const fetchUsers = async () => {
     const { data } = await supabase
@@ -235,12 +269,17 @@ export default function CalendarView() {
         return tasks.sort((a, b) => a.title.localeCompare(b.title));
       
       case "manual":
-        return tasks.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+        // Use user-specific order from user_task_order table
+        return tasks.sort((a, b) => {
+          const orderA = userTaskOrder[a.id] ?? 999999;
+          const orderB = userTaskOrder[b.id] ?? 999999;
+          return orderA - orderB;
+        });
       
       default:
         return tasks;
     }
-  }, [filteredTasks, sortOption]);
+  }, [filteredTasks, sortOption, userTaskOrder]);
 
   // Split tasks into active and completed
   const activeTasks = sortedTasks.filter(t => t.status !== 'Completed');
@@ -256,7 +295,7 @@ export default function CalendarView() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id || !user) return;
 
     const oldIndex = activeTasks.findIndex(t => t.id === active.id);
     const newIndex = activeTasks.findIndex(t => t.id === over.id);
@@ -268,18 +307,59 @@ export default function CalendarView() {
     const [movedTask] = reorderedTasks.splice(oldIndex, 1);
     reorderedTasks.splice(newIndex, 0, movedTask);
 
-    // Update order_index for all affected tasks
-    const updates = reorderedTasks.map((task, index) => 
+    // Determine current date scope
+    let dateScope: string = dateView;
+    if (dateView === 'custom' && dateRange?.from) {
+      dateScope = `custom-${format(dateRange.from, 'yyyy-MM-dd')}`;
+    }
+
+    // Save user-specific task order to user_task_order table
+    const orderPromises = reorderedTasks.map((task, index) => 
       supabase
-        .from('tasks')
-        .update({ order_index: index })
-        .eq('id', task.id)
+        .from('user_task_order')
+        .upsert({
+          user_id: user.id,
+          task_id: task.id,
+          date_scope: dateScope,
+          order_index: index,
+        }, {
+          onConflict: 'user_id,task_id,date_scope'
+        })
     );
 
-    await Promise.all(updates);
-    
-    // Invalidate query to refresh
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    try {
+      await Promise.all(orderPromises);
+      
+      // Refresh the user's task order
+      await fetchUserTaskOrder();
+      
+      // Invalidate query to refresh
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error) {
+      console.error('Error saving task order:', error);
+    }
+  };
+
+  const handleResetOrder = async () => {
+    if (!user) return;
+
+    let dateScope: string = dateView;
+    if (dateView === 'custom' && dateRange?.from) {
+      dateScope = `custom-${format(dateRange.from, 'yyyy-MM-dd')}`;
+    }
+
+    try {
+      await supabase
+        .from('user_task_order')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('date_scope', dateScope);
+
+      setUserTaskOrder({});
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error) {
+      console.error('Error resetting task order:', error);
+    }
   };
 
   const completedToday = filteredTasks.filter(t => t.status === 'Completed').length;
@@ -363,6 +443,18 @@ export default function CalendarView() {
               )}
 
               <TaskSortDropdown value={sortOption} onChange={setSortOption} />
+              
+              {sortOption === 'manual' && Object.keys(userTaskOrder).length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleResetOrder}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset Order
+                </Button>
+              )}
             </div>
           </header>
         </>

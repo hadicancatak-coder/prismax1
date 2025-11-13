@@ -5,6 +5,7 @@ import { adminService } from "@/lib/adminService";
 import { errorLogger } from "@/lib/errorLogger";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamKPIsManager } from "@/components/admin/TeamKPIsManager";
+import { TaskAnalyticsDashboard } from "@/components/admin/TaskAnalyticsDashboard";
 
 export default function Overview() {
   const [loading, setLoading] = useState(true);
@@ -122,6 +123,12 @@ export default function Overview() {
             <span className="text-metadata">Operational</span>
           </div>
         </div>
+      </div>
+
+      {/* Task Analytics Dashboard */}
+      <div>
+        <h3 className="text-section-title mb-6">Task Analytics</h3>
+        <TaskAnalyticsDashboard />
       </div>
 
       {/* Team KPIs Section */}
