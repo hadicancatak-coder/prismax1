@@ -18,8 +18,6 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TaskDialog } from "@/components/TaskDialog";
-import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
-import { TasksStatsBar } from "@/components/tasks/TasksStatsBar";
 import { useTasks } from "@/hooks/useTasks";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -130,16 +128,6 @@ export default function Tasks() {
   }
 
   const tasks = data || [];
-  
-  // Calculate statistics
-  const totalTasks = tasks.length;
-  const overdueCount = tasks.filter((task: any) => {
-    if (!task.due_at || task.status === 'Completed') return false;
-    return new Date(task.due_at) < new Date();
-  }).length;
-  const ongoingCount = tasks.filter((task: any) => task.status === 'Ongoing').length;
-  const completedCount = tasks.filter((task: any) => task.status === 'Completed').length;
-  const completionPercentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   if (isLoading) {
     return (
@@ -162,9 +150,7 @@ export default function Tasks() {
 
   return (
     <div className="px-6 md:px-12 py-8 space-y-6">
-      <TasksStatsBar tasks={data || []} />
-      
-      <div className="flex items-center justify-between mt-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>
           <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
