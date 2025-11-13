@@ -39,7 +39,7 @@ import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
-import KPIs from "./pages/KPIs";
+
 
 const App = () => (
   <ErrorBoundary>
@@ -76,7 +76,7 @@ const App = () => (
             <Route path="/profile/:userId?" element={<Profile />} />
             <Route path="/activity-log" element={<ActivityLog />} />
             <Route path="/utm-planner" element={<UtmPlanner />} />
-            <Route path="/kpis" element={<KPIs />} />
+            
             <Route path="/operations" element={<Operations />} />
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />

@@ -36,7 +36,6 @@ import {
   const coreItems = [
     { title: "Tasks", url: "/tasks", icon: CheckSquare },
     { title: "Agenda", url: "/calendar", icon: Calendar },
-    { title: "KPIs", url: "/kpis", icon: Target },
   ];
 
 const adsItems = [

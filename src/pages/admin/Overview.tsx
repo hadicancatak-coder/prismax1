@@ -95,36 +95,6 @@ export default function Overview() {
         </div>
       </div>
 
-      <div>
-        <h3 className="text-section-title mb-4 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-green-500" />
-          System Health
-        </h3>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
-            <div className="flex items-center gap-3">
-              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-body font-medium">Database</span>
-            </div>
-            <span className="text-metadata">Operational</span>
-          </div>
-          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
-            <div className="flex items-center gap-3">
-              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-body font-medium">Authentication</span>
-            </div>
-            <span className="text-metadata">Operational</span>
-          </div>
-          <div className="flex items-center justify-between py-4 border-b border-border transition-smooth hover:bg-muted/50">
-            <div className="flex items-center gap-3">
-              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-body font-medium">API</span>
-            </div>
-            <span className="text-metadata">Operational</span>
-          </div>
-        </div>
-      </div>
-
       {/* Task Analytics Dashboard */}
       <div>
         <h3 className="text-section-title mb-6">Task Analytics</h3>

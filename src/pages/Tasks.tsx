@@ -18,6 +18,8 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TaskDialog } from "@/components/TaskDialog";
+import { TaskStatsCards } from "@/components/tasks/TaskStatsCards";
+import { TasksStatsBar } from "@/components/tasks/TasksStatsBar";
 import { useTasks } from "@/hooks/useTasks";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -160,7 +162,9 @@ export default function Tasks() {
 
   return (
     <div className="px-6 md:px-12 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <TasksStatsBar tasks={data || []} />
+      
+      <div className="flex items-center justify-between mt-6">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>
           <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
