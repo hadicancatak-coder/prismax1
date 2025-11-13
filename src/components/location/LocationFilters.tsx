@@ -67,114 +67,133 @@ export function LocationFilters({
   };
 
   return (
-    <Card className="p-3">
-      {/* Collapsed View */}
-      {!isExpanded && (
-        <div className="flex items-center justify-between gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsExpanded(true)}
+    <Card className="p-2">
+      <div className="flex items-center gap-4">
+        {/* Compact row - always visible */}
+        <div className="flex items-center gap-2 flex-1">
+          <Select
+            value={filters.cities.length === 1 ? filters.cities[0] : "all"}
+            onValueChange={(value) => 
+              onFiltersChange({ ...filters, cities: value === "all" ? [] : [value] })
+            }
+          >
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue placeholder="City" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cities</SelectItem>
+              {availableCities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.agencies.length === 1 ? filters.agencies[0] : "all"}
+            onValueChange={(value) => 
+              onFiltersChange({ ...filters, agencies: value === "all" ? [] : [value] })
+            }
+          >
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue placeholder="Agency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Agencies</SelectItem>
+              {availableAgencies.map((agency) => (
+                <SelectItem key={agency} value={agency}>
+                  {agency}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.categories.length === 1 ? filters.categories[0] : "all"}
+            onValueChange={(value) => 
+              onFiltersChange({ ...filters, categories: value === "all" ? [] : [value as LocationCategory] })
+            }
+          >
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {Object.keys(LOCATION_CATEGORIES).map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
             className="gap-2"
           >
             <Filter className="h-4 w-4" />
-            {activeFilterCount > 0 ? (
+            More Filters
+            {activeFilterCount > 3 && (
               <Badge variant="default" className="h-5 px-1.5">
-                {activeFilterCount}
+                {activeFilterCount - 3}
               </Badge>
-            ) : (
-              "Filters"
             )}
-            <ChevronDown className="h-4 w-4" />
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </Button>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-              <X className="h-4 w-4 mr-1" />
-              Clear All
-            </Button>
-          )}
         </div>
-      )}
 
-      {/* Expanded View */}
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+            <X className="h-4 w-4 mr-1" />
+            Clear All
+          </Button>
+        )}
+      </div>
+
+      {/* Expanded section */}
       {isExpanded && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <h3 className="font-semibold text-sm">Filters</h3>
-              {activeFilterCount > 0 && (
-                <Badge variant="default" className="h-5 px-1.5">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                  <X className="h-4 w-4 mr-1" />
-                  Clear All
-                </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsExpanded(false)}
-              >
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Cities */}
+        <div className="pt-3 mt-3 border-t space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Cities</Label>
-              <div className="flex flex-wrap gap-1">
-                {availableCities.map((city) => (
-                  <Badge
-                    key={city}
-                    variant={filters.cities.includes(city) ? "default" : "outline"}
-                    className="cursor-pointer text-xs"
-                    onClick={() => toggleCity(city)}
-                  >
-                    {city}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Agencies */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Agencies</Label>
+              <label className="text-sm font-medium">Cities (Multiple)</label>
               <SimpleMultiSelect
-                options={availableAgencies.map((a) => ({ value: a, label: a }))}
+                options={availableCities.map(c => ({ value: c, label: c }))}
+                selected={filters.cities}
+                onChange={(selected) => onFiltersChange({ ...filters, cities: selected })}
+                placeholder="Select cities"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Agencies (Multiple)</label>
+              <SimpleMultiSelect
+                options={availableAgencies.map(a => ({ value: a, label: a }))}
                 selected={filters.agencies}
-                onChange={(agencies) => onFiltersChange({ ...filters, agencies })}
+                onChange={(selected) => onFiltersChange({ ...filters, agencies: selected })}
                 placeholder="Select agencies"
               />
             </div>
 
-            {/* Categories */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Categories</Label>
+              <label className="text-sm font-medium">Categories (Multiple)</label>
               <SimpleMultiSelect
-                options={Object.entries(LOCATION_CATEGORIES).map(([key, config]) => ({
-                  value: key,
-                  label: `${config.emoji} ${key}`,
-                }))}
+                options={Object.keys(LOCATION_CATEGORIES).map(c => ({ value: c, label: c }))}
                 selected={filters.categories}
-                onChange={(categories) =>
-                  onFiltersChange({ ...filters, categories: categories as LocationCategory[] })
-                }
+                onChange={(selected) => onFiltersChange({ ...filters, categories: selected as LocationCategory[] })}
                 placeholder="Select categories"
               />
             </div>
 
-            {/* Price Range */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Price (AED/month)</Label>
-              <div className="flex items-center gap-1">
+              <label className="text-sm font-medium">Price Range ($)</label>
+              <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   value={filters.priceRange.min}
@@ -184,10 +203,10 @@ export function LocationFilters({
                       priceRange: { ...filters.priceRange, min: Number(e.target.value) },
                     })
                   }
-                  className="h-8 text-xs"
+                  className="h-8 text-sm"
                   placeholder="Min"
                 />
-                <span className="text-xs">-</span>
+                <span className="text-muted-foreground">-</span>
                 <Input
                   type="number"
                   value={filters.priceRange.max}
@@ -197,20 +216,17 @@ export function LocationFilters({
                       priceRange: { ...filters.priceRange, max: Number(e.target.value) },
                     })
                   }
-                  className="h-8 text-xs"
+                  className="h-8 text-sm"
                   placeholder="Max"
                 />
               </div>
             </div>
 
-            {/* Score Range */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Score Range</Label>
-              <div className="flex items-center gap-1">
+              <label className="text-sm font-medium">Score Range</label>
+              <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  min="0"
-                  max="10"
                   value={filters.scoreRange.min}
                   onChange={(e) =>
                     onFiltersChange({
@@ -218,14 +234,13 @@ export function LocationFilters({
                       scoreRange: { ...filters.scoreRange, min: Number(e.target.value) },
                     })
                   }
-                  className="h-8 text-xs"
+                  className="h-8 text-sm"
                   placeholder="Min"
+                  step="0.1"
                 />
-                <span className="text-xs">-</span>
+                <span className="text-muted-foreground">-</span>
                 <Input
                   type="number"
-                  min="0"
-                  max="10"
                   value={filters.scoreRange.max}
                   onChange={(e) =>
                     onFiltersChange({
@@ -233,8 +248,9 @@ export function LocationFilters({
                       scoreRange: { ...filters.scoreRange, max: Number(e.target.value) },
                     })
                   }
-                  className="h-8 text-xs"
+                  className="h-8 text-sm"
                   placeholder="Max"
+                  step="0.1"
                 />
               </div>
             </div>
