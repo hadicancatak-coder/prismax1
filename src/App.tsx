@@ -15,11 +15,13 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Overview from "./pages/admin/Overview";
 import UsersManagement from "./pages/admin/UsersManagement";
 import SelectorsManagement from "./pages/admin/SelectorsManagement";
+import KPIsManagement from "./pages/admin/KPIsManagement";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
 import SecurityScans from "./pages/admin/SecurityScans";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
+import CustomReports from "./pages/CustomReports";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -62,6 +64,7 @@ const App = () => (
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="selectors" element={<SelectorsManagement />} />
+              <Route path="kpis" element={<KPIsManagement />} />
               <Route path="approvals" element={<ApprovalsCenter />} />
               <Route path="errors" element={<ErrorLogs />} />
               <Route path="activity" element={<ActivityLog />} />
@@ -79,6 +82,7 @@ const App = () => (
             
             <Route path="/operations" element={<Operations />} />
             <Route path="/operations/status-log" element={<StatusLog />} />
+            <Route path="/operations/reports" element={<CustomReports />} />
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />
