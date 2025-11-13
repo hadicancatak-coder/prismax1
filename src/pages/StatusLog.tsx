@@ -8,6 +8,7 @@ import { useStatusLogs, useDeleteStatusLog, useResolveStatusLog, useStatusLogSta
 import { CreateStatusLogDialog } from "@/components/statuslog/CreateStatusLogDialog";
 import { ConvertToTaskDialog } from "@/components/statuslog/ConvertToTaskDialog";
 import { StatusLogFilters } from "@/components/statuslog/StatusLogFilters";
+import { EntityShortcuts } from "@/components/statuslog/EntityShortcuts";
 import { StatusLogFilters as Filters, StatusLog as StatusLogType } from "@/lib/statusLogService";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -20,6 +21,12 @@ const StatusLog = () => {
   const [editingLog, setEditingLog] = useState<StatusLogType | null>(null);
   const [convertingLog, setConvertingLog] = useState<StatusLogType | null>(null);
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<string>("");
+
+  const handleEntityClick = (entity: string) => {
+    setSelectedEntity(entity);
+    setFilters({ ...filters, entity: entity ? [entity] : undefined });
+  };
 
   const { data: logs = [], isLoading } = useStatusLogs(filters);
   const { data: stats } = useStatusLogStats();
@@ -88,6 +95,13 @@ const StatusLog = () => {
           Create Log
         </Button>
       </div>
+
+      {/* Entity Shortcuts */}
+      <EntityShortcuts
+        logs={logs}
+        selectedEntity={selectedEntity}
+        onEntityClick={handleEntityClick}
+      />
 
       {/* Stats */}
       {stats && (

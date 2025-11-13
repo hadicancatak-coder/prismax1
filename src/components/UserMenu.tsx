@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Shield, Info, LogOut, Activity, ShieldCheck, Target, FolderKanban, Bell, TrendingUp } from "lucide-react";
+import { User, Shield, Info, LogOut, Activity, ShieldCheck, FolderKanban, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,10 +63,6 @@ export const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/kpis")} className="cursor-pointer">
-          <Target className="mr-2 h-4 w-4" />
-          My KPIs
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/security")} className="cursor-pointer">
           <Shield className="mr-2 h-4 w-4" />
           Security
@@ -75,6 +71,9 @@ export const UserMenu = () => {
           <Info className="mr-2 h-4 w-4" />
           About
         </DropdownMenuItem>
+        
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Workspace</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/team-base")} className="cursor-pointer">
           <FolderKanban className="mr-2 h-4 w-4" />
@@ -88,10 +87,8 @@ export const UserMenu = () => {
         {userRole === 'admin' && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/kpis")} className="cursor-pointer">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              KPIs
-            </DropdownMenuItem>
+            <DropdownMenuLabel>Admin</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate("/activity-log")} className="cursor-pointer">
               <Activity className="mr-2 h-4 w-4" />
               Activity Log
