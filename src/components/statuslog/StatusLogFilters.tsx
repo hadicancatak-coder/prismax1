@@ -51,7 +51,6 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
               <SelectValue placeholder="All platforms" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All platforms</SelectItem>
               {platforms.map((p) => (
                 <SelectItem key={p.id} value={p.name}>
                   {p.name}
@@ -71,7 +70,6 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
               <SelectValue placeholder="All campaigns" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All campaigns</SelectItem>
               {campaigns.map((c) => (
                 <SelectItem key={c.id} value={c.name}>
                   {c.name}
@@ -91,7 +89,6 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="resolved">Resolved</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
