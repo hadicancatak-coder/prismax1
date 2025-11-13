@@ -1,36 +1,146 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, FolderOpen, FileSpreadsheet } from "lucide-react";
-import { SpreadsheetTable } from "@/components/reports/SpreadsheetTable";
+import { Save, FolderOpen, Download, FileJson } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { SpreadsheetData } from "@/lib/formulaParser";
+import { ReportSidebar } from "@/components/reports/ReportSidebar";
+import { ReportCanvas } from "@/components/reports/ReportCanvas";
+import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
+import type { ReportDocument, ReportElement } from "@/types/report";
+import { createTableElement, createTextElement, exportReportToJSON } from "@/lib/reportHelpers";
 
 export default function CustomReports() {
-  const [reportName, setReportName] = useState("Untitled Report");
-  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData>({});
+  const [report, setReport] = useState<ReportDocument>({
+    id: crypto.randomUUID(),
+    name: "Untitled Report",
+    elements: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleAddElement = (type: 'table' | 'text' | 'chart' | 'image') => {
+    const position = report.elements.length;
+    let newElement: ReportElement;
+
+    switch (type) {
+      case 'table':
+        newElement = createTableElement(position);
+        break;
+      case 'text':
+        newElement = createTextElement(position);
+        break;
+      default:
+        toast({
+          title: "Coming Soon",
+          description: `${type} elements will be available in a future phase.`,
+        });
+        return;
+    }
+
+    setReport((prev) => ({
+      ...prev,
+      elements: [...prev.elements, newElement],
+      updatedAt: new Date().toISOString(),
+    }));
+
+    setActiveElementId(newElement.id);
+
+    toast({
+      title: "Element Added",
+      description: `${type} element has been added to the report.`,
+    });
+  };
+
+  const handleElementsReorder = (elements: ReportElement[]) => {
+    setReport((prev) => ({
+      ...prev,
+      elements,
+      updatedAt: new Date().toISOString(),
+    }));
+  };
+
+  const handleElementUpdate = (id: string, data: any) => {
+    setReport((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        el.id === id ? { ...el, data } : el
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
+  };
+
+  const handleElementDelete = (id: string) => {
+    setReport((prev) => ({
+      ...prev,
+      elements: prev.elements.filter((el) => el.id !== id),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    if (activeElementId === id) {
+      setActiveElementId(null);
+    }
+
+    toast({
+      title: "Element Deleted",
+      description: "The element has been removed from the report.",
+    });
+  };
+
+  const handleElementDuplicate = (id: string) => {
+    const element = report.elements.find((el) => el.id === id);
+    if (!element) return;
+
+    const newElement: ReportElement = {
+      ...element,
+      id: `${element.type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      position: report.elements.length,
+    };
+
+    setReport((prev) => ({
+      ...prev,
+      elements: [...prev.elements, newElement],
+      updatedAt: new Date().toISOString(),
+    }));
+
+    toast({
+      title: "Element Duplicated",
+      description: "A copy of the element has been added to the report.",
+    });
+  };
 
   const handleSave = () => {
-    // In a real implementation, this would save to the database
-    const dataStr = JSON.stringify({
-      name: reportName,
-      data: spreadsheetData,
-      savedAt: new Date().toISOString(),
-    });
-    
-    localStorage.setItem(`report_${Date.now()}`, dataStr);
+    const dataStr = JSON.stringify(report);
+    localStorage.setItem(`report_${report.id}`, dataStr);
     
     toast({
       title: "Report Saved",
-      description: `"${reportName}" has been saved successfully.`,
+      description: `"${report.name}" has been saved successfully.`,
+    });
+  };
+
+  const handleExportJSON = () => {
+    const json = exportReportToJSON(report);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${report.name.replace(/\s+/g, '_')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Report Exported",
+      description: "JSON file has been downloaded.",
     });
   };
 
   const handleLoad = () => {
-    // In a real implementation, this would show a dialog to select from saved reports
     toast({
       title: "Load Report",
       description: "This feature will allow you to load previously saved reports.",
@@ -38,99 +148,61 @@ export default function CustomReports() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-page-title">Custom Reports</h1>
-          <p className="text-body text-muted-foreground">
-            Create custom reports with formula-powered spreadsheet tables
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleLoad}>
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Load
-          </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <FileSpreadsheet className="h-6 w-6 text-primary" />
-            <div className="flex-1">
-              <Label htmlFor="reportName" className="text-sm text-muted-foreground">
+    <>
+      <GlobalBubbleMenu />
+      
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="border-b bg-card sticky top-0 z-40">
+          <div className="px-4 sm:px-6 lg:px-12 py-4 flex items-center justify-between gap-4">
+            <div className="flex-1 max-w-md">
+              <Label htmlFor="reportName" className="text-xs text-muted-foreground">
                 Report Name
               </Label>
               <Input
                 id="reportName"
-                value={reportName}
-                onChange={(e) => setReportName(e.target.value)}
+                value={report.name}
+                onChange={(e) => setReport({ ...report, name: e.target.value })}
                 className="mt-1 font-medium"
                 placeholder="Enter report name..."
               />
             </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleLoad}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Load
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportJSON}>
+                <FileJson className="h-4 w-4 mr-2" />
+                Export JSON
+              </Button>
+              <Button size="sm" onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="spreadsheet" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="spreadsheet">Spreadsheet</TabsTrigger>
-              <TabsTrigger value="about">About</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="spreadsheet" className="mt-6">
-              <SpreadsheetTable onDataChange={setSpreadsheetData} />
-            </TabsContent>
-            
-            <TabsContent value="about" className="mt-6">
-              <div className="space-y-4 text-sm text-muted-foreground">
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">About Custom Reports</h3>
-                  <p>
-                    Custom Reports provides a powerful spreadsheet interface for creating dynamic reports with formula support.
-                    Perfect for data analysis, budget planning, and performance tracking.
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">Features</h3>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Add/remove rows and columns dynamically</li>
-                    <li>Excel-like cell referencing (A1, B2, etc.)</li>
-                    <li>Formula support with real-time calculations</li>
-                    <li>Functions: SUM, AVG, MIN, MAX, COUNT</li>
-                    <li>Mathematical expressions with cell references</li>
-                    <li>Export to CSV</li>
-                    <li>Save and load reports</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">Keyboard Shortcuts</h3>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Double-click cell to edit</li>
-                    <li>Enter - Move down</li>
-                    <li>Tab - Move right</li>
-                    <li>Arrow keys - Navigate cells</li>
-                    <li>Escape - Cancel edit</li>
-                  </ul>
-                </div>
-                
-                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
-                  <p className="text-blue-900 dark:text-blue-100">
-                    <strong>Tip:</strong> Formula cells are highlighted in blue. All formulas start with "=" character.
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* Sidebar */}
+        <ReportSidebar
+          onAddElement={handleAddElement}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+
+        {/* Canvas */}
+        <ReportCanvas
+          elements={report.elements}
+          activeElementId={activeElementId}
+          onElementsReorder={handleElementsReorder}
+          onElementSelect={setActiveElementId}
+          onElementUpdate={handleElementUpdate}
+          onElementDelete={handleElementDelete}
+          onElementDuplicate={handleElementDuplicate}
+        />
+      </div>
+    </>
   );
 }

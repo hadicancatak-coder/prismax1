@@ -12,12 +12,20 @@ import {
 
 interface SpreadsheetTableProps {
   onDataChange?: (data: SpreadsheetData) => void;
+  initialData?: SpreadsheetData;
+  initialRows?: number;
+  initialCols?: number;
 }
 
-export function SpreadsheetTable({ onDataChange }: SpreadsheetTableProps) {
-  const [rows, setRows] = useState(10);
-  const [cols, setCols] = useState(8);
-  const [data, setData] = useState<SpreadsheetData>({});
+export function SpreadsheetTable({ 
+  onDataChange, 
+  initialData = {},
+  initialRows = 10,
+  initialCols = 8,
+}: SpreadsheetTableProps) {
+  const [rows, setRows] = useState(initialRows);
+  const [cols, setCols] = useState(initialCols);
+  const [data, setData] = useState<SpreadsheetData>(initialData);
   const [selectedCell, setSelectedCell] = useState<{ col: number; row: number } | null>(null);
 
   const updateData = useCallback((newData: SpreadsheetData) => {
