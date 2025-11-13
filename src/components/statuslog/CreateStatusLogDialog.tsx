@@ -127,9 +127,8 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
                 <SelectTrigger id="platform">
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {platforms.map((p) => (
+              <SelectContent>
+                {platforms.map((p) => (
                     <SelectItem key={p.id} value={p.name}>
                       {p.name}
                     </SelectItem>
@@ -156,7 +155,6 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
                 <SelectValue placeholder="Select campaign" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {campaigns.map((c) => (
                   <SelectItem key={c.id} value={c.name}>
                     {c.name}

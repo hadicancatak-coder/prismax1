@@ -180,7 +180,8 @@ export default function LocationIntelligence() {
             availableAgencies={agencies}
           />
 
-          {viewMode === "map" ? (
+        {viewMode === "map" ? (
+          <div className="h-[calc(100vh-400px)] min-h-[600px] rounded-lg overflow-hidden border">
             <LocationMap
               ref={mapRef}
               locations={filteredLocations}
@@ -188,7 +189,8 @@ export default function LocationIntelligence() {
               onMapClick={handleMapClick}
               selectedLocationId={selectedLocation?.id}
             />
-          ) : viewMode === "list" ? (
+          </div>
+        ) : viewMode === "list" ? (
             <LocationListView
               locations={filteredLocations}
               onView={handleView}

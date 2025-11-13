@@ -169,22 +169,22 @@ export default function Tasks() {
       </div>
 
       {/* Consolidated Filters in Single Row */}
-      <Card className="p-4">
-        <div className="space-y-3">
+      <Card className="p-3">
+        <div className="space-y-2">
           {/* Main Filter Row - Single Line */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Input
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64"
+              className="w-full sm:w-64 h-9"
             />
             
             <div className="h-6 w-px bg-border hidden sm:block" />
             
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[120px] h-9">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ export default function Tasks() {
                   if (v === 'kanban-date') setBoardGroupBy('date');
                 }}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[160px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,7 +235,7 @@ export default function Tasks() {
 
           {/* Clear All Filters */}
           {hasActiveFilters && (
-            <div className="flex items-center gap-2 pt-2 border-t">
+            <div className="flex items-center gap-2 pt-1 border-t">
               <Button
                 variant="ghost"
                 size="sm"
