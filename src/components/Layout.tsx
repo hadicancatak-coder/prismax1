@@ -17,7 +17,7 @@ export const Layout = () => {
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <AppSidebar />
         <main className="flex-1 overflow-auto w-full">
-          <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b-2 border-border/60 bg-card/80 backdrop-blur-md sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-smooth min-h-[44px] min-w-[44px]" />
               {showBackButton && (

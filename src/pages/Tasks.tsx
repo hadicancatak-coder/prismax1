@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2 } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
+import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
@@ -306,7 +307,13 @@ export default function Tasks() {
 
             return (
               <>
-                {viewMode === 'table' && <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} />}
+                {viewMode === 'table' && (
+                  filteredTasks.length > 100 ? (
+                    <TasksTableVirtualized tasks={filteredTasks} onTaskUpdate={refetch} />
+                  ) : (
+                    <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} />
+                  )
+                )}
                 {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
                 {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && (
                   <TaskBoardView 
