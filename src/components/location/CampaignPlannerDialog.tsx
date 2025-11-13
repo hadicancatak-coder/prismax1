@@ -528,7 +528,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
           </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+          <div className="flex justify-end gap-2 pt-4 border-t mt-4 pr-12">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -537,7 +537,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
               disabled={loading || selectedPlacements.length === 0 || remainingBudget < 0}
             >
               {loading 
-                ? (mode === 'edit' ? "Updating..." : "Creating...") 
+                ? (mode === 'edit' ? "Updating..." : "Creating...")
                 : (mode === 'edit' ? "Update Campaign" : "Create Campaign")
               }
             </Button>
