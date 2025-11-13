@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2 } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2, ChevronUp, ChevronDown } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
@@ -40,6 +40,7 @@ export default function Tasks() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
   const [filteredDialogType, setFilteredDialogType] = useState<'all' | 'overdue' | 'ongoing' | 'completed'>('all');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   useEffect(() => {
@@ -168,10 +169,10 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* Consolidated Filters in Single Row */}
+      {/* Consolidated Filters - Collapsible */}
       <Card className="p-2">
         <div className="space-y-2">
-          {/* Main Filter Row - Single Line */}
+          {/* Always Visible - Single Compact Row */}
           <div className="flex flex-wrap items-center gap-1.5">
             <Input
               placeholder="Search tasks..."
@@ -180,9 +181,6 @@ export default function Tasks() {
               className="w-full sm:w-64 h-8 text-sm"
             />
             
-            <div className="h-6 w-px bg-border hidden sm:block" />
-            
-            {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[120px] h-8 text-sm">
                 <SelectValue placeholder="Status" />
@@ -197,21 +195,22 @@ export default function Tasks() {
               </SelectContent>
             </Select>
 
-            <AssigneeFilterBar
-              selectedAssignees={selectedAssignees}
-              onAssigneesChange={setSelectedAssignees}
-              selectedTeams={selectedTeams}
-              onTeamsChange={setSelectedTeams}
-            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="h-8 gap-1.5 text-sm"
+            >
+              {filtersExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              More Filters
+              {(selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter) && (
+                <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-xs">
+                  {[selectedAssignees.length > 0, selectedTeams.length > 0, dateFilter].filter(Boolean).length}
+                </Badge>
+              )}
+            </Button>
 
-            <TaskDateFilterBar
-              value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null}
-              onFilterChange={setDateFilter}
-              onStatusChange={() => {}}
-              selectedStatus="all"
-            />
-
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto">
               <Select 
                 value={viewMode} 
                 onValueChange={(v) => {
@@ -232,6 +231,25 @@ export default function Tasks() {
               </Select>
             </div>
           </div>
+
+          {/* Expandable Filters Section */}
+          {filtersExpanded && (
+            <div className="border-t pt-2 space-y-2">
+              <AssigneeFilterBar
+                selectedAssignees={selectedAssignees}
+                onAssigneesChange={setSelectedAssignees}
+                selectedTeams={selectedTeams}
+                onTeamsChange={setSelectedTeams}
+              />
+              
+              <TaskDateFilterBar
+                value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null}
+                onFilterChange={setDateFilter}
+                onStatusChange={() => {}}
+                selectedStatus="all"
+              />
+            </div>
+          )}
 
           {/* Clear All Filters */}
           {hasActiveFilters && (

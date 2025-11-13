@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Shield, Info, LogOut, Activity, ShieldCheck, FolderKanban, Bell } from "lucide-react";
+import { User, Shield, Info, LogOut, Activity, ShieldCheck, FolderKanban, Bell, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -70,6 +70,10 @@ export const UserMenu = () => {
         <DropdownMenuItem onClick={() => navigate("/about")} className="cursor-pointer">
           <Info className="mr-2 h-4 w-4" />
           About
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/kpis")} className="cursor-pointer">
+          <Target className="mr-2 h-4 w-4" />
+          My KPIs
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />

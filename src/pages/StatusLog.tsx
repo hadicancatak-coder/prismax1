@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit, Trash2, CheckCircle, ArrowRight, FileText } from "lucide-react";
-import { useStatusLogs, useDeleteStatusLog, useResolveStatusLog, useStatusLogStats } from "@/hooks/useStatusLogs";
+import { useStatusLogs, useDeleteStatusLog, useResolveStatusLog } from "@/hooks/useStatusLogs";
 import { CreateStatusLogDialog } from "@/components/statuslog/CreateStatusLogDialog";
 import { ConvertToTaskDialog } from "@/components/statuslog/ConvertToTaskDialog";
 import { StatusLogFilters } from "@/components/statuslog/StatusLogFilters";
@@ -29,7 +29,6 @@ const StatusLog = () => {
   };
 
   const { data: logs = [], isLoading } = useStatusLogs(filters);
-  const { data: stats } = useStatusLogStats();
   const deleteMutation = useDeleteStatusLog();
   const resolveMutation = useResolveStatusLog();
 
@@ -102,52 +101,6 @@ const StatusLog = () => {
         selectedEntity={selectedEntity}
         onEntityClick={handleEntityClick}
       />
-
-      {/* Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.active}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Issues</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.issues}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Blockers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.blockers}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       <StatusLogFilters filters={filters} onFiltersChange={setFilters} />
 
