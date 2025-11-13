@@ -31,6 +31,17 @@ export function LPDetectionCard({ detection }: LPDetectionCardProps) {
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
+            {detection.lpType && (
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant={detection.lpType === 'static' ? 'default' : 'secondary'}
+                  className="text-base font-medium"
+                >
+                  {detection.lpType === 'static' ? '📄 Static LP' : '⚡ Dynamic LP'}
+                </Badge>
+              </div>
+            )}
+
             {detection.country && (
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-muted-foreground" />
