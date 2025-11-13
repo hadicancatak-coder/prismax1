@@ -45,14 +45,14 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
         </div>
 
         <Select
-          value={filters.platform || ""}
-          onValueChange={(platform) => onFiltersChange({ ...filters, platform: platform || undefined })}
+          value={filters.platform || "all"}
+          onValueChange={(platform) => onFiltersChange({ ...filters, platform: platform === "all" ? undefined : platform })}
         >
           <SelectTrigger className="h-8 w-32 text-sm">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             {platforms.map((p) => (
               <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
             ))}
@@ -60,14 +60,14 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
         </Select>
 
         <Select
-          value={filters.campaign_name || ""}
-          onValueChange={(campaign_name) => onFiltersChange({ ...filters, campaign_name: campaign_name || undefined })}
+          value={filters.campaign_name || "all"}
+          onValueChange={(campaign_name) => onFiltersChange({ ...filters, campaign_name: campaign_name === "all" ? undefined : campaign_name })}
         >
           <SelectTrigger className="h-8 w-32 text-sm">
             <SelectValue placeholder="Campaign" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             {campaigns.map((c) => (
               <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
             ))}
@@ -75,14 +75,14 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
         </Select>
 
         <Select
-          value={filters.status || ""}
-          onValueChange={(status) => onFiltersChange({ ...filters, status: status || undefined })}
+          value={filters.status || "all"}
+          onValueChange={(status) => onFiltersChange({ ...filters, status: status === "all" ? undefined : status })}
         >
           <SelectTrigger className="h-8 w-28 text-sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="resolved">Resolved</SelectItem>
             <SelectItem value="archived">Archived</SelectItem>

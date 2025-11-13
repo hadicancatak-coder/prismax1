@@ -169,7 +169,7 @@ export default function Tasks() {
       </div>
 
       {/* Consolidated Filters in Single Row */}
-      <Card className="p-3">
+      <Card className="p-2">
         <div className="space-y-2">
           {/* Main Filter Row - Single Line */}
           <div className="flex flex-wrap items-center gap-1.5">
@@ -177,14 +177,14 @@ export default function Tasks() {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 h-9"
+              className="w-full sm:w-64 h-8 text-sm"
             />
             
             <div className="h-6 w-px bg-border hidden sm:block" />
             
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px] h-9">
+              <SelectTrigger className="w-[120px] h-8 text-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ export default function Tasks() {
                   if (v === 'kanban-date') setBoardGroupBy('date');
                 }}
               >
-                <SelectTrigger className="w-[160px] h-9">
+                <SelectTrigger className="w-[160px] h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,9 +240,9 @@ export default function Tasks() {
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
               >
-                <X className="h-3.5 w-3.5 mr-1.5" />
+                <X className="h-3 w-3 mr-1" />
                 Clear All Filters
               </Button>
               <span className="text-xs text-muted-foreground">
