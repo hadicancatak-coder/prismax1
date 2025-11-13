@@ -79,6 +79,7 @@ const App = () => (
             <Route path="/utm-planner" element={<UtmPlanner />} />
             
             <Route path="/operations" element={<Operations />} />
+            <Route path="/operations/status-log" element={<StatusLog />} />
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />
