@@ -4,7 +4,6 @@ import { Users, ListTodo, AlertCircle, CheckSquare } from "lucide-react";
 import { adminService } from "@/lib/adminService";
 import { errorLogger } from "@/lib/errorLogger";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TeamKPIsManager } from "@/components/admin/TeamKPIsManager";
 import { TaskAnalyticsDashboard } from "@/components/admin/TaskAnalyticsDashboard";
 
 export default function Overview() {
@@ -100,9 +99,6 @@ export default function Overview() {
         <h3 className="text-section-title mb-6">Task Analytics</h3>
         <TaskAnalyticsDashboard />
       </div>
-
-      {/* Team KPIs Section */}
-      <TeamKPIsManager />
     </div>
   );
 }

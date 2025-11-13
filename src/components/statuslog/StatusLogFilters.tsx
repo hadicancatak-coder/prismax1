@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
@@ -14,110 +17,130 @@ interface StatusLogFiltersProps {
 }
 
 export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { data: entities = [] } = useSystemEntities();
   const { data: platforms = [] } = useUtmPlatforms();
   const { data: campaigns = [] } = useUtmCampaigns();
 
-  return (
-    <div className="space-y-4 p-4 bg-card rounded-lg border">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search logs..."
-          value={filters.search || ""}
-          onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-          className="pl-9"
-        />
-      </div>
+  const activeFiltersCount = [
+    filters.entity?.length,
+    filters.platform,
+    filters.campaign_name,
+    filters.status,
+    filters.log_type?.length
+  ].filter(Boolean).length;
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="space-y-2">
-          <Label>Entity</Label>
-          <EnhancedMultiSelect
-            options={entities.map(e => ({ value: e.name, label: e.name }))}
-            selected={filters.entity || []}
-            onChange={(entity) => onFiltersChange({ ...filters, entity })}
-            placeholder="All entities"
+  return (
+    <div className="bg-card rounded-lg border">
+      {/* Compact Row */}
+      <div className="flex items-center gap-2 p-2">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search logs..."
+            value={filters.search || ""}
+            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
+            className="h-8 pl-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Platform</Label>
-          <Select
-            value={filters.platform || ""}
-            onValueChange={(platform) => onFiltersChange({ ...filters, platform: platform || undefined })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All platforms" />
-            </SelectTrigger>
-            <SelectContent>
-              {platforms.map((p) => (
-                <SelectItem key={p.id} value={p.name}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={filters.platform || ""}
+          onValueChange={(platform) => onFiltersChange({ ...filters, platform: platform || undefined })}
+        >
+          <SelectTrigger className="h-8 w-32 text-sm">
+            <SelectValue placeholder="Platform" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All</SelectItem>
+            {platforms.map((p) => (
+              <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <div className="space-y-2">
-          <Label>Campaign</Label>
-          <Select
-            value={filters.campaign_name || ""}
-            onValueChange={(campaign_name) => onFiltersChange({ ...filters, campaign_name: campaign_name || undefined })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All campaigns" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns.map((c) => (
-                <SelectItem key={c.id} value={c.name}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={filters.campaign_name || ""}
+          onValueChange={(campaign_name) => onFiltersChange({ ...filters, campaign_name: campaign_name || undefined })}
+        >
+          <SelectTrigger className="h-8 w-32 text-sm">
+            <SelectValue placeholder="Campaign" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All</SelectItem>
+            {campaigns.map((c) => (
+              <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select
-            value={filters.status || ""}
-            onValueChange={(status) => onFiltersChange({ ...filters, status: status || undefined })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={filters.status || ""}
+          onValueChange={(status) => onFiltersChange({ ...filters, status: status || undefined })}
+        >
+          <SelectTrigger className="h-8 w-28 text-sm">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="h-8 gap-1.5 text-sm"
+        >
+          {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          Filters
+          {activeFiltersCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-xs">
+              {activeFiltersCount}
+            </Badge>
+          )}
+        </Button>
       </div>
 
-      <div className="flex gap-2">
-        <Label className="text-sm text-muted-foreground">Log Type:</Label>
-        <div className="flex gap-2 flex-wrap">
-          {['issue', 'blocker', 'plan', 'update', 'note'].map((type) => (
-            <button
-              key={type}
-              onClick={() => onFiltersChange({
-                ...filters,
-                log_type: filters.log_type === type ? undefined : type
-              })}
-              className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                filters.log_type === type
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>
-          ))}
+      {/* Expanded Section */}
+      {isExpanded && (
+        <div className="border-t p-3 space-y-3">
+          <div>
+            <Label className="text-xs">Entities</Label>
+            <EnhancedMultiSelect
+              options={entities.map(e => ({ value: e.name, label: e.name }))}
+              selected={filters.entity || []}
+              onChange={(entity) => onFiltersChange({ ...filters, entity })}
+              placeholder="All entities"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Log Type</Label>
+            <div className="flex gap-1.5 flex-wrap mt-1.5">
+              {['issue', 'blocker', 'plan', 'update', 'note'].map((type) => (
+                <Badge
+                  key={type}
+                  variant={filters.log_type?.includes(type) ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-accent text-xs h-7"
+                  onClick={() => {
+                    const current = Array.isArray(filters.log_type) ? filters.log_type : [];
+                    const updated = current.includes(type)
+                      ? current.filter(t => t !== type)
+                      : [...current, type];
+                    onFiltersChange({ ...filters, log_type: updated.length > 0 ? updated as any : undefined });
+                  }}
+                >
+                  {type}
+                </Badge>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

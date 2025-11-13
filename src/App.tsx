@@ -17,7 +17,6 @@ import UsersManagement from "./pages/admin/UsersManagement";
 import SelectorsManagement from "./pages/admin/SelectorsManagement";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
-import AuditLog from "./pages/admin/AuditLog";
 import SecurityScans from "./pages/admin/SecurityScans";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
@@ -39,6 +38,7 @@ import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
+import KPIs from "./pages/KPIs";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
@@ -65,7 +65,6 @@ const App = () => (
               <Route path="approvals" element={<ApprovalsCenter />} />
               <Route path="errors" element={<ErrorLogs />} />
               <Route path="activity" element={<ActivityLog />} />
-              <Route path="audit" element={<AuditLog />} />
               <Route path="security" element={<SecurityScans />} />
             </Route>
             <Route path="/team-base" element={<TeamBase />} />
@@ -83,6 +82,7 @@ const App = () => (
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />
+            <Route path="/kpis" element={<KPIs />} />
             <Route path="/location-intelligence" element={<LocationIntelligence />} />
             <Route path="/web-intel" element={<WebIntel />} />
             <Route path="/about" element={<About />} />

@@ -48,10 +48,6 @@ export default function TeamBase() {
   const [phaseEnd, setPhaseEnd] = useState("");
   const [phaseDescription, setPhaseDescription] = useState("");
   
-  // Report form
-  const [reportTitle, setReportTitle] = useState("");
-  const [reportLink, setReportLink] = useState("");
-  const [reportType, setReportType] = useState("sheet");
 
   useEffect(() => {
     if (!user) return;
@@ -203,27 +199,6 @@ export default function TeamBase() {
     }
   };
 
-  const handleCreateReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.from("reports").insert({
-      title: reportTitle,
-      link: reportLink,
-      type: reportType,
-      created_by: user?.id
-    });
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Report added" });
-      setReportDialogOpen(false);
-      setReportTitle("");
-      setReportLink("");
-      setReportType("sheet");
-      await fetchReports();
-    }
-  };
-
   const handleDeleteReport = async (id: string) => {
     const { error } = await supabase.from("reports").delete().eq("id", id);
     if (error) {
@@ -240,8 +215,8 @@ export default function TeamBase() {
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="bg-gradient-primary p-4 rounded-lg mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">🏢 Base</h1>
-        <p className="text-white/90">Manage blockers, projects, team directory, and shared resources</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">🏢 Base</h1>
+        <p className="text-muted-foreground">Manage blockers, projects, team directory, and shared resources</p>
       </div>
 
       <Tabs defaultValue="team" className="w-full">
@@ -468,38 +443,9 @@ export default function TeamBase() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Reports & Resources</h2>
             {userRole === "admin" && (
-              <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button><Plus className="mr-2 h-4 w-4" />Add Report</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Report Link</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateReport} className="space-y-4">
-                    <div>
-                      <Label>Title</Label>
-                      <Input value={reportTitle} onChange={(e) => setReportTitle(e.target.value)} required />
-                    </div>
-                    <div>
-                      <Label>Link</Label>
-                      <Input type="url" value={reportLink} onChange={(e) => setReportLink(e.target.value)} required />
-                    </div>
-                    <div>
-                      <Label>Type</Label>
-                      <Select value={reportType} onValueChange={setReportType}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sheet">Google Sheet</SelectItem>
-                          <SelectItem value="slide">Google Slides</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button type="submit" className="w-full">Add Report</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button onClick={() => setReportDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />Add Report
+              </Button>
             )}
           </div>
 
