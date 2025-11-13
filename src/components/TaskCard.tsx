@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -56,23 +57,39 @@ export const TaskCard = ({ task }: { task: Task }) => {
     setDeleteDialogOpen(false);
   };
   
+  const getPriorityBorderClass = () => {
+    if (task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "Completed") {
+      return "border-l-4 border-l-destructive";
+    }
+    switch (task.priority) {
+      case "High":
+        return "border-l-4 border-l-destructive";
+      case "Medium":
+        return "border-l-4 border-l-warning";
+      case "Low":
+        return "border-l-4 border-l-success";
+      default:
+        return "border-l-4 border-l-muted";
+    }
+  };
+
   const statusColors = {
-    "Ongoing": "bg-warning/10 text-warning border-warning/30 shadow-xs",
-    "Pending": "bg-pending/10 text-pending border-pending/30 shadow-xs",
-    "Blocked": "bg-destructive/10 text-destructive border-destructive/30 shadow-xs",
-    "Completed": "bg-success/10 text-success border-success/30 shadow-xs",
-    "Failed": "bg-gray-100 text-gray-600 border-gray-300 shadow-xs",
+    "Ongoing": "bg-primary/15 text-primary border-primary/30",
+    "Pending": "bg-pending/15 text-pending border-pending/30",
+    "Blocked": "bg-destructive/15 text-destructive border-destructive/30",
+    "Completed": "bg-success/15 text-success border-success/30",
+    "Failed": "bg-muted/15 text-muted-foreground border-muted/30",
   };
 
   const priorityColors = {
-    High: "bg-destructive/10 text-destructive border-destructive/30 shadow-xs",
-    Medium: "bg-warning/10 text-warning border-warning/30 shadow-xs",
-    Low: "bg-gray-100 text-gray-600 border-gray-300 shadow-xs",
+    High: "bg-destructive/15 text-destructive border-destructive/30",
+    Medium: "bg-warning/15 text-warning border-warning/30",
+    Low: "bg-success/15 text-success border-success/30",
   };
 
   return (
     <>
-      <Card className="p-5 transition-all hover:shadow-lg cursor-pointer group" onClick={() => setDialogOpen(true)}>
+      <Card className={cn("p-5 transition-all hover:shadow-lg cursor-pointer group", getPriorityBorderClass())} onClick={() => setDialogOpen(true)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-semibold text-gray-900 mb-1.5 truncate group-hover:text-primary transition-colors">{task.title}</h3>
@@ -107,13 +124,19 @@ export const TaskCard = ({ task }: { task: Task }) => {
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <Badge
           variant="outline"
-          className={statusColors[task.status as keyof typeof statusColors] || "bg-gray-100 text-gray-600 border-gray-300 shadow-xs"}
+          className={cn(
+            "text-sm px-3.5 py-1.5 font-semibold",
+            statusColors[task.status as keyof typeof statusColors] || "bg-muted/15 text-muted-foreground border-muted/30"
+          )}
         >
           {task.status}
         </Badge>
         <Badge
           variant="outline"
-          className={priorityColors[task.priority as keyof typeof priorityColors]}
+          className={cn(
+            "text-sm px-3.5 py-1.5 font-semibold",
+            priorityColors[task.priority as keyof typeof priorityColors]
+          )}
         >
           {task.priority}
         </Badge>

@@ -127,18 +127,33 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
     return due.toDateString() === tomorrow.toDateString();
   };
 
+  const getRowBackgroundClass = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-success/5";
+      case "Blocked":
+        return "bg-destructive/5";
+      case "Ongoing":
+        return "bg-primary/5";
+      case "Pending":
+        return "bg-pending/5";
+      default:
+        return "";
+    }
+  };
+
   const statusColors = {
-    Pending: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400",
-    Ongoing: "bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400",
-    Completed: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
-    Failed: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
-    Blocked: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400",
+    Pending: "bg-pending/15 text-pending border-pending/30",
+    Ongoing: "bg-primary/15 text-primary border-primary/30",
+    Completed: "bg-success/15 text-success border-success/30",
+    Failed: "bg-muted/15 text-muted-foreground border-muted/30",
+    Blocked: "bg-destructive/15 text-destructive border-destructive/30",
   };
 
   const priorityColors = {
-    High: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
-    Medium: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
-    Low: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
+    High: "bg-destructive/15 text-destructive border-destructive/30",
+    Medium: "bg-warning/15 text-warning border-warning/30",
+    Low: "bg-success/15 text-success border-success/30",
   };
 
   const handleRowClick = (taskId: string) => {
@@ -174,7 +189,8 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
               <TableRow
                 key={task.id}
                 className={cn(
-                  "cursor-pointer hover:bg-gray-50 transition-colors h-10 border-b border-gray-100 last:border-0",
+                  "cursor-pointer hover:bg-muted/50 transition-all h-10 border-b border-border last:border-0",
+                  getRowBackgroundClass(task.status),
                   task.pending_approval && 'border-l-4 border-l-primary',
                   isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive',
                   isDueToday(task.due_at) && 'border-l-4 border-l-warning',
@@ -213,12 +229,12 @@ export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium truncate">{task.title}</span>
                       {task.pending_approval && (
-                        <Badge variant="default" className="text-[10px] px-1 py-0">
+                        <Badge variant="default" className="text-xs px-2.5 py-0.5">
                           Pending
                         </Badge>
                       )}
                       {task.comments_count > 0 && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0">
+                        <Badge variant="outline" className="text-xs px-2.5 py-0.5">
                           💬 {task.comments_count}
                         </Badge>
                       )}
