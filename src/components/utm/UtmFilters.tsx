@@ -1,13 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SimpleMultiSelect } from "./SimpleMultiSelect";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { ENTITIES, TEAMS } from "@/lib/constants";
-import { Search, X } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 import type { UtmLinkFilters } from "@/hooks/useUtmLinks";
 
 interface UtmFiltersProps {
@@ -26,6 +27,7 @@ const LP_TYPES = [
 export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleClearFilters = () => {
     onFiltersChange({});
@@ -35,121 +37,59 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
     (value) => value !== undefined && (Array.isArray(value) ? value.length > 0 : value !== "")
   );
 
+  const activeFilterCount = 
+    (filters.search ? 1 : 0) +
+    (filters.campaign_name?.length || 0) +
+    (filters.platform?.length || 0) +
+    (filters.lp_type ? 1 : 0) +
+    (filters.link_purpose?.length || 0) +
+    (filters.entity?.length || 0) +
+    (filters.teams?.length || 0) +
+    (filters.status ? 1 : 0);
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Filters</CardTitle>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-            <X className="h-4 w-4 mr-2" />
-            Clear All
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Search */}
-        <div className="space-y-2">
-          <Label htmlFor="search">Search</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <Card className="p-2">
+      <div className="flex items-center gap-4">
+        {/* Compact row - always visible */}
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              id="search"
               value={filters.search || ""}
               onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
               placeholder="Search by name, URL, campaign..."
-              className="pl-9"
+              className="h-8 pl-8 text-sm"
             />
           </div>
-        </div>
 
-        {/* Campaign */}
-        <div className="space-y-2">
-          <Label>Campaign</Label>
-          <SimpleMultiSelect
-            options={campaigns.map(c => ({ value: c.name, label: c.name }))}
-            selected={filters.campaign_name || []}
-            onChange={(selected) => onFiltersChange({ ...filters, campaign_name: selected })}
-            placeholder="All campaigns"
-          />
-        </div>
-
-        {/* Platform */}
-        <div className="space-y-2">
-          <Label>Platform</Label>
-          <SimpleMultiSelect
-            options={platforms.map(p => ({ value: p.name, label: p.name }))}
-            selected={filters.platform || []}
-            onChange={(selected) => onFiltersChange({ ...filters, platform: selected })}
-            placeholder="All platforms"
-          />
-        </div>
-
-        {/* LP Type */}
-        <div className="space-y-2">
-          <Label>LP Type</Label>
           <Select
-            value={filters.lp_type || "all"}
-            onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value === "all" ? undefined : value })}
+            value={filters.campaign_name?.length === 1 ? filters.campaign_name[0] : "all"}
+            onValueChange={(value) => 
+              onFiltersChange({ ...filters, campaign_name: value === "all" ? [] : [value] })
+            }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="All LP types" />
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue placeholder="Campaign" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All LP types</SelectItem>
-              {LP_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
+              <SelectItem value="all">All Campaigns</SelectItem>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.name}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
 
-        {/* Link Purpose */}
-        <div className="space-y-2">
-          <Label>Link Purpose</Label>
-          <SimpleMultiSelect
-            options={LINK_PURPOSES.map(p => ({ value: p, label: p }))}
-            selected={filters.link_purpose || []}
-            onChange={(selected) => onFiltersChange({ ...filters, link_purpose: selected })}
-            placeholder="All purposes"
-          />
-        </div>
-
-        {/* Entity */}
-        <div className="space-y-2">
-          <Label>Entity</Label>
-          <SimpleMultiSelect
-            options={ENTITIES.map(e => ({ value: e, label: e }))}
-            selected={filters.entity || []}
-            onChange={(selected) => onFiltersChange({ ...filters, entity: selected })}
-            placeholder="All entities"
-          />
-        </div>
-
-        {/* Team */}
-        <div className="space-y-2">
-          <Label>Team</Label>
-          <SimpleMultiSelect
-            options={TEAMS.map(t => ({ value: t, label: t }))}
-            selected={filters.teams || []}
-            onChange={(selected) => onFiltersChange({ ...filters, teams: selected })}
-            placeholder="All teams"
-          />
-        </div>
-
-        {/* Status */}
-        <div className="space-y-2">
-          <Label>Status</Label>
           <Select
             value={filters.status || "all"}
             onValueChange={(value) => onFiltersChange({ ...filters, status: value === "all" ? undefined : value })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="All statuses" />
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               {STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -157,8 +97,102 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
               ))}
             </SelectContent>
           </Select>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            More Filters
+            {activeFilterCount > 3 && (
+              <Badge variant="default" className="h-5 px-1.5">
+                {activeFilterCount - 3}
+              </Badge>
+            )}
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-      </CardContent>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+            <X className="h-4 w-4 mr-1" />
+            Clear All
+          </Button>
+        )}
+      </div>
+
+      {/* Expanded section */}
+      {isExpanded && (
+        <div className="pt-3 mt-3 border-t space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Platform</label>
+              <SimpleMultiSelect
+                options={platforms.map(p => ({ value: p.name, label: p.name }))}
+                selected={filters.platform || []}
+                onChange={(selected) => onFiltersChange({ ...filters, platform: selected })}
+                placeholder="All platforms"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">LP Type</label>
+              <Select
+                value={filters.lp_type || "all"}
+                onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value === "all" ? undefined : value })}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="All LP types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All LP types</SelectItem>
+                  {LP_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Link Purpose</label>
+              <SimpleMultiSelect
+                options={LINK_PURPOSES.map(p => ({ value: p, label: p }))}
+                selected={filters.link_purpose || []}
+                onChange={(selected) => onFiltersChange({ ...filters, link_purpose: selected })}
+                placeholder="All purposes"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Entity</label>
+              <SimpleMultiSelect
+                options={ENTITIES.map(e => ({ value: e, label: e }))}
+                selected={filters.entity || []}
+                onChange={(selected) => onFiltersChange({ ...filters, entity: selected })}
+                placeholder="All entities"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Team</label>
+              <SimpleMultiSelect
+                options={TEAMS.map(t => ({ value: t, label: t }))}
+                selected={filters.teams || []}
+                onChange={(selected) => onFiltersChange({ ...filters, teams: selected })}
+                placeholder="All teams"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
