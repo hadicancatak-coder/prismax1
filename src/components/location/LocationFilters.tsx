@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SimpleMultiSelect } from "@/components/utm/SimpleMultiSelect";
 import { LocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
-import { X, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 
 export interface LocationFilters {
   cities: string[];
@@ -29,14 +29,7 @@ export function LocationFilters({
   availableCities,
   availableAgencies,
 }: LocationFiltersProps) {
-  const [isExpanded, setIsExpanded] = useState(() => {
-    const saved = localStorage.getItem('location-filters-expanded');
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('location-filters-expanded', JSON.stringify(isExpanded));
-  }, [isExpanded]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const hasActiveFilters =
     filters.cities.length > 0 ||
