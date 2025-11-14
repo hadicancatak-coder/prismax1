@@ -21,7 +21,7 @@ All colors MUST be HSL.
     --secondary: 215 12% 17%;
     --secondary-foreground: 0 0% 100%;
     --muted: 215 10% 25%;
-    --muted-foreground: 220 9% 63%; /* #9AA0A6 */
+    --muted-foreground: 220 9% 75%; /* Lighter for better readability */
     --accent: 207 100% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
@@ -41,12 +41,12 @@ All colors MUST be HSL.
     --sidebar-border: 0 0% 100% / 0.05;
     --sidebar-ring: 207 100% 40%;
 
-    /* Grayscale palette */
+    /* Grayscale palette - improved for readability */
     --gray-50: 220 14% 96%;
     --gray-100: 220 13% 91%;
     --gray-200: 220 13% 82%;
-    --gray-300: 220 9% 63%;
-    --gray-400: 220 9% 46%;
+    --gray-300: 220 9% 75%; /* Improved from 63% */
+    --gray-400: 220 9% 65%; /* Improved from 46% */
     --gray-500: 220 9% 39%;
     --gray-600: 220 13% 28%;
     --gray-700: 220 14% 20%;
@@ -81,7 +81,7 @@ All colors MUST be HSL.
     --secondary: 215 12% 17%;
     --secondary-foreground: 0 0% 100%;
     --muted: 215 10% 25%;
-    --muted-foreground: 220 9% 63%;
+    --muted-foreground: 220 9% 75%;
     --accent: 207 100% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 30%;
@@ -167,13 +167,13 @@ All colors MUST be HSL.
     font-size: 14px; 
     line-height: 1.5; 
     font-weight: 400;
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 9% 75%); /* Lighter for better readability */
   }
   .text-metadata { 
     font-size: 12px; 
     line-height: 1.4; 
     font-weight: 400; 
-    color: hsl(var(--gray-400)); 
+    color: hsl(220 9% 65%); /* Lighter for better readability */
   }
 
   .hover-text {
