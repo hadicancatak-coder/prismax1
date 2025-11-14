@@ -232,7 +232,7 @@ export default function CustomReports() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => setLoadDialogOpen(true)}>
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Load
+                Load {reports.length > 0 && `(${reports.length})`}
               </Button>
               <Button variant="outline" size="sm" onClick={handleExportJSON}>
                 <FileJson className="h-4 w-4 mr-2" />
