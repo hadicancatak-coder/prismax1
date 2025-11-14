@@ -9,8 +9,6 @@ import { AdminRoute } from "./components/AdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import Dashboard from "./pages/Dashboard";
-import Boards from "./pages/Boards";
-import WorkspaceLanding from "./pages/WorkspaceLanding";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -60,8 +58,6 @@ const App = () => (
             <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/boards" element={<Boards />} />
-            <Route path="/workspace/:workspaceId" element={<WorkspaceLanding />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<CalendarView />} />
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
