@@ -38,6 +38,7 @@ export interface ChartElementData {
   yAxis: string[];
   title?: string;
   colors?: string[];
+  height?: number;
 }
 
 export interface ImageElementData {

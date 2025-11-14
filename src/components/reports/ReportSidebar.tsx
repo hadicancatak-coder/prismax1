@@ -57,13 +57,12 @@ export function ReportSidebar({ onAddElement, isOpen, onToggle }: ReportSidebarP
                   size="icon"
                   onClick={() => onAddElement('chart')}
                   className="h-12 w-12"
-                  disabled
                 >
                   <BarChart3 className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Add Chart (Phase 3)</p>
+                <p>Add Chart</p>
               </TooltipContent>
             </Tooltip>
 
