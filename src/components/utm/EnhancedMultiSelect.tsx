@@ -76,15 +76,23 @@ export function EnhancedMultiSelect({
                   return (
                     <Badge key={value} variant="secondary" className="gap-1">
                       {option?.label || value}
-                      <button
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemove(value);
                         }}
-                        className="ml-1 ring-offset-background rounded-full outline-none hover:bg-accent"
+                        className="ml-1 ring-offset-background rounded-full outline-none hover:bg-accent cursor-pointer"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleRemove(value);
+                          }
+                        }}
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </span>
                     </Badge>
                   );
                 })
