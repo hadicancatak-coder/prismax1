@@ -18,12 +18,16 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 100%;
     --primary: 207 100% 40%; /* #0052CC - Atlassian blue */
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 207 100% 35%; /* Darker blue for hover */
     --secondary: 215 12% 17%;
     --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 215 10% 22%; /* Lighter for hover */
     --muted: 215 10% 25%;
     --muted-foreground: 220 9% 75%; /* Lighter for better readability */
+    --muted-hover: 215 10% 28%; /* Slightly lighter muted for hover */
     --accent: 207 100% 40%;
     --accent-foreground: 0 0% 100%;
+    --accent-hover: 207 100% 35%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
@@ -78,12 +82,16 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 100%;
     --primary: 207 100% 40%;
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 207 100% 35%;
     --secondary: 215 12% 17%;
     --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 215 10% 22%;
     --muted: 215 10% 25%;
     --muted-foreground: 220 9% 75%;
+    --muted-hover: 215 10% 28%;
     --accent: 207 100% 40%;
     --accent-foreground: 0 0% 100%;
+    --accent-hover: 207 100% 35%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100% / 0.08;
