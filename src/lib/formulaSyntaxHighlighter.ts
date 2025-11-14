@@ -54,6 +54,9 @@ export const FORMULAS = [
   'MAX',
   'IF',
   'VLOOKUP',
+  'AND',
+  'OR',
+  'HLOOKUP',
 ] as const;
 
 export const FORMULA_TEMPLATES: Record<string, string> = {
@@ -64,6 +67,9 @@ export const FORMULA_TEMPLATES: Record<string, string> = {
   MAX: '=MAX(A1:A10)',
   IF: '=IF(A1>10, "Yes", "No")',
   VLOOKUP: '=VLOOKUP(A1, A1:B10, 2)',
+  AND: '=AND(A1>10, B1<20)',
+  OR: '=OR(A1>10, B1<20)',
+  HLOOKUP: '=HLOOKUP(A1, A1:B10, 2)',
 };
 
 export const FORMULA_DESCRIPTIONS: Record<string, string> = {
@@ -74,4 +80,7 @@ export const FORMULA_DESCRIPTIONS: Record<string, string> = {
   MAX: 'Returns the maximum value',
   IF: 'Returns one value if true, another if false',
   VLOOKUP: 'Looks up a value in a table',
+  AND: 'Returns TRUE if all conditions are true',
+  OR: 'Returns TRUE if any condition is true',
+  HLOOKUP: 'Looks up a value horizontally in a table',
 };
