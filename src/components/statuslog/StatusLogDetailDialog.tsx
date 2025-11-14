@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { StatusLog } from "@/lib/statusLogService";
 import { format } from "date-fns";
 import { Edit, ArrowRight, CheckCircle, X } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface StatusLogDetailDialogProps {
   log: StatusLog | null;
@@ -63,7 +64,10 @@ export function StatusLogDetailDialog({
           {log.description && (
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-1">Description</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{log.description}</p>
+              <div 
+                className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.description) }}
+              />
             </div>
           )}
 
