@@ -36,7 +36,7 @@ export function TopHeader() {
               <span className="hidden sm:inline">Create</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 bg-card z-50">
             <DropdownMenuItem onClick={() => navigate("/tasks")}>
               📋 New Task
             </DropdownMenuItem>

@@ -108,7 +108,7 @@ export function GlobalSearch() {
           />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="center">
+      <PopoverContent className="w-[400px] p-0 bg-card z-50" align="center">
         <Command>
           <CommandList>
             {!query && recentSearches.length > 0 && (
