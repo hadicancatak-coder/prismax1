@@ -1,4 +1,4 @@
-import type { ReportDocument, ReportElement, TableElementData, TextElementData, ChartElementData } from "@/types/report";
+import type { ReportDocument, ReportElement, TableElementData, TextElementData, ChartElementData, ImageElementData } from "@/types/report";
 
 export function generateElementId(type: string): string {
   return `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -50,6 +50,22 @@ export function createChartElement(position: number): ReportElement {
       yAxis: [],
       title: 'New Chart',
     } as ChartElementData,
+  };
+}
+
+export function createImageElement(position: number): ReportElement {
+  return {
+    id: generateElementId('image'),
+    type: 'image',
+    position,
+    config: {
+      width: 'full',
+    },
+    data: {
+      url: '',
+      alt: '',
+      caption: '',
+    } as ImageElementData,
   };
 }
 
