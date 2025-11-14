@@ -55,15 +55,15 @@ export function RedditPreview({ adData }: RedditPreviewProps) {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-4 text-muted-foreground text-sm">
-            <button className="flex items-center gap-1 hover:bg-gray-100 px-2 py-1 rounded">
+            <button className="flex items-center gap-1 hover:bg-muted-hover px-2 py-1 rounded">
               <MessageSquare className="h-4 w-4" />
               <span>45 Comments</span>
             </button>
-            <button className="flex items-center gap-1 hover:bg-gray-100 px-2 py-1 rounded">
+            <button className="flex items-center gap-1 hover:bg-muted-hover px-2 py-1 rounded">
               <Share className="h-4 w-4" />
               <span>Share</span>
             </button>
-            <button className="flex items-center gap-1 hover:bg-gray-100 px-2 py-1 rounded">
+            <button className="flex items-center gap-1 hover:bg-muted-hover px-2 py-1 rounded">
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
