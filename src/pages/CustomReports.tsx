@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, FolderOpen, Download, FileJson, FileText } from "lucide-react";
+import { Save, FolderOpen, FileJson } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ReportSidebar } from "@/components/reports/ReportSidebar";
 import { ReportCanvas } from "@/components/reports/ReportCanvas";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import type { ReportDocument, ReportElement } from "@/types/report";
-import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON, exportReportToPDF } from "@/lib/reportHelpers";
+import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON } from "@/lib/reportHelpers";
 
 export default function CustomReports() {
   const [report, setReport] = useState<ReportDocument>({
@@ -146,22 +146,6 @@ export default function CustomReports() {
     });
   };
 
-  const handleExportPDF = async () => {
-    try {
-      await exportReportToPDF(report.name, 'report-canvas');
-      toast({
-        title: "Report Exported",
-        description: "PDF file has been downloaded.",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleLoad = () => {
     toast({
       title: "Load Report",
@@ -198,10 +182,6 @@ export default function CustomReports() {
               <Button variant="outline" size="sm" onClick={handleExportJSON}>
                 <FileJson className="h-4 w-4 mr-2" />
                 Export JSON
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                <FileText className="h-4 w-4 mr-2" />
-                Export PDF
               </Button>
               <Button size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-2" />
