@@ -4,10 +4,9 @@ import { cn } from "@/lib/utils";
 interface SpreadsheetCellProps {
   value: string;
   formula?: string;
-  calculated?: number;
+  calculated?: boolean | number;
   isSelected: boolean;
-  isFormula: boolean;
-  onValueChange: (value: string) => void;
+  onChange: (value: string) => void;
   onSelect: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
 }
@@ -17,8 +16,7 @@ export function SpreadsheetCell({
   formula,
   calculated,
   isSelected,
-  isFormula,
-  onValueChange,
+  onChange,
   onSelect,
   onKeyDown,
 }: SpreadsheetCellProps) {
@@ -45,32 +43,32 @@ export function SpreadsheetCell({
 
   const handleBlur = () => {
     setIsEditing(false);
-    onValueChange(editValue);
+    onChange(editValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setIsEditing(false);
-      onValueChange(editValue);
+      onChange(editValue);
       onKeyDown(e);
     } else if (e.key === 'Escape') {
       setIsEditing(false);
       setEditValue(value);
     } else if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       setIsEditing(false);
-      onValueChange(editValue);
+      onChange(editValue);
       onKeyDown(e);
     }
   };
 
-  const displayValue = isFormula && calculated !== undefined ? calculated.toString() : value;
+  const displayValue = formula && calculated ? value : (formula || value);
 
   return (
     <div
       className={cn(
-        "h-10 border border-border bg-background relative",
-        isSelected && "ring-2 ring-primary",
-        isFormula && "bg-blue-50 dark:bg-blue-950/20"
+        "h-full w-full text-xs transition-colors",
+        isSelected && "ring-2 ring-primary ring-inset",
+        !isEditing && "cursor-cell hover:bg-muted/30"
       )}
       onClick={onSelect}
       onDoubleClick={handleDoubleClick}
@@ -83,10 +81,15 @@ export function SpreadsheetCell({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="w-full h-full px-2 text-sm bg-background border-0 focus:outline-none"
+          className="w-full h-full px-1.5 py-0.5 bg-background border-0 outline-none text-xs font-mono"
         />
       ) : (
-        <div className="w-full h-full px-2 flex items-center text-sm truncate">
+        <div
+          className={cn(
+            "h-full px-1.5 py-0.5 truncate",
+            formula && "font-mono text-muted-foreground"
+          )}
+        >
           {displayValue}
         </div>
       )}

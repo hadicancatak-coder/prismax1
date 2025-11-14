@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateStatusLog, useUpdateStatusLog } from "@/hooks/useStatusLogs";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
@@ -25,6 +25,8 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
   const [entity, setEntity] = useState<string[]>(editingLog?.entity || []);
   const [platform, setPlatform] = useState(editingLog?.platform || "");
   const [campaignName, setCampaignName] = useState(editingLog?.campaign_name || "");
+  const [socialuaUpdate, setSocialuaUpdate] = useState(editingLog?.socialua_update || "");
+  const [ppcUpdate, setPpcUpdate] = useState(editingLog?.ppc_update || "");
 
   const { data: entities = [] } = useSystemEntities();
   const { data: platforms = [] } = useUtmPlatforms();
@@ -39,10 +41,12 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
     const logData = {
       title,
       description: description || undefined,
-      log_type: logType as 'issue' | 'blocker' | 'plan' | 'update' | 'note',
+      log_type: logType as 'issue' | 'blocker' | 'plan' | 'update' | 'note' | 'brief',
       entity: entity.length > 0 ? entity : undefined,
       platform: platform || undefined,
       campaign_name: campaignName || undefined,
+      socialua_update: logType === 'brief' ? (socialuaUpdate || undefined) : undefined,
+      ppc_update: logType === 'brief' ? (ppcUpdate || undefined) : undefined,
       status: 'active' as const,
     };
 
@@ -73,6 +77,8 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
     setEntity([]);
     setPlatform("");
     setCampaignName("");
+    setSocialuaUpdate("");
+    setPpcUpdate("");
   };
 
   return (
@@ -95,12 +101,11 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Enter detailed description"
-              rows={4}
+              minHeight="120px"
             />
           </div>
 
@@ -117,6 +122,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
                   <SelectItem value="plan">Plan</SelectItem>
                   <SelectItem value="update">Update</SelectItem>
                   <SelectItem value="note">Note</SelectItem>
+                  <SelectItem value="brief">Brief</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,6 +169,30 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
               </SelectContent>
             </Select>
           </div>
+
+          {logType === 'brief' && (
+            <>
+              <div className="space-y-2">
+                <Label>Social UA Update</Label>
+                <RichTextEditor
+                  value={socialuaUpdate}
+                  onChange={setSocialuaUpdate}
+                  placeholder="Enter Social UA updates..."
+                  minHeight="120px"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>PPC Update</Label>
+                <RichTextEditor
+                  value={ppcUpdate}
+                  onChange={setPpcUpdate}
+                  placeholder="Enter PPC updates..."
+                  minHeight="120px"
+                />
+              </div>
+            </>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
