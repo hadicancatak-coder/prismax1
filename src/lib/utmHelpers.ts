@@ -75,24 +75,48 @@ export const formatFullMonthYear2Digit = (date: Date = new Date()): string => {
 };
 
 /**
- * Generate utm_campaign based on purpose
+ * Generate utm_content based on LP URL and campaign (Google Sheets formula)
+ */
+export const generateUtmContent = (
+  lpUrl: string,
+  campaignName: string
+): string => {
+  if (!lpUrl.trim()) {
+    return "⚠️ Add LP URL";
+  }
+
+  const parts = lpUrl.split('/').filter(p => p.trim() !== '');
+  const slug = parts[parts.length - 1];
+
+  if (/^\d+$/.test(slug)) {
+    return campaignName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  }
+
+  return slug.toLowerCase().replace(/[^a-z0-9]/g, '_');
+};
+
+/**
+ * Generate utm_campaign by purpose - NEW FORMAT: platform_campaignname_monthYY
  */
 export const generateUtmCampaignByPurpose = (
   purpose: 'AO' | 'Webinar' | 'Seminar',
+  platform: string,
   campaignName?: string,
   webinarName?: string,
   city?: string,
   date: Date = new Date()
 ): string => {
+  const platformPrefix = platform.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  
   if (purpose === 'AO' && campaignName) {
-    return `${campaignName.toLowerCase()}_${formatMonthYear2Digit(date)}`;
+    return `${platformPrefix}_${campaignName.toLowerCase()}_${formatMonthYear2Digit(date)}`;
   }
   if (purpose === 'Webinar' && webinarName) {
     const cleanName = webinarName.toLowerCase().replace(/\s+/g, '');
-    return `${cleanName}_${formatMonthYear2Digit(date)}`;
+    return `${platformPrefix}_${cleanName}_${formatMonthYear2Digit(date)}`;
   }
   if (purpose === 'Seminar' && city) {
-    return `${city}Seminar_${formatFullMonthYear2Digit(date)}`;
+    return `${platformPrefix}_${city}Seminar_${formatFullMonthYear2Digit(date)}`;
   }
   return '';
 };
