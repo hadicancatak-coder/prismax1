@@ -173,7 +173,7 @@ All colors MUST be HSL.
     font-size: 12px; 
     line-height: 1.4; 
     font-weight: 400; 
-    color: hsl(var(--muted-foreground)); 
+    color: hsl(var(--gray-400)); 
   }
 
   /* Formula syntax highlighting */
@@ -338,6 +338,15 @@ All colors MUST be HSL.
   
   .card-glow:hover::before {
     opacity: 0.6;
+  }
+
+  /* Hover utilities */
+  .hover-text {
+    @apply hover:text-primary transition-colors;
+  }
+
+  .hover-bg-subtle {
+    @apply hover:bg-[#2C3237] transition-colors;
   }
 }
 
