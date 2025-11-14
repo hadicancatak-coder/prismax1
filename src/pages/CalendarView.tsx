@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, Info, RotateCcw } from "lucide-react";
+import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
@@ -23,6 +23,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
+import { CalendarKanbanView } from "@/components/calendar/CalendarKanbanView";
 
 // Sortable Task Item Component
 function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = false }: any) {
@@ -136,6 +137,7 @@ export default function CalendarView() {
     return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
   });
   const [userTaskOrder, setUserTaskOrder] = useState<Record<string, number>>({});
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const currentDate = new Date();
 
   const sensors = useSensors(
@@ -455,6 +457,20 @@ export default function CalendarView() {
                   Reset Order
                 </Button>
               )}
+
+              {/* List/Kanban Toggle */}
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'kanban')}>
+                <TabsList>
+                  <TabsTrigger value="list" className="gap-2">
+                    <List className="h-4 w-4" />
+                    List
+                  </TabsTrigger>
+                  <TabsTrigger value="kanban" className="gap-2">
+                    <LayoutGrid className="h-4 w-4" />
+                    Kanban
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </header>
         </>
@@ -469,101 +485,108 @@ export default function CalendarView() {
         </div>
       )}
 
-      <div className={`grid gap-6 lg:gap-8 mt-6 lg:mt-8 ${focusMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
-        <div className={focusMode ? '' : 'lg:col-span-2'}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-section-title">
-              {dateView === "today" && "Today's Tasks"} 
-              {dateView === "yesterday" && "Yesterday's Tasks"}
-              {dateView === "tomorrow" && "Tomorrow's Tasks"}
-              {dateView === "week" && "This Week's Tasks"}
-              {dateView === "month" && "This Month's Tasks"}
-              {dateView === "custom" && "Custom Range Tasks"}
-              ({activeTasks.length})
-            </h2>
-            {focusMode && (
-              <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
-              Exit Focus Mode
-              </Button>
-            )}
-          </div>
-          <div>
-            {isLoading ? (
-              <ListSkeleton items={5} />
-            ) : (
-            <>
-              {activeTasks.length > 0 && sortOption !== "manual" && (
-                <Alert className="mb-4 border-primary/50 bg-primary/5">
-                  <Info className="h-4 w-4 text-primary" />
-                  <AlertDescription className="text-sm">
-                    💡 <strong>Tip:</strong> Switch to "Manual Order" in the sort dropdown to drag & drop tasks into your preferred order
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={activeTasks.map(t => t.id)}
-                  strategy={verticalListSortingStrategy}
-                  disabled={sortOption !== "manual"}
-                >
-                  <div className="space-y-2">
-                    {activeTasks.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">No active tasks for this period</p>
-                    ) : (
-                      activeTasks.map((task) => (
-                        <SortableTaskItem
-                          key={task.id}
-                          task={task}
-                          onTaskClick={(id: string) => {
-                            setSelectedTaskId(id);
-                            setTaskDialogOpen(true);
-                          }}
-                          onTaskComplete={handleTaskComplete}
-                          isManualMode={sortOption === "manual"}
-                        />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-
-              <CompletedTasksSection
-                tasks={completedTasks}
-                onTaskClick={(id: string) => {
-                  setSelectedTaskId(id);
-                  setTaskDialogOpen(true);
-                }}
-                onTaskComplete={handleTaskComplete}
-              />
-            </>
-            )}
-          </div>
+      {/* Centered content - removed sidebar */}
+      <div className="max-w-7xl mx-auto mt-6 lg:mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-section-title">
+            {dateView === "today" && "Today's Tasks"} 
+            {dateView === "yesterday" && "Yesterday's Tasks"}
+            {dateView === "tomorrow" && "Tomorrow's Tasks"}
+            {dateView === "week" && "This Week's Tasks"}
+            {dateView === "month" && "This Month's Tasks"}
+            {dateView === "custom" && "Custom Range Tasks"}
+            ({activeTasks.length})
+          </h2>
+          {focusMode && (
+            <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
+            Exit Focus Mode
+            </Button>
+          )}
         </div>
-        
-        {!focusMode && (
-          <div>
-            <h2 className="text-section-title mb-6">Quick Stats</h2>
-            <div className="space-y-6">
-              <div className="flex justify-between items-center pb-4 border-b border-border">
-                <span className="text-metadata">Completed</span>
-                <span className="text-2xl font-semibold">{completedToday}/{totalToday}</span>
-              </div>
-              <div className="flex justify-between items-center pb-4 border-b border-border">
-                <span className="text-metadata">High Priority</span>
-                <span className="text-2xl font-semibold text-destructive">{highPriorityCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-metadata">Upcoming</span>
-                <span className="text-2xl font-semibold text-primary">{upcomingCount}</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <div>
+          {isLoading ? (
+            <ListSkeleton items={5} />
+          ) : (
+            <>
+              {viewMode === 'list' ? (
+                <>
+                  {activeTasks.length > 0 && sortOption !== "manual" && (
+                    <Alert className="mb-4 border-primary/50 bg-primary/5">
+                      <Info className="h-4 w-4 text-primary" />
+                      <AlertDescription className="text-sm">
+                        💡 <strong>Tip:</strong> Switch to "Manual Order" in the sort dropdown to drag & drop tasks into your preferred order
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={activeTasks.map(t => t.id)}
+                      strategy={verticalListSortingStrategy}
+                      disabled={sortOption !== "manual"}
+                    >
+                      <div className="space-y-2">
+                        {activeTasks.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">No active tasks for this period</p>
+                        ) : (
+                          activeTasks.map((task) => (
+                            <SortableTaskItem
+                              key={task.id}
+                              task={task}
+                              onTaskClick={(id: string) => {
+                                setSelectedTaskId(id);
+                                setTaskDialogOpen(true);
+                              }}
+                              onTaskComplete={handleTaskComplete}
+                              isManualMode={sortOption === "manual"}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+
+                  <CompletedTasksSection
+                    tasks={completedTasks}
+                    onTaskClick={(id: string) => {
+                      setSelectedTaskId(id);
+                      setTaskDialogOpen(true);
+                    }}
+                    onTaskComplete={handleTaskComplete}
+                  />
+                </>
+              ) : (
+                <CalendarKanbanView
+                  tasks={activeTasks}
+                  view={
+                    dateView === 'today' || dateView === 'yesterday' || dateView === 'tomorrow' 
+                      ? 'day' 
+                      : dateView === 'custom'
+                      ? 'week' 
+                      : dateView as 'week' | 'month'
+                  }
+                  dateView={dateView}
+                  workingDays={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                  selectedDate={
+                    dateView === 'yesterday' ? subDays(currentDate, 1) :
+                    dateView === 'tomorrow' ? addDays(currentDate, 1) :
+                    dateView === 'week' ? startOfWeek(currentDate, { weekStartsOn: 1 }) :
+                    dateView === 'month' ? startOfMonth(currentDate) :
+                    dateRange?.from || currentDate
+                  }
+                  onTaskClick={(id: string) => {
+                    setSelectedTaskId(id);
+                    setTaskDialogOpen(true);
+                  }}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {selectedTaskId && (
