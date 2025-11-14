@@ -117,6 +117,7 @@ export function ReportCanvas({
         strategy={verticalListSortingStrategy}
       >
         <div 
+          id="report-canvas"
           className="max-w-5xl mx-auto py-8 px-16 min-h-[calc(100vh-12rem)]"
           onClick={() => onElementSelect('')}
         >
