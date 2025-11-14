@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,11 +41,6 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
   const [loading, setLoading] = useState(false);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [agencyFilter, setAgencyFilter] = useState<string[]>([]);
-  const [reachMetrics, setReachMetrics] = useState<{
-    totalReach: number;
-    cpm: number;
-    seasonalInfo: any;
-  } | null>(null);
 
   // Initialize form data when editing
   useEffect(() => {
@@ -89,11 +84,14 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
     )
   ).sort() as string[];
 
-  // Calculate derived values first
-  const selectedPlacements = suggestedPlacements.filter(p => manualSelections.has(p.location.id));
+  // Calculate derived values with useMemo for stable references
+  const selectedPlacements = useMemo(() => {
+    return suggestedPlacements.filter(p => manualSelections.has(p.location.id));
+  }, [suggestedPlacements, manualSelections]);
+
   const totalCost = selectedPlacements.reduce((sum, p) => sum + p.cost, 0);
   const remainingBudget = formData.budget - totalCost;
-  const duration = formData.start_date && formData.end_date 
+  const duration = formData.start_date && formData.end_date
     ? calculateDuration(formData.start_date, formData.end_date) 
     : 0;
 
@@ -118,26 +116,21 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
     }
   }, [formData.budget, formData.start_date, formData.end_date, selectedCities, locations, allPrices]);
   
-  // Calculate reach metrics when placements change
-  useEffect(() => {
-    // Calculate selectedPlacements inside the effect to avoid infinite loop
-    const selectedPlacements = suggestedPlacements.filter(p => manualSelections.has(p.location.id));
-    
+  // Calculate reach metrics with useMemo instead of useEffect
+  const reachMetrics = useMemo(() => {
     if (selectedPlacements.length > 0 && formData.start_date && formData.end_date) {
       const duration = formData.start_date && formData.end_date 
         ? calculateDuration(formData.start_date, formData.end_date) 
         : 0;
-      const metrics = calculateReach(
+      return calculateReach(
         selectedPlacements,
         duration,
         formData.start_date,
         formData.end_date
       );
-      setReachMetrics(metrics);
-    } else {
-      setReachMetrics(null);
     }
-  }, [suggestedPlacements, manualSelections, formData.start_date, formData.end_date]);
+    return null;
+  }, [selectedPlacements, formData.start_date, formData.end_date]);
 
   const toggleCity = (city: string) => {
     setSelectedCities(prev =>
