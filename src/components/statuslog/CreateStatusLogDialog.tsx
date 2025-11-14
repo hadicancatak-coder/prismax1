@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,22 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
 
   const createMutation = useCreateStatusLog();
   const updateMutation = useUpdateStatusLog();
+
+  // Update form when editingLog changes
+  useEffect(() => {
+    if (editingLog) {
+      setTitle(editingLog.title);
+      setDescription(editingLog.description || "");
+      setLogType(editingLog.log_type);
+      setEntity(editingLog.entity || []);
+      setPlatform(editingLog.platform || "");
+      setCampaignName(editingLog.campaign_name || "");
+      setSocialuaUpdate(editingLog.socialua_update || "");
+      setPpcUpdate(editingLog.ppc_update || "");
+    } else {
+      resetForm();
+    }
+  }, [editingLog]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,11 +99,15 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{editingLog ? "Edit Status Log" : "Create Status Log"}</DialogTitle>
+          <DialogDescription>
+            {editingLog ? "Update the status log details below." : "Create a new status log entry."}
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="overflow-y-auto flex-1 pr-2">
+          <form onSubmit={handleSubmit} className="space-y-4" id="status-log-form">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input
@@ -193,16 +213,16 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
               </div>
             </>
           )}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-              {editingLog ? "Update" : "Create"} Log
-            </Button>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
+        <DialogFooter className="pt-4 border-t">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" form="status-log-form" disabled={createMutation.isPending || updateMutation.isPending}>
+            {editingLog ? "Update" : "Create"} Log
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
