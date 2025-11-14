@@ -1,4 +1,5 @@
 import type { SpreadsheetData } from "@/lib/formulaParser";
+import type { AdvancedSpreadsheetData, ChartConfig } from "./spreadsheet";
 
 export interface ReportDocument {
   id: string;
@@ -22,8 +23,10 @@ export interface ReportElement {
 export interface TableElementData {
   rows: number;
   cols: number;
-  cells: SpreadsheetData;
+  cells: SpreadsheetData | AdvancedSpreadsheetData;
   title?: string;
+  charts?: ChartConfig[];
+  useAdvanced?: boolean;
 }
 
 export interface TextElementData {

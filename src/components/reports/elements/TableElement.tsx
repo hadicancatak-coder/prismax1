@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { SpreadsheetTable } from "../SpreadsheetTable";
+import { AdvancedSpreadsheet } from "../AdvancedSpreadsheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { SpreadsheetData } from "@/lib/formulaParser";
+import { Switch } from "@/components/ui/switch";
+import type { AdvancedSpreadsheetData, ChartConfig } from "@/types/spreadsheet";
 import type { TableElementData } from "@/types/report";
 
 interface TableElementProps {
@@ -19,12 +20,16 @@ export function TableElement({ data, onChange, isActive }: TableElementProps) {
     onChange({ ...data, title: newTitle });
   };
 
-  const handleDataChange = (cells: SpreadsheetData) => {
-    onChange({ ...data, cells });
+  const handleDataChange = (cells: AdvancedSpreadsheetData) => {
+    onChange({ ...data, cells, useAdvanced: true });
+  };
+
+  const handleChartsChange = (charts: ChartConfig[]) => {
+    onChange({ ...data, charts });
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full flex flex-col">
       <div className="flex items-center gap-4">
         <Label htmlFor="table-title" className="text-sm font-medium">
           Table Title
@@ -38,12 +43,15 @@ export function TableElement({ data, onChange, isActive }: TableElementProps) {
         />
       </div>
       
-      <SpreadsheetTable 
-        onDataChange={handleDataChange}
-        initialData={data.cells}
-        initialRows={data.rows}
-        initialCols={data.cols}
-      />
+      <div className="flex-1 min-h-0">
+        <AdvancedSpreadsheet
+          onDataChange={handleDataChange}
+          onChartsChange={handleChartsChange}
+          initialData={data.cells as AdvancedSpreadsheetData}
+          initialRows={data.rows}
+          initialCols={data.cols}
+        />
+      </div>
     </div>
   );
 }

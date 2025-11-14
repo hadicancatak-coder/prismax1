@@ -217,11 +217,20 @@ export function UtmBuilder() {
 
   return (
     <>
-      <AlertBanner
-        variant="warning"
-        message="⚠️ Link Accuracy Responsibility: You are responsible for ensuring all UTM links are correct before use. Always verify the final URL matches your campaign requirements."
-        autoDismiss={false}
-      />
+      <div className="mb-4 rounded-lg border border-warning/50 bg-warning/10 p-4">
+        <p className="text-sm text-foreground">
+          ⚠️ <strong>Link Accuracy Responsibility:</strong> You are responsible for ensuring all UTM links are correct before use. Always verify the final URL matches your campaign requirements. Use{' '}
+          <a 
+            href="https://docs.google.com/spreadsheets/d/1Desiq_cUDzdypT-Y54EUkKDWDj2ZJyQm0mHLpxhBFJs/edit?gid=1805871355#gid=1805871355"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-primary/80 font-medium"
+          >
+            this Google Sheet table
+          </a>{' '}
+          for reference.
+        </p>
+      </div>
       
       <Card>
         <CardHeader>
