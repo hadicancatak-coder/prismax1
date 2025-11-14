@@ -87,9 +87,136 @@ function getValues(refs: string[], data: SpreadsheetData): number[] {
   return refs.map(ref => getCellValue(ref, data));
 }
 
+// Evaluate a condition (for IF function)
+function evaluateCondition(condition: string, data: SpreadsheetData): boolean {
+  // Replace cell refs with values
+  const expr = replaceCellRefs(condition, data);
+  
+  // Parse comparison operators
+  if (expr.includes('>=')) {
+    const [left, right] = expr.split('>=').map(v => parseFloat(v.trim()));
+    return left >= right;
+  } else if (expr.includes('<=')) {
+    const [left, right] = expr.split('<=').map(v => parseFloat(v.trim()));
+    return left <= right;
+  } else if (expr.includes('>')) {
+    const [left, right] = expr.split('>').map(v => parseFloat(v.trim()));
+    return left > right;
+  } else if (expr.includes('<')) {
+    const [left, right] = expr.split('<').map(v => parseFloat(v.trim()));
+    return left < right;
+  } else if (expr.includes('=')) {
+    const [left, right] = expr.split('=').map(v => v.trim());
+    return left === right;
+  }
+  
+  return false;
+}
+
+// Perform VLOOKUP
+function performVlookup(lookupValue: string, tableRange: string, colIndex: number, data: SpreadsheetData): number {
+  const cells = parseRange(tableRange);
+  const lookupVal = replaceCellRefs(lookupValue, data);
+  
+  // Group cells by rows
+  const table: string[][] = [];
+  let currentRow: string[] = [];
+  let lastRow = -1;
+  
+  cells.forEach(cellKey => {
+    const parsed = parseCellRef(cellKey);
+    if (!parsed) return;
+    
+    if (lastRow !== -1 && parsed.row !== lastRow) {
+      table.push(currentRow);
+      currentRow = [];
+    }
+    
+    currentRow.push(cellKey);
+    lastRow = parsed.row;
+  });
+  
+  if (currentRow.length > 0) table.push(currentRow);
+  
+  // Search for lookup value in first column
+  for (const row of table) {
+    if (row.length < colIndex) continue;
+    
+    const firstCell = getCellValue(row[0], data).toString();
+    if (firstCell === lookupVal) {
+      return getCellValue(row[colIndex - 1], data);
+    }
+  }
+  
+  return 0;
+}
+
 // Evaluate formula functions
 function evaluateFunction(funcName: string, args: string, data: SpreadsheetData): number {
   const argRefs: string[] = [];
+  
+  // Handle IF and VLOOKUP separately (they have special argument parsing)
+  if (funcName.toUpperCase() === 'IF') {
+    // IF(condition, trueValue, falseValue)
+    // Split by commas but respect quoted strings
+    const parts: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    let parenDepth = 0;
+    
+    for (let i = 0; i < args.length; i++) {
+      const char = args[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+        current += char;
+      } else if (char === '(' && !inQuotes) {
+        parenDepth++;
+        current += char;
+      } else if (char === ')' && !inQuotes) {
+        parenDepth--;
+        current += char;
+      } else if (char === ',' && !inQuotes && parenDepth === 0) {
+        parts.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    if (current) parts.push(current.trim());
+    
+    if (parts.length !== 3) return 0;
+    
+    const [condition, trueVal, falseVal] = parts;
+    const conditionResult = evaluateCondition(condition, data);
+    
+    // Handle string values (remove quotes)
+    const getTrueValue = () => {
+      if (trueVal.startsWith('"') && trueVal.endsWith('"')) {
+        return 1; // Convert string to 1 for display
+      }
+      return parseFloat(replaceCellRefs(trueVal, data)) || 0;
+    };
+    
+    const getFalseValue = () => {
+      if (falseVal.startsWith('"') && falseVal.endsWith('"')) {
+        return 0; // Convert string to 0 for display
+      }
+      return parseFloat(replaceCellRefs(falseVal, data)) || 0;
+    };
+    
+    return conditionResult ? getTrueValue() : getFalseValue();
+  }
+  
+  if (funcName.toUpperCase() === 'VLOOKUP') {
+    // VLOOKUP(lookupValue, tableRange, colIndex)
+    const parts = args.split(',').map(a => a.trim());
+    if (parts.length < 3) return 0;
+    
+    const [lookupVal, tableRange, colIdx] = parts;
+    return performVlookup(lookupVal, tableRange, parseInt(colIdx), data);
+  }
   
   // Parse arguments (can be ranges or individual cells)
   const argParts = args.split(',').map(a => a.trim());

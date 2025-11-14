@@ -211,27 +211,27 @@ export function SpreadsheetToolbar({
                 Pick
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 bg-[#282E33] border-white/10">
+            <PopoverContent className="w-64">
               <div className="space-y-3">
                 {onSetBackgroundColor && (
-                  <div>
-                    <Label htmlFor="bg-color" className="text-xs text-white">Background</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bg-color" className="text-xs">Background</Label>
                     <Input
                       id="bg-color"
                       type="color"
-                      onChange={(e) => onSetBackgroundColor(e.target.value)}
-                      className="h-8 w-full"
+                      onChange={(e) => onSetBackgroundColor?.(e.target.value)}
+                      className="h-8 w-full cursor-pointer"
                     />
                   </div>
                 )}
                 {onSetTextColor && (
-                  <div>
-                    <Label htmlFor="text-color" className="text-xs text-white">Text</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="text-color" className="text-xs">Text</Label>
                     <Input
                       id="text-color"
                       type="color"
-                      onChange={(e) => onSetTextColor(e.target.value)}
-                      className="h-8 w-full"
+                      onChange={(e) => onSetTextColor?.(e.target.value)}
+                      className="h-8 w-full cursor-pointer"
                     />
                   </div>
                 )}

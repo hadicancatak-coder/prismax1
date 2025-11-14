@@ -175,6 +175,95 @@ All colors MUST be HSL.
     font-weight: 400; 
     color: hsl(var(--muted-foreground)); 
   }
+
+  /* Formula syntax highlighting */
+  .formula-syntax-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1;
+    padding: inherit;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .formula-function {
+    color: #569CD6;
+    font-weight: 600;
+  }
+
+  .formula-cell-ref {
+    color: #4EC9B0;
+  }
+
+  .formula-number {
+    color: #B5CEA8;
+  }
+
+  .formula-string {
+    color: #CE9178;
+  }
+
+  .formula-operator {
+    color: #D4D4D4;
+  }
+
+  .formula-delimiter {
+    color: #DA70D6;
+  }
+
+  /* Formula autocomplete dropdown */
+  .formula-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-top: 2px;
+  }
+
+  .formula-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background 0.15s;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .formula-suggestion-item:last-child {
+    border-bottom: none;
+  }
+
+  .formula-suggestion-item:hover,
+  .formula-suggestion-selected {
+    background: hsl(var(--muted));
+  }
+
+  .formula-suggestion-name {
+    color: #569CD6;
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+  }
+
+  .formula-suggestion-description {
+    color: hsl(var(--muted-foreground));
+    font-size: 11px;
+  }
   
   /* Legacy aliases for compatibility */
   .text-heading-lg { font-size: 1.5rem; line-height: 1.3; font-weight: 600; color: hsl(var(--foreground)); }

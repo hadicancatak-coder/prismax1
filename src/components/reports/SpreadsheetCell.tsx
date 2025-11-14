@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { FormulaAutocomplete } from "./FormulaAutocomplete";
 
 interface SpreadsheetCellProps {
   value: string;
@@ -22,14 +23,6 @@ export function SpreadsheetCell({
 }: SpreadsheetCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -41,23 +34,28 @@ export function SpreadsheetCell({
     setIsEditing(true);
   };
 
+  const handleCommit = () => {
+    setIsEditing(false);
+    onChange(editValue);
+  };
+
   const handleBlur = () => {
     setIsEditing(false);
     onChange(editValue);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      setIsEditing(false);
-      onChange(editValue);
-      onKeyDown(e);
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditValue(value);
-    } else if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      setIsEditing(false);
-      onChange(editValue);
-      onKeyDown(e);
+  const handleCellKeyDown = (e: React.KeyboardEvent) => {
+    if (!isEditing) {
+      if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+        setIsEditing(true);
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          setEditValue('');
+        } else {
+          setEditValue(e.key);
+        }
+      } else if (e.key === 'Enter') {
+        setIsEditing(true);
+      }
     }
   };
 
@@ -72,16 +70,15 @@ export function SpreadsheetCell({
       )}
       onClick={onSelect}
       onDoubleClick={handleDoubleClick}
+      onKeyDown={handleCellKeyDown}
+      tabIndex={0}
     >
       {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
+        <FormulaAutocomplete
           value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
+          onChange={setEditValue}
+          onCommit={handleCommit}
           onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="w-full h-full px-1.5 py-0.5 bg-background border-0 outline-none text-xs font-mono"
         />
       ) : (
         <div
