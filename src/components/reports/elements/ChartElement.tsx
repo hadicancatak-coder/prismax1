@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { ChartWizardDialog } from "../ChartWizardDialog";
+import { ChartInsights } from "../ChartInsights";
 import {
   LineChart,
   Line,
@@ -125,6 +126,15 @@ export function ChartElement({ data, onChange, isActive, allElements }: ChartEle
             </Button>
           </div>
         </div>
+      )}
+
+      {/* AI Insights */}
+      {data.sourceTableId && chartData.length > 0 && (
+        <ChartInsights 
+          chartData={chartData} 
+          chartType={data.chartType} 
+          title={data.title} 
+        />
       )}
 
       {/* Chart Wizard Dialog */}
