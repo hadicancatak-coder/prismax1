@@ -33,11 +33,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-      }),
+      StarterKit,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {

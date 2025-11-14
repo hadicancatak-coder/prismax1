@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusLog } from "@/lib/statusLogService";
@@ -58,6 +58,9 @@ export function StatusLogDetailDialog({
               </div>
             </div>
           </div>
+          <DialogDescription>
+            View detailed information about this status log entry.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
