@@ -12,88 +12,96 @@ interface ReportSidebarProps {
 export function ReportSidebar({ onAddElement, isOpen, onToggle }: ReportSidebarProps) {
   return (
     <>
-      {/* Floating toggle button - always visible */}
+      {/* Toggle button - always visible with higher z-index */}
       <Button
-        variant="outline"
-        size="icon"
         onClick={onToggle}
-        className="fixed left-4 top-24 z-50 shadow-md bg-card"
+        size="icon"
+        variant="outline"
+        className={cn(
+          "fixed top-24 z-[60] shadow-lg transition-all duration-300",
+          isOpen ? "left-[17rem]" : "left-4"
+        )}
       >
         {isOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </Button>
 
       {/* Sidebar panel */}
-      <div className={cn(
-        "fixed left-16 top-24 z-50 transition-all duration-300",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="bg-card border rounded-lg shadow-lg overflow-hidden">
-          <div className="flex flex-col gap-1 p-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAddElement('table')}
-                    className="h-12 w-12"
-                  >
-                    <Table className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Add Table</p>
-                </TooltipContent>
-              </Tooltip>
+      <div
+        className={cn(
+          "fixed left-4 top-24 z-50 w-64 rounded-lg border bg-card p-4 shadow-lg transition-all duration-300",
+          isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+        )}
+      >
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold mb-3">Add Elements</h3>
+            <div className="space-y-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onAddElement('table')}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <Table className="mr-2 h-4 w-4" />
+                      Add Table
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Insert a data table with spreadsheet capabilities</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAddElement('text')}
-                    className="h-12 w-12"
-                  >
-                    <FileText className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Add Text Block</p>
-                </TooltipContent>
-              </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onAddElement('text')}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Add Text
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Insert a rich text block</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAddElement('chart')}
-                    className="h-12 w-12"
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Add Chart</p>
-                </TooltipContent>
-              </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onAddElement('chart')}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Add Chart
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Insert a chart (bar, line, area)</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAddElement('image')}
-                    className="h-12 w-12"
-                  >
-                    <Image className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Add Image</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => onAddElement('image')}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <Image className="mr-2 h-4 w-4" />
+                      Add Image
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Insert an image with optional caption</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </div>
