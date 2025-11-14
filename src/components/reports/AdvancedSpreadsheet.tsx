@@ -3,6 +3,7 @@ import { DataGrid, Column, RenderCellProps, RenderEditCellProps } from 'react-da
 import 'react-data-grid/lib/styles.css';
 import { SpreadsheetToolbar } from './SpreadsheetToolbar';
 import { ChartGeneratorDialog } from './ChartGeneratorDialog';
+import { FormulaBar } from './FormulaBar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from '@/components/ui/context-menu';
 import type { AdvancedSpreadsheetData, AdvancedCellData, CellStyle, ChartConfig } from '@/types/spreadsheet';
 import { evaluateFormula, isFormula, recalculateAll } from '@/lib/formulaParser';
@@ -47,6 +48,7 @@ export function AdvancedSpreadsheet({
   const [cellData, setCellData] = useState<AdvancedSpreadsheetData>(initialData);
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [selectedRange, setSelectedRange] = useState<{ startRow: number; startCol: number; endRow: number; endCol: number } | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ col: number; row: number } | null>(null);
   const [charts, setCharts] = useState<ChartConfig[]>([]);
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
@@ -350,8 +352,33 @@ export function AdvancedSpreadsheet({
     return data;
   };
 
+  // Get formula bar value
+  const formulaBarValue = useMemo(() => {
+    if (!selectedCell) return '';
+    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    const cell = cellData[cellKey];
+    return cell?.formula || cell?.value?.toString() || '';
+  }, [selectedCell, cellData]);
+
+  // Update formula bar value
+  const handleFormulaBarChange = (value: string) => {
+    if (!selectedCell) return;
+    handleCellEdit(selectedCell.col, selectedCell.row, value);
+  };
+
+  const handleFormulaBarCommit = () => {
+    // Just blur, the autocomplete will handle commit
+  };
+
   return (
     <div className="flex flex-col h-full">
+      <FormulaBar
+        selectedCell={selectedCell ? getCellKey(selectedCell.col, selectedCell.row) : null}
+        value={formulaBarValue}
+        onChange={handleFormulaBarChange}
+        onCommit={handleFormulaBarCommit}
+      />
+
       <SpreadsheetToolbar
         onAddRow={addRow}
         onAddColumn={addColumn}
@@ -376,6 +403,12 @@ export function AdvancedSpreadsheet({
           className="rdg-light h-full"
           style={{ height: '100%' }}
           rowKeyGetter={(row) => row.rowIdx}
+          onCellClick={(args) => {
+            const colIdx = columns.findIndex(c => c.key === args.column.key);
+            if (colIdx > 0) {
+              setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
+            }
+          }}
         />
       </div>
 
