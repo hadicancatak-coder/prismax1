@@ -26,7 +26,7 @@ export function WorkspaceCard({
 
   return (
     <Card 
-      className="cursor-pointer hover:bg-card-hover transition-all duration-200 group"
+      className="card-glow cursor-pointer hover:bg-card-hover transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,82,204,0.3)]"
       onClick={onClick}
     >
       <CardHeader className="pb-3">

@@ -126,7 +126,7 @@ export function MyTasks() {
   ];
 
   return (
-    <Card className="p-6">
+    <Card className="card-glow hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] transition-all duration-300 p-6">
       <h2 className="text-section-title mb-6">My Tasks</h2>
       <div className="space-y-2">
         {taskCategories.map((category) => (

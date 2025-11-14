@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Save, FolderOpen, FileJson, FilePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { ReportSidebar } from "@/components/reports/ReportSidebar";
+import { SpreadsheetToolbar } from "@/components/reports/SpreadsheetToolbar";
 import { ReportCanvas } from "@/components/reports/ReportCanvas";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import { LoadReportDialog } from "@/components/reports/LoadReportDialog";
@@ -24,7 +24,6 @@ export default function CustomReports() {
   });
   
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [reportExists, setReportExists] = useState(false);
@@ -208,9 +207,9 @@ export default function CustomReports() {
     <>
       <GlobalBubbleMenu />
       
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background page-transition">
         {/* Header */}
-        <div className="border-b bg-card sticky top-0 z-40">
+        <div className="border-b border-white/10 bg-card sticky top-0 z-40">
           <div className="px-4 sm:px-6 lg:px-12 py-4 flex items-center justify-between gap-4">
             <div className="flex-1 max-w-md">
               <Label htmlFor="reportName" className="text-xs text-muted-foreground">
@@ -246,11 +245,11 @@ export default function CustomReports() {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <ReportSidebar
+        {/* Excel-style Toolbar */}
+        <SpreadsheetToolbar
           onAddElement={handleAddElement}
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onSave={handleSave}
+          onLoad={() => setLoadDialogOpen(true)}
         />
 
         {/* Canvas */}
