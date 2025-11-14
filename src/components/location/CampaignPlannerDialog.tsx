@@ -120,7 +120,13 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
   
   // Calculate reach metrics when placements change
   useEffect(() => {
+    // Calculate selectedPlacements inside the effect to avoid infinite loop
+    const selectedPlacements = suggestedPlacements.filter(p => manualSelections.has(p.location.id));
+    
     if (selectedPlacements.length > 0 && formData.start_date && formData.end_date) {
+      const duration = formData.start_date && formData.end_date 
+        ? calculateDuration(formData.start_date, formData.end_date) 
+        : 0;
       const metrics = calculateReach(
         selectedPlacements,
         duration,
@@ -131,7 +137,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
     } else {
       setReachMetrics(null);
     }
-  }, [selectedPlacements, duration, formData.start_date, formData.end_date]);
+  }, [suggestedPlacements, manualSelections, formData.start_date, formData.end_date]);
 
   const toggleCity = (city: string) => {
     setSelectedCities(prev =>
