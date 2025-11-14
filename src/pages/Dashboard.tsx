@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { NewsTicker } from "@/components/NewsTicker";
 import { ToolsGallery } from "@/components/dashboard/ToolsGallery";
 import { WorkspaceSection } from "@/components/dashboard/WorkspaceSection";
+import { RecentlyViewed } from "@/components/dashboard/RecentlyViewed";
 import { MyTasks } from "@/components/dashboard/MyTasks";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 
@@ -22,6 +23,8 @@ export default function Dashboard() {
       <NewsTicker />
 
       <ToolsGallery />
+
+      <RecentlyViewed />
 
       <WorkspaceSection />
 
