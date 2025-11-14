@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +7,10 @@ import { toast } from "@/hooks/use-toast";
 import { ReportSidebar } from "@/components/reports/ReportSidebar";
 import { ReportCanvas } from "@/components/reports/ReportCanvas";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
+import { LoadReportDialog } from "@/components/reports/LoadReportDialog";
 import type { ReportDocument, ReportElement } from "@/types/report";
 import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON } from "@/lib/reportHelpers";
+import { useCustomReports } from "@/hooks/useCustomReports";
 
 export default function CustomReports() {
   const [report, setReport] = useState<ReportDocument>({
@@ -21,6 +23,16 @@ export default function CustomReports() {
   
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [reportExists, setReportExists] = useState(false);
+
+  const { reports, createReport, updateReport, isCreating, isUpdating } = useCustomReports();
+
+  // Check if current report exists in database
+  useEffect(() => {
+    const exists = reports.some(r => r.id === report.id);
+    setReportExists(exists);
+  }, [reports, report.id]);
 
   const handleAddElement = (type: 'table' | 'text' | 'chart' | 'image') => {
     const position = report.elements.length;
@@ -119,13 +131,12 @@ export default function CustomReports() {
   };
 
   const handleSave = () => {
-    const dataStr = JSON.stringify(report);
-    localStorage.setItem(`report_${report.id}`, dataStr);
-    
-    toast({
-      title: "Report Saved",
-      description: `"${report.name}" has been saved successfully.`,
-    });
+    if (reportExists) {
+      updateReport(report);
+    } else {
+      createReport(report);
+      setReportExists(true);
+    }
   };
 
   const handleExportJSON = () => {
@@ -146,11 +157,26 @@ export default function CustomReports() {
     });
   };
 
-  const handleLoad = () => {
+  const handleLoad = (loadedReport: ReportDocument) => {
+    setReport(loadedReport);
+    setActiveElementId(null);
+    setReportExists(true);
     toast({
-      title: "Load Report",
-      description: "This feature will allow you to load previously saved reports.",
+      title: "Report Loaded",
+      description: `"${loadedReport.name}" has been loaded successfully.`,
     });
+  };
+
+  const handleNewReport = () => {
+    setReport({
+      id: crypto.randomUUID(),
+      name: "Untitled Report",
+      elements: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    setActiveElementId(null);
+    setReportExists(false);
   };
 
   return (
@@ -175,7 +201,7 @@ export default function CustomReports() {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleLoad}>
+              <Button variant="outline" size="sm" onClick={() => setLoadDialogOpen(true)}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Load
               </Button>
@@ -183,9 +209,9 @@ export default function CustomReports() {
                 <FileJson className="h-4 w-4 mr-2" />
                 Export JSON
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} disabled={isCreating || isUpdating}>
                 <Save className="h-4 w-4 mr-2" />
-                Save
+                {reportExists ? "Update" : "Save"}
               </Button>
             </div>
           </div>
@@ -207,6 +233,13 @@ export default function CustomReports() {
           onElementUpdate={handleElementUpdate}
           onElementDelete={handleElementDelete}
           onElementDuplicate={handleElementDuplicate}
+        />
+
+        {/* Load Report Dialog */}
+        <LoadReportDialog
+          open={loadDialogOpen}
+          onOpenChange={setLoadDialogOpen}
+          onLoadReport={handleLoad}
         />
       </div>
     </>
