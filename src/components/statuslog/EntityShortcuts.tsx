@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CustomizeShortcutsDialog } from "./CustomizeShortcutsDialog";
 
 interface EntityShortcutsProps {
@@ -17,30 +17,41 @@ export const EntityShortcuts = ({ logs, selectedEntity, onEntityClick }: EntityS
   const [preferredEntityIds, setPreferredEntityIds] = useState<string[]>([]);
   const [showCustomize, setShowCustomize] = useState(false);
 
-  // Load preferences from localStorage
+  // Load preferences from localStorage once on mount
   useEffect(() => {
     const saved = localStorage.getItem("statusLogEntityShortcuts");
     if (saved) {
       setPreferredEntityIds(JSON.parse(saved));
-    } else {
-      // Default to first 6 entities by display order
-      setPreferredEntityIds(allEntities.slice(0, 6).map(e => e.id));
     }
-  }, [allEntities]);
+  }, []);
+
+  // Set default entities when allEntities loads and no saved preferences exist
+  useEffect(() => {
+    if (allEntities.length > 0 && preferredEntityIds.length === 0) {
+      const saved = localStorage.getItem("statusLogEntityShortcuts");
+      if (!saved) {
+        setPreferredEntityIds(allEntities.slice(0, 6).map(e => e.id));
+      }
+    }
+  }, [allEntities.length, preferredEntityIds.length]);
 
   // Calculate log counts per entity
-  const entityCounts = logs.reduce((acc, log) => {
-    if (log.entity) {
-      acc[log.entity] = (acc[log.entity] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  const entityCounts = useMemo(() => {
+    return logs.reduce((acc, log) => {
+      if (log.entity) {
+        acc[log.entity] = (acc[log.entity] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  }, [logs]);
 
   // Get entities to display
-  const displayEntities = preferredEntityIds
-    .map(id => allEntities.find(e => e.id === id))
-    .filter(Boolean)
-    .slice(0, 8);
+  const displayEntities = useMemo(() => {
+    return preferredEntityIds
+      .map(id => allEntities.find(e => e.id === id))
+      .filter(Boolean)
+      .slice(0, 8);
+  }, [preferredEntityIds, allEntities]);
 
   const handleSavePreferences = (entityIds: string[]) => {
     setPreferredEntityIds(entityIds);
