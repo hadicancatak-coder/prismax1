@@ -40,19 +40,30 @@ export class UtmRuleEngine {
   }
 
   static async getAllRules(): Promise<UtmRule[]> {
-    const { data } = await supabase.from('utm_automation_rules').select('*').eq('is_active', true);
-    return (data || []) as any;
+    try {
+      const { data, error } = await supabase
+        .from('utm_automation_rules' as any)
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return (data || []) as unknown as UtmRule[];
+    } catch (error) {
+      console.error('Error fetching rules:', error);
+      return [];
+    }
   }
 
   static async saveRule(rule: Partial<UtmRule>) {
-    if (rule.id) {
-      return await supabase.from('utm_automation_rules').update(rule).eq('id', rule.id);
-    }
-    return await supabase.from('utm_automation_rules').insert(rule);
+    const { error } = rule.id
+      ? await supabase.from('utm_automation_rules' as any).update(rule).eq('id', rule.id)
+      : await supabase.from('utm_automation_rules' as any).insert(rule);
+    return { success: !error, error: error?.message };
   }
 
   static async deleteRule(ruleId: string) {
-    return await supabase.from('utm_automation_rules').delete().eq('id', ruleId);
+    const { error } = await supabase.from('utm_automation_rules' as any).delete().eq('id', ruleId);
+    return { success: !error, error: error?.message };
   }
 
   static async testRule(rule: UtmRule, context: UtmRuleContext): Promise<string> {
