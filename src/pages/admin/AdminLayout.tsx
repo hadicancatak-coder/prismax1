@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Shield, AlertCircle, Activity, FileText, ShieldCheck, Database, Target } from "lucide-react";
+import { LayoutDashboard, Users, Shield, AlertCircle, Activity, FileText, ShieldCheck, Database, Target, Link2 } from "lucide-react";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -49,6 +49,10 @@ export default function AdminLayout() {
           <TabsTrigger value="errors" className="gap-2">
             <AlertCircle className="h-4 w-4" />
             <span className="hidden sm:inline">Errors</span>
+          </TabsTrigger>
+          <TabsTrigger value="utm-automation" className="gap-2">
+            <Link2 className="h-4 w-4" />
+            <span className="hidden sm:inline">UTM Rules</span>
           </TabsTrigger>
           <TabsTrigger value="activity" className="gap-2">
             <Activity className="h-4 w-4" />

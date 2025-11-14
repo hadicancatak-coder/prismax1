@@ -17,7 +17,7 @@ import { useCreateUtmLink } from "@/hooks/useUtmLinks";
 import { toast } from "sonner";
 import { detectLPMetadata } from "@/lib/lpDetector";
 import { LPDetectionCard } from "./LPDetectionCard";
-import { buildUtmUrl, generateUtmCampaignByPurpose, calculateUtmMedium } from "@/lib/utmHelpers";
+import { buildUtmUrl, generateUtmCampaignByPurpose, calculateUtmMedium, generateUtmContent } from "@/lib/utmHelpers";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -109,7 +109,8 @@ export function UtmBuilder() {
         selectedEntities.forEach((entityName) => {
           const entity = entities.find(e => e.name === entityName);
           const campaignName = campaigns.find(c => c.name === entityName)?.name || entityName;
-          const utmCampaign = generateUtmCampaignByPurpose('AO', campaignName);
+          const utmCampaign = generateUtmCampaignByPurpose('AO', platformName, campaignName);
+          const utmContent = generateUtmContent(lpUrl, campaignName);
           
           // Use entity's website_param if available, otherwise fallback to entity name
           const websiteParam = entity?.website_param || entity?.code || entityName.toLowerCase();
@@ -119,7 +120,8 @@ export function UtmBuilder() {
             utmSource: platformName.toLowerCase().replace(/\s+/g, ''),
             utmMedium,
             utmCampaign,
-            utmContent: deviceType,
+            utmContent,
+            utmTerm: deviceType === 'mobile' ? 'mobile' : undefined,
             customParams: withExtensions ? { extensions: 'true', entity: websiteParam } : { entity: websiteParam },
           });
 
@@ -136,14 +138,16 @@ export function UtmBuilder() {
           });
         });
       } else if (purpose === 'Webinar') {
-        const utmCampaign = generateUtmCampaignByPurpose('Webinar', undefined, webinarName);
+        const utmCampaign = generateUtmCampaignByPurpose('Webinar', platformName, undefined, webinarName);
+        const utmContent = generateUtmContent(lpUrl, webinarName);
         
         const url = buildUtmUrl({
           baseUrl: lpUrl,
           utmSource: platformName.toLowerCase().replace(/\s+/g, ''),
           utmMedium,
           utmCampaign,
-          utmContent: deviceType,
+          utmContent,
+          utmTerm: deviceType === 'mobile' ? 'mobile' : undefined,
         });
 
         links.push({
@@ -157,10 +161,17 @@ export function UtmBuilder() {
           purpose: 'Webinar',
         });
       } else if (purpose === 'Seminar') {
-        const utmCampaign = generateUtmCampaignByPurpose('Seminar', undefined, undefined, city);
+        const utmCampaign = generateUtmCampaignByPurpose('Seminar', platformName, undefined, undefined, city);
+        const utmContent = generateUtmContent(lpUrl, city);
         
         const url = buildUtmUrl({
           baseUrl: lpUrl,
+          utmSource: platformName.toLowerCase().replace(/\s+/g, ''),
+          utmMedium,
+          utmCampaign,
+          utmContent,
+          utmTerm: deviceType === 'mobile' ? 'mobile' : undefined,
+        });
           utmSource: platformName.toLowerCase().replace(/\s+/g, ''),
           utmMedium,
           utmCampaign,

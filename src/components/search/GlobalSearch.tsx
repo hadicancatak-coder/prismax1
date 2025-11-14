@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Clock, Sparkles } from "lucide-react";
+import { Search, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SearchResult {
@@ -12,6 +13,7 @@ interface SearchResult {
   description: string;
   url: string;
   entity_type: string;
+  category: string;
   workspace_id?: string;
 }
 
@@ -30,15 +32,26 @@ export function GlobalSearch() {
     }
   }, []);
 
-  // Search functionality disabled (search_index table doesn't exist yet)
+  // Search functionality with Supabase
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
       return;
     }
 
-    // TODO: Implement search when search_index table is created
-    setResults([]);
+    const searchContent = async () => {
+      const { data } = await supabase.rpc('search_content' as any, {
+        query_text: query,
+        limit_results: 20
+      });
+
+      if (data) {
+        setResults(data as any);
+      }
+    };
+
+    const debounce = setTimeout(searchContent, 300);
+    return () => clearTimeout(debounce);
   }, [query]);
 
   // Keyboard shortcut (Cmd+K / Ctrl+K)
@@ -66,19 +79,37 @@ export function GlobalSearch() {
   };
 
   const getEntityIcon = (type: string) => {
-    switch (type) {
-      case "task":
-        return "📋";
-      case "report":
-        return "📊";
-      case "campaign":
-        return "📢";
-      case "status_log":
-        return "📝";
-      default:
-        return "📄";
-    }
+    const icons: Record<string, string> = {
+      task: "✓",
+      utm_link: "🔗",
+      campaign: "📢",
+      report: "📊",
+      status_log: "📝",
+      location: "📍",
+      ad: "📱"
+    };
+    return icons[type] || "📄";
   };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+      Tasks: "✓",
+      Marketing: "📢",
+      Reports: "📊",
+      Operations: "⚙️",
+      Locations: "📍"
+    };
+    return icons[category] || "📁";
+  };
+
+  // Group results by category
+  const groupedResults = results.reduce((acc, result) => {
+    if (!acc[result.category]) {
+      acc[result.category] = [];
+    }
+    acc[result.category].push(result);
+    return acc;
+  }, {} as Record<string, typeof results>);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
