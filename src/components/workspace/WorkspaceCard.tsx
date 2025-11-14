@@ -26,27 +26,27 @@ export function WorkspaceCard({
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all group"
+      className="cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200 group bg-white border border-gray-200"
       onClick={onClick}
     >
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div 
-            className="p-3 rounded-lg group-hover:scale-110 transition-transform"
-            style={{ backgroundColor: `${color}15` }}
+            className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform"
+            style={{ backgroundColor: `${color}20` }}
           >
-            <Icon className="h-6 w-6" style={{ color }} />
+            <Icon className="h-8 w-8" style={{ color }} />
           </div>
-          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+          <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
             {boardCount} {boardCount === 1 ? 'board' : 'boards'}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        <CardTitle className="text-lg group-hover:text-primary transition-smooth">
+        <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
           {name}
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-sm text-gray-600">
           {description}
         </CardDescription>
       </CardContent>

@@ -44,20 +44,20 @@ export function BoardCard({
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-md transition-all group relative"
+      className="cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200 group relative bg-white border border-gray-200"
       onClick={() => navigate(route)}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div 
-              className="p-2 rounded-lg group-hover:scale-110 transition-transform"
-              style={{ backgroundColor: color ? `${color}15` : 'hsl(var(--muted))' }}
+              className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform"
+              style={{ backgroundColor: color ? `${color}20` : 'hsl(var(--muted))' }}
             >
-              <Icon className="h-5 w-5" style={{ color: color || 'hsl(var(--foreground))' }} />
+              <Icon className="h-8 w-8" style={{ color: color || 'hsl(var(--primary))' }} />
             </div>
             <div>
-              <CardTitle className="text-base group-hover:text-primary transition-smooth">
+              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
                 {name}
               </CardTitle>
             </div>
@@ -69,23 +69,23 @@ export function BoardCard({
             onClick={handleStarClick}
           >
             <Star 
-              className={`h-4 w-4 ${starred ? 'fill-yellow-400 text-yellow-400' : ''}`} 
+              className={`h-4 w-4 ${starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`} 
             />
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <CardDescription className="text-xs line-clamp-2">
+      <CardContent className="space-y-3">
+        <CardDescription className="text-sm text-gray-600 line-clamp-2">
           {description}
         </CardDescription>
         <div className="flex items-center justify-between pt-2">
           {stats && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200">
               {stats}
             </Badge>
           )}
           {lastUpdated && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-500">
               {lastUpdated}
             </span>
           )}

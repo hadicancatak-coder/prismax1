@@ -10,15 +10,16 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="px-4 md:px-8 lg:px-12 xl:px-24 py-8 bg-background min-h-screen space-y-8">
-      <header>
-        <h1 className="text-page-title text-foreground mb-1">
-          Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
-        </h1>
-        <p className="text-body text-muted-foreground">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
-      </header>
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#091E42] via-[#0F2E54] to-[#1B3A5F]">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 space-y-12">
+        <header>
+          <h1 className="text-page-title text-white mb-2">
+            Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
+          </h1>
+          <p className="text-body text-white/70">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </header>
 
       <NewsTicker />
 
@@ -28,9 +29,10 @@ export default function Dashboard() {
 
       <WorkspaceSection />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        <MyTasks />
-        <ActivityFeed />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <MyTasks />
+          <ActivityFeed />
+        </div>
       </div>
     </div>
   );
