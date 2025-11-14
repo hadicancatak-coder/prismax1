@@ -7,7 +7,7 @@ export interface StatusLog {
   created_by: string;
   title: string;
   description?: string;
-  log_type: 'issue' | 'blocker' | 'plan' | 'update' | 'note';
+  log_type: 'issue' | 'blocker' | 'plan' | 'update' | 'note' | 'brief';
   entity?: string[];
   platform?: string;
   campaign_name?: string;
@@ -17,6 +17,8 @@ export interface StatusLog {
   task_id?: string;
   converted_at?: string;
   converted_by?: string;
+  socialua_update?: string;
+  ppc_update?: string;
   profiles?: {
     name: string;
     email: string;

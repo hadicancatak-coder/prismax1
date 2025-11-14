@@ -12,8 +12,8 @@ interface ReportSidebarProps {
 export function ReportSidebar({ onAddElement, isOpen, onToggle }: ReportSidebarProps) {
   return (
     <div className={cn(
-      "fixed left-4 top-24 z-50 transition-all duration-300",
-      isOpen ? "translate-x-0" : "-translate-x-20"
+      "fixed right-4 top-24 z-50 transition-all duration-300",
+      isOpen ? "translate-x-0" : "translate-x-20"
     )}>
       <div className="bg-card border rounded-lg shadow-lg overflow-hidden">
         <div className="flex flex-col gap-1 p-2">

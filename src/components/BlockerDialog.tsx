@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -148,34 +148,31 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
 
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Detailed description of the blocker"
-              rows={3}
+              minHeight="80px"
             />
           </div>
 
           <div>
             <Label htmlFor="stuckReason">Why It's Stuck</Label>
-            <Textarea
-              id="stuckReason"
+            <RichTextEditor
               value={stuckReason}
-              onChange={(e) => setStuckReason(e.target.value)}
+              onChange={setStuckReason}
               placeholder="Explain why this task is blocked"
-              rows={2}
+              minHeight="60px"
             />
           </div>
 
           <div>
             <Label htmlFor="fixProcess">Process to Fix</Label>
-            <Textarea
-              id="fixProcess"
+            <RichTextEditor
               value={fixProcess}
-              onChange={(e) => setFixProcess(e.target.value)}
+              onChange={setFixProcess}
               placeholder="Steps needed to resolve this blocker"
-              rows={2}
+              minHeight="60px"
             />
           </div>
 
