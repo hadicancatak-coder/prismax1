@@ -183,57 +183,35 @@ export function AdvancedSpreadsheet({
           const style = cell?.style;
 
           return (
-            <ContextMenu>
-              <ContextMenuTrigger asChild>
-                <div
-                  className={cn(
-                    "h-full w-full px-2 py-1 cursor-cell",
-                    isSelected && "ring-2 ring-primary ring-inset"
-                  )}
-                  style={{
-                    backgroundColor: style?.backgroundColor,
-                    color: style?.textColor,
-                    textAlign: style?.textAlign || 'left',
-                    fontWeight: style?.bold ? 'bold' : 'normal',
-                    fontStyle: style?.italic ? 'italic' : 'normal',
-                    textDecoration: style?.underline ? 'underline' : 'none',
-                    borderTop: style?.borderTop ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                    borderRight: style?.borderRight ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                    borderBottom: style?.borderBottom ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                    borderLeft: style?.borderLeft ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                  }}
-                  onClick={() => {
-                    setSelectedCells(new Set([cellKey]));
-                    setSelectedRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
-                  }}
-                  onContextMenu={() => setContextMenuCell({ col: colIndex, row: rowIndex })}
-                >
-                  {displayValue}
-                </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => handleCellEdit(colIndex, rowIndex, '')}>
-                  Clear Cell
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => {
-                  const cell = cellData[cellKey];
-                  if (cell) {
-                    navigator.clipboard.writeText(String(cell.value));
-                    toast.success('Copied to clipboard');
-                  }
-                }}>
-                  Copy
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => deleteRow(rowIndex)}>
-                  Delete Row
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => deleteColumn(colIndex)}>
-                  Delete Column
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+            <div
+              className={cn(
+                "h-full w-full px-2 py-1 cursor-cell",
+                isSelected && "ring-2 ring-primary ring-inset"
+              )}
+              style={{
+                backgroundColor: style?.backgroundColor,
+                color: style?.textColor,
+                textAlign: style?.textAlign || 'left',
+                fontWeight: style?.bold ? 'bold' : 'normal',
+                fontStyle: style?.italic ? 'italic' : 'normal',
+                textDecoration: style?.underline ? 'underline' : 'none',
+                borderTop: style?.borderTop ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
+                borderRight: style?.borderRight ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
+                borderBottom: style?.borderBottom ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
+                borderLeft: style?.borderLeft ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
+              }}
+              onClick={() => {
+                setSelectedCells(new Set([cellKey]));
+                setSelectedRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
+                setSelectedCell({ col: colIndex, row: rowIndex });
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setContextMenuCell({ col: colIndex, row: rowIndex });
+              }}
+            >
+              {displayValue}
+            </div>
           );
         },
       });
@@ -357,13 +335,17 @@ export function AdvancedSpreadsheet({
     if (!selectedCell) return '';
     const cellKey = getCellKey(selectedCell.col, selectedCell.row);
     const cell = cellData[cellKey];
-    return cell?.formula || cell?.value?.toString() || '';
+    if (!cell) return '';
+    return cell.formula || cell.value?.toString() || '';
   }, [selectedCell, cellData]);
 
   // Update formula bar value
   const handleFormulaBarChange = (value: string) => {
     if (!selectedCell) return;
-    handleCellEdit(selectedCell.col, selectedCell.row, value);
+    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    if (cellKey) {
+      handleCellEdit(selectedCell.col, selectedCell.row, value);
+    }
   };
 
   const handleFormulaBarCommit = () => {
@@ -382,8 +364,20 @@ export function AdvancedSpreadsheet({
       <SpreadsheetToolbar
         onAddRow={addRow}
         onAddColumn={addColumn}
-        onDeleteRow={() => contextMenuCell && deleteRow(contextMenuCell.row)}
-        onDeleteColumn={() => contextMenuCell && deleteColumn(contextMenuCell.col)}
+        onDeleteRow={() => {
+          if (contextMenuCell) {
+            deleteRow(contextMenuCell.row);
+          } else if (selectedCell) {
+            deleteRow(selectedCell.row);
+          }
+        }}
+        onDeleteColumn={() => {
+          if (contextMenuCell) {
+            deleteColumn(contextMenuCell.col);
+          } else if (selectedCell) {
+            deleteColumn(selectedCell.col);
+          }
+        }}
         onExportCSV={exportToCSV}
         onImportCSV={importFromCSV}
         onCreateChart={() => setShowChartDialog(true)}
@@ -396,21 +390,55 @@ export function AdvancedSpreadsheet({
         hasSelection={selectedCells.size > 0}
       />
 
-      <div className="flex-1 overflow-auto">
-        <DataGrid
-          columns={columns}
-          rows={rows}
-          className="rdg-light h-full"
-          style={{ height: '100%' }}
-          rowKeyGetter={(row) => row.rowIdx}
-          onCellClick={(args) => {
-            const colIdx = columns.findIndex(c => c.key === args.column.key);
-            if (colIdx > 0) {
-              setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
-            }
-          }}
-        />
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="flex-1 overflow-auto">
+            <DataGrid
+              columns={columns}
+              rows={rows}
+              className="rdg-light h-full"
+              style={{ height: '100%' }}
+              rowKeyGetter={(row) => row.rowIdx}
+              onCellClick={(args) => {
+                const colIdx = columns.findIndex(c => c.key === args.column.key);
+                if (colIdx > 0) {
+                  setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
+                }
+              }}
+            />
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          {contextMenuCell && (
+            <>
+              <ContextMenuItem onClick={() => {
+                const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
+                handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
+              }}>
+                Clear Cell
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => {
+                const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
+                const cell = cellData[cellKey];
+                if (cell) {
+                  navigator.clipboard.writeText(String(cell.value));
+                  toast.success('Copied to clipboard');
+                }
+              }}>
+                Copy
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => deleteRow(contextMenuCell.row)}>
+                Delete Row
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => deleteColumn(contextMenuCell.col)}>
+                Delete Column
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
 
       <ChartGeneratorDialog
         open={showChartDialog}

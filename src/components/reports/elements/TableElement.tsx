@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AdvancedSpreadsheet } from "../AdvancedSpreadsheet";
+import { SpreadsheetErrorBoundary } from "../SpreadsheetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -44,13 +45,15 @@ export function TableElement({ data, onChange, isActive }: TableElementProps) {
       </div>
       
       <div className="flex-1 min-h-0">
-        <AdvancedSpreadsheet
-          onDataChange={handleDataChange}
-          onChartsChange={handleChartsChange}
-          initialData={data.cells as AdvancedSpreadsheetData}
-          initialRows={data.rows}
-          initialCols={data.cols}
-        />
+        <SpreadsheetErrorBoundary>
+          <AdvancedSpreadsheet
+            onDataChange={handleDataChange}
+            onChartsChange={handleChartsChange}
+            initialData={data.cells as AdvancedSpreadsheetData}
+            initialRows={data.rows}
+            initialCols={data.cols}
+          />
+        </SpreadsheetErrorBoundary>
       </div>
     </div>
   );

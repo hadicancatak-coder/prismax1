@@ -19,8 +19,8 @@ export function FormulaBar({ selectedCell, value, onChange, onCommit }: FormulaB
       <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-[#282E33]">
         {/* Cell reference */}
         <div className="flex items-center gap-2 min-w-[80px]">
-          <span className="text-xs font-mono text-muted-foreground">
-            {selectedCell || '--'}
+          <span className="text-xs font-mono text-gray-400">
+            {selectedCell || 'No cell selected'}
           </span>
         </div>
 
@@ -35,14 +35,16 @@ export function FormulaBar({ selectedCell, value, onChange, onCommit }: FormulaB
         </Button>
 
         {/* Formula input */}
-        <div className="flex-1 min-w-0">
-          <FormulaAutocomplete
-            value={value}
-            onChange={onChange}
-            onCommit={onCommit}
-            className="h-7 px-2 text-sm"
-          />
-        </div>
+        {selectedCell && (
+          <div className="flex-1 min-w-0">
+            <FormulaAutocomplete
+              value={value}
+              onChange={onChange}
+              onCommit={onCommit}
+              className="h-7 px-2 text-sm"
+            />
+          </div>
+        )}
 
         {/* Help button */}
         <Button

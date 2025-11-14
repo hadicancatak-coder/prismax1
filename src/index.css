@@ -176,6 +176,46 @@ All colors MUST be HSL.
     color: hsl(var(--gray-400)); 
   }
 
+  .hover-text {
+    @apply hover:text-primary transition-colors;
+  }
+
+  .hover-bg-subtle {
+    @apply hover:bg-[#2C3237] transition-colors;
+  }
+
+  /* React Data Grid Dark Theme Overrides */
+  .rdg {
+    --rdg-background-color: #1a1f25;
+    --rdg-header-background-color: #282e33;
+    --rdg-row-hover-background-color: #2c3237;
+    --rdg-row-selected-background-color: #0052cc1a;
+    --rdg-border-color: rgba(255, 255, 255, 0.1);
+    --rdg-color: #ffffff;
+    --rdg-selection-color: #0052cc;
+    
+    border: 1px solid var(--rdg-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .rdg-cell {
+    border-right: 1px solid var(--rdg-border-color);
+    border-bottom: 1px solid var(--rdg-border-color);
+    color: var(--rdg-color);
+    background-color: var(--rdg-background-color);
+  }
+
+  .rdg-header-row {
+    background-color: var(--rdg-header-background-color);
+    font-weight: 600;
+  }
+
+  .rdg-cell:focus-within {
+    outline: 2px solid var(--rdg-selection-color);
+    outline-offset: -2px;
+  }
+
   /* Formula syntax highlighting */
   .formula-syntax-overlay {
     position: absolute;
