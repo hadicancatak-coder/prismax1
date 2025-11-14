@@ -73,13 +73,12 @@ export function ReportSidebar({ onAddElement, isOpen, onToggle }: ReportSidebarP
                   size="icon"
                   onClick={() => onAddElement('image')}
                   className="h-12 w-12"
-                  disabled
                 >
                   <Image className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Add Image (Phase 4)</p>
+                <p>Add Image</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
