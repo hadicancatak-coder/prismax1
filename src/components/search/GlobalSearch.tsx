@@ -30,29 +30,15 @@ export function GlobalSearch() {
     }
   }, []);
 
-  // Search functionality with debouncing
+  // Search functionality disabled (search_index table doesn't exist yet)
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
       return;
     }
 
-    const searchTimer = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from("search_index")
-        .select("*")
-        .textSearch("search_vector", query, {
-          type: "websearch",
-          config: "english",
-        })
-        .limit(10);
-
-      if (!error && data) {
-        setResults(data as SearchResult[]);
-      }
-    }, 300);
-
-    return () => clearTimeout(searchTimer);
+    // TODO: Implement search when search_index table is created
+    setResults([]);
   }, [query]);
 
   // Keyboard shortcut (Cmd+K / Ctrl+K)

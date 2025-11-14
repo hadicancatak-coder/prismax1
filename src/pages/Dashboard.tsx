@@ -1,8 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { NewsTicker } from "@/components/NewsTicker";
 import { ToolsGallery } from "@/components/dashboard/ToolsGallery";
-import { WorkspaceSection } from "@/components/dashboard/WorkspaceSection";
-import { RecentlyViewed } from "@/components/dashboard/RecentlyViewed";
 import { MyTasks } from "@/components/dashboard/MyTasks";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 
@@ -21,13 +19,9 @@ export default function Dashboard() {
           </p>
         </header>
 
-      <NewsTicker />
+        <NewsTicker />
 
-      <ToolsGallery />
-
-      <RecentlyViewed />
-
-      <WorkspaceSection />
+        <ToolsGallery />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           <MyTasks />
