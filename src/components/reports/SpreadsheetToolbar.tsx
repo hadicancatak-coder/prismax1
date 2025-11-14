@@ -18,7 +18,12 @@ import {
   Image,
   Save,
   FolderOpen,
+  Square,
+  Library,
+  Combine,
+  Split,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +43,10 @@ interface SpreadsheetToolbarProps {
   onSetAlignment?: (align: 'left' | 'center' | 'right') => void;
   onSetBackgroundColor?: (color: string) => void;
   onSetTextColor?: (color: string) => void;
+  onSetBorders?: (borderType: 'all' | 'outer' | 'top' | 'bottom' | 'left' | 'right' | 'none') => void;
+  onMergeCells?: () => void;
+  onSplitCells?: () => void;
+  onToggleFormulaLibrary?: () => void;
   onSave?: () => void;
   onLoad?: () => void;
   hasSelection?: boolean;
@@ -58,6 +67,10 @@ export function SpreadsheetToolbar({
   onSetAlignment,
   onSetBackgroundColor,
   onSetTextColor,
+  onSetBorders,
+  onMergeCells,
+  onSplitCells,
+  onToggleFormulaLibrary,
   onSave,
   onLoad,
   hasSelection = false,
@@ -247,6 +260,53 @@ export function SpreadsheetToolbar({
           <BarChart3 className="h-4 w-4 mr-1" />
           Chart
         </Button>
+      )}
+
+      {/* Borders & Merge Section */}
+      {(onSetBorders || onMergeCells || onSplitCells) && (
+        <div className="flex items-center gap-1">
+          {onSetBorders && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+                  <Square className="h-4 w-4 mr-1" />
+                  Borders
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => onSetBorders('all')}>All Borders</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('outer')}>Outer Border</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('top')}>Top Border</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('bottom')}>Bottom Border</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('left')}>Left Border</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('right')}>Right Border</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSetBorders('none')}>No Borders</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {onMergeCells && (
+            <Button onClick={onMergeCells} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Combine className="h-4 w-4 mr-1" />
+              Merge
+            </Button>
+          )}
+          {onSplitCells && (
+            <Button onClick={onSplitCells} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Split className="h-4 w-4 mr-1" />
+              Split
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Formula Library Toggle */}
+      {onToggleFormulaLibrary && (
+        <div className="flex items-center gap-1 ml-auto">
+          <Button onClick={onToggleFormulaLibrary} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+            <Library className="h-4 w-4 mr-1" />
+            Formulas
+          </Button>
+        </div>
       )}
     </div>
   );

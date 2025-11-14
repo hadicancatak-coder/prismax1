@@ -15,7 +15,7 @@ export function FormulaBar({ selectedCell, value, onChange, onCommit }: FormulaB
   const [showHelp, setShowHelp] = useState(false);
 
   return (
-    <>
+    <div className="relative">
       <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-[#282E33]">
         {/* Cell reference */}
         <div className="flex items-center gap-2 min-w-[80px]">
@@ -59,6 +59,6 @@ export function FormulaBar({ selectedCell, value, onChange, onCommit }: FormulaB
 
       {/* Help panel */}
       {showHelp && <FormulaHelpPanel onClose={() => setShowHelp(false)} />}
-    </>
+    </div>
   );
 }
