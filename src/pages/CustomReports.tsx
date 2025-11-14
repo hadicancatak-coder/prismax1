@@ -8,7 +8,7 @@ import { ReportSidebar } from "@/components/reports/ReportSidebar";
 import { ReportCanvas } from "@/components/reports/ReportCanvas";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import type { ReportDocument, ReportElement } from "@/types/report";
-import { createTableElement, createTextElement, exportReportToJSON } from "@/lib/reportHelpers";
+import { createTableElement, createTextElement, createChartElement, exportReportToJSON } from "@/lib/reportHelpers";
 
 export default function CustomReports() {
   const [report, setReport] = useState<ReportDocument>({
@@ -32,6 +32,9 @@ export default function CustomReports() {
         break;
       case 'text':
         newElement = createTextElement(position);
+        break;
+      case 'chart':
+        newElement = createChartElement(position);
         break;
       default:
         toast({

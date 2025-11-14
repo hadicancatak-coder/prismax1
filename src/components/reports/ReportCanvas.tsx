@@ -15,7 +15,8 @@ import {
 import { ReportElementWrapper } from "./ReportElementWrapper";
 import { TableElement } from "./elements/TableElement";
 import { TextElement } from "./elements/TextElement";
-import type { ReportElement, TableElementData, TextElementData } from "@/types/report";
+import { ChartElement } from "./elements/ChartElement";
+import type { ReportElement, TableElementData, TextElementData, ChartElementData } from "@/types/report";
 
 interface ReportCanvasProps {
   elements: ReportElement[];
@@ -80,6 +81,15 @@ export function ReportCanvas({
             data={element.data as TextElementData}
             onChange={(data) => onElementUpdate(element.id, data)}
             isActive={element.id === activeElementId}
+          />
+        );
+      case 'chart':
+        return (
+          <ChartElement
+            data={element.data as ChartElementData}
+            onChange={(data) => onElementUpdate(element.id, data)}
+            isActive={element.id === activeElementId}
+            allElements={elements}
           />
         );
       default:

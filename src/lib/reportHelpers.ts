@@ -1,4 +1,4 @@
-import type { ReportDocument, ReportElement, TableElementData, TextElementData } from "@/types/report";
+import type { ReportDocument, ReportElement, TableElementData, TextElementData, ChartElementData } from "@/types/report";
 
 export function generateElementId(type: string): string {
   return `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -32,6 +32,24 @@ export function createTextElement(position: number): ReportElement {
     data: {
       content: '<p>Start typing...</p>',
     } as TextElementData,
+  };
+}
+
+export function createChartElement(position: number): ReportElement {
+  return {
+    id: generateElementId('chart'),
+    type: 'chart',
+    position,
+    config: {
+      width: 'full',
+      height: 400,
+    },
+    data: {
+      chartType: 'bar',
+      xAxis: '',
+      yAxis: [],
+      title: 'New Chart',
+    } as ChartElementData,
   };
 }
 
