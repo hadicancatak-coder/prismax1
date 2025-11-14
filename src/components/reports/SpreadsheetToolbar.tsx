@@ -13,29 +13,38 @@ import {
   Trash2,
   BarChart3,
   Palette,
+  Table,
+  FileText,
+  Image,
+  Save,
+  FolderOpen,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface SpreadsheetToolbarProps {
-  onAddRow: () => void;
-  onAddColumn: () => void;
-  onDeleteRow: () => void;
-  onDeleteColumn: () => void;
-  onExportCSV: () => void;
-  onImportCSV: (file: File) => void;
-  onCreateChart: () => void;
-  onToggleBold: () => void;
-  onToggleItalic: () => void;
-  onToggleUnderline: () => void;
-  onSetAlignment: (align: 'left' | 'center' | 'right') => void;
-  onSetBackgroundColor: (color: string) => void;
-  onSetTextColor: (color: string) => void;
-  hasSelection: boolean;
+  onAddElement?: (type: 'table' | 'text' | 'chart' | 'image') => void;
+  onAddRow?: () => void;
+  onAddColumn?: () => void;
+  onDeleteRow?: () => void;
+  onDeleteColumn?: () => void;
+  onExportCSV?: () => void;
+  onImportCSV?: (file: File) => void;
+  onCreateChart?: () => void;
+  onToggleBold?: () => void;
+  onToggleItalic?: () => void;
+  onToggleUnderline?: () => void;
+  onSetAlignment?: (align: 'left' | 'center' | 'right') => void;
+  onSetBackgroundColor?: (color: string) => void;
+  onSetTextColor?: (color: string) => void;
+  onSave?: () => void;
+  onLoad?: () => void;
+  hasSelection?: boolean;
 }
 
 export function SpreadsheetToolbar({
+  onAddElement,
   onAddRow,
   onAddColumn,
   onDeleteRow,
@@ -49,7 +58,9 @@ export function SpreadsheetToolbar({
   onSetAlignment,
   onSetBackgroundColor,
   onSetTextColor,
-  hasSelection,
+  onSave,
+  onLoad,
+  hasSelection = false,
 }: SpreadsheetToolbarProps) {
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -65,114 +76,178 @@ export function SpreadsheetToolbar({
   };
 
   return (
-    <div className="flex items-center gap-2 p-2 border-b bg-muted/30 flex-wrap">
-      {/* File Actions */}
-      <div className="flex items-center gap-1">
-        <Button onClick={handleImportClick} size="sm" variant="ghost">
-          <Upload className="h-4 w-4 mr-1" />
-          Import CSV
-        </Button>
-        <Button onClick={onExportCSV} size="sm" variant="ghost">
-          <Download className="h-4 w-4 mr-1" />
-          Export CSV
-        </Button>
-      </div>
-
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Row/Column Actions */}
-      <div className="flex items-center gap-1">
-        <Button onClick={onAddRow} size="sm" variant="ghost">
-          <Plus className="h-4 w-4 mr-1" />
-          Row
-        </Button>
-        <Button onClick={onAddColumn} size="sm" variant="ghost">
-          <Plus className="h-4 w-4 mr-1" />
-          Column
-        </Button>
-        <Button onClick={onDeleteRow} size="sm" variant="ghost" disabled={!hasSelection}>
-          <Trash2 className="h-4 w-4 mr-1" />
-          Row
-        </Button>
-        <Button onClick={onDeleteColumn} size="sm" variant="ghost" disabled={!hasSelection}>
-          <Trash2 className="h-4 w-4 mr-1" />
-          Column
-        </Button>
-      </div>
-
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Formatting Actions */}
-      <div className="flex items-center gap-1">
-        <Button onClick={onToggleBold} size="sm" variant="ghost" disabled={!hasSelection}>
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button onClick={onToggleItalic} size="sm" variant="ghost" disabled={!hasSelection}>
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button onClick={onToggleUnderline} size="sm" variant="ghost" disabled={!hasSelection}>
-          <Underline className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Alignment */}
-      <div className="flex items-center gap-1">
-        <Button onClick={() => onSetAlignment('left')} size="sm" variant="ghost" disabled={!hasSelection}>
-          <AlignLeft className="h-4 w-4" />
-        </Button>
-        <Button onClick={() => onSetAlignment('center')} size="sm" variant="ghost" disabled={!hasSelection}>
-          <AlignCenter className="h-4 w-4" />
-        </Button>
-        <Button onClick={() => onSetAlignment('right')} size="sm" variant="ghost" disabled={!hasSelection}>
-          <AlignRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Colors */}
-      <div className="flex items-center gap-1">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button size="sm" variant="ghost" disabled={!hasSelection}>
-              <Palette className="h-4 w-4 mr-1" />
-              Colors
+    <div className="sticky top-0 z-50 flex items-center gap-2 px-6 py-3 border-b border-white/10 bg-[#282E33] flex-wrap">
+      {/* Insert Section */}
+      {onAddElement && (
+        <>
+          <div className="flex items-center gap-1 pr-4 border-r border-white/10">
+            <span className="text-sm font-medium text-white mr-2">Insert</span>
+            <Button onClick={() => onAddElement('table')} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Table className="h-4 w-4 mr-1" />
+              Table
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64">
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="bg-color" className="text-xs">Background Color</Label>
-                <Input
-                  id="bg-color"
-                  type="color"
-                  onChange={(e) => onSetBackgroundColor(e.target.value)}
-                  className="h-8 w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="text-color" className="text-xs">Text Color</Label>
-                <Input
-                  id="text-color"
-                  type="color"
-                  onChange={(e) => onSetTextColor(e.target.value)}
-                  className="h-8 w-full"
-                />
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+            <Button onClick={() => onAddElement('text')} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <FileText className="h-4 w-4 mr-1" />
+              Text
+            </Button>
+            <Button onClick={() => onAddElement('chart')} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Chart
+            </Button>
+            <Button onClick={() => onAddElement('image')} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Image className="h-4 w-4 mr-1" />
+              Image
+            </Button>
+          </div>
+        </>
+      )}
 
-      <Separator orientation="vertical" className="h-6" />
+      {/* File Actions */}
+      {(onSave || onLoad || onImportCSV || onExportCSV) && (
+        <div className="flex items-center gap-1 pr-4 border-r border-white/10">
+          <span className="text-sm font-medium text-white mr-2">File</span>
+          {onSave && (
+            <Button onClick={onSave} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Save className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          )}
+          {onLoad && (
+            <Button onClick={onLoad} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <FolderOpen className="h-4 w-4 mr-1" />
+              Load
+            </Button>
+          )}
+          {onImportCSV && (
+            <Button onClick={handleImportClick} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Upload className="h-4 w-4 mr-1" />
+              Import
+            </Button>
+          )}
+          {onExportCSV && (
+            <Button onClick={onExportCSV} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Data Section */}
+      {(onAddRow || onAddColumn || onDeleteRow || onDeleteColumn) && (
+        <div className="flex items-center gap-1 pr-4 border-r border-white/10">
+          <span className="text-sm font-medium text-white mr-2">Data</span>
+          {onAddRow && (
+            <Button onClick={onAddRow} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Plus className="h-4 w-4 mr-1" />
+              Row
+            </Button>
+          )}
+          {onAddColumn && (
+            <Button onClick={onAddColumn} size="sm" variant="ghost" className="hover:bg-[#2C3237]">
+              <Plus className="h-4 w-4 mr-1" />
+              Column
+            </Button>
+          )}
+          {onDeleteRow && (
+            <Button onClick={onDeleteRow} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Row
+            </Button>
+          )}
+          {onDeleteColumn && (
+            <Button onClick={onDeleteColumn} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Column
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Format Section */}
+      {(onToggleBold || onToggleItalic || onToggleUnderline || onSetAlignment) && (
+        <div className="flex items-center gap-1 pr-4 border-r border-white/10">
+          <span className="text-sm font-medium text-white mr-2">Format</span>
+          {onToggleBold && (
+            <Button onClick={onToggleBold} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Bold className="h-4 w-4" />
+            </Button>
+          )}
+          {onToggleItalic && (
+            <Button onClick={onToggleItalic} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Italic className="h-4 w-4" />
+            </Button>
+          )}
+          {onToggleUnderline && (
+            <Button onClick={onToggleUnderline} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+              <Underline className="h-4 w-4" />
+            </Button>
+          )}
+          {onSetAlignment && (
+            <>
+              <Separator orientation="vertical" className="h-6 mx-1" />
+              <Button onClick={() => onSetAlignment('left')} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+                <AlignLeft className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => onSetAlignment('center')} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+                <AlignCenter className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => onSetAlignment('right')} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+                <AlignRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Colors Section */}
+      {(onSetBackgroundColor || onSetTextColor) && (
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-medium text-white mr-2">Colors</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+                <Palette className="h-4 w-4 mr-1" />
+                Pick
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 bg-[#282E33] border-white/10">
+              <div className="space-y-3">
+                {onSetBackgroundColor && (
+                  <div>
+                    <Label htmlFor="bg-color" className="text-xs text-white">Background</Label>
+                    <Input
+                      id="bg-color"
+                      type="color"
+                      onChange={(e) => onSetBackgroundColor(e.target.value)}
+                      className="h-8 w-full"
+                    />
+                  </div>
+                )}
+                {onSetTextColor && (
+                  <div>
+                    <Label htmlFor="text-color" className="text-xs text-white">Text</Label>
+                    <Input
+                      id="text-color"
+                      type="color"
+                      onChange={(e) => onSetTextColor(e.target.value)}
+                      className="h-8 w-full"
+                    />
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
 
       {/* Chart */}
-      <Button onClick={onCreateChart} size="sm" variant="ghost" disabled={!hasSelection}>
-        <BarChart3 className="h-4 w-4 mr-1" />
-        Create Chart
-      </Button>
+      {onCreateChart && (
+        <Button onClick={onCreateChart} size="sm" variant="ghost" disabled={!hasSelection} className="hover:bg-[#2C3237]">
+          <BarChart3 className="h-4 w-4 mr-1" />
+          Chart
+        </Button>
+      )}
     </div>
   );
 }

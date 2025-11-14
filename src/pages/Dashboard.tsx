@@ -8,7 +8,7 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div className="min-h-screen w-full bg-background page-transition">
       <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 space-y-12">
         <header>
           <h1 className="text-page-title mb-2">
