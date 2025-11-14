@@ -44,7 +44,7 @@ export function LoadReportDialog({ open, onOpenChange, onLoadReport }: LoadRepor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Load Report</DialogTitle>
+          <DialogTitle>Load Report ({reports.length} saved)</DialogTitle>
           <DialogDescription>
             Select a previously saved report to continue editing.
           </DialogDescription>
