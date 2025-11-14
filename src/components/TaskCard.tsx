@@ -96,12 +96,12 @@ export const TaskCard = ({ task }: { task: Task }) => {
             <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{task.description}</p>
           </div>
           <div className="flex gap-1 ml-3">
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 hover:text-primary" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}>
               <MessageCircle className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
