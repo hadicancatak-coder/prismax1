@@ -14,6 +14,7 @@ import { StatusLogFilters as Filters, StatusLog as StatusLogType } from "@/lib/s
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import DOMPurify from "dompurify";
 
 const StatusLog = () => {
   const [filters, setFilters] = useState<Filters>({});
@@ -146,7 +147,12 @@ const StatusLog = () => {
                     <TableCell className="font-medium max-w-xs">
                       <div className="truncate">{log.title}</div>
                       {log.description && (
-                        <div className="text-xs text-muted-foreground truncate">{log.description}</div>
+                        <div 
+                          className="text-xs text-muted-foreground prose prose-sm dark:prose-invert max-w-none line-clamp-2"
+                          dangerouslySetInnerHTML={{ 
+                            __html: DOMPurify.sanitize(log.description) 
+                          }}
+                        />
                       )}
                     </TableCell>
                     <TableCell>{getLogTypeBadge(log.log_type)}</TableCell>
