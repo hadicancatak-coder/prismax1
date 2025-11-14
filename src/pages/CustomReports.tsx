@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, FolderOpen, FileJson } from "lucide-react";
+import { Save, FolderOpen, FileJson, FilePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ReportSidebar } from "@/components/reports/ReportSidebar";
 import { ReportCanvas } from "@/components/reports/ReportCanvas";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
 import { LoadReportDialog } from "@/components/reports/LoadReportDialog";
+import { TemplateSelector } from "@/components/reports/TemplateSelector";
 import type { ReportDocument, ReportElement } from "@/types/report";
-import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON } from "@/lib/reportHelpers";
+import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON, generateElementId } from "@/lib/reportHelpers";
 import { useCustomReports } from "@/hooks/useCustomReports";
+import type { ReportTemplate } from "@/lib/reportTemplates";
 
 export default function CustomReports() {
   const [report, setReport] = useState<ReportDocument>({
@@ -24,6 +26,7 @@ export default function CustomReports() {
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [reportExists, setReportExists] = useState(false);
 
   const { reports, createReport, updateReport, isCreating, isUpdating } = useCustomReports();
@@ -179,6 +182,28 @@ export default function CustomReports() {
     setReportExists(false);
   };
 
+  const handleTemplateSelect = (template: ReportTemplate) => {
+    const elementsWithIds = template.elements.map((el, idx) => ({
+      ...el,
+      id: generateElementId(el.type),
+      position: idx,
+    }));
+
+    setReport({
+      id: crypto.randomUUID(),
+      name: template.name,
+      elements: elementsWithIds,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    setActiveElementId(null);
+    setReportExists(false);
+    toast({
+      title: "Template Applied",
+      description: `Started new report from "${template.name}" template.`,
+    });
+  };
+
   return (
     <>
       <GlobalBubbleMenu />
@@ -201,6 +226,10 @@ export default function CustomReports() {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setTemplateDialogOpen(true)}>
+                <FilePlus className="h-4 w-4 mr-2" />
+                New from Template
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setLoadDialogOpen(true)}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Load
@@ -240,6 +269,13 @@ export default function CustomReports() {
           open={loadDialogOpen}
           onOpenChange={setLoadDialogOpen}
           onLoadReport={handleLoad}
+        />
+
+        {/* Template Selector Dialog */}
+        <TemplateSelector
+          open={templateDialogOpen}
+          onOpenChange={setTemplateDialogOpen}
+          onSelectTemplate={handleTemplateSelect}
         />
       </div>
     </>

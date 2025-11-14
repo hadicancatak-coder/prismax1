@@ -10,13 +10,13 @@ export function useCustomReports() {
     queryKey: ["custom-reports"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("custom_reports")
+        .from("custom_reports" as any)
         .select("*")
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
 
-      return data.map((report) => ({
+      return (data || []).map((report: any) => ({
         id: report.id,
         name: report.name,
         elements: report.elements as any[],
@@ -32,7 +32,7 @@ export function useCustomReports() {
       if (!user) throw new Error("User not authenticated");
 
       const { data, error } = await supabase
-        .from("custom_reports")
+        .from("custom_reports" as any)
         .insert({
           user_id: user.id,
           name: report.name,
@@ -63,7 +63,7 @@ export function useCustomReports() {
   const updateReport = useMutation({
     mutationFn: async (report: ReportDocument) => {
       const { data, error } = await supabase
-        .from("custom_reports")
+        .from("custom_reports" as any)
         .update({
           name: report.name,
           elements: report.elements as any,
@@ -94,7 +94,7 @@ export function useCustomReports() {
   const deleteReport = useMutation({
     mutationFn: async (reportId: string) => {
       const { error } = await supabase
-        .from("custom_reports")
+        .from("custom_reports" as any)
         .delete()
         .eq("id", reportId);
 
