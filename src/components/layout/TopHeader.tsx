@@ -16,9 +16,9 @@ export function TopHeader() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b-2 border-border/60 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 bg-white/10 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-smooth min-h-[44px] min-w-[44px]" />
+        <SidebarTrigger className="text-white/80 hover:text-white hover:bg-white/10 rounded transition-all min-h-[44px] min-w-[44px]" />
       </div>
 
       {/* Centered Search Bar */}

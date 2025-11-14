@@ -89,8 +89,8 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarContent className={`bg-sidebar-background overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
+      <Sidebar collapsible="icon" className="bg-black/20 backdrop-blur-md border-r border-white/10">
+        <SidebarContent className={`overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo and User Section - Clickable to navigate to Dashboard */}
           <div 
             onClick={() => navigate('/')}

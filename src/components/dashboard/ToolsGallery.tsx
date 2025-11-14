@@ -56,11 +56,11 @@ export function ToolsGallery() {
   const navigate = useNavigate();
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-section-title text-foreground">Quick Access</h2>
+        <h2 className="text-section-title text-white">Quick Access</h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {MOST_USED_TOOLS.map((tool) => (
           <BoardCard
             key={tool.id}
