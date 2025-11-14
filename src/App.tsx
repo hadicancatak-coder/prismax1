@@ -14,11 +14,10 @@ import CalendarView from "./pages/CalendarView";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Overview from "./pages/admin/Overview";
 import UsersManagement from "./pages/admin/UsersManagement";
-import SelectorsManagement from "./pages/admin/SelectorsManagement";
-import KPIsManagement from "./pages/admin/KPIsManagement";
-import ErrorLogs from "./pages/admin/ErrorLogs";
-import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
-import SecurityScans from "./pages/admin/SecurityScans";
+import Config from "./pages/admin/Config";
+import SecurityPage from "./pages/admin/SecurityPage";
+import Logs from "./pages/admin/Logs";
+import UtmAutomation from "./pages/admin/UtmAutomation";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import CustomReports from "./pages/CustomReports";
@@ -63,12 +62,10 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />
-              <Route path="selectors" element={<SelectorsManagement />} />
-              <Route path="kpis" element={<KPIsManagement />} />
-              <Route path="approvals" element={<ApprovalsCenter />} />
-              <Route path="errors" element={<ErrorLogs />} />
-              <Route path="activity" element={<ActivityLog />} />
-              <Route path="security" element={<SecurityScans />} />
+              <Route path="config" element={<Config />} />
+              <Route path="utm-automation" element={<UtmAutomation />} />
+              <Route path="security" element={<SecurityPage />} />
+              <Route path="logs" element={<Logs />} />
             </Route>
             <Route path="/team-base" element={<TeamBase />} />
               <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
