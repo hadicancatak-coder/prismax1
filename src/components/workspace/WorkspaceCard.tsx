@@ -26,27 +26,27 @@ export function WorkspaceCard({
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200 group bg-white border border-gray-200"
+      className="cursor-pointer hover:bg-card-hover transition-all duration-200 group"
       onClick={onClick}
     >
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between mb-4">
           <div 
-            className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform"
-            style={{ backgroundColor: `${color}20` }}
+            className="w-12 h-12 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: `${color}15` }}
           >
-            <Icon className="h-8 w-8" style={{ color }} />
+            <Icon className="h-6 w-6" style={{ color }} />
           </div>
-          <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
+          <div className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-full font-medium">
             {boardCount} {boardCount === 1 ? 'board' : 'boards'}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+        <CardTitle className="text-base font-semibold text-white mb-2">
           {name}
         </CardTitle>
-        <CardDescription className="text-sm text-gray-600">
+      </CardHeader>
+      <CardContent className="pt-0">
+        <CardDescription className="text-sm text-muted-foreground line-clamp-2">
           {description}
         </CardDescription>
       </CardContent>

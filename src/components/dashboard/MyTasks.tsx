@@ -127,25 +127,25 @@ export function MyTasks() {
 
   return (
     <Card className="p-6">
-      <h2 className="text-section-title text-foreground mb-4">My Tasks</h2>
+      <h2 className="text-section-title mb-6">My Tasks</h2>
       <div className="space-y-2">
         {taskCategories.map((category) => (
           <div
             key={category.label}
             onClick={() => navigate("/tasks")}
-            className="flex items-center justify-between p-3 rounded-lg hover:bg-muted cursor-pointer transition-smooth group"
+            className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-card-hover border border-border/50 cursor-pointer transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded ${category.bgColor}`}>
-                <category.icon className={`h-4 w-4 ${category.color}`} />
+              <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center">
+                <category.icon className="h-5 w-5 text-primary" />
               </div>
-              <span className="text-body text-foreground">{category.label}</span>
+              <span className="font-medium text-foreground">{category.label}</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="font-semibold">
                 {category.count}
               </Badge>
-              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-smooth" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
           </div>
         ))}
