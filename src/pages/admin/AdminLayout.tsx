@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Shield, AlertCircle, Activity, FileText, ShieldCheck, Database, Target, Link2 } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, Activity, Database, Link2 } from "lucide-react";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function AdminLayout() {
       </div>
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6 lg:space-y-8">
-        <TabsList className="grid grid-cols-4 sm:grid-cols-8 w-full lg:w-auto border-b border-border overflow-x-auto">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -30,33 +30,21 @@ export default function AdminLayout() {
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
-          <TabsTrigger value="selectors" className="gap-2">
+          <TabsTrigger value="config" className="gap-2">
             <Database className="h-4 w-4" />
-            <span className="hidden sm:inline">Selectors</span>
-          </TabsTrigger>
-          <TabsTrigger value="kpis" className="gap-2">
-            <Target className="h-4 w-4" />
-            <span className="hidden sm:inline">KPIs</span>
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className="gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Approvals</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Security</span>
-          </TabsTrigger>
-          <TabsTrigger value="errors" className="gap-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Errors</span>
+            <span className="hidden sm:inline">Config</span>
           </TabsTrigger>
           <TabsTrigger value="utm-automation" className="gap-2">
             <Link2 className="h-4 w-4" />
             <span className="hidden sm:inline">UTM Rules</span>
           </TabsTrigger>
-          <TabsTrigger value="activity" className="gap-2">
+          <TabsTrigger value="security" className="gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-2">
             <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Activity</span>
+            <span className="hidden sm:inline">Logs</span>
           </TabsTrigger>
         </TabsList>
 
