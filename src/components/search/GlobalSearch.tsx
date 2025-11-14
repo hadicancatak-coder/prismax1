@@ -164,7 +164,6 @@ export function GlobalSearch() {
                         </div>
                       )}
                     </div>
-                    <Sparkles className="h-3 w-3 text-muted-foreground ml-2" />
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -172,11 +172,6 @@ export function UtmBuilder() {
           utmContent,
           utmTerm: deviceType === 'mobile' ? 'mobile' : undefined,
         });
-          utmSource: platformName.toLowerCase().replace(/\s+/g, ''),
-          utmMedium,
-          utmCampaign,
-          utmContent: deviceType,
-        });
 
         links.push({
           id: crypto.randomUUID(),
