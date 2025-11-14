@@ -214,7 +214,7 @@ export function AdvancedSpreadsheet({
           const rowIndex = props.row.rowIdx;
           const cellKey = getCellKey(colIndex, rowIndex);
           const cell = cellData[cellKey];
-          const displayValue = cell?.formula || cell?.value || '';
+          const displayValue = String(cell?.formula || cell?.value || '');
 
           return (
             <input
@@ -223,10 +223,6 @@ export function AdvancedSpreadsheet({
               value={displayValue}
               onChange={(e) => {
                 handleCellEdit(colIndex, rowIndex, e.target.value);
-              }}
-              onBlur={() => {
-                const newVal = displayValue;
-                handleCellEdit(colIndex, rowIndex, newVal);
               }}
             />
           );
@@ -240,10 +236,16 @@ export function AdvancedSpreadsheet({
           // Check if this cell is part of a merged range (but not the top-left cell)
           const isMergedChild = Array.from(mergedCells.entries()).some(([topLeftKey, range]) => {
             if (topLeftKey === cellKey) return false;
+            // Parse cell key like "A1" to get column and row
             const parts = topLeftKey.match(/([A-Z]+)(\d+)/);
             if (!parts) return false;
-            const topLeftCol = parts[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 65, -1);
+            const topLeftColLetters = parts[1];
             const topLeftRow = parseInt(parts[2]) - 1;
+            // Convert column letters to index
+            let topLeftCol = -1;
+            for (let i = 0; i < topLeftColLetters.length; i++) {
+              topLeftCol = (topLeftCol + 1) * 26 + topLeftColLetters.charCodeAt(i) - 65;
+            }
             return (
               colIndex >= topLeftCol &&
               colIndex < topLeftCol + range.colSpan &&
@@ -525,13 +527,13 @@ export function AdvancedSpreadsheet({
           </ContextMenuContent>
         </ContextMenu>
 
-        {showChartDialog && (
+        {showChartDialog && selectedRange && (
           <ChartGeneratorDialog
             open={showChartDialog}
-            onClose={() => setShowChartDialog(false)}
-            onCreateChart={handleCreateChart}
-            maxRow={rowCount}
-            maxCol={colCount}
+            onOpenChange={setShowChartDialog}
+            selectedRange={selectedRange}
+            data={[]}
+            onCreateChart={(config) => handleCreateChart({ ...config, id: String(Date.now()) })}
           />
         )}
       </div>
