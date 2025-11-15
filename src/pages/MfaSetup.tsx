@@ -77,6 +77,15 @@ export default function MfaSetup() {
       setBackupCodes(data.backupCodes);
       setShowBackupCodes(true);
 
+      // Create MFA session after successful setup
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('manage-mfa-session', {
+        body: { action: 'create' }
+      });
+
+      if (!sessionError && sessionData?.sessionToken && sessionData?.expiresAt) {
+        setMfaVerifiedStatus(true, sessionData.sessionToken, sessionData.expiresAt);
+      }
+
       toast({
         title: "MFA Enabled!",
         description: "Two-factor authentication has been enabled for your account",

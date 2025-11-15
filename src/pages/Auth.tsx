@@ -66,22 +66,31 @@ export default function Auth() {
 
         if (error) throw error;
 
-        // Check if MFA is enabled for this user
+        // Check MFA status for this user
         const { data: profile } = await supabase
           .from('profiles')
-          .select('mfa_enabled')
+          .select('mfa_enabled, mfa_enrollment_required')
           .eq('user_id', signInData.user.id)
           .single();
 
-        if (profile?.mfa_enabled) {
-          // Redirect to MFA verification
-          navigate("/mfa-verify");
-          return;
-        } else {
-          // First time login - redirect to MFA setup
+        // If MFA enrollment is required but not yet enabled, force setup
+        if (profile?.mfa_enrollment_required && !profile?.mfa_enabled) {
+          toast({
+            title: "2FA Setup Required",
+            description: "Please set up two-factor authentication to continue",
+          });
           navigate("/mfa-setup");
           return;
         }
+
+        // If MFA is enabled, require verification
+        if (profile?.mfa_enabled) {
+          navigate("/mfa-verify");
+          return;
+        }
+
+        // If no MFA requirement, redirect to home
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -98,7 +107,7 @@ export default function Auth() {
 
         toast({
           title: "Account created!",
-          description: "You can now log in.",
+          description: "Please log in to set up two-factor authentication.",
         });
         
         setIsLogin(true);
