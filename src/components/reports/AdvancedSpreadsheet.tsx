@@ -305,15 +305,17 @@ export function AdvancedSpreadsheet({
               isSelected={isSelected}
               mergeInfo={mergeInfo}
               onCellClick={() => {
-                setSelectedCells(new Set([cellKey]));
-                setSelectedRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
-                setSelectedCell({ col: colIndex, row: rowIndex });
+                selectedCellsRef.current = new Set([cellKey]);
+                selectedRangeRef.current = { startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex };
+                selectedCellRef.current = { col: colIndex, row: rowIndex };
+                forceUpdate(n => n + 1);
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
-                setContextMenuCell({ col: colIndex, row: rowIndex });
-                setContextMenuPosition({ x: e.clientX, y: e.clientY });
-                setContextMenuOpen(true);
+                contextMenuCellRef.current = { col: colIndex, row: rowIndex };
+                contextMenuPositionRef.current = { x: e.clientX, y: e.clientY };
+                contextMenuOpenRef.current = true;
+                forceUpdate(n => n + 1);
               }}
               onCellEdit={(value) => handleCellEdit(colIndex, rowIndex, value)}
             />
@@ -323,7 +325,7 @@ export function AdvancedSpreadsheet({
     }
 
     return cols;
-  }, [colCount, cellData, selectedCells, handleCellEdit, mergedCells]);
+  }, [colCount, cellData, handleCellEdit, mergedCells]);
 
   const rows: Row[] = useMemo(() => {
     return Array.from({ length: rowCount }, (_, i) => ({ rowIdx: i }));
@@ -410,24 +412,24 @@ export function AdvancedSpreadsheet({
   };
 
   const formulaBarValue = useMemo(() => {
-    if (!selectedCell) return '';
-    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    if (!selectedCellRef.current) return '';
+    const cellKey = getCellKey(selectedCellRef.current.col, selectedCellRef.current.row);
     const cell = cellData[cellKey];
     if (!cell) return '';
     return cell.formula || cell.value?.toString() || '';
-  }, [selectedCell, cellData]);
+  }, [selectedCellRef.current, cellData]);
 
   const handleFormulaBarChange = (value: string) => {
-    if (!selectedCell) return;
-    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    if (!selectedCellRef.current) return;
+    const cellKey = getCellKey(selectedCellRef.current.col, selectedCellRef.current.row);
     if (cellKey) {
-      handleCellEdit(selectedCell.col, selectedCell.row, value);
+      handleCellEdit(selectedCellRef.current.col, selectedCellRef.current.row, value);
     }
   };
 
   const handleFormulaBarCommit = () => {
-    if (!selectedCell) return;
-    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    if (!selectedCellRef.current) return;
+    const cellKey = getCellKey(selectedCellRef.current.col, selectedCellRef.current.row);
     const cell = cellData[cellKey];
     if (cell?.formula) {
       try {
@@ -443,7 +445,7 @@ export function AdvancedSpreadsheet({
     <div className="flex h-full w-full">
       <div className="flex-1 flex flex-col min-w-0">
         <FormulaBar
-          selectedCell={selectedCell ? `${columnToLetter(selectedCell.col)}${selectedCell.row + 1}` : null}
+          selectedCell={selectedCellRef.current ? `${columnToLetter(selectedCellRef.current.col)}${selectedCellRef.current.row + 1}` : null}
           value={formulaBarValue}
           onChange={handleFormulaBarChange}
           onCommit={handleFormulaBarCommit}
@@ -453,17 +455,17 @@ export function AdvancedSpreadsheet({
           onAddRow={addRow}
           onAddColumn={addColumn}
           onDeleteRow={() => {
-            if (contextMenuCell) {
-              deleteRow(contextMenuCell.row);
-            } else if (selectedCell) {
-              deleteRow(selectedCell.row);
+            if (contextMenuCellRef.current) {
+              deleteRow(contextMenuCellRef.current.row);
+            } else if (selectedCellRef.current) {
+              deleteRow(selectedCellRef.current.row);
             }
           }}
           onDeleteColumn={() => {
-            if (contextMenuCell) {
-              deleteColumn(contextMenuCell.col);
-            } else if (selectedCell) {
-              deleteColumn(selectedCell.col);
+            if (contextMenuCellRef.current) {
+              deleteColumn(contextMenuCellRef.current.col);
+            } else if (selectedCellRef.current) {
+              deleteColumn(selectedCellRef.current.col);
             }
           }}
           onExportCSV={exportToCSV}
@@ -479,7 +481,7 @@ export function AdvancedSpreadsheet({
           onMergeCells={handleMergeCells}
           onSplitCells={handleSplitCells}
           onToggleFormulaLibrary={() => setShowFormulaLibrary(!showFormulaLibrary)}
-          hasSelection={selectedCells.size > 0}
+          hasSelection={selectedCellsRef.current.size > 0}
         />
 
         <div className="flex-1 overflow-auto bg-background">
@@ -492,18 +494,19 @@ export function AdvancedSpreadsheet({
             onCellClick={(args) => {
               const colIdx = columns.findIndex(c => c.key === args.column.key);
               if (colIdx > 0) {
-                setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
+                selectedCellRef.current = { col: colIdx - 1, row: args.row.rowIdx };
+                forceUpdate(n => n + 1);
               }
             }}
           />
         </div>
 
-        {contextMenuOpen && contextMenuPosition && contextMenuCell && (
+        {contextMenuOpenRef.current && contextMenuPositionRef.current && contextMenuCellRef.current && (
           <div 
             className="context-menu-panel fixed z-50 bg-popover text-popover-foreground rounded-md border shadow-md p-1 w-48"
             style={{ 
-              left: contextMenuPosition.x, 
-              top: contextMenuPosition.y,
+              left: contextMenuPositionRef.current.x, 
+              top: contextMenuPositionRef.current.y,
             }}
           >
             <div className="flex flex-col gap-1">
@@ -511,8 +514,11 @@ export function AdvancedSpreadsheet({
                 variant="ghost"
                 className="justify-start h-8 px-2"
                 onClick={() => {
-                  handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
-                  setContextMenuOpen(false);
+                  if (contextMenuCellRef.current) {
+                    handleCellEdit(contextMenuCellRef.current.col, contextMenuCellRef.current.row, '');
+                  }
+                  contextMenuOpenRef.current = false;
+                  forceUpdate(n => n + 1);
                 }}
               >
                 Clear Cell
@@ -521,13 +527,16 @@ export function AdvancedSpreadsheet({
                 variant="ghost"
                 className="justify-start h-8 px-2"
                 onClick={() => {
-                  const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
-                  const cell = cellData[cellKey];
-                  if (cell) {
-                    navigator.clipboard.writeText(String(cell.value));
-                    toast.success('Copied to clipboard');
+                  if (contextMenuCellRef.current) {
+                    const cellKey = getCellKey(contextMenuCellRef.current.col, contextMenuCellRef.current.row);
+                    const cell = cellData[cellKey];
+                    if (cell) {
+                      navigator.clipboard.writeText(String(cell.value));
+                      toast.success('Copied to clipboard');
+                    }
                   }
-                  setContextMenuOpen(false);
+                  contextMenuOpenRef.current = false;
+                  forceUpdate(n => n + 1);
                 }}
               >
                 Copy
@@ -537,8 +546,11 @@ export function AdvancedSpreadsheet({
                 variant="ghost"
                 className="justify-start h-8 px-2"
                 onClick={() => {
-                  deleteRow(contextMenuCell.row);
-                  setContextMenuOpen(false);
+                  if (contextMenuCellRef.current) {
+                    deleteRow(contextMenuCellRef.current.row);
+                  }
+                  contextMenuOpenRef.current = false;
+                  forceUpdate(n => n + 1);
                 }}
               >
                 Delete Row
@@ -547,8 +559,11 @@ export function AdvancedSpreadsheet({
                 variant="ghost"
                 className="justify-start h-8 px-2"
                 onClick={() => {
-                  deleteColumn(contextMenuCell.col);
-                  setContextMenuOpen(false);
+                  if (contextMenuCellRef.current) {
+                    deleteColumn(contextMenuCellRef.current.col);
+                  }
+                  contextMenuOpenRef.current = false;
+                  forceUpdate(n => n + 1);
                 }}
               >
                 Delete Column
@@ -557,11 +572,11 @@ export function AdvancedSpreadsheet({
           </div>
         )}
 
-        {showChartDialog && selectedRange && (
+        {showChartDialog && selectedRangeRef.current && (
           <ChartGeneratorDialog
             open={showChartDialog}
             onOpenChange={setShowChartDialog}
-            selectedRange={selectedRange}
+            selectedRange={selectedRangeRef.current}
             data={[]}
             onCreateChart={(config) => handleCreateChart({ ...config, id: String(Date.now()) })}
           />
@@ -572,8 +587,8 @@ export function AdvancedSpreadsheet({
         isOpen={showFormulaLibrary}
         onToggle={() => setShowFormulaLibrary(!showFormulaLibrary)}
         onInsertFormula={(formula) => {
-          if (selectedCell) {
-            handleCellEdit(selectedCell.col, selectedCell.row, formula);
+          if (selectedCellRef.current) {
+            handleCellEdit(selectedCellRef.current.col, selectedCellRef.current.row, formula);
             toast.success('Formula inserted!');
           } else {
             toast.error('Please select a cell first');
