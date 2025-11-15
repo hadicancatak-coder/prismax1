@@ -245,11 +245,7 @@ export function AdvancedSpreadsheet({
           rowCount={rowCount}
           colCount={colCount}
           cellData={cellDataMap}
-          selectedCells={selectedCellsSet}
-          mergedCells={mergedCellsMap}
           onCellEdit={handleCellEdit}
-          onCellClick={handleVirtualCellClick}
-          onContextMenu={handleVirtualContextMenu}
         />
       </div>
 
