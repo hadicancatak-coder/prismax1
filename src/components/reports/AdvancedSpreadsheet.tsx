@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { DataGrid, Column, RenderCellProps, RenderEditCellProps } from 'react-data-grid';
+import { VirtualizedSpreadsheet } from './VirtualizedSpreadsheet';
 import 'react-data-grid/lib/styles.css';
 import { SpreadsheetToolbar } from './SpreadsheetToolbar';
 import { ChartGeneratorDialog } from './ChartGeneratorDialog';
@@ -50,22 +50,45 @@ export function AdvancedSpreadsheet({
   const cellDataRef = useRef<AdvancedSpreadsheetData>(initialData);
   
   // Use state instead of refs to allow DataGrid to handle updates properly
-  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const [selectedRange, setSelectedRange] = useState<{ startRow: number; startCol: number; endRow: number; endCol: number } | null>(null);
-  const [selectedCell, setSelectedCell] = useState<{ col: number; row: number } | null>(null);
-  const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
+  const [selectedCell, setSelectedCell] = useState<string | null>(null);
+  const [contextMenuCell, setContextMenuCell] = useState<string | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   
   const [charts, setCharts] = useState<ChartConfig[]>([]);
   const [showChartDialog, setShowChartDialog] = useState(false);
-  const [mergedCells, setMergedCells] = useState<Map<string, MergedCell>>(new Map());
+  const [mergedCells, setMergedCells] = useState<MergedCell[]>([]);
   const [showFormulaLibrary, setShowFormulaLibrary] = useState(false);
   const [frozenRows, setFrozenRows] = useState(0);
   const [frozenColumns, setFrozenColumns] = useState(0);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [filterActive, setFilterActive] = useState(false);
 
+  const cellDataMap = useMemo(() => {
+    const map = new Map<string, AdvancedCellData>();
+    Object.entries(cellData).forEach(([key, value]) => {
+      map.set(key, value);
+    });
+    return map;
+  }, [cellData]);
+  
+  const selectedCellsSet = useMemo(() => new Set(selectedCells), [selectedCells]);
+  
+  const mergedCellsMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    mergedCells.forEach(mc => {
+      for (let r = mc.startRow; r < mc.startRow + mc.rowSpan; r++) {
+        for (let c = mc.startCol; c < mc.startCol + mc.colSpan; c++) {
+          if (r !== mc.startRow || c !== mc.startCol) {
+            map.set(`${r}-${c}`, true);
+          }
+        }
+      }
+    });
+    return map;
+  }, [mergedCells]);
   // Keep cellDataRef in sync
   useEffect(() => {
     cellDataRef.current = cellData;
