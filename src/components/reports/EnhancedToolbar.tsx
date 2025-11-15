@@ -63,15 +63,20 @@ interface EnhancedToolbarProps {
   onSetBackgroundColor?: (color: string) => void;
   onSetTextColor?: (color: string) => void;
   onSetBorders?: (borderType: 'all' | 'outer' | 'none') => void;
-  onFreeze?: (type: 'row' | 'column' | 'both') => void;
+  onFreeze?: (type: 'row' | 'column' | 'both' | 'none') => void;
   onSort?: (direction: 'asc' | 'desc') => void;
   onFilter?: () => void;
+  onFindReplace?: () => void;
   onCreateChart?: () => void;
   onAddRow?: () => void;
   onAddColumn?: () => void;
   onDeleteRow?: () => void;
   onDeleteColumn?: () => void;
+  onInsertRow?: () => void;
+  onInsertColumn?: () => void;
   hasSelection?: boolean;
+  frozenRows?: number;
+  frozenColumns?: number;
 }
 
 const commonColors = [
@@ -95,12 +100,17 @@ export function EnhancedToolbar({
   onFreeze,
   onSort,
   onFilter,
+  onFindReplace,
   onCreateChart,
   onAddRow,
   onAddColumn,
+  onInsertRow,
+  onInsertColumn,
   onDeleteRow,
   onDeleteColumn,
   hasSelection = false,
+  frozenRows = 0,
+  frozenColumns = 0,
 }: EnhancedToolbarProps) {
   return (
     <div className="sticky top-0 z-50 bg-background border-b border-border">
@@ -156,7 +166,7 @@ export function EnhancedToolbar({
               <MenubarItem disabled>
                 Find <MenubarShortcut>⌘F</MenubarShortcut>
               </MenubarItem>
-              <MenubarItem disabled>
+              <MenubarItem onClick={onFindReplace}>
                 Find & Replace <MenubarShortcut>⌘H</MenubarShortcut>
               </MenubarItem>
             </MenubarContent>
@@ -171,9 +181,18 @@ export function EnhancedToolbar({
               <MenubarSub>
                 <MenubarSubTrigger>Freeze</MenubarSubTrigger>
                 <MenubarSubContent>
-                  <MenubarItem onClick={() => onFreeze?.('row')}>Freeze top row</MenubarItem>
-                  <MenubarItem onClick={() => onFreeze?.('column')}>Freeze first column</MenubarItem>
-                  <MenubarItem onClick={() => onFreeze?.('both')}>Freeze both</MenubarItem>
+                  <MenubarItem onClick={() => onFreeze?.('row')}>
+                    Freeze top row {frozenRows > 0 && '✓'}
+                  </MenubarItem>
+                  <MenubarItem onClick={() => onFreeze?.('column')}>
+                    Freeze first column {frozenColumns > 0 && '✓'}
+                  </MenubarItem>
+                  <MenubarItem onClick={() => onFreeze?.('both')}>
+                    Freeze both {frozenRows > 0 && frozenColumns > 0 && '✓'}
+                  </MenubarItem>
+                  <MenubarItem onClick={() => onFreeze?.('none')}>
+                    Unfreeze
+                  </MenubarItem>
                 </MenubarSubContent>
               </MenubarSub>
               <MenubarItem disabled>Full screen</MenubarItem>
@@ -183,13 +202,22 @@ export function EnhancedToolbar({
           <MenubarMenu>
             <MenubarTrigger>Insert</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={onInsertRow}>
+                <Plus className="mr-2 h-4 w-4" />
+                Row above
+              </MenubarItem>
               <MenubarItem onClick={onAddRow}>
                 <Plus className="mr-2 h-4 w-4" />
-                Row
+                Row below
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={onInsertColumn}>
+                <Plus className="mr-2 h-4 w-4" />
+                Column left
               </MenubarItem>
               <MenubarItem onClick={onAddColumn}>
                 <Plus className="mr-2 h-4 w-4" />
-                Column
+                Column right
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={onCreateChart}>
@@ -450,9 +478,18 @@ export function EnhancedToolbar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onFreeze?.('row')}>Freeze top row</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onFreeze?.('column')}>Freeze first column</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onFreeze?.('both')}>Freeze both</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onFreeze?.('row')}>
+              Freeze top row {frozenRows > 0 && '✓'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onFreeze?.('column')}>
+              Freeze first column {frozenColumns > 0 && '✓'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onFreeze?.('both')}>
+              Freeze both {frozenRows > 0 && frozenColumns > 0 && '✓'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onFreeze?.('none')}>
+              Unfreeze
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -501,15 +538,34 @@ export function EnhancedToolbar({
 
         <Separator orientation="vertical" className="h-6" />
 
-        <Button variant="outline" size="sm" className="h-8" onClick={onAddRow}>
-          <Plus className="mr-2 h-4 w-4" />
-          Row
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8">
+              <Plus className="mr-2 h-4 w-4" />
+              Insert <ChevronDown className="ml-2 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={onInsertRow}>Row above</DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddRow}>Row below</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onInsertColumn}>Column left</DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddColumn}>Column right</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <Button variant="outline" size="sm" className="h-8" onClick={onAddColumn}>
-          <Plus className="mr-2 h-4 w-4" />
-          Column
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8">
+              <Minus className="mr-2 h-4 w-4" />
+              Delete <ChevronDown className="ml-2 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={onDeleteRow}>Delete row</DropdownMenuItem>
+            <DropdownMenuItem onClick={onDeleteColumn}>Delete column</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

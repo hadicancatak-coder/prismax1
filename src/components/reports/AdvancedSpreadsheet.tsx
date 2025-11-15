@@ -55,6 +55,10 @@ export function AdvancedSpreadsheet({
   const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
   const [mergedCells, setMergedCells] = useState<Map<string, MergedCell>>(new Map());
   const [showFormulaLibrary, setShowFormulaLibrary] = useState(false);
+  const [frozenRows, setFrozenRows] = useState(0);
+  const [frozenColumns, setFrozenColumns] = useState(0);
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [filterActive, setFilterActive] = useState(false);
 
   const updateCellData = useCallback((updates: Partial<AdvancedSpreadsheetData>) => {
     setCellData(prev => {
