@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 const NOTIFICATION_TYPES = [
   { id: "task_assigned", label: "Task assignments", description: "When you're assigned to a task" },
@@ -26,6 +28,7 @@ export function NotificationPreferences() {
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -92,27 +95,41 @@ export function NotificationPreferences() {
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-      <p className="text-sm text-muted-foreground mb-6">
-        Control which notifications you want to receive
-      </p>
-      <div className="space-y-4">
-        {NOTIFICATION_TYPES.map((type) => (
-          <div key={type.id} className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label htmlFor={type.id} className="font-medium cursor-pointer">
-                {type.label}
-              </Label>
-              <p className="text-sm text-muted-foreground">{type.description}</p>
-            </div>
-            <Switch
-              id={type.id}
-              checked={preferences[type.id]}
-              onCheckedChange={() => togglePreference(type.id)}
-            />
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Notification Preferences</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Control which notifications you want to receive
+            </p>
           </div>
-        ))}
-      </div>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-9 p-0">
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        
+        <CollapsibleContent className="mt-6">
+          <div className="space-y-4">
+            {NOTIFICATION_TYPES.map((type) => (
+              <div key={type.id} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Label htmlFor={type.id} className="font-medium cursor-pointer">
+                    {type.label}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">{type.description}</p>
+                </div>
+                <Switch
+                  id={type.id}
+                  checked={preferences[type.id]}
+                  onCheckedChange={() => togglePreference(type.id)}
+                />
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
