@@ -1,282 +1,314 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Save, FolderOpen, FileJson, FilePlus } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { SpreadsheetToolbar } from "@/components/reports/SpreadsheetToolbar";
-import { ReportCanvas } from "@/components/reports/ReportCanvas";
-import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
-import { LoadReportDialog } from "@/components/reports/LoadReportDialog";
-import { TemplateSelector } from "@/components/reports/TemplateSelector";
-import type { ReportDocument, ReportElement } from "@/types/report";
-import { createTableElement, createTextElement, createChartElement, createImageElement, exportReportToJSON, generateElementId } from "@/lib/reportHelpers";
-import { useCustomReports } from "@/hooks/useCustomReports";
-import type { ReportTemplate } from "@/lib/reportTemplates";
+import { useState, useCallback, useRef } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useCustomReports } from '@/hooks/useCustomReports';
+import { useSpreadsheetKeyboard } from '@/hooks/useSpreadsheetKeyboard';
+import { AdvancedSpreadsheet } from '@/components/reports/AdvancedSpreadsheet';
+import { EnhancedToolbar } from '@/components/reports/EnhancedToolbar';
+import { FindReplaceDialog } from '@/components/reports/FindReplaceDialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Save, FolderOpen, Download, Keyboard } from 'lucide-react';
+import type { AdvancedSpreadsheetData, ChartConfig } from '@/types/spreadsheet';
 
 export default function CustomReports() {
-  const [report, setReport] = useState<ReportDocument>({
-    id: crypto.randomUUID(),
-    name: "Untitled Report",
-    elements: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  const [activeElementId, setActiveElementId] = useState<string | null>(null);
-  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [reportExists, setReportExists] = useState(false);
-
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { reports, createReport, updateReport, isCreating, isUpdating } = useCustomReports();
 
-  // Check if current report exists in database
-  useEffect(() => {
-    const exists = reports.some(r => r.id === report.id);
-    setReportExists(exists);
-  }, [reports, report.id]);
+  const [spreadsheetId, setSpreadsheetId] = useState<string | null>(null);
+  const [spreadsheetName, setSpreadsheetName] = useState('Untitled Spreadsheet');
+  const [spreadsheetData, setSpreadsheetData] = useState<AdvancedSpreadsheetData>({});
+  const [charts, setCharts] = useState<ChartConfig[]>([]);
+  const [frozenRows, setFrozenRows] = useState(0);
+  const [frozenColumns, setFrozenColumns] = useState(0);
+  const [filterActive, setFilterActive] = useState(false);
+  const [findReplaceOpen, setFindReplaceOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<string | null>(null);
+  const spreadsheetRef = useRef<any>(null);
 
-  const handleAddElement = (type: 'table' | 'text' | 'chart' | 'image') => {
-    const position = report.elements.length;
-    let newElement: ReportElement;
+  const handleSave = useCallback(async () => {
+    if (!user) return;
 
-    switch (type) {
-      case 'table':
-        newElement = createTableElement(position);
-        break;
-      case 'text':
-        newElement = createTextElement(position);
-        break;
-      case 'chart':
-        newElement = createChartElement(position);
-        break;
-      case 'image':
-        newElement = createImageElement(position);
-        break;
-      default:
-        toast({
-          title: "Coming Soon",
-          description: `${type} elements will be available in a future phase.`,
-        });
-        return;
-    }
-
-    setReport((prev) => ({
-      ...prev,
-      elements: [...prev.elements, newElement],
-      updatedAt: new Date().toISOString(),
-    }));
-
-    setActiveElementId(newElement.id);
-
-    toast({
-      title: "Element Added",
-      description: `${type} element has been added to the report.`,
-    });
-  };
-
-  const handleElementsReorder = (elements: ReportElement[]) => {
-    setReport((prev) => ({
-      ...prev,
-      elements,
-      updatedAt: new Date().toISOString(),
-    }));
-  };
-
-  const handleElementUpdate = (id: string, data: any) => {
-    setReport((prev) => ({
-      ...prev,
-      elements: prev.elements.map((el) =>
-        el.id === id ? { ...el, data } : el
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
-  };
-
-  const handleElementDelete = (id: string) => {
-    setReport((prev) => ({
-      ...prev,
-      elements: prev.elements.filter((el) => el.id !== id),
-      updatedAt: new Date().toISOString(),
-    }));
-
-    if (activeElementId === id) {
-      setActiveElementId(null);
-    }
-
-    toast({
-      title: "Element Deleted",
-      description: "The element has been removed from the report.",
-    });
-  };
-
-  const handleElementDuplicate = (id: string) => {
-    const element = report.elements.find((el) => el.id === id);
-    if (!element) return;
-
-    const newElement: ReportElement = {
-      ...element,
-      id: `${element.type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      position: report.elements.length,
+    const spreadsheetDoc = {
+      name: spreadsheetName,
+      elements: {
+        cells: spreadsheetData,
+        charts: charts,
+        frozenRows: frozenRows,
+        frozenColumns: frozenColumns,
+      },
+      user_id: user.id,
     };
 
-    setReport((prev) => ({
-      ...prev,
-      elements: [...prev.elements, newElement],
-      updatedAt: new Date().toISOString(),
-    }));
+    try {
+      if (spreadsheetId) {
+        updateReport({
+          id: spreadsheetId,
+          ...spreadsheetDoc,
+          updated_at: new Date().toISOString(),
+        } as any);
+      } else {
+        const newReport: any = await new Promise((resolve) => {
+          createReport({
+            ...spreadsheetDoc,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as any);
+          setTimeout(() => resolve({ id: crypto.randomUUID() }), 100);
+        });
+        setSpreadsheetId(newReport.id);
+      }
+      toast({
+        title: 'Saved',
+        description: 'Spreadsheet saved successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save spreadsheet',
+        variant: 'destructive',
+      });
+    }
+  }, [user, spreadsheetId, spreadsheetName, spreadsheetData, charts, frozenRows, frozenColumns, createReport, updateReport, toast]);
+
+  const handleLoad = useCallback((reportId: string) => {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+
+    setSpreadsheetId(report.id);
+    setSpreadsheetName(report.name);
+    
+    const data = report.elements as any;
+    setSpreadsheetData(data?.cells || {});
+    setCharts(data?.charts || []);
+    setFrozenRows(data?.frozenRows || 0);
+    setFrozenColumns(data?.frozenColumns || 0);
 
     toast({
-      title: "Element Duplicated",
-      description: "A copy of the element has been added to the report.",
+      title: 'Loaded',
+      description: `Loaded "${report.name}"`,
     });
-  };
+  }, [reports, toast]);
 
-  const handleSave = () => {
-    if (reportExists) {
-      updateReport(report);
-    } else {
-      createReport(report);
-      setReportExists(true);
+  const handleExport = useCallback(() => {
+    const rows: string[][] = [];
+    const cellKeys = Object.keys(spreadsheetData);
+    
+    if (cellKeys.length === 0) {
+      toast({
+        title: 'Nothing to export',
+        description: 'The spreadsheet is empty',
+        variant: 'destructive',
+      });
+      return;
     }
-  };
 
-  const handleExportJSON = () => {
-    const json = exportReportToJSON(report);
-    const blob = new Blob([json], { type: 'application/json' });
+    let maxRow = 0;
+    let maxCol = 0;
+    cellKeys.forEach(key => {
+      const match = key.match(/([A-Z]+)(\d+)/);
+      if (match) {
+        const col = match[1].charCodeAt(0) - 65;
+        const row = parseInt(match[2]) - 1;
+        maxRow = Math.max(maxRow, row);
+        maxCol = Math.max(maxCol, col);
+      }
+    });
+
+    for (let r = 0; r <= maxRow; r++) {
+      const row: string[] = [];
+      for (let c = 0; c <= maxCol; c++) {
+        const cellKey = `${String.fromCharCode(65 + c)}${r + 1}`;
+        const cellData = spreadsheetData[cellKey];
+        const value = cellData?.value?.toString() || '';
+        row.push(`"${value.replace(/"/g, '""')}"`);
+      }
+      rows.push(row);
+    }
+
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${report.name.replace(/\s+/g, '_')}.json`;
-    document.body.appendChild(a);
+    a.download = `${spreadsheetName}.csv`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast({
-      title: "Report Exported",
-      description: "JSON file has been downloaded.",
-    });
-  };
+    toast({ title: 'Exported', description: 'CSV file downloaded' });
+  }, [spreadsheetData, spreadsheetName, toast]);
 
-  const handleLoad = (loadedReport: ReportDocument) => {
-    setReport(loadedReport);
-    setActiveElementId(null);
-    setReportExists(true);
-    toast({
-      title: "Report Loaded",
-      description: `"${loadedReport.name}" has been loaded successfully.`,
-    });
-  };
+  const handleNew = useCallback(() => {
+    setSpreadsheetId(null);
+    setSpreadsheetName('Untitled Spreadsheet');
+    setSpreadsheetData({});
+    setCharts([]);
+    setFrozenRows(0);
+    setFrozenColumns(0);
+    setFilterActive(false);
+  }, []);
 
-  const handleNewReport = () => {
-    setReport({
-      id: crypto.randomUUID(),
-      name: "Untitled Report",
-      elements: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    setActiveElementId(null);
-    setReportExists(false);
-  };
+  const handleFreeze = useCallback((type: 'row' | 'column' | 'both' | 'none') => {
+    if (type === 'row') {
+      setFrozenRows(1);
+      setFrozenColumns(0);
+    } else if (type === 'column') {
+      setFrozenRows(0);
+      setFrozenColumns(1);
+    } else if (type === 'both') {
+      setFrozenRows(1);
+      setFrozenColumns(1);
+    } else {
+      setFrozenRows(0);
+      setFrozenColumns(0);
+    }
+  }, []);
 
-  const handleTemplateSelect = (template: ReportTemplate) => {
-    const elementsWithIds = template.elements.map((el, idx) => ({
-      ...el,
-      id: generateElementId(el.type),
-      position: idx,
-    }));
+  const handleSort = useCallback((direction: 'asc' | 'desc') => {
+    if (spreadsheetRef.current?.handleSort) {
+      spreadsheetRef.current.handleSort(direction);
+    }
+  }, []);
 
-    setReport({
-      id: crypto.randomUUID(),
-      name: template.name,
-      elements: elementsWithIds,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const handleFilter = useCallback(() => {
+    setFilterActive(prev => !prev);
+  }, []);
+
+  const handleInsertRow = useCallback(() => {
+    if (spreadsheetRef.current?.insertRow) {
+      spreadsheetRef.current.insertRow('above');
+    }
+  }, []);
+
+  const handleInsertColumn = useCallback(() => {
+    if (spreadsheetRef.current?.insertColumn) {
+      spreadsheetRef.current.insertColumn('left');
+    }
+  }, []);
+
+  const handleDeleteRow = useCallback(() => {
+    if (spreadsheetRef.current?.deleteRow) {
+      spreadsheetRef.current.deleteRow();
+    }
+  }, []);
+
+  const handleDeleteColumn = useCallback(() => {
+    if (spreadsheetRef.current?.deleteColumn) {
+      spreadsheetRef.current.deleteColumn();
+    }
+  }, []);
+
+  const handleReplace = useCallback((findText: string, replaceText: string, options: any) => {
+    const newData = { ...spreadsheetData };
+    let replacedCount = 0;
+
+    Object.keys(newData).forEach(cellKey => {
+      const cell = newData[cellKey];
+      if (!cell) return;
+
+      const searchIn = options.searchFormulas ? (cell.formula || cell.value.toString()) : cell.value.toString();
+      const matches = options.matchCase 
+        ? searchIn.includes(findText)
+        : searchIn.toLowerCase().includes(findText.toLowerCase());
+
+      if (matches) {
+        if (options.matchEntireCell) {
+          if (options.matchCase ? searchIn === findText : searchIn.toLowerCase() === findText.toLowerCase()) {
+            if (options.searchFormulas && cell.formula) {
+              cell.formula = replaceText;
+            } else {
+              cell.value = replaceText;
+            }
+            replacedCount++;
+          }
+        } else {
+          const regex = new RegExp(findText, options.matchCase ? 'g' : 'gi');
+          if (options.searchFormulas && cell.formula) {
+            cell.formula = cell.formula.replace(regex, replaceText);
+            replacedCount++;
+          } else {
+            const newValue = cell.value.toString().replace(regex, replaceText);
+            cell.value = newValue;
+            replacedCount++;
+          }
+        }
+      }
     });
-    setActiveElementId(null);
-    setReportExists(false);
-    toast({
-      title: "Template Applied",
-      description: `Started new report from "${template.name}" template.`,
-    });
-  };
+
+    setSpreadsheetData(newData);
+    toast({ title: 'Replace complete', description: `Replaced ${replacedCount} occurrence(s)` });
+  }, [spreadsheetData, toast]);
+
+  useSpreadsheetKeyboard({
+    onSave: handleSave,
+    onNew: handleNew,
+    onFind: () => setFindReplaceOpen(true),
+    onFindReplace: () => setFindReplaceOpen(true),
+  });
 
   return (
-    <>
-      <GlobalBubbleMenu />
-      
-      <div className="min-h-screen bg-background page-transition">
-        {/* Header */}
-        <div className="border-b border-white/10 bg-card sticky top-0 z-40">
-          <div className="px-4 sm:px-6 lg:px-12 py-4 flex items-center justify-between gap-4">
-            <div className="flex-1 max-w-md">
-              <Label htmlFor="reportName" className="text-xs text-muted-foreground">
-                Report Name
-              </Label>
-              <Input
-                id="reportName"
-                value={report.name}
-                onChange={(e) => setReport({ ...report, name: e.target.value })}
-                className="mt-1 font-medium"
-                placeholder="Enter report name..."
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setTemplateDialogOpen(true)}>
-                <FilePlus className="h-4 w-4 mr-2" />
-                New from Template
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setLoadDialogOpen(true)}>
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Load {reports.length > 0 && `(${reports.length})`}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportJSON}>
-                <FileJson className="h-4 w-4 mr-2" />
-                Export JSON
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={isCreating || isUpdating}>
-                <Save className="h-4 w-4 mr-2" />
-                {reportExists ? "Update" : "Save"}
-              </Button>
-            </div>
+    <div className="h-screen flex flex-col bg-background">
+      <div className="h-12 border-b border-border bg-card px-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <Input
+            value={spreadsheetName}
+            onChange={(e) => setSpreadsheetName(e.target.value)}
+            className="max-w-xs font-medium"
+            placeholder="Spreadsheet name"
+          />
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={handleNew} title="New spreadsheet">
+              New
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleSave} disabled={isCreating || isUpdating} title="Save (Ctrl+S)">
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => reports.length > 0 && handleLoad(reports[0].id)} title="Load spreadsheet">
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Load
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleExport} title="Export to CSV">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
           </div>
         </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Keyboard className="w-3 h-3" />
+          <span>Ctrl+S: Save | Ctrl+F: Find | F2: Edit</span>
+        </div>
+      </div>
 
-        {/* Excel-style Toolbar */}
-        <SpreadsheetToolbar
-          onAddElement={handleAddElement}
-          onSave={handleSave}
-          onLoad={() => setLoadDialogOpen(true)}
-        />
+      <EnhancedToolbar
+        hasSelection={!!selectedCell}
+        frozenRows={frozenRows}
+        frozenColumns={frozenColumns}
+        onSave={handleSave}
+        onNew={handleNew}
+        onFreeze={handleFreeze}
+        onSort={handleSort}
+        onFilter={handleFilter}
+        onInsertRow={handleInsertRow}
+        onInsertColumn={handleInsertColumn}
+        onDeleteRow={handleDeleteRow}
+        onDeleteColumn={handleDeleteColumn}
+      />
 
-        {/* Canvas */}
-        <ReportCanvas
-          elements={report.elements}
-          activeElementId={activeElementId}
-          onElementsReorder={handleElementsReorder}
-          onElementSelect={setActiveElementId}
-          onElementUpdate={handleElementUpdate}
-          onElementDelete={handleElementDelete}
-          onElementDuplicate={handleElementDuplicate}
-        />
-
-        {/* Load Report Dialog */}
-        <LoadReportDialog
-          open={loadDialogOpen}
-          onOpenChange={setLoadDialogOpen}
-          onLoadReport={handleLoad}
-        />
-
-        {/* Template Selector Dialog */}
-        <TemplateSelector
-          open={templateDialogOpen}
-          onOpenChange={setTemplateDialogOpen}
-          onSelectTemplate={handleTemplateSelect}
+      <div className="flex-1 overflow-hidden">
+        <AdvancedSpreadsheet
+          initialData={spreadsheetData}
+          onDataChange={setSpreadsheetData}
         />
       </div>
-    </>
+
+      <FindReplaceDialog
+        open={findReplaceOpen}
+        onOpenChange={setFindReplaceOpen}
+        onReplace={handleReplace}
+        cellData={spreadsheetData}
+      />
+    </div>
   );
 }
