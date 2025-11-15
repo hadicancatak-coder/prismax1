@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const getClientId = () => localStorage.getItem("GOOGLE_CLIENT_ID") || import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
 
@@ -30,7 +30,8 @@ export function useGoogleAuth() {
   };
 
   const initializeGoogleAuth = async () => {
-    if (!GOOGLE_CLIENT_ID) {
+    const clientId = getClientId();
+    if (!clientId) {
       console.error('Google Client ID not configured');
       setIsLoading(false);
       return;
@@ -50,9 +51,15 @@ export function useGoogleAuth() {
   };
 
   const signIn = () => {
+    const clientId = getClientId();
+    if (!clientId) {
+      console.error("Google Client ID not configured");
+      return;
+    }
+    
     if (window.google?.accounts?.oauth2) {
       const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID!,
+        client_id: clientId,
         scope: SCOPES,
         callback: (response: any) => {
           if (response.access_token) {

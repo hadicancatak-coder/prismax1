@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet } from 'lucide-react';
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const getAPIKey = () => localStorage.getItem("GOOGLE_API_KEY") || import.meta.env.VITE_GOOGLE_API_KEY;
+const getClientId = () => localStorage.getItem("GOOGLE_CLIENT_ID") || import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 interface GoogleSheetPickerProps {
   accessToken: string;
@@ -32,10 +32,18 @@ export function GoogleSheetPicker({ accessToken, onSheetSelected }: GoogleSheetP
       return;
     }
 
+    const apiKey = getAPIKey();
+    const clientId = getClientId();
+    
+    if (!apiKey || !clientId) {
+      console.error('Google API credentials not configured');
+      return;
+    }
+
     const picker = new window.google.picker.PickerBuilder()
       .setOAuthToken(accessToken)
-      .setDeveloperKey(GOOGLE_API_KEY!)
-      .setAppId(GOOGLE_CLIENT_ID!.split('.')[0])
+      .setDeveloperKey(apiKey)
+      .setAppId(clientId.split('.')[0])
       .addView(
         new window.google.picker.DocsView(window.google.picker.ViewId.SPREADSHEETS)
           .setMode(window.google.picker.DocsViewMode.LIST)

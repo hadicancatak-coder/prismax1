@@ -1,27 +1,49 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useKPIs } from "@/hooks/useKPIs";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Target, TrendingUp } from "lucide-react";
+import { useKPIs } from "@/hooks/useKPIs";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
+import { Target, TrendingUp } from "lucide-react";
 
 export default function KPIs() {
   const { user } = useAuth();
   const { kpis, isLoading } = useKPIs();
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
 
-  // Filter KPIs assigned to the current user
+  // Get current user's profile ID
+  useEffect(() => {
+    const fetchUserProfileId = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (data) {
+        setUserProfileId(data.id);
+      }
+    };
+    
+    fetchUserProfileId();
+  }, [user?.id]);
+
+  // Filter KPIs assigned to current user using profile ID
   const myKPIs = kpis?.filter(kpi => 
-    kpi.assignments?.some(assignment => assignment.user_id === user?.id)
+    kpi.assignments?.some(assignment => assignment.user_id === userProfileId)
   ) || [];
 
   if (isLoading) {
     return (
       <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 bg-background min-h-screen space-y-6">
-        <Skeleton className="h-12 w-64" />
+        <CardSkeleton />
         <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       </div>
     );
