@@ -6,10 +6,10 @@ import { ChartGeneratorDialog } from './ChartGeneratorDialog';
 import { FormulaBar } from './FormulaBar';
 import { Button } from '@/components/ui/button';
 import { FormulaLibraryPanel } from './FormulaLibraryPanel';
+import { GridCell } from './GridCell';
 import type { AdvancedSpreadsheetData, AdvancedCellData, CellStyle, ChartConfig, MergedCell } from '@/types/spreadsheet';
 import { evaluateFormula, isFormula, recalculateAll } from '@/lib/formulaParser';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface AdvancedSpreadsheetProps {
   initialData?: AdvancedSpreadsheetData;
@@ -271,12 +271,10 @@ export function AdvancedSpreadsheet({
           // Check if this cell is part of a merged range (but not the top-left cell)
           const isMergedChild = Array.from(mergedCells.entries()).some(([topLeftKey, range]) => {
             if (topLeftKey === cellKey) return false;
-            // Parse cell key like "A1" to get column and row
             const parts = topLeftKey.match(/([A-Z]+)(\d+)/);
             if (!parts) return false;
             const topLeftColLetters = parts[1];
             const topLeftRow = parseInt(parts[2]) - 1;
-            // Convert column letters to index
             let topLeftCol = -1;
             for (let i = 0; i < topLeftColLetters.length; i++) {
               topLeftCol = (topLeftCol + 1) * 26 + topLeftColLetters.charCodeAt(i) - 65;
@@ -294,33 +292,13 @@ export function AdvancedSpreadsheet({
           }
 
           const mergeInfo = mergedCells.get(cellKey);
-          const displayValue = cell?.calculatedValue !== undefined
-            ? cell.calculatedValue
-            : cell?.value || '';
-
-          const style = cell?.style;
 
           return (
-            <div
-              className={cn(
-                "h-full w-full px-2 py-1 cursor-cell",
-                isSelected && "ring-2 ring-primary ring-inset"
-              )}
-              style={{
-                backgroundColor: style?.backgroundColor,
-                color: style?.textColor,
-                textAlign: style?.textAlign || 'left',
-                fontWeight: style?.bold ? 'bold' : 'normal',
-                fontStyle: style?.italic ? 'italic' : 'normal',
-                textDecoration: style?.underline ? 'underline' : 'none',
-                borderTop: style?.borderTop ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                borderRight: style?.borderRight ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                borderBottom: style?.borderBottom ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                borderLeft: style?.borderLeft ? `1px solid ${style?.borderColor || '#ccc'}` : undefined,
-                gridColumn: mergeInfo ? `span ${mergeInfo.colSpan}` : undefined,
-                gridRow: mergeInfo ? `span ${mergeInfo.rowSpan}` : undefined,
-              }}
-              onClick={() => {
+            <GridCell
+              cell={cell}
+              isSelected={isSelected}
+              mergeInfo={mergeInfo}
+              onCellClick={() => {
                 setSelectedCells(new Set([cellKey]));
                 setSelectedRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
                 setSelectedCell({ col: colIndex, row: rowIndex });
@@ -331,25 +309,8 @@ export function AdvancedSpreadsheet({
                 setContextMenuPosition({ x: e.clientX, y: e.clientY });
                 setContextMenuOpen(true);
               }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.currentTarget.classList.add('ring-2', 'ring-primary');
-              }}
-              onDragLeave={(e) => {
-                e.currentTarget.classList.remove('ring-2', 'ring-primary');
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.currentTarget.classList.remove('ring-2', 'ring-primary');
-                const formula = e.dataTransfer.getData('formula');
-                if (formula) {
-                  handleCellEdit(colIndex, rowIndex, formula);
-                  toast.success('Formula inserted!');
-                }
-              }}
-            >
-              {displayValue}
-            </div>
+              onCellEdit={(value) => handleCellEdit(colIndex, rowIndex, value)}
+            />
           );
         },
       });
