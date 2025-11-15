@@ -483,7 +483,7 @@ export function AdvancedSpreadsheet({
         />
 
         <ContextMenu>
-          <ContextMenuTrigger>
+          <ContextMenuTrigger asChild>
             <div className="flex-1 overflow-auto bg-background">
               <DataGrid
                 columns={columns}
