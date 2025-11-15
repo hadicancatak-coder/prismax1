@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2, Monitor, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,10 +13,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useDeleteUtmLink } from "@/hooks/useUtmLinks";
+import { useDeleteUtmLink, useUpdateUtmLink } from "@/hooks/useUtmLinks";
 import { toast } from "sonner";
 import { UtmLink } from "@/hooks/useUtmLinks";
 import { format } from "date-fns";
+import { UtmBulkActionsBar } from "./UtmBulkActionsBar";
+import { exportUtmLinksToCSV } from "@/lib/utmExport";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UtmTableGroupedViewProps {
   links: UtmLink[];
@@ -34,7 +38,9 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedLinks, setExpandedLinks] = useState<Set<string>>(new Set());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const deleteUtmLink = useDeleteUtmLink();
+  const updateUtmLink = useUpdateUtmLink();
 
   // Group links by expansion_group_id or by campaign + platform + month
   const groupedLinks: GroupedLinks[] = (() => {
@@ -110,6 +116,48 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.size === links.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(links.map(l => l.id)));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkExport = () => {
+    const selectedLinks = links.filter(l => selectedIds.has(l.id));
+    exportUtmLinksToCSV(selectedLinks, `utm-links-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    toast.success(`Exported ${selectedLinks.length} UTM links`);
+  };
+
+  const handleBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedIds);
+    for (const id of idsToDelete) {
+      await deleteUtmLink.mutateAsync(id);
+    }
+    setSelectedIds(new Set());
+    toast.success(`Deleted ${idsToDelete.length} UTM links`);
+  };
+
+  const handleBulkStatusChange = async (status: string) => {
+    const idsToUpdate = Array.from(selectedIds);
+    for (const id of idsToUpdate) {
+      await updateUtmLink.mutateAsync({ id, status });
+    }
+    setSelectedIds(new Set());
+    toast.success(`Updated status for ${idsToUpdate.length} UTM links`);
+  };
+
   if (links.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -120,11 +168,23 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
 
   return (
     <>
+      <UtmBulkActionsBar
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        onExport={handleBulkExport}
+        onDelete={handleBulkDelete}
+        onStatusChange={handleBulkStatusChange}
+      />
       <div className="rounded-md border">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="w-10 p-3"></th>
+              <th className="w-10 p-3">
+                <Checkbox
+                  checked={selectedIds.size === links.length && links.length > 0}
+                  onCheckedChange={handleSelectAll}
+                />
+              </th>
               <th className="text-left p-3 font-medium">Campaign</th>
               <th className="text-left p-3 font-medium">Platform</th>
               <th className="text-left p-3 font-medium">Purpose</th>
@@ -188,16 +248,29 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                             className="border-b hover:bg-muted/20"
                           >
                             <td className="p-3 pl-8">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleLink(link.id);
-                                }}
-                              >
-                                {isLinkExpanded ? (
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={selectedIds.has(link.id)}
+                                  onCheckedChange={() => handleSelectOne(link.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLink(link.id);
+                                  }}
+                                >
+                                  {isLinkExpanded ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                                  {isLinkExpanded ? (
                                   <ChevronDown className="h-3 w-3" />
                                 ) : (
                                   <ChevronRight className="h-3 w-3" />

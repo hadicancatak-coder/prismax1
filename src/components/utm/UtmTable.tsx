@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Copy, ExternalLink, Trash2, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useDeleteUtmLink, type UtmLink } from "@/hooks/useUtmLinks";
+import { useDeleteUtmLink, useUpdateUtmLink, type UtmLink } from "@/hooks/useUtmLinks";
 import { format } from "date-fns";
+import { UtmBulkActionsBar } from "./UtmBulkActionsBar";
+import { exportUtmLinksToCSV } from "@/lib/utmExport";
 
 interface UtmTableProps {
   links: UtmLink[];
@@ -14,7 +17,9 @@ interface UtmTableProps {
 
 export const UtmTable = ({ links }: UtmTableProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const deleteUtmLink = useDeleteUtmLink();
+  const updateUtmLink = useUpdateUtmLink();
 
   const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url);
@@ -68,12 +73,53 @@ export const UtmTable = ({ links }: UtmTableProps) => {
     );
   }
 
+  const handleBulkExport = () => {
+    const selected = links.filter(l => selectedIds.has(l.id));
+    exportUtmLinksToCSV(selected, `utm-links-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    toast.success(`Exported ${selected.length} links`);
+  };
+
+  const handleBulkDelete = async () => {
+    for (const id of Array.from(selectedIds)) {
+      await deleteUtmLink.mutateAsync(id);
+    }
+    setSelectedIds(new Set());
+    toast.success(`Deleted ${selectedIds.size} links`);
+  };
+
+  const handleBulkStatusChange = async (status: string) => {
+    for (const id of Array.from(selectedIds)) {
+      await updateUtmLink.mutateAsync({ id, status });
+    }
+    setSelectedIds(new Set());
+    toast.success(`Updated ${selectedIds.size} links`);
+  };
+
   return (
     <>
+      <UtmBulkActionsBar
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        onExport={handleBulkExport}
+        onDelete={handleBulkDelete}
+        onStatusChange={handleBulkStatusChange}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedIds.size === links.length && links.length > 0}
+                  onCheckedChange={() => {
+                    if (selectedIds.size === links.length) {
+                      setSelectedIds(new Set());
+                    } else {
+                      setSelectedIds(new Set(links.map(l => l.id)));
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Link Name</TableHead>
               <TableHead>Campaign</TableHead>
               <TableHead>Platform</TableHead>
