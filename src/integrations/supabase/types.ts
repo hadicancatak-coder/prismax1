@@ -1339,7 +1339,7 @@ export type Database = {
       kpi_assignments: {
         Row: {
           assigned_at: string
-          assigned_by: string | null
+          assigned_by: string
           id: string
           kpi_id: string
           notes: string | null
@@ -1349,7 +1349,7 @@ export type Database = {
         }
         Insert: {
           assigned_at?: string
-          assigned_by?: string | null
+          assigned_by: string
           id?: string
           kpi_id: string
           notes?: string | null
@@ -1359,7 +1359,7 @@ export type Database = {
         }
         Update: {
           assigned_at?: string
-          assigned_by?: string | null
+          assigned_by?: string
           id?: string
           kpi_id?: string
           notes?: string | null

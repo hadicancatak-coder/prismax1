@@ -93,49 +93,95 @@ export function useKPIs() {
 
   const assignKPI = useMutation({
     mutationFn: async (assignment: Partial<KPIAssignment>) => {
-      // Get the profile ID for assigned_by (current user doing the assignment)
-      const { data: assignedByProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", assignment.assigned_by!)
-        .single();
-
-      if (!assignedByProfile) throw new Error("Assigner profile not found");
-
-      let finalAssignment: any = {
-        ...assignment,
-        assigned_by: assignedByProfile.id,
-      };
-
-      // If assigning to a user (not a team), convert user_id to profile ID
-      if (assignment.user_id) {
-        const { data: assignedUserProfile } = await supabase
+      try {
+        // Get the profile ID for assigned_by (current user doing the assignment)
+        const { data: assignedByProfile, error: assignerError } = await supabase
           .from("profiles")
           .select("id")
-          .eq("user_id", assignment.user_id)
+          .eq("user_id", assignment.assigned_by!)
           .single();
 
-        if (!assignedUserProfile) throw new Error("Assigned user profile not found");
-        
-        finalAssignment.user_id = assignedUserProfile.id;
-        finalAssignment.team_name = null;
-      } else if (assignment.team_name) {
-        // Team assignment
-        finalAssignment.user_id = null;
+        if (assignerError) {
+          console.error("Error fetching assigner profile:", assignerError);
+          throw new Error("Could not find your profile. Please try logging out and back in.");
+        }
+
+        if (!assignedByProfile) {
+          throw new Error("Your profile was not found. Please contact support.");
+        }
+
+        let finalAssignment: any = {
+          ...assignment,
+          assigned_by: assignedByProfile.id,
+        };
+
+        // If assigning to a user (not a team), convert user_id to profile ID
+        if (assignment.user_id) {
+          const { data: assignedUserProfile, error: userError } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", assignment.user_id)
+            .single();
+
+          if (userError) {
+            console.error("Error fetching assigned user profile:", userError);
+            throw new Error("Could not find the user you're trying to assign to. Please try again.");
+          }
+
+          if (!assignedUserProfile) {
+            throw new Error("The selected user profile was not found.");
+          }
+          
+          finalAssignment.user_id = assignedUserProfile.id;
+          finalAssignment.team_name = null;
+        } else if (assignment.team_name) {
+          // Team assignment
+          finalAssignment.user_id = null;
+        } else {
+          throw new Error("Please select either a user or a team to assign the KPI to.");
+        }
+
+        console.log("Attempting to insert KPI assignment:", finalAssignment);
+
+        const { error: insertError } = await supabase
+          .from("kpi_assignments")
+          .insert(finalAssignment);
+
+        if (insertError) {
+          console.error("Error inserting KPI assignment:", insertError);
+          
+          // Provide more specific error messages based on common issues
+          if (insertError.message.includes("violates row-level security")) {
+            throw new Error("You don't have permission to assign KPIs. Please contact an administrator.");
+          } else if (insertError.message.includes("foreign key")) {
+            throw new Error("Invalid KPI or user selected. Please refresh and try again.");
+          } else if (insertError.message.includes("null value")) {
+            throw new Error("Missing required information. Please fill in all required fields.");
+          } else {
+            throw new Error(`Failed to assign KPI: ${insertError.message}`);
+          }
+        }
+
+        console.log("KPI assignment created successfully");
+      } catch (error) {
+        console.error("KPI assignment error:", error);
+        throw error;
       }
-
-      const { error } = await supabase
-        .from("kpi_assignments")
-        .insert(finalAssignment);
-
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kpis"] });
-      toast({ title: "Success", description: "KPI assigned successfully" });
+      toast({ 
+        title: "Success", 
+        description: "KPI assigned successfully. The user will be notified.",
+      });
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error("KPI assignment mutation error:", error);
+      toast({ 
+        title: "Assignment Failed", 
+        description: error.message || "An unexpected error occurred. Please try again.",
+        variant: "destructive" 
+      });
     },
   });
 
