@@ -82,37 +82,29 @@ export function NotificationPreferences() {
 
   if (loading) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      </Card>
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-      <p className="text-sm text-muted-foreground mb-6">
-        Control which notifications you want to receive
-      </p>
-      <div className="space-y-4">
-        {NOTIFICATION_TYPES.map((type) => (
-          <div key={type.id} className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label htmlFor={type.id} className="font-medium cursor-pointer">
-                {type.label}
-              </Label>
-              <p className="text-sm text-muted-foreground">{type.description}</p>
-            </div>
-            <Switch
-              id={type.id}
-              checked={preferences[type.id]}
-              onCheckedChange={() => togglePreference(type.id)}
-            />
+    <div className="space-y-4">
+      {NOTIFICATION_TYPES.map((type) => (
+        <div key={type.id} className="flex items-center justify-between py-2">
+          <div className="flex-1">
+            <Label htmlFor={type.id} className="font-medium cursor-pointer">
+              {type.label}
+            </Label>
+            <p className="text-sm text-muted-foreground">{type.description}</p>
           </div>
-        ))}
-      </div>
-    </Card>
+          <Switch
+            id={type.id}
+            checked={preferences[type.id]}
+            onCheckedChange={() => togglePreference(type.id)}
+          />
+        </div>
+      ))}
+    </div>
   );
 }

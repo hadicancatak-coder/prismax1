@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ import { Upload, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 const TEAMS = ["SocialUA", "PPC", "PerMar"];
 
@@ -295,7 +297,26 @@ export default function Profile() {
 
       {/* Notification Preferences - Only for own profile */}
       {isOwnProfile && (
-        <NotificationPreferences />
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold">Notification Preferences</h3>
+                    <p className="text-sm text-muted-foreground">Manage your notification settings</p>
+                  </div>
+                  <ChevronDown className="h-5 w-5 transition-transform data-[state=open]:rotate-180" />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-6 pb-6">
+                <NotificationPreferences />
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
 
       {/* Team Members */}

@@ -1342,21 +1342,30 @@ export type Database = {
           assigned_by: string | null
           id: string
           kpi_id: string
-          user_id: string
+          notes: string | null
+          status: string | null
+          team_name: string | null
+          user_id: string | null
         }
         Insert: {
           assigned_at?: string
           assigned_by?: string | null
           id?: string
           kpi_id: string
-          user_id: string
+          notes?: string | null
+          status?: string | null
+          team_name?: string | null
+          user_id?: string | null
         }
         Update: {
           assigned_at?: string
           assigned_by?: string | null
           id?: string
           kpi_id?: string
-          user_id?: string
+          notes?: string | null
+          status?: string | null
+          team_name?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

@@ -20,7 +20,7 @@ import Logs from "./pages/admin/Logs";
 import UtmAutomation from "./pages/admin/UtmAutomation";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
-import CustomReports from "./pages/CustomReports";
+import GoogleSheetsReports from "./pages/GoogleSheetsReports";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -79,7 +79,7 @@ const App = () => (
             
             <Route path="/operations" element={<Operations />} />
             <Route path="/operations/status-log" element={<StatusLog />} />
-            <Route path="/operations/custom-reports" element={<CustomReports />} />
+            <Route path="/operations/custom-reports" element={<GoogleSheetsReports />} />
             <Route path="/operations/:id" element={<AuditLogDetail />} />
             <Route path="/copywriter" element={<CopyWriter />} />
             <Route path="/security" element={<Security />} />

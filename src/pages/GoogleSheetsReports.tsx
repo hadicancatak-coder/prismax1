@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { GoogleSheetPicker } from '@/components/reports/GoogleSheetPicker';
+import { GoogleAPISetupGuide } from '@/components/reports/GoogleAPISetupGuide';
+import { GoogleAPIConfig } from '@/components/reports/GoogleAPIConfig';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertCircle, ExternalLink, FileSpreadsheet, Plus, Trash2, LogOut } from 'lucide-react';
+import { AlertCircle, ExternalLink, FileSpreadsheet, Plus, Trash2, LogOut, Settings, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function GoogleSheetsReports() {
+  // Check for API credentials in localStorage first, then fall back to env vars
+  const getAPIKey = () => localStorage.getItem("GOOGLE_API_KEY") || import.meta.env.VITE_GOOGLE_API_KEY;
+  const getClientId = () => localStorage.getItem("GOOGLE_CLIENT_ID") || import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  
+  const [apiConfigured, setApiConfigured] = useState(false);
+  
+  useEffect(() => {
+    setApiConfigured(!!(getAPIKey() && getClientId()));
+  }, []);
+
   const { isAuthenticated, isLoading: authLoading, accessToken, signIn, signOut } = useGoogleAuth();
   const { sheets, isLoading, createSheet, saveSheet, deleteSheet, updateLastAccessed, isCreating } = useGoogleSheets(accessToken);
   const [newSheetName, setNewSheetName] = useState('');
@@ -46,25 +59,44 @@ export default function GoogleSheetsReports() {
     }
   };
 
-  if (authLoading) {
+  // Show setup guide if API is not configured
+  if (!apiConfigured) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Google Sheets Reports</h1>
+          <p className="text-muted-foreground">
+            Integrate your Google Sheets for powerful reporting capabilities
+          </p>
         </div>
+
+        <Tabs defaultValue="guide" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="guide">Setup Guide</TabsTrigger>
+            <TabsTrigger value="config">
+              <Settings className="h-4 w-4 mr-2" />
+              Configuration
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="guide">
+            <GoogleAPISetupGuide />
+          </TabsContent>
+
+          <TabsContent value="config">
+            <GoogleAPIConfig onConfigured={() => setApiConfigured(true)} />
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
 
-  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID || !import.meta.env.VITE_GOOGLE_API_KEY) {
+  if (authLoading) {
     return (
       <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Google API credentials not configured. Please add VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_API_KEY to your environment variables.
-          </AlertDescription>
-        </Alert>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }

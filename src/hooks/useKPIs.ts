@@ -93,18 +93,40 @@ export function useKPIs() {
 
   const assignKPI = useMutation({
     mutationFn: async (assignment: Partial<KPIAssignment>) => {
-      // Get the profile ID for assigned_by
-      const { data: profile } = await supabase
+      // Get the profile ID for assigned_by (current user doing the assignment)
+      const { data: assignedByProfile } = await supabase
         .from("profiles")
         .select("id")
         .eq("user_id", assignment.assigned_by!)
         .single();
 
-      if (!profile) throw new Error("Profile not found");
+      if (!assignedByProfile) throw new Error("Assigner profile not found");
+
+      let finalAssignment: any = {
+        ...assignment,
+        assigned_by: assignedByProfile.id,
+      };
+
+      // If assigning to a user (not a team), convert user_id to profile ID
+      if (assignment.user_id) {
+        const { data: assignedUserProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", assignment.user_id)
+          .single();
+
+        if (!assignedUserProfile) throw new Error("Assigned user profile not found");
+        
+        finalAssignment.user_id = assignedUserProfile.id;
+        finalAssignment.team_name = null;
+      } else if (assignment.team_name) {
+        // Team assignment
+        finalAssignment.user_id = null;
+      }
 
       const { error } = await supabase
         .from("kpi_assignments")
-        .insert({ ...assignment, assigned_by: profile.id } as any);
+        .insert(finalAssignment);
 
       if (error) throw error;
     },
