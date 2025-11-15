@@ -40,16 +40,16 @@ export function TopHeader() {
             <DropdownMenuItem onClick={() => navigate("/tasks")}>
               📋 New Task
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/status-log")}>
+            <DropdownMenuItem onClick={() => navigate("/operations/status-log")}>
               📝 Status Log
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/operations/reports")}>
+            <DropdownMenuItem onClick={() => navigate("/operations/custom-reports")}>
               📊 Custom Report
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/ads/search")}>
               📢 Search Campaign
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/utm")}>
+            <DropdownMenuItem onClick={() => navigate("/utm-planner")}>
               🔗 UTM Link
             </DropdownMenuItem>
           </DropdownMenuContent>
