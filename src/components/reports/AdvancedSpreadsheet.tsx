@@ -39,7 +39,7 @@ const getCellKey = (col: number, row: number): string => {
 
 export function AdvancedSpreadsheet({
   initialData = {},
-  initialRows = 50,
+  initialRows = 100,
   initialCols = 26,
   onDataChange,
   onChartsChange,
@@ -54,7 +54,7 @@ export function AdvancedSpreadsheet({
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
   const [mergedCells, setMergedCells] = useState<Map<string, MergedCell>>(new Map());
-  const [showFormulaLibrary, setShowFormulaLibrary] = useState(true);
+  const [showFormulaLibrary, setShowFormulaLibrary] = useState(false);
 
   const updateCellData = useCallback((updates: Partial<AdvancedSpreadsheetData>) => {
     setCellData(prev => {
