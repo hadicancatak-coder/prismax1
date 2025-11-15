@@ -89,7 +89,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
 
   const handleBulkStatusChange = async (status: string) => {
     for (const id of Array.from(selectedIds)) {
-      await updateUtmLink.mutateAsync({ id, status });
+      await updateUtmLink.mutateAsync({ id, status: status as "active" | "paused" | "archived" });
     }
     setSelectedIds(new Set());
     toast.success(`Updated ${selectedIds.size} links`);

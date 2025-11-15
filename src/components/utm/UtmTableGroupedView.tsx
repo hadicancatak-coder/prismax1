@@ -152,7 +152,7 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
   const handleBulkStatusChange = async (status: string) => {
     const idsToUpdate = Array.from(selectedIds);
     for (const id of idsToUpdate) {
-      await updateUtmLink.mutateAsync({ id, status });
+      await updateUtmLink.mutateAsync({ id, status: status as "active" | "paused" | "archived" });
     }
     setSelectedIds(new Set());
     toast.success(`Updated status for ${idsToUpdate.length} UTM links`);
@@ -270,12 +270,6 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                   )}
                                 </Button>
                               </div>
-                                  {isLinkExpanded ? (
-                                  <ChevronDown className="h-3 w-3" />
-                                ) : (
-                                  <ChevronRight className="h-3 w-3" />
-                                )}
-                              </Button>
                             </td>
                             <td className="p-3">
                               <Badge variant="outline" className="font-mono text-xs">
