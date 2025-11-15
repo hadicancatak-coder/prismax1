@@ -204,8 +204,8 @@ export default function Profile() {
   if (!profile) return <div className="p-8">Loading...</div>;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 animate-fade-in max-w-7xl mx-auto">
-      <Card className="p-6 lg:p-8">
+    <div className="p-8 space-y-6 animate-fade-in">
+      <Card className="p-8">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-32 w-32">
@@ -301,11 +301,11 @@ export default function Profile() {
       {/* Team Members */}
       {teamMembers.length > 0 && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 mb-6">
+          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
             <Users className="h-5 w-5" />
             Team Members ({teamMembers.length})
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {teamMembers.map((member) => (
               <Card
                 key={member.user_id}
