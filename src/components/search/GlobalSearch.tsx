@@ -40,13 +40,24 @@ export function GlobalSearch() {
     }
 
     const searchContent = async () => {
-      const { data } = await supabase.rpc('search_content' as any, {
-        query_text: query,
-        limit_results: 20
-      });
+      try {
+        const { data, error } = await supabase.rpc('search_content', {
+          query_text: query,
+          limit_results: 20
+        });
 
-      if (data) {
-        setResults(data as any);
+        if (error) {
+          console.error('Search error:', error);
+          setResults([]);
+          return;
+        }
+
+        if (data) {
+          setResults(data as SearchResult[]);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
       }
     };
 
@@ -147,27 +158,30 @@ export function GlobalSearch() {
               <CommandEmpty>No results found for "{query}"</CommandEmpty>
             )}
 
-            {results.length > 0 && (
-              <CommandGroup heading="Results">
-                {results.map((result) => (
+            {query && results.length > 0 && Object.keys(groupedResults).map((category) => (
+              <CommandGroup key={category} heading={`${getCategoryIcon(category)} ${category}`}>
+                {groupedResults[category].map((result) => (
                   <CommandItem
                     key={result.id}
                     onSelect={() => handleSelect(result.url, result.title)}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-accent"
                   >
                     <span className="mr-2">{getEntityIcon(result.entity_type)}</span>
-                    <div className="flex-1">
-                      <div className="font-medium">{result.title}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{result.title}</div>
                       {result.description && (
                         <div className="text-xs text-muted-foreground truncate">
                           {result.description}
                         </div>
                       )}
                     </div>
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {result.entity_type.replace('_', ' ')}
+                    </Badge>
                   </CommandItem>
                 ))}
               </CommandGroup>
-            )}
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>

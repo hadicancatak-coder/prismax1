@@ -240,7 +240,7 @@ export function AdvancedSpreadsheet({
         hasSelection={selectedCells.length > 0}
       />
 
-      <div className="flex-1 border border-white/10 rounded overflow-hidden bg-[#1a1f25]">
+      <div className="flex-1 overflow-hidden border border-white/10 rounded bg-[#1a1f25]">
         <VirtualizedSpreadsheet
           rowCount={rowCount}
           colCount={colCount}

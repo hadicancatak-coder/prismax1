@@ -108,6 +108,33 @@ export function StatusLogDetailDialog({
               </div>
             )}
           </div>
+
+          {/* Brief Log Specific Fields */}
+          {log.log_type === 'brief' && (
+            <div className="space-y-4 mt-4 pt-4 border-t border-border">
+              <h3 className="text-base font-semibold text-foreground">Brief Details</h3>
+              
+              {log.socialua_update && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Social UA Update</h4>
+                  <div 
+                    className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.socialua_update) }}
+                  />
+                </div>
+              )}
+
+              {log.ppc_update && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">PPC Update</h4>
+                  <div 
+                    className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.ppc_update) }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t mt-4">
