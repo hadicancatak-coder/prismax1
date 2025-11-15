@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { DataGrid, Column, RenderCellProps, RenderEditCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { SpreadsheetToolbar } from './SpreadsheetToolbar';
@@ -47,14 +47,18 @@ export function AdvancedSpreadsheet({
   const [rowCount, setRowCount] = useState(initialRows);
   const [colCount, setColCount] = useState(initialCols);
   const [cellData, setCellData] = useState<AdvancedSpreadsheetData>(initialData);
-  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
-  const [selectedRange, setSelectedRange] = useState<{ startRow: number; startCol: number; endRow: number; endCol: number } | null>(null);
-  const [selectedCell, setSelectedCell] = useState<{ col: number; row: number } | null>(null);
+  
+  // Use refs for selection and context menu to prevent column recreation
+  const selectedCellsRef = useRef<Set<string>>(new Set());
+  const selectedRangeRef = useRef<{ startRow: number; startCol: number; endRow: number; endCol: number } | null>(null);
+  const selectedCellRef = useRef<{ col: number; row: number } | null>(null);
+  const contextMenuCellRef = useRef<{ col: number; row: number } | null>(null);
+  const contextMenuPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const contextMenuOpenRef = useRef(false);
+  const [, forceUpdate] = useState(0);
+  
   const [charts, setCharts] = useState<ChartConfig[]>([]);
   const [showChartDialog, setShowChartDialog] = useState(false);
-  const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
-  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [mergedCells, setMergedCells] = useState<Map<string, MergedCell>>(new Map());
   const [showFormulaLibrary, setShowFormulaLibrary] = useState(false);
   const [frozenRows, setFrozenRows] = useState(0);
@@ -64,32 +68,34 @@ export function AdvancedSpreadsheet({
 
   // Click outside to close context menu
   useEffect(() => {
-    if (!contextMenuOpen) return;
+    if (!contextMenuOpenRef.current) return;
     
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('.context-menu-panel')) {
-        setContextMenuOpen(false);
+        contextMenuOpenRef.current = false;
+        forceUpdate(n => n + 1);
       }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [contextMenuOpen]);
+  }, [contextMenuOpenRef.current]);
 
   // Escape key to close context menu
   useEffect(() => {
-    if (!contextMenuOpen) return;
+    if (!contextMenuOpenRef.current) return;
     
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setContextMenuOpen(false);
+        contextMenuOpenRef.current = false;
+        forceUpdate(n => n + 1);
       }
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [contextMenuOpen]);
+  }, [contextMenuOpenRef.current]);
 
   const updateCellData = useCallback((updates: Partial<AdvancedSpreadsheetData>) => {
     setCellData(prev => {
@@ -149,10 +155,10 @@ export function AdvancedSpreadsheet({
   }, [cellData, updateCellData]);
 
   const applyStyleToSelection = useCallback((styleUpdates: Partial<CellStyle>) => {
-    if (selectedCells.size === 0) return;
+    if (selectedCellsRef.current.size === 0) return;
 
     const updates: Partial<AdvancedSpreadsheetData> = {};
-    selectedCells.forEach(cellKey => {
+    selectedCellsRef.current.forEach(cellKey => {
       const cell = cellData[cellKey] || { value: '' };
       updates[cellKey] = {
         ...cell,
@@ -161,7 +167,7 @@ export function AdvancedSpreadsheet({
     });
 
     updateCellData(updates);
-  }, [selectedCells, cellData, updateCellData]);
+  }, [cellData, updateCellData]);
 
   const applyBorders = (borderType: 'all' | 'outer' | 'top' | 'bottom' | 'left' | 'right' | 'none') => {
     const borderStyle: Partial<CellStyle> = {
@@ -183,9 +189,9 @@ export function AdvancedSpreadsheet({
   };
 
   const handleMergeCells = () => {
-    if (!selectedRange) return;
+    if (!selectedRangeRef.current) return;
 
-    const { startRow, startCol, endRow, endCol } = selectedRange;
+    const { startRow, startCol, endRow, endCol } = selectedRangeRef.current;
     const rowSpan = endRow - startRow + 1;
     const colSpan = endCol - startCol + 1;
 
@@ -205,9 +211,9 @@ export function AdvancedSpreadsheet({
   };
 
   const handleSplitCells = () => {
-    if (!selectedCell) return;
+    if (!selectedCellRef.current) return;
 
-    const cellKey = getCellKey(selectedCell.col, selectedCell.row);
+    const cellKey = getCellKey(selectedCellRef.current.col, selectedCellRef.current.row);
     if (!mergedCells.has(cellKey)) {
       toast.error('This cell is not merged');
       return;
@@ -266,7 +272,7 @@ export function AdvancedSpreadsheet({
           const rowIndex = props.row.rowIdx;
           const cellKey = getCellKey(colIndex, rowIndex);
           const cell = cellData[cellKey];
-          const isSelected = selectedCells.has(cellKey);
+          const isSelected = selectedCellsRef.current.has(cellKey);
 
           // Check if this cell is part of a merged range (but not the top-left cell)
           const isMergedChild = Array.from(mergedCells.entries()).some(([topLeftKey, range]) => {
