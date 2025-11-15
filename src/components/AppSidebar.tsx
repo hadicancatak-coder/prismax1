@@ -56,7 +56,7 @@ const mediaItems = [
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
   { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
-  { title: "Custom Reports", url: "/operations/custom-reports", icon: FileText },
+  { title: "Google Sheets", url: "/operations/custom-reports", icon: FileText },
 ];
 
 export function AppSidebar() {

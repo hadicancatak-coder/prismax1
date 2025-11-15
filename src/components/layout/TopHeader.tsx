@@ -44,7 +44,7 @@ export function TopHeader() {
               📝 Status Log
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/operations/custom-reports")}>
-              📊 Custom Report
+              📊 Google Sheets
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/ads/search")}>
               📢 Search Campaign
