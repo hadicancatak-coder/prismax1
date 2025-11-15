@@ -25,8 +25,8 @@ const columnToLetter = (index: number): string => {
   return letter;
 };
 
-const getCellKey = (col: number, row: number): string => {
-  return `${columnToLetter(col)}${row + 1}`;
+const getCellKey = (row: number, col: number): string => {
+  return `${row}-${col}`;
 };
 
 export function AdvancedSpreadsheet({
@@ -109,7 +109,7 @@ export function AdvancedSpreadsheet({
   }, [onDataChange]);
 
   const handleCellEdit = useCallback((row: number, col: number, value: string) => {
-    const cellKey = getCellKey(col, row);
+    const cellKey = getCellKey(row, col);
     const updates: AdvancedSpreadsheetData = {};
 
     if (isFormula(value)) {
