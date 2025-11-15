@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataGrid, Column, RenderCellProps, RenderEditCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { SpreadsheetToolbar } from './SpreadsheetToolbar';
 import { ChartGeneratorDialog } from './ChartGeneratorDialog';
 import { FormulaBar } from './FormulaBar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { FormulaLibraryPanel } from './FormulaLibraryPanel';
 import type { AdvancedSpreadsheetData, AdvancedCellData, CellStyle, ChartConfig, MergedCell } from '@/types/spreadsheet';
@@ -62,6 +61,35 @@ export function AdvancedSpreadsheet({
   const [frozenColumns, setFrozenColumns] = useState(0);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [filterActive, setFilterActive] = useState(false);
+
+  // Click outside to close context menu
+  useEffect(() => {
+    if (!contextMenuOpen) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.context-menu-panel')) {
+        setContextMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenuOpen]);
+
+  // Escape key to close context menu
+  useEffect(() => {
+    if (!contextMenuOpen) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setContextMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [contextMenuOpen]);
 
   const updateCellData = useCallback((updates: Partial<AdvancedSpreadsheetData>) => {
     setCellData(prev => {
@@ -505,68 +533,60 @@ export function AdvancedSpreadsheet({
 
         {contextMenuOpen && contextMenuPosition && contextMenuCell && (
           <div 
+            className="context-menu-panel fixed z-50 bg-popover text-popover-foreground rounded-md border shadow-md p-1 w-48"
             style={{ 
-              position: 'fixed', 
               left: contextMenuPosition.x, 
               top: contextMenuPosition.y,
-              zIndex: 50 
             }}
           >
-            <Popover open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
-              <PopoverTrigger asChild>
-                <div className="w-0 h-0" />
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-48 p-1">
-                <div className="flex flex-col gap-1">
-                  <Button
-                    variant="ghost"
-                    className="justify-start h-8 px-2"
-                    onClick={() => {
-                      handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
-                      setContextMenuOpen(false);
-                    }}
-                  >
-                    Clear Cell
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start h-8 px-2"
-                    onClick={() => {
-                      const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
-                      const cell = cellData[cellKey];
-                      if (cell) {
-                        navigator.clipboard.writeText(String(cell.value));
-                        toast.success('Copied to clipboard');
-                      }
-                      setContextMenuOpen(false);
-                    }}
-                  >
-                    Copy
-                  </Button>
-                  <div className="h-px bg-border my-1" />
-                  <Button
-                    variant="ghost"
-                    className="justify-start h-8 px-2"
-                    onClick={() => {
-                      deleteRow(contextMenuCell.row);
-                      setContextMenuOpen(false);
-                    }}
-                  >
-                    Delete Row
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start h-8 px-2"
-                    onClick={() => {
-                      deleteColumn(contextMenuCell.col);
-                      setContextMenuOpen(false);
-                    }}
-                  >
-                    Delete Column
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                className="justify-start h-8 px-2"
+                onClick={() => {
+                  handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
+                  setContextMenuOpen(false);
+                }}
+              >
+                Clear Cell
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start h-8 px-2"
+                onClick={() => {
+                  const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
+                  const cell = cellData[cellKey];
+                  if (cell) {
+                    navigator.clipboard.writeText(String(cell.value));
+                    toast.success('Copied to clipboard');
+                  }
+                  setContextMenuOpen(false);
+                }}
+              >
+                Copy
+              </Button>
+              <div className="h-px bg-border my-1" />
+              <Button
+                variant="ghost"
+                className="justify-start h-8 px-2"
+                onClick={() => {
+                  deleteRow(contextMenuCell.row);
+                  setContextMenuOpen(false);
+                }}
+              >
+                Delete Row
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start h-8 px-2"
+                onClick={() => {
+                  deleteColumn(contextMenuCell.col);
+                  setContextMenuOpen(false);
+                }}
+              >
+                Delete Column
+              </Button>
+            </div>
           </div>
         )}
 
