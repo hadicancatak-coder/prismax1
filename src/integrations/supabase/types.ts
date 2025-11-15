@@ -4048,6 +4048,18 @@ export type Database = {
       }
       regenerate_backup_codes: { Args: never; Returns: string[] }
       reschedule_overdue_tasks: { Args: never; Returns: undefined }
+      search_content: {
+        Args: { limit_results?: number; query_text: string }
+        Returns: {
+          category: string
+          description: string
+          entity_type: string
+          id: string
+          title: string
+          url: string
+          workspace_id: string
+        }[]
+      }
       send_notification:
         | {
             Args: {
