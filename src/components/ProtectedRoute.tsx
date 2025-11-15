@@ -28,6 +28,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
+  const [mfaEnrollmentRequired, setMfaEnrollmentRequired] = useState<boolean | null>(null);
   const [checkingMfa, setCheckingMfa] = useState(true);
 
   useEffect(() => {
@@ -37,15 +38,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (user && !loading) {
-      // Check if user has MFA enabled
+      // Check if user has MFA enabled and if enrollment is required
       const checkMfaStatus = async () => {
         const { data } = await supabase
           .from('profiles')
-          .select('mfa_enabled')
+          .select('mfa_enabled, mfa_enrollment_required')
           .eq('user_id', user.id)
           .single();
         
         setMfaEnabled(data?.mfa_enabled || false);
+        setMfaEnrollmentRequired(data?.mfa_enrollment_required || false);
         setCheckingMfa(false);
       };
       
@@ -59,36 +61,45 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Phase 4: Skip MFA re-validation for exempt routes
-    const isExemptRoute = MFA_EXEMPT_ROUTES.some(route => 
-      location.pathname === route || location.pathname.startsWith(route + '/')
-    );
-    
-    const isRequiredRoute = MFA_REQUIRED_ROUTES.some(route => 
-      location.pathname === route || location.pathname.startsWith(route + '/')
-    );
+    if (!checkingMfa && user) {
+      // If MFA enrollment is required but not enabled, force setup
+      if (mfaEnrollmentRequired && !mfaEnabled) {
+        console.log('🔒 MFA enrollment required, redirecting to setup');
+        navigate("/mfa-setup");
+        return;
+      }
 
-    if (!checkingMfa && user && mfaEnabled) {
-      // Always require MFA for sensitive routes
-      if (isRequiredRoute && !mfaVerified) {
-        console.log('🔒 MFA required route, redirecting to verification');
-        navigate("/mfa-verify");
-        return;
-      }
+      // Phase 4: Skip MFA re-validation for exempt routes
+      const isExemptRoute = MFA_EXEMPT_ROUTES.some(route => 
+        location.pathname === route || location.pathname.startsWith(route + '/')
+      );
       
-      // For exempt routes, allow access even without MFA verification
-      if (isExemptRoute) {
-        console.log('✅ MFA exempt route, allowing access');
-        return;
-      }
-      
-      // For other routes, require MFA if enabled
-      if (!mfaVerified) {
-        console.log('🔒 MFA enabled but not verified, redirecting');
-        navigate("/mfa-verify");
+      const isRequiredRoute = MFA_REQUIRED_ROUTES.some(route => 
+        location.pathname === route || location.pathname.startsWith(route + '/')
+      );
+
+      if (mfaEnabled) {
+        // Always require MFA for sensitive routes
+        if (isRequiredRoute && !mfaVerified) {
+          console.log('🔒 MFA required route, redirecting to verification');
+          navigate("/mfa-verify");
+          return;
+        }
+        
+        // For exempt routes, allow access even without MFA verification
+        if (isExemptRoute) {
+          console.log('✅ MFA exempt route, allowing access');
+          return;
+        }
+        
+        // For other routes, require MFA if enabled
+        if (!mfaVerified) {
+          console.log('🔒 MFA enabled but not verified, redirecting');
+          navigate("/mfa-verify");
+        }
       }
     }
-  }, [user, mfaEnabled, mfaVerified, checkingMfa, navigate, location]);
+  }, [user, mfaEnabled, mfaEnrollmentRequired, mfaVerified, checkingMfa, navigate, location]);
 
   if (loading || checkingMfa) {
     return (
