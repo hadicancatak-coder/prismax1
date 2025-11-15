@@ -19,9 +19,9 @@ const MOST_USED_TOOLS = [
     color: "#8B5CF6",
   },
   {
-    id: "custom-reports",
-    name: "Custom Reports",
-    description: "Build custom reports and analytics dashboards",
+    id: "google-sheets",
+    name: "Google Sheets",
+    description: "Connect and manage Google Sheets reports",
     route: "/operations/custom-reports",
     icon: "BarChart3",
     color: "#10B981",
