@@ -289,9 +289,9 @@ export function AdvancedSpreadsheet({
             );
           });
 
-      if (isMergedChild) {
-        return <div className="h-full w-full" />;
-      }
+          if (isMergedChild) {
+            return <div className="h-full w-full" />;
+          }
 
           const mergeInfo = mergedCells.get(cellKey);
           const displayValue = cell?.calculatedValue !== undefined
