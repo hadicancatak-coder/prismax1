@@ -4,7 +4,8 @@ import 'react-data-grid/lib/styles.css';
 import { SpreadsheetToolbar } from './SpreadsheetToolbar';
 import { ChartGeneratorDialog } from './ChartGeneratorDialog';
 import { FormulaBar } from './FormulaBar';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from '@/components/ui/context-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { FormulaLibraryPanel } from './FormulaLibraryPanel';
 import type { AdvancedSpreadsheetData, AdvancedCellData, CellStyle, ChartConfig, MergedCell } from '@/types/spreadsheet';
 import { evaluateFormula, isFormula, recalculateAll } from '@/lib/formulaParser';
@@ -53,6 +54,8 @@ export function AdvancedSpreadsheet({
   const [charts, setCharts] = useState<ChartConfig[]>([]);
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [contextMenuCell, setContextMenuCell] = useState<{ col: number; row: number } | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [mergedCells, setMergedCells] = useState<Map<string, MergedCell>>(new Map());
   const [showFormulaLibrary, setShowFormulaLibrary] = useState(false);
   const [frozenRows, setFrozenRows] = useState(0);
@@ -297,6 +300,8 @@ export function AdvancedSpreadsheet({
               onContextMenu={(e) => {
                 e.preventDefault();
                 setContextMenuCell({ col: colIndex, row: rowIndex });
+                setContextMenuPosition({ x: e.clientX, y: e.clientY });
+                setContextMenuOpen(true);
               }}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -482,54 +487,88 @@ export function AdvancedSpreadsheet({
           hasSelection={selectedCells.size > 0}
         />
 
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <div className="flex-1 overflow-auto bg-background">
-              <DataGrid
-                columns={columns}
-                rows={rows}
-                className="rdg-light h-full"
-                style={{ height: '100%' }}
-                rowKeyGetter={(row) => row.rowIdx}
-                onCellClick={(args) => {
-                  const colIdx = columns.findIndex(c => c.key === args.column.key);
-                  if (colIdx > 0) {
-                    setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
-                  }
-                }}
-              />
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            {contextMenuCell && (
-              <>
-                <ContextMenuItem onClick={() => {
-                  handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
-                }}>
-                  Clear Cell
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => {
-                  const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
-                  const cell = cellData[cellKey];
-                  if (cell) {
-                    navigator.clipboard.writeText(String(cell.value));
-                    toast.success('Copied to clipboard');
-                  }
-                }}>
-                  Copy
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => deleteRow(contextMenuCell.row)}>
-                  Delete Row
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => deleteColumn(contextMenuCell.col)}>
-                  Delete Column
-                </ContextMenuItem>
-              </>
-            )}
-          </ContextMenuContent>
-        </ContextMenu>
+        <div className="flex-1 overflow-auto bg-background">
+          <DataGrid
+            columns={columns}
+            rows={rows}
+            className="rdg-light h-full"
+            style={{ height: '100%' }}
+            rowKeyGetter={(row) => row.rowIdx}
+            onCellClick={(args) => {
+              const colIdx = columns.findIndex(c => c.key === args.column.key);
+              if (colIdx > 0) {
+                setSelectedCell({ col: colIdx - 1, row: args.row.rowIdx });
+              }
+            }}
+          />
+        </div>
+
+        {contextMenuOpen && contextMenuPosition && contextMenuCell && (
+          <div 
+            style={{ 
+              position: 'fixed', 
+              left: contextMenuPosition.x, 
+              top: contextMenuPosition.y,
+              zIndex: 50 
+            }}
+          >
+            <Popover open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
+              <PopoverTrigger asChild>
+                <div className="w-0 h-0" />
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-48 p-1">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    className="justify-start h-8 px-2"
+                    onClick={() => {
+                      handleCellEdit(contextMenuCell.col, contextMenuCell.row, '');
+                      setContextMenuOpen(false);
+                    }}
+                  >
+                    Clear Cell
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="justify-start h-8 px-2"
+                    onClick={() => {
+                      const cellKey = getCellKey(contextMenuCell.col, contextMenuCell.row);
+                      const cell = cellData[cellKey];
+                      if (cell) {
+                        navigator.clipboard.writeText(String(cell.value));
+                        toast.success('Copied to clipboard');
+                      }
+                      setContextMenuOpen(false);
+                    }}
+                  >
+                    Copy
+                  </Button>
+                  <div className="h-px bg-border my-1" />
+                  <Button
+                    variant="ghost"
+                    className="justify-start h-8 px-2"
+                    onClick={() => {
+                      deleteRow(contextMenuCell.row);
+                      setContextMenuOpen(false);
+                    }}
+                  >
+                    Delete Row
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="justify-start h-8 px-2"
+                    onClick={() => {
+                      deleteColumn(contextMenuCell.col);
+                      setContextMenuOpen(false);
+                    }}
+                  >
+                    Delete Column
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
 
         {showChartDialog && selectedRange && (
           <ChartGeneratorDialog
