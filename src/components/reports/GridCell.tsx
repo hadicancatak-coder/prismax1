@@ -1,59 +1,72 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import type { AdvancedCellData, MergedCell } from '@/types/spreadsheet';
+import type { CellStyle } from '@/types/spreadsheet';
 import { Input } from '@/components/ui/input';
 
 interface GridCellProps {
-  cell: AdvancedCellData | undefined;
-  isSelected: boolean;
-  isActive: boolean;
-  isEditing: boolean;
-  mergeInfo: MergedCell | undefined;
-  onCellClick: () => void;
-  onCellDoubleClick: () => void;
-  onContextMenu: (e: React.MouseEvent) => void;
-  onCellEdit: (value: string) => void;
+  row: number;
+  col: number;
+  value?: string | number;
+  calculated?: string | number;
+  formula?: string;
+  style?: CellStyle;
+  isSelected?: boolean;
+  isActive?: boolean;
+  isEditing?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+  onDoubleClick?: () => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
+  onMouseEnter?: () => void;
+  onEdit?: (value: string) => void;
+  onStopEditing?: () => void;
+  mergeInfo?: { colSpan: number; rowSpan: number };
 }
 
 export const GridCell = memo(function GridCell({
-  cell,
-  isSelected,
-  isActive,
-  isEditing,
+  row,
+  col,
+  value,
+  calculated,
+  formula,
+  style,
+  isSelected = false,
+  isActive = false,
+  isEditing = false,
+  onClick,
+  onDoubleClick,
+  onMouseDown,
+  onMouseEnter,
+  onEdit,
+  onStopEditing,
   mergeInfo,
-  onCellClick,
-  onCellDoubleClick,
-  onContextMenu,
-  onCellEdit,
 }: GridCellProps) {
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayValue = cell?.calculatedValue !== undefined
-    ? cell.calculatedValue
-    : cell?.value || '';
-
-  const style = cell?.style;
+  const displayValue = calculated !== undefined ? calculated : (value || '');
 
   useEffect(() => {
     if (isEditing) {
-      setEditValue(cell?.formula || cell?.value?.toString() || '');
+      setEditValue(formula || value?.toString() || '');
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [isEditing, cell]);
+  }, [isEditing, formula, value]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      onCellEdit(editValue);
+      onEdit?.(editValue);
+      onStopEditing?.();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      onCellEdit(cell?.formula || cell?.value?.toString() || '');
+      setEditValue(formula || value?.toString() || '');
+      onStopEditing?.();
     }
   };
 
   const handleBlur = () => {
-    onCellEdit(editValue);
+    onEdit?.(editValue);
+    onStopEditing?.();
   };
 
   if (isEditing) {
@@ -71,27 +84,29 @@ export const GridCell = memo(function GridCell({
     );
   }
 
+  const cellStyle: React.CSSProperties = {
+    backgroundColor: isSelected ? 'hsl(var(--primary) / 0.1)' : (style?.backgroundColor || 'hsl(var(--card))'),
+    color: style?.textColor || 'hsl(var(--foreground))',
+    textAlign: style?.textAlign || 'left',
+    fontWeight: style?.bold ? 'bold' : 'normal',
+    fontStyle: style?.italic ? 'italic' : 'normal',
+    textDecoration: style?.underline ? 'underline' : 'none',
+    borderTop: style?.borderTop ? `1px solid ${style?.borderColor || 'hsl(var(--border))'}` : undefined,
+    gridColumn: mergeInfo ? `span ${mergeInfo.colSpan}` : undefined,
+    gridRow: mergeInfo ? `span ${mergeInfo.rowSpan}` : undefined,
+  };
+
   return (
     <div
       className={cn(
-        "h-full w-full px-2 py-1 cursor-cell border-r border-b border-border bg-card text-foreground text-sm select-none overflow-hidden",
-        isSelected && "bg-primary/10",
+        "h-full w-full px-2 py-1 cursor-cell border-r border-b border-border text-sm select-none overflow-hidden flex items-center",
         isActive && "ring-2 ring-primary ring-inset"
       )}
-      style={{
-        backgroundColor: isSelected ? undefined : (style?.backgroundColor || 'hsl(var(--card))'),
-        color: style?.textColor,
-        textAlign: style?.textAlign || 'left',
-        fontWeight: style?.bold ? 'bold' : 'normal',
-        fontStyle: style?.italic ? 'italic' : 'normal',
-        textDecoration: style?.underline ? 'underline' : 'none',
-        borderTop: style?.borderTop ? `1px solid ${style?.borderColor || 'hsl(var(--border))'}` : undefined,
-        gridColumn: mergeInfo ? `span ${mergeInfo.colSpan}` : undefined,
-        gridRow: mergeInfo ? `span ${mergeInfo.rowSpan}` : undefined,
-      }}
-      onClick={onCellClick}
-      onDoubleClick={onCellDoubleClick}
-      onContextMenu={onContextMenu}
+      style={cellStyle}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
     >
       <div className="truncate">{displayValue}</div>
     </div>
