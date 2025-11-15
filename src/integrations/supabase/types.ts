@@ -1303,6 +1303,39 @@ export type Database = {
         }
         Relationships: []
       }
+      google_sheets_reports: {
+        Row: {
+          created_at: string
+          id: string
+          last_accessed_at: string | null
+          sheet_id: string
+          sheet_name: string
+          sheet_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          sheet_id: string
+          sheet_name: string
+          sheet_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          sheet_id?: string
+          sheet_name?: string
+          sheet_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kpi_assignments: {
         Row: {
           assigned_at: string
