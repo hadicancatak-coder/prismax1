@@ -67,9 +67,12 @@ export function AssignKPIDialog({ open, onOpenChange, kpi }: AssignKPIDialogProp
       notes: notes || null,
     };
 
-    assignKPI.mutate(assignment);
-    onOpenChange(false);
-    resetForm();
+    assignKPI.mutate(assignment, {
+      onSuccess: () => {
+        onOpenChange(false);
+        resetForm();
+      },
+    });
   };
 
   const isValid = assignmentType === "user" ? !!selectedUserId : !!selectedTeam;
@@ -150,11 +153,18 @@ export function AssignKPIDialog({ open, onOpenChange, kpi }: AssignKPIDialogProp
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={assignKPI.isPending}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!isValid}>
-            Assign KPI
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!isValid || assignKPI.isPending}
+          >
+            {assignKPI.isPending ? "Assigning..." : "Assign KPI"}
           </Button>
         </DialogFooter>
       </DialogContent>
