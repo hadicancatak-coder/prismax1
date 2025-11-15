@@ -810,6 +810,50 @@ export type Database = {
           },
         ]
       }
+      boards: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          route: string
+          sort_order: number | null
+          workspace_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          route: string
+          sort_order?: number | null
+          workspace_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          route?: string
+          sort_order?: number | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_assignees: {
         Row: {
           assigned_at: string
@@ -1101,6 +1145,33 @@ export type Database = {
           region?: string | null
           tags?: string[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_reports: {
+        Row: {
+          created_at: string
+          elements: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          elements?: Json
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          elements?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2449,6 +2520,53 @@ export type Database = {
           },
         ]
       }
+      search_index: {
+        Row: {
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json | null
+          search_vector: unknown
+          title: string
+          updated_at: string
+          url: string
+          workspace_id: string | null
+        }
+        Insert: {
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          search_vector?: unknown
+          title: string
+          updated_at?: string
+          url: string
+          workspace_id?: string | null
+        }
+        Update: {
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          search_vector?: unknown
+          title?: string
+          updated_at?: string
+          url?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_index_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_scan_results: {
         Row: {
           completed_at: string | null
@@ -2518,14 +2636,16 @@ export type Database = {
           converted_at: string | null
           converted_by: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           entity: string[] | null
           id: string
           log_type: string
           platform: string | null
+          ppc_update: string | null
           resolved_at: string | null
           resolved_by: string | null
+          socialua_update: string | null
           status: string | null
           task_id: string | null
           title: string
@@ -2536,14 +2656,16 @@ export type Database = {
           converted_at?: string | null
           converted_by?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           entity?: string[] | null
           id?: string
           log_type: string
           platform?: string | null
+          ppc_update?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          socialua_update?: string | null
           status?: string | null
           task_id?: string | null
           title: string
@@ -2554,14 +2676,16 @@ export type Database = {
           converted_at?: string | null
           converted_by?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           entity?: string[] | null
           id?: string
           log_type?: string
           platform?: string | null
+          ppc_update?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          socialua_update?: string | null
           status?: string | null
           task_id?: string | null
           title?: string
@@ -3130,6 +3254,42 @@ export type Database = {
           },
         ]
       }
+      templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          preview_image_url: string | null
+          template_data: Json | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          preview_image_url?: string | null
+          template_data?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          preview_image_url?: string | null
+          template_data?: Json | null
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           created_at: string
@@ -3164,6 +3324,38 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_board_access: {
+        Row: {
+          access_count: number | null
+          board_id: string
+          is_starred: boolean | null
+          last_accessed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_count?: number | null
+          board_id: string
+          is_starred?: boolean | null
+          last_accessed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_count?: number | null
+          board_id?: string
+          is_starred?: boolean | null
+          last_accessed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_board_access_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
             referencedColumns: ["id"]
           },
         ]
@@ -3674,6 +3866,36 @@ export type Database = {
         }
         Relationships: []
       }
+      workspaces: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       launch_campaigns_with_assignees: {
@@ -3798,6 +4020,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_board_access: {
+        Args: { p_board_id: string; p_user_id: string }
+        Returns: undefined
       }
       is_comment_author: {
         Args: { _comment_id: string; _user_id: string }
