@@ -3102,6 +3102,7 @@ export type Database = {
           jira_links: Json | null
           labels: string[] | null
           order_index: number | null
+          parent_task_id: string | null
           pending_approval: boolean | null
           pending_changes: Json | null
           priority: Database["public"]["Enums"]["task_priority"]
@@ -3109,6 +3110,7 @@ export type Database = {
           project_key: string | null
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
+          recurrence_days_of_week: number[] | null
           recurrence_rrule: string | null
           requested_status: Database["public"]["Enums"]["task_status"] | null
           source: Database["public"]["Enums"]["task_source"]
@@ -3146,6 +3148,7 @@ export type Database = {
           jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
+          parent_task_id?: string | null
           pending_approval?: boolean | null
           pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -3153,6 +3156,7 @@ export type Database = {
           project_key?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
+          recurrence_days_of_week?: number[] | null
           recurrence_rrule?: string | null
           requested_status?: Database["public"]["Enums"]["task_status"] | null
           source?: Database["public"]["Enums"]["task_source"]
@@ -3190,6 +3194,7 @@ export type Database = {
           jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
+          parent_task_id?: string | null
           pending_approval?: boolean | null
           pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -3197,6 +3202,7 @@ export type Database = {
           project_key?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
+          recurrence_days_of_week?: number[] | null
           recurrence_rrule?: string | null
           requested_status?: Database["public"]["Enums"]["task_status"] | null
           source?: Database["public"]["Enums"]["task_source"]
@@ -3243,6 +3249,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "launch_pad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
@@ -3983,6 +3996,7 @@ export type Database = {
       cleanup_rate_limit: { Args: never; Returns: undefined }
       detect_language: { Args: { content_text: string }; Returns: string }
       extract_client_ip: { Args: { ip_chain: string }; Returns: string }
+      generate_recurring_tasks: { Args: never; Returns: undefined }
       get_admin_user_ids: {
         Args: never
         Returns: {

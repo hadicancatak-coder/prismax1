@@ -50,7 +50,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [entities, setEntities] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [recurrence, setRecurrence] = useState<string>("none");
-  const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number | null>(null);
+  const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
@@ -122,31 +122,43 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       }
     }
 
-    // Validate recurring task day against assignee working days
-    if (recurrence === "weekly" && recurrenceDayOfWeek !== null && selectedAssignees.length > 0) {
+    // Validate recurring task days against assignee working days
+    if (recurrence === "weekly" && recurrenceDaysOfWeek.length > 0 && selectedAssignees.length > 0) {
       const { data: assigneeProfiles } = await supabase
         .from("profiles")
         .select("id, name, working_days")
         .in("id", selectedAssignees);
-      
-      const invalidAssignees: string[] = [];
+
+      const invalidAssignees: Map<string, string[]> = new Map();
       
       assigneeProfiles?.forEach(profile => {
-        const isValidDay = (
-          (profile.working_days === 'mon-fri' && recurrenceDayOfWeek >= 1 && recurrenceDayOfWeek <= 5) ||
-          (profile.working_days === 'sun-thu' && (recurrenceDayOfWeek === 0 || (recurrenceDayOfWeek >= 1 && recurrenceDayOfWeek <= 4)))
-        );
+        const invalidDays: string[] = [];
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         
-        if (!isValidDay) {
-          invalidAssignees.push(profile.name);
+        recurrenceDaysOfWeek.forEach(dayOfWeek => {
+          const isValidDay = (
+            (profile.working_days === 'mon-fri' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+            (profile.working_days === 'sun-thu' && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4)))
+          );
+          
+          if (!isValidDay) {
+            invalidDays.push(days[dayOfWeek]);
+          }
+        });
+
+        if (invalidDays.length > 0) {
+          invalidAssignees.set(profile.name, invalidDays);
         }
       });
-      
-      if (invalidAssignees.length > 0) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      if (invalidAssignees.size > 0) {
+        const conflictMessages = Array.from(invalidAssignees.entries())
+          .map(([name, days]) => `${name}: ${days.join(', ')}`)
+          .join('\n');
+        
         toast({
-          title: "Working Day Conflict",
-          description: `${days[recurrenceDayOfWeek]} falls outside working days for: ${invalidAssignees.join(', ')}`,
+          title: "Working Day Conflicts",
+          description: `The following assignees have conflicts:\n${conflictMessages}`,
           variant: "destructive",
         });
         return;
@@ -157,9 +169,10 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
     let recurrenceRule = "";
     if (recurrence === "daily") {
       recurrenceRule = "FREQ=DAILY";
-    } else if (recurrence === "weekly" && recurrenceDayOfWeek !== null) {
+    } else if (recurrence === "weekly" && recurrenceDaysOfWeek.length > 0) {
       const days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-      recurrenceRule = `FREQ=WEEKLY;BYDAY=${days[recurrenceDayOfWeek]}`;
+      const selectedDays = recurrenceDaysOfWeek.map(d => days[d]).join(',');
+      recurrenceRule = `FREQ=WEEKLY;BYDAY=${selectedDays}`;
     } else if (recurrence === "monthly" && recurrenceDayOfMonth !== null) {
       recurrenceRule = `FREQ=MONTHLY;BYMONTHDAY=${recurrenceDayOfMonth}`;
     }
@@ -175,7 +188,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         priority: recurrence !== "none" ? "High" : priority,
         status: status,
         recurrence_rrule: recurrenceRule || "",
-        recurrence_day_of_week: recurrenceDayOfWeek,
+        recurrence_days_of_week: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : null,
         recurrence_day_of_month: recurrenceDayOfMonth,
         assignee_id: null,
         project_id: null,
@@ -231,10 +244,12 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         visibility: "global" as "global" | "pool" | "private",
         entity: entities.length > 0 ? entities : [],
         recurrence_rrule: recurrenceRule || null,
-        recurrence_day_of_week: recurrenceDayOfWeek,
+        recurrence_days_of_week: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : null,
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
-        task_type: taskType as "task" | "operations" | "campaign_launch",
+        task_type: (taskType === "recurring" || taskType === "campaign" || taskType === "operations" || taskType === "general") 
+          ? taskType as any 
+          : "task",
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
@@ -289,7 +304,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       setEntities([]);
       setDate(undefined);
       setRecurrence("none");
-      setRecurrenceDayOfWeek(null);
+      setRecurrenceDaysOfWeek([]);
       setRecurrenceDayOfMonth(null);
       setValidationErrors({});
       setSelectedTeams([]);
@@ -492,11 +507,12 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     setDate(undefined);
                   }
                   if (value !== "weekly") {
-                    setRecurrenceDayOfWeek(null);
+                    setRecurrenceDaysOfWeek([]);
                   }
                   if (value !== "monthly") {
                     setRecurrenceDayOfMonth(null);
                   }
+                  setTaskType(value !== "none" ? "recurring" : "general");
                 }}
               >
                 <SelectTrigger>
@@ -514,24 +530,35 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
           {recurrence === "weekly" && (
             <div className="space-y-2">
-              <Label>Day of Week</Label>
-              <Select 
-                value={recurrenceDayOfWeek?.toString() || ""} 
-                onValueChange={(val) => setRecurrenceDayOfWeek(parseInt(val))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Sunday</SelectItem>
-                  <SelectItem value="1">Monday</SelectItem>
-                  <SelectItem value="2">Tuesday</SelectItem>
-                  <SelectItem value="3">Wednesday</SelectItem>
-                  <SelectItem value="4">Thursday</SelectItem>
-                  <SelectItem value="5">Friday</SelectItem>
-                  <SelectItem value="6">Saturday</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Days of Week (Multi-select)</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 1, label: 'Mon' },
+                  { value: 2, label: 'Tue' },
+                  { value: 3, label: 'Wed' },
+                  { value: 4, label: 'Thu' },
+                  { value: 5, label: 'Fri' },
+                  { value: 6, label: 'Sat' },
+                  { value: 0, label: 'Sun' },
+                ].map(day => (
+                  <div key={day.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`day-${day.value}`}
+                      checked={recurrenceDaysOfWeek.includes(day.value)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
+                        } else {
+                          setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`day-${day.value}`} className="cursor-pointer">
+                      {day.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

@@ -23,6 +23,8 @@ interface TaskDateFilterBarProps {
   onFilterChange: (filter: DateFilter | null) => void;
   onStatusChange: (status: string) => void;
   selectedStatus: string;
+  onTaskTypeChange?: (taskType: string) => void;
+  selectedTaskType?: string;
   taskCounts?: {
     all: number;
     today: number;
@@ -40,6 +42,8 @@ export function TaskDateFilterBar({
   onFilterChange, 
   onStatusChange,
   selectedStatus,
+  onTaskTypeChange,
+  selectedTaskType = "all",
   taskCounts 
 }: TaskDateFilterBarProps) {
   const [customRange, setCustomRange] = useState<DateRange | null>(null);
@@ -59,6 +63,14 @@ export function TaskDateFilterBar({
     { value: "Completed", label: "Completed" },
     { value: "Failed", label: "Failed" },
     { value: "Blocked", label: "Blocked" },
+  ];
+
+  const taskTypeOptions = [
+    { value: "all", label: "All Types" },
+    { value: "general", label: "General" },
+    { value: "recurring", label: "Recurring" },
+    { value: "campaign", label: "Campaign" },
+    { value: "operations", label: "Operations" },
   ];
 
   return (
@@ -97,6 +109,21 @@ export function TaskDateFilterBar({
           />
         </PopoverContent>
       </Popover>
+
+      {onTaskTypeChange && (
+        <Select value={selectedTaskType} onValueChange={onTaskTypeChange}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Task Type" />
+          </SelectTrigger>
+          <SelectContent>
+            {taskTypeOptions.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }

@@ -1,10 +1,9 @@
-import React, { useRef, useCallback, memo, useState, useEffect } from 'react';
-import { VariableSizeGrid as Grid } from 'react-window';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import { VariableSizeGrid } from 'react-window';
 import type { AdvancedCellData } from '@/types/spreadsheet';
 import { GridCell } from './GridCell';
 import { ColumnHeader, RowHeader, CornerCell } from './SpreadsheetHeader';
 import { useSpreadsheetSelection } from '@/hooks/useSpreadsheetSelection';
-import { useSpreadsheetKeyboard } from '@/hooks/useSpreadsheetKeyboard';
 
 interface VirtualizedSpreadsheetProps {
   rowCount: number;
@@ -19,16 +18,22 @@ export function VirtualizedSpreadsheet({
   cellData,
   onCellEdit,
 }: VirtualizedSpreadsheetProps) {
-  const gridRef = useRef<Grid>(null);
+  const gridRef = useRef<VariableSizeGrid>(null);
   const colHeaderScrollRef = useRef<HTMLDivElement>(null);
   const rowHeaderScrollRef = useRef<HTMLDivElement>(null);
   
-  const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
-  const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
-  const [resizing, setResizing] = useState<{ type: 'col' | 'row', index: number, start: number, startSize: number } | null>(null);
-
+  const [columnWidths, setColumnWidths] = useState<Record<number, number>>(() => 
+    Array.from({ length: colCount }, (_, i) => 100).reduce((acc, width, i) => ({ ...acc, [i]: width }), {})
+  );
+  const [rowHeights, setRowHeights] = useState<Record<number, number>>(() =>
+    Array.from({ length: rowCount }, (_, i) => 32).reduce((acc, height, i) => ({ ...acc, [i]: height }), {})
+  );
+  
   const {
     selectedCell,
+    editingCell,
+    selectedColumns,
+    selectedRows,
     selectCell,
     selectColumn,
     selectRow,
@@ -38,13 +43,13 @@ export function VirtualizedSpreadsheet({
     isCellSelected,
     isActiveCell,
     isEditing,
-    selectedColumns,
-    selectedRows,
   } = useSpreadsheetSelection();
 
-  const ROW_HEADER_WIDTH = 40;
-  const COL_HEADER_HEIGHT = 28;
-  const DEFAULT_COL_WIDTH = 120;
+  const [resizing, setResizing] = useState<{ type: 'column' | 'row'; index: number; start: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
+
+  const DEFAULT_COL_WIDTH = 100;
   const DEFAULT_ROW_HEIGHT = 32;
 
   const getColumnWidth = useCallback((index: number) => {
@@ -57,106 +62,128 @@ export function VirtualizedSpreadsheet({
 
   const getCellKey = (row: number, col: number) => `${row}-${col}`;
 
-  const handleCellClick = useCallback((row: number, col: number, e: React.MouseEvent) => {
-    selectCell(row, col, e.shiftKey);
-  }, [selectCell]);
+  const handleCellClick = (row: number, col: number, event: React.MouseEvent) => {
+    selectCell(row, col, event.shiftKey);
+  };
 
-  const handleCellDoubleClick = useCallback((row: number, col: number) => {
+  const handleCellDoubleClick = (row: number, col: number) => {
     startEditing(row, col);
-  }, [startEditing]);
+  };
 
-  const handleCellChange = useCallback((row: number, col: number, value: string) => {
+  const handleCellMouseDown = (row: number, col: number, event: React.MouseEvent) => {
+    if (event.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ row, col });
+    selectCell(row, col, false);
+  };
+
+  const handleCellMouseEnter = (row: number, col: number) => {
+    if (isDragging && dragStart) {
+      selectCell(row, col, true);
+    }
+  };
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setDragStart(null);
+  }, []);
+
+  const handleCellEdit = (row: number, col: number, value: string) => {
     onCellEdit(row, col, value);
-    stopEditing();
-  }, [onCellEdit, stopEditing]);
+  };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!selectedCell || isEditing(selectedCell.row, selectedCell.col)) return;
+    if (!selectedCell) return;
+    
+    const { row, col } = selectedCell;
+    const editing = editingCell && editingCell.row === row && editingCell.col === col;
+    
+    if (editing) return;
 
     switch (e.key) {
       case 'ArrowUp':
         e.preventDefault();
-        if (selectedCell.row > 0) selectCell(selectedCell.row - 1, selectedCell.col);
+        if (row > 0) selectCell(row - 1, col, e.shiftKey);
         break;
       case 'ArrowDown':
         e.preventDefault();
-        if (selectedCell.row < rowCount - 1) selectCell(selectedCell.row + 1, selectedCell.col);
+        if (row < rowCount - 1) selectCell(row + 1, col, e.shiftKey);
         break;
       case 'ArrowLeft':
         e.preventDefault();
-        if (selectedCell.col > 0) selectCell(selectedCell.row, selectedCell.col - 1);
+        if (col > 0) selectCell(row, col - 1, e.shiftKey);
         break;
       case 'ArrowRight':
         e.preventDefault();
-        if (selectedCell.col < colCount - 1) selectCell(selectedCell.row, selectedCell.col + 1);
+        if (col < colCount - 1) selectCell(row, col + 1, e.shiftKey);
         break;
       case 'Tab':
         e.preventDefault();
         if (e.shiftKey) {
-          if (selectedCell.col > 0) selectCell(selectedCell.row, selectedCell.col - 1);
+          if (col > 0) selectCell(row, col - 1, false);
         } else {
-          if (selectedCell.col < colCount - 1) selectCell(selectedCell.row, selectedCell.col + 1);
+          if (col < colCount - 1) selectCell(row, col + 1, false);
         }
         break;
       case 'Enter':
         e.preventDefault();
-        if (e.shiftKey) {
-          if (selectedCell.row > 0) selectCell(selectedCell.row - 1, selectedCell.col);
-        } else {
-          if (selectedCell.row < rowCount - 1) selectCell(selectedCell.row + 1, selectedCell.col);
+        if (!editing) {
+          startEditing(row, col);
         }
         break;
       case 'F2':
         e.preventDefault();
-        startEditing(selectedCell.row, selectedCell.col);
-        break;
-      case 'Escape':
-        e.preventDefault();
-        stopEditing();
+        startEditing(row, col);
         break;
       case 'Delete':
       case 'Backspace':
         e.preventDefault();
-        onCellEdit(selectedCell.row, selectedCell.col, '');
+        if (!editing) {
+          onCellEdit(row, col, '');
+        }
         break;
       default:
-        // Start editing on any alphanumeric key
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-          startEditing(selectedCell.row, selectedCell.col);
+          startEditing(row, col);
         }
+        break;
     }
-  }, [selectedCell, selectCell, rowCount, colCount, startEditing, stopEditing, onCellEdit, isEditing]);
+  }, [selectedCell, editingCell, rowCount, colCount, selectCell, startEditing, onCellEdit]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleKeyDown, handleMouseUp]);
 
-  const handleColumnResizeStart = useCallback((col: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setResizing({ type: 'col', index: col, start: e.clientX, startSize: getColumnWidth(col) });
-  }, [getColumnWidth]);
+  const handleColumnResize = useCallback((col: number, startX: number) => {
+    setResizing({ type: 'column', index: col, start: startX });
+  }, []);
 
-  const handleRowResizeStart = useCallback((row: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setResizing({ type: 'row', index: row, start: e.clientY, startSize: getRowHeight(row) });
-  }, [getRowHeight]);
+  const handleRowResize = useCallback((row: number, startY: number) => {
+    setResizing({ type: 'row', index: row, start: startY });
+  }, []);
 
   useEffect(() => {
     if (!resizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (resizing.type === 'col') {
+      if (resizing.type === 'column') {
         const delta = e.clientX - resizing.start;
-        const newWidth = Math.max(50, resizing.startSize + delta);
+        const currentWidth = columnWidths[resizing.index] || DEFAULT_COL_WIDTH;
+        const newWidth = Math.max(50, currentWidth + delta);
         setColumnWidths(prev => ({ ...prev, [resizing.index]: newWidth }));
+        setResizing({ ...resizing, start: e.clientX });
         gridRef.current?.resetAfterColumnIndex(resizing.index);
       } else {
         const delta = e.clientY - resizing.start;
-        const newHeight = Math.max(21, resizing.startSize + delta);
+        const currentHeight = rowHeights[resizing.index] || DEFAULT_ROW_HEIGHT;
+        const newHeight = Math.max(24, currentHeight + delta);
         setRowHeights(prev => ({ ...prev, [resizing.index]: newHeight }));
+        setResizing({ ...resizing, start: e.clientY });
         gridRef.current?.resetAfterRowIndex(resizing.index);
       }
     };
@@ -167,12 +194,11 @@ export function VirtualizedSpreadsheet({
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizing]);
+  }, [resizing, columnWidths, rowHeights]);
 
   const handleScroll = useCallback(({ scrollLeft, scrollTop }: { scrollLeft: number; scrollTop: number }) => {
     if (colHeaderScrollRef.current) {
@@ -186,96 +212,91 @@ export function VirtualizedSpreadsheet({
   const CellRenderer = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const key = getCellKey(rowIndex, columnIndex);
     const cell = cellData.get(key);
-    const selected = isCellSelected(rowIndex, columnIndex);
-    const active = isActiveCell(rowIndex, columnIndex);
-    const editing = isEditing(rowIndex, columnIndex);
 
     return (
       <div style={style}>
         <GridCell
-          cell={cell}
-          isSelected={selected}
-          isActive={active}
-          isEditing={editing}
-          mergeInfo={undefined}
-          onCellClick={() => handleCellClick(rowIndex, columnIndex, {} as any)}
-          onCellDoubleClick={() => handleCellDoubleClick(rowIndex, columnIndex)}
-          onContextMenu={(e) => e.preventDefault()}
-          onCellEdit={(value) => handleCellChange(rowIndex, columnIndex, value)}
+          row={rowIndex}
+          col={columnIndex}
+          value={cell?.value}
+          calculated={cell?.calculatedValue}
+          formula={cell?.formula}
+          style={cell?.style}
+          isSelected={isCellSelected(rowIndex, columnIndex)}
+          isActive={isActiveCell(rowIndex, columnIndex)}
+          isEditing={isEditing(rowIndex, columnIndex)}
+          onClick={(e) => handleCellClick(rowIndex, columnIndex, e)}
+          onDoubleClick={() => handleCellDoubleClick(rowIndex, columnIndex)}
+          onMouseDown={(e) => handleCellMouseDown(rowIndex, columnIndex, e)}
+          onMouseEnter={() => handleCellMouseEnter(rowIndex, columnIndex)}
+          onEdit={(value) => handleCellEdit(rowIndex, columnIndex, value)}
+          onStopEditing={stopEditing}
         />
       </div>
     );
-  }, [cellData, isCellSelected, isActiveCell, isEditing, handleCellClick, handleCellDoubleClick, handleCellChange]);
+  }, [cellData, isCellSelected, isActiveCell, isEditing, handleCellEdit, stopEditing]);
 
   return (
-    <div className="relative h-full w-full bg-background border border-border rounded-lg overflow-hidden">
-      {/* Corner Cell */}
-      <div
-        className="absolute top-0 left-0 z-30 border-b border-r border-border"
-        style={{ width: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }}
-      >
+    <div className="relative h-full w-full bg-card overflow-hidden">
+      <div className="absolute top-0 left-0 w-[40px] h-[32px] z-30">
         <CornerCell onClick={selectAll} />
       </div>
 
-      {/* Column Headers */}
-      <div
+      <div 
         ref={colHeaderScrollRef}
-        className="absolute top-0 z-20 overflow-hidden"
-        style={{ left: ROW_HEADER_WIDTH, right: 0, height: COL_HEADER_HEIGHT }}
+        className="absolute top-0 left-[40px] right-0 h-[32px] overflow-hidden z-20"
       >
-        <div className="flex">
-          {Array.from({ length: colCount }, (_, i) => (
+        <div className="flex" style={{ width: 'max-content' }}>
+          {Array.from({ length: colCount }).map((_, i) => (
             <ColumnHeader
               key={i}
               column={i}
               width={getColumnWidth(i)}
               isSelected={selectedColumns.has(i)}
               onClick={() => selectColumn(i)}
-              onResizeStart={(e) => handleColumnResizeStart(i, e)}
+              onResizeStart={(e) => {
+                e.stopPropagation();
+                handleColumnResize(i, e.clientX);
+              }}
             />
           ))}
         </div>
       </div>
 
-      {/* Row Headers */}
-      <div
+      <div 
         ref={rowHeaderScrollRef}
-        className="absolute left-0 z-20 overflow-hidden"
-        style={{ top: COL_HEADER_HEIGHT, bottom: 0, width: ROW_HEADER_WIDTH }}
+        className="absolute top-[32px] left-0 bottom-0 w-[40px] overflow-hidden z-20"
       >
         <div>
-          {Array.from({ length: rowCount }, (_, i) => (
+          {Array.from({ length: rowCount }).map((_, i) => (
             <RowHeader
               key={i}
               row={i}
               height={getRowHeight(i)}
               isSelected={selectedRows.has(i)}
               onClick={() => selectRow(i)}
-              onResizeStart={(e) => handleRowResizeStart(i, e)}
+              onResizeStart={(e) => {
+                e.stopPropagation();
+                handleRowResize(i, e.clientY);
+              }}
             />
           ))}
         </div>
       </div>
 
-      {/* Data Grid */}
-      <div
-        className="absolute z-10"
-        style={{ top: COL_HEADER_HEIGHT, left: ROW_HEADER_WIDTH, right: 0, bottom: 0 }}
-      >
-        <Grid
+      <div className="absolute top-[32px] left-[40px] right-0 bottom-0 overflow-hidden">
+        <VariableSizeGrid
           ref={gridRef}
           columnCount={colCount}
-          columnWidth={getColumnWidth}
-          height={600 - COL_HEADER_HEIGHT}
           rowCount={rowCount}
-          rowHeight={getRowHeight}
-          width={1200 - ROW_HEADER_WIDTH}
-          overscanColumnCount={3}
-          overscanRowCount={5}
+          columnWidth={(index) => getColumnWidth(index)}
+          rowHeight={(index) => getRowHeight(index)}
+          width={typeof window !== 'undefined' ? window.innerWidth - 100 : 1200}
+          height={typeof window !== 'undefined' ? window.innerHeight - 250 : 700}
           onScroll={handleScroll}
         >
           {CellRenderer}
-        </Grid>
+        </VariableSizeGrid>
       </div>
     </div>
   );
