@@ -8,42 +8,40 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GlobalBubbleMenu } from "@/components/editor/GlobalBubbleMenu";
-import { lazy, Suspense } from "react";
-
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Tasks = lazy(() => import("./pages/Tasks"));
-const CalendarView = lazy(() => import("./pages/CalendarView"));
-const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
-const Overview = lazy(() => import("./pages/admin/Overview"));
-const UsersManagement = lazy(() => import("./pages/admin/UsersManagement"));
-const Config = lazy(() => import("./pages/admin/Config"));
-const SecurityPage = lazy(() => import("./pages/admin/SecurityPage"));
-const Logs = lazy(() => import("./pages/admin/Logs"));
-const Operations = lazy(() => import("./pages/Operations"));
-const StatusLog = lazy(() => import("./pages/StatusLog"));
-const GoogleSheetsReports = lazy(() => import("./pages/GoogleSheetsReports"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const TeamBase = lazy(() => import("./pages/TeamBase"));
-const SearchPlanner = lazy(() => import("./pages/SearchPlanner"));
-const DisplayPlanner = lazy(() => import("./pages/DisplayPlanner"));
-const SavedElementsPage = lazy(() => import("./pages/SavedElementsPage"));
-const Backlog = lazy(() => import("./pages/Backlog"));
-const Auth = lazy(() => import("./pages/Auth"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const ActivityLog = lazy(() => import("./pages/ActivityLog"));
-const MfaSetup = lazy(() => import("./pages/MfaSetup"));
-const MfaVerify = lazy(() => import("./pages/MfaVerify"));
-const Security = lazy(() => import("./pages/Security"));
-const About = lazy(() => import("./pages/About"));
-const UtmPlanner = lazy(() => import("./pages/UtmPlanner"));
-const CopyWriter = lazy(() => import("./pages/CopyWriter"));
-const LocationIntelligence = lazy(() => import("./pages/LocationIntelligence"));
-const WebIntel = lazy(() => import("./pages/WebIntel"));
+import Dashboard from "./pages/Dashboard";
+import Tasks from "./pages/Tasks";
+import CalendarView from "./pages/CalendarView";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Overview from "./pages/admin/Overview";
+import UsersManagement from "./pages/admin/UsersManagement";
+import Config from "./pages/admin/Config";
+import SecurityPage from "./pages/admin/SecurityPage";
+import Logs from "./pages/admin/Logs";
+import Operations from "./pages/Operations";
+import StatusLog from "./pages/StatusLog";
+import GoogleSheetsReports from "./pages/GoogleSheetsReports";
+import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
+import TeamBase from "./pages/TeamBase";
+import SearchPlanner from "./pages/SearchPlanner";
+import DisplayPlanner from "./pages/DisplayPlanner";
+import SavedElementsPage from "./pages/SavedElementsPage";
+import Backlog from "./pages/Backlog";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import ActivityLog from "./pages/ActivityLog";
+import MfaSetup from "./pages/MfaSetup";
+import MfaVerify from "./pages/MfaVerify";
+import Security from "./pages/Security";
+import About from "./pages/About";
+import UtmPlanner from "./pages/UtmPlanner";
+import CopyWriter from "./pages/CopyWriter";
+import LocationIntelligence from "./pages/LocationIntelligence";
+import WebIntel from "./pages/WebIntel";
 import ComplianceApproval from "./pages/ComplianceApproval";
 import PublicComplianceReview from "./pages/PublicComplianceReview";
-const KPIs = lazy(() => import("./pages/KPIs"));
-const AuditLogDetail = lazy(() => import("./components/operations/AuditLogDetail").then(m => ({ default: m.AuditLogDetail })));
+import KPIs from "./pages/KPIs";
+import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
 const App = () => (
@@ -54,15 +52,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <GlobalBubbleMenu />
-          <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen bg-background">
-              <div className="flex flex-col items-center gap-4">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              </div>
-            </div>
-          }>
-            <Routes>
+          <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
               <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
@@ -100,8 +90,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
               </Route>
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
