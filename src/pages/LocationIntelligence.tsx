@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
+import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
+import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
 import { logger } from "@/lib/logger";
 import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
 import { LocationSearch } from "@/components/location/LocationSearch";
@@ -22,6 +24,8 @@ export default function LocationIntelligence() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
   const { locations, isLoading, deleteLocation, getLocationWithDetails } = useMediaLocations();
+  const { campaigns } = usePlannedCampaigns();
+  const { campaignLocations, getLocationsByCampaign } = useLocationCampaigns();
   const mapRef = useRef<LocationMapRef>(null);
 
   const [viewMode, setViewMode] = useState<"map" | "list" | "campaigns">("map");
@@ -37,12 +41,18 @@ export default function LocationIntelligence() {
     cities: [],
     agencies: [],
     categories: [],
+    campaignId: undefined,
     priceRange: { min: 0, max: 1000000 },
     scoreRange: { min: 0, max: 10 },
   });
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
   const agencies = Array.from(new Set(locations.map(l => l.agency).filter(Boolean))).sort() as string[];
+
+  // Get location IDs for selected campaign
+  const campaignLocationIds = filters.campaignId 
+    ? getLocationsByCampaign(filters.campaignId).map(cl => cl.location_id)
+    : [];
 
   // Apply filters
   const filteredLocations = locations.filter((loc) => {
@@ -52,6 +62,7 @@ export default function LocationIntelligence() {
       const category = getLocationCategory(loc.type);
       if (!category || !filters.categories.includes(category)) return false;
     }
+    if (filters.campaignId && !campaignLocationIds.includes(loc.id)) return false;
     const price = loc.price_per_month || 0;
     if (price < filters.priceRange.min || price > filters.priceRange.max) return false;
     const score = loc.manual_score || 0;
@@ -171,6 +182,7 @@ export default function LocationIntelligence() {
             onFiltersChange={setFilters}
             availableCities={cities}
             availableAgencies={agencies}
+            availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
           />
 
         {viewMode === "map" ? (

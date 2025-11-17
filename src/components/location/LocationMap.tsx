@@ -11,6 +11,7 @@ interface LocationMapProps {
   onLocationClick: (location: MediaLocation) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
   selectedLocationId?: string | null;
+  campaignLocationIds?: string[];
 }
 
 export interface LocationMapRef {
@@ -18,7 +19,7 @@ export interface LocationMapRef {
 }
 
 export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
-  ({ locations, onLocationClick, onMapClick, selectedLocationId }, ref) => {
+  ({ locations, onLocationClick, onMapClick, selectedLocationId, campaignLocationIds = [] }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const markers = useRef<mapboxgl.Marker[]>([]);
@@ -118,6 +119,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
       locations.forEach(location => {
         const category = getLocationCategory(location.type);
         const color = category ? LOCATION_CATEGORIES[category].color : '#6b7280';
+        const isInCampaign = campaignLocationIds.includes(location.id);
 
         const el = document.createElement('div');
         el.className = 'location-marker';
@@ -136,12 +138,35 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           el.style.transform = 'scale(1.3)';
         }
 
+        // Add campaign badge if location is in a campaign
+        if (isInCampaign) {
+          const badge = document.createElement('div');
+          badge.className = 'campaign-badge';
+          badge.style.position = 'absolute';
+          badge.style.top = '-8px';
+          badge.style.right = '-8px';
+          badge.style.backgroundColor = 'hsl(var(--primary))';
+          badge.style.color = 'white';
+          badge.style.borderRadius = '50%';
+          badge.style.width = '16px';
+          badge.style.height = '16px';
+          badge.style.display = 'flex';
+          badge.style.alignItems = 'center';
+          badge.style.justifyContent = 'center';
+          badge.style.fontSize = '10px';
+          badge.style.fontWeight = 'bold';
+          badge.innerHTML = '✓';
+          el.appendChild(badge);
+          el.style.position = 'relative';
+        }
+
         const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
           .setHTML(`
             <div class="p-2">
               <div class="font-semibold">${location.name}</div>
               <div class="text-sm text-muted-foreground">${location.type}</div>
               ${location.manual_score ? `<div class="text-sm">Score: ${location.manual_score}/10</div>` : ''}
+              ${isInCampaign ? `<div class="text-xs text-primary mt-1">✓ In Campaign</div>` : ''}
             </div>
           `);
 

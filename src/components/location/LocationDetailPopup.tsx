@@ -1,5 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LocationWithDetails, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
+import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
+import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil } from "lucide-react";
@@ -15,7 +17,15 @@ interface LocationDetailPopupProps {
 }
 
 export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }: LocationDetailPopupProps) {
+  const { getCampaignsByLocation } = useLocationCampaigns();
+  const { campaigns: allCampaigns } = usePlannedCampaigns();
+  
   if (!location) return null;
+
+  const locationCampaigns = getCampaignsByLocation(location.id);
+  const campaignDetails = locationCampaigns.map(cl => 
+    allCampaigns.find(c => c.id === cl.campaign_id)
+  ).filter(Boolean);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -132,6 +142,30 @@ export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {campaignDetails.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-2">Associated Campaigns ({campaignDetails.length})</h4>
+              <div className="space-y-2">
+                {campaignDetails.map((campaign) => campaign && (
+                  <div
+                    key={campaign.id}
+                    className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-white">{campaign.name}</p>
+                      <p className="text-sm text-gray-400">
+                        {format(new Date(campaign.start_date), "PP")} - {format(new Date(campaign.end_date), "PP")}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      Budget: AED {campaign.budget.toLocaleString()}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
