@@ -100,7 +100,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = fa
         className="mt-1"
       />
       <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h4 className={`text-body font-medium ${task.status === 'Completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
             {task.title}
           </h4>
@@ -111,6 +111,12 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = fa
           }>
             {task.priority}
           </Badge>
+          {task.isRecurringOccurrence && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-primary/10 border-primary/30 flex items-center gap-1">
+              <RotateCcw className="h-2.5 w-2.5" />
+              {getRecurrenceLabel(task)}
+            </Badge>
+          )}
         </div>
         {task.description && (
           <p className="text-metadata line-clamp-1">

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -657,35 +657,72 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   { value: 5, label: 'Fri' },
                   { value: 6, label: 'Sat' },
                   { value: 0, label: 'Sun' },
-                ].map(day => (
-                  <div
-                    key={day.value}
-                    onClick={() => {
-                      if (recurrenceDaysOfWeek.includes(day.value)) {
-                        setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
-                      } else {
-                        setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
-                      }
-                    }}
-                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all cursor-pointer hover:border-primary/50 ${
-                      recurrenceDaysOfWeek.includes(day.value) 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border'
-                    }`}
-                  >
-                    <Checkbox
-                      checked={recurrenceDaysOfWeek.includes(day.value)}
-                      onCheckedChange={(checked) => {
-                        // Prevent double-firing from both div click and checkbox change
-                        return;
+                ].map(day => {
+                  // Check if any assignee can't work this day
+                  const hasConflict = selectedAssignees.some(assigneeId => {
+                    const assignee = users.find((u: any) => u.id === assigneeId);
+                    if (!assignee?.working_days) return false;
+                    
+                    return (
+                      (assignee.working_days === 'mon-fri' && (day.value === 0 || day.value === 6)) ||
+                      (assignee.working_days === 'sun-thu' && (day.value === 5 || day.value === 6))
+                    );
+                  });
+                  
+                  return (
+                    <div
+                      key={day.value}
+                      onClick={() => {
+                        if (hasConflict) return;
+                        if (recurrenceDaysOfWeek.includes(day.value)) {
+                          setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
+                        } else {
+                          setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
+                        }
                       }}
-                    />
-                    <span className="text-sm font-medium">
-                      {day.label}
-                    </span>
-                  </div>
-                ))}
+                      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                        hasConflict 
+                          ? 'opacity-40 cursor-not-allowed bg-muted' 
+                          : 'cursor-pointer hover:border-primary/50'
+                      } ${
+                        recurrenceDaysOfWeek.includes(day.value) 
+                          ? 'border-primary bg-primary/10' 
+                          : 'border-border'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={recurrenceDaysOfWeek.includes(day.value)}
+                        disabled={hasConflict}
+                        onCheckedChange={(checked) => {
+                          // Prevent double-firing from both div click and checkbox change
+                          return;
+                        }}
+                      />
+                      <span className={`text-sm font-medium ${hasConflict ? 'line-through' : ''}`}>
+                        {day.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+              
+              {/* Recurrence Preview */}
+              {recurrence === "weekly" && recurrenceDaysOfWeek.length > 0 && (
+                <div className="p-3 bg-primary/5 rounded-md text-sm border border-primary/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <RotateCcw className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-primary">Recurrence Preview</span>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Task will repeat every{' '}
+                    <strong className="text-foreground">
+                      {recurrenceDaysOfWeek
+                        .map(d => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d])
+                        .join(', ')}
+                    </strong>
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -705,6 +742,31 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Monthly Recurrence Preview */}
+              {recurrenceDayOfMonth && (
+                <div className="p-3 bg-primary/5 rounded-md text-sm border border-primary/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <RotateCcw className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-primary">Recurrence Preview</span>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Task will repeat on the <strong className="text-foreground">{recurrenceDayOfMonth}{recurrenceDayOfMonth === 1 ? 'st' : recurrenceDayOfMonth === 2 ? 'nd' : recurrenceDayOfMonth === 3 ? 'rd' : 'th'} day</strong> of every month
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {recurrence === "daily" && (
+            <div className="p-3 bg-primary/5 rounded-md text-sm border border-primary/20">
+              <div className="flex items-center gap-2 mb-1">
+                <RotateCcw className="h-4 w-4 text-primary" />
+                <span className="font-medium text-primary">Recurrence Preview</span>
+              </div>
+              <p className="text-muted-foreground">
+                Task will repeat <strong className="text-foreground">every day</strong>
+              </p>
             </div>
           )}
 
