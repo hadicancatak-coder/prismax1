@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UtmRule } from "@/lib/utmRuleEngine";
 import { UtmVariableSelector } from "./UtmVariableSelector";
 import { getPreviewValue, validateTemplate } from "@/lib/utmVariables";
-import { Save, X, Eye } from "lucide-react";
+import { Save, X, Eye, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UtmRuleBuilderProps {
   rule?: UtmRule | null;
@@ -26,6 +27,27 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
   const [priority, setPriority] = useState(rule?.priority || 0);
   const templateInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState('');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkPermission();
+  }, []);
+
+  const checkPermission = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setHasPermission(false);
+      return;
+    }
+    
+    const { data: role } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    setHasPermission(role?.role === 'admin');
+  };
 
   const updatePreview = (newTemplate: string) => {
     setTemplate(newTemplate);
@@ -164,11 +186,29 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Rule
+          <Button 
+            onClick={handleSave} 
+            disabled={hasPermission === false}
+          >
+            {hasPermission === false ? (
+              <>
+                <Lock className="h-4 w-4 mr-2" />
+                Admin Only
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Rule
+              </>
+            )}
           </Button>
         </div>
+        
+        {hasPermission === false && (
+          <p className="text-sm text-destructive text-center">
+            ⚠️ You need admin permissions to create automation rules
+          </p>
+        )}
       </CardContent>
     </Card>
   );
