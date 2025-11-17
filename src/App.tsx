@@ -39,6 +39,8 @@ import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
+import ComplianceApproval from "./pages/ComplianceApproval";
+import PublicComplianceReview from "./pages/PublicComplianceReview";
 import KPIs from "./pages/KPIs";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
@@ -86,6 +88,8 @@ const App = () => (
             <Route path="/kpis" element={<KPIs />} />
             <Route path="/location-intelligence" element={<LocationIntelligence />} />
             <Route path="/web-intel" element={<WebIntel />} />
+            <Route path="/compliance-approval" element={<ComplianceApproval />} />
+            <Route path="/review/:token" element={<PublicComplianceReview />} />
             <Route path="/about" element={<About />} />
           </Route>
           <Route path="*" element={<NotFound />} />

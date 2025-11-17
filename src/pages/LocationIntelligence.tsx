@@ -186,13 +186,14 @@ export default function LocationIntelligence() {
           />
 
         {viewMode === "map" ? (
-          <div className="h-[calc(100vh-280px)] min-h-[700px] rounded-lg overflow-hidden border">
+          <div className="h-[calc(100vh-220px)] min-h-[700px] rounded-lg overflow-hidden border">
             <LocationMap
               ref={mapRef}
               locations={filteredLocations}
               onLocationClick={handleLocationClick}
               onMapClick={handleMapClick}
               selectedLocationId={selectedLocation?.id}
+              campaignLocationIds={campaignLocationIds}
             />
           </div>
         ) : viewMode === "list" ? (

@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
-  CheckSquare, 
+  CheckSquare,
+  CheckCircle2,
   Calendar, 
   LayoutDashboard as DashboardIcon, 
   LogOut, 
@@ -55,6 +56,7 @@ const mediaItems = [
 
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
+  { title: "Compliance Approval", url: "/compliance-approval", icon: CheckCircle2 },
   { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
   { title: "Google Sheets", url: "/operations/custom-reports", icon: FileText },
 ];
