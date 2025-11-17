@@ -42,6 +42,14 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
     const file = e.target.files?.[0];
     if (!file || !requestId) return;
 
+    // 2 MB validation
+    const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    if (file.size > MAX_SIZE) {
+      toast.error("File too large. Maximum 2 MB. Please provide a link instead.");
+      e.target.value = ''; // Clear the input
+      return;
+    }
+
     setIsUploading(true);
     try {
       const url = await uploadAsset(file, requestId);
@@ -56,8 +64,9 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
       });
       toast.success("File uploaded successfully");
       setOpen(false);
-    } catch (error) {
-      toast.error("Failed to upload file");
+      e.target.value = ''; // Clear for next upload
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to upload file");
     } finally {
       setIsUploading(false);
     }
@@ -133,7 +142,20 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
             </Select>
           </div>
 
-          {assetType === "text" && (
+          {assetType === "image" || assetType === "video" ? (
+            <div className="space-y-2">
+              <Label>Upload File</Label>
+              <Input
+                type="file"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                accept={assetType === "image" ? "image/*" : "video/*"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload one file at a time. Maximum 2 MB.
+              </p>
+            </div>
+          ) : assetType === "text" ? (
             <div className="space-y-2">
               <Label>Text Content</Label>
               <Textarea
@@ -143,9 +165,7 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
                 rows={6}
               />
             </div>
-          )}
-
-          {assetType === "link" && (
+          ) : (
             <div className="space-y-2">
               <Label>URL</Label>
               <Input
@@ -154,27 +174,6 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
                 placeholder="https://example.com"
                 type="url"
               />
-            </div>
-          )}
-
-          {(assetType === "image" || assetType === "video") && (
-            <div className="space-y-2">
-              <Label>Upload File</Label>
-              <Input
-                type="file"
-                accept={
-                  assetType === "image"
-                    ? "image/*"
-                    : "video/*"
-                }
-                onChange={handleFileUpload}
-                disabled={isUploading || !requestId}
-              />
-              {!requestId && (
-                <p className="text-xs text-muted-foreground">
-                  Save the request first to upload files
-                </p>
-              )}
             </div>
           )}
 
@@ -187,7 +186,14 @@ export function AssetUploader({ onAssetAdded, requestId }: AssetUploaderProps) {
               Cancel
             </Button>
             {assetType === "text" || assetType === "link" ? (
-              <Button type="button" onClick={handleAddAsset}>
+              <Button
+                type="button"
+                onClick={handleAddAsset}
+                disabled={
+                  (assetType === "text" && !textContent.trim()) ||
+                  (assetType === "link" && !linkUrl.trim())
+                }
+              >
                 Add
               </Button>
             ) : null}
