@@ -29,33 +29,33 @@ export function ActivityLogEntry({
   };
 
   return (
-    <div className="flex gap-3 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
-      <div className="flex-shrink-0 mt-1">
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <Activity className="h-4 w-4 text-primary" />
+    <div className="flex gap-2 py-1.5 px-3 rounded-md bg-muted/20 border border-border/30">
+      <div className="flex-shrink-0 mt-0.5">
+        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+          <Activity className="h-3 w-3 text-primary" />
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="font-medium text-sm">
+        <div className="flex items-baseline gap-1.5 flex-wrap">
+          <span className="font-medium text-xs">
             {profiles?.name || 'System'}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground">
             {description || `updated ${field_name}`}
           </span>
         </div>
         {old_value !== undefined && new_value !== undefined && !description && (
-          <div className="mt-1 text-xs text-muted-foreground space-y-1">
-            <div className="flex items-center gap-2">
+          <div className="mt-0.5 text-[10px] text-muted-foreground space-y-0.5">
+            <div className="flex items-center gap-1.5">
               <span className="text-destructive line-through">{formatValue(old_value)}</span>
               <span>→</span>
               <span className="text-green-600 dark:text-green-400">{formatValue(new_value)}</span>
             </div>
           </div>
         )}
-        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          {changed_at && format(new Date(changed_at), "MMM d, yyyy 'at' h:mm a")}
+        <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
+          <Clock className="h-2.5 w-2.5" />
+          {changed_at && format(new Date(changed_at), "MMM d, h:mm a")}
         </div>
       </div>
     </div>

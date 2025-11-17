@@ -41,6 +41,7 @@ import WebIntel from "./pages/WebIntel";
 import ComplianceApproval from "./pages/ComplianceApproval";
 import PublicComplianceReview from "./pages/PublicComplianceReview";
 import KPIs from "./pages/KPIs";
+import CampaignsLog from "./pages/CampaignsLog";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/copywriter" element={<CopyWriter />} />
                 <Route path="/security" element={<Security />} />
                 <Route path="/kpis" element={<KPIs />} />
+                <Route path="/campaigns-log" element={<CampaignsLog />} />
                 <Route path="/location-intelligence" element={<LocationIntelligence />} />
                 <Route path="/web-intel" element={<WebIntel />} />
                 <Route path="/compliance-approval" element={<ComplianceApproval />} />

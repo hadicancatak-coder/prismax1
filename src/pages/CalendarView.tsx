@@ -288,7 +288,7 @@ export default function CalendarView() {
         occurrences.forEach(occ => {
           expandedTasks.push({
             ...task,
-            id: `${task.id}-${occ.occurrenceDate.toISOString()}`,
+            id: `${task.id}::${occ.occurrenceDate.getTime()}`,
             originalTaskId: task.id,
             due_at: occ.occurrenceDate.toISOString(),
             status: occ.isCompleted ? 'Completed' : task.status,
@@ -353,9 +353,9 @@ export default function CalendarView() {
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     // Check if this is a recurring occurrence
-    if (taskId.includes('-')) {
-      const [originalTaskId, dateStr] = taskId.split('-');
-      const occurrenceDate = new Date(dateStr);
+    if (taskId.includes('::')) {
+      const [originalTaskId, timestamp] = taskId.split('::');
+      const occurrenceDate = new Date(parseInt(timestamp));
       
       if (completed) {
         // Mark this specific date as complete
@@ -657,7 +657,7 @@ export default function CalendarView() {
                               task={task}
                               onTaskClick={(id: string) => {
                                 // Extract original task ID if this is a recurring occurrence
-                                const originalId = id.includes('-') ? id.split('-')[0] : id;
+    const originalId = id.includes('::') ? id.split('::')[0] : id;
                                 setSelectedTaskId(originalId);
                                 setTaskDialogOpen(true);
                               }}
@@ -674,7 +674,7 @@ export default function CalendarView() {
                     tasks={completedTasks}
                     onTaskClick={(id: string) => {
                       // Extract original task ID if this is a recurring occurrence
-                      const originalId = id.includes('-') ? id.split('-')[0] : id;
+    const originalId = id.includes('::') ? id.split('::')[0] : id;
                       setSelectedTaskId(originalId);
                       setTaskDialogOpen(true);
                     }}
@@ -702,7 +702,7 @@ export default function CalendarView() {
                   }
                   onTaskClick={(id: string) => {
                     // Extract original task ID if this is a recurring occurrence
-                    const originalId = id.includes('-') ? id.split('-')[0] : id;
+                    const originalId = id.includes('::') ? id.split('::')[0] : id;
                     setSelectedTaskId(originalId);
                     setTaskDialogOpen(true);
                   }}

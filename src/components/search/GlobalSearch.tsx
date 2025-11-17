@@ -128,6 +128,12 @@ export function GlobalSearch() {
     return icons[category] || "📁";
   };
 
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
   // Group results by category
   const groupedResults = results.reduce((acc, result) => {
     if (!acc[result.category]) {
@@ -187,7 +193,7 @@ export function GlobalSearch() {
                       <div className="font-medium truncate">{result.title}</div>
                       {result.description && (
                         <div className="text-xs text-muted-foreground truncate">
-                          {result.description}
+                          {stripHtml(result.description)}
                         </div>
                       )}
                     </div>

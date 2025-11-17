@@ -78,6 +78,47 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
     }
   }, [open, userRole]);
 
+  // Auto-add team members when teams are selected
+  useEffect(() => {
+    if (selectedTeams.length > 0 && users.length > 0) {
+      fetchTeamMembersAndAssign();
+    }
+  }, [selectedTeams]);
+
+  const fetchTeamMembersAndAssign = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, user_id, name, teams')
+      .not('teams', 'is', null);
+    
+    if (data) {
+      const teamMemberIds: string[] = [];
+      data.forEach(profile => {
+        if (Array.isArray(profile.teams)) {
+          const hasMatchingTeam = profile.teams.some(t => 
+            selectedTeams.includes(t)
+          );
+          if (hasMatchingTeam && !teamMemberIds.includes(profile.id)) {
+            teamMemberIds.push(profile.id);
+          }
+        }
+      });
+      
+      // Auto-add without duplicates
+      setSelectedAssignees(prev => {
+        const combined = [...new Set([...prev, ...teamMemberIds])];
+        return combined;
+      });
+      
+      if (teamMemberIds.length > 0) {
+        toast({
+          title: "Team members added",
+          description: `${teamMemberIds.length} assignee${teamMemberIds.length > 1 ? 's' : ''} from selected teams`,
+        });
+      }
+    }
+  };
+
   const fetchUsers = async () => {
     const { data } = await supabase.from("profiles").select("id, user_id, name");
     setUsers(data || []);
