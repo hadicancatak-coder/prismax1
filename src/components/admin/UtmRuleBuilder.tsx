@@ -78,7 +78,7 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
     }
 
     const ruleData: Partial<UtmRule> = {
-      id: rule?.id,
+      ...(rule?.id && { id: rule.id }),
       rule_name: ruleName,
       rule_type: ruleType,
       template: ruleType === 'template' ? template : undefined,
