@@ -7,7 +7,7 @@ export interface WebIntelSite {
   name: string;
   url: string;
   country: string;
-  type: 'Website' | 'App' | 'Portal' | 'Forum';
+  type: 'Website' | 'App' | 'Portal' | 'Forum' | 'News' | 'Lifestyle' | 'Finance' | 'Business' | 'Local';
   category?: string;
   estimated_monthly_traffic?: number;
   entity?: string;

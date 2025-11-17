@@ -893,6 +893,42 @@ export type Database = {
           },
         ]
       }
+      campaign_locations: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          location_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_locations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "planned_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "media_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_placements: {
         Row: {
           allocated_budget: number
@@ -1177,6 +1213,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      deal_campaigns: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          deal_id: string | null
+          id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "planned_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_campaigns_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_utm_links: {
+        Row: {
+          created_at: string | null
+          deal_id: string | null
+          id: string
+          utm_link_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          utm_link_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          utm_link_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_utm_links_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_utm_links_utm_link_id_fkey"
+            columns: ["utm_link_id"]
+            isOneToOne: false
+            referencedRelation: "utm_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entity_campaigns: {
         Row: {
@@ -3959,6 +4067,65 @@ export type Database = {
         }
         Relationships: []
       }
+      web_intel_deals: {
+        Row: {
+          contact_email: string | null
+          contact_name: string | null
+          contract_link: string | null
+          created_at: string | null
+          created_by: string | null
+          deal_value: number | null
+          end_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          start_date: string | null
+          status: string
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contract_link?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deal_value?: number | null
+          end_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          start_date?: string | null
+          status: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contract_link?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deal_value?: number | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_intel_deals_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web_intel_historic_prices: {
         Row: {
           created_at: string
@@ -4082,6 +4249,45 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      website_campaigns: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          platforms: string[] | null
+          website_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          platforms?: string[] | null
+          website_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          platforms?: string[] | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "planned_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_campaigns_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "web_intel_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspaces: {
         Row: {
