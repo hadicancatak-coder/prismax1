@@ -15,6 +15,7 @@ export interface UtmRule {
   priority: number;
   is_active: boolean;
   description?: string;
+  lp_type_id?: string | null;
 }
 
 // Cache for active rules (5 minute TTL)

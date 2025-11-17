@@ -433,12 +433,9 @@ export default function SelectorsManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList>
           <TabsTrigger value="entities">Entities</TabsTrigger>
           <TabsTrigger value="cities">Cities</TabsTrigger>
-          <TabsTrigger value="platforms">Platforms</TabsTrigger>
-          <TabsTrigger value="mediums">UTM Mediums</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
         </TabsList>
 
         {/* Entities Tab */}

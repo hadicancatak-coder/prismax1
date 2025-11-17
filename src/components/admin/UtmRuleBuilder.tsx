@@ -11,6 +11,7 @@ import { getPreviewValue, validateTemplate } from "@/lib/utmVariables";
 import { Save, X, Eye, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useUtmLpTypes } from "@/hooks/useUtmLpTypes";
 
 interface UtmRuleBuilderProps {
   rule?: UtmRule | null;
@@ -25,9 +26,12 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
   const [formula, setFormula] = useState(rule?.formula || '');
   const [description, setDescription] = useState(rule?.description || '');
   const [priority, setPriority] = useState(rule?.priority || 0);
+  const [lpTypeId, setLpTypeId] = useState(rule?.lp_type_id || '');
   const templateInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  
+  const { data: lpTypes = [] } = useUtmLpTypes();
 
   useEffect(() => {
     checkPermission();
@@ -86,6 +90,7 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
       description,
       is_active: false,
       priority,
+      lp_type_id: lpTypeId || null,
     };
 
     onSave(ruleData);
@@ -170,6 +175,26 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
             )}
           </div>
         )}
+
+        <div className="space-y-2">
+          <Label htmlFor="lp-type">Landing Page Type (Optional)</Label>
+          <Select value={lpTypeId} onValueChange={setLpTypeId}>
+            <SelectTrigger id="lp-type">
+              <SelectValue placeholder="All LP types (no filter)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All LP Types</SelectItem>
+              {lpTypes.map(type => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            If selected, this rule only applies to links of this LP type
+          </p>
+        </div>
 
         <div className="space-y-2">
           <Label>Description</Label>

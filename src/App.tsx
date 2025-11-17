@@ -17,7 +17,7 @@ import UsersManagement from "./pages/admin/UsersManagement";
 import Config from "./pages/admin/Config";
 import SecurityPage from "./pages/admin/SecurityPage";
 import Logs from "./pages/admin/Logs";
-import UtmAutomation from "./pages/admin/UtmAutomation";
+
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import GoogleSheetsReports from "./pages/GoogleSheetsReports";
@@ -63,7 +63,7 @@ const App = () => (
               <Route path="overview" element={<Overview />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="config" element={<Config />} />
-              <Route path="utm-automation" element={<UtmAutomation />} />
+              
               <Route path="security" element={<SecurityPage />} />
               <Route path="logs" element={<Logs />} />
             </Route>

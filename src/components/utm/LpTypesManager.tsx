@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useUtmLpTypes, useCreateLpType, useUpdateLpType, useDeleteLpType, UtmLpType } from "@/hooks/useUtmLpTypes";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -18,6 +19,8 @@ export function LpTypesManager() {
   const deleteLpType = useDeleteLpType();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [lpTypeToDelete, setLpTypeToDelete] = useState<UtmLpType | null>(null);
   const [editingLpType, setEditingLpType] = useState<UtmLpType | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -63,9 +66,19 @@ export function LpTypesManager() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this LP type?')) {
-      deleteLpType.mutate(id);
+  const handleDeleteClick = (lpType: UtmLpType) => {
+    setLpTypeToDelete(lpType);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (lpTypeToDelete) {
+      deleteLpType.mutate(lpTypeToDelete.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setLpTypeToDelete(null);
+        }
+      });
     }
   };
 
@@ -126,7 +139,7 @@ export function LpTypesManager() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(lpType.id)}
+                        onClick={() => handleDeleteClick(lpType)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -197,6 +210,24 @@ export function LpTypesManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete LP Type?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{lpTypeToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
