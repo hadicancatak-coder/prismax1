@@ -1118,6 +1118,131 @@ export type Database = {
           },
         ]
       }
+      compliance_assets: {
+        Row: {
+          asset_content: string
+          asset_metadata: Json | null
+          asset_type: string
+          created_at: string
+          id: string
+          request_id: string
+          status: string
+          version_number: number
+        }
+        Insert: {
+          asset_content: string
+          asset_metadata?: Json | null
+          asset_type: string
+          created_at?: string
+          id?: string
+          request_id: string
+          status?: string
+          version_number?: number
+        }
+        Update: {
+          asset_content?: string
+          asset_metadata?: Json | null
+          asset_type?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          status?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_assets_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          public_link_token: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          public_link_token?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          public_link_token?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compliance_reviews: {
+        Row: {
+          action: string
+          asset_id: string
+          comments: string | null
+          id: string
+          ip_address: string | null
+          request_id: string
+          reviewed_at: string
+          reviewer_email: string
+          reviewer_name: string
+        }
+        Insert: {
+          action: string
+          asset_id: string
+          comments?: string | null
+          id?: string
+          ip_address?: string | null
+          request_id: string
+          reviewed_at?: string
+          reviewer_email: string
+          reviewer_name: string
+        }
+        Update: {
+          action?: string
+          asset_id?: string
+          comments?: string | null
+          id?: string
+          ip_address?: string | null
+          request_id?: string
+          reviewed_at?: string
+          reviewer_email?: string
+          reviewer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_reviews_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reviews_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copywriter_copies: {
         Row: {
           campaigns: string[] | null
