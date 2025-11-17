@@ -24,7 +24,7 @@ describe('Task API Contract Tests', () => {
         description: 'Testing task creation schema',
         status: 'Pending' as const,
         priority: 'Medium' as const,
-        task_type: 'task' as const,
+        task_type: 'generic' as const,
         created_by: testUserId,
       };
 

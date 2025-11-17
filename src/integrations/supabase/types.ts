@@ -4674,13 +4674,7 @@ export type Database = {
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
-      task_type:
-        | "task"
-        | "campaign_launch"
-        | "operations"
-        | "generic"
-        | "campaign"
-        | "recurring"
+      task_type: "generic" | "campaign" | "recurring"
       task_visibility: "global" | "pool" | "private"
       team: "SocialUA" | "PPC" | "PerMar"
       utm_status: "active" | "paused" | "archived"
@@ -4857,14 +4851,7 @@ export const Constants = {
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],
       task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
-      task_type: [
-        "task",
-        "campaign_launch",
-        "operations",
-        "generic",
-        "campaign",
-        "recurring",
-      ],
+      task_type: ["generic", "campaign", "recurring"],
       task_visibility: ["global", "pool", "private"],
       team: ["SocialUA", "PPC", "PerMar"],
       utm_status: ["active", "paused", "archived"],

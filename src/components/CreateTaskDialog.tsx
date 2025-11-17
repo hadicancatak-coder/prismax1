@@ -55,7 +55,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [attachedAds, setAttachedAds] = useState<any[]>([]);
-  const [taskType, setTaskType] = useState<string>("task");
+  const [taskType, setTaskType] = useState<string>("generic");
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -247,9 +247,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_days_of_week: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : null,
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
-        task_type: (taskType === "recurring" || taskType === "campaign" || taskType === "operations" || taskType === "general") 
-          ? taskType as any 
-          : "task",
+        task_type: taskType as 'generic' | 'campaign' | 'recurring',
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
@@ -582,7 +580,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   if (value !== "monthly") {
                     setRecurrenceDayOfMonth(null);
                   }
-                  setTaskType(value !== "none" ? "recurring" : "general");
+                  setTaskType(value !== "none" ? "recurring" : "generic");
                 }}
               >
                 <SelectTrigger>

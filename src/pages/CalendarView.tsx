@@ -24,6 +24,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
 import { CalendarKanbanView } from "@/components/calendar/CalendarKanbanView";
+import { expandRecurringTask, getRecurrenceLabel } from "@/lib/recurrenceExpander";
+import { useToast } from "@/hooks/use-toast";
 
 // Sortable Task Item Component
 function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = false }: any) {
@@ -138,7 +140,9 @@ export default function CalendarView() {
   });
   const [userTaskOrder, setUserTaskOrder] = useState<Record<string, number>>({});
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [completions, setCompletions] = useState<any[]>([]);
   const currentDate = new Date();
+  const { toast } = useToast();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -198,7 +202,37 @@ export default function CalendarView() {
     setUsers(data || []);
   };
 
-  // Filter tasks by date range
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchCompletions = async () => {
+      const { data } = await supabase
+        .from('recurring_task_completions')
+        .select('*')
+        .order('completed_date', { ascending: false});
+      
+      setCompletions(data || []);
+    };
+    
+    fetchCompletions();
+    
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('recurring_completions')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'recurring_task_completions'
+      }, () => {
+        fetchCompletions();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const filteredTasks = useMemo(() => {
     if (!allTasks) return [];
 
@@ -238,18 +272,48 @@ export default function CalendarView() {
         break;
     }
 
-    return allTasks.filter((task: any) => {
-      if (!task.due_at) return false;
-      const dueDate = new Date(task.due_at);
-      const inDateRange = dueDate >= startDate && dueDate <= endDate;
-      
-      // Filter by selected user if one is selected
+    const expandedTasks: any[] = [];
+
+    allTasks.forEach(task => {
+      if (task.task_type === 'recurring' && task.recurrence_rrule) {
+        // Expand recurring task into occurrences
+        const occurrences = expandRecurringTask(
+          task,
+          startDate,
+          endDate,
+          completions.filter(c => c.task_id === task.id)
+        );
+        
+        // Convert each occurrence to a task-like object
+        occurrences.forEach(occ => {
+          expandedTasks.push({
+            ...task,
+            id: `${task.id}-${occ.occurrenceDate.toISOString()}`,
+            originalTaskId: task.id,
+            due_at: occ.occurrenceDate.toISOString(),
+            status: occ.isCompleted ? 'Completed' : task.status,
+            isRecurringOccurrence: true,
+            completionId: occ.completionId,
+          });
+        });
+      } else if (task.due_at) {
+        // Regular task with due date
+        const dueDate = new Date(task.due_at);
+        const inDateRange = dueDate >= startDate && dueDate <= endDate;
+        
+        if (inDateRange) {
+          expandedTasks.push(task);
+        }
+      }
+    });
+
+    // Filter by selected user
+    return expandedTasks.filter(task => {
       const userMatch = !selectedUserId || 
         task.assignees?.some((a: any) => a.user_id === selectedUserId);
-      
-      return inDateRange && userMatch;
+      return userMatch;
     });
-  }, [allTasks, dateView, dateRange, selectedUserId]);
+  }, [allTasks, dateView, dateRange, selectedUserId, completions]);
 
   // Sort tasks based on selected option
   const sortedTasks = useMemo(() => {
@@ -288,10 +352,64 @@ export default function CalendarView() {
   const completedTasks = sortedTasks.filter(t => t.status === 'Completed');
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
-    await supabase
-      .from('tasks')
-      .update({ status: completed ? 'Completed' : 'Pending' })
-      .eq('id', taskId);
+    // Check if this is a recurring occurrence
+    if (taskId.includes('-')) {
+      const [originalTaskId, dateStr] = taskId.split('-');
+      const occurrenceDate = new Date(dateStr);
+      
+      if (completed) {
+        // Mark this specific date as complete
+        const { error } = await supabase
+          .from('recurring_task_completions')
+          .insert({
+            task_id: originalTaskId,
+            completed_by: user.id,
+            completed_date: format(occurrenceDate, 'yyyy-MM-dd'),
+            completed_at: new Date().toISOString(),
+          });
+        
+        if (error) {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Marked complete", description: `Completed for ${format(occurrenceDate, 'MMM dd')}` });
+        }
+      } else {
+        // Unmark completion
+        const task = filteredTasks.find(t => t.id === taskId);
+        if (task?.completionId) {
+          await supabase
+            .from('recurring_task_completions')
+            .delete()
+            .eq('id', task.completionId);
+          
+          toast({ title: "Unmarked", description: "Completion removed" });
+        }
+      }
+    } else {
+      // Regular task completion
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: completed ? 'Completed' : 'Pending',
+          completed_at: completed ? new Date().toISOString() : null
+        })
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Error updating task:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to update task", 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: completed ? "Task completed" : "Task reopened",
+          description: completed ? "Great job!" : "Task marked as pending"
+        });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -538,7 +656,9 @@ export default function CalendarView() {
                               key={task.id}
                               task={task}
                               onTaskClick={(id: string) => {
-                                setSelectedTaskId(id);
+                                // Extract original task ID if this is a recurring occurrence
+                                const originalId = id.includes('-') ? id.split('-')[0] : id;
+                                setSelectedTaskId(originalId);
                                 setTaskDialogOpen(true);
                               }}
                               onTaskComplete={handleTaskComplete}
@@ -553,7 +673,9 @@ export default function CalendarView() {
                   <CompletedTasksSection
                     tasks={completedTasks}
                     onTaskClick={(id: string) => {
-                      setSelectedTaskId(id);
+                      // Extract original task ID if this is a recurring occurrence
+                      const originalId = id.includes('-') ? id.split('-')[0] : id;
+                      setSelectedTaskId(originalId);
                       setTaskDialogOpen(true);
                     }}
                     onTaskComplete={handleTaskComplete}
@@ -579,7 +701,9 @@ export default function CalendarView() {
                     dateRange?.from || currentDate
                   }
                   onTaskClick={(id: string) => {
-                    setSelectedTaskId(id);
+                    // Extract original task ID if this is a recurring occurrence
+                    const originalId = id.includes('-') ? id.split('-')[0] : id;
+                    setSelectedTaskId(originalId);
                     setTaskDialogOpen(true);
                   }}
                 />
