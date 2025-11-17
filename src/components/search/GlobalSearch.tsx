@@ -6,6 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface SearchResult {
   id: string;
@@ -22,6 +23,7 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
 
   // Load recent searches from localStorage
@@ -40,6 +42,7 @@ export function GlobalSearch() {
     }
 
     const searchContent = async () => {
+      setIsSearching(true);
       try {
         const { data, error } = await supabase.rpc('search_content', {
           query_text: query,
@@ -48,6 +51,11 @@ export function GlobalSearch() {
 
         if (error) {
           console.error('Search error:', error);
+          toast({
+            title: "Search failed",
+            description: "Unable to search content. Please try again.",
+            variant: "destructive"
+          });
           setResults([]);
           return;
         }
@@ -57,7 +65,14 @@ export function GlobalSearch() {
         }
       } catch (error) {
         console.error('Search error:', error);
+        toast({
+          title: "Search error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive"
+        });
         setResults([]);
+      } finally {
+        setIsSearching(false);
       }
     };
 
