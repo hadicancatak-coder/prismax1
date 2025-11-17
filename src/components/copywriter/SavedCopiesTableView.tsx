@@ -505,18 +505,11 @@ export function SavedCopiesTableView({
                     />
                   </TableCell>
                   <TableCell className="min-h-[44px] border-r p-2">
-                    <div className="flex flex-wrap gap-1 max-h-[40px] overflow-hidden">
-                      {copy.campaigns.slice(0, 2).map((c) => (
-                        <Badge key={c} variant="outline" className="text-xs px-1 py-0">
-                          {c}
-                        </Badge>
-                      ))}
-                      {copy.campaigns.length > 2 && (
-                        <Badge variant="outline" className="text-xs px-1 py-0">
-                          +{copy.campaigns.length - 2}
-                        </Badge>
-                      )}
-                    </div>
+                    <CampaignsTagsInput
+                      value={copy.campaigns || []}
+                      onChange={(v) => handleUpdateField(copy.id, "campaigns", v)}
+                      disabled={isGuest}
+                    />
                   </TableCell>
                   <TableCell className="min-h-[44px] border-r p-2">
                     <Select
