@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity, MoreVertical } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity, MoreVertical, CheckCircle2, RotateCcw } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -56,6 +56,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [showComments, setShowComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [completionHistory, setCompletionHistory] = useState<any[]>([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [blockers, setBlockers] = useState<any[]>([]);

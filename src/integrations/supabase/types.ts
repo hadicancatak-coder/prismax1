@@ -3400,7 +3400,6 @@ export type Database = {
           jira_links: Json | null
           labels: string[] | null
           order_index: number | null
-          parent_task_id: string | null
           pending_approval: boolean | null
           pending_changes: Json | null
           priority: Database["public"]["Enums"]["task_priority"]
@@ -3446,7 +3445,6 @@ export type Database = {
           jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
-          parent_task_id?: string | null
           pending_approval?: boolean | null
           pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -3492,7 +3490,6 @@ export type Database = {
           jira_links?: Json | null
           labels?: string[] | null
           order_index?: number | null
-          parent_task_id?: string | null
           pending_approval?: boolean | null
           pending_changes?: Json | null
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -3547,13 +3544,6 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "launch_pad_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_parent_task_id_fkey"
-            columns: ["parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
@@ -4537,7 +4527,6 @@ export type Database = {
       cleanup_rate_limit: { Args: never; Returns: undefined }
       detect_language: { Args: { content_text: string }; Returns: string }
       extract_client_ip: { Args: { ip_chain: string }; Returns: string }
-      generate_recurring_tasks: { Args: never; Returns: undefined }
       get_admin_user_ids: {
         Args: never
         Returns: {
@@ -4685,7 +4674,13 @@ export type Database = {
       task_priority: "High" | "Medium" | "Low"
       task_source: "native" | "jira"
       task_status: "Pending" | "Ongoing" | "Failed" | "Blocked" | "Completed"
-      task_type: "task" | "campaign_launch" | "operations"
+      task_type:
+        | "task"
+        | "campaign_launch"
+        | "operations"
+        | "generic"
+        | "campaign"
+        | "recurring"
       task_visibility: "global" | "pool" | "private"
       team: "SocialUA" | "PPC" | "PerMar"
       utm_status: "active" | "paused" | "archived"
@@ -4862,7 +4857,14 @@ export const Constants = {
       task_priority: ["High", "Medium", "Low"],
       task_source: ["native", "jira"],
       task_status: ["Pending", "Ongoing", "Failed", "Blocked", "Completed"],
-      task_type: ["task", "campaign_launch", "operations"],
+      task_type: [
+        "task",
+        "campaign_launch",
+        "operations",
+        "generic",
+        "campaign",
+        "recurring",
+      ],
       task_visibility: ["global", "pool", "private"],
       team: ["SocialUA", "PPC", "PerMar"],
       utm_status: ["active", "paused", "archived"],
