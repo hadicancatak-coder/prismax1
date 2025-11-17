@@ -54,7 +54,14 @@ const App = () => (
           <Toaster />
           <Sonner />
           <GlobalBubbleMenu />
-          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-background">
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            </div>
+          }>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
