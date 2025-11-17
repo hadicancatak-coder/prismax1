@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
 import { useKPIs } from "@/hooks/useKPIs";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,6 +55,9 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
     setStatus("draft");
     setTargets([{ target_type: "channel", target_name: "", target_value: 0, current_value: 0, unit: "" }]);
   };
+
+  const totalTargetsWeight = targets.reduce((sum, t) => sum + (t.target_value || 0), 0);
+  const remainingWeight = 100 - weight;
 
   const handleAddTarget = () => {
     setTargets([...targets, { target_type: "channel", target_name: "", target_value: 0, current_value: 0, unit: "" }]);
@@ -155,7 +159,12 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="weight">Weight (%) *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="weight">Weight (%) *</Label>
+                <Badge variant={weight > 100 ? "destructive" : remainingWeight < 0 ? "destructive" : "secondary"} className="text-xs">
+                  {weight > 100 ? "Exceeds 100%" : `${remainingWeight}% remaining`}
+                </Badge>
+              </div>
               <Input
                 id="weight"
                 type="number"
@@ -163,7 +172,11 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                 onChange={(e) => setWeight(Number(e.target.value))}
                 min={0}
                 max={100}
+                className={weight > 100 ? "border-destructive" : ""}
               />
+              {weight > 100 && (
+                <p className="text-xs text-destructive">Weight cannot exceed 100%</p>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -17,6 +17,7 @@ import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import DOMPurify from "dompurify";
 
 const StatusLog = () => {
+  const [hideResolved, setHideResolved] = useState(true);
   const [filters, setFilters] = useState<Filters>({});
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
@@ -32,7 +33,11 @@ const StatusLog = () => {
     setFilters({ ...filters, entity: entity ? [entity] : undefined });
   };
 
-  const { data: logs = [], isLoading } = useStatusLogs(filters);
+  const appliedFilters = hideResolved 
+    ? { ...filters, hideResolved: true }
+    : filters;
+  
+  const { data: logs = [], isLoading } = useStatusLogs(appliedFilters);
   const deleteMutation = useDeleteStatusLog();
   const resolveMutation = useResolveStatusLog();
 
@@ -111,7 +116,17 @@ const StatusLog = () => {
         onEntityClick={handleEntityClick}
       />
 
-      <StatusLogFilters filters={filters} onFiltersChange={setFilters} />
+      <div className="flex items-center gap-2">
+        <StatusLogFilters filters={filters} onFiltersChange={setFilters} />
+        <Button
+          variant={hideResolved ? "default" : "outline"}
+          size="sm"
+          onClick={() => setHideResolved(!hideResolved)}
+          className="ml-auto"
+        >
+          {hideResolved ? "Show" : "Hide"} Resolved
+        </Button>
+      </div>
 
       {isLoading ? (
         <TableSkeleton columns={7} rows={8} />

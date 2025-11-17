@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/TaskCard";
-import { Upload, Users } from "lucide-react";
+import { Upload, Users, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { useKPIs } from "@/hooks/useKPIs";
+import { Progress } from "@/components/ui/progress";
 
 const TEAMS = ["SocialUA", "PPC", "PerMar"];
 
@@ -36,6 +38,13 @@ export default function Profile() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any>({ completed: [], pending: [], blocked: [], failed: [] });
   const [uploading, setUploading] = useState(false);
+
+  const { kpis } = useKPIs();
+  
+  // Filter KPIs for the profile being viewed
+  const profileKPIs = kpis?.filter(kpi => 
+    kpi.assignments?.some(a => a.user_id === (userId || user?.id))
+  ) || [];
 
   useEffect(() => {
     if (!user) return;
@@ -317,6 +326,67 @@ export default function Profile() {
             </CollapsibleContent>
           </Card>
         </Collapsible>
+      )}
+
+      {/* KPIs Section */}
+      {profileKPIs.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
+            <Target className="h-5 w-5" />
+            Key Performance Indicators ({profileKPIs.length})
+          </h2>
+          <div className="space-y-4">
+            {profileKPIs.map((kpi) => {
+              const assignment = kpi.assignments?.find(a => a.user_id === (userId || user?.id));
+              return (
+                <Card key={kpi.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{kpi.name}</h3>
+                        {kpi.description && <p className="text-sm text-muted-foreground mt-1">{kpi.description}</p>}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline">Weight: {kpi.weight}%</Badge>
+                          <Badge variant="outline">{kpi.type}</Badge>
+                          <Badge variant="outline">{kpi.period}</Badge>
+                          <Badge variant={assignment?.status === 'approved' ? 'default' : assignment?.status === 'pending' ? 'secondary' : 'destructive'}>
+                            {assignment?.status || 'pending'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {kpi.targets && kpi.targets.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-sm">Targets</h4>
+                        {kpi.targets.map((target) => {
+                          const progress = target.target_value > 0 ? (target.current_value / target.target_value) * 100 : 0;
+                          return (
+                            <div key={target.id} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{target.target_name}</span>
+                                <span className="text-muted-foreground">{target.current_value} / {target.target_value} {target.unit}</span>
+                              </div>
+                              <Progress value={progress} className="h-2" />
+                              <Badge variant="outline" className="text-xs">{target.target_type}</Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {assignment?.notes && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-1">Assignment Notes</h4>
+                        <p className="text-sm text-muted-foreground">{assignment.notes}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </Card>
       )}
 
       {/* Team Members */}

@@ -2,10 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { statusLogService, StatusLog, StatusLogFilters } from "@/lib/statusLogService";
 import { toast } from "@/hooks/use-toast";
 
-export const useStatusLogs = (filters?: StatusLogFilters) => {
+export const useStatusLogs = (filters?: StatusLogFilters & { hideResolved?: boolean }) => {
   return useQuery({
     queryKey: ["status-logs", filters],
-    queryFn: () => statusLogService.getStatusLogs(filters),
+    queryFn: async () => {
+      const logs = await statusLogService.getStatusLogs(filters);
+      if (filters?.hideResolved) {
+        return logs.filter(log => log.status !== 'resolved' && log.status !== 'archived');
+      }
+      return logs;
+    },
   });
 };
 
