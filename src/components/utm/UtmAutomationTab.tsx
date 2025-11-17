@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { UtmRuleBuilder } from "@/components/admin/UtmRuleBuilder";
 import { UtmRuleTestPanel } from "@/components/admin/UtmRuleTestPanel";
 import { RegenerateLinksDialog } from "@/components/admin/RegenerateLinksDialog";
@@ -22,14 +25,21 @@ export function UtmAutomationTab() {
   const [showBuilder, setShowBuilder] = useState(false);
   const [showRegenerate, setShowRegenerate] = useState(false);
   const [activeTab, setActiveTab] = useState("rules");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
+  const [selectedLpType, setSelectedLpType] = useState<string>('all');
 
-  // Group rules by parameter type
+  // Filter and group rules
+  const filteredRules = selectedLpType === 'all' 
+    ? rules 
+    : rules.filter(r => !r.lp_type_id || r.lp_type_id === selectedLpType);
+
   const rulesByType = {
-    utm_source: rules.filter(r => r.rule_name === 'utm_source'),
-    utm_medium: rules.filter(r => r.rule_name === 'utm_medium'),
-    utm_campaign: rules.filter(r => r.rule_name === 'utm_campaign'),
-    utm_content: rules.filter(r => r.rule_name === 'utm_content'),
-    utm_term: rules.filter(r => r.rule_name === 'utm_term'),
+    utm_source: filteredRules.filter(r => r.rule_name === 'utm_source'),
+    utm_medium: filteredRules.filter(r => r.rule_name === 'utm_medium'),
+    utm_campaign: filteredRules.filter(r => r.rule_name === 'utm_campaign'),
+    utm_content: filteredRules.filter(r => r.rule_name === 'utm_content'),
+    utm_term: filteredRules.filter(r => r.rule_name === 'utm_term'),
   };
 
   const handleSave = (rule: Partial<UtmRule>) => {
@@ -45,10 +55,19 @@ export function UtmAutomationTab() {
     });
   };
 
-  const handleDelete = (ruleId: string) => {
-    if (confirm('Are you sure you want to delete this rule?')) {
-      deleteRule(ruleId, {
-        onSuccess: () => toast.success('Rule deleted successfully'),
+  const handleDeleteClick = (ruleId: string) => {
+    setRuleToDelete(ruleId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (ruleToDelete) {
+      deleteRule(ruleToDelete, {
+        onSuccess: () => {
+          toast.success('Rule deleted successfully');
+          setDeleteDialogOpen(false);
+          setRuleToDelete(null);
+        },
         onError: () => toast.error('Failed to delete rule'),
       });
     }
@@ -87,6 +106,11 @@ export function UtmAutomationTab() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{rule.rule_type}</span>
                     {rule.is_active && <Badge variant="success">Active</Badge>}
+                    {rule.lp_type_id && (
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950">
+                        {lpTypes.find(t => t.id === rule.lp_type_id)?.name || 'LP Type'}
+                      </Badge>
+                    )}
                     {rule.description && (
                       <span className="text-sm text-muted-foreground">- {rule.description}</span>
                     )}
@@ -122,7 +146,7 @@ export function UtmAutomationTab() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(rule.id)}
+                    onClick={() => handleDeleteClick(rule.id)}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
@@ -166,6 +190,24 @@ export function UtmAutomationTab() {
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
+          {/* LP Type Filter */}
+          <div className="flex items-center gap-4 mb-4">
+            <Label htmlFor="lp-type-filter" className="whitespace-nowrap">Filter by LP Type:</Label>
+            <Select value={selectedLpType} onValueChange={setSelectedLpType}>
+              <SelectTrigger id="lp-type-filter" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All LP Types</SelectItem>
+                {lpTypes.map(type => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {showBuilder ? (
             <UtmRuleBuilder
               rule={editingRule}
@@ -207,6 +249,24 @@ export function UtmAutomationTab() {
       </Tabs>
 
       <RegenerateLinksDialog open={showRegenerate} onOpenChange={setShowRegenerate} />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Rule?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The rule will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
