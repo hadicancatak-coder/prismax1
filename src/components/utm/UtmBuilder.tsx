@@ -55,10 +55,32 @@ export function UtmBuilder() {
     return lpType?.id || null;
   };
 
+  const cleanInputUrl = (url: string): string => {
+    if (!url.trim()) return url;
+    
+    try {
+      const urlWithProtocol = url.startsWith('http') ? url : `https://${url}`;
+      const urlObj = new URL(urlWithProtocol);
+      
+      // Remove all UTM parameters
+      urlObj.searchParams.delete('utm_source');
+      urlObj.searchParams.delete('utm_medium');
+      urlObj.searchParams.delete('utm_campaign');
+      urlObj.searchParams.delete('utm_content');
+      urlObj.searchParams.delete('utm_term');
+      
+      return urlObj.toString();
+    } catch (e) {
+      // If parsing fails, strip query string at minimum
+      return url.split('?')[0];
+    }
+  };
+
   const handleLpChange = (value: string) => {
-    setLpUrl(value);
-    if (value.trim()) {
-      const detected = detectLPMetadata(value);
+    const cleanedUrl = cleanInputUrl(value);
+    setLpUrl(cleanedUrl);
+    if (cleanedUrl.trim()) {
+      const detected = detectLPMetadata(cleanedUrl);
       setDetection(detected);
       if (detected.purpose) {
         const mappedLpType = mapPurposeToLpType(detected.purpose);

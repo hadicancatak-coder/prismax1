@@ -113,6 +113,13 @@ export const buildUtmUrl = (params: {
     const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
     const url = new URL(urlWithProtocol);
     
+    // Remove any existing UTM parameters before adding new ones
+    url.searchParams.delete('utm_source');
+    url.searchParams.delete('utm_medium');
+    url.searchParams.delete('utm_campaign');
+    url.searchParams.delete('utm_content');
+    url.searchParams.delete('utm_term');
+    
     url.searchParams.set("utm_source", sanitizeUtmParameter(params.utm_source));
     url.searchParams.set("utm_medium", sanitizeUtmParameter(params.utm_medium));
     url.searchParams.set("utm_campaign", sanitizeUtmParameter(params.utm_campaign));
