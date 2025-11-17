@@ -28,10 +28,10 @@ export default function ComplianceApproval() {
         <div className="space-y-1">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <CheckCircle2 className="h-8 w-8 text-primary" />
-            Compliance Approval
+            Legal
           </h1>
           <p className="text-muted-foreground">
-            Manage compliance review requests and track approval status
+            Manage legal review requests and track approval status
           </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>

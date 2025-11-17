@@ -15,8 +15,10 @@ export interface ComplianceAsset {
 
 export interface ComplianceRequest {
   id: string;
+  entity?: string;
   title: string;
   description: string | null;
+  initial_comments?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -46,8 +48,10 @@ export const useComplianceRequests = () => {
 
   const createRequest = useMutation({
     mutationFn: async (data: {
+      entity: string;
       title: string;
       description?: string;
+      initial_comments?: string;
       assets: Array<{
         asset_type: "text" | "image" | "video" | "link";
         asset_content: string;
@@ -60,8 +64,10 @@ export const useComplianceRequests = () => {
       const { data: request, error: requestError } = await supabase
         .from("compliance_requests")
         .insert({
+          entity: data.entity,
           title: data.title,
           description: data.description,
+          initial_comments: data.initial_comments,
           created_by: user.id,
         })
         .select()

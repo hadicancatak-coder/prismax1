@@ -1164,7 +1164,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          entity: string | null
           id: string
+          initial_comments: string | null
           public_link_token: string
           status: string
           title: string
@@ -1174,7 +1176,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string | null
           id?: string
+          initial_comments?: string | null
           public_link_token?: string
           status?: string
           title: string
@@ -1184,7 +1188,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string | null
           id?: string
+          initial_comments?: string | null
           public_link_token?: string
           status?: string
           title?: string

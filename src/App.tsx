@@ -40,8 +40,8 @@ const UtmPlanner = lazy(() => import("./pages/UtmPlanner"));
 const CopyWriter = lazy(() => import("./pages/CopyWriter"));
 const LocationIntelligence = lazy(() => import("./pages/LocationIntelligence"));
 const WebIntel = lazy(() => import("./pages/WebIntel"));
-const ComplianceApproval = lazy(() => import("./pages/ComplianceApproval"));
-const PublicComplianceReview = lazy(() => import("./pages/PublicComplianceReview"));
+import ComplianceApproval from "./pages/ComplianceApproval";
+import PublicComplianceReview from "./pages/PublicComplianceReview";
 const KPIs = lazy(() => import("./pages/KPIs"));
 const AuditLogDetail = lazy(() => import("./components/operations/AuditLogDetail").then(m => ({ default: m.AuditLogDetail })));
 
