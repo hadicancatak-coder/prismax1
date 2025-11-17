@@ -360,6 +360,76 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                 </Select>
               </div>
 
+              {userRole === "admin" && (
+                <div className="space-y-2">
+                  <Label>Assignees</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        {selectedAssignees.length > 0 
+                          ? `${selectedAssignees.length} assignee${selectedAssignees.length > 1 ? 's' : ''} selected` 
+                          : "Select assignees"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-80"
+                      onInteractOutside={(e) => {
+                        const target = e.target as Element;
+                        if (target.closest('[role="checkbox"]') || target.closest('label')) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <ScrollArea className="max-h-[300px]">
+                        <div className="space-y-2 pr-4">
+                          {users.map((usr) => (
+                            <div 
+                              key={usr.id} 
+                              className="flex items-center space-x-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Checkbox
+                                id={`assignee-${usr.id}`}
+                                checked={selectedAssignees.includes(usr.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedAssignees([...selectedAssignees, usr.id]);
+                                  } else {
+                                    setSelectedAssignees(selectedAssignees.filter(id => id !== usr.id));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`assignee-${usr.id}`} className="text-sm cursor-pointer">
+                                {usr.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedAssignees.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {selectedAssignees.map((assigneeId) => {
+                        const assignee = users.find(u => u.id === assigneeId);
+                        return assignee ? (
+                          <Badge key={assigneeId} variant="secondary" className="text-xs">
+                            {assignee.name}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAssignees(selectedAssignees.filter(id => id !== assigneeId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <RichTextEditor
@@ -607,75 +677,6 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           )}
 
-          {userRole === "admin" && (
-            <div className="space-y-2">
-              <Label>Assignees</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    {selectedAssignees.length > 0 
-                      ? `${selectedAssignees.length} assignee${selectedAssignees.length > 1 ? 's' : ''} selected` 
-                      : "Select assignees"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-80"
-                  onInteractOutside={(e) => {
-                    const target = e.target as Element;
-                    if (target.closest('[role="checkbox"]') || target.closest('label')) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <ScrollArea className="max-h-[300px]">
-                    <div className="space-y-2 pr-4">
-                      {users.map((usr) => (
-                        <div 
-                          key={usr.id} 
-                          className="flex items-center space-x-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Checkbox
-                            id={`assignee-${usr.id}`}
-                            checked={selectedAssignees.includes(usr.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedAssignees([...selectedAssignees, usr.id]);
-                              } else {
-                                setSelectedAssignees(selectedAssignees.filter(id => id !== usr.id));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`assignee-${usr.id}`} className="text-sm cursor-pointer">
-                            {usr.name}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-              {selectedAssignees.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {selectedAssignees.map((assigneeId) => {
-                    const assignee = users.find(u => u.id === assigneeId);
-                    return assignee ? (
-                      <Badge key={assigneeId} variant="secondary" className="text-xs">
-                        {assignee.name}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedAssignees(selectedAssignees.filter(id => id !== assigneeId))}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
-          )}
 
               {/* Attached Ads Section - Only show for Campaign type */}
               {taskType === "campaign_launch" && (

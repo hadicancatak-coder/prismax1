@@ -637,6 +637,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               </div>
             </div>
 
+            <div>
+              <Label className="mb-2 block">Assignees</Label>
+              <MultiAssigneeSelector
+                entityType="task"
+                entityId={taskId}
+                assignees={assignees}
+                onAssigneesChange={refetchAssignees}
+              />
+            </div>
+
             {userRole === 'admin' && (
               <div>
                 <Label className="mb-2 block">Teams</Label>
@@ -658,16 +668,6 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 )}
               </div>
             )}
-
-            <div>
-              <Label className="mb-2 block">Assignees</Label>
-              <MultiAssigneeSelector
-                entityType="task"
-                entityId={taskId}
-                assignees={assignees}
-                onAssigneesChange={refetchAssignees}
-              />
-            </div>
 
             {task.status === "Blocked" && editMode && (
               <div>
