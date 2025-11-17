@@ -138,20 +138,18 @@ export function GlobalSearch() {
   }, {} as Record<string, typeof results>);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative w-full max-w-md mx-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search... (⌘K)"
-            className="pl-10 pr-4 bg-muted/50 border-border/60 focus:bg-background transition-smooth"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setOpen(true)}
-          />
-        </div>
-      </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 bg-card z-50" align="center">
+    <div className="relative w-full max-w-md mx-4">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <Input
+        placeholder="Search... (⌘K)"
+        className="pl-10 pr-4 bg-muted/50 border-border/60 focus:bg-background transition-smooth"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+      />
+      <Popover open={open && (query.length > 0 || recentSearches.length > 0)} onOpenChange={setOpen}>
+        <PopoverContent className="w-[400px] p-0 bg-card z-50" align="start" side="bottom" sideOffset={8} onOpenAutoFocus={(e) => e.preventDefault()}>
         <Command>
           <CommandList>
             {!query && recentSearches.length > 0 && (
@@ -199,7 +197,8 @@ export function GlobalSearch() {
             ))}
           </CommandList>
         </Command>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
