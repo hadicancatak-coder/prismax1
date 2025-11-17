@@ -25,12 +25,29 @@ export default function UtmAutomation() {
   const handleSave = (rule: Partial<UtmRule>) => {
     saveRule(rule, {
       onSuccess: () => {
-        toast.success('Rule saved successfully');
+        toast.success('✅ Rule saved successfully and will be available after activation');
         setShowBuilder(false);
         setEditingRule(null);
       },
-      onError: () => {
-        toast.error('Failed to save rule');
+      onError: (error: Error) => {
+        console.error('Failed to save rule:', error);
+        
+        // Show specific error messages
+        let errorMessage = 'Failed to save rule';
+        
+        if (error.message.includes('row-level security') || error.message.includes('permission')) {
+          errorMessage = '🔒 You need admin permissions to create automation rules';
+        } else if (error.message.includes('unique constraint')) {
+          errorMessage = '⚠️ A rule with this name already exists for this parameter';
+        } else if (error.message.includes('foreign key')) {
+          errorMessage = '⚠️ Invalid reference in rule configuration';
+        } else if (error.message) {
+          errorMessage = `❌ ${error.message}`;
+        }
+        
+        toast.error(errorMessage, {
+          duration: 5000,
+        });
       },
     });
   };

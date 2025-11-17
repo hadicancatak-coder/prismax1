@@ -144,10 +144,17 @@ export class UtmRuleEngine {
     // Clear cache when saving
     ruleCache = null;
     
-    const { error } = rule.id
-      ? await supabase.from('utm_automation_rules').update(rule as any).eq('id', rule.id)
-      : await supabase.from('utm_automation_rules').insert([rule as any]);
-    return { success: !error, error: error?.message };
+    const { data, error } = rule.id
+      ? await supabase.from('utm_automation_rules').update(rule as any).eq('id', rule.id).select().single()
+      : await supabase.from('utm_automation_rules').insert([rule as any]).select().single();
+    
+    if (error) {
+      console.error('❌ Failed to save UTM rule:', error);
+      throw error;
+    }
+    
+    console.log('✅ Rule saved successfully:', data);
+    return data;
   }
 
   static async deleteRule(ruleId: string) {
@@ -155,7 +162,13 @@ export class UtmRuleEngine {
     ruleCache = null;
     
     const { error } = await supabase.from('utm_automation_rules').delete().eq('id', ruleId);
-    return { success: !error, error: error?.message };
+    
+    if (error) {
+      console.error('❌ Failed to delete UTM rule:', error);
+      throw error;
+    }
+    
+    console.log('✅ Rule deleted successfully');
   }
 
   static async toggleRuleActive(ruleId: string, isActive: boolean, ruleName: string) {
@@ -175,8 +188,13 @@ export class UtmRuleEngine {
       .from('utm_automation_rules')
       .update({ is_active: isActive })
       .eq('id', ruleId);
-      
-    return { success: !error, error: error?.message };
+    
+    if (error) {
+      console.error('❌ Failed to toggle UTM rule:', error);
+      throw error;
+    }
+    
+    console.log('✅ Rule toggled successfully');
   }
 
   static async testRule(rule: UtmRule, context: UtmRuleContext): Promise<string> {
