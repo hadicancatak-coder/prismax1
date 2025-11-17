@@ -1460,6 +1460,7 @@ export type Database = {
       landing_page_templates: {
         Row: {
           base_url: string
+          campaign_name: string | null
           country: string | null
           created_at: string | null
           created_by: string
@@ -1474,6 +1475,7 @@ export type Database = {
         }
         Insert: {
           base_url: string
+          campaign_name?: string | null
           country?: string | null
           created_at?: string | null
           created_by: string
@@ -1488,6 +1490,7 @@ export type Database = {
         }
         Update: {
           base_url?: string
+          campaign_name?: string | null
           country?: string | null
           created_at?: string | null
           created_by?: string

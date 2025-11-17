@@ -31,6 +31,7 @@ interface SavedLP {
   language: string;
   purpose: string;
   platform: string;
+  campaign?: string;
   lpType: 'static' | 'dynamic';
   utmContent: 'web' | 'mobile';
   lpTypeId?: string | null;
@@ -45,7 +46,7 @@ export function ReadyLinksBuilder() {
   const { copy: copyToClipboard } = useCopyToClipboard();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newLP, setNewLP] = useState({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web' as 'web' | 'mobile', lpTypeId: null as string | null });
+  const [newLP, setNewLP] = useState({ url: '', country: '', language: 'EN', platform: '', campaign: '', utmContent: 'web' as 'web' | 'mobile', lpTypeId: null as string | null });
   const [detectionResult, setDetectionResult] = useState<LPDetectionResult | null>(null);
 
   // Fetch landing page templates
@@ -71,6 +72,7 @@ export function ReadyLinksBuilder() {
       language: template.language || 'EN',
       purpose: template.purpose || '',
       platform: template.platform || '',
+      campaign: template.campaign_name || '',
       lpType: (template.lp_type as 'static' | 'dynamic') || 'static',
       utmContent: (template.utm_content as 'web' | 'mobile') || 'web',
       lpTypeId: template.lp_type_id || null,
@@ -84,7 +86,7 @@ export function ReadyLinksBuilder() {
 
   // Mutation to create template
   const createTemplate = useMutation({
-    mutationFn: async (template: Omit<typeof newLP, 'purpose'> & { purpose: string; lpType: 'static' | 'dynamic'; utmContent: 'web' | 'mobile' }) => {
+    mutationFn: async (template: Omit<typeof newLP, 'purpose'> & { purpose: string; lpType: 'static' | 'dynamic'; utmContent: 'web' | 'mobile'; campaign?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -97,7 +99,9 @@ export function ReadyLinksBuilder() {
           country: template.country,
           language: template.language,
           platform: template.platform,
+          campaign_name: template.campaign || null,
           utm_content: template.utmContent || 'web',
+          lp_type_id: template.lpTypeId,
           created_by: user.id,
         });
 
@@ -106,7 +110,7 @@ export function ReadyLinksBuilder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['landing-page-templates'] });
       toast({ title: "Success", description: "Landing page template added" });
-      setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web', lpTypeId: null });
+      setNewLP({ url: '', country: '', language: 'EN', platform: '', campaign: '', utmContent: 'web', lpTypeId: null });
       setDetectionResult(null);
       setShowAddDialog(false);
     },
@@ -154,6 +158,7 @@ export function ReadyLinksBuilder() {
         country: newLP.country,
         language: newLP.language,
         platform,
+        campaign: newLP.campaign,
         purpose,
         lpType: detected.lpType || 'static',
         utmContent: newLP.utmContent || 'web',
@@ -183,6 +188,8 @@ export function ReadyLinksBuilder() {
         updates.lp_type = value;
       } else if (field === 'utmContent') {
         updates.utm_content = value;
+      } else if (field === 'campaign') {
+        updates.campaign_name = value;
       }
 
       const { error } = await supabase
@@ -291,6 +298,7 @@ export function ReadyLinksBuilder() {
                 <TableHead>Country</TableHead>
                 <TableHead>Language</TableHead>
                 <TableHead>Platform</TableHead>
+                <TableHead>Campaign</TableHead>
                 <TableHead>LP URL</TableHead>
                 <TableHead>LP Type</TableHead>
                 <TableHead>Device</TableHead>
@@ -328,6 +336,14 @@ export function ReadyLinksBuilder() {
                         options={platforms.map(p => ({ id: p.id, name: p.name }))}
                         onChange={(val) => updateLP(lp.id, 'platform', val)}
                         placeholder="Select platform"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={lp.campaign || ''}
+                        options={campaigns.map(c => ({ id: c.id, name: c.name }))}
+                        onChange={(val) => updateLP(lp.id, 'campaign', val)}
+                        placeholder="Optional"
                       />
                     </TableCell>
                     <TableCell className="font-mono text-xs max-w-[200px] truncate" title={lp.url}>
@@ -518,12 +534,31 @@ export function ReadyLinksBuilder() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label>Campaign (Optional)</Label>
+              <Select 
+                value={newLP.campaign || ''} 
+                onValueChange={(value) => setNewLP(prev => ({ ...prev, campaign: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.name}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setShowAddDialog(false);
-              setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web', lpTypeId: null });
+              setNewLP({ url: '', country: '', language: 'EN', platform: '', campaign: '', utmContent: 'web', lpTypeId: null });
               setDetectionResult(null);
             }}>
               Cancel
