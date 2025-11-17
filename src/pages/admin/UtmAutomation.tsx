@@ -2,22 +2,25 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmRuleBuilder } from "@/components/admin/UtmRuleBuilder";
 import { UtmRuleFlowDiagram } from "@/components/admin/UtmRuleFlowDiagram";
 import { UtmRuleTestPanel } from "@/components/admin/UtmRuleTestPanel";
 import { UtmRuleGuide } from "@/components/admin/UtmRuleGuide";
+import { RegenerateLinksDialog } from "@/components/admin/RegenerateLinksDialog";
 import { useUtmRules } from "@/hooks/useUtmRules";
 import { UtmRule } from "@/lib/utmRuleEngine";
-import { Plus, Edit, Trash, TestTube, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash, TestTube, BookOpen, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function UtmAutomation() {
-  const { rules, isLoading, saveRule, deleteRule, isSaving, isDeleting } = useUtmRules();
+  const { rules, isLoading, saveRule, deleteRule, toggleRule, isSaving, isDeleting, isToggling } = useUtmRules();
   const [editingRule, setEditingRule] = useState<UtmRule | null>(null);
   const [testingRule, setTestingRule] = useState<UtmRule | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [showRegenerate, setShowRegenerate] = useState(false);
 
   const handleSave = (rule: Partial<UtmRule>) => {
     saveRule(rule, {
@@ -55,6 +58,20 @@ export default function UtmAutomation() {
     setShowBuilder(true);
   };
 
+  const handleToggle = (rule: UtmRule, isActive: boolean) => {
+    toggleRule(
+      { ruleId: rule.id, isActive, ruleName: rule.rule_name },
+      {
+        onSuccess: () => {
+          toast.success(isActive ? 'Rule activated' : 'Rule deactivated');
+        },
+        onError: () => {
+          toast.error('Failed to toggle rule');
+        },
+      }
+    );
+  };
+
   if (isLoading) {
     return <TableSkeleton />;
   }
@@ -67,11 +84,19 @@ export default function UtmAutomation() {
           <h1 className="text-3xl font-bold">UTM Automation Rules</h1>
           <p className="text-muted-foreground">Configure how UTM parameters are generated</p>
         </div>
-        <Button onClick={handleNewRule}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Rule
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowRegenerate(true)}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Regenerate All Links
+          </Button>
+          <Button onClick={handleNewRule}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Rule
+          </Button>
+        </div>
       </div>
+
+      <RegenerateLinksDialog open={showRegenerate} onOpenChange={setShowRegenerate} />
 
       {/* Tabs: Guide, Rules, Create */}
       <Tabs defaultValue="rules" className="space-y-6">
@@ -133,15 +158,26 @@ export default function UtmAutomation() {
                 <Card key={rule.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1">
+                      <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
                           <CardTitle>{rule.rule_name}</CardTitle>
-                          <Badge variant={rule.is_active ? 'default' : 'secondary'}>
-                            {rule.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
+                          {rule.is_active && <Badge>Live</Badge>}
                           <Badge variant="outline">{rule.rule_type}</Badge>
                         </div>
                         <CardDescription>{rule.description}</CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={rule.is_active}
+                          onCheckedChange={(checked) => handleToggle(rule, checked)}
+                          disabled={isToggling}
+                        />
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(rule)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(rule.id)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </div>
                       <div className="flex gap-2">
                         <Button
