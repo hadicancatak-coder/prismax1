@@ -22,10 +22,15 @@ import { TaskDialog } from "@/components/TaskDialog";
 import { useTasks } from "@/hooks/useTasks";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
+import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
+import { exportTasksToCSV } from "@/lib/taskExport";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Tasks() {
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -159,12 +164,16 @@ export default function Tasks() {
   };
 
   const handleBulkStatusChange = async (status: string) => {
-    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status }).eq('id', id)));
+    await Promise.all(selectedTaskIds.map(id => 
+      supabase.from('tasks').update({ status: status as any }).eq('id', id)
+    ));
     setSelectedTaskIds([]);
   };
 
   const handleBulkPriorityChange = async (priority: string) => {
-    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ priority }).eq('id', id)));
+    await Promise.all(selectedTaskIds.map(id => 
+      supabase.from('tasks').update({ priority: priority as any }).eq('id', id)
+    ));
     setSelectedTaskIds([]);
   };
 
@@ -366,7 +375,12 @@ export default function Tasks() {
                   filteredTasks.length > 100 ? (
                     <TasksTableVirtualized tasks={filteredTasks} onTaskUpdate={refetch} />
                   ) : (
-                    <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} />
+                    <TasksTable 
+                      tasks={paginatedTasks} 
+                      onTaskUpdate={refetch}
+                      selectedIds={selectedTaskIds}
+                      onSelectionChange={setSelectedTaskIds}
+                    />
                   )
                 )}
                 {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}

@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoreVertical, Trash2, CheckCircle, Copy, Loader2 } from "lucide-react";
@@ -177,6 +178,14 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
         <Table className="table-auto w-full">
           <TableHeader className="bg-muted/50 sticky top-0 z-10">
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={selectedIds?.length === tasks.length && tasks.length > 0}
+                  onCheckedChange={(checked) => {
+                    onSelectionChange?.(checked ? tasks.map(t => t.id) : []);
+                  }}
+                />
+              </TableHead>
               <TableHead className="font-semibold text-xs w-auto">Task</TableHead>
               <TableHead className="font-semibold text-xs w-auto hidden xl:table-cell">Description</TableHead>
               <TableHead className="font-semibold text-xs w-[100px]">Status</TableHead>
@@ -200,6 +209,18 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                 )}
                 onClick={() => handleRowClick(task.id)}
               >
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds?.includes(task.id) || false}
+                    onCheckedChange={(checked) => {
+                      onSelectionChange?.(
+                        checked 
+                          ? [...(selectedIds || []), task.id]
+                          : (selectedIds || []).filter(id => id !== task.id)
+                      );
+                    }}
+                  />
+                </TableCell>
                 <TableCell
                   onDoubleClick={(e) => {
                     e.stopPropagation();
