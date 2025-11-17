@@ -549,20 +549,14 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   { value: 6, label: 'Sat' },
                   { value: 0, label: 'Sun' },
                 ].map(day => (
-                  <div 
+                  <label 
                     key={day.value} 
+                    htmlFor={`day-${day.value}`}
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all cursor-pointer hover:border-primary/50 ${
                       recurrenceDaysOfWeek.includes(day.value) 
                         ? 'border-primary bg-primary/10' 
                         : 'border-border'
                     }`}
-                    onClick={() => {
-                      if (recurrenceDaysOfWeek.includes(day.value)) {
-                        setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
-                      } else {
-                        setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
-                      }
-                    }}
                   >
                     <Checkbox
                       id={`day-${day.value}`}
@@ -574,12 +568,11 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                           setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
                         }
                       }}
-                      className="pointer-events-none"
                     />
-                    <Label htmlFor={`day-${day.value}`} className="cursor-pointer text-sm font-medium pointer-events-none">
+                    <span className="text-sm font-medium">
                       {day.label}
-                    </Label>
-                  </div>
+                    </span>
+                  </label>
                 ))}
               </div>
             </div>

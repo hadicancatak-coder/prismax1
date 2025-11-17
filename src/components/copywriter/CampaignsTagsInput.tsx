@@ -65,13 +65,20 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
           <Badge key={tag} variant="secondary" className="text-xs gap-1">
             {tag}
             {!disabled && (
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={() => removeTag(tag)}
-                className="hover:bg-muted rounded-full"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    removeTag(tag);
+                  }
+                }}
+                className="hover:bg-muted rounded-full cursor-pointer inline-flex"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </span>
             )}
           </Badge>
         ))}

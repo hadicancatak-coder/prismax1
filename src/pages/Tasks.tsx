@@ -199,25 +199,26 @@ export default function Tasks() {
         onPriorityChange={handleBulkPriorityChange}
         onExport={handleBulkExport}
       />
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-page-title text-foreground">Tasks</h1>
-          <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
+      <div className="max-w-7xl mx-auto w-full space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-page-title text-foreground">Tasks</h1>
+            <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" className="min-h-[44px]">
+              <ListTodo className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Template</span>
+            </Button>
+            <Button onClick={() => setDialogOpen(true)} className="min-h-[44px]">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Task</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" className="min-h-[44px]">
-            <ListTodo className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Template</span>
-          </Button>
-          <Button onClick={() => setDialogOpen(true)} className="min-h-[44px]">
-            <Plus className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">New Task</span>
-          </Button>
-        </div>
-      </div>
 
-      {/* Consolidated Filters - Collapsible */}
-      <Card className="p-2">
+        {/* Consolidated Filters - Collapsible */}
+        <Card className="p-2">
         <div className="space-y-2">
           {/* Always Visible - Single Compact Row */}
           <div className="flex flex-wrap items-center gap-1.5">
@@ -474,6 +475,7 @@ export default function Tasks() {
         })()}
         onRefresh={refetch}
       />
+      </div>
     </div>
   );
 }
