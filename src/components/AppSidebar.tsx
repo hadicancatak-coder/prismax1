@@ -56,7 +56,7 @@ const mediaItems = [
 
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
-  { title: "Legal", url: "/compliance-approval", icon: CheckCircle2 },
+  { title: "Legal Logs", url: "/compliance-approval", icon: CheckCircle2 },
   { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
   { title: "Google Sheets", url: "/operations/custom-reports", icon: FileText },
 ];
