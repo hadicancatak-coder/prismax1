@@ -3829,21 +3829,21 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
-          utm_medium: string | null
+          utm_medium: string
         }
         Insert: {
           created_at?: string
           id?: string
           is_active?: boolean | null
           name: string
-          utm_medium?: string | null
+          utm_medium: string
         }
         Update: {
           created_at?: string
           id?: string
           is_active?: boolean | null
           name?: string
-          utm_medium?: string | null
+          utm_medium?: string
         }
         Relationships: []
       }

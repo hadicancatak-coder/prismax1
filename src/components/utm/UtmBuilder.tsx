@@ -17,7 +17,7 @@ import { useCreateUtmLink } from "@/hooks/useUtmLinks";
 import { toast } from "sonner";
 import { detectLPMetadata } from "@/lib/lpDetector";
 import { LPDetectionCard } from "./LPDetectionCard";
-import { buildUtmUrl, generateUtmCampaignByPurpose, calculateUtmMedium, generateUtmContent } from "@/lib/utmHelpers";
+import { buildUtmUrl, generateUtmCampaignByPurpose, generateUtmContent } from "@/lib/utmHelpers";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -103,7 +103,19 @@ export function UtmBuilder() {
     const purpose = detection.purpose!;
 
     selectedPlatforms.forEach((platformName) => {
-      const utmMedium = calculateUtmMedium(platformName);
+      const platform = platforms.find(p => p.name === platformName);
+      
+      if (!platform) {
+        toast.error(`Platform "${platformName}" not found`);
+        return;
+      }
+      
+      if (!platform.utm_medium) {
+        toast.error(`Platform "${platformName}" has no UTM medium assigned. Please configure it in Settings.`);
+        return;
+      }
+      
+      const utmMedium = platform.utm_medium;
       
       if (purpose === 'AO') {
         selectedEntities.forEach((entityName) => {
@@ -202,7 +214,7 @@ export function UtmBuilder() {
         full_url: link.full_url,
         base_url: lpUrl,
         utm_source: link.platform.toLowerCase(),
-        utm_medium: calculateUtmMedium(link.platform),
+        utm_medium: link.utm_medium,
         utm_campaign: link.utm_campaign,
         utm_content: link.deviceType,
         platform: link.platform,
@@ -274,7 +286,11 @@ export function UtmBuilder() {
                   allowCustom={true}
                   customPlaceholder="Add new platform"
                   onAddCustom={async (name) => {
-                    await createPlatform.mutateAsync({ name, is_active: true });
+                    await createPlatform.mutateAsync({ 
+                      name, 
+                      utm_medium: 'referral', // Default medium for custom platforms
+                      is_active: true 
+                    });
                   }}
                 />
               </div>

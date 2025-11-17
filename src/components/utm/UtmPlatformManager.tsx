@@ -7,29 +7,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useUtmPlatforms, useCreatePlatform, useUpdatePlatform, useDeletePlatform } from "@/hooks/useUtmPlatforms";
+import { useUtmMediums } from "@/hooks/useUtmMediums";
 import { checkPlatformDependencies, formatDependencyMessage } from "@/lib/selectorDependencyCheck";
 import { toast } from "sonner";
 
 export function UtmPlatformManager() {
   const { data: platforms = [], isLoading } = useUtmPlatforms();
+  const { data: mediums = [] } = useUtmMediums();
   const createPlatform = useCreatePlatform();
   const updatePlatform = useUpdatePlatform();
   const deletePlatform = useDeletePlatform();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<any>(null);
-  const [platformForm, setPlatformForm] = useState({ name: "" });
+  const [platformForm, setPlatformForm] = useState({ name: "", utm_medium: "" });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [platformToDelete, setPlatformToDelete] = useState<any>(null);
 
   const handleOpenDialog = (platform: any = null) => {
     if (platform) {
       setEditingPlatform(platform);
-      setPlatformForm({ name: platform.name });
+      setPlatformForm({ name: platform.name, utm_medium: platform.utm_medium || "" });
     } else {
       setEditingPlatform(null);
-      setPlatformForm({ name: "" });
+      setPlatformForm({ name: "", utm_medium: "" });
     }
     setIsDialogOpen(true);
   };
@@ -40,24 +44,29 @@ export function UtmPlatformManager() {
       return;
     }
 
+    if (!platformForm.utm_medium) {
+      toast.error("UTM medium is required");
+      return;
+    }
+
     if (editingPlatform) {
       updatePlatform.mutate(
-        { id: editingPlatform.id, name: platformForm.name },
+        { id: editingPlatform.id, name: platformForm.name, utm_medium: platformForm.utm_medium },
         {
           onSuccess: () => {
             setIsDialogOpen(false);
             setEditingPlatform(null);
-            setPlatformForm({ name: "" });
+            setPlatformForm({ name: "", utm_medium: "" });
           }
         }
       );
     } else {
       createPlatform.mutate(
-        { name: platformForm.name },
+        { name: platformForm.name, utm_medium: platformForm.utm_medium, is_active: true },
         {
           onSuccess: () => {
             setIsDialogOpen(false);
-            setPlatformForm({ name: "" });
+            setPlatformForm({ name: "", utm_medium: "" });
           }
         }
       );
@@ -108,27 +117,39 @@ export function UtmPlatformManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Platform Name</TableHead>
+                <TableHead>UTM Medium</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {platforms.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center text-muted-foreground">
-                    No platforms configured yet
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                    No platforms yet. Click "Add Platform" to create one.
                   </TableCell>
                 </TableRow>
               ) : (
                 platforms.map((platform) => (
                   <TableRow key={platform.id}>
                     <TableCell className="font-medium">{platform.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{platform.utm_medium || 'Not set'}</Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(platform)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenDialog(platform)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(platform)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(platform)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -140,13 +161,14 @@ export function UtmPlatformManager() {
         </CardContent>
       </Card>
 
-      {/* Edit/Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingPlatform ? "Edit Platform" : "Add Platform"}</DialogTitle>
+            <DialogTitle>{editingPlatform ? "Edit Platform" : "Add New Platform"}</DialogTitle>
             <DialogDescription>
-              {editingPlatform ? "Update platform name" : "Add a new UTM platform"}
+              {editingPlatform 
+                ? "Update the platform name and its UTM medium." 
+                : "Create a new platform and assign its UTM medium."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -154,14 +176,41 @@ export function UtmPlatformManager() {
               <Label htmlFor="platform-name">Platform Name</Label>
               <Input
                 id="platform-name"
-                placeholder="e.g., Google, Meta, TikTok"
                 value={platformForm.name}
-                onChange={(e) => setPlatformForm({ name: e.target.value })}
+                onChange={(e) =>
+                  setPlatformForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="e.g., Google, Meta, TikTok"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="utm-medium">UTM Medium *</Label>
+              <Select
+                value={platformForm.utm_medium}
+                onValueChange={(value) =>
+                  setPlatformForm((prev) => ({ ...prev, utm_medium: value }))
+                }
+              >
+                <SelectTrigger id="utm-medium">
+                  <SelectValue placeholder="Select a medium" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mediums.map((medium) => (
+                    <SelectItem key={medium.id} value={medium.name}>
+                      {medium.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                This medium will always be used for {platformForm.name || "this platform"}
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSavePlatform}>
               {editingPlatform ? "Update" : "Create"}
             </Button>
@@ -169,7 +218,6 @@ export function UtmPlatformManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
