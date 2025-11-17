@@ -144,9 +144,25 @@ export class UtmRuleEngine {
     // Clear cache when saving
     ruleCache = null;
     
-    const { data, error } = rule.id
-      ? await supabase.from('utm_automation_rules').update(rule as any).eq('id', rule.id).select().single()
-      : await supabase.from('utm_automation_rules').insert([rule as any]).select().single();
+    let data, error;
+    
+    if (rule.id) {
+      // UPDATE existing rule
+      ({ data, error } = await supabase
+        .from('utm_automation_rules')
+        .update(rule as any)
+        .eq('id', rule.id)
+        .select()
+        .single());
+    } else {
+      // INSERT new rule - remove id field to let DB auto-generate
+      const { id, ...ruleWithoutId } = rule;
+      ({ data, error } = await supabase
+        .from('utm_automation_rules')
+        .insert([ruleWithoutId as any])
+        .select()
+        .single());
+    }
     
     if (error) {
       console.error('❌ Failed to save UTM rule:', error);
