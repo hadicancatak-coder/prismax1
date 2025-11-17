@@ -16,7 +16,7 @@ export const UTM_VARIABLE_CATEGORIES: VariableCategory[] = [
   {
     name: "Platform",
     variables: [
-      { key: "{platform}", label: "Platform", description: "Full platform name (lowercase)", example: "google" },
+      { key: "{platform}", label: "Platform", description: "Platform name (lowercase, underscored)", example: "google_ads" },
       { key: "{platformCode}", label: "Platform Code", description: "First 3 letters", example: "goo" },
     ],
   },
@@ -24,7 +24,7 @@ export const UTM_VARIABLE_CATEGORIES: VariableCategory[] = [
     name: "Campaign",
     variables: [
       { key: "{campaign}", label: "Campaign", description: "Campaign name (lowercase, underscored)", example: "summer_sale" },
-      { key: "{campaignCode}", label: "Campaign Code", description: "First 5 letters", example: "summe" },
+      { key: "{campaignCode}", label: "Campaign Code", description: "First 5 letters (underscored)", example: "summe" },
     ],
   },
   {
@@ -40,28 +40,28 @@ export const UTM_VARIABLE_CATEGORIES: VariableCategory[] = [
   {
     name: "Entity",
     variables: [
-      { key: "{entity}", label: "Entity", description: "Entity name (lowercase)", example: "cfi" },
-      { key: "{entityCode}", label: "Entity Code", description: "First 3 letters", example: "cfi" },
+      { key: "{entity}", label: "Entity", description: "Entity name (lowercase, underscored)", example: "my_company" },
+      { key: "{entityCode}", label: "Entity Code", description: "First 3 letters", example: "my_" },
     ],
   },
   {
     name: "Location",
     variables: [
-      { key: "{city}", label: "City", description: "City name (lowercase)", example: "dubai" },
+      { key: "{city}", label: "City", description: "City name (lowercase, underscored)", example: "abu_dhabi" },
       { key: "{country}", label: "Country", description: "Country code", example: "ae" },
     ],
   },
   {
     name: "Device",
     variables: [
-      { key: "{device}", label: "Device", description: "Device type", example: "mobile" },
+      { key: "{device}", label: "Device", description: "Device type (lowercase, underscored)", example: "mobile_app" },
     ],
   },
   {
     name: "Custom",
     variables: [
-      { key: "{webinar}", label: "Webinar", description: "Webinar name", example: "webinar123" },
-      { key: "{purpose}", label: "Purpose", description: "Campaign purpose", example: "awareness" },
+      { key: "{webinar}", label: "Webinar", description: "Webinar name (lowercase, underscored)", example: "summer_webinar" },
+      { key: "{purpose}", label: "Purpose", description: "Campaign purpose (lowercase, underscored)", example: "brand_awareness" },
     ],
   },
   {
@@ -91,17 +91,17 @@ export function replaceVariables(template: string, context: UtmRuleContext): str
   
   // Build variable map
   const variables: Record<string, string> = {
-    "{platform}": context.platform.toLowerCase(),
-    "{platformCode}": context.platform.toLowerCase().substring(0, 3),
+    "{platform}": context.platform.toLowerCase().replace(/\s+/g, "_"),
+    "{platformCode}": context.platform.toLowerCase().replace(/\s+/g, "_").substring(0, 3),
     "{campaign}": context.campaign.toLowerCase().replace(/\s+/g, "_"),
-    "{campaignCode}": context.campaign.toLowerCase().replace(/\s+/g, "").substring(0, 5),
-    "{entity}": context.entity?.toLowerCase() || "",
-    "{entityCode}": context.entity?.toLowerCase().substring(0, 3) || "",
+    "{campaignCode}": context.campaign.toLowerCase().replace(/\s+/g, "_").substring(0, 5),
+    "{entity}": context.entity?.toLowerCase().replace(/\s+/g, "_") || "",
+    "{entityCode}": context.entity?.toLowerCase().replace(/\s+/g, "_").substring(0, 3) || "",
     "{city}": context.city?.toLowerCase().replace(/\s+/g, "_") || "",
     "{country}": "ae", // Default country
-    "{webinar}": context.webinar?.toLowerCase().replace(/\s+/g, "") || "",
-    "{device}": context.device || "desktop",
-    "{purpose}": context.purpose || "",
+    "{webinar}": context.webinar?.toLowerCase().replace(/\s+/g, "_") || "",
+    "{device}": context.device?.toLowerCase().replace(/\s+/g, "_") || "desktop",
+    "{purpose}": context.purpose?.toLowerCase().replace(/\s+/g, "_") || "",
     "{monthYY}": formatMonthYear2Digit(now),
     "{monthYear}": `${now.toLocaleString('en', { month: 'short' })}${now.getFullYear()}`,
     "{month}": (now.getMonth() + 1).toString().padStart(2, "0"),
@@ -137,14 +137,14 @@ export function validateTemplate(template: string): { valid: boolean; error?: st
 
 export function getPreviewValue(template: string): string {
   const sampleContext: UtmRuleContext = {
-    platform: "Google",
+    platform: "Google Ads",
     campaign: "Summer Sale",
-    entity: "CFI",
+    entity: "My Company",
     lpUrl: "https://example.com",
-    city: "Dubai",
-    device: "mobile",
+    city: "Abu Dhabi",
+    device: "mobile app",
     date: new Date("2025-11-15"),
-    purpose: "awareness",
+    purpose: "brand awareness",
   };
   
   return replaceVariables(template, sampleContext);
