@@ -3510,6 +3510,7 @@ export type Database = {
           formula: string | null
           id: string
           is_active: boolean | null
+          lp_type_id: string | null
           priority: number | null
           rule_name: string
           rule_type: string
@@ -3524,6 +3525,7 @@ export type Database = {
           formula?: string | null
           id?: string
           is_active?: boolean | null
+          lp_type_id?: string | null
           priority?: number | null
           rule_name: string
           rule_type?: string
@@ -3538,6 +3540,7 @@ export type Database = {
           formula?: string | null
           id?: string
           is_active?: boolean | null
+          lp_type_id?: string | null
           priority?: number | null
           rule_name?: string
           rule_type?: string
@@ -3550,6 +3553,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utm_automation_rules_lp_type_id_fkey"
+            columns: ["lp_type_id"]
+            isOneToOne: false
+            referencedRelation: "utm_lp_types"
             referencedColumns: ["id"]
           },
         ]
@@ -3656,6 +3666,7 @@ export type Database = {
           last_used_at: string | null
           link_purpose: string | null
           lp_type: string | null
+          lp_type_id: string | null
           month_year: string | null
           name: string
           notes: string | null
@@ -3693,6 +3704,7 @@ export type Database = {
           last_used_at?: string | null
           link_purpose?: string | null
           lp_type?: string | null
+          lp_type_id?: string | null
           month_year?: string | null
           name: string
           notes?: string | null
@@ -3730,6 +3742,7 @@ export type Database = {
           last_used_at?: string | null
           link_purpose?: string | null
           lp_type?: string | null
+          lp_type_id?: string | null
           month_year?: string | null
           name?: string
           notes?: string | null
@@ -3748,6 +3761,44 @@ export type Database = {
           validated_at?: string | null
           validated_by?: string | null
           validation_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_links_lp_type_id_fkey"
+            columns: ["lp_type_id"]
+            isOneToOne: false
+            referencedRelation: "utm_lp_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utm_lp_types: {
+        Row: {
+          created_at: string | null
+          default_url_pattern: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_url_pattern?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          default_url_pattern?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
         }
         Relationships: []
       }
