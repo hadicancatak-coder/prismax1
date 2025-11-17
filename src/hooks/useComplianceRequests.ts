@@ -147,6 +147,12 @@ export const useComplianceRequests = () => {
   });
 
   const uploadAsset = async (file: File, requestId: string): Promise<string> => {
+    // Server-side validation
+    const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    if (file.size > MAX_SIZE) {
+      throw new Error("File size exceeds 2 MB limit. Please provide a link instead.");
+    }
+
     const fileExt = file.name.split(".").pop();
     const fileName = `${requestId}/${crypto.randomUUID()}.${fileExt}`;
 
@@ -223,6 +229,42 @@ export const useComplianceRequests = () => {
     },
   });
 
+  const bulkDeleteRequests = useMutation({
+    mutationFn: async (requestIds: string[]) => {
+      const { error } = await supabase
+        .from("compliance_requests")
+        .delete()
+        .in("id", requestIds);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["compliance-requests"] });
+      toast.success("Requests deleted");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete requests: " + error.message);
+    },
+  });
+
+  const bulkUpdateStatus = useMutation({
+    mutationFn: async (data: { requestIds: string[]; status: string }) => {
+      const { error } = await supabase
+        .from("compliance_requests")
+        .update({ status: data.status })
+        .in("id", data.requestIds);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["compliance-requests"] });
+      toast.success("Status updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update status: " + error.message);
+    },
+  });
+
   return {
     requests,
     isLoading,
@@ -232,5 +274,7 @@ export const useComplianceRequests = () => {
     uploadAsset,
     addAssetToRequest: addAssetToRequest.mutate,
     updateAsset: updateAsset.mutate,
+    bulkDeleteRequests: bulkDeleteRequests.mutate,
+    bulkUpdateStatus: bulkUpdateStatus.mutate,
   };
 };
