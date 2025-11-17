@@ -85,7 +85,18 @@ export const generateUtmContent = (
     return "⚠️ Add LP URL";
   }
 
-  const parts = lpUrl.split('/').filter(p => p.trim() !== '');
+  // Strip query parameters and hash from URL before processing
+  let cleanUrl = lpUrl;
+  try {
+    const urlWithProtocol = lpUrl.startsWith('http') ? lpUrl : `https://${lpUrl}`;
+    const urlObj = new URL(urlWithProtocol);
+    cleanUrl = urlObj.pathname; // Use only the pathname (no query or hash)
+  } catch (e) {
+    // If URL parsing fails, try to remove query string manually
+    cleanUrl = lpUrl.split('?')[0].split('#')[0];
+  }
+
+  const parts = cleanUrl.split('/').filter(p => p.trim() !== '');
   const slug = parts[parts.length - 1];
 
   if (/^\d+$/.test(slug)) {
@@ -182,6 +193,13 @@ export const buildUtmUrl = (params: {
     const cleanUrl = params.baseUrl.trim();
     const urlWithProtocol = cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
     const url = new URL(urlWithProtocol);
+    
+    // Remove any existing UTM parameters before adding new ones
+    url.searchParams.delete('utm_source');
+    url.searchParams.delete('utm_medium');
+    url.searchParams.delete('utm_campaign');
+    url.searchParams.delete('utm_content');
+    url.searchParams.delete('utm_term');
     
     url.searchParams.set('utm_source', params.utmSource.toLowerCase());
     url.searchParams.set('utm_medium', params.utmMedium.toLowerCase());
