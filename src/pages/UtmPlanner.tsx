@@ -5,8 +5,10 @@ import { UtmTableGroupedView } from "@/components/utm/UtmTableGroupedView";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
 import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
 import { ReadyLinksBuilder } from "@/components/utm/ReadyLinksBuilder";
+import { UtmConfigurationTab } from "@/components/utm/UtmConfigurationTab";
+import { UtmAutomationTab } from "@/components/utm/UtmAutomationTab";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
-import { Link2, Plus, List, Folder, Sparkles } from "lucide-react";
+import { Link2, Plus, List, Folder, Sparkles, Settings, Zap } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const UtmPlanner = () => {
@@ -28,22 +30,30 @@ const UtmPlanner = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full md:w-auto md:inline-grid">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto">
           <TabsTrigger value="builder" className="gap-2">
             <Plus className="h-4 w-4" />
-            Builder
+            <span className="hidden sm:inline">Builder</span>
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="gap-2">
             <Folder className="h-4 w-4" />
-            Campaigns
+            <span className="hidden sm:inline">Campaigns</span>
           </TabsTrigger>
           <TabsTrigger value="links" className="gap-2">
             <List className="h-4 w-4" />
-            Links ({utmLinks.length})
+            <span className="hidden sm:inline">Links</span>
           </TabsTrigger>
           <TabsTrigger value="ready" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Ready Links
+            <span className="hidden sm:inline">Ready</span>
+          </TabsTrigger>
+          <TabsTrigger value="config" className="gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Config</span>
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="gap-2">
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Automation</span>
           </TabsTrigger>
         </TabsList>
 
@@ -67,6 +77,14 @@ const UtmPlanner = () => {
 
         <TabsContent value="ready" forceMount hidden={activeTab !== "ready"} className="space-y-4">
           <ReadyLinksBuilder />
+        </TabsContent>
+
+        <TabsContent value="config" forceMount hidden={activeTab !== "config"} className="space-y-6">
+          <UtmConfigurationTab />
+        </TabsContent>
+
+        <TabsContent value="automation" forceMount hidden={activeTab !== "automation"} className="space-y-6">
+          <UtmAutomationTab />
         </TabsContent>
       </Tabs>
     </div>
