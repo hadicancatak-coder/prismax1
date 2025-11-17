@@ -9,11 +9,12 @@ interface GeneratedLink {
   id: string;
   name: string;
   full_url: string;
+  base_url: string;
   utm_campaign: string;
-  utm_source?: string;
-  utm_medium?: string;
+  utm_source: string;
+  utm_medium: string;
   utm_term?: string;
-  utm_content?: string;
+  utm_content: string;
   lp_type_id?: string | null;
   entity?: string[];
   platform: string;

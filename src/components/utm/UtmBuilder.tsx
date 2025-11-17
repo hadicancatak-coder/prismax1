@@ -103,7 +103,7 @@ export function UtmBuilder() {
             customParams: withExtensions ? { extensions: 'true', entity: websiteParam } : { entity: websiteParam },
           });
           
-          links.push({ id: `${platformName}-${entityName}-${Date.now()}`, full_url: url, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
+          links.push({ id: `${platformName}-${entityName}-${Date.now()}`, full_url: url, base_url: lpUrl, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
             utm_medium: utmMedium, utm_campaign: utmCampaign, utm_term: entityName, utm_content: utmContent, lp_type_id: selectedLpType,
             platform: platformName, purpose: 'AO', entity: [entityName], name: `${platformName} - ${entityName}`, deviceType, websiteParam });
         });
@@ -111,14 +111,14 @@ export function UtmBuilder() {
         const utmCampaign = generateUtmCampaignByPurpose('Webinar', platformName, undefined, webinarName);
         const utmContent = generateUtmContent(lpUrl, webinarName);
         const url = buildUtmUrl({ baseUrl: lpUrl, utmSource: platformName.toLowerCase().replace(/\s+/g, ''), utmMedium, utmCampaign, utmContent, utmTerm: deviceType === 'mobile' ? 'mobile' : undefined });
-        links.push({ id: crypto.randomUUID(), name: `${platformName} - ${webinarName}`, full_url: url, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
+        links.push({ id: crypto.randomUUID(), name: `${platformName} - ${webinarName}`, full_url: url, base_url: lpUrl, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
           utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: utmContent, lp_type_id: selectedLpType, platform: platformName,
           entity: [detection.country || 'Global'], deviceType, purpose: 'Webinar' });
       } else if (purpose === 'Seminar') {
         const utmCampaign = generateUtmCampaignByPurpose('Seminar', platformName, undefined, undefined, city);
         const utmContent = generateUtmContent(lpUrl, city);
         const url = buildUtmUrl({ baseUrl: lpUrl, utmSource: platformName.toLowerCase().replace(/\s+/g, ''), utmMedium, utmCampaign, utmContent, utmTerm: deviceType === 'mobile' ? 'mobile' : undefined });
-        links.push({ id: crypto.randomUUID(), name: `${platformName} - ${city} Seminar`, full_url: url, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
+        links.push({ id: crypto.randomUUID(), name: `${platformName} - ${city} Seminar`, full_url: url, base_url: lpUrl, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
           utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: utmContent, lp_type_id: selectedLpType, platform: platformName,
           entity: [detection.country || city], deviceType, purpose: 'Seminar' });
       }
