@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Plus, X } from "lucide-react";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useComplianceRequests } from "@/hooks/useComplianceRequests";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { AssetUploader } from "./AssetUploader";
 
 interface CreateComplianceRequestDialogProps {
@@ -27,8 +28,10 @@ interface CreateComplianceRequestDialogProps {
 }
 
 interface FormData {
-  title: string;
+  entity: string;
+  name: string;
   description: string;
+  initial_comments: string;
 }
 
 interface Asset {
@@ -41,12 +44,18 @@ export function CreateComplianceRequestDialog({
   open,
   onOpenChange,
 }: CreateComplianceRequestDialogProps) {
-  const { register, handleSubmit, reset } = useForm<FormData>();
+  const { register, handleSubmit, reset, control } = useForm<FormData>();
   const { createRequest } = useComplianceRequests();
+  const { data: entities } = useSystemEntities();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data: FormData) => {
+    if (!data.entity) {
+      alert("Please select an entity");
+      return;
+    }
+    
     if (assets.length === 0) {
       alert("Please add at least one asset");
       return;
@@ -55,8 +64,10 @@ export function CreateComplianceRequestDialog({
     setIsSubmitting(true);
     createRequest(
       {
-        title: data.title,
+        entity: data.entity,
+        title: data.name,
         description: data.description,
+        initial_comments: data.initial_comments,
         assets,
       },
       {
@@ -84,15 +95,38 @@ export function CreateComplianceRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Compliance Request</DialogTitle>
+          <DialogTitle>Create Legal Review Request</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="entity">Entity *</Label>
+            <Controller
+              name="entity"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select entity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {entities?.map((entity) => (
+                      <SelectItem key={entity.id} value={entity.code}>
+                        {entity.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
             <Input
-              id="title"
-              {...register("title", { required: true })}
+              id="name"
+              {...register("name", { required: true })}
               placeholder="e.g., Summer Campaign 2025"
             />
           </div>
@@ -137,6 +171,16 @@ export function CreateComplianceRequestDialog({
             ))}
 
             <AssetUploader onAssetAdded={handleAddAsset} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="initial_comments">Initial Comments / Notes</Label>
+            <Textarea
+              id="initial_comments"
+              {...register("initial_comments")}
+              placeholder="Add any initial comments or notes about this request..."
+              rows={3}
+            />
           </div>
 
           <div className="flex justify-end gap-2">
