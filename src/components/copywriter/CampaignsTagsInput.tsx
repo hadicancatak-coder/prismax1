@@ -97,8 +97,8 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
       </div>
       
       {showSuggestions && filteredCampaigns.length > 0 && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[200px] rounded-md border bg-popover text-popover-foreground shadow-md">
-          <Command>
+        <div className="absolute top-full left-0 z-10 mt-1 w-full min-w-[200px] max-h-[250px] rounded-md border border-border bg-popover text-popover-foreground shadow-sm overflow-auto">
+          <Command className="border-0 bg-transparent">
             <CommandList>
               <CommandGroup>
                 {filteredCampaigns.slice(0, 5).map((campaign) => (
