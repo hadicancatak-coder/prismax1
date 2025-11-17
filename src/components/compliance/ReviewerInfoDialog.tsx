@@ -53,18 +53,24 @@ export function ReviewerInfoDialog({ open, onSubmit }: ReviewerInfoDialogProps) 
 
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
-                },
-              })}
-              placeholder="john@example.com"
-            />
+          <Input
+            id="email"
+            type="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Invalid email address",
+              },
+              validate: (value) => {
+                if (!value.endsWith("@cfi.trade")) {
+                  return "Only @cfi.trade email addresses are allowed";
+                }
+                return true;
+              }
+            })}
+            placeholder="john@cfi.trade"
+          />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
