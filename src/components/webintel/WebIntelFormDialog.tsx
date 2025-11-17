@@ -26,7 +26,7 @@ interface WebIntelFormDialogProps {
 }
 
 const COUNTRIES = ['UAE', 'Saudi Arabia', 'Egypt', 'Kuwait', 'Qatar', 'Bahrain', 'Jordan', 'Lebanon', 'Morocco'];
-const SITE_TYPES: ('Website' | 'App' | 'Portal' | 'Forum')[] = ['Website', 'App', 'Portal', 'Forum'];
+const SITE_TYPES: ('Website' | 'App' | 'Portal' | 'Forum' | 'News' | 'Lifestyle' | 'Finance' | 'Business' | 'Local')[] = ['Website', 'App', 'Portal', 'Forum', 'News', 'Lifestyle', 'Finance', 'Business', 'Local'];
 const CATEGORIES = ['Trading', 'Generic', 'Business', 'App'];
 const AVAILABLE_TAGS = ['GDN', 'DV360', 'Direct', 'Mobile-only'];
 
@@ -42,7 +42,7 @@ export function WebIntelFormDialog({
     name: '',
     url: '',
     country: 'UAE',
-    type: 'Website' as 'Website' | 'App' | 'Portal' | 'Forum',
+    type: 'Website' as 'Website' | 'App' | 'Portal' | 'Forum' | 'News' | 'Lifestyle' | 'Finance' | 'Business' | 'Local',
     category: '',
     estimated_monthly_traffic: 0,
     entity: '',

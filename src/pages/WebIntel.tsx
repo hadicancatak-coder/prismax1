@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Download } from "lucide-react";
+import { Plus, Upload, Download, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelSites } from "@/hooks/useWebIntelSites";
+import { useWebIntelDeals } from "@/hooks/useWebIntelDeals";
+import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
+import { useUtmLinks } from "@/hooks/useUtmLinks";
 import { WebIntelStats } from "@/components/webintel/WebIntelStats";
 import { WebIntelFilters, WebIntelFiltersState } from "@/components/webintel/WebIntelFilters";
 import { WebIntelTableView } from "@/components/webintel/WebIntelTableView";
 import { WebIntelFormDialog } from "@/components/webintel/WebIntelFormDialog";
 import { WebIntelDetailDialog } from "@/components/webintel/WebIntelDetailDialog";
 import { BulkSiteUploadDialog } from "@/components/webintel/BulkSiteUploadDialog";
+import { DealsTableView } from "@/components/webintel/DealsTableView";
+import { DealFormDialog } from "@/components/webintel/DealFormDialog";
+import { DealDetailDialog } from "@/components/webintel/DealDetailDialog";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
@@ -26,6 +33,25 @@ export default function WebIntel() {
     getSiteWithDetails,
   } = useWebIntelSites();
 
+  const {
+    deals,
+    isLoading: isLoadingDeals,
+    dealCampaigns,
+    dealUtmLinks,
+    createDeal,
+    updateDeal,
+    deleteDeal,
+    addCampaignToDeal,
+    addUtmLinkToDeal,
+    getCampaignsByDeal,
+    getUtmLinksByDeal,
+  } = useWebIntelDeals();
+
+  const { campaigns } = usePlannedCampaigns();
+  const { data: utmLinks = [] } = useUtmLinks();
+
+  const [activeTab, setActiveTab] = useState("websites");
+
   const [filters, setFilters] = useState<WebIntelFiltersState>({
     search: '',
     countries: [],
@@ -38,8 +64,12 @@ export default function WebIntel() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [dealFormDialogOpen, setDealFormDialogOpen] = useState(false);
+  const [dealDetailDialogOpen, setDealDetailDialogOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<any>(null);
   const [viewingSite, setViewingSite] = useState<any>(null);
+  const [editingDeal, setEditingDeal] = useState<any>(null);
+  const [viewingDeal, setViewingDeal] = useState<any>(null);
 
   // Get unique values for filters
   const availableCountries = Array.from(new Set(sites.map(s => s.country))).sort();
@@ -151,9 +181,62 @@ export default function WebIntel() {
     toast.success("Data exported successfully");
   };
 
+  const handleAddDeal = () => {
+    setEditingDeal(null);
+    setDealFormDialogOpen(true);
+  };
+
+  const handleEditDeal = (deal: any) => {
+    setEditingDeal(deal);
+    setDealFormDialogOpen(true);
+  };
+
+  const handleViewDeal = (deal: any) => {
+    setViewingDeal(deal);
+    setDealDetailDialogOpen(true);
+  };
+
+  const [deleteDealConfirmId, setDeleteDealConfirmId] = useState<string | null>(null);
+
+  const handleDeleteDeal = (dealId: string) => {
+    setDeleteDealConfirmId(dealId);
+  };
+
+  const confirmDeleteDeal = async () => {
+    if (deleteDealConfirmId) {
+      await deleteDeal.mutateAsync(deleteDealConfirmId);
+      setDeleteDealConfirmId(null);
+    }
+  };
+
+  const handleSaveDeal = async (dealData: any, campaignIds: string[], utmLinkIds: string[]) => {
+    try {
+      let dealId: string;
+      if (editingDeal) {
+        const result = await updateDeal.mutateAsync({ id: editingDeal.id, ...dealData });
+        dealId = result.id;
+      } else {
+        const result = await createDeal.mutateAsync(dealData);
+        dealId = result.id;
+      }
+      
+      // Add campaigns and UTM links
+      for (const campaignId of campaignIds) {
+        await addCampaignToDeal.mutateAsync({ dealId, campaignId });
+      }
+      for (const utmLinkId of utmLinkIds) {
+        await addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId });
+      }
+      
+      setDealFormDialogOpen(false);
+      setEditingDeal(null);
+    } catch (error) {
+      console.error('Save deal error:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">Web Intel</h1>
@@ -170,44 +253,63 @@ export default function WebIntel() {
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
-          <Button onClick={handleAdd}>
+          <Button onClick={activeTab === 'websites' ? handleAdd : handleAddDeal}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Site
+            {activeTab === 'websites' ? 'Add Site' : 'Add Deal'}
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <TableSkeleton rows={1} />
-        </div>
-      ) : (
-        <WebIntelStats sites={sites} />
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="websites">Websites</TabsTrigger>
+          <TabsTrigger value="deals">
+            <FileText className="h-4 w-4 mr-2" />
+            Deals
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filters */}
-      <WebIntelFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        availableCountries={availableCountries}
-        availableCategories={availableCategories}
-        availableTags={availableTags}
-        availableEntities={availableEntities}
-      />
+        <TabsContent value="websites" className="space-y-6">
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <>
+              <WebIntelStats sites={sites} />
+              <WebIntelFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableCountries={availableCountries}
+                availableCategories={availableCategories}
+                availableTags={availableTags}
+                availableEntities={availableEntities}
+              />
+              <WebIntelTableView
+                sites={filteredSites}
+                allCampaigns={allCampaigns}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </>
+          )}
+        </TabsContent>
 
-      {/* Table */}
-      {isLoading ? (
-        <TableSkeleton />
-      ) : (
-        <WebIntelTableView
-          sites={filteredSites}
-          allCampaigns={allCampaigns}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
+        <TabsContent value="deals" className="space-y-6">
+          {isLoadingDeals ? (
+            <TableSkeleton />
+          ) : (
+            <DealsTableView
+              deals={deals}
+              onView={handleViewDeal}
+              onEdit={handleEditDeal}
+              onDelete={handleDeleteDeal}
+              getCampaignCount={(dealId) => getCampaignsByDeal(dealId).length}
+              getUtmLinkCount={(dealId) => getUtmLinksByDeal(dealId).length}
+              getWebsiteName={(websiteId) => sites.find(s => s.id === websiteId)?.name || 'N/A'}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <WebIntelFormDialog
