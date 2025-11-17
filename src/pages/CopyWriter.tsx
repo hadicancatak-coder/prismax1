@@ -16,6 +16,7 @@ import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
 const PLATFORMS = ["ppc", "facebook", "instagram", "tiktok", "snap", "reddit", "whatsapp"];
+const STATUSES = ["draft", "in_review", "approved", "rejected"];
 
 function CopyWriter() {
   const queryClient = useQueryClient();
@@ -24,6 +25,7 @@ function CopyWriter() {
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [activeLanguages, setActiveLanguages] = useState<string[]>(["en", "ar"]);
 
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -32,6 +34,7 @@ function CopyWriter() {
     platform: platformFilter !== "all" ? [platformFilter] : undefined,
     entity: entityFilter !== "all" ? [entityFilter] : undefined,
     elementType: typeFilter !== "all" ? typeFilter : undefined,
+    status: statusFilter !== "all" ? statusFilter : undefined,
     search: debouncedSearch,
   });
 
@@ -105,6 +108,19 @@ function CopyWriter() {
               {ENTITIES.map((entity) => (
                 <SelectItem key={entity} value={entity}>
                   {entity}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter || "all"} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status.replace('_', ' ')}
                 </SelectItem>
               ))}
             </SelectContent>

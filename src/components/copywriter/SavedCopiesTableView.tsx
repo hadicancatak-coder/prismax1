@@ -19,6 +19,8 @@ import { CampaignsTagsInput } from "@/components/copywriter/CampaignsTagsInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ENTITIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { EntitiesMultiSelect } from "./EntitiesMultiSelect";
+import { CopywriterBulkActionsBar } from "./CopywriterBulkActionsBar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +51,7 @@ interface SavedCopiesTableViewProps {
 }
 
 interface NewRowData {
-  entity: string;
+  entity: string[];
   campaigns: string[];
   element_type: string;
   content_en: string;
@@ -60,6 +62,7 @@ interface NewRowData {
   char_limit_ar: number | null;
   char_limit_es: number | null;
   char_limit_az: number | null;
+  status: string;
 }
 
 const LANGUAGE_LABELS: Record<string, string> = {
@@ -99,7 +102,7 @@ export function SavedCopiesTableView({
   useEffect(() => {
     if (addingNewRow && !newRow) {
       setNewRow({
-        entity: "",
+        entity: [],
         campaigns: [],
         element_type: "headline",
         content_en: "",
@@ -110,6 +113,7 @@ export function SavedCopiesTableView({
         char_limit_ar: null,
         char_limit_es: null,
         char_limit_az: null,
+        status: "draft",
       });
       setTimeout(() => {
         newRowEnglishRef.current?.focus();
@@ -132,7 +136,7 @@ export function SavedCopiesTableView({
 
     try {
       await createMutation.mutateAsync({
-        entity: newRow.entity ? [newRow.entity] : [],
+        entity: newRow.entity,
         campaigns: newRow.campaigns,
         element_type: newRow.element_type,
         platform: [],
@@ -146,6 +150,7 @@ export function SavedCopiesTableView({
         char_limit_az: newRow.char_limit_az,
         tags: [],
         region: "",
+        status: "draft",
       });
       setNewRow(null);
       onNewRowComplete();
@@ -183,9 +188,7 @@ export function SavedCopiesTableView({
     }
   };
 
-  const handleBulkDelete = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleBulkDelete = async () => {
     try {
       await Promise.all(selected.map((id) => deleteMutation.mutateAsync(id)));
       setSelected([]);
@@ -309,42 +312,58 @@ export function SavedCopiesTableView({
   };
 
   const allLanguages = ["en", "ar", ...activeLanguages.filter((l) => l !== "en" && l !== "ar")];
-  const totalWidth = 50 + 100 + 140 + 100 + allLanguages.length * 530 + 100;
+  const totalWidth = 50 + 200 + 140 + 100 + 120 + allLanguages.length * 530 + 100;
+
+  const handleBulkStatusChange = async (status: string) => {
+    try {
+      await Promise.all(selected.map(id => 
+        updateMutation.mutateAsync({ id, updates: { status } })
+      ));
+      toast({ title: `Updated ${selected.length} copies to ${status}` });
+      setSelected([]);
+    } catch (error) {
+      toast({ title: "Failed to update status", variant: "destructive" });
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selectedCopies = copies.filter(c => selected.includes(c.id));
+    const csv = ["Entity,Campaign,Type,Status,Content EN,Content AR,Content ES,Content AZ"]
+      .concat(selectedCopies.map(c => 
+        `"${c.entity.join(',')}","${c.campaigns?.join(',') || ''}","${c.element_type}","${c.status}","${c.content_en || ''}","${c.content_ar || ''}","${c.content_es || ''}","${c.content_az || ''}"`
+      ))
+      .join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `copywriter-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkSync = async () => {
+    try {
+      const selectedCopies = copies.filter(c => selected.includes(c.id));
+      await Promise.all(selectedCopies.map(copy => syncCopyToPlanners({ copy, languages: activeLanguages as any })));
+      toast({ title: `Synced ${selected.length} copies to planners` });
+      setSelected([]);
+    } catch (error) {
+      toast({ title: "Failed to sync copies", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {selected.length > 0 && !isGuest && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{selected.length} selected</span>
-          <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); setShowBulkDeleteConfirm(true); }}>
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete Selected
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete {selected.length} copies?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={handleBulkDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
+      <CopywriterBulkActionsBar
+        selectedCount={selected.length}
+        onClearSelection={() => setSelected([])}
+        onDelete={handleBulkDelete}
+        onStatusChange={handleBulkStatusChange}
+        onExport={handleBulkExport}
+        onSyncToPlanner={handleBulkSync}
+      />
 
       <div className="border rounded-lg overflow-auto" style={{ maxHeight: "calc(100vh - 300px)" }}>
         <Table style={{ width: `${totalWidth}px`, tableLayout: "fixed" }}>
@@ -357,9 +376,10 @@ export function SavedCopiesTableView({
                   disabled={isGuest}
                 />
               </TableHead>
-              <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Entity</TableHead>
+              <TableHead className="h-10 w-[200px] border-r text-xs font-semibold">Entity</TableHead>
               <TableHead className="h-10 w-[140px] border-r text-xs font-semibold">Campaign</TableHead>
               <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Type</TableHead>
+              <TableHead className="h-10 w-[120px] border-r text-xs font-semibold">Status</TableHead>
               {allLanguages.map((lang) => (
                 <>
                   <TableHead key={`${lang}-content`} className="h-10 w-[250px] border-r text-xs font-semibold">
@@ -384,22 +404,29 @@ export function SavedCopiesTableView({
               <TableRow className="min-h-[44px] border-b bg-primary/5">
                 <TableCell className="min-h-[44px] border-r" />
                 <TableCell className="min-h-[44px] border-r p-2">
-                  <Select value={newRow.entity} onValueChange={(v) => setNewRow({ ...newRow, entity: v })}>
-                    <SelectTrigger className="h-8 text-xs border-0">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ENTITIES.map((e) => (
-                        <SelectItem key={e} value={e}>{e}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <EntitiesMultiSelect
+                    value={newRow.entity}
+                    onChange={(v) => setNewRow({ ...newRow, entity: v })}
+                  />
                 </TableCell>
                 <TableCell className="min-h-[44px] border-r p-2">
                   <CampaignsTagsInput
                     value={newRow.campaigns}
                     onChange={(v) => setNewRow({ ...newRow, campaigns: v })}
                   />
+                </TableCell>
+                <TableCell className="min-h-[44px] border-r p-2">
+                  <Select value={newRow.status} onValueChange={(v) => setNewRow({ ...newRow, status: v })}>
+                    <SelectTrigger className="h-8 text-xs border-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="in_review">In Review</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="min-h-[44px] border-r p-2">
                   <Select value={newRow.element_type} onValueChange={(v) => setNewRow({ ...newRow, element_type: v })}>
@@ -471,20 +498,11 @@ export function SavedCopiesTableView({
                     />
                   </TableCell>
                   <TableCell className="min-h-[44px] border-r p-2">
-                    <Select
-                      value={copy.entity[0] || ""}
-                      onValueChange={(v) => handleUpdateField(copy.id, "entity", [v])}
+                    <EntitiesMultiSelect
+                      value={copy.entity}
+                      onChange={(v) => handleUpdateField(copy.id, "entity", v)}
                       disabled={isGuest}
-                    >
-                      <SelectTrigger className="h-8 text-xs border-0">
-                        <SelectValue placeholder="-" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ENTITIES.map((e) => (
-                          <SelectItem key={e} value={e}>{e}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </TableCell>
                   <TableCell className="min-h-[44px] border-r p-2">
                     <div className="flex flex-wrap gap-1 max-h-[40px] overflow-hidden">
@@ -515,6 +533,23 @@ export function SavedCopiesTableView({
                         {ELEMENT_TYPES.map((t) => (
                           <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="min-h-[44px] border-r p-2">
+                    <Select
+                      value={copy.status}
+                      onValueChange={(v) => handleUpdateField(copy.id, "status", v)}
+                      disabled={isGuest}
+                    >
+                      <SelectTrigger className="h-8 text-xs border-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="in_review">In Review</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

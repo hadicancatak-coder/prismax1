@@ -1101,6 +1101,7 @@ export type Database = {
           is_synced_to_planner: boolean | null
           platform: string[]
           region: string | null
+          status: string | null
           tags: string[] | null
           updated_at: string
         }
@@ -1122,6 +1123,7 @@ export type Database = {
           is_synced_to_planner?: boolean | null
           platform?: string[]
           region?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -1143,6 +1145,7 @@ export type Database = {
           is_synced_to_planner?: boolean | null
           platform?: string[]
           region?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string
         }

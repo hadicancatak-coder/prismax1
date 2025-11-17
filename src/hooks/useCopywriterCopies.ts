@@ -22,6 +22,7 @@ export interface CopywriterCopy {
   char_limit_ar: number | null;
   char_limit_az: number | null;
   char_limit_es: number | null;
+  status: string;
 }
 
 interface CopywriterFilters {
@@ -30,6 +31,7 @@ interface CopywriterFilters {
   campaigns?: string[];
   elementType?: string;
   search?: string;
+  status?: string;
 }
 
 export const useCopywriterCopies = (filters?: CopywriterFilters) => {
@@ -55,6 +57,10 @@ export const useCopywriterCopies = (filters?: CopywriterFilters) => {
 
       if (filters?.elementType) {
         query = query.eq("element_type", filters.elementType);
+      }
+
+      if (filters?.status) {
+        query = query.eq("status", filters.status);
       }
 
       const { data, error } = await query;
