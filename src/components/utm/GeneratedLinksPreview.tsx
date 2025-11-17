@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Save, X } from "lucide-react";
+import { useUtmLpTypes } from "@/hooks/useUtmLpTypes";
 import { toast } from "sonner";
 
 interface GeneratedLink {
@@ -9,6 +10,11 @@ interface GeneratedLink {
   name: string;
   full_url: string;
   utm_campaign: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_term?: string;
+  utm_content?: string;
+  lp_type_id?: string | null;
   entity?: string[];
   platform: string;
   deviceType?: string;
@@ -23,6 +29,8 @@ interface GeneratedLinksPreviewProps {
 }
 
 export function GeneratedLinksPreview({ links, onCopy, onSave, onClear }: GeneratedLinksPreviewProps) {
+  const { data: lpTypes = [] } = useUtmLpTypes();
+
   if (links.length === 0) return null;
 
   return (
@@ -46,11 +54,18 @@ export function GeneratedLinksPreview({ links, onCopy, onSave, onClear }: Genera
                     {link.full_url}
                   </p>
                   <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{link.platform}</Badge>
+                    {link.lp_type_id && (
+                      <Badge variant="secondary">
+                        {lpTypes.find(t => t.id === link.lp_type_id)?.name || 'LP Type'}
+                      </Badge>
+                    )}
+                    {link.utm_source && <Badge variant="secondary">{link.utm_source}</Badge>}
+                    {link.utm_medium && <Badge variant="secondary">{link.utm_medium}</Badge>}
                     <Badge variant="default">{link.utm_campaign}</Badge>
                     {link.entity && link.entity.length > 0 && (
                       <Badge variant="outline">{link.entity.join(", ")}</Badge>
                     )}
-                    <Badge variant="secondary">{link.platform}</Badge>
                     {link.deviceType && (
                       <Badge variant="outline" className="text-xs">
                         {link.deviceType}
