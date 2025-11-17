@@ -60,7 +60,7 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap gap-1 items-center border rounded-md p-1 min-h-8 max-w-[200px]">
+      <div className="flex flex-wrap gap-1 items-center border rounded-md p-1 min-h-8 w-full">
         {value.map((tag) => (
           <Badge key={tag} variant="secondary" className="text-xs gap-1">
             {tag}
@@ -97,8 +97,8 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
       </div>
       
       {showSuggestions && filteredCampaigns.length > 0 && (
-        <div className="absolute top-full left-0 z-10 mt-1 w-full min-w-[200px] max-h-[250px] rounded-md border border-border bg-popover text-popover-foreground shadow-sm overflow-auto">
-          <Command className="border-0 bg-transparent">
+        <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[180px] max-w-[400px] max-h-[200px] rounded-md border border-border bg-popover text-popover-foreground shadow-sm overflow-auto">
+          <Command className="border-0 bg-popover">
             <CommandList>
               <CommandGroup>
                 {filteredCampaigns.slice(0, 5).map((campaign) => (
