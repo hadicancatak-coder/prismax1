@@ -73,7 +73,7 @@ export function ComplianceRequestDetailDialog({
             </Button>
             <Button
               variant="outline"
-              onClick={() => window.open(`/review/${request.public_link_token}`, "_blank")}
+              onClick={() => window.open(`${window.location.origin}/review/${request.public_link_token}`, "_blank", "noopener,noreferrer")}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Open Review Page

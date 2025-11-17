@@ -84,7 +84,7 @@ export function ComplianceRequestsTable({
 
   const openReviewPage = (token: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    window.open(`/review/${token}`, "_blank");
+    window.open(`${window.location.origin}/review/${token}`, "_blank", "noopener,noreferrer");
   };
 
   const getReviewProgress = (request: ComplianceRequest) => {
