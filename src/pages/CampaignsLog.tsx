@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
@@ -26,6 +28,7 @@ export default function CampaignsLog() {
   const [loading, setLoading] = useState(true);
   const [selectedEntity, setSelectedEntity] = useState<string>("all");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [campaignsExpanded, setCampaignsExpanded] = useState(false);
 
   const { createTracking, getEntitiesForCampaign } = useCampaignEntityTracking();
 
@@ -91,13 +94,6 @@ export default function CampaignsLog() {
     setActiveDragId(null);
   };
 
-  // Get campaigns not yet tracked in selected entity
-  const availableCampaigns = campaigns.filter((campaign) => {
-    if (selectedEntity === "all") return true;
-    const tracking = getEntitiesForCampaign(campaign.id);
-    return !tracking.some((t) => t.entity === selectedEntity);
-  });
-
   const activeCampaign = campaigns.find((c) => c.id === activeDragId);
 
   if (loading) {
@@ -141,32 +137,15 @@ export default function CampaignsLog() {
           </Select>
         </div>
 
-        {/* Available Campaigns Pool */}
-        {availableCampaigns.length > 0 && (
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                Available Campaigns
-                <span className="text-sm text-muted-foreground ml-2">
-                  (Drag to entity table below)
-                </span>
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {availableCampaigns.map((campaign) => (
-                  <DraggableCampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    isDragging={activeDragId === campaign.id}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Entity Tables */}
-        <div className="space-y-6">
-          {selectedEntity === "all" ? (
+        {/* Entity Tables - First */}
+        <div className="space-y-6 mb-8">
+          {allEntities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                No entities found. Add campaigns with entity tags first.
+              </p>
+            </div>
+          ) : selectedEntity === "all" ? (
             allEntities.map((entity) => (
               <EntityCampaignTable
                 key={entity}
@@ -182,13 +161,53 @@ export default function CampaignsLog() {
           )}
         </div>
 
-        {/* No Entities */}
-        {allEntities.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              No entities found. Add campaigns with entity tags first.
-            </p>
-          </div>
+        {/* All Campaigns - Last (Collapsible) */}
+        {campaigns.length > 0 && (
+          <Collapsible
+            open={campaignsExpanded}
+            onOpenChange={setCampaignsExpanded}
+            className="mb-8"
+          >
+            <CollapsibleTrigger asChild>
+              <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <ChevronDown
+                      className={cn(
+                        "h-5 w-5 transition-transform",
+                        campaignsExpanded && "rotate-180"
+                      )}
+                    />
+                    <h2 className="text-lg font-semibold">
+                      All Campaigns
+                      <span className="text-sm text-muted-foreground ml-2">
+                        ({campaigns.length} total)
+                      </span>
+                    </h2>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Drag to entity tables above
+                  </span>
+                </CardContent>
+              </Card>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent>
+              <Card className="mt-2">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                    {campaigns.map((campaign) => (
+                      <DraggableCampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        isDragging={activeDragId === campaign.id}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </div>
 

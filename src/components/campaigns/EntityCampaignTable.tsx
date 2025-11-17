@@ -50,8 +50,8 @@ function CampaignTrackingCard({
   const statusOption = STATUS_OPTIONS.find((s) => s.value === tracking.status);
 
   return (
-    <Card className="w-full border-2">
-      <CardContent className="p-3 space-y-2">
+    <Card className="w-full border-2 min-w-[160px]">
+      <CardContent className="p-4 space-y-2.5">
         {/* Header with Title and Remove Button */}
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-semibold text-sm line-clamp-2 flex-1">
@@ -69,7 +69,7 @@ function CampaignTrackingCard({
 
         {/* Image Preview */}
         {campaign.image_url && (
-          <div className="w-full h-20 rounded overflow-hidden bg-muted">
+          <div className="w-full h-24 rounded overflow-hidden bg-muted">
             <img
               src={campaign.image_url}
               alt={campaign.title}
@@ -139,14 +139,14 @@ export function EntityCampaignTable({ entity, campaigns }: EntityCampaignTablePr
         </div>
       </CardHeader>
       <CardContent>
-        <div
-          ref={setNodeRef}
-          className={cn(
-            "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 min-h-[200px] p-4 rounded-lg border-2 border-dashed transition-colors",
-            isOver ? "border-primary bg-primary/5" : "border-border",
-            entityCampaigns.length === 0 && "flex items-center justify-center"
-          )}
-        >
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 min-h-[300px] p-6 rounded-lg border-2 border-dashed transition-all duration-200",
+          isOver ? "border-primary bg-primary/10 shadow-lg" : "border-border bg-muted/20",
+          entityCampaigns.length === 0 && "flex items-center justify-center"
+        )}
+      >
           {entityCampaigns.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center col-span-full">
               Drop campaigns here to track them in {entity}
