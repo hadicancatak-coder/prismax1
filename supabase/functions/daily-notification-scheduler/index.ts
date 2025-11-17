@@ -28,6 +28,15 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // ========== 0. GENERATE RECURRING TASK INSTANCES ==========
+    console.log('Generating recurring task instances...');
+    const { error: recurringError } = await supabase.rpc('generate_recurring_tasks');
+    if (recurringError) {
+      console.error('Error generating recurring tasks:', recurringError);
+    } else {
+      console.log('✅ Successfully generated recurring task instances');
+    }
+
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
