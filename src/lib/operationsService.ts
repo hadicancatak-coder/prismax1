@@ -316,7 +316,7 @@ class OperationsService {
           assignee_id: item.assigned_to,
           created_by: user.id,
           due_at: item.operation_audit_logs.deadline,
-          task_type: 'task',
+          task_type: 'generic',
           priority: 'Medium',
           status: 'Pending',
         })
