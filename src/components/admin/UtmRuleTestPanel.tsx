@@ -95,7 +95,7 @@ export function UtmRuleTestPanel({ rule }: UtmRuleTestPanelProps) {
           <div className="space-y-2">
             <Label>Result</Label>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="flex-1 justify-between py-2 px-3 font-mono">
+              <Badge variant="outline" className="flex-1 justify-between py-2 px-3 font-mono bg-muted text-foreground">
                 <span className="truncate">{result}</span>
                 <Button
                   variant="ghost"

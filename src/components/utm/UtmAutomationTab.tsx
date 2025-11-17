@@ -13,7 +13,7 @@ import { RegenerateLinksDialog } from "@/components/admin/RegenerateLinksDialog"
 import { useUtmRules } from "@/hooks/useUtmRules";
 import { useUtmLpTypes } from "@/hooks/useUtmLpTypes";
 import { UtmRule } from "@/lib/utmRuleEngine";
-import { Plus, Edit, Trash, TestTube, RefreshCw } from "lucide-react";
+import { Plus, Edit, Trash, TestTube, RefreshCw, Info, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
@@ -87,13 +87,105 @@ export function UtmAutomationTab() {
     return <TableSkeleton />;
   }
 
+  const fallbackExamples: Record<string, string> = {
+    utm_source: '{platform}',
+    utm_medium: 'cpc',
+    utm_campaign: '{platform}_{campaign}_{monthYY}',
+    utm_content: 'Generated from LP URL',
+    utm_term: '(empty)',
+  };
+
+  const FallbackRulesInfo = () => (
+    <Card className="border-amber-500/30 bg-amber-500/5">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+          <Info className="h-5 w-5" />
+          Default Fallback Rules (Active when no custom rules exist)
+        </CardTitle>
+        <CardDescription>
+          These defaults are used automatically when you haven't created custom rules
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border">
+            <Badge variant="outline" className="shrink-0">utm_source</Badge>
+            <div className="flex-1">
+              <div className="text-sm font-mono text-foreground">
+                {`{platform}`} 
+                <span className="text-xs ml-2 text-muted-foreground">(e.g., "google", "facebook")</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border">
+            <Badge variant="outline" className="shrink-0">utm_medium</Badge>
+            <div className="flex-1">
+              <div className="text-sm font-mono text-foreground">
+                cpc 
+                <span className="text-xs ml-2 text-muted-foreground">(hardcoded as "cpc")</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border">
+            <Badge variant="outline" className="shrink-0">utm_campaign</Badge>
+            <div className="flex-1">
+              <div className="text-sm font-mono text-foreground">
+                {`{platform}_{campaign}_{monthYY}`}
+                <span className="text-xs ml-2 text-muted-foreground">(e.g., "google_gold_nov25")</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border">
+            <Badge variant="outline" className="shrink-0">utm_content</Badge>
+            <div className="flex-1">
+              <div className="text-sm font-mono text-foreground">
+                Generated from LP URL slug
+                <span className="text-xs ml-2 text-muted-foreground">(e.g., "open_account", "webinar_forex")</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border">
+            <Badge variant="outline" className="shrink-0">utm_term</Badge>
+            <div className="flex-1">
+              <div className="text-sm text-muted-foreground italic">
+                (No fallback - remains empty)
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 text-sm text-muted-foreground flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500" />
+          <span>Create custom rules above to override these defaults for specific landing page types</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   const RuleGroup = ({ title, paramType, rules }: { title: string; paramType: string; rules: UtmRule[] }) => (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{title}</span>
-          <Badge variant="outline">{rules.length} rules</Badge>
+          <div className="flex items-center gap-2">
+            {rules.length === 0 && (
+              <Badge variant="outline" className="text-amber-600 dark:text-amber-500 border-amber-600/30">
+                Using Fallback
+              </Badge>
+            )}
+            <Badge variant="outline">{rules.length} rules</Badge>
+          </div>
         </CardTitle>
+        {rules.length === 0 && (
+          <CardDescription className="text-amber-600 dark:text-amber-500 flex items-center gap-1">
+            <Info className="h-3 w-3" />
+            Default: <code className="px-1 py-0.5 bg-muted rounded text-xs text-foreground">{fallbackExamples[paramType]}</code>
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
@@ -224,6 +316,8 @@ export function UtmAutomationTab() {
               <RuleGroup title="🚀 UTM Campaign Rules" paramType="utm_campaign" rules={rulesByType.utm_campaign} />
               <RuleGroup title="📝 UTM Content Rules" paramType="utm_content" rules={rulesByType.utm_content} />
               <RuleGroup title="🔍 UTM Term Rules" paramType="utm_term" rules={rulesByType.utm_term} />
+              
+              <FallbackRulesInfo />
             </div>
           )}
         </TabsContent>
