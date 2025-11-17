@@ -34,6 +34,7 @@ export function UtmBuilder() {
   const [generatedLinks, setGeneratedLinks] = useState<any[]>([]);
   const [showAddCampaign, setShowAddCampaign] = useState(false);
   const [selectedLpType, setSelectedLpType] = useState<string | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
 
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
@@ -76,6 +77,7 @@ export function UtmBuilder() {
     if (!detection) { toast.error("LP metadata could not be detected"); return; }
     if (selectedPlatforms.length === 0) { toast.error("Please select at least one platform"); return; }
     if (detection.purpose === 'AO' && selectedEntities.length === 0) { toast.error("Please select at least one entity for AO campaigns"); return; }
+    if (detection.purpose === 'AO' && !selectedCampaign) { toast.error("Please select a campaign for AO links"); return; }
     if (detection.purpose === 'Webinar' && !webinarName.trim()) { toast.error("Please enter a webinar name"); return; }
     if (detection.purpose === 'Seminar' && !city.trim()) { toast.error("Please select a city for the seminar"); return; }
 
@@ -92,7 +94,7 @@ export function UtmBuilder() {
       if (purpose === 'AO') {
         selectedEntities.forEach((entityName) => {
           const entity = entities.find(e => e.name === entityName);
-          const campaignName = campaigns.find(c => c.name === entityName)?.name || entityName;
+          const campaignName = selectedCampaign || entityName;
           const utmCampaign = generateUtmCampaignByPurpose('AO', platformName, campaignName);
           const utmContent = generateUtmContent(lpUrl, campaignName);
           const websiteParam = entity?.website_param || entity?.code || entityName.toLowerCase();
@@ -108,14 +110,18 @@ export function UtmBuilder() {
             platform: platformName, purpose: 'AO', entity: [entityName], name: `${platformName} - ${entityName}`, deviceType, websiteParam });
         });
       } else if (purpose === 'Webinar') {
-        const utmCampaign = generateUtmCampaignByPurpose('Webinar', platformName, undefined, webinarName);
+        const utmCampaign = selectedCampaign 
+          ? `${selectedCampaign.toLowerCase()}_webinar_${webinarName.toLowerCase()}`
+          : generateUtmCampaignByPurpose('Webinar', platformName, undefined, webinarName);
         const utmContent = generateUtmContent(lpUrl, webinarName);
         const url = buildUtmUrl({ baseUrl: lpUrl, utmSource: platformName.toLowerCase().replace(/\s+/g, ''), utmMedium, utmCampaign, utmContent, utmTerm: deviceType === 'mobile' ? 'mobile' : undefined });
         links.push({ id: crypto.randomUUID(), name: `${platformName} - ${webinarName}`, full_url: url, base_url: lpUrl, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
           utm_medium: utmMedium, utm_campaign: utmCampaign, utm_content: utmContent, lp_type_id: selectedLpType, platform: platformName,
           entity: [detection.country || 'Global'], deviceType, purpose: 'Webinar' });
       } else if (purpose === 'Seminar') {
-        const utmCampaign = generateUtmCampaignByPurpose('Seminar', platformName, undefined, undefined, city);
+        const utmCampaign = selectedCampaign
+          ? `${selectedCampaign.toLowerCase()}_seminar_${city.toLowerCase()}`
+          : generateUtmCampaignByPurpose('Seminar', platformName, undefined, undefined, city);
         const utmContent = generateUtmContent(lpUrl, city);
         const url = buildUtmUrl({ baseUrl: lpUrl, utmSource: platformName.toLowerCase().replace(/\s+/g, ''), utmMedium, utmCampaign, utmContent, utmTerm: deviceType === 'mobile' ? 'mobile' : undefined });
         links.push({ id: crypto.randomUUID(), name: `${platformName} - ${city} Seminar`, full_url: url, base_url: lpUrl, utm_source: platformName.toLowerCase().replace(/\s+/g, ''),
@@ -142,6 +148,33 @@ export function UtmBuilder() {
             <div className="space-y-2"><Label>Platforms *</Label>
               <EnhancedMultiSelect options={platformOptions} selected={selectedPlatforms} onChange={setSelectedPlatforms} placeholder="Select platforms..." allowCustom={true}
                 customPlaceholder="Add new platform" onAddCustom={async (name) => { await createPlatform.mutateAsync({ name, utm_medium: 'referral', is_active: true }); }} /></div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Campaign {detection.purpose === 'AO' ? '*' : '(Optional)'}</Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowAddCampaign(true)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Campaign
+                </Button>
+              </div>
+              <Select value={selectedCampaign || ''} onValueChange={setSelectedCampaign}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.name}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {detection.purpose === 'AO' && (<div className="space-y-2"><Label>Entities (Countries) *</Label>
               <EnhancedMultiSelect options={entityOptions} selected={selectedEntities} onChange={setSelectedEntities} placeholder="Select entities..." allowCustom={true}
                 customPlaceholder="Add new entity" onAddCustom={async (name) => { const code = name.toLowerCase().replace(/\s+/g, '_'); await createEntity.mutateAsync({ name, code, is_active: true, display_order: entities.length, emoji: null }); }} /></div>)}
