@@ -1466,6 +1466,7 @@ export type Database = {
           id: string
           language: string | null
           lp_type: string | null
+          lp_type_id: string | null
           platform: string | null
           purpose: string | null
           updated_at: string | null
@@ -1479,6 +1480,7 @@ export type Database = {
           id?: string
           language?: string | null
           lp_type?: string | null
+          lp_type_id?: string | null
           platform?: string | null
           purpose?: string | null
           updated_at?: string | null
@@ -1492,12 +1494,21 @@ export type Database = {
           id?: string
           language?: string | null
           lp_type?: string | null
+          lp_type_id?: string | null
           platform?: string | null
           purpose?: string | null
           updated_at?: string | null
           utm_content?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_templates_lp_type_id_fkey"
+            columns: ["lp_type_id"]
+            isOneToOne: false
+            referencedRelation: "utm_lp_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       launch_campaign_assignees: {
         Row: {

@@ -26,7 +26,7 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
   const [formula, setFormula] = useState(rule?.formula || '');
   const [description, setDescription] = useState(rule?.description || '');
   const [priority, setPriority] = useState(rule?.priority || 0);
-  const [lpTypeId, setLpTypeId] = useState(rule?.lp_type_id || '');
+  const [lpTypeId, setLpTypeId] = useState(rule?.lp_type_id || '__all__');
   const templateInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -90,7 +90,7 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
       description,
       is_active: false,
       priority,
-      lp_type_id: lpTypeId || null,
+      lp_type_id: lpTypeId === '__all__' ? null : lpTypeId || null,
     };
 
     onSave(ruleData);
@@ -182,13 +182,13 @@ export function UtmRuleBuilder({ rule, onSave, onCancel }: UtmRuleBuilderProps) 
             <SelectTrigger id="lp-type">
               <SelectValue placeholder="All LP types (no filter)" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All LP Types</SelectItem>
-              {lpTypes.map(type => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
+              <SelectContent>
+                <SelectItem value="__all__">All LP Types (No Filter)</SelectItem>
+                {lpTypes.map(type => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">

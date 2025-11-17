@@ -16,6 +16,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmPlatforms } from "@/hooks/useUtmPlatforms";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
+import { useUtmLpTypes } from "@/hooks/useUtmLpTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { buildUtmUrl, calculateUtmMedium, generateUtmCampaignByPurpose } from "@/lib/utmHelpers";
 import { detectLPMetadata, LPDetectionResult } from "@/lib/lpDetector";
@@ -32,6 +33,7 @@ interface SavedLP {
   platform: string;
   lpType: 'static' | 'dynamic';
   utmContent: 'web' | 'mobile';
+  lpTypeId?: string | null;
 }
 
 export function ReadyLinksBuilder() {
@@ -39,10 +41,11 @@ export function ReadyLinksBuilder() {
   const { data: campaigns = [] } = useUtmCampaigns();
   const { data: platforms = [] } = useUtmPlatforms();
   const { data: entities = [] } = useSystemEntities();
+  const { data: lpTypes = [] } = useUtmLpTypes();
   const { copy: copyToClipboard } = useCopyToClipboard();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newLP, setNewLP] = useState({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web' as 'web' | 'mobile' });
+  const [newLP, setNewLP] = useState({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web' as 'web' | 'mobile', lpTypeId: null as string | null });
   const [detectionResult, setDetectionResult] = useState<LPDetectionResult | null>(null);
 
   // Fetch landing page templates
@@ -70,6 +73,7 @@ export function ReadyLinksBuilder() {
       platform: template.platform || '',
       lpType: (template.lp_type as 'static' | 'dynamic') || 'static',
       utmContent: (template.utm_content as 'web' | 'mobile') || 'web',
+      lpTypeId: template.lp_type_id || null,
     }));
   }, [templates]);
 
@@ -102,7 +106,7 @@ export function ReadyLinksBuilder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['landing-page-templates'] });
       toast({ title: "Success", description: "Landing page template added" });
-      setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web' });
+      setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web', lpTypeId: null });
       setDetectionResult(null);
       setShowAddDialog(false);
     },
@@ -153,6 +157,7 @@ export function ReadyLinksBuilder() {
         purpose,
         lpType: detected.lpType || 'static',
         utmContent: newLP.utmContent || 'web',
+        lpTypeId: newLP.lpTypeId,
       });
     } catch (error: any) {
       toast({
@@ -518,7 +523,7 @@ export function ReadyLinksBuilder() {
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setShowAddDialog(false);
-              setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web' });
+              setNewLP({ url: '', country: '', language: 'EN', platform: '', utmContent: 'web', lpTypeId: null });
               setDetectionResult(null);
             }}>
               Cancel
