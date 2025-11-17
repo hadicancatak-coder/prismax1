@@ -658,9 +658,15 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                   { value: 6, label: 'Sat' },
                   { value: 0, label: 'Sun' },
                 ].map(day => (
-                  <label 
-                    key={day.value} 
-                    htmlFor={`day-${day.value}`}
+                  <div
+                    key={day.value}
+                    onClick={() => {
+                      if (recurrenceDaysOfWeek.includes(day.value)) {
+                        setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
+                      } else {
+                        setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
+                      }
+                    }}
                     className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all cursor-pointer hover:border-primary/50 ${
                       recurrenceDaysOfWeek.includes(day.value) 
                         ? 'border-primary bg-primary/10' 
@@ -668,20 +674,16 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     }`}
                   >
                     <Checkbox
-                      id={`day-${day.value}`}
                       checked={recurrenceDaysOfWeek.includes(day.value)}
                       onCheckedChange={(checked) => {
-                        if (checked) {
-                          setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
-                        } else {
-                          setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
-                        }
+                        // Prevent double-firing from both div click and checkbox change
+                        return;
                       }}
                     />
                     <span className="text-sm font-medium">
                       {day.label}
                     </span>
-                  </label>
+                  </div>
                 ))}
               </div>
             </div>
