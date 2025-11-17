@@ -23,13 +23,23 @@ export function useUtmRules() {
     },
   });
 
+  const toggleRuleMutation = useMutation({
+    mutationFn: ({ ruleId, isActive, ruleName }: { ruleId: string; isActive: boolean; ruleName: string }) => 
+      UtmRuleEngine.toggleRuleActive(ruleId, isActive, ruleName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['utm-rules'] });
+    },
+  });
+
   return {
     rules,
     isLoading,
     error,
     saveRule: saveRuleMutation.mutate,
     deleteRule: deleteRuleMutation.mutate,
+    toggleRule: toggleRuleMutation.mutate,
     isSaving: saveRuleMutation.isPending,
     isDeleting: deleteRuleMutation.isPending,
+    isToggling: toggleRuleMutation.isPending,
   };
 }
