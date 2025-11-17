@@ -25,7 +25,9 @@ import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<any>(null);
@@ -148,10 +150,45 @@ export default function Tasks() {
     setStatusFilter("all");
     setActiveQuickFilter(null);
     setSearchQuery("");
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkComplete = async () => {
+    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status: 'Completed' }).eq('id', id)));
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkStatusChange = async (status: string) => {
+    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status }).eq('id', id)));
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkPriorityChange = async (priority: string) => {
+    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ priority }).eq('id', id)));
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkDelete = async () => {
+    await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').delete().eq('id', id)));
+    setSelectedTaskIds([]);
+  };
+
+  const handleBulkExport = () => {
+    const selectedTasks = filteredTasks.filter(t => selectedTaskIds.includes(t.id));
+    exportTasksToCSV(selectedTasks);
   };
 
   return (
-    <div className="px-6 md:px-12 py-8 space-y-6">
+    <div className="px-6 md:px-12 py-8 space-y-6 relative">
+      <TaskBulkActionsBar
+        selectedCount={selectedTaskIds.length}
+        onClearSelection={() => setSelectedTaskIds([])}
+        onComplete={handleBulkComplete}
+        onDelete={handleBulkDelete}
+        onStatusChange={handleBulkStatusChange}
+        onPriorityChange={handleBulkPriorityChange}
+        onExport={handleBulkExport}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-page-title text-foreground">Tasks</h1>

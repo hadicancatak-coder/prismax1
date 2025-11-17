@@ -101,6 +101,7 @@ export function CreateCopyDialog({ open, onOpenChange, editingCopy }: CreateCopy
       char_limit_ar: null,
       char_limit_az: null,
       char_limit_es: null,
+      status: "draft",
     };
 
     try {

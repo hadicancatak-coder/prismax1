@@ -41,9 +41,11 @@ import { cn } from "@/lib/utils";
 interface TasksTableProps {
   tasks: any[];
   onTaskUpdate: () => void;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
-export const TasksTable = ({ tasks, onTaskUpdate }: TasksTableProps) => {
+export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionChange }: TasksTableProps) => {
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const queryClient = useQueryClient();
