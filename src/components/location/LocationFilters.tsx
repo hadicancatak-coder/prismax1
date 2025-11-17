@@ -12,6 +12,7 @@ export interface LocationFilters {
   cities: string[];
   agencies: string[];
   categories: LocationCategory[];
+  campaignId?: string;
   priceRange: { min: number; max: number };
   scoreRange: { min: number; max: number };
 }
@@ -21,6 +22,7 @@ interface LocationFiltersProps {
   onFiltersChange: (filters: LocationFilters) => void;
   availableCities: string[];
   availableAgencies: string[];
+  availableCampaigns: Array<{ id: string; name: string }>;
 }
 
 export function LocationFilters({
@@ -28,6 +30,7 @@ export function LocationFilters({
   onFiltersChange,
   availableCities,
   availableAgencies,
+  availableCampaigns,
 }: LocationFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -35,6 +38,7 @@ export function LocationFilters({
     filters.cities.length > 0 ||
     filters.agencies.length > 0 ||
     filters.categories.length > 0 ||
+    filters.campaignId ||
     filters.priceRange.min > 0 ||
     filters.priceRange.max < 1000000 ||
     filters.scoreRange.min > 0 ||
@@ -44,6 +48,7 @@ export function LocationFilters({
     filters.cities.length + 
     filters.agencies.length + 
     filters.categories.length +
+    (filters.campaignId ? 1 : 0) +
     (filters.priceRange.min > 0 ? 1 : 0) +
     (filters.priceRange.max < 1000000 ? 1 : 0) +
     (filters.scoreRange.min > 0 ? 1 : 0) +
@@ -54,6 +59,7 @@ export function LocationFilters({
       cities: [],
       agencies: [],
       categories: [],
+      campaignId: undefined,
       priceRange: { min: 0, max: 1000000 },
       scoreRange: { min: 0, max: 10 },
     });
