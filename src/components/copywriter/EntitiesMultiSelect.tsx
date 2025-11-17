@@ -61,8 +61,10 @@ export function EntitiesMultiSelect({ value, onChange, disabled }: EntitiesMulti
                   }}
                 >
                   {entity}
-                  <button
-                    className="ml-1 rounded-full outline-none hover:bg-muted"
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="ml-1 rounded-full outline-none hover:bg-muted cursor-pointer inline-flex"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleRemove(entity, e as any);
@@ -75,7 +77,7 @@ export function EntitiesMultiSelect({ value, onChange, disabled }: EntitiesMulti
                     onClick={(e) => handleRemove(entity, e)}
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </span>
                 </Badge>
               ))
             ) : (
