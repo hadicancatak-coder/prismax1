@@ -62,8 +62,8 @@ function CopyWriter() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap border-b border-border pb-4">
-          <div className="relative flex-1 w-full sm:max-w-sm min-w-0">
+        <div className="flex flex-col lg:flex-row gap-3 items-center justify-center flex-wrap border-b border-border pb-4">
+          <div className="relative flex-1 w-full lg:max-w-sm min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Search copies..."
@@ -72,7 +72,7 @@ function CopyWriter() {
               className="pl-10 min-h-[44px] w-full"
             />
           </div>
-          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+          <div className="flex gap-2 flex-wrap justify-center">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
               <SelectValue placeholder="Type" />
