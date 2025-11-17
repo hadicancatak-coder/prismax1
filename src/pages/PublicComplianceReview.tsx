@@ -32,13 +32,7 @@ export default function PublicComplianceReview() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { submitReview } = useComplianceReviews();
 
-  useEffect(() => {
-    // Check localStorage for reviewer info
-    const stored = localStorage.getItem("compliance_reviewer_info");
-    if (stored) {
-      setReviewerInfo(JSON.parse(stored));
-    }
-  }, []);
+  // Removed localStorage check - always ask for reviewer info
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -84,7 +78,7 @@ export default function PublicComplianceReview() {
 
   const handleReviewerInfoSubmit = (info: { name: string; email: string }) => {
     setReviewerInfo(info);
-    localStorage.setItem("compliance_reviewer_info", JSON.stringify(info));
+    // Removed localStorage.setItem - always ask fresh
   };
 
   const handleReviewChange = (

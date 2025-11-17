@@ -1019,6 +1019,7 @@ export type Database = {
           id: string
           image_url: string | null
           lp_link: string | null
+          notes: string | null
           start_date: string
           target: string
           title: string
@@ -1034,6 +1035,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           lp_link?: string | null
+          notes?: string | null
           start_date: string
           target: string
           title: string
@@ -1049,6 +1051,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           lp_link?: string | null
+          notes?: string | null
           start_date?: string
           target?: string
           title?: string

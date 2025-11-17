@@ -59,6 +59,7 @@ const operationsItems = [
   { title: "Legal Logs", url: "/compliance-approval", icon: CheckCircle2 },
   { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
   { title: "Google Sheets", url: "/operations/custom-reports", icon: FileText },
+  { title: "Campaigns Log", url: "/campaigns-log", icon: Target },
 ];
 
 export function AppSidebar() {
