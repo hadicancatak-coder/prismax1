@@ -373,12 +373,12 @@ export default function CalendarView() {
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
       {!focusMode && (
         <>
-          <header className="mb-8">
+          <header className="mb-8 max-w-7xl mx-auto">
             <h1 className="text-page-title mb-2">Agenda</h1>
             <p className="text-muted-foreground">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
             
             {userRole === 'admin' && users.length > 0 && (
-              <div className="mt-4 max-w-xs">
+              <div className="mt-4 max-w-xs mx-auto sm:mx-0">
                 <Select value={selectedUserId || undefined} onValueChange={(value) => setSelectedUserId(value === 'all' ? null : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Users" />
@@ -395,7 +395,7 @@ export default function CalendarView() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
               <Tabs value={dateView} onValueChange={(v) => {
                 const newView = v as typeof dateView;
                 setDateView(newView);

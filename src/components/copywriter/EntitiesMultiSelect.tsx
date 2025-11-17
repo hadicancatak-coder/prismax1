@@ -87,11 +87,11 @@ export function EntitiesMultiSelect({ value, onChange, disabled }: EntitiesMulti
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command>
+      <PopoverContent className="w-full p-0 max-h-[250px]" align="start">
+        <Command className="border-border bg-popover">
           <CommandInput placeholder="Search entities..." />
           <CommandEmpty>No entity found.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
+          <CommandGroup className="max-h-[200px] overflow-auto">
             {ENTITIES.map((entity) => (
               <CommandItem
                 key={entity}
