@@ -120,7 +120,7 @@ export default function LocationIntelligence() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-background">
       {/* Full-screen Map */}
       <div className="absolute inset-0">
         <LocationMap
@@ -134,39 +134,44 @@ export default function LocationIntelligence() {
       </div>
 
       {/* Top-left: Search and Filters */}
-      <div className="absolute top-4 left-4 z-10 space-y-2 max-w-sm">
-        <LocationSearch
-          locations={locations}
-          onLocationSelect={(location) => {
-            mapRef.current?.flyToLocation(location);
-            setSelectedLocation(location);
-            setDetailOpen(true);
-          }}
-        />
+      <div className="absolute top-4 left-4 z-10 space-y-2 w-80">
+        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3">
+          <LocationSearch
+            locations={locations}
+            onLocationSelect={(location) => {
+              mapRef.current?.flyToLocation(location);
+              setSelectedLocation(location);
+              setDetailOpen(true);
+            }}
+          />
+        </div>
         
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="w-full"
-        >
-          <Target className="w-4 h-4 mr-2" />
-          Filters
-          {showFilters && <ChevronUp className="ml-2 h-4 w-4" />}
-          {!showFilters && <ChevronDown className="ml-2 h-4 w-4" />}
-        </Button>
+        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full justify-between rounded-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span>Filters</span>
+            </div>
+            {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
 
-        {showFilters && (
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 max-w-md">
-            <LocationFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              availableCities={cities}
-              availableAgencies={agencies}
-              availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
-            />
-          </div>
-        )}
+          {showFilters && (
+            <div className="p-3 border-t">
+              <LocationFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableCities={cities}
+                availableAgencies={agencies}
+                availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Top-right: Admin Actions */}
@@ -180,6 +185,7 @@ export default function LocationIntelligence() {
               setClickedCoordinates(null);
               setFormOpen(true);
             }}
+            className="bg-background/95 backdrop-blur-sm shadow-lg"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Location
@@ -188,6 +194,7 @@ export default function LocationIntelligence() {
             variant="secondary"
             size="sm"
             onClick={() => setUploadOpen(true)}
+            className="bg-background/95 backdrop-blur-sm shadow-lg"
           >
             <Upload className="w-4 h-4 mr-2" />
             Bulk Upload
@@ -197,27 +204,31 @@ export default function LocationIntelligence() {
 
       {/* Bottom-left: Location Stats */}
       <div className="absolute bottom-4 left-4 z-10">
-        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4">
-          <div className="flex items-center gap-4 text-sm">
+        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 min-w-[200px]">
+          <div className="flex items-center gap-6 text-sm">
             <div>
-              <div className="text-muted-foreground">Total</div>
-              <div className="text-xl font-bold">{filteredLocations.length}</div>
+              <div className="text-muted-foreground text-xs">Total Locations</div>
+              <div className="text-2xl font-bold">{filteredLocations.length}</div>
             </div>
-            <div className="h-8 w-px bg-border" />
-            <div>
-              <div className="text-muted-foreground">Selected</div>
-              <div className="text-xl font-bold text-primary">{selectedLocations.length}</div>
-            </div>
+            {selectedLocations.length > 0 && (
+              <>
+                <div className="h-10 w-px bg-border" />
+                <div>
+                  <div className="text-muted-foreground text-xs">Selected</div>
+                  <div className="text-2xl font-bold text-primary">{selectedLocations.length}</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Bottom-right: Selected Locations Panel */}
       {selectedLocations.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-10 w-96">
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 max-h-[400px] flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-lg">Selected Locations ({selectedLocations.length})</h3>
+        <div className="absolute bottom-4 right-4 z-10 w-96 max-w-[calc(100vw-2rem)]">
+          <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 max-h-[60vh] flex flex-col">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b">
+              <h3 className="font-semibold text-lg">Selected ({selectedLocations.length})</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -227,11 +238,11 @@ export default function LocationIntelligence() {
               </Button>
             </div>
             
-            <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+            <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-2">
               {selectedLocations.map((location) => (
                 <div
                   key={location.id}
-                  className="flex items-center justify-between p-2 bg-muted rounded hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded hover:bg-muted transition-colors cursor-pointer group"
                   onClick={() => {
                     setSelectedLocation(location);
                     setDetailOpen(true);
@@ -239,12 +250,20 @@ export default function LocationIntelligence() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{location.name}</div>
-                    <div className="text-xs text-muted-foreground">{location.city}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span>{location.city}</span>
+                      {location.manual_score && (
+                        <>
+                          <span>•</span>
+                          <span>Score: {location.manual_score}/10</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedLocations(selectedLocations.filter(loc => loc.id !== location.id));
@@ -259,10 +278,11 @@ export default function LocationIntelligence() {
             <Button
               onClick={handleCreateCampaign}
               className="w-full"
+              size="lg"
               disabled={selectedLocations.length === 0}
             >
               <Target className="w-4 h-4 mr-2" />
-              Create Campaign ({selectedLocations.length} locations)
+              Create Campaign with {selectedLocations.length} location{selectedLocations.length !== 1 ? 's' : ''}
             </Button>
           </div>
         </div>
