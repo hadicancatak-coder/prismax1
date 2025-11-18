@@ -99,7 +99,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
 
         const marker = new mapboxgl.Marker(el).setLngLat([location.longitude, location.latitude]).addTo(map.current);
         
-        // Enhanced popup HTML with better styling
+        // Create popup
         const popupHTML = `
           <div class="p-3 min-w-[240px] max-w-[260px]">
             <div class="flex items-start justify-between mb-2">
@@ -168,7 +168,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           </div>
         `;
         
-        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup' }).setHTML(popupHTML);
+        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup', closeButton: true, closeOnClick: false }).setHTML(popupHTML);
         popup.on('open', () => { 
           popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => {
             btn.addEventListener('click', () => { 
@@ -178,6 +178,24 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           }); 
         });
         marker.setPopup(popup);
+        
+        // Show popup on hover
+        el.addEventListener('mouseenter', () => {
+          if (!isSelectionMode) {
+            popup.addTo(map.current!);
+          }
+        });
+        
+        // Hide popup on leave after a delay (allows entering popup)
+        el.addEventListener('mouseleave', () => {
+          setTimeout(() => {
+            const hoveredPopup = popup.getElement();
+            if (hoveredPopup && !hoveredPopup.matches(':hover')) {
+              popup.remove();
+            }
+          }, 200);
+        });
+        
         markers.current.push(marker);
       });
 
