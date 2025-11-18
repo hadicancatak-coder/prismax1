@@ -6,17 +6,15 @@ import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
 import { logger } from "@/lib/logger";
 import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
 import { LocationSearch } from "@/components/location/LocationSearch";
-import { LocationListView } from "@/components/location/LocationListView";
 import { LocationDetailPopup } from "@/components/location/LocationDetailPopup";
 import { LocationFormDialog } from "@/components/location/LocationFormDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { CampaignsSection } from "@/components/location/CampaignsSection";
 import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDialog";
 import { BulkLocationUploadDialog } from "@/components/location/BulkLocationUploadDialog";
 import { LocationFilters } from "@/components/location/LocationFilters";
 import type { LocationFilters as Filters } from "@/components/location/LocationFilters";
 import { Button } from "@/components/ui/button";
-import { Target, Plus, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, Plus, Upload, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -80,23 +78,26 @@ export default function LocationIntelligence() {
 
   const handleMapClick = (coords: { lat: number; lng: number }) => {
     setClickedCoordinates(coords);
+    setEditingLocation(null);
     setFormOpen(true);
-    toast.success(`Location selected at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
   };
 
-  const handleEdit = (location?: MediaLocation) => {
-    setEditingLocation(location || selectedLocation || null);
-    setDetailOpen(false);
+  const handleLocationSelect = (location: MediaLocation) => {
+    mapRef.current?.flyToLocation(location);
+    setSelectedLocation(location);
+    setDetailOpen(true);
+  };
+
+  const handleEdit = (location: MediaLocation) => {
+    setEditingLocation(location);
+    setClickedCoordinates(null);
     setFormOpen(true);
   };
 
   const handleDelete = async (locationId: string) => {
     try {
-      // Use the deleteLocation hook properly
       await supabase.from('media_locations').delete().eq('id', locationId);
       toast.success("Location deleted successfully");
-      setDetailOpen(false);
-      setSelectedLocation(null);
     } catch (error) {
       logger.error("Failed to delete location", { error });
       toast.error("Failed to delete location");
@@ -120,44 +121,39 @@ export default function LocationIntelligence() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Full-screen Map */}
+    <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden">
+      {/* Full-screen map background */}
       <div className="absolute inset-0">
         <LocationMap
-          ref={mapRef}
           locations={filteredLocations}
+          selectedLocationId={selectedLocations.map(l => l.id)}
+          campaignLocationIds={campaignLocationIds}
           onLocationClick={handleLocationClick}
           onMapClick={isAdmin ? handleMapClick : undefined}
-          selectedLocationId={selectedLocations.map(loc => loc.id)}
-          campaignLocationIds={campaignLocationIds}
+          ref={mapRef}
         />
       </div>
 
-      {/* Top-left: Search and Filters */}
-      <div className="absolute top-4 left-4 z-10 space-y-2 max-w-sm">
-        <LocationSearch
-          locations={locations}
-          onLocationSelect={(location) => {
-            mapRef.current?.flyToLocation(location);
-            setSelectedLocation(location);
-            setDetailOpen(true);
-          }}
+      {/* Top-left overlay - Search & Filters */}
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-sm">
+        <LocationSearch 
+          locations={filteredLocations} 
+          onLocationSelect={handleLocationSelect} 
         />
         
-        <Button
-          variant="secondary"
+        <Button 
+          variant="secondary" 
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="w-full"
+          className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10 justify-start"
         >
-          <Target className="w-4 h-4 mr-2" />
+          <Filter className="h-4 w-4 mr-2" />
           Filters
-          {showFilters && <ChevronUp className="ml-2 h-4 w-4" />}
-          {!showFilters && <ChevronDown className="ml-2 h-4 w-4" />}
+          {showFilters ? <ChevronUp className="h-4 w-4 ml-auto" /> : <ChevronDown className="h-4 w-4 ml-auto" />}
         </Button>
-
+        
         {showFilters && (
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 max-w-md">
+          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300 max-h-[calc(100vh-200px)] overflow-y-auto">
             <LocationFilters
               filters={filters}
               onFiltersChange={setFilters}
@@ -169,125 +165,114 @@ export default function LocationIntelligence() {
         )}
       </div>
 
-      {/* Top-right: Admin Actions */}
+      {/* Top-right overlay - Admin actions */}
       {isAdmin && (
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setEditingLocation(null);
+          <Button 
+            onClick={() => { 
+              setEditingLocation(null); 
               setClickedCoordinates(null);
-              setFormOpen(true);
-            }}
+              setFormOpen(true); 
+            }} 
+            className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Add Location
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setUploadOpen(true)}
+          <Button 
+            onClick={() => setUploadOpen(true)} 
+            variant="secondary" 
+            className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10"
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="h-4 w-4 mr-2" />
             Bulk Upload
           </Button>
         </div>
       )}
 
-      {/* Bottom-left: Location Stats */}
-      <div className="absolute bottom-4 left-4 z-10">
-        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div>
-              <div className="text-muted-foreground">Total</div>
-              <div className="text-xl font-bold">{filteredLocations.length}</div>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div>
-              <div className="text-muted-foreground">Selected</div>
-              <div className="text-xl font-bold text-primary">{selectedLocations.length}</div>
-            </div>
+      {/* Bottom-left overlay - Stats */}
+      <div className="absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4">
+        <div className="flex gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">Total:</span>
+            <span className="ml-2 font-semibold">{filteredLocations.length}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Selected:</span>
+            <span className="ml-2 font-semibold text-primary">{selectedLocations.length}</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom-right: Selected Locations Panel */}
+      {/* Bottom-right overlay - Selected locations panel */}
       {selectedLocations.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-10 w-96">
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 max-h-[400px] flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-lg">Selected Locations ({selectedLocations.length})</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearSelection}
-              >
-                Clear All
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto space-y-2 mb-3">
-              {selectedLocations.map((location) => (
-                <div
-                  key={location.id}
-                  className="flex items-center justify-between p-2 bg-muted rounded hover:bg-muted/80 transition-colors cursor-pointer"
-                  onClick={() => {
-                    setSelectedLocation(location);
-                    setDetailOpen(true);
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{location.name}</div>
-                    <div className="text-xs text-muted-foreground">{location.city}</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedLocations(selectedLocations.filter(loc => loc.id !== location.id));
-                    }}
-                  >
-                    ×
-                  </Button>
+        <div className="absolute bottom-4 right-4 z-10 bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 max-w-sm w-80 max-h-[500px] overflow-hidden flex flex-col">
+          <h3 className="font-semibold mb-3">Selected Locations ({selectedLocations.length})</h3>
+          <div className="space-y-2 mb-4 overflow-y-auto flex-1">
+            {selectedLocations.map(loc => (
+              <div key={loc.id} className="flex justify-between items-center p-2 bg-background/50 rounded text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{loc.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{loc.city}</div>
                 </div>
-              ))}
-            </div>
-
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleLocationClick(loc)}
+                  className="ml-2 h-6 w-6 p-0 hover:bg-background/70"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-2 border-t border-white/10">
+            <Button
+              onClick={handleClearSelection}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              Clear
+            </Button>
             <Button
               onClick={handleCreateCampaign}
-              className="w-full"
-              disabled={selectedLocations.length === 0}
+              size="sm"
+              className="flex-1"
             >
-              <Target className="w-4 h-4 mr-2" />
-              Create Campaign ({selectedLocations.length} locations)
+              <Target className="h-4 w-4 mr-2" />
+              Create Campaign
             </Button>
           </div>
         </div>
       )}
 
       {/* Dialogs */}
-      <LocationDetailPopup
-        location={selectedLocation ? getLocationWithDetails(selectedLocation.id) || null : null}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {selectedLocation && (
+        <LocationDetailPopup
+          location={selectedLocation as any}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          onEdit={() => handleEdit(selectedLocation)}
+          onDelete={() => handleDelete(selectedLocation.id)}
+        />
+      )}
 
       <LocationFormDialog
-        location={editingLocation ? getLocationWithDetails(editingLocation.id) || null : null}
         open={formOpen}
         onClose={() => setFormOpen(false)}
+        location={editingLocation as any}
         initialCoordinates={clickedCoordinates}
       />
 
       <CampaignPlannerDialog
         open={plannerOpen}
-        onClose={() => setPlannerOpen(false)}
-        locations={selectedLocations.length > 0 ? selectedLocations : filteredLocations}
+        onClose={() => {
+          setSelectedLocations([]);
+          setPlannerOpen(false);
+        }}
+        locations={selectedLocations}
+        mode="create"
       />
 
       <BulkLocationUploadDialog

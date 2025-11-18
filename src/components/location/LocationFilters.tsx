@@ -73,7 +73,7 @@ export function LocationFilters({
   };
 
   return (
-    <Card className="p-2">
+    <div className="space-y-4">
       <div className="flex items-center gap-4">
         {/* Compact row - always visible */}
         <div className="flex items-center gap-2 flex-1">
@@ -118,7 +118,10 @@ export function LocationFilters({
           <Select
             value={filters.categories.length === 1 ? filters.categories[0] : "all"}
             onValueChange={(value) => 
-              onFiltersChange({ ...filters, categories: value === "all" ? [] : [value as LocationCategory] })
+              onFiltersChange({ 
+                ...filters, 
+                categories: value === "all" ? [] : [value as LocationCategory] 
+              })
             }
           >
             <SelectTrigger className="h-8 w-[140px]">
@@ -126,143 +129,164 @@ export function LocationFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {Object.keys(LOCATION_CATEGORIES).map((category) => (
+              {Object.entries(LOCATION_CATEGORIES).map(([category, config]) => (
                 <SelectItem key={category} value={category}>
-                  {category}
+                  {config.emoji} {category}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
 
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2"
+            className="h-8"
           >
-            <Filter className="h-4 w-4" />
-            More Filters
-            {activeFilterCount > 3 && (
-              <Badge variant="default" className="h-5 px-1.5">
-                {activeFilterCount - 3}
-              </Badge>
-            )}
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-            <X className="h-4 w-4 mr-1" />
-            Clear All
-          </Button>
-        )}
       </div>
 
       {/* Expanded section */}
       {isExpanded && (
-        <div className="pt-3 mt-3 border-t space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-4 pt-4 border-t">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Cities (Multiple)</label>
+              <label className="text-sm font-medium">Cities</label>
               <SimpleMultiSelect
-                options={availableCities.map(c => ({ value: c, label: c }))}
+                options={availableCities.map(city => ({ value: city, label: city }))}
                 selected={filters.cities}
-                onChange={(selected) => onFiltersChange({ ...filters, cities: selected })}
-                placeholder="Select cities"
+                onChange={(cities) => onFiltersChange({ ...filters, cities })}
+                placeholder="Select cities..."
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Agencies (Multiple)</label>
+              <label className="text-sm font-medium">Agencies</label>
               <SimpleMultiSelect
-                options={availableAgencies.map(a => ({ value: a, label: a }))}
+                options={availableAgencies.map(agency => ({ value: agency, label: agency }))}
                 selected={filters.agencies}
-                onChange={(selected) => onFiltersChange({ ...filters, agencies: selected })}
-                placeholder="Select agencies"
+                onChange={(agencies) => onFiltersChange({ ...filters, agencies })}
+                placeholder="Select agencies..."
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Categories (Multiple)</label>
-              <SimpleMultiSelect
-                options={Object.keys(LOCATION_CATEGORIES).map(c => ({ value: c, label: c }))}
-                selected={filters.categories}
-                onChange={(selected) => onFiltersChange({ ...filters, categories: selected as LocationCategory[] })}
-                placeholder="Select categories"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Categories</label>
+            <SimpleMultiSelect
+              options={Object.entries(LOCATION_CATEGORIES).map(([category, config]) => ({
+                value: category,
+                label: `${config.emoji} ${category}`
+              }))}
+              selected={filters.categories}
+              onChange={(categories) => onFiltersChange({ 
+                ...filters, 
+                categories: categories as LocationCategory[] 
+              })}
+              placeholder="Select categories..."
+            />
+          </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Campaign</label>
+            <Select
+              value={filters.campaignId || "all"}
+              onValueChange={(value) => 
+                onFiltersChange({ 
+                  ...filters, 
+                  campaignId: value === "all" ? undefined : value 
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by campaign" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campaigns</SelectItem>
+                {availableCampaigns.map((campaign) => (
+                  <SelectItem key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Price Range ($)</label>
+              <label className="text-sm font-medium">Price Range (AED/month)</label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  value={filters.priceRange.min}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      priceRange: { ...filters.priceRange, min: Number(e.target.value) },
-                    })
-                  }
-                  className="h-8 text-sm"
                   placeholder="Min"
+                  value={filters.priceRange.min}
+                  onChange={(e) => onFiltersChange({
+                    ...filters,
+                    priceRange: { ...filters.priceRange, min: Number(e.target.value) }
+                  })}
+                  className="h-8"
                 />
                 <span className="text-muted-foreground">-</span>
                 <Input
                   type="number"
-                  value={filters.priceRange.max}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      priceRange: { ...filters.priceRange, max: Number(e.target.value) },
-                    })
-                  }
-                  className="h-8 text-sm"
                   placeholder="Max"
+                  value={filters.priceRange.max}
+                  onChange={(e) => onFiltersChange({
+                    ...filters,
+                    priceRange: { ...filters.priceRange, max: Number(e.target.value) }
+                  })}
+                  className="h-8"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Score Range</label>
+              <label className="text-sm font-medium">Score Range (0-10)</label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  value={filters.scoreRange.min}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      scoreRange: { ...filters.scoreRange, min: Number(e.target.value) },
-                    })
-                  }
-                  className="h-8 text-sm"
                   placeholder="Min"
-                  step="0.1"
+                  min="0"
+                  max="10"
+                  value={filters.scoreRange.min}
+                  onChange={(e) => onFiltersChange({
+                    ...filters,
+                    scoreRange: { ...filters.scoreRange, min: Number(e.target.value) }
+                  })}
+                  className="h-8"
                 />
                 <span className="text-muted-foreground">-</span>
                 <Input
                   type="number"
-                  value={filters.scoreRange.max}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      scoreRange: { ...filters.scoreRange, max: Number(e.target.value) },
-                    })
-                  }
-                  className="h-8 text-sm"
                   placeholder="Max"
-                  step="0.1"
+                  min="0"
+                  max="10"
+                  value={filters.scoreRange.max}
+                  onChange={(e) => onFiltersChange({
+                    ...filters,
+                    scoreRange: { ...filters.scoreRange, max: Number(e.target.value) }
+                  })}
+                  className="h-8"
                 />
               </div>
             </div>
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

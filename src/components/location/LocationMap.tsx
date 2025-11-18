@@ -212,12 +212,12 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
     }, [locations, onLocationClick, selectedLocationId]);
 
     return (
-      <div className="relative">
-        <div ref={mapContainer} className="h-[600px] rounded-lg border" />
+      <div className="relative w-full h-full">
+        <div ref={mapContainer} className="absolute inset-0" />
 
         {/* Empty state overlay */}
         {locations.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
             <div className="text-center space-y-2 p-6">
               <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-semibold">No Locations to Display</h3>
@@ -228,23 +228,8 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           </div>
         )}
 
-        <div className="absolute top-4 left-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border max-w-xs">
-          <div className="text-xs font-semibold mb-2">Location Categories</div>
-          <div className="space-y-1">
-            {Object.entries(LOCATION_CATEGORIES).map(([category, config]) => (
-              <div key={category} className="flex items-center gap-2 text-xs">
-                <div
-                  className="w-3 h-3 rounded-full border border-white flex-shrink-0"
-                  style={{ backgroundColor: config.color }}
-                />
-                <span className="truncate">{config.emoji} {category}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {onMapClick && (
-          <div className="absolute bottom-4 right-4 bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg border">
+          <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-md p-3 rounded-lg shadow-xl border border-white/10">
             <p className="text-xs text-muted-foreground">
               <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded border">Right-Click</kbd> to add location
             </p>
