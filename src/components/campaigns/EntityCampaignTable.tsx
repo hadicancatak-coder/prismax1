@@ -11,10 +11,8 @@ import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCa
 
 interface Campaign {
   id: string;
-  title: string;
-  description: string | null;
-  lp_link: string | null;
-  image_url: string | null;
+  name: string;
+  notes: string | null;
 }
 
 interface EntityCampaignTableProps {
@@ -55,7 +53,7 @@ function CampaignTrackingCard({
         {/* Header with Title and Remove Button */}
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-semibold text-sm line-clamp-2 flex-1">
-            {campaign.title}
+            {campaign.name}
           </h4>
           <Button
             variant="ghost"
@@ -66,30 +64,6 @@ function CampaignTrackingCard({
             <X className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Image Preview */}
-        {campaign.image_url && (
-          <div className="w-full h-24 rounded overflow-hidden bg-muted">
-            <img
-              src={campaign.image_url}
-              alt={campaign.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
-        {/* LP Link */}
-        {campaign.lp_link && (
-          <a
-            href={campaign.lp_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
-          >
-            <ExternalLink className="h-3 w-3" />
-            <span className="truncate">Landing Page</span>
-          </a>
-        )}
 
         {/* Status Dropdown */}
         <div>
