@@ -14,7 +14,7 @@ interface LocationDetailPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
 }
 
 export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDelete }: LocationDetailPopupProps) {

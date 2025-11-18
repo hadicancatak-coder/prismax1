@@ -71,7 +71,7 @@ export function LocationSearch({ locations, onLocationSelect }: LocationSearchPr
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full max-w-sm justify-start text-muted-foreground">
+        <Button variant="outline" className="w-full max-w-sm justify-start text-muted-foreground bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
           <Search className="mr-2 h-4 w-4" />
           Search locations...
           <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
