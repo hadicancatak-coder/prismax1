@@ -1232,22 +1232,38 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
             {/* Time Tracking Section - Removed per user request */}
             
-            <Separator />
+            {/* Dependencies Section - Collapsible */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Dependencies</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <TaskDependenciesSection
+                  taskId={taskId}
+                  currentStatus={task.status}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Dependencies Section */}
-            <TaskDependenciesSection
-              taskId={taskId}
-              currentStatus={task.status}
-            />
-
-            <Separator />
-
-            {/* Checklist Section */}
-            <TaskChecklistSection
-              taskId={taskId}
-              initialChecklist={task.checklist || []}
-              onUpdate={fetchTask}
-            />
+            {/* Checklist Section - Collapsible */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Checklist</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <TaskChecklistSection
+                  taskId={taskId}
+                  initialChecklist={task.checklist || []}
+                  onUpdate={fetchTask}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <Separator />
 
