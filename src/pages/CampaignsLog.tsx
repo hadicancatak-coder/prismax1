@@ -61,8 +61,17 @@ export default function CampaignsLog() {
     }
     const targetEntity = dropTargetId.replace('entity-', '');
 
-    console.log('Creating tracking:', { campaign_id: campaignId, entity: targetEntity });
-    await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
+    try {
+      console.log('Creating tracking:', { campaign_id: campaignId, entity: targetEntity });
+      await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
+      toast.success(`Campaign added to ${targetEntity}`);
+    } catch (error: any) {
+      console.error('Failed to add campaign:', error);
+      const errorMessage = error.message?.includes("duplicate") 
+        ? "Campaign already exists in this entity" 
+        : "Failed to add campaign";
+      toast.error(errorMessage);
+    }
   };
 
   const transformedCampaigns = campaigns.map((c) => ({
@@ -109,9 +118,6 @@ export default function CampaignsLog() {
             <Button onClick={() => setExternalAccessDialogOpen(true)}>
               <ExternalLink className="h-4 w-4 mr-2" />Generate Review Link
             </Button>
-            <Button onClick={() => setCreateCampaignDialogOpen(true)} variant="default">
-              <Plus className="h-4 w-4 mr-2" />New Campaign
-            </Button>
           </div>
         </div>
 
@@ -140,10 +146,23 @@ export default function CampaignsLog() {
                     <h3 className="font-semibold text-base">Campaign Library</h3>
                     <Badge variant="secondary" className="ml-1">{filteredCampaigns.length}</Badge>
                   </div>
-                  <ChevronDown className={cn(
-                    "h-5 w-5 text-muted-foreground transition-transform duration-300",
-                    expandedCampaigns.has('library') && "rotate-180"
-                  )} />
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCreateCampaignDialogOpen(true);
+                      }} 
+                      size="sm" 
+                      variant="default"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Campaign
+                    </Button>
+                    <ChevronDown className={cn(
+                      "h-5 w-5 text-muted-foreground transition-transform duration-300",
+                      expandedCampaigns.has('library') && "rotate-180"
+                    )} />
+                  </div>
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent 
