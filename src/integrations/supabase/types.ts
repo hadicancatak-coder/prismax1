@@ -979,7 +979,7 @@ export type Database = {
             foreignKeyName: "campaign_entity_tracking_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "campaigns"
+            referencedRelation: "utm_campaigns"
             referencedColumns: ["id"]
           },
         ]
