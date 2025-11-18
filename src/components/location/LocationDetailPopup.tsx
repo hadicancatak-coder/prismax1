@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { LocationWithDetails, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
 import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
 import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil } from "lucide-react";
@@ -17,7 +18,6 @@ interface LocationDetailPopupProps {
 }
 
 export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDelete }: LocationDetailPopupProps) {
-  const { useAuth } = require('@/hooks/useAuth');
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
   const { getCampaignsByLocation } = useLocationCampaigns();
