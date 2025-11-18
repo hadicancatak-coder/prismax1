@@ -3,12 +3,10 @@ import { useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, MessageSquare } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
-import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
-import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 
 interface Campaign {
   id: string;
@@ -52,9 +50,6 @@ function CampaignTrackingCard({
   externalReviewerEmail,
 }: CampaignTrackingCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const { useComments } = useCampaignComments();
-  const { data: comments = [] } = useComments(tracking.id);
 
   if (!campaign) return null;
 
@@ -91,19 +86,6 @@ function CampaignTrackingCard({
               {statusOption.label}
             </Badge>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-7 text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              setCommentsOpen(true);
-            }}
-          >
-            <MessageSquare className="h-3 w-3 mr-1" />
-            Comments ({comments.length})
-          </Button>
         </CardContent>
       </Card>
 
@@ -111,17 +93,6 @@ function CampaignTrackingCard({
         open={detailOpen}
         onOpenChange={setDetailOpen}
         campaignId={tracking.campaign_id}
-      />
-
-      <CampaignCommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        trackingId={tracking.id}
-        campaignName={campaign.name}
-        entityName={entity}
-        isExternal={isExternal}
-        externalReviewerName={externalReviewerName}
-        externalReviewerEmail={externalReviewerEmail}
       />
     </>
   );
