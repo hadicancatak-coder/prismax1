@@ -5,28 +5,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useUtmCampaigns } from '@/hooks/useUtmCampaigns';
-import { EditCampaignDialog } from './EditCampaignDialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useDeleteUtmCampaign } from '@/hooks/useUtmCampaigns';
-import { Edit2, Trash2, ExternalLink, Search, SortAsc, SortDesc } from 'lucide-react';
+import { ExternalLink, Search, SortAsc, SortDesc, Info } from 'lucide-react';
 import type { UtmCampaign } from '@/hooks/useUtmCampaigns';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export function CampaignLibrary() {
+  const navigate = useNavigate();
   const { data: campaigns = [], isLoading } = useUtmCampaigns();
-  const [editingCampaign, setEditingCampaign] = useState<UtmCampaign | null>(null);
-  const [deletingCampaign, setDeletingCampaign] = useState<UtmCampaign | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'usage' | 'lastUsed' | 'updated'>('updated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const deleteCampaign = useDeleteUtmCampaign();
 
-  const handleDelete = () => {
-    if (!deletingCampaign) return;
-    deleteCampaign.mutate(deletingCampaign.id, {
-      onSuccess: () => setDeletingCampaign(null)
-    });
+  const handleManageClick = () => {
+    navigate('/campaigns-log');
+    toast.info('Redirected to Campaign Log for editing');
   };
 
   // Filter campaigns by search query
@@ -82,7 +78,17 @@ export function CampaignLibrary() {
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          This is a read-only view. To edit or delete campaigns, please go to{" "}
+          <Button variant="link" className="p-0 h-auto font-medium" onClick={handleManageClick}>
+            Campaign Log
+          </Button>
+        </AlertDescription>
+      </Alert>
+
       <Card>
         <CardContent className="p-4 space-y-4">
           {/* Search & Sort Bar */}
@@ -137,7 +143,6 @@ export function CampaignLibrary() {
                 <TableHead className="text-center">Usage</TableHead>
                 <TableHead>Last Edited</TableHead>
                 <TableHead>Last Used</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,24 +174,6 @@ export function CampaignLibrary() {
                     {campaign.last_used_at
                       ? formatDistanceToNow(new Date(campaign.last_used_at), { addSuffix: true })
                       : 'Never'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingCampaign(campaign)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingCampaign(campaign)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}

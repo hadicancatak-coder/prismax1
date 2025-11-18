@@ -8,6 +8,7 @@ export interface CampaignMetadata {
   version_code: string | null;
   image_url: string | null;
   image_file_size: number | null;
+  asset_link: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -39,11 +40,13 @@ export const useCampaignMetadata = () => {
       versionCode,
       imageUrl,
       imageFileSize,
+      assetLink,
     }: {
       campaignId: string;
       versionCode?: string;
       imageUrl?: string;
       imageFileSize?: number;
+      assetLink?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -54,6 +57,7 @@ export const useCampaignMetadata = () => {
           version_code: versionCode,
           image_url: imageUrl,
           image_file_size: imageFileSize,
+          asset_link: assetLink,
           created_by: user?.id,
           updated_at: new Date().toISOString(),
         })

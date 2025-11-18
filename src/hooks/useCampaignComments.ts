@@ -34,6 +34,22 @@ export const useCampaignComments = () => {
     enabled: !!trackingId,
   });
 
+  // Get all comments for a UTM campaign (campaign-level)
+  const useUtmCampaignComments = (campaignId: string) => useQuery({
+    queryKey: ["utm-campaign-comments", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("utm_campaign_comments")
+        .select("*")
+        .eq("utm_campaign_id", campaignId)
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!campaignId,
+  });
+
   // Add comment
   const addComment = useMutation({
     mutationFn: async ({
@@ -79,6 +95,45 @@ export const useCampaignComments = () => {
     },
   });
 
+  // Add comment to UTM campaign
+  const addUtmCampaignComment = useMutation({
+    mutationFn: async ({
+      campaignId,
+      commentText,
+      authorName,
+      authorEmail,
+    }: {
+      campaignId: string;
+      commentText: string;
+      authorName?: string;
+      authorEmail?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
+        .from("utm_campaign_comments")
+        .insert({
+          utm_campaign_id: campaignId,
+          comment_text: commentText,
+          author_name: authorName || user?.email || "Anonymous",
+          author_email: authorEmail || user?.email,
+          author_id: user?.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["utm-campaign-comments"] });
+      toast.success("Comment added");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to add comment");
+    },
+  });
+
   // Get comment count for a tracking
   const getCommentCount = (trackingId: string) => {
     const { data: comments } = useComments(trackingId);
@@ -87,7 +142,9 @@ export const useCampaignComments = () => {
 
   return {
     useComments,
+    useUtmCampaignComments,
     addComment,
+    addUtmCampaignComment,
     getCommentCount,
   };
 };

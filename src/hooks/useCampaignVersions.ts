@@ -1,0 +1,105 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export interface CampaignVersion {
+  id: string;
+  utm_campaign_id: string;
+  version_number: number;
+  name: string;
+  landing_page: string | null;
+  description: string | null;
+  image_url: string | null;
+  image_file_size: number | null;
+  asset_link: string | null;
+  version_notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export const useCampaignVersions = () => {
+  const queryClient = useQueryClient();
+
+  // Fetch versions for a campaign
+  const useVersions = (campaignId: string) => useQuery({
+    queryKey: ["campaign-versions", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("utm_campaign_versions")
+        .select("*")
+        .eq("utm_campaign_id", campaignId)
+        .order("version_number", { ascending: false });
+      
+      if (error) throw error;
+      return data as CampaignVersion[];
+    },
+    enabled: !!campaignId,
+  });
+
+  // Create new version
+  const createVersion = useMutation({
+    mutationFn: async ({
+      campaignId,
+      name,
+      landingPage,
+      description,
+      imageUrl,
+      imageFileSize,
+      assetLink,
+      versionNotes,
+    }: {
+      campaignId: string;
+      name: string;
+      landingPage?: string;
+      description?: string;
+      imageUrl?: string;
+      imageFileSize?: number;
+      assetLink?: string;
+      versionNotes?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get current highest version number
+      const { data: versions } = await supabase
+        .from("utm_campaign_versions")
+        .select("version_number")
+        .eq("utm_campaign_id", campaignId)
+        .order("version_number", { ascending: false })
+        .limit(1);
+      
+      const nextVersion = (versions?.[0]?.version_number || 0) + 1;
+      
+      const { data, error } = await supabase
+        .from("utm_campaign_versions")
+        .insert({
+          utm_campaign_id: campaignId,
+          version_number: nextVersion,
+          name,
+          landing_page: landingPage,
+          description,
+          image_url: imageUrl,
+          image_file_size: imageFileSize,
+          asset_link: assetLink,
+          version_notes: versionNotes,
+          created_by: user?.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-versions"] });
+      toast.success("Campaign version saved");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to save version");
+    },
+  });
+
+  return {
+    useVersions,
+    createVersion,
+  };
+};
