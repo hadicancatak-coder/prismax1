@@ -567,7 +567,7 @@ export default function CalendarView() {
               <Card className="p-3">
                 <div className="flex items-center gap-2 justify-between">
                   {/* Left Section - Date View Selection */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-shrink min-w-0">
                     <Tabs value={dateView} onValueChange={(v) => {
                       const newView = v as typeof dateView;
                       setDateView(newView);
@@ -576,31 +576,17 @@ export default function CalendarView() {
                       }
                     }}>
                       <TabsList className="h-9">
-                        <TabsTrigger value="today" className="h-8 px-3 text-xs">Today</TabsTrigger>
-                        <TabsTrigger value="tomorrow" className="h-8 px-3 text-xs">Tomorrow</TabsTrigger>
-                        <TabsTrigger value="custom" className="h-8 px-3 text-xs">Custom</TabsTrigger>
-                        <TabsTrigger value="yesterday" className="h-8 px-3 text-xs hidden lg:flex">Yesterday</TabsTrigger>
-                        <TabsTrigger value="week" className="h-8 px-3 text-xs hidden lg:flex">Week</TabsTrigger>
-                        <TabsTrigger value="month" className="h-8 px-3 text-xs hidden lg:flex">Month</TabsTrigger>
+                        <TabsTrigger value="today" className="h-8 px-2 text-xs">Today</TabsTrigger>
+                        <TabsTrigger value="tomorrow" className="h-8 px-2 text-xs">Tomorrow</TabsTrigger>
+                        <TabsTrigger value="custom" className="h-8 px-2 text-xs">Custom</TabsTrigger>
                       </TabsList>
                     </Tabs>
 
                     {dateView === "custom" && (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-9 gap-2">
+                          <Button variant="outline" size="sm" className="h-9 w-9 p-0" title="Pick date range">
                             <CalendarIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline text-xs">
-                              {dateRange?.from ? (
-                                dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? (
-                                  `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
-                                ) : (
-                                  format(dateRange.from, "MMM d")
-                                )
-                              ) : (
-                                "Pick dates"
-                              )}
-                            </span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -620,19 +606,39 @@ export default function CalendarView() {
                   </div>
 
                   {/* Right Section - Sort and View */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <TaskSortDropdown value={sortOption} onChange={setSortOption} />
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Select value={sortOption} onValueChange={(v) => setSortOption(v as any)}>
+                      <SelectTrigger className="h-9 w-[80px] text-xs">
+                        <SelectValue placeholder="Sort" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="due_date_asc">Due: Earliest</SelectItem>
+                        <SelectItem value="due_date_desc">Due: Latest</SelectItem>
+                        <SelectItem value="created_at_desc">Newest First</SelectItem>
+                        <SelectItem value="created_at_asc">Oldest First</SelectItem>
+                        <SelectItem value="priority_high">Priority: High</SelectItem>
+                        <SelectItem value="manual">Manual Order</SelectItem>
+                      </SelectContent>
+                    </Select>
                     
-                    <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'kanban')}>
-                      <TabsList className="h-9">
-                        <TabsTrigger value="list" className="h-8 w-8 p-0" title="List View">
-                          <List className="h-4 w-4" />
-                        </TabsTrigger>
-                        <TabsTrigger value="kanban" className="h-8 w-8 p-0" title="Kanban View">
-                          <LayoutGrid className="h-4 w-4" />
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="h-9 w-9 p-0"
+                      title="List View"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'kanban' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setViewMode('kanban')}
+                      className="h-9 w-9 p-0"
+                      title="Kanban View"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
 
                     {sortOption === 'manual' && Object.keys(userTaskOrder).length > 0 && (
                       <Button 

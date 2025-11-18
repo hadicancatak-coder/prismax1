@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { WebIntelDeal } from "@/hooks/useWebIntelDeals";
 import { useWebIntelSites } from "@/hooks/useWebIntelSites";
-import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmLinks } from "@/hooks/useUtmLinks";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ const STATUSES: ('Active' | 'Pending' | 'Expired' | 'Cancelled')[] = ['Active', 
 
 export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampaignIds = [], initialUtmLinkIds = [] }: DealFormDialogProps) {
   const { sites } = useWebIntelSites();
-  const { campaigns } = usePlannedCampaigns();
+  const { data: campaigns = [] } = useUtmCampaigns();
   const { data: utmLinks = [] } = useUtmLinks();
 
   const [formData, setFormData] = useState({
