@@ -67,10 +67,9 @@ export function TaskDateFilterBar({
 
   const taskTypeOptions = [
     { value: "all", label: "All Types" },
-    { value: "general", label: "General" },
+    { value: "generic", label: "General" },
     { value: "recurring", label: "Recurring" },
     { value: "campaign", label: "Campaign" },
-    { value: "operations", label: "Operations" },
   ];
 
   return (

@@ -64,7 +64,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
       status,
       due_at: dueDate?.toISOString(),
       entity: entity.length > 0 ? entity : undefined,
-      task_type: 'task' as const,
+      task_type: 'generic' as const,
     };
 
     convertMutation.mutate(

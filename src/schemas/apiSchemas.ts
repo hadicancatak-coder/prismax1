@@ -37,9 +37,9 @@ export const taskStatusSchema = z.enum([
 export const taskPrioritySchema = z.enum(['Low', 'Medium', 'High', 'Critical']);
 
 export const taskTypeSchema = z.enum([
-  'task',
-  'campaign_launch',
-  'operations'
+  'generic',
+  'campaign',
+  'recurring'
 ]);
 
 export const taskSchema = z.object({
