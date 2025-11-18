@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
@@ -561,82 +562,92 @@ export default function CalendarView() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
-              <Tabs value={dateView} onValueChange={(v) => {
-                const newView = v as typeof dateView;
-                setDateView(newView);
-                if (newView !== "custom") {
-                  setDateRange(undefined);
-                }
-              }} className="w-full sm:w-auto">
-                <TabsList className="grid grid-cols-3 sm:flex w-full sm:w-auto">
-                  <TabsTrigger value="yesterday" className="min-h-[44px]">Yesterday</TabsTrigger>
-                  <TabsTrigger value="today" className="min-h-[44px]">Today</TabsTrigger>
-                  <TabsTrigger value="tomorrow" className="min-h-[44px]">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="week" className="min-h-[44px] hidden sm:inline-flex">This Week</TabsTrigger>
-                  <TabsTrigger value="month" className="min-h-[44px] hidden sm:inline-flex">This Month</TabsTrigger>
-                  <TabsTrigger value="custom" className="min-h-[44px]">Custom</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            {/* Date View and Filters Section - Single Row */}
+            <div className="mt-6">
+              <Card className="p-3">
+                <div className="flex items-center gap-2 justify-between">
+                  {/* Left Section - Date View Selection */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Tabs value={dateView} onValueChange={(v) => {
+                      const newView = v as typeof dateView;
+                      setDateView(newView);
+                      if (newView !== "custom") {
+                        setDateRange(undefined);
+                      }
+                    }}>
+                      <TabsList className="h-9">
+                        <TabsTrigger value="today" className="h-8 px-3 text-xs">Today</TabsTrigger>
+                        <TabsTrigger value="tomorrow" className="h-8 px-3 text-xs">Tomorrow</TabsTrigger>
+                        <TabsTrigger value="custom" className="h-8 px-3 text-xs">Custom</TabsTrigger>
+                        <TabsTrigger value="yesterday" className="h-8 px-3 text-xs hidden lg:flex">Yesterday</TabsTrigger>
+                        <TabsTrigger value="week" className="h-8 px-3 text-xs hidden lg:flex">Week</TabsTrigger>
+                        <TabsTrigger value="month" className="h-8 px-3 text-xs hidden lg:flex">Month</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
 
-              {dateView === "custom" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start text-left font-normal min-w-[260px]">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange?.from ? (
-                        dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? (
-                          `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
-                        ) : (
-                          format(dateRange.from, "MMM d, yyyy")
-                        )
-                      ) : (
-                        "Pick a date range"
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <DateRangePicker
-                      value={dateRange}
-                      onChange={(range) => {
-                        setDateRange(range);
-                        if (range) {
-                          setDateView("custom");
-                        }
-                      }}
-                      presets="full"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
+                    {dateView === "custom" && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline text-xs">
+                              {dateRange?.from ? (
+                                dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? (
+                                  `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
+                                ) : (
+                                  format(dateRange.from, "MMM d")
+                                )
+                              ) : (
+                                "Pick dates"
+                              )}
+                            </span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <DateRangePicker
+                            value={dateRange}
+                            onChange={(range) => {
+                              setDateRange(range);
+                              if (range) {
+                                setDateView("custom");
+                              }
+                            }}
+                            presets="full"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
 
-              <TaskSortDropdown value={sortOption} onChange={setSortOption} />
-              
-              {sortOption === 'manual' && Object.keys(userTaskOrder).length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleResetOrder}
-                  className="gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset Order
-                </Button>
-              )}
+                  {/* Right Section - Sort and View */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <TaskSortDropdown value={sortOption} onChange={setSortOption} />
+                    
+                    <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'kanban')}>
+                      <TabsList className="h-9">
+                        <TabsTrigger value="list" className="h-8 w-8 p-0" title="List View">
+                          <List className="h-4 w-4" />
+                        </TabsTrigger>
+                        <TabsTrigger value="kanban" className="h-8 w-8 p-0" title="Kanban View">
+                          <LayoutGrid className="h-4 w-4" />
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
 
-              {/* List/Kanban Toggle */}
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'kanban')}>
-                <TabsList>
-                  <TabsTrigger value="list" className="gap-2">
-                    <List className="h-4 w-4" />
-                    List
-                  </TabsTrigger>
-                  <TabsTrigger value="kanban" className="gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    Kanban
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                    {sortOption === 'manual' && Object.keys(userTaskOrder).length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleResetOrder}
+                        className="h-9 w-9 p-0"
+                        title="Reset Order"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
             </div>
           </header>
         </>
