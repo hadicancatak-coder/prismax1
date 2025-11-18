@@ -1,220 +1,113 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronDown } from "lucide-react";
-import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ChevronDown, FolderOpen, ExternalLink, Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
+import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
+import { CampaignDetailDialog } from "@/components/campaigns/CampaignDetailDialog";
+import { ExternalAccessDialog } from "@/components/campaigns/ExternalAccessDialog";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
-
-interface Campaign {
-  id: string;
-  name: string;
-  budget: number;
-  start_date: string;
-  end_date: string;
-  agency: string | null;
-  cities: string[];
-  status: string;
-  notes: string | null;
-}
+import { useSystemEntities } from "@/hooks/useSystemEntities";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function CampaignsLog() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEntity, setSelectedEntity] = useState<string>("all");
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [campaignsExpanded, setCampaignsExpanded] = useState(false);
-
+  const { data: systemEntities = [] } = useSystemEntities();
+  const entities = systemEntities.filter(e => e.is_active).map(e => `${e.emoji} ${e.name}`);
+  const { data: utmCampaigns = [], isLoading: campaignsLoading } = useUtmCampaigns();
   const { createTracking, getEntitiesForCampaign } = useCampaignEntityTracking();
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
+  const [campaignsExpanded, setCampaignsExpanded] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [externalAccessOpen, setExternalAccessOpen] = useState(false);
 
-  const fetchCampaigns = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("planned_campaigns")
-        .select("*")
-        .order("start_date", { ascending: false });
-
-      if (error) throw error;
-      setCampaigns(data || []);
-    } catch (error) {
-      console.error("Error fetching campaigns:", error);
-      toast.error("Failed to load campaigns");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get all unique cities from campaigns
-  const allEntities = Array.from(
-    new Set(
-      campaigns.flatMap((c) => c.cities || [])
-    )
-  ).sort();
-
-  const handleDragStart = (event: any) => {
-    setActiveDragId(event.active.id);
-  };
+  const filteredCampaigns = utmCampaigns.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const transformedCampaigns = utmCampaigns.map(c => ({ id: c.id, name: c.name, notes: null }));
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
-
     if (!over) return;
 
     const campaignId = active.id as string;
     const targetEntity = over.id as string;
-
-    // Check if campaign is already in this entity
     const existingTracking = getEntitiesForCampaign(campaignId);
-    const alreadyExists = existingTracking.some((t) => t.entity === targetEntity);
-
-    if (alreadyExists) {
+    
+    if (existingTracking.some(t => t.entity === targetEntity)) {
       toast.error("Campaign already exists in this entity");
       return;
     }
 
-    // Create tracking record
-    await createTracking.mutateAsync({
-      campaign_id: campaignId,
-      entity: targetEntity,
-      status: "Draft",
-    });
+    await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
   };
 
-  const handleDragCancel = () => {
-    setActiveDragId(null);
-  };
-
-  const activeCampaign = campaigns.find((c) => c.id === activeDragId);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (campaignsLoading) return <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <div className="container mx-auto py-8 px-4 max-w-[1800px]">
-        {/* Header with Entity Filter */}
-        <div className="mb-8 space-y-4">
+    <DndContext onDragStart={(e) => setActiveDragId(String(e.active.id))} onDragEnd={handleDragEnd} onDragCancel={() => setActiveDragId(null)}>
+      <div className="h-[calc(100vh-64px)] flex flex-col">
+        <div className="flex-shrink-0 p-4 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Campaigns Log</h1>
-              <p className="text-muted-foreground">
-                Drag campaigns to entity tables to track their status
-              </p>
+              <h1 className="text-3xl font-bold">Campaigns Log</h1>
+              <p className="text-muted-foreground">Drag campaigns from library to entity tables</p>
             </div>
+            <Button onClick={() => setExternalAccessOpen(true)} variant="outline">
+              <ExternalLink className="h-4 w-4 mr-2" />Generate Review Link
+            </Button>
           </div>
-
-          <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Filter by entity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Entities</SelectItem>
-              {allEntities.map((entity) => (
-                <SelectItem key={entity} value={entity}>
-                  {entity}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
-        {/* Entity Tables - First */}
-        <div className="space-y-6 mb-8">
-          {allEntities.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No entities found. Add campaigns with entity tags first.
-              </p>
-            </div>
-          ) : selectedEntity === "all" ? (
-            allEntities.map((entity) => (
-              <EntityCampaignTable
-                key={entity}
-                entity={entity}
-                campaigns={campaigns}
-              />
-            ))
-          ) : (
-            <EntityCampaignTable
-              entity={selectedEntity}
-              campaigns={campaigns}
-            />
-          )}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {entities.map(entity => <EntityCampaignTable key={entity} entity={entity} campaigns={transformedCampaigns} />)}
+          </div>
         </div>
 
-        {/* All Campaigns - Last (Collapsible) */}
-        {campaigns.length > 0 && (
-          <Collapsible
-            open={campaignsExpanded}
-            onOpenChange={setCampaignsExpanded}
-            className="mb-8"
-          >
-            <CollapsibleTrigger asChild>
-              <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <ChevronDown
-                      className={cn(
-                        "h-5 w-5 transition-transform",
-                        campaignsExpanded && "rotate-180"
-                      )}
-                    />
-                    <h2 className="text-lg font-semibold">
-                      All Campaigns
-                      <span className="text-sm text-muted-foreground ml-2">
-                        ({campaigns.length} total)
-                      </span>
-                    </h2>
+        <div className="flex-shrink-0 border-t">
+          <Collapsible open={campaignsExpanded} onOpenChange={setCampaignsExpanded}>
+            <Card className="rounded-none border-0">
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="cursor-pointer hover:bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FolderOpen className="h-5 w-5" /><CardTitle>Campaign Library</CardTitle><Badge variant="secondary">{utmCampaigns.length}</Badge>
+                    </div>
+                    <ChevronDown className={cn("h-5 w-5 transition-transform", campaignsExpanded && "rotate-180")} />
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Drag to entity tables above
-                  </span>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-4">
+                  <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="mb-4" />
+                  <ScrollArea className="h-[280px]">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                      {filteredCampaigns.map(campaign => (
+                        <div key={campaign.id} onClick={() => { setSelectedCampaign(campaign); setDetailDialogOpen(true); }}>
+                          <DraggableCampaignCard campaign={campaign} />
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </CardContent>
-              </Card>
-            </CollapsibleTrigger>
-
-            <CollapsibleContent>
-              <Card className="mt-2">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                    {campaigns.map((campaign) => (
-                      <DraggableCampaignCard
-                        key={campaign.id}
-                        campaign={campaign}
-                        isDragging={activeDragId === campaign.id}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </CollapsibleContent>
+              </CollapsibleContent>
+            </Card>
           </Collapsible>
-        )}
+        </div>
       </div>
 
-      {/* Drag Overlay */}
-      <DragOverlay>
-        {activeCampaign && <DraggableCampaignCard campaign={activeCampaign} isDragging />}
-      </DragOverlay>
+      <DragOverlay>{activeDragId && <DraggableCampaignCard campaign={utmCampaigns.find(c => c.id === activeDragId)!} />}</DragOverlay>
+      {selectedCampaign && <CampaignDetailDialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen} campaign={selectedCampaign} />}
+      <ExternalAccessDialog open={externalAccessOpen} onOpenChange={setExternalAccessOpen} />
     </DndContext>
   );
 }

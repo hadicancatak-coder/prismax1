@@ -8,6 +8,7 @@ export interface CampaignEntityTracking {
   entity: string;
   status: string;
   notes: string | null;
+  entity_comments: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -117,6 +118,34 @@ export const useCampaignEntityTracking = () => {
     return trackingRecords.filter((t) => t.campaign_id === campaignId);
   };
 
+  // Helper: Get entity comments
+  const getEntityComments = (entity: string) => {
+    const entityRecords = trackingRecords.filter((t) => t.entity === entity);
+    return entityRecords.length > 0 ? entityRecords[0].entity_comments : null;
+  };
+
+  // Update entity comments
+  const updateEntityComments = useMutation({
+    mutationFn: async ({ entity, comments }: { entity: string; comments: string }) => {
+      // Update all tracking records for this entity
+      const entityRecords = trackingRecords.filter((t) => t.entity === entity);
+      if (entityRecords.length === 0) return null;
+
+      const { data, error } = await supabase
+        .from("campaign_entity_tracking")
+        .update({ entity_comments: comments })
+        .eq("entity", entity)
+        .select()
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-entity-tracking"] });
+    },
+  });
+
   return {
     trackingRecords,
     isLoading,
@@ -125,5 +154,7 @@ export const useCampaignEntityTracking = () => {
     deleteTracking,
     getCampaignsByEntity,
     getEntitiesForCampaign,
+    getEntityComments,
+    updateEntityComments,
   };
 };

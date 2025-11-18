@@ -5,9 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
+import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
+import { useCampaignComments } from "@/hooks/useCampaignComments";
+import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 
 interface Campaign {
   id: string;
@@ -15,9 +18,24 @@ interface Campaign {
   notes: string | null;
 }
 
+interface CampaignTrackingCardProps {
+  tracking: CampaignEntityTracking;
+  campaign: Campaign | undefined;
+  onUpdateStatus: (status: string) => void;
+  onUpdateNotes: (notes: string) => void;
+  onRemove: () => void;
+  entity: string;
+  isExternal?: boolean;
+  externalReviewerName?: string;
+  externalReviewerEmail?: string;
+}
+
 interface EntityCampaignTableProps {
   entity: string;
   campaigns: Campaign[];
+  isExternal?: boolean;
+  externalReviewerName?: string;
+  externalReviewerEmail?: string;
 }
 
 const STATUS_OPTIONS = [
@@ -34,14 +52,17 @@ function CampaignTrackingCard({
   onUpdateStatus,
   onUpdateNotes,
   onRemove,
-}: {
-  tracking: CampaignEntityTracking;
-  campaign: Campaign | undefined;
-  onUpdateStatus: (status: string) => void;
-  onUpdateNotes: (notes: string) => void;
-  onRemove: () => void;
-}) {
+  entity,
+  isExternal = false,
+  externalReviewerName,
+  externalReviewerEmail,
+}: CampaignTrackingCardProps) {
   const [localNotes, setLocalNotes] = useState(tracking.notes || "");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { useMetadata } = useCampaignMetadata();
+  const { data: metadata } = useMetadata(tracking.campaign_id);
+  const { useComments } = useCampaignComments();
+  const { data: comments = [] } = useComments(tracking.id);
 
   if (!campaign) return null;
 
@@ -50,24 +71,37 @@ function CampaignTrackingCard({
   return (
     <Card className="w-full border-2 min-w-[160px]">
       <CardContent className="p-4 space-y-2.5">
-        {/* Header with Title and Remove Button */}
+        {/* Header with Title, Version, and Remove Button */}
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm line-clamp-2 flex-1">
-            {campaign.name}
-          </h4>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 flex-shrink-0"
-            onClick={onRemove}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex-1 space-y-1">
+            <h4 className="font-semibold text-sm line-clamp-2">
+              {campaign.name}
+            </h4>
+            {metadata?.version_code && (
+              <Badge variant="outline" className="text-xs">
+                {metadata.version_code}
+              </Badge>
+            )}
+          </div>
+          {!isExternal && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 flex-shrink-0"
+              onClick={onRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Status Dropdown */}
         <div>
-          <Select value={tracking.status} onValueChange={onUpdateStatus}>
+          <Select 
+            value={tracking.status} 
+            onValueChange={onUpdateStatus}
+            disabled={isExternal}
+          >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -88,29 +122,78 @@ function CampaignTrackingCard({
           onBlur={() => onUpdateNotes(localNotes)}
           placeholder="Add notes..."
           className="min-h-[60px] text-xs resize-none"
+          disabled={isExternal}
         />
+
+        {/* Comments Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCommentsOpen(true)}
+          className="w-full justify-start gap-2 h-8 text-xs"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
+        </Button>
       </CardContent>
+
+      <CampaignCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        trackingId={tracking.id}
+        campaignName={campaign.name}
+        entityName={entity}
+        isExternal={isExternal}
+        externalReviewerName={externalReviewerName}
+        externalReviewerEmail={externalReviewerEmail}
+      />
     </Card>
   );
 }
 
-export function EntityCampaignTable({ entity, campaigns }: EntityCampaignTableProps) {
+export function EntityCampaignTable({ 
+  entity, 
+  campaigns, 
+  isExternal = false,
+  externalReviewerName,
+  externalReviewerEmail,
+}: EntityCampaignTableProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: entity,
+    disabled: isExternal,
   });
 
-  const { getCampaignsByEntity, updateTracking, deleteTracking } = useCampaignEntityTracking();
+  const { 
+    getCampaignsByEntity, 
+    updateTracking, 
+    deleteTracking,
+    updateEntityComments,
+    getEntityComments,
+  } = useCampaignEntityTracking();
   const entityCampaigns = getCampaignsByEntity(entity);
+  const [localEntityComments, setLocalEntityComments] = useState(
+    getEntityComments(entity) || ""
+  );
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 space-y-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold">{entity}</CardTitle>
           <Badge variant="secondary" className="text-xs">
             {entityCampaigns.length} {entityCampaigns.length === 1 ? "campaign" : "campaigns"}
           </Badge>
         </div>
+        
+        {/* Entity-level comments */}
+        <Textarea
+          placeholder="Notes for this entity..."
+          value={localEntityComments}
+          onChange={(e) => setLocalEntityComments(e.target.value)}
+          onBlur={() => updateEntityComments.mutate({ entity, comments: localEntityComments })}
+          className="min-h-[80px] text-sm"
+          disabled={isExternal}
+        />
       </CardHeader>
       <CardContent>
       <div
@@ -131,16 +214,20 @@ export function EntityCampaignTable({ entity, campaigns }: EntityCampaignTablePr
               return (
                 <CampaignTrackingCard
                   key={tracking.id}
-                  tracking={tracking}
-                  campaign={campaign}
-                  onUpdateStatus={(status) =>
-                    updateTracking.mutate({ id: tracking.id, status })
-                  }
-                  onUpdateNotes={(notes) =>
-                    updateTracking.mutate({ id: tracking.id, notes })
-                  }
-                  onRemove={() => deleteTracking.mutate(tracking.id)}
-                />
+                tracking={tracking}
+                campaign={campaign}
+                onUpdateStatus={(status) =>
+                  updateTracking.mutate({ id: tracking.id, status })
+                }
+                onUpdateNotes={(notes) =>
+                  updateTracking.mutate({ id: tracking.id, notes })
+                }
+                onRemove={() => deleteTracking.mutate(tracking.id)}
+                entity={entity}
+                isExternal={isExternal}
+                externalReviewerName={externalReviewerName}
+                externalReviewerEmail={externalReviewerEmail}
+              />
               );
             })
           )}
