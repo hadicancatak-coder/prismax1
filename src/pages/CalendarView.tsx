@@ -609,7 +609,7 @@ export default function CalendarView() {
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Select value={sortOption} onValueChange={(v) => setSortOption(v as any)}>
                       <SelectTrigger className="h-9 w-[80px] text-xs">
-                        <SelectValue placeholder="Sort" />
+                        <span>Sort</span>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="due_date_asc">Due: Earliest</SelectItem>

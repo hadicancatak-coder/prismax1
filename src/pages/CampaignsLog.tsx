@@ -59,14 +59,8 @@ export default function CampaignsLog() {
     }
     const targetEntity = dropTargetId.replace('entity-', '');
 
-    try {
-      console.log('Creating tracking:', { campaign_id: campaignId, entity: targetEntity });
-      await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
-      toast.success(`Campaign added to ${targetEntity}`);
-    } catch (error: any) {
-      console.error('Failed to add campaign:', error);
-      toast.error(error.message?.includes("duplicate") ? "Campaign already exists in this entity" : "Failed to add campaign");
-    }
+    console.log('Creating tracking:', { campaign_id: campaignId, entity: targetEntity });
+    await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
   };
 
   const transformedCampaigns = campaigns.map((c) => ({
