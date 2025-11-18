@@ -35,7 +35,10 @@ export default function CampaignsLog() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const handleDragStart = (event: any) => setActiveDragId(String(event.active.id));
+  const handleDragStart = (event: any) => {
+    console.log('Drag started:', event.active.id);
+    setActiveDragId(String(event.active.id));
+  };
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
@@ -45,13 +48,20 @@ export default function CampaignsLog() {
     const campaignId = String(active.id);
     const dropTargetId = String(over.id);
     
-    if (!dropTargetId.startsWith('entity-')) return;
+    console.log('Drop attempt:', { campaignId, dropTargetId });
+    
+    if (!dropTargetId.startsWith('entity-')) {
+      console.log('Invalid drop target');
+      return;
+    }
     const targetEntity = dropTargetId.replace('entity-', '');
 
     try {
+      console.log('Creating tracking:', { campaign_id: campaignId, entity: targetEntity });
       await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
       toast.success(`Campaign added to ${targetEntity}`);
     } catch (error: any) {
+      console.error('Failed to add campaign:', error);
       toast.error(error.message?.includes("duplicate") ? "Campaign already exists in this entity" : "Failed to add campaign");
     }
   };
