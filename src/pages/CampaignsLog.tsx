@@ -3,7 +3,7 @@ import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragOv
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, ExternalLink, Search, ChevronDown } from "lucide-react";
+import { GripVertical, ExternalLink, Search, ChevronDown, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable"
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
 import { ExternalAccessDialog } from "@/components/campaigns/ExternalAccessDialog";
 import { UtmCampaignDetailDialog } from "@/components/campaigns/UtmCampaignDetailDialog";
+import { CreateUtmCampaignDialog } from "@/components/campaigns/CreateUtmCampaignDialog";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
@@ -22,6 +23,7 @@ export default function CampaignsLog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [externalAccessDialogOpen, setExternalAccessDialogOpen] = useState(false);
+  const [createCampaignDialogOpen, setCreateCampaignDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string>("");
   const [libraryEntityFilter, setLibraryEntityFilter] = useState<string>("all");
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -106,6 +108,9 @@ export default function CampaignsLog() {
             </div>
             <Button onClick={() => setExternalAccessDialogOpen(true)}>
               <ExternalLink className="h-4 w-4 mr-2" />Generate Review Link
+            </Button>
+            <Button onClick={() => setCreateCampaignDialogOpen(true)} variant="default">
+              <Plus className="h-4 w-4 mr-2" />New Campaign
             </Button>
           </div>
         </div>
@@ -196,6 +201,8 @@ export default function CampaignsLog() {
       </DragOverlay>
 
       <ExternalAccessDialog open={externalAccessDialogOpen} onOpenChange={setExternalAccessDialogOpen} />
+      
+      <CreateUtmCampaignDialog open={createCampaignDialogOpen} onOpenChange={setCreateCampaignDialogOpen} />
       
       {selectedCampaignId && (
         <UtmCampaignDetailDialog

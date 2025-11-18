@@ -76,6 +76,25 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   
   const entities = getEntitiesForCampaign(campaignId);
 
+  // Reset form when campaign data changes or when toggling edit mode
+  const resetFormFields = () => {
+    if (campaign) {
+      setName(campaign.name || "");
+      setLandingPage(campaign.landing_page || "");
+      setDescription(campaign.description || "");
+      setAssetLink(campaign.campaign_metadata?.asset_link || "");
+      setImageFile(null);
+    }
+  };
+
+  const handleToggleEdit = () => {
+    if (!isEditing) {
+      // When entering edit mode, reset fields with current data
+      resetFormFields();
+    }
+    setIsEditing(!isEditing);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -254,7 +273,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                         Save Changes
                       </Button>
                     ) : (
-                      <Button onClick={() => setIsEditing(true)} size="sm" variant="outline">
+                      <Button onClick={handleToggleEdit} size="sm" variant="outline">
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
