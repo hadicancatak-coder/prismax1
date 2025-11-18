@@ -9,10 +9,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
-import { format } from "date-fns";
-import { MessageSquare } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { Loader2, Send } from "lucide-react";
 
 interface CampaignCommentsDialogProps {
   open: boolean;
@@ -36,8 +39,9 @@ export function CampaignCommentsDialog({
   externalReviewerEmail,
 }: CampaignCommentsDialogProps) {
   const { useComments, addComment } = useCampaignComments();
-  const { data: comments = [] } = useComments(trackingId);
+  const { data: comments = [], isLoading } = useComments(trackingId);
   const [newComment, setNewComment] = useState("");
+  const [requestType, setRequestType] = useState<'Comment' | 'Optimize' | 'Boost' | 'Remove'>('Comment');
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -46,11 +50,13 @@ export function CampaignCommentsDialog({
       await addComment.mutateAsync({
         trackingId,
         commentText: newComment,
+        requestType: requestType,
         isExternal,
         authorName: externalReviewerName,
         authorEmail: externalReviewerEmail,
       });
       setNewComment("");
+      setRequestType('Comment');
     } catch (error) {
       // Error handled by hook
     }
@@ -58,64 +64,116 @@ export function CampaignCommentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[500px]">
+      <DialogContent className="max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Campaign Comments
-          </DialogTitle>
+          <DialogTitle>Campaign Comments</DialogTitle>
           <DialogDescription>
             {campaignName} in {entityName}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <ScrollArea className="h-64 border rounded-lg p-3 bg-muted/30">
-            {comments.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No comments yet. Be the first to add one!
-              </p>
-            ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="mb-4 last:mb-0 p-3 bg-background rounded-lg"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
+        <ScrollArea className="h-80 border rounded-lg p-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : comments.length > 0 ? (
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 group">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarFallback className="text-xs">
+                      {comment.author_name?.charAt(0) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold">
                         {comment.author_name}
-                      </p>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      </span>
                       {comment.is_external && (
-                        <Badge variant="outline" className="text-xs">
-                          External
+                        <Badge variant="outline" className="text-xs">External</Badge>
+                      )}
+                      {comment.request_type !== 'Comment' && (
+                        <Badge 
+                          variant={
+                            comment.request_type === 'Optimize' ? 'default' :
+                            comment.request_type === 'Boost' ? 'secondary' :
+                            'destructive'
+                          }
+                          className="text-xs"
+                        >
+                          {comment.request_type === 'Optimize' && '🎯 '}
+                          {comment.request_type === 'Boost' && '🚀 '}
+                          {comment.request_type === 'Remove' && '🗑️ '}
+                          {comment.request_type}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {comment.comment_text}
                     </p>
                   </div>
-                  <p className="text-sm">{comment.comment_text}</p>
                 </div>
-              ))
-            )}
-          </ScrollArea>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No comments yet</p>
+          )}
+        </ScrollArea>
 
-          <div className="space-y-2">
-            <Textarea
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[80px]"
-            />
-            <Button
-              onClick={handleAddComment}
-              disabled={!newComment.trim()}
-              className="w-full"
-            >
-              Add Comment
-            </Button>
+        <div className="space-y-3 mt-4 pt-4 border-t">
+          {isExternal && (
+            <div className="space-y-2">
+              <Label className="text-sm">Request Type</Label>
+              <Select value={requestType} onValueChange={(value: any) => setRequestType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Comment">💬 Comment</SelectItem>
+                  <SelectItem value="Optimize">🎯 Optimize</SelectItem>
+                  <SelectItem value="Boost">🚀 Boost</SelectItem>
+                  <SelectItem value="Remove">🗑️ Remove</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          <div className="flex gap-2">
+            <Avatar className="h-8 w-8 flex-shrink-0">
+              <AvatarFallback className="text-xs">
+                {isExternal ? (externalReviewerName?.charAt(0) || "?") : "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <Textarea
+                placeholder={isExternal ? "Explain your request..." : "Add a comment..."}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[60px] mb-2"
+              />
+              <Button 
+                onClick={handleAddComment} 
+                disabled={!newComment.trim() || addComment.isPending}
+                size="sm"
+              >
+                {addComment.isPending ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-3 w-3 mr-2" />
+                    {isExternal ? "Submit Request" : "Comment"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -1,15 +1,14 @@
-import { useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragOverlay } from "@dnd-kit/core";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, FolderOpen, ExternalLink, Loader2 } from "lucide-react";
+import { GripVertical, ExternalLink, Search, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
-import { CampaignDetailDialog } from "@/components/campaigns/CampaignDetailDialog";
 import { ExternalAccessDialog } from "@/components/campaigns/ExternalAccessDialog";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
@@ -18,96 +17,132 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function CampaignsLog() {
-  const { data: systemEntities = [] } = useSystemEntities();
-  const entities = systemEntities.filter(e => e.is_active).map(e => `${e.emoji} ${e.name}`);
-  const { data: utmCampaigns = [], isLoading: campaignsLoading } = useUtmCampaigns();
-  const { createTracking, getEntitiesForCampaign } = useCampaignEntityTracking();
-
-  const [campaignsExpanded, setCampaignsExpanded] = useState(true);
+  const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set(['library']));
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [externalAccessOpen, setExternalAccessOpen] = useState(false);
+  const [externalAccessDialogOpen, setExternalAccessDialogOpen] = useState(false);
+  const [selectedEntity, setSelectedEntity] = useState<string>("");
 
-  const filteredCampaigns = utmCampaigns.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const transformedCampaigns = utmCampaigns.map(c => ({ id: c.id, name: c.name, notes: null }));
+  const { data: entities = [] } = useSystemEntities();
+  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useUtmCampaigns();
+  const { createTracking } = useCampaignEntityTracking();
+  
+  useEffect(() => {
+    if (entities.length > 0 && !selectedEntity) {
+      setSelectedEntity(entities[0].name);
+    }
+  }, [entities, selectedEntity]);
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleDragStart = (event: any) => setActiveDragId(String(event.active.id));
+
+  const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     setActiveDragId(null);
     if (!over) return;
 
-    const campaignId = active.id as string;
-    const targetEntity = over.id as string;
-    const existingTracking = getEntitiesForCampaign(campaignId);
+    const campaignId = String(active.id);
+    const dropTargetId = String(over.id);
     
-    if (existingTracking.some(t => t.entity === targetEntity)) {
-      toast.error("Campaign already exists in this entity");
-      return;
-    }
+    if (!dropTargetId.startsWith('entity-')) return;
+    const targetEntity = dropTargetId.replace('entity-', '');
 
-    await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
+    try {
+      await createTracking.mutateAsync({ campaign_id: campaignId, entity: targetEntity, status: "Draft" });
+      toast.success(`Campaign added to ${targetEntity}`);
+    } catch (error: any) {
+      toast.error(error.message?.includes("duplicate") ? "Campaign already exists in this entity" : "Failed to add campaign");
+    }
   };
 
-  if (campaignsLoading) return <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  const transformedCampaigns = campaigns.map((c) => ({
+    id: c.id, name: c.name, campaign_type: c.campaign_type, description: c.description,
+    landing_page: c.landing_page, is_active: c.is_active, notes: null,
+  }));
+
+  const filteredCampaigns = transformedCampaigns.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  if (isLoadingCampaigns) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
 
   return (
-    <DndContext onDragStart={(e) => setActiveDragId(String(e.active.id))} onDragEnd={handleDragEnd} onDragCancel={() => setActiveDragId(null)}>
-      <div className="h-[calc(100vh-64px)] flex flex-col">
-        <div className="flex-shrink-0 p-4 border-b">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="container mx-auto py-6 px-4 space-y-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Campaigns Log</h1>
-              <p className="text-muted-foreground">Drag campaigns from library to entity tables</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold">Campaign Log</h1>
+                <p className="text-muted-foreground mt-1">Track campaign status by entity</p>
+              </div>
+              <Select value={selectedEntity} onValueChange={setSelectedEntity}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select entity" />
+                </SelectTrigger>
+                <SelectContent>
+                  {entities.map((entity) => (
+                    <SelectItem key={entity.name} value={entity.name}>
+                      {entity.emoji} {entity.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Button onClick={() => setExternalAccessOpen(true)} variant="outline">
+            <Button onClick={() => setExternalAccessDialogOpen(true)}>
               <ExternalLink className="h-4 w-4 mr-2" />Generate Review Link
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {entities.map(entity => <EntityCampaignTable key={entity} entity={entity} campaigns={transformedCampaigns} />)}
+        <div className="flex-1 overflow-hidden flex flex-col container mx-auto px-4">
+          {selectedEntity && (
+            <div className="flex-1 overflow-hidden">
+              <EntityCampaignTable entity={selectedEntity} campaigns={transformedCampaigns} />
+            </div>
+          )}
+        </div>
+        
+        <div className="border-t bg-card flex-shrink-0">
+          <div className="container mx-auto px-4">
+            <Collapsible open={expandedCampaigns.has('library')} onOpenChange={(open) => {
+              const newExpanded = new Set(expandedCampaigns);
+              open ? newExpanded.add('library') : newExpanded.delete('library');
+              setExpandedCampaigns(newExpanded);
+            }}>
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between py-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">Campaign Library</h3>
+                    <Badge variant="secondary">{filteredCampaigns.length}</Badge>
+                  </div>
+                  <ChevronDown className={cn("h-5 w-5 transition-transform", expandedCampaigns.has('library') && "rotate-180")} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pb-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1" />
+                </div>
+                <ScrollArea className="h-40">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 pr-4">
+                    {filteredCampaigns.map((campaign) => (
+                      <DraggableCampaignCard key={campaign.id} campaign={campaign} isDragging={activeDragId === campaign.id} />
+                    ))}
+                  </div>
+                  {filteredCampaigns.length === 0 && <div className="text-center text-muted-foreground py-8">No campaigns found</div>}
+                </ScrollArea>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
-
-        <div className="flex-shrink-0 border-t">
-          <Collapsible open={campaignsExpanded} onOpenChange={setCampaignsExpanded}>
-            <Card className="rounded-none border-0">
-              <CollapsibleTrigger className="w-full">
-                <CardHeader className="cursor-pointer hover:bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="h-5 w-5" /><CardTitle>Campaign Library</CardTitle><Badge variant="secondary">{utmCampaigns.length}</Badge>
-                    </div>
-                    <ChevronDown className={cn("h-5 w-5 transition-transform", campaignsExpanded && "rotate-180")} />
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-4">
-                  <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="mb-4" />
-                  <ScrollArea className="h-[280px]">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                      {filteredCampaigns.map(campaign => (
-                        <div key={campaign.id} onClick={() => { setSelectedCampaign(campaign); setDetailDialogOpen(true); }}>
-                          <DraggableCampaignCard campaign={campaign} />
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        </div>
       </div>
+      
+      <DragOverlay>
+        {activeDragId ? <DraggableCampaignCard campaign={transformedCampaigns.find(c => c.id === activeDragId)!} isDragging={true} /> : null}
+      </DragOverlay>
 
-      <DragOverlay>{activeDragId && <DraggableCampaignCard campaign={utmCampaigns.find(c => c.id === activeDragId)!} />}</DragOverlay>
-      {selectedCampaign && <CampaignDetailDialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen} campaign={selectedCampaign} />}
-      <ExternalAccessDialog open={externalAccessOpen} onOpenChange={setExternalAccessOpen} />
+      <ExternalAccessDialog open={externalAccessDialogOpen} onOpenChange={setExternalAccessDialogOpen} />
     </DndContext>
   );
 }
