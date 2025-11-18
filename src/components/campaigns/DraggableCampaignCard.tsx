@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 
 interface Campaign {
   id: string;
-  title: string;
-  description: string | null;
-  lp_link: string | null;
-  image_url: string | null;
-  entity: string[] | null;
+  name: string;
+  budget: number;
+  agency: string | null;
+  cities: string[];
+  notes: string | null;
 }
 
 interface DraggableCampaignCardProps {

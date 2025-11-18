@@ -11,10 +11,8 @@ import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCa
 
 interface Campaign {
   id: string;
-  title: string;
-  description: string | null;
-  lp_link: string | null;
-  image_url: string | null;
+  name: string;
+  notes: string | null;
 }
 
 interface EntityCampaignTableProps {
