@@ -119,7 +119,7 @@ export default function CampaignsLog() {
                   <ChevronDown className={cn("h-5 w-5 transition-transform", expandedCampaigns.has('library') && "rotate-180")} />
                 </div>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pb-4 space-y-3">
+              <CollapsibleContent className="pb-4 space-y-3 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1" />

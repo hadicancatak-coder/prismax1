@@ -42,7 +42,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [agencyFilter, setAgencyFilter] = useState<string[]>([]);
 
-  // Initialize form data when editing
+  // Initialize form data when editing or with pre-selected locations
   useEffect(() => {
     if (mode === 'edit' && campaign) {
       setFormData({
@@ -66,8 +66,29 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       
       setSuggestedPlacements(placementsWithLocations);
       setManualSelections(new Set(placementsWithLocations.map(p => p.location.id)));
+    } else if (mode === 'create' && locations.length > 0 && open) {
+      // Pre-fill with selected locations on create mode
+      const uniqueCities = Array.from(new Set(locations.map(l => l.city)));
+      setSelectedCities(uniqueCities);
+      
+      // Calculate estimated costs for pre-selected locations
+      const duration = formData.start_date && formData.end_date 
+        ? calculateDuration(formData.start_date, formData.end_date) 
+        : 1;
+      
+      const placementsWithCosts = locations.map(location => {
+        const priceData = allPrices.find(p => p.location_id === location.id);
+        const basePrice = priceData?.price || location.price_per_month || 0;
+        return {
+          location,
+          cost: basePrice * duration
+        };
+      });
+      
+      setSuggestedPlacements(placementsWithCosts);
+      setManualSelections(new Set(locations.map(l => l.id)));
     }
-  }, [mode, campaign, locations, getPlacementsForCampaign]);
+  }, [mode, campaign, locations, open, getPlacementsForCampaign, allPrices, formData.start_date, formData.end_date]);
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
   
