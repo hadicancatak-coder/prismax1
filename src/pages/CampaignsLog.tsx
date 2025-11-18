@@ -110,16 +110,19 @@ export default function CampaignsLog() {
               setExpandedCampaigns(newExpanded);
             }}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between py-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                <button className="w-full flex items-center justify-between py-3 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-2">
                   <div className="flex items-center gap-2">
                     <GripVertical className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="font-semibold">Campaign Library</h3>
-                    <Badge variant="secondary">{filteredCampaigns.length}</Badge>
+                    <h3 className="font-semibold text-base">Campaign Library</h3>
+                    <Badge variant="secondary" className="ml-1">{filteredCampaigns.length}</Badge>
                   </div>
-                  <ChevronDown className={cn("h-5 w-5 transition-transform", expandedCampaigns.has('library') && "rotate-180")} />
-                </div>
+                  <ChevronDown className={cn(
+                    "h-5 w-5 text-muted-foreground transition-transform duration-300",
+                    expandedCampaigns.has('library') && "rotate-180"
+                  )} />
+                </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pb-4 space-y-3 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+              <CollapsibleContent className="pb-4 space-y-3 overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1" />

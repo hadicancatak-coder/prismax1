@@ -44,6 +44,8 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
 
   // Initialize form data when editing or with pre-selected locations
   useEffect(() => {
+    if (!open) return;
+    
     if (mode === 'edit' && campaign) {
       setFormData({
         name: campaign.name,
@@ -66,29 +68,27 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       
       setSuggestedPlacements(placementsWithLocations);
       setManualSelections(new Set(placementsWithLocations.map(p => p.location.id)));
-    } else if (mode === 'create' && locations.length > 0 && open) {
+    } else if (mode === 'create' && locations.length > 0) {
       // Pre-fill with selected locations on create mode
       const uniqueCities = Array.from(new Set(locations.map(l => l.city)));
       setSelectedCities(uniqueCities);
       
-      // Calculate estimated costs for pre-selected locations
-      const duration = formData.start_date && formData.end_date 
-        ? calculateDuration(formData.start_date, formData.end_date) 
-        : 1;
+      // Calculate estimated costs for pre-selected locations (use 1 month as default duration)
+      const defaultDuration = 1;
       
       const placementsWithCosts = locations.map(location => {
         const priceData = allPrices.find(p => p.location_id === location.id);
         const basePrice = priceData?.price || location.price_per_month || 0;
         return {
           location,
-          cost: basePrice * duration
+          cost: basePrice * defaultDuration
         };
       });
       
       setSuggestedPlacements(placementsWithCosts);
       setManualSelections(new Set(locations.map(l => l.id)));
     }
-  }, [mode, campaign, locations, open, getPlacementsForCampaign, allPrices, formData.start_date, formData.end_date]);
+  }, [mode, campaign, locations, open, getPlacementsForCampaign, allPrices]);
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
   
@@ -116,9 +116,9 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
     ? calculateDuration(formData.start_date, formData.end_date) 
     : 0;
 
-  // Auto-suggest placements when budget/cities/dates change
+  // Auto-suggest placements when budget/cities change (but not on every date change to avoid infinite loop)
   useEffect(() => {
-    if (formData.budget > 0 && selectedCities.length > 0 && formData.start_date && formData.end_date) {
+    if (mode === 'create' && formData.budget > 0 && selectedCities.length > 0 && formData.start_date && formData.end_date) {
       const duration = calculateDuration(formData.start_date, formData.end_date);
       const suggestions = suggestPlacements(
         locations, 
@@ -131,11 +131,8 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       );
       setSuggestedPlacements(suggestions);
       setManualSelections(new Set(suggestions.map(s => s.location.id)));
-    } else {
-      setSuggestedPlacements([]);
-      setManualSelections(new Set());
     }
-  }, [formData.budget, formData.start_date, formData.end_date, selectedCities, locations, allPrices]);
+  }, [formData.budget, selectedCities, locations, allPrices, mode]);
   
   // Calculate reach metrics with useMemo instead of useEffect
   const reachMetrics = useMemo(() => {

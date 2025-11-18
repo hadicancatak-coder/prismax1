@@ -168,7 +168,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           </div>
         `;
         
-        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup', closeButton: true, closeOnClick: false }).setHTML(popupHTML);
+        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup', closeButton: true, closeOnClick: true }).setHTML(popupHTML);
         popup.on('open', () => { 
           popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => {
             btn.addEventListener('click', () => { 
@@ -179,21 +179,12 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         });
         marker.setPopup(popup);
         
-        // Show popup on hover
-        el.addEventListener('mouseenter', () => {
-          if (!isSelectionMode) {
+        // Show popup on click
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!popup.isOpen()) {
             popup.addTo(map.current!);
           }
-        });
-        
-        // Hide popup on leave after a delay (allows entering popup)
-        el.addEventListener('mouseleave', () => {
-          setTimeout(() => {
-            const hoveredPopup = popup.getElement();
-            if (hoveredPopup && !hoveredPopup.matches(':hover')) {
-              popup.remove();
-            }
-          }, 200);
         });
         
         markers.current.push(marker);
