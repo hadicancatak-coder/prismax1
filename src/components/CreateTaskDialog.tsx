@@ -29,6 +29,9 @@ import { ENTITIES, TEAMS } from "@/lib/constants";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -56,6 +59,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [attachedAds, setAttachedAds] = useState<any[]>([]);
   const [taskType, setTaskType] = useState<string>("generic");
+  const [workingDaysWarning, setWorkingDaysWarning] = useState<string | null>(null);
 
   const handleJiraLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
@@ -77,6 +81,27 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
       fetchUsers();
     }
   }, [open, userRole]);
+
+  // Check working days when date or assignees change
+  useEffect(() => {
+    if (date && selectedAssignees.length > 0 && users.length > 0) {
+      const assignedUsers = users.filter(u => selectedAssignees.includes(u.id));
+      const validation = validateDateForUsers(date, assignedUsers);
+      
+      if (!validation.isValid) {
+        const usersList = validation.invalidUsers.map(u => 
+          `${u.name} (${formatWorkingDays(u.workingDays)})`
+        ).join(', ');
+        setWorkingDaysWarning(
+          `⚠️ ${getDayName(date)} is outside working days for: ${usersList}`
+        );
+      } else {
+        setWorkingDaysWarning(null);
+      }
+    } else {
+      setWorkingDaysWarning(null);
+    }
+  }, [date, selectedAssignees, users]);
 
   // Auto-add team members when teams are selected
   useEffect(() => {
@@ -130,38 +155,8 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
     setValidationErrors({});
 
-    // Validate due date against assignee working days (for one-time tasks)
-    if (date && selectedAssignees.length > 0 && recurrence === "none") {
-      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-      
-      // Fetch selected assignees' working days
-      const { data: assigneeProfiles } = await supabase
-        .from("profiles")
-        .select("id, name, working_days")
-        .in("id", selectedAssignees);
-      
-      const invalidAssignees: string[] = [];
-      
-      assigneeProfiles?.forEach(profile => {
-        const isValidDay = (
-          (profile.working_days === 'mon-fri' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
-          (profile.working_days === 'sun-thu' && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4)))
-        );
-        
-        if (!isValidDay) {
-          invalidAssignees.push(profile.name);
-        }
-      });
-      
-      if (invalidAssignees.length > 0) {
-        toast({
-          title: "Working Day Conflict",
-          description: `The selected date falls outside working days for: ${invalidAssignees.join(', ')}. They work ${assigneeProfiles[0]?.working_days || 'different days'}.`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    // Note: Working day warnings are shown live in the UI, but we allow task creation
+    // to proceed even if dates fall outside working days
 
     // Validate recurring task days against assignee working days
     if (recurrence === "weekly" && recurrenceDaysOfWeek.length > 0 && selectedAssignees.length > 0) {
@@ -523,6 +518,14 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                 />
               </PopoverContent>
             </Popover>
+            {workingDaysWarning && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {workingDaysWarning}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-2">
