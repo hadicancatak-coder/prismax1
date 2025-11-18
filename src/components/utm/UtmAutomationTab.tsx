@@ -96,7 +96,7 @@ export function UtmAutomationTab() {
   };
 
   const FallbackRulesInfo = () => (
-    <Card className="border-amber-500/30 bg-amber-500/5">
+    <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
           <Info className="h-5 w-5" />
@@ -181,7 +181,7 @@ export function UtmAutomationTab() {
           </div>
         </CardTitle>
         {rules.length === 0 && (
-          <CardDescription className="text-amber-600 dark:text-amber-500 flex items-center gap-1">
+          <CardDescription className="text-warning flex items-center gap-1">
             <Info className="h-3 w-3" />
             Default: <code className="px-1 py-0.5 bg-muted rounded text-xs text-foreground">{fallbackExamples[paramType]}</code>
           </CardDescription>
@@ -199,7 +199,7 @@ export function UtmAutomationTab() {
                     <span className="font-medium">{rule.rule_type}</span>
                     {rule.is_active && <Badge variant="success">Active</Badge>}
                     {rule.lp_type_id && (
-                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950">
+                      <Badge variant="outline" className="bg-info/10 text-info-foreground">
                         {lpTypes.find(t => t.id === rule.lp_type_id)?.name || 'LP Type'}
                       </Badge>
                     )}
