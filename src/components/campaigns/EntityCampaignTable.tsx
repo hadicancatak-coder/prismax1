@@ -11,7 +11,7 @@ import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCa
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
-import { CampaignDetailDialog } from "@/components/CampaignDetailDialog";
+import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
 
 interface Campaign {
   id: string;
@@ -153,11 +153,10 @@ function CampaignTrackingCard({
         externalReviewerEmail={externalReviewerEmail}
       />
       
-      <CampaignDetailDialog
+      <UtmCampaignDetailDialog
         open={detailOpen}
         onOpenChange={setDetailOpen}
         campaignId={tracking.campaign_id}
-        onUpdate={() => {}}
       />
     </Card>
   );

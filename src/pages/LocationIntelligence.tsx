@@ -1,6 +1,6 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, X, FolderOpen, Target, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { Plus, Upload, X, FolderOpen, Target, ChevronDown, ChevronUp, Filter, MapPin, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
@@ -15,11 +15,12 @@ import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDial
 import { BulkLocationUploadDialog } from "@/components/location/BulkLocationUploadDialog";
 import { CampaignsListDialog } from "@/components/location/CampaignsListDialog";
 import { VendorsDialog } from "@/components/location/VendorsDialog";
-import { MapContextMenu } from "@/components/location/MapContextMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 
 export default function LocationIntelligence() {
   const { userRole } = useAuth();
@@ -41,6 +42,7 @@ export default function LocationIntelligence() {
   const [selectionMode, setSelectionMode] = useState<'normal' | 'campaign-select'>('normal');
   const [clickedCoordinates, setClickedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<LocationMapRef>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
     cities: [],
@@ -134,6 +136,29 @@ export default function LocationIntelligence() {
     }));
   };
 
+  // Set up right-click context menu on map
+  useEffect(() => {
+    const mapContainer = document.querySelector('.mapboxgl-canvas-container');
+    if (!mapContainer) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      setContextMenuPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleClick = () => {
+      setContextMenuPos(null);
+    };
+
+    mapContainer.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      mapContainer.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('click', handleClick);
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden bg-muted/20">
@@ -152,27 +177,89 @@ export default function LocationIntelligence() {
         </div>
       )}
 
-      <MapContextMenu
-        onAddLocation={() => { setEditingLocation(null); setFormOpen(true); }}
-        onCreateCampaignSelect={handleCreateCampaignSelect}
-        onCreateCampaign={() => setPlannerOpen(true)}
-        onViewCampaigns={() => setCampaignsListOpen(true)}
-        onViewVendors={() => setVendorsOpen(true)}
-        isAdmin={isAdmin}
-      >
-        <div className="absolute inset-0">
-          <LocationMap
-            locations={filteredLocations}
-            selectedLocationId={selectedLocations.map(l => l.id)}
-            campaignLocationIds={campaignLocationIds}
-            onLocationClick={handleLocationClick}
-            onMapClick={isAdmin && selectionMode === 'normal' ? handleMapClick : undefined}
-            selectionMode={selectionMode}
-            isAdmin={isAdmin}
-            ref={mapRef}
-          />
-        </div>
-      </MapContextMenu>
+      <div className="absolute inset-0">
+        <LocationMap
+          locations={filteredLocations}
+          selectedLocationId={selectedLocations.map(l => l.id)}
+          campaignLocationIds={campaignLocationIds}
+          onLocationClick={handleLocationClick}
+          onMapClick={isAdmin && selectionMode === 'normal' ? handleMapClick : undefined}
+          selectionMode={selectionMode}
+          isAdmin={isAdmin}
+          ref={mapRef}
+        />
+      </div>
+
+      {/* Custom context menu portal */}
+      {contextMenuPos && createPortal(
+        <div
+          className={cn(
+            "fixed z-50 min-w-[200px] overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl",
+            "animate-in fade-in-0 zoom-in-95"
+          )}
+          style={{
+            left: `${contextMenuPos.x}px`,
+            top: `${contextMenuPos.y}px`,
+          }}
+        >
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setEditingLocation(null);
+                setFormOpen(true);
+                setContextMenuPos(null);
+              }}
+              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              Add Location Here
+            </button>
+          )}
+          <button
+            onClick={() => {
+              handleCreateCampaignSelect();
+              setContextMenuPos(null);
+            }}
+            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <Target className="mr-2 h-4 w-4" />
+            Select Locations for Campaign
+          </button>
+          <button
+            onClick={() => {
+              setPlannerOpen(true);
+              setContextMenuPos(null);
+            }}
+            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Campaign
+          </button>
+          <button
+            onClick={() => {
+              setCampaignsListOpen(true);
+              setContextMenuPos(null);
+            }}
+            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <FolderOpen className="mr-2 h-4 w-4" />
+            View All Campaigns
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setVendorsOpen(true);
+                setContextMenuPos(null);
+              }}
+              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Layers className="mr-2 h-4 w-4" />
+              Manage Vendors
+            </button>
+          )}
+        </div>,
+        document.body
+      )}
 
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-sm">
         <LocationSearch locations={filteredLocations} onLocationSelect={handleLocationSelect} />
