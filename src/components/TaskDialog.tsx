@@ -40,6 +40,9 @@ import { useTaskChangeLogs } from "@/hooks/useTaskChangeLogs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TaskPresenceIndicator } from "@/components/tasks/TaskPresenceIndicator";
 import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
+import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface TaskDialogProps {
   open: boolean;
@@ -75,6 +78,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [editingComment, setEditingComment] = useState<{id: string, body: string} | null>(null);
   const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [workingDaysWarning, setWorkingDaysWarning] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
@@ -126,6 +130,31 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [comments, showComments]);
+
+  // Check working days when due date or assignees change in edit mode
+  useEffect(() => {
+    if (editMode && editedTask?.due_at && assignees.length > 0 && profiles.length > 0) {
+      const dueDate = new Date(editedTask.due_at);
+      const assigneeProfiles = profiles.filter(p => 
+        assignees.some(a => a.user_id === p.user_id)
+      );
+      
+      const validation = validateDateForUsers(dueDate, assigneeProfiles);
+      
+      if (!validation.isValid) {
+        const usersList = validation.invalidUsers.map(u => 
+          `${u.name} (${formatWorkingDays(u.workingDays)})`
+        ).join(', ');
+        setWorkingDaysWarning(
+          `⚠️ ${getDayName(dueDate)} is outside working days for: ${usersList}`
+        );
+      } else {
+        setWorkingDaysWarning(null);
+      }
+    } else {
+      setWorkingDaysWarning(null);
+    }
+  }, [editMode, editedTask?.due_at, assignees, profiles]);
 
   const fetchTask = async () => {
     try {
@@ -1184,13 +1213,13 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                           }
                         });
                         
+                        // Show warning but don't block
                         if (invalidAssignees.length > 0) {
                           toast({
-                            title: "Working Day Conflict",
-                            description: `This date is outside working days for: ${invalidAssignees.join(', ')}`,
-                            variant: "destructive",
+                            title: "Working Day Warning",
+                            description: `Note: ${getDayName(date)} is outside working days for: ${invalidAssignees.join(', ')}`,
+                            variant: "default",
                           });
-                          return;
                         }
                         
                         const { error } = await supabase
@@ -1228,6 +1257,14 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   </Button>
                 )}
               </div>
+              {workingDaysWarning && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {workingDaysWarning}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             {/* Time Tracking Section - Removed per user request */}
