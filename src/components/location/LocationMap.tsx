@@ -2,16 +2,17 @@ import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MediaLocation, getLocationCategory, LOCATION_CATEGORIES } from "@/hooks/useMediaLocations";
-import { MapPin } from "lucide-react";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiaGFkaWNhbiIsImEiOiJjbWh1YjY5bWkwNDI2MmpzYmQ0MmkwaXBnIn0.ScDl8LTtKyGxmLBFC8R4rw";
 
 interface LocationMapProps {
   locations: MediaLocation[];
-  onLocationClick: (location: MediaLocation) => void;
-  onMapClick?: (coords: { lat: number; lng: number }) => void;
   selectedLocationId?: string[] | null;
   campaignLocationIds?: string[];
+  onLocationClick: (location: MediaLocation) => void;
+  onMapClick?: (coords: { lat: number; lng: number }) => void;
+  selectionMode?: 'normal' | 'campaign-select';
+  isAdmin?: boolean;
 }
 
 export interface LocationMapRef {
@@ -19,223 +20,66 @@ export interface LocationMapRef {
 }
 
 export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
-  ({ locations, onLocationClick, onMapClick, selectedLocationId, campaignLocationIds = [] }, ref) => {
+  ({ locations, onLocationClick, onMapClick, selectedLocationId, campaignLocationIds = [], selectionMode = 'normal', isAdmin = false }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const markers = useRef<mapboxgl.Marker[]>([]);
     const highlightMarker = useRef<mapboxgl.Marker | null>(null);
+    const selectedLocationIds = selectedLocationId || [];
 
-    // Expose map control methods
     useImperativeHandle(ref, () => ({
       flyToLocation: (location: MediaLocation) => {
         if (!map.current) return;
-
-        map.current.flyTo({
-          center: [Number(location.longitude), Number(location.latitude)],
-          zoom: 15,
-          duration: 1500,
-        });
-
-        // Highlight selected location
-        if (highlightMarker.current) {
-          highlightMarker.current.remove();
-        }
-
+        map.current.flyTo({ center: [Number(location.longitude), Number(location.latitude)], zoom: 15, duration: 1500 });
+        if (highlightMarker.current) highlightMarker.current.remove();
         const el = document.createElement('div');
-        el.className = 'highlight-marker';
-        el.style.width = '40px';
-        el.style.height = '40px';
-        el.style.borderRadius = '50%';
-        el.style.border = '4px solid hsl(var(--primary))';
-        el.style.backgroundColor = 'hsl(var(--primary) / 0.3)';
-        el.style.animation = 'pulse 2s ease-in-out infinite';
-
-        highlightMarker.current = new mapboxgl.Marker(el)
-          .setLngLat([Number(location.longitude), Number(location.latitude)])
-          .addTo(map.current);
-
-        // Remove highlight after 3 seconds
-        setTimeout(() => {
-          highlightMarker.current?.remove();
-          highlightMarker.current = null;
-        }, 3000);
+        el.style.cssText = 'width:40px;height:40px;border-radius:50%;border:4px solid hsl(var(--primary));background:hsl(var(--primary)/0.3);animation:pulse 2s ease-in-out infinite';
+        highlightMarker.current = new mapboxgl.Marker(el).setLngLat([Number(location.longitude), Number(location.latitude)]).addTo(map.current);
+        setTimeout(() => { highlightMarker.current?.remove(); highlightMarker.current = null; }, 3000);
       },
     }));
 
     useEffect(() => {
       if (!mapContainer.current) return;
-
       mapboxgl.accessToken = MAPBOX_TOKEN;
-
-      // Center on UAE coordinates, will adjust when markers are added
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [55.2708, 25.2048], // UAE
-        zoom: 8,
-      });
-
+      map.current = new mapboxgl.Map({ container: mapContainer.current, style: "mapbox://styles/mapbox/streets-v12", center: [55.2708, 25.2048], zoom: 8 });
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      // Add right-click handler for adding new locations
-      if (onMapClick) {
-        map.current.on('contextmenu', (e) => {
-          e.preventDefault(); // Prevent browser context menu
-          
-          const { lng, lat } = e.lngLat;
-          onMapClick({ lat, lng });
-
-          // Show temporary marker with pulse animation
-          const tempMarker = new mapboxgl.Marker({ 
-            color: '#22c55e',
-            scale: 1.2 
-          })
-            .setLngLat([lng, lat])
-            .addTo(map.current!);
-
-          // Add pulse effect
-          const markerEl = tempMarker.getElement();
-          markerEl.style.animation = 'pulse 1s ease-in-out';
-
-          // Remove after 3 seconds
-          setTimeout(() => tempMarker.remove(), 3000);
-        });
-      }
-
-      return () => {
-        map.current?.remove();
-      };
-    }, [onMapClick]);
-
-    // Render individual markers (no clustering)
-    const updateMarkers = () => {
-      if (!map.current) return;
-
-      // Clear existing markers
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-
-      // Render individual markers for all locations
-      locations.forEach(location => {
-        const category = getLocationCategory(location.type);
-        const color = category ? LOCATION_CATEGORIES[category].color : '#6b7280';
-        const isInCampaign = campaignLocationIds.includes(location.id);
-
-        const el = document.createElement('div');
-        el.className = 'location-marker';
-        el.style.backgroundColor = color;
-        el.style.width = '24px';
-        el.style.height = '24px';
-        el.style.borderRadius = '50%';
-        el.style.border = '2px solid white';
-        el.style.cursor = 'pointer';
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        el.style.transition = 'all 0.2s ease';
-
-        // Highlight if selected
-        const isSelected = Array.isArray(selectedLocationId) && selectedLocationId.includes(location.id);
-        if (isSelected) {
-          el.style.border = '3px solid hsl(var(--primary))';
-          el.style.transform = 'scale(1.3)';
-        }
-
-        // Add campaign badge if location is in a campaign
-        if (isInCampaign) {
-          const badge = document.createElement('div');
-          badge.className = 'campaign-badge';
-          badge.style.position = 'absolute';
-          badge.style.top = '-8px';
-          badge.style.right = '-8px';
-          badge.style.backgroundColor = 'hsl(var(--primary))';
-          badge.style.color = 'white';
-          badge.style.borderRadius = '50%';
-          badge.style.width = '16px';
-          badge.style.height = '16px';
-          badge.style.display = 'flex';
-          badge.style.alignItems = 'center';
-          badge.style.justifyContent = 'center';
-          badge.style.fontSize = '10px';
-          badge.style.fontWeight = 'bold';
-          badge.innerHTML = '✓';
-          el.appendChild(badge);
-          el.style.position = 'relative';
-        }
-
-        const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-          .setHTML(`
-            <div class="p-2">
-              <div class="font-semibold">${location.name}</div>
-              <div class="text-sm text-muted-foreground">${location.type}</div>
-              ${location.manual_score ? `<div class="text-sm">Score: ${location.manual_score}/10</div>` : ''}
-              ${isInCampaign ? `<div class="text-xs text-primary mt-1">✓ In Campaign</div>` : ''}
-            </div>
-          `);
-
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([Number(location.longitude), Number(location.latitude)])
-          .setPopup(popup)
-          .addTo(map.current!);
-
-        el.addEventListener('click', () => {
-          onLocationClick(location);
-        });
-
-        markers.current.push(marker);
-      });
-    };
+      return () => { map.current?.remove(); };
+    }, []);
 
     useEffect(() => {
-      if (!map.current) return;
+      if (!map.current || locations.length === 0) return;
+      markers.current.forEach(m => m.remove());
+      markers.current = [];
+      const isSelectionMode = selectionMode === 'campaign-select';
 
-      // Initial render
-      map.current.on('load', updateMarkers);
+      locations.forEach((location) => {
+        if (!map.current || !location.latitude || !location.longitude) return;
+        const isSelected = selectedLocationIds.includes(location.id);
+        const isInCampaign = campaignLocationIds.includes(location.id);
+        const category = getLocationCategory(location.type);
+        const emoji = category ? LOCATION_CATEGORIES[category].emoji : '📍';
 
-      // Initial update if map already loaded
-      if (map.current.loaded()) {
-        updateMarkers();
-      }
+        const el = document.createElement('div');
+        el.innerHTML = `<div style="position:relative;cursor:pointer;font-size:${isSelected?'32px':'24px'};transition:all 0.3s;filter:${isSelected?'drop-shadow(0 0 8px rgba(59,130,246,0.8))':isInCampaign?'drop-shadow(0 0 6px rgba(34,197,94,0.6))':'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'};transform:scale(${isSelected?1.2:1});${isSelectionMode?'animation:pulse 2s infinite':''}">${emoji}${isInCampaign?'<div style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:#22c55e;border:2px solid white;border-radius:50%"></div>':''}${isSelected&&isSelectionMode?'<div style="position:absolute;top:-4px;left:-4px;width:12px;height:12px;background:#3b82f6;border:2px solid white;border-radius:50%"></div>':''}</div><style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}</style>`;
+        el.addEventListener('click', () => onLocationClick(location));
 
-      // Fit bounds to show all markers on initial load
-      if (locations.length > 0 && map.current.loaded()) {
+        const marker = new mapboxgl.Marker(el).setLngLat([location.longitude, location.latitude]).addTo(map.current);
+        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px' }).setHTML(`<div style="padding:12px;min-width:240px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><h3 style="font-weight:600;font-size:1rem">${location.name}</h3>${location.manual_score?`<span style="font-size:0.75rem;padding:2px 8px;border-radius:4px;background:rgba(139,92,246,0.1);color:#8B5CF6">${location.manual_score}/10</span>`:''}</div><div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"><div style="font-size:0.875rem">📍 ${location.city}</div><div style="font-size:0.875rem">🏷️ ${location.type}</div>${location.agency?`<div style="font-size:0.875rem">🏢 ${location.agency}</div>`:''}${location.price_per_month?`<div style="font-size:0.875rem">💰 AED ${location.price_per_month.toLocaleString()}/mo</div>`:''}</div><div style="display:flex;gap:8px">${isSelectionMode?`<button class="popup-btn" style="flex:1;padding:6px 12px;font-size:0.875rem;background:#8B5CF6;color:white;border:none;border-radius:6px;cursor:pointer">${isSelected?'Remove':'Add to Campaign'}</button>`:`<button class="popup-btn" style="flex:1;padding:6px 12px;font-size:0.875rem;border:1px solid #e5e7eb;background:white;border-radius:6px;cursor:pointer">View Details</button>${isAdmin?'<button class="popup-btn-edit" style="padding:6px 12px;font-size:0.875rem;border:1px solid #e5e7eb;background:white;border-radius:6px;cursor:pointer">Edit</button>':''}`}</div></div>`);
+        popup.on('open', () => { popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => btn.addEventListener('click', () => { onLocationClick(location); popup.remove(); })); });
+        marker.setPopup(popup);
+        markers.current.push(marker);
+      });
+
+      if (locations.length > 0) {
         const bounds = new mapboxgl.LngLatBounds();
-        locations.forEach(loc => {
-          bounds.extend([Number(loc.longitude), Number(loc.latitude)]);
-        });
-        map.current.fitBounds(bounds, { padding: 50, maxZoom: 12 });
+        locations.forEach(loc => { if (loc.latitude && loc.longitude) bounds.extend([loc.longitude, loc.latitude]); });
+        if (!bounds.isEmpty()) map.current.fitBounds(bounds, { padding: 100, maxZoom: 12 });
       }
+    }, [locations, selectedLocationIds, campaignLocationIds, selectionMode, isAdmin]);
 
-      return () => {
-        if (map.current) {
-          map.current.off('load', updateMarkers);
-        }
-      };
-    }, [locations, onLocationClick, selectedLocationId]);
-
-    return (
-      <div className="relative w-full h-full">
-        <div ref={mapContainer} className="absolute inset-0" />
-
-        {/* Empty state overlay */}
-        {locations.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
-            <div className="text-center space-y-2 p-6">
-              <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-semibold">No Locations to Display</h3>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                No locations match the current filters. Try adjusting your filter settings.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {onMapClick && (
-          <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-md p-3 rounded-lg shadow-xl border border-white/10">
-            <p className="text-xs text-muted-foreground">
-              <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted rounded border">Right-Click</kbd> to add location
-            </p>
-          </div>
-        )}
-      </div>
-    );
+    return <div className="relative w-full h-full"><div ref={mapContainer} className="absolute inset-0" /></div>;
   }
 );
+
+LocationMap.displayName = "LocationMap";
