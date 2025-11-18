@@ -1061,6 +1061,7 @@ export type Database = {
       }
       campaign_metadata: {
         Row: {
+          asset_link: string | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -1071,6 +1072,7 @@ export type Database = {
           version_code: string | null
         }
         Insert: {
+          asset_link?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -1081,6 +1083,7 @@ export type Database = {
           version_code?: string | null
         }
         Update: {
+          asset_link?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -3980,6 +3983,100 @@ export type Database = {
             columns: ["lp_type_id"]
             isOneToOne: false
             referencedRelation: "utm_lp_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utm_campaign_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          comment_text: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          utm_campaign_id: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          comment_text: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          utm_campaign_id: string
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          comment_text?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          utm_campaign_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_campaign_comments_utm_campaign_id_fkey"
+            columns: ["utm_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utm_campaign_versions: {
+        Row: {
+          asset_link: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          image_file_size: number | null
+          image_url: string | null
+          landing_page: string | null
+          name: string
+          utm_campaign_id: string
+          version_notes: string | null
+          version_number: number
+        }
+        Insert: {
+          asset_link?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_file_size?: number | null
+          image_url?: string | null
+          landing_page?: string | null
+          name: string
+          utm_campaign_id: string
+          version_notes?: string | null
+          version_number: number
+        }
+        Update: {
+          asset_link?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_file_size?: number | null
+          image_url?: string | null
+          landing_page?: string | null
+          name?: string
+          utm_campaign_id?: string
+          version_notes?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_campaign_versions_utm_campaign_id_fkey"
+            columns: ["utm_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaigns"
             referencedColumns: ["id"]
           },
         ]
