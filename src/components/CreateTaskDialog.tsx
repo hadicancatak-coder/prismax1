@@ -392,9 +392,8 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
                     <SelectValue placeholder="Select task type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="task">General Task</SelectItem>
-                    <SelectItem value="operations">Operations</SelectItem>
-                    <SelectItem value="campaign_launch">Campaign</SelectItem>
+                    <SelectItem value="generic">General Task</SelectItem>
+                    <SelectItem value="campaign">Campaign</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -782,7 +781,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
 
 
               {/* Attached Ads Section - Only show for Campaign type */}
-              {taskType === "campaign_launch" && (
+              {taskType === "campaign" && (
                 <div className="space-y-2 pt-2 border-t">
                   <AttachedAdsSection
                     attachedAds={attachedAds}
