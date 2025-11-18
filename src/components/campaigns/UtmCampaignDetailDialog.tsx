@@ -226,8 +226,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0 space-y-2">
               <div className="flex items-start justify-between gap-4">
+                <DialogTitle className="text-xl pr-8">{campaign?.name || "Campaign Details"}</DialogTitle>
                 <div className="flex-1 min-w-0">
                   <DialogTitle className="text-xl mb-1">
                     {isEditing ? (

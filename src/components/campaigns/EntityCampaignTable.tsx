@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, X, MessageSquare, History, ChevronDown } from "lucide-react";
+import { X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
-import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
-import { useCampaignVersions } from "@/hooks/useCampaignVersions";
-import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 
 interface Campaign {
   id: string;
@@ -24,8 +19,6 @@ interface Campaign {
 interface CampaignTrackingCardProps {
   tracking: CampaignEntityTracking;
   campaign: Campaign | undefined;
-  onUpdateStatus: (status: string) => void;
-  onUpdateNotes: (notes: string) => void;
   onRemove: () => void;
   entity: string;
   isExternal?: boolean;
@@ -52,269 +45,154 @@ const STATUS_OPTIONS = [
 function CampaignTrackingCard({
   tracking,
   campaign,
-  onUpdateStatus,
-  onUpdateNotes,
   onRemove,
   entity,
   isExternal = false,
   externalReviewerName,
   externalReviewerEmail,
 }: CampaignTrackingCardProps) {
-  const [localNotes, setLocalNotes] = useState(tracking.notes || "");
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentsExpanded, setCommentsExpanded] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
-  const { useMetadata } = useCampaignMetadata();
-  const { data: metadata } = useMetadata(tracking.campaign_id);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const { useComments } = useCampaignComments();
   const { data: comments = [] } = useComments(tracking.id);
-  const { useVersions } = useCampaignVersions();
-  const { data: versions = [] } = useVersions(tracking.campaign_id);
 
   if (!campaign) return null;
 
   const statusOption = STATUS_OPTIONS.find((s) => s.value === tracking.status);
 
   return (
-    <div className="space-y-2">
-      <Card className="w-full border-2 min-w-[160px]">
-        <CardContent className="p-4 space-y-2.5">
-          {/* Header with Title, Version, and Remove Button */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 space-y-1">
-              <h4 
-                className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-                onClick={() => setDetailOpen(true)}
-              >
-                {campaign.name}
-              </h4>
-              {metadata?.version_code && (
-                <Badge variant="outline" className="text-xs">
-                  {metadata.version_code}
-                </Badge>
-              )}
-            </div>
+    <>
+      <Card 
+        className="w-full border-2 min-w-[160px] cursor-pointer hover:border-primary transition-colors"
+        onClick={() => setDetailOpen(true)}
+      >
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-semibold text-sm line-clamp-1 flex-1">
+              {campaign.name}
+            </h4>
             {!isExternal && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 flex-shrink-0"
-                onClick={onRemove}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
-
-          {/* Status Dropdown */}
-          <div>
-            <Select 
-              value={tracking.status} 
-              onValueChange={onUpdateStatus}
-              disabled={isExternal}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-xs">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Notes Textarea */}
-          <Textarea
-            value={localNotes}
-            onChange={(e) => setLocalNotes(e.target.value)}
-            onBlur={() => onUpdateNotes(localNotes)}
-            placeholder="Add notes..."
-            className="min-h-[60px] text-xs resize-none"
-            disabled={isExternal}
-          />
-
-          {/* Collapsible Comments Section */}
-          <Collapsible open={commentsExpanded} onOpenChange={setCommentsExpanded}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-between gap-2 h-8 text-xs"
-              >
-                <span className="flex items-center gap-2">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
-                </span>
-                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", commentsExpanded && "rotate-180")} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCommentsOpen(true)}
-                className="w-full text-xs"
-              >
-                View All Comments
-              </Button>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Version History Toggle */}
-          {versions.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowVersions(!showVersions)}
-              className="w-full justify-between gap-2 h-8 text-xs"
-            >
-              <span className="flex items-center gap-2">
-                <History className="h-3.5 w-3.5" />
-                {versions.length} {versions.length === 1 ? "Version" : "Versions"}
-              </span>
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showVersions && "rotate-180")} />
-            </Button>
+          
+          {statusOption && (
+            <Badge variant="outline" className="text-xs">
+              {statusOption.label}
+            </Badge>
           )}
-        </CardContent>
 
-        <CampaignCommentsDialog
-          open={commentsOpen}
-          onOpenChange={setCommentsOpen}
-          trackingId={tracking.id}
-          campaignName={campaign.name}
-          entityName={entity}
-          isExternal={isExternal}
-          externalReviewerName={externalReviewerName}
-          externalReviewerEmail={externalReviewerEmail}
-        />
-        
-        <UtmCampaignDetailDialog
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-          campaignId={tracking.campaign_id}
-        />
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCommentsOpen(true);
+            }}
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            Comments ({comments.length})
+          </Button>
+        </CardContent>
       </Card>
 
-      {/* Version History as Child Rows */}
-      {showVersions && versions.length > 0 && (
-        <div className="ml-4 space-y-1">
-          {versions.slice(0, 3).map((version) => (
-            <Card key={version.id} className="border border-muted bg-muted/30">
-              <CardContent className="p-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">v{version.version_number}</Badge>
-                  <span className="text-xs text-muted-foreground line-clamp-1">{version.name}</span>
-                </div>
-                {version.version_notes && (
-                  <span className="text-xs text-muted-foreground line-clamp-1 max-w-[120px]">
-                    {version.version_notes}
-                  </span>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-          {versions.length > 3 && (
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setDetailOpen(true)}
-              className="text-xs h-auto p-1"
-            >
-              View all {versions.length} versions
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
+      <UtmCampaignDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        campaignId={tracking.campaign_id}
+      />
+
+      <CampaignCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        trackingId={tracking.id}
+        campaignName={campaign.name}
+        entityName={entity}
+        isExternal={isExternal}
+        externalReviewerName={externalReviewerName}
+        externalReviewerEmail={externalReviewerEmail}
+      />
+    </>
   );
 }
 
-export function EntityCampaignTable({ 
-  entity, 
-  campaigns, 
+export function EntityCampaignTable({
+  entity,
+  campaigns,
   isExternal = false,
   externalReviewerName,
   externalReviewerEmail,
 }: EntityCampaignTableProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `entity-${entity}`,
-    disabled: isExternal,
-  });
+  const { trackingRecords, deleteTracking, getEntityComments } = useCampaignEntityTracking();
+  const { setNodeRef, isOver } = useDroppable({ id: `entity-${entity}` });
 
-  const { 
-    getCampaignsByEntity, 
-    updateTracking, 
-    deleteTracking,
-    updateEntityComments,
-    getEntityComments,
-  } = useCampaignEntityTracking();
-  const entityCampaigns = getCampaignsByEntity(entity);
-  const [localEntityComments, setLocalEntityComments] = useState(
-    getEntityComments(entity) || ""
-  );
+  const entityCampaigns = trackingRecords.filter((t) => t.entity === entity);
+  const entityComments = getEntityComments(entity);
+
+  const handleRemove = async (trackingId: string) => {
+    try {
+      await deleteTracking.mutateAsync(trackingId);
+    } catch (error) {
+      console.error('Failed to remove campaign:', error);
+    }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold">{entity}</CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {entityCampaigns.length} {entityCampaigns.length === 1 ? "campaign" : "campaigns"}
-          </Badge>
-        </div>
-        
-        {/* Entity-level comments */}
-        <Textarea
-          placeholder="Notes for this entity..."
-          value={localEntityComments}
-          onChange={(e) => setLocalEntityComments(e.target.value)}
-          onBlur={() => updateEntityComments.mutate({ entity, comments: localEntityComments })}
-          className="min-h-[80px] text-sm"
-          disabled={isExternal}
-        />
-      </CardHeader>
-      <CardContent>
-      <div
-        ref={setNodeRef}
-        className={cn(
-          "grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 min-h-[300px] p-6 rounded-lg border-2 border-dashed transition-all duration-200",
-          isOver ? "border-primary bg-primary/10 shadow-lg" : "border-border bg-muted/20",
-          entityCampaigns.length === 0 && "flex items-center justify-center"
-        )}
-      >
-          {entityCampaigns.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center col-span-full">
-              Drop campaigns here to track them in {entity}
-            </p>
-          ) : (
-            entityCampaigns.map((tracking) => {
-              const campaign = campaigns.find((c) => c.id === tracking.campaign_id);
-              return (
-                <CampaignTrackingCard
-                  key={tracking.id}
-                tracking={tracking}
-                campaign={campaign}
-                onUpdateStatus={(status) =>
-                  updateTracking.mutate({ id: tracking.id, status })
-                }
-                onUpdateNotes={(notes) =>
-                  updateTracking.mutate({ id: tracking.id, notes })
-                }
-                onRemove={() => deleteTracking.mutate(tracking.id)}
-                entity={entity}
-                isExternal={isExternal}
-                externalReviewerName={externalReviewerName}
-                externalReviewerEmail={externalReviewerEmail}
-              />
-              );
-            })
+    <div className="h-full flex flex-col">
+      <Card className="flex-1 flex flex-col">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            {entity}
+            <Badge variant="secondary">{entityCampaigns.length}</Badge>
+          </CardTitle>
+          {entityComments && (
+            <p className="text-sm text-muted-foreground mt-1">{entityComments}</p>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-auto">
+          <div
+            ref={setNodeRef}
+            className={cn(
+              "min-h-[200px] p-2 rounded-lg border-2 border-dashed transition-colors",
+              isOver ? "border-primary bg-primary/5" : "border-muted-foreground/20"
+            )}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {entityCampaigns.map((tracking) => {
+                const campaign = campaigns.find((c) => c.id === tracking.campaign_id);
+                return (
+                  <CampaignTrackingCard
+                    key={tracking.id}
+                    tracking={tracking}
+                    campaign={campaign}
+                    onRemove={() => handleRemove(tracking.id)}
+                    entity={entity}
+                    isExternal={isExternal}
+                    externalReviewerName={externalReviewerName}
+                    externalReviewerEmail={externalReviewerEmail}
+                  />
+                );
+              })}
+            </div>
+            {entityCampaigns.length === 0 && (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                Drop campaigns here
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
