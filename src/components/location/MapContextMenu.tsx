@@ -14,7 +14,7 @@ interface MapContextMenuProps {
   onCreateCampaign: () => void;
   onViewCampaigns: () => void;
   onViewVendors: () => void;
-  disabled?: boolean;
+  isAdmin?: boolean;
 }
 
 export function MapContextMenu({
@@ -24,21 +24,23 @@ export function MapContextMenu({
   onCreateCampaign,
   onViewCampaigns,
   onViewVendors,
-  disabled = false,
+  isAdmin = false,
 }: MapContextMenuProps) {
-  if (disabled) return <>{children}</>;
-
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-60 bg-card/95 backdrop-blur-md border-white/10">
-        <ContextMenuItem onClick={onAddLocation} className="cursor-pointer">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Location
-        </ContextMenuItem>
-        <ContextMenuSeparator />
+      <ContextMenuContent className="w-60 bg-card/95 backdrop-blur-md border-white/10 z-[200]">
+        {isAdmin && (
+          <>
+            <ContextMenuItem onClick={onAddLocation} className="cursor-pointer">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Location
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        )}
         <ContextMenuItem onClick={onCreateCampaignSelect} className="cursor-pointer">
           <Target className="h-4 w-4 mr-2" />
           Create Campaign (Select)
