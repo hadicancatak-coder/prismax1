@@ -72,6 +72,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [editedTask, setEditedTask] = useState<any>(null);
   const [confirmDeleteComment, setConfirmDeleteComment] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState<{id: string, body: string} | null>(null);
+  const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
@@ -145,6 +146,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           .eq("user_id", data.created_by)
           .single();
         creatorProfile = creator;
+      }
+
+      // Parse BYDAY from RRULE
+      if (data.recurrence_rrule?.includes('BYDAY=')) {
+        const match = data.recurrence_rrule.match(/BYDAY=([A-Z,]+)/);
+        if (match) {
+          const dayMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+          const days = match[1].split(',').map((d: string) => dayMap[d as keyof typeof dayMap]).filter((d: number | undefined) => d !== undefined) as number[];
+          setRecurrenceDaysOfWeek(days);
+        }
       }
 
       if (data.assignee_id) {
@@ -406,23 +417,32 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         }
       } else {
         // Admin: Save directly
+        const updates: any = {
+          title: editedTask.title,
+          description: editedTask.description,
+          status: editedTask.status,
+          priority: editedTask.priority,
+          entity: editedTask.entity,
+          project_id: editedTask.project_id,
+          due_at: editedTask.due_at,
+          jira_links: editedTask.jira_links,
+          recurrence_rrule: editedTask.recurrence_rrule,
+          recurrence_day_of_week: editedTask.recurrence_day_of_week,
+          recurrence_day_of_month: editedTask.recurrence_day_of_month,
+          blocker_reason: editedTask.blocker_reason,
+          failure_reason: editedTask.failure_reason,
+        };
+        
+        // Generate RRULE from multi-day selection
+        if (editedTask.recurrence_rrule?.includes('WEEKLY') && recurrenceDaysOfWeek.length > 0) {
+          const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+          const selectedDays = recurrenceDaysOfWeek.map(d => dayMap[d]).join(',');
+          updates.recurrence_rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`;
+        }
+        
         const { error } = await supabase
           .from("tasks")
-          .update({
-            title: editedTask.title,
-            description: editedTask.description,
-            status: editedTask.status,
-            priority: editedTask.priority,
-            entity: editedTask.entity,
-            project_id: editedTask.project_id,
-            due_at: editedTask.due_at,
-            jira_links: editedTask.jira_links,
-            recurrence_rrule: editedTask.recurrence_rrule,
-            recurrence_day_of_week: editedTask.recurrence_day_of_week,
-            recurrence_day_of_month: editedTask.recurrence_day_of_month,
-            blocker_reason: editedTask.blocker_reason,
-            failure_reason: editedTask.failure_reason,
-          })
+          .update(updates)
           .eq("id", taskId);
         
         if (error) throw error;
@@ -492,6 +512,17 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                 <Button variant="outline" size="sm" onClick={() => {
                   setEditMode(true);
                   setEditedTask({...task});
+                  
+                  // Parse existing RRULE for days
+                  if (task.recurrence_rrule?.includes('BYDAY=')) {
+                    const match = task.recurrence_rrule.match(/BYDAY=([A-Z,]+)/);
+                    if (match) {
+                      const dayMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+                      setRecurrenceDaysOfWeek(match[1].split(',').map((d: string) => dayMap[d as keyof typeof dayMap]).filter((d: number | undefined) => d !== undefined) as number[]);
+                    }
+                  } else {
+                    setRecurrenceDaysOfWeek([]);
+                  }
                 }}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -804,6 +835,11 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                           recurrence_day_of_week: value !== 'weekly' ? null : editedTask.recurrence_day_of_week,
                           recurrence_day_of_month: value !== 'monthly' ? null : editedTask.recurrence_day_of_month,
                         });
+                        
+                        // Reset multi-day selection when switching away from weekly
+                        if (value !== 'weekly') {
+                          setRecurrenceDaysOfWeek([]);
+                        }
                       }}
                     >
                       <SelectTrigger>
@@ -817,27 +853,89 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                       </SelectContent>
                     </Select>
 
+
                     {editedTask?.recurrence_rrule?.includes('WEEKLY') && (
-                      <Select 
-                        value={editedTask.recurrence_day_of_week?.toString() || ""} 
-                        onValueChange={(val) => setEditedTask({
-                          ...editedTask,
-                          recurrence_day_of_week: parseInt(val)
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">Sunday</SelectItem>
-                          <SelectItem value="1">Monday</SelectItem>
-                          <SelectItem value="2">Tuesday</SelectItem>
-                          <SelectItem value="3">Wednesday</SelectItem>
-                          <SelectItem value="4">Thursday</SelectItem>
-                          <SelectItem value="5">Friday</SelectItem>
-                          <SelectItem value="6">Saturday</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base">Days of Week</Label>
+                          {recurrenceDaysOfWeek.length > 0 && (
+                            <span className="text-sm text-muted-foreground">
+                              {recurrenceDaysOfWeek.length} {recurrenceDaysOfWeek.length === 1 ? 'day' : 'days'} selected
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground -mt-1">Select one or more days</p>
+                        <div className="grid grid-cols-7 gap-2">
+                          {[
+                            { value: 1, label: 'Mon' },
+                            { value: 2, label: 'Tue' },
+                            { value: 3, label: 'Wed' },
+                            { value: 4, label: 'Thu' },
+                            { value: 5, label: 'Fri' },
+                            { value: 6, label: 'Sat' },
+                            { value: 0, label: 'Sun' },
+                          ].map(day => {
+                            const hasConflict = (editedTask.assignees || []).some((assigneeId: string) => {
+                              const assignee = profiles.find((u: any) => u.id === assigneeId);
+                              if (!assignee?.working_days) return false;
+                              return (
+                                (assignee.working_days === 'mon-fri' && (day.value === 0 || day.value === 6)) ||
+                                (assignee.working_days === 'sun-thu' && (day.value === 5 || day.value === 6))
+                              );
+                            });
+                            
+                            return (
+                              <div
+                                key={day.value}
+                                onClick={() => {
+                                  if (hasConflict) return;
+                                  if (recurrenceDaysOfWeek.includes(day.value)) {
+                                    setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
+                                  } else {
+                                    setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
+                                  }
+                                }}
+                                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                                  hasConflict 
+                                    ? 'opacity-40 cursor-not-allowed bg-muted' 
+                                    : 'cursor-pointer hover:border-primary/50'
+                                } ${
+                                  recurrenceDaysOfWeek.includes(day.value) 
+                                    ? 'border-primary bg-primary/10' 
+                                    : 'border-border'
+                                }`}
+                              >
+                                <Checkbox
+                                  checked={recurrenceDaysOfWeek.includes(day.value)}
+                                  disabled={hasConflict}
+                                  onCheckedChange={() => {}} // Prevent double-firing
+                                />
+                                <span className={`text-sm font-medium ${hasConflict ? 'line-through' : ''}`}>
+                                  {day.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Recurrence Preview */}
+                        {recurrenceDaysOfWeek.length > 0 && (
+                          <div className="p-3 bg-primary/5 rounded-md text-sm border border-primary/20">
+                            <div className="flex items-center gap-2 mb-1">
+                              <RotateCcw className="h-4 w-4 text-primary" />
+                              <span className="font-medium text-primary">Recurrence Preview</span>
+                            </div>
+                            <p className="text-muted-foreground">
+                              Task will repeat every{' '}
+                              <strong className="text-foreground">
+                                {recurrenceDaysOfWeek
+                                  .map(d => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d])
+                                  .join(', ')}
+                              </strong>
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {editedTask?.recurrence_rrule?.includes('MONTHLY') && (
