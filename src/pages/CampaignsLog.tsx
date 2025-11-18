@@ -116,7 +116,10 @@ export default function CampaignsLog() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col container mx-auto px-4">
+        <div className={cn(
+          "flex-1 overflow-hidden flex flex-col container mx-auto px-4 transition-all duration-300",
+          !expandedCampaigns.has('library') && "h-[calc(100vh-200px)]"
+        )}>
           {selectedEntity && (
             <div className="flex-1 overflow-hidden">
               <EntityCampaignTable entity={selectedEntity} campaigns={transformedCampaigns} />
@@ -144,7 +147,13 @@ export default function CampaignsLog() {
                   )} />
                 </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pb-4 space-y-3 overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+              <CollapsibleContent 
+                className="pb-4 space-y-3 transition-all duration-300"
+                style={{ 
+                  overflow: expandedCampaigns.has('library') ? 'visible' : 'hidden',
+                  maxHeight: expandedCampaigns.has('library') ? '600px' : '0px'
+                }}
+              >
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

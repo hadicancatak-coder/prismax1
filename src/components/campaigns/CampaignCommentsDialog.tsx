@@ -91,6 +91,11 @@ export function CampaignCommentsDialog({
                       <span className="text-sm font-semibold">
                         {comment.author_name}
                       </span>
+                      {comment.is_external && comment.author_email && (
+                        <span className="text-xs text-muted-foreground">
+                          ({comment.author_email})
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>

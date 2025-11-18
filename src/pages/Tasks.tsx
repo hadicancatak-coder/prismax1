@@ -118,11 +118,13 @@ export default function Tasks() {
     
     const statusMatch = statusFilter === "all" || task.status === statusFilter;
     
+    const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
+    
     const searchMatch = debouncedSearch === "" || 
       task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
-    return assigneeMatch && teamMatch && dateMatch && statusMatch && searchMatch;
+    return assigneeMatch && teamMatch && dateMatch && statusMatch && taskTypeMatch && searchMatch;
   });
 
   // Apply filter recalculation when dependencies change
@@ -148,13 +150,14 @@ export default function Tasks() {
     );
   }
 
-  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilter !== "all" || activeQuickFilter || searchQuery;
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilter !== "all" || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
 
   const clearAllFilters = () => {
     setSelectedAssignees([]);
     setSelectedTeams([]);
     setDateFilter(null);
     setStatusFilter("all");
+    setTaskTypeFilter("all");
     setActiveQuickFilter(null);
     setSearchQuery("");
     setSelectedTaskIds([]);
@@ -241,6 +244,18 @@ export default function Tasks() {
                 <SelectItem value="Completed">Completed</SelectItem>
                 <SelectItem value="Failed">Failed</SelectItem>
                 <SelectItem value="Blocked">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
+              <SelectTrigger className="w-[130px] h-8 text-sm">
+                <SelectValue placeholder="Task Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="generic">Generic</SelectItem>
+                <SelectItem value="campaign">Campaigns</SelectItem>
+                <SelectItem value="recurring">Recurring</SelectItem>
               </SelectContent>
             </Select>
 
