@@ -160,7 +160,7 @@ export default function LocationIntelligence() {
         onViewVendors={() => setVendorsOpen(true)}
         isAdmin={isAdmin}
       >
-        <div className="absolute inset-0" onContextMenu={(e) => e.preventDefault()}>
+        <div className="absolute inset-0">
           <LocationMap
             locations={filteredLocations}
             selectedLocationId={selectedLocations.map(l => l.id)}
