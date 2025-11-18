@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 interface Campaign {
   id: string;
   name: string;
-  budget: number;
-  agency: string | null;
-  cities: string[];
-  notes: string | null;
+  campaign_type: string;
+  description: string;
+  landing_page: string;
+  is_active: boolean;
 }
 
 interface DraggableCampaignCardProps {
@@ -51,39 +51,31 @@ export function DraggableCampaignCard({ campaign, isDragging }: DraggableCampaig
           </h3>
         </div>
 
-        {/* Budget */}
-        <div className="text-xs text-muted-foreground">
-          Budget: ${campaign.budget.toLocaleString()}
-        </div>
+        {/* Campaign Type */}
+        <Badge variant="outline" className="text-xs w-fit">
+          {campaign.campaign_type}
+        </Badge>
 
-        {/* Agency */}
-        {campaign.agency && (
-          <div className="text-xs text-muted-foreground">
-            Agency: {campaign.agency}
-          </div>
-        )}
-
-        {/* Cities */}
-        {campaign.cities && campaign.cities.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {campaign.cities.slice(0, 2).map((city) => (
-              <Badge key={city} variant="secondary" className="text-xs">
-                {city}
-              </Badge>
-            ))}
-            {campaign.cities.length > 2 && (
-              <Badge variant="secondary" className="text-xs">
-                +{campaign.cities.length - 2}
-              </Badge>
-            )}
-          </div>
-        )}
-
-        {/* Notes */}
-        {campaign.notes && (
+        {/* Description */}
+        {campaign.description && (
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {campaign.notes}
+            {campaign.description}
           </p>
+        )}
+
+        {/* Landing Page */}
+        {campaign.landing_page && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <ExternalLink className="h-3 w-3" />
+            <span className="truncate">{new URL(campaign.landing_page).hostname}</span>
+          </div>
+        )}
+
+        {/* Status */}
+        {!campaign.is_active && (
+          <Badge variant="secondary" className="text-xs w-fit">
+            Inactive
+          </Badge>
         )}
       </CardContent>
     </Card>
