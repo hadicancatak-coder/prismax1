@@ -3,10 +3,11 @@ import { useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
+import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 
 interface Campaign {
   id: string;
@@ -50,6 +51,7 @@ function CampaignTrackingCard({
   externalReviewerEmail,
 }: CampaignTrackingCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   if (!campaign) return null;
 
@@ -66,19 +68,32 @@ function CampaignTrackingCard({
             <h4 className="font-semibold text-sm line-clamp-1 flex-1">
               {campaign.name}
             </h4>
-            {!isExternal && (
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRemove();
+                  setCommentsOpen(true);
                 }}
               >
-                <X className="h-3.5 w-3.5" />
+                <MessageSquare className="h-3.5 w-3.5" />
               </Button>
-            )}
+              {!isExternal && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
           
           {statusOption && (
@@ -93,6 +108,17 @@ function CampaignTrackingCard({
         open={detailOpen}
         onOpenChange={setDetailOpen}
         campaignId={tracking.campaign_id}
+      />
+
+      <CampaignCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        trackingId={tracking.id}
+        campaignName={campaign.name}
+        entityName={entity}
+        isExternal={isExternal}
+        externalReviewerName={externalReviewerName}
+        externalReviewerEmail={externalReviewerEmail}
       />
     </>
   );
