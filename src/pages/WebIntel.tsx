@@ -221,17 +221,19 @@ export default function WebIntel() {
       }
       
       // Add campaigns and UTM links
-      for (const campaignId of campaignIds) {
-        await addCampaignToDeal.mutateAsync({ dealId, campaignId });
+      if (campaignIds.length > 0) {
+        await Promise.all(campaignIds.map(campaignId => addCampaignToDeal.mutateAsync({ dealId, campaignId })));
       }
-      for (const utmLinkId of utmLinkIds) {
-        await addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId });
+      if (utmLinkIds.length > 0) {
+        await Promise.all(utmLinkIds.map(utmLinkId => addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId })));
       }
       
+      toast.success(editingDeal ? "Deal updated successfully" : "Deal created successfully");
       setDealFormDialogOpen(false);
       setEditingDeal(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save deal error:', error);
+      toast.error(error.message || "Failed to save deal");
     }
   };
 

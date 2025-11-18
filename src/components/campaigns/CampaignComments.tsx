@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send } from "lucide-react";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { formatDistanceToNow } from "date-fns";
@@ -48,7 +49,19 @@ export function CampaignComments({ campaignId }: CampaignCommentsProps) {
               {comments.map((comment: any) => (
                 <div key={comment.id} className="border-b pb-3 last:border-0">
                   <div className="flex items-start justify-between mb-1">
-                    <span className="font-medium text-sm">{comment.author_name}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium text-sm">{comment.author_name}</span>
+                      {comment.is_external && comment.author_email && (
+                        <span className="text-xs text-muted-foreground">
+                          {comment.author_email}
+                        </span>
+                      )}
+                      {comment.request_type && (
+                        <Badge variant="secondary" className="w-fit text-xs">
+                          {comment.request_type}
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>

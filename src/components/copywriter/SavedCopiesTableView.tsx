@@ -274,10 +274,11 @@ export function SavedCopiesTableView({
             <div
               className={cn(
                 "text-xs cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 min-h-[32px] max-h-[120px] overflow-y-auto",
-                !content && "text-muted-foreground italic"
+                !content && "text-muted-foreground italic",
+                lang === "ar" && "text-right"
               )}
               onClick={() => !isGuest && setEditingCell(cellId)}
-              dangerouslySetInnerHTML={{ __html: content || (lang === "en" ? "Click to edit..." : "") }}
+              dangerouslySetInnerHTML={{ __html: content || "Click to edit..." }}
               title={content ? (new DOMParser().parseFromString(content, 'text/html')).body.textContent || '' : ''}
             />
           )}
