@@ -60,6 +60,8 @@ export const useCampaignMetadata = () => {
           asset_link: assetLink,
           created_by: user?.id,
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'utm_campaign_id'
         })
         .select()
         .single();

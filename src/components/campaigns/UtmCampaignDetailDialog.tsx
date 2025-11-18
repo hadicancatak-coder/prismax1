@@ -1,5 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -8,15 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useUpdateUtmCampaign } from "@/hooks/useUtmCampaigns";
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignComments } from "./CampaignComments";
-import { CampaignVersionHistory } from "./CampaignVersionHistory";
-import { Loader2, FileImage, ExternalLink, Save } from "lucide-react";
+import { Loader2, FileImage, ExternalLink, Save, X, MessageCircle, Plus, MoreVertical, Edit, Trash2, Activity } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface UtmCampaignDetailDialogProps {
   open: boolean;
@@ -32,6 +35,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [assetLink, setAssetLink] = useState("");
   const [versionNotes, setVersionNotes] = useState("");
+  const [showComments, setShowComments] = useState(false);
+  const [isAddingVersion, setIsAddingVersion] = useState(false);
+  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
 
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["utm-campaign", campaignId],
@@ -65,7 +71,8 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const updateMutation = useUpdateUtmCampaign();
   const { upsertMetadata, uploadImage } = useCampaignMetadata();
   const { getEntitiesForCampaign } = useCampaignEntityTracking();
-  const { createVersion } = useCampaignVersions();
+  const { useVersions, createVersion, deleteVersion } = useCampaignVersions();
+  const { data: versions = [], isLoading: versionsLoading } = useVersions(campaignId);
   
   const entities = getEntitiesForCampaign(campaignId);
 
@@ -113,28 +120,62 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         campaignId,
         imageUrl,
         imageFileSize,
-        assetLink: assetLink || null,
+        assetLink: assetLink || undefined,
       });
-
-      if (versionNotes.trim()) {
-        await createVersion.mutateAsync({
-          campaignId,
-          name,
-          landingPage: landingPage || undefined,
-          description: description || undefined,
-          imageUrl,
-          imageFileSize,
-          assetLink: assetLink || undefined,
-          versionNotes,
-        });
-        setVersionNotes("");
-      }
 
       setIsEditing(false);
       setImageFile(null);
       toast.success("Campaign updated successfully");
     } catch (error) {
       toast.error("Failed to update campaign");
+    }
+  };
+
+  const handleAddVersion = async () => {
+    if (!versionNotes.trim()) {
+      toast.error("Please provide version notes");
+      return;
+    }
+
+    try {
+      let imageUrl = campaign?.campaign_metadata?.image_url;
+      let imageFileSize = campaign?.campaign_metadata?.image_file_size;
+
+      if (imageFile) {
+        const result = await uploadImage.mutateAsync({ 
+          campaignId, 
+          file: imageFile 
+        });
+        imageUrl = result.publicUrl;
+        imageFileSize = result.fileSize;
+      }
+
+      await createVersion.mutateAsync({
+        campaignId,
+        name,
+        landingPage: landingPage || undefined,
+        description: description || undefined,
+        imageUrl,
+        imageFileSize,
+        assetLink: assetLink || undefined,
+        versionNotes,
+      });
+
+      setVersionNotes("");
+      setIsAddingVersion(false);
+      setImageFile(null);
+      toast.success("Version saved successfully");
+    } catch (error) {
+      toast.error("Failed to save version");
+    }
+  };
+
+  const handleDeleteVersion = async (versionId: string) => {
+    try {
+      await deleteVersion.mutateAsync(versionId);
+      toast.success("Version deleted");
+    } catch (error) {
+      toast.error("Failed to delete version");
     }
   };
 
@@ -156,220 +197,303 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Campaign Details: {campaign.name}</DialogTitle>
-          <DialogDescription>
-            Manage campaign information, assets, comments, and version history
-          </DialogDescription>
-        </DialogHeader>
-
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="comments">Comments</TabsTrigger>
-            <TabsTrigger value="versions">Versions</TabsTrigger>
-            <TabsTrigger value="entities">Entities</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details" className="space-y-4 mt-4">
-            <div>
-              <Label htmlFor="name">Campaign Name</Label>
-              {isEditing ? (
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-              ) : (
-                <p className="mt-1 text-sm font-medium">{campaign.name}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="landing-page">Landing Page</Label>
-              {isEditing ? (
-                <Input
-                  id="landing-page"
-                  value={landingPage}
-                  onChange={(e) => setLandingPage(e.target.value)}
-                  placeholder="https://example.com"
-                  className="mt-1"
-                />
-              ) : (
-                <p className="mt-1 text-sm break-all">
-                  {campaign.landing_page || <span className="text-muted-foreground">Not set</span>}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label>Active Entities</Label>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {entities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Not live on any entity yet</p>
-                ) : (
-                  entities.map((entityTracking) => (
-                    <Badge key={entityTracking.id} variant="secondary" className="gap-1">
-                      {entityTracking.entity}
-                      <span className="text-xs">({entityTracking.status})</span>
-                    </Badge>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {isEditing && (
-              <>
-                <div>
-                  <Label htmlFor="asset-image">Campaign Asset (Image, max 2MB)</Label>
-                  <div className="mt-1 space-y-2">
-                    <Input id="asset-image" type="file" accept="image/*" onChange={handleImageUpload} className="cursor-pointer" />
-                    {campaign.campaign_metadata?.image_url && !imageFile && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <FileImage className="h-4 w-4" />
-                        <a href={campaign.campaign_metadata.image_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          Current image
-                        </a>
-                      </div>
+      <DialogContent className={cn(
+        "max-h-[85vh] overflow-hidden p-0 transition-all duration-300",
+        showComments ? "max-w-[1400px]" : "max-w-4xl"
+      )}>
+        <div className="flex h-full">
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <DialogTitle className="text-2xl mb-2">
+                    {isEditing ? (
+                      <Input value={name} onChange={(e) => setName(e.target.value)} className="text-2xl font-semibold" />
+                    ) : (
+                      campaign.name
                     )}
-                    {imageFile && <p className="text-sm text-muted-foreground">Selected: {imageFile.name}</p>}
+                  </DialogTitle>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Created {format(new Date(campaign.created_at), 'MMM d, yyyy')}</span>
+                    {campaign.last_used_at && (
+                      <>
+                        <span>•</span>
+                        <span>Last used {format(new Date(campaign.last_used_at), 'MMM d, yyyy')}</span>
+                      </>
+                    )}
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={showComments ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowComments(!showComments)}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Comments
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
 
-                <div>
-                  <Label htmlFor="asset-link">Or External Asset Link (for files over 2MB)</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      id="asset-link"
-                      value={assetLink}
-                      onChange={(e) => setAssetLink(e.target.value)}
-                      placeholder="https://drive.google.com/..."
-                    />
-                    {assetLink && (
-                      <Button variant="outline" size="icon" onClick={() => window.open(assetLink, "_blank")}>
-                        <ExternalLink className="h-4 w-4" />
+            <Separator />
+
+            <ScrollArea className="flex-1 px-6 py-4">
+              <div className="space-y-6">
+                {/* Campaign Info */}
+                <Card className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-lg">Campaign Information</h3>
+                    {isEditing ? (
+                      <Button onClick={handleSave} size="sm">
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    ) : (
+                      <Button onClick={() => setIsEditing(true)} size="sm" variant="outline">
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
                       </Button>
                     )}
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="version-notes">Version Notes (optional)</Label>
-                  <Textarea
-                    id="version-notes"
-                    value={versionNotes}
-                    onChange={(e) => setVersionNotes(e.target.value)}
-                    placeholder="Describe the changes you're making..."
-                    className="mt-1"
-                    rows={3}
-                  />
-                </div>
-              </>
-            )}
-
-            {!isEditing && campaign.campaign_metadata && (
-              <div className="space-y-2">
-                {campaign.campaign_metadata.image_url && (
                   <div>
-                    <Label>Campaign Asset</Label>
-                    <a href={campaign.campaign_metadata.image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline mt-1">
-                      <FileImage className="h-4 w-4" />
-                      View Image ({(campaign.campaign_metadata.image_file_size! / 1024).toFixed(0)} KB)
-                    </a>
+                    <Label>Landing Page</Label>
+                    {isEditing ? (
+                      <Input
+                        value={landingPage}
+                        onChange={(e) => setLandingPage(e.target.value)}
+                        placeholder="https://example.com"
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm break-all">
+                        {campaign.landing_page ? (
+                          <a href={campaign.landing_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                            {campaign.landing_page}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Not set</span>
+                        )}
+                      </p>
+                    )}
                   </div>
-                )}
-                {campaign.campaign_metadata.asset_link && (
+
                   <div>
-                    <Label>External Asset Link</Label>
-                    <a href={campaign.campaign_metadata.asset_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline mt-1">
-                      <ExternalLink className="h-4 w-4" />
-                      Open Link
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Usage Count</Label>
-                <p className="mt-1 text-sm font-medium">{campaign.usage_count || 0}</p>
-              </div>
-
-              <div>
-                <Label>Created</Label>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {format(new Date(campaign.created_at), "MMM d, yyyy")}
-                </p>
-              </div>
-            </div>
-
-            {campaign.last_used_at && (
-              <div>
-                <Label>Last Used</Label>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {format(new Date(campaign.last_used_at), "MMM d, yyyy 'at' h:mm a")}
-                </p>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              {isEditing ? (
-                <>
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                  <Button onClick={handleSave} disabled={updateMutation.isPending || upsertMetadata.isPending}>
-                    {(updateMutation.isPending || upsertMetadata.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={() => setIsEditing(true)}>Edit Campaign</Button>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="comments" className="mt-4">
-            <CampaignComments campaignId={campaignId} />
-          </TabsContent>
-
-          <TabsContent value="versions" className="mt-4">
-            <CampaignVersionHistory campaignId={campaignId} />
-          </TabsContent>
-
-          <TabsContent value="entities" className="space-y-4 mt-4">
-            <div>
-              <Label>Associated Entities</Label>
-              {entities.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">No entities associated with this campaign yet.</p>
-              ) : (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {entities.map((tracking) => (
-                    <Badge key={tracking.id} variant="secondary">{tracking.entity}</Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label>Campaign Status by Entity</Label>
-              <div className="mt-2 space-y-2">
-                {entities.map((tracking) => (
-                  <div key={tracking.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{tracking.entity}</p>
-                      {tracking.notes && <p className="text-sm text-muted-foreground mt-1">{tracking.notes}</p>}
+                    <Label>Active Entities</Label>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {entities.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Not live on any entity yet</p>
+                      ) : (
+                        entities.map((entityTracking) => (
+                          <Badge key={entityTracking.id} variant="secondary" className="gap-1">
+                            {entityTracking.entity}
+                            <span className="text-xs opacity-70">({entityTracking.status})</span>
+                          </Badge>
+                        ))
+                      )}
                     </div>
-                    <Badge variant={
-                      tracking.status === 'active' ? 'success' :
-                      tracking.status === 'planning' ? 'secondary' :
-                      tracking.status === 'completed' ? 'default' : 'outline'
-                    }>
-                      {tracking.status}
-                    </Badge>
                   </div>
-                ))}
+
+                  {isEditing && (
+                    <>
+                      <div>
+                        <Label htmlFor="asset-image">Campaign Asset (Image, max 2MB)</Label>
+                        <div className="mt-1 space-y-2">
+                          <Input id="asset-image" type="file" accept="image/*" onChange={handleImageUpload} className="cursor-pointer" />
+                          {campaign.campaign_metadata?.image_url && !imageFile && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <FileImage className="h-4 w-4" />
+                              <span>Current image: {(campaign.campaign_metadata.image_file_size || 0) / 1024}KB</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="asset-link">External Asset Link (for files &gt;2MB)</Label>
+                        <Input
+                          id="asset-link"
+                          value={assetLink}
+                          onChange={(e) => setAssetLink(e.target.value)}
+                          placeholder="https://drive.google.com/..."
+                          className="mt-1"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {!isEditing && campaign.campaign_metadata && (
+                    <div>
+                      <Label>Assets</Label>
+                      <div className="mt-2 space-y-2">
+                        {campaign.campaign_metadata.image_url && (
+                          <a
+                            href={campaign.campaign_metadata.image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <FileImage className="h-4 w-4" />
+                            View Image ({(campaign.campaign_metadata.image_file_size || 0) / 1024}KB)
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {campaign.campaign_metadata.asset_link && (
+                          <a
+                            href={campaign.campaign_metadata.asset_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            External Asset Link
+                          </a>
+                        )}
+                        {!campaign.campaign_metadata.image_url && !campaign.campaign_metadata.asset_link && (
+                          <p className="text-sm text-muted-foreground">No assets uploaded</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                {/* Versions Log */}
+                <Card className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-lg">Version History</h3>
+                    </div>
+                    <Button onClick={() => setIsAddingVersion(!isAddingVersion)} size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Version
+                    </Button>
+                  </div>
+
+                  {isAddingVersion && (
+                    <Card className="p-4 mb-4 border-2 border-primary/20">
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Version Notes *</Label>
+                          <Textarea
+                            value={versionNotes}
+                            onChange={(e) => setVersionNotes(e.target.value)}
+                            placeholder="Describe what changed in this version..."
+                            className="mt-1"
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="version-image">Attach Asset (optional)</Label>
+                          <Input id="version-image" type="file" accept="image/*" onChange={handleImageUpload} className="mt-1 cursor-pointer" />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="outline" size="sm" onClick={() => {
+                            setIsAddingVersion(false);
+                            setVersionNotes("");
+                            setImageFile(null);
+                          }}>
+                            Cancel
+                          </Button>
+                          <Button size="sm" onClick={handleAddVersion}>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Version
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+
+                  {versionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      No versions yet. Create your first version to track changes.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {versions.map((version, index) => {
+                        const createdDate = version.created_at ? new Date(version.created_at) : null;
+                        const isValidDate = createdDate && !isNaN(createdDate.getTime());
+                        
+                        return (
+                          <div
+                            key={version.id}
+                            className="border rounded-lg p-3 hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Badge variant="outline" className="flex-shrink-0">v{version.version_number}</Badge>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">{version.name}</div>
+                                  {version.version_notes && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                      {version.version_notes}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {isValidDate 
+                                    ? format(createdDate, 'MMM d, yyyy')
+                                    : 'Date unavailable'}
+                                </span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setEditingVersionId(version.id)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDeleteVersion(version.id)}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </ScrollArea>
+          </div>
+
+          {/* Expandable Comments Section */}
+          {showComments && (
+            <>
+              <Separator orientation="vertical" className="h-full" />
+              <div className="w-[500px] flex flex-col border-l">
+                <div className="px-4 py-3 border-b">
+                  <h3 className="font-semibold">Comments & Activity</h3>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <CampaignComments campaignId={campaignId} />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
