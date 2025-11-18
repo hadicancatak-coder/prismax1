@@ -19,7 +19,7 @@ import SecurityPage from "./pages/admin/SecurityPage";
 import Logs from "./pages/admin/Logs";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
-import GoogleSheetsReports from "./pages/GoogleSheetsReports";
+import ReportsLog from "./pages/ReportsLog";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -38,7 +38,6 @@ import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
-import ComplianceApproval from "./pages/ComplianceApproval";
 import PublicComplianceReview from "./pages/PublicComplianceReview";
 import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
@@ -82,7 +81,7 @@ const App = () => (
                 <Route path="/utm-planner" element={<UtmPlanner />} />
                 <Route path="/operations" element={<Operations />} />
                 <Route path="/operations/status-log" element={<StatusLog />} />
-                <Route path="/operations/custom-reports" element={<GoogleSheetsReports />} />
+                <Route path="/operations/custom-reports" element={<ReportsLog />} />
                 <Route path="/operations/:id" element={<AuditLogDetail />} />
                 <Route path="/copywriter" element={<CopyWriter />} />
                 <Route path="/security" element={<Security />} />
@@ -90,7 +89,6 @@ const App = () => (
                 <Route path="/campaigns-log" element={<CampaignsLog />} />
                 <Route path="/location-intelligence" element={<LocationIntelligence />} />
                 <Route path="/web-intel" element={<WebIntel />} />
-                <Route path="/compliance-approval" element={<ComplianceApproval />} />
                 <Route path="/about" element={<About />} />
               </Route>
               <Route path="*" element={<NotFound />} />
