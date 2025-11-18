@@ -377,6 +377,13 @@ export default function CalendarView() {
         if (error) {
           toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
+          // Log completion to task comments
+          await supabase.from('comments').insert({
+            task_id: originalTaskId,
+            author_id: user.id,
+            body: `✓ Completed recurring instance for ${format(occurrenceDate, 'EEEE, MMMM dd, yyyy')}`,
+          });
+          
           toast({ title: "Marked complete", description: `Completed for ${format(occurrenceDate, 'MMM dd')}` });
         }
       } else {
@@ -387,6 +394,13 @@ export default function CalendarView() {
             .from('recurring_task_completions')
             .delete()
             .eq('id', task.completionId);
+          
+          // Log uncompletion to comments
+          await supabase.from('comments').insert({
+            task_id: originalTaskId,
+            author_id: user.id,
+            body: `↺ Unmarked completion for ${format(occurrenceDate, 'EEEE, MMMM dd, yyyy')}`,
+          });
           
           toast({ title: "Unmarked", description: "Completion removed" });
         }
