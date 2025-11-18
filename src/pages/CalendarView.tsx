@@ -117,6 +117,12 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = fa
               {getRecurrenceLabel(task)}
             </Badge>
           )}
+          {task.isRecurringTask && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-primary/10 border-primary/30 flex items-center gap-1">
+              <RotateCcw className="h-2.5 w-2.5" />
+              {getRecurrenceLabel(task)} • {task.completedCount}/{task.occurrenceCount}
+            </Badge>
+          )}
         </div>
         {task.description && (
           <p className="text-metadata line-clamp-1">
@@ -282,26 +288,48 @@ export default function CalendarView() {
 
     allTasks.forEach(task => {
       if (task.task_type === 'recurring' && task.recurrence_rrule) {
-        // Expand recurring task into occurrences
-        const occurrences = expandRecurringTask(
-          task,
-          startDate,
-          endDate,
-          completions.filter(c => c.task_id === task.id)
-        );
-        
-        // Convert each occurrence to a task-like object
-        occurrences.forEach(occ => {
-          expandedTasks.push({
-            ...task,
-            id: `${task.id}::${occ.occurrenceDate.getTime()}`,
-            originalTaskId: task.id,
-            due_at: occ.occurrenceDate.toISOString(),
-            status: occ.isCompleted ? 'Completed' : task.status,
-            isRecurringOccurrence: true,
-            completionId: occ.completionId,
+        // For Kanban view, expand recurring task into occurrences
+        if (viewMode === 'kanban') {
+          const occurrences = expandRecurringTask(
+            task,
+            startDate,
+            endDate,
+            completions.filter(c => c.task_id === task.id)
+          );
+          
+          // Convert each occurrence to a task-like object
+          occurrences.forEach(occ => {
+            expandedTasks.push({
+              ...task,
+              id: `${task.id}::${occ.occurrenceDate.getTime()}`,
+              originalTaskId: task.id,
+              due_at: occ.occurrenceDate.toISOString(),
+              status: occ.isCompleted ? 'Completed' : task.status,
+              isRecurringOccurrence: true,
+              completionId: occ.completionId,
+            });
           });
-        });
+        } else {
+          // For List view, show recurring task once with aggregated completion status
+          const occurrences = expandRecurringTask(
+            task,
+            startDate,
+            endDate,
+            completions.filter(c => c.task_id === task.id)
+          );
+          
+          if (occurrences.length > 0) {
+            // Show as pending if any occurrence is not completed
+            const hasIncomplete = occurrences.some(occ => !occ.isCompleted);
+            expandedTasks.push({
+              ...task,
+              status: hasIncomplete ? task.status : 'Completed',
+              isRecurringTask: true,
+              occurrenceCount: occurrences.length,
+              completedCount: occurrences.filter(occ => occ.isCompleted).length,
+            });
+          }
+        }
       } else if (task.due_at) {
         // Regular task with due date
         const dueDate = new Date(task.due_at);
@@ -676,12 +704,21 @@ export default function CalendarView() {
                               key={task.id}
                               task={task}
                               onTaskClick={(id: string) => {
-                                // Extract original task ID if this is a recurring occurrence
-    const originalId = id.includes('::') ? id.split('::')[0] : id;
+                                // For recurring tasks in list view or occurrences in kanban, extract original ID
+                                const originalId = id.includes('::') ? id.split('::')[0] : id;
                                 setSelectedTaskId(originalId);
                                 setTaskDialogOpen(true);
                               }}
-                              onTaskComplete={handleTaskComplete}
+                              onTaskComplete={(taskId, completed) => {
+                                // For recurring tasks in list view, don't allow checkbox completion
+                                // User must open the task dialog to complete individual occurrences
+                                if (task.isRecurringTask) {
+                                  setSelectedTaskId(taskId);
+                                  setTaskDialogOpen(true);
+                                  return;
+                                }
+                                handleTaskComplete(taskId, completed);
+                              }}
                               isManualMode={sortOption === "manual"}
                             />
                           ))
