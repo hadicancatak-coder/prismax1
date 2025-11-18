@@ -417,19 +417,6 @@ export function SavedCopiesTableView({
                   />
                 </TableCell>
                 <TableCell className="min-h-[44px] border-r p-2">
-                  <Select value={newRow.status} onValueChange={(v) => setNewRow({ ...newRow, status: v })}>
-                    <SelectTrigger className="h-8 text-xs border-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="in_review">In Review</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="min-h-[44px] border-r p-2">
                   <Select value={newRow.element_type} onValueChange={(v) => setNewRow({ ...newRow, element_type: v })}>
                     <SelectTrigger className="h-8 text-xs border-0">
                       <SelectValue>
@@ -440,6 +427,19 @@ export function SavedCopiesTableView({
                       {ELEMENT_TYPES.map((t) => (
                         <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="min-h-[44px] border-r p-2">
+                  <Select value={newRow.status} onValueChange={(v) => setNewRow({ ...newRow, status: v })}>
+                    <SelectTrigger className="h-8 text-xs border-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="in_review">In Review</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
