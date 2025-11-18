@@ -8,13 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity, MoreVertical, CheckCircle2, RotateCcw } from "lucide-react";
+import { Clock, Send, Smile, X, MessageCircle, Plus, CalendarIcon, Edit, Check, Trash2, Activity, MoreVertical, CheckCircle2, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -73,6 +74,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   const [confirmDeleteComment, setConfirmDeleteComment] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState<{id: string, body: string} | null>(null);
   const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { assignees, refetch: refetchAssignees } = useRealtimeAssignees("task", taskId);
