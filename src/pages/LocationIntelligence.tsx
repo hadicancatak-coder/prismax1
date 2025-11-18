@@ -181,7 +181,13 @@ export default function LocationIntelligence() {
         </Button>
         {showFilters && (
           <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300 max-h-[500px] overflow-y-auto">
-            <LocationFilters filters={filters} onFiltersChange={setFilters} cities={cities} agencies={agencies} campaigns={campaigns} />
+            <LocationFilters 
+              filters={filters} 
+              onFiltersChange={setFilters} 
+              availableCities={cities} 
+              availableAgencies={agencies} 
+              availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
+            />
           </div>
         )}
       </div>
@@ -239,8 +245,19 @@ export default function LocationIntelligence() {
         </div>
       )}
 
-      <LocationDetailPopup open={detailOpen} onClose={() => setDetailOpen(false)} location={selectedLocation} onEdit={() => selectedLocation && handleEdit(selectedLocation)} onDelete={() => selectedLocation && handleDelete(selectedLocation.id)} />
-      <LocationFormDialog open={formOpen} onClose={() => { setFormOpen(false); setEditingLocation(null); setClickedCoordinates(null); }} location={editingLocation} initialCoordinates={clickedCoordinates} />
+      <LocationDetailPopup 
+        open={detailOpen} 
+        onOpenChange={setDetailOpen} 
+        location={selectedLocation ? { ...selectedLocation, historic_prices: [], past_campaigns: [] } : null} 
+        onEdit={() => selectedLocation && handleEdit(selectedLocation)} 
+        onDelete={() => selectedLocation && handleDelete(selectedLocation.id)} 
+      />
+      <LocationFormDialog 
+        open={formOpen} 
+        onClose={() => { setFormOpen(false); setEditingLocation(null); setClickedCoordinates(null); }} 
+        location={editingLocation ? { ...editingLocation, historic_prices: [], past_campaigns: [] } : null} 
+        initialCoordinates={clickedCoordinates} 
+      />
       <CampaignPlannerDialog open={plannerOpen} onClose={() => { setPlannerOpen(false); setSelectedLocations([]); setSelectionMode('normal'); }} locations={selectedLocations.length > 0 ? selectedLocations : filteredLocations} />
       <BulkLocationUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <CampaignsListDialog open={campaignsListOpen} onClose={() => setCampaignsListOpen(false)} onCreateNew={() => { setCampaignsListOpen(false); setPlannerOpen(true); }} />
