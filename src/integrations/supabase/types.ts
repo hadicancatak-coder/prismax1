@@ -1546,7 +1546,7 @@ export type Database = {
             foreignKeyName: "deal_campaigns_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "planned_campaigns"
+            referencedRelation: "utm_campaigns"
             referencedColumns: ["id"]
           },
           {

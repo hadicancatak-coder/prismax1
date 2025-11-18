@@ -29,6 +29,32 @@ const UtmPlanner = () => {
         </div>
       </div>
 
+      {/* Google Sheets Backup Warning */}
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-blue-400 mb-1">Google Sheets Backup Available</h3>
+          <p className="text-sm text-muted-foreground mb-2">
+            For additional backup and reporting, you can export your UTM data to Google Sheets
+          </p>
+          <a
+            href="https://docs.google.com/spreadsheets"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-400 hover:text-blue-300 underline inline-flex items-center gap-1"
+          >
+            Open Google Sheets
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto">
           <TabsTrigger value="builder" className="gap-2">

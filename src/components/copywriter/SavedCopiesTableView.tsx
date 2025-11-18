@@ -532,8 +532,11 @@ export function SavedCopiesTableView({
                   </TableCell>
                   <TableCell className="min-h-[44px] border-r p-2">
                     <Select
-                      value={copy.status}
-                      onValueChange={(v) => handleUpdateField(copy.id, "status", v)}
+                      value={copy.status || "draft"}
+                      onValueChange={(v) => {
+                        console.log('Status change:', { id: copy.id, status: v });
+                        handleUpdateField(copy.id, "status", v);
+                      }}
                       disabled={isGuest}
                     >
                       <SelectTrigger className="h-8 text-xs border-0">

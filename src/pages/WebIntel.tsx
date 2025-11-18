@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelDeals } from "@/hooks/useWebIntelDeals";
-import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useUtmLinks } from "@/hooks/useUtmLinks";
 import { DealsTableView } from "@/components/webintel/DealsTableView";
 import { DealFormDialog } from "@/components/webintel/DealFormDialog";
@@ -26,7 +26,7 @@ export default function WebIntel() {
     getUtmLinksByDeal,
   } = useWebIntelDeals();
 
-  const { campaigns } = usePlannedCampaigns();
+  const { data: campaigns = [] } = useUtmCampaigns();
   const { data: utmLinks = [] } = useUtmLinks();
 
   const [dealFormDialogOpen, setDealFormDialogOpen] = useState(false);
