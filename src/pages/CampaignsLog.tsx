@@ -3,20 +3,20 @@ import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragOv
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, ExternalLink, Search, ChevronDown, Plus, Trash2, Check } from "lucide-react";
+import { GripVertical, ExternalLink, Search, ChevronDown, Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
-import { ExternalAccessDialog } from "@/components/campaigns/ExternalAccessDialog";
 import { UtmCampaignDetailDialog } from "@/components/campaigns/UtmCampaignDetailDialog";
 import { CreateUtmCampaignDialog } from "@/components/campaigns/CreateUtmCampaignDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
+import { useExternalAccess } from "@/hooks/useExternalAccess";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -49,7 +49,6 @@ export default function CampaignsLog() {
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set(['library']));
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [externalAccessDialogOpen, setExternalAccessDialogOpen] = useState(false);
   const [createCampaignDialogOpen, setCreateCampaignDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string>("");
   const [libraryEntityFilter, setLibraryEntityFilter] = useState<string>("all");
@@ -57,10 +56,12 @@ export default function CampaignsLog() {
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
   const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
   const [bulkTargetEntity, setBulkTargetEntity] = useState<string>("");
+  const [generatingLink, setGeneratingLink] = useState(false);
 
   const { data: entities = [] } = useSystemEntities();
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useUtmCampaigns();
   const { createTracking, getEntitiesForCampaign, deleteTracking } = useCampaignEntityTracking();
+  const { generateLink } = useExternalAccess();
   
   useEffect(() => {
     if (entities.length > 0 && !selectedEntity) setSelectedEntity(entities[0].name);
@@ -158,27 +159,65 @@ export default function CampaignsLog() {
     }
   };
 
+  const handleGenerateReviewLink = async () => {
+    if (!selectedEntity) {
+      toast.error("Please select an entity first");
+      return;
+    }
+
+    setGeneratingLink(true);
+    try {
+      const result = await generateLink.mutateAsync({
+        entity: selectedEntity,
+        reviewerName: "External Reviewer",
+        reviewerEmail: "reviewer@cfi.trade",
+        expiresAt: undefined, // Never expires
+      });
+
+      // Copy link to clipboard
+      await navigator.clipboard.writeText(result.url);
+      toast.success("Review link generated and copied to clipboard!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to generate review link");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
   if (isLoadingCampaigns) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="min-h-screen bg-background flex flex-col">
         <div className="container mx-auto py-6 px-6 space-y-4 flex-shrink-0">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-6 flex-1">
-              <div className="flex-1">
-                <h1 className="text-page-title">Campaign Log</h1>
-                <p className="text-muted-foreground mt-1 text-sm">Track and manage campaign assignments across entities</p>
-              </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex-1">
+              <h1 className="text-page-title">Campaign Log</h1>
+              <p className="text-muted-foreground mt-1 text-sm">Track and manage campaign assignments across entities</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-                <SelectTrigger className="w-[280px]"><SelectValue placeholder="Select entity" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[280px]"><SelectValue placeholder="Select entity" /></SelectTrigger>
                 <SelectContent className="z-[100]">{entities.map((e) => <SelectItem key={e.name} value={e.name}>{e.emoji} {e.name}</SelectItem>)}</SelectContent>
               </Select>
+              <Button 
+                onClick={handleGenerateReviewLink} 
+                className="w-full sm:w-auto"
+                disabled={!selectedEntity || generatingLink}
+              >
+                {generatingLink ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Generate Review Link
+                  </>
+                )}
+              </Button>
             </div>
-            <Button onClick={() => setExternalAccessDialogOpen(true)} className="flex-shrink-0">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Generate Review Link
-            </Button>
           </div>
         </div>
 
@@ -254,7 +293,6 @@ export default function CampaignsLog() {
           return campaign ? <DraggableCampaignCard campaign={campaign} isDragging /> : null;
         })()}
       </DragOverlay>
-      <ExternalAccessDialog open={externalAccessDialogOpen} onOpenChange={setExternalAccessDialogOpen} />
       <CreateUtmCampaignDialog open={createCampaignDialogOpen} onOpenChange={setCreateCampaignDialogOpen} />
       {selectedCampaignId && <UtmCampaignDetailDialog open={!!selectedCampaignId} onOpenChange={(o) => !o && setSelectedCampaignId(null)} campaignId={selectedCampaignId} />}
       <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
