@@ -10,7 +10,7 @@ interface LocationMapProps {
   locations: MediaLocation[];
   onLocationClick: (location: MediaLocation) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
-  selectedLocationId?: string | null;
+  selectedLocationId?: string[] | null;
   campaignLocationIds?: string[];
 }
 
@@ -133,7 +133,8 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         el.style.transition = 'all 0.2s ease';
 
         // Highlight if selected
-        if (selectedLocationId === location.id) {
+        const isSelected = Array.isArray(selectedLocationId) && selectedLocationId.includes(location.id);
+        if (isSelected) {
           el.style.border = '3px solid hsl(var(--primary))';
           el.style.transform = 'scale(1.3)';
         }
