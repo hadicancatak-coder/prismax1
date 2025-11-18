@@ -10,6 +10,8 @@ interface LocationMapProps {
   selectedLocationId?: string[] | null;
   campaignLocationIds?: string[];
   onLocationClick: (location: MediaLocation) => void;
+  onViewDetails?: (location: MediaLocation) => void;
+  onEdit?: (location: MediaLocation) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
   selectionMode?: 'normal' | 'campaign-select';
   isAdmin?: boolean;
@@ -20,7 +22,7 @@ export interface LocationMapRef {
 }
 
 export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
-  ({ locations, onLocationClick, onMapClick, selectedLocationId, campaignLocationIds = [], selectionMode = 'normal', isAdmin = false }, ref) => {
+  ({ locations, onLocationClick, onViewDetails, onEdit, onMapClick, selectedLocationId, campaignLocationIds = [], selectionMode = 'normal', isAdmin = false }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const markers = useRef<mapboxgl.Marker[]>([]);
@@ -172,12 +174,34 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         
         const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup', closeButton: true, closeOnClick: true }).setHTML(popupHTML);
         popup.on('open', () => { 
-          popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => {
-            btn.addEventListener('click', () => { 
+          const popupEl = popup.getElement();
+          if (!popupEl) return;
+          
+          // Handle "View Details" button
+          const viewDetailsBtn = popupEl.querySelector('.popup-btn');
+          if (viewDetailsBtn && onViewDetails) {
+            viewDetailsBtn.addEventListener('click', () => { 
+              onViewDetails(location);
+              popup.remove(); 
+            });
+          }
+          
+          // Handle selection button in selection mode
+          if (isSelectionMode) {
+            viewDetailsBtn?.addEventListener('click', () => { 
               onLocationClick(location); 
               popup.remove(); 
             });
-          }); 
+          }
+          
+          // Handle "Edit" button
+          const editBtn = popupEl.querySelector('.popup-btn-edit');
+          if (editBtn && onEdit) {
+            editBtn.addEventListener('click', () => { 
+              onEdit(location);
+              popup.remove(); 
+            });
+          }
         });
         marker.setPopup(popup);
         

@@ -86,6 +86,11 @@ export default function LocationIntelligence() {
     }
   };
 
+  const handleViewDetails = (location: MediaLocation) => {
+    setSelectedLocation(location);
+    setDetailOpen(true);
+  };
+
   const handleMapClick = (coords: { lat: number; lng: number }) => {
     setClickedCoordinates(coords);
     setEditingLocation(null);
@@ -138,25 +143,30 @@ export default function LocationIntelligence() {
 
   // Set up right-click context menu on map
   useEffect(() => {
-    const mapContainer = document.querySelector('.mapboxgl-canvas-container');
-    if (!mapContainer) return;
+    // Wait for map to be ready
+    const timer = setTimeout(() => {
+      const mapContainer = document.querySelector('.mapboxgl-canvas-container');
+      if (!mapContainer) return;
 
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      setContextMenuPos({ x: e.clientX, y: e.clientY });
-    };
+      const handleContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+        setContextMenuPos({ x: e.clientX, y: e.clientY });
+      };
 
-    const handleClick = () => {
-      setContextMenuPos(null);
-    };
+      const handleClick = () => {
+        setContextMenuPos(null);
+      };
 
-    mapContainer.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('click', handleClick);
+      mapContainer.addEventListener('contextmenu', handleContextMenu);
+      document.addEventListener('click', handleClick);
 
-    return () => {
-      mapContainer.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('click', handleClick);
-    };
+      return () => {
+        mapContainer.removeEventListener('contextmenu', handleContextMenu);
+        document.removeEventListener('click', handleClick);
+      };
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {
@@ -183,6 +193,8 @@ export default function LocationIntelligence() {
           selectedLocationId={selectedLocations.map(l => l.id)}
           campaignLocationIds={campaignLocationIds}
           onLocationClick={handleLocationClick}
+          onViewDetails={handleViewDetails}
+          onEdit={handleEdit}
           onMapClick={isAdmin && selectionMode === 'normal' ? handleMapClick : undefined}
           selectionMode={selectionMode}
           isAdmin={isAdmin}
@@ -267,16 +279,14 @@ export default function LocationIntelligence() {
           <Filter className="h-4 w-4 mr-2" />Filters {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
         </Button>
         {showFilters && (
-          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300">
-            <div className="max-h-[500px] overflow-y-auto">
-              <LocationFilters 
-                filters={filters} 
-                onFiltersChange={setFilters} 
-                availableCities={cities} 
-                availableAgencies={agencies} 
-                availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
-              />
-            </div>
+          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300 max-w-sm">
+            <LocationFilters 
+              filters={filters} 
+              onFiltersChange={setFilters} 
+              availableCities={cities} 
+              availableAgencies={agencies} 
+              availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
+            />
           </div>
         )}
       </div>
@@ -347,7 +357,15 @@ export default function LocationIntelligence() {
         location={editingLocation ? { ...editingLocation, historic_prices: [], past_campaigns: [] } : null} 
         initialCoordinates={clickedCoordinates} 
       />
-      <CampaignPlannerDialog open={plannerOpen} onClose={() => { setPlannerOpen(false); setSelectedLocations([]); setSelectionMode('normal'); }} locations={selectedLocations.length > 0 ? selectedLocations : filteredLocations} />
+      <CampaignPlannerDialog
+        open={plannerOpen}
+        onClose={() => {
+          setPlannerOpen(false);
+          setSelectedLocations([]);
+          setSelectionMode('normal');
+        }}
+        locations={selectedLocations}
+      />
       <BulkLocationUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <CampaignsListDialog open={campaignsListOpen} onClose={() => setCampaignsListOpen(false)} onCreateNew={() => { setCampaignsListOpen(false); setPlannerOpen(true); }} />
       <VendorsDialog open={vendorsOpen} onClose={() => setVendorsOpen(false)} locations={locations} onFilterByAgency={handleFilterByAgency} />
