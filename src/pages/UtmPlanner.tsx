@@ -3,12 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmBuilder } from "@/components/utm/UtmBuilder";
 import { UtmTableGroupedView } from "@/components/utm/UtmTableGroupedView";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
-import { CampaignLibrary } from "@/components/utm/CampaignLibrary";
 import { ReadyLinksBuilder } from "@/components/utm/ReadyLinksBuilder";
 import { UtmConfigurationTab } from "@/components/utm/UtmConfigurationTab";
 import { UtmAutomationTab } from "@/components/utm/UtmAutomationTab";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
-import { Link2, Plus, List, Folder, Sparkles, Settings, Zap } from "lucide-react";
+import { Link2, Plus, List, Sparkles, Settings, Zap } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const UtmPlanner = () => {
@@ -57,14 +56,10 @@ const UtmPlanner = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full lg:w-auto">
           <TabsTrigger value="builder" className="gap-2">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Builder</span>
-          </TabsTrigger>
-          <TabsTrigger value="campaigns" className="gap-2">
-            <Folder className="h-4 w-4" />
-            <span className="hidden sm:inline">Campaigns</span>
           </TabsTrigger>
           <TabsTrigger value="links" className="gap-2">
             <List className="h-4 w-4" />
@@ -86,10 +81,6 @@ const UtmPlanner = () => {
 
         <TabsContent value="builder" forceMount hidden={activeTab !== "builder"} className="space-y-6">
           <UtmBuilder />
-        </TabsContent>
-
-        <TabsContent value="campaigns" forceMount hidden={activeTab !== "campaigns"} className="space-y-4">
-          <CampaignLibrary />
         </TabsContent>
 
         <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="space-y-6">
