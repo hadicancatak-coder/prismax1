@@ -8,11 +8,9 @@ export const Layout = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col w-full overflow-hidden">
+        <main className="flex-1 overflow-auto w-full">
           <TopHeader />
-          <div className="flex-1 overflow-auto">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </SidebarProvider>

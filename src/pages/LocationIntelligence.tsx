@@ -120,9 +120,9 @@ export default function LocationIntelligence() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
+    <div className="relative h-screen w-full overflow-hidden">
       {/* Full-screen Map */}
-      <div className="flex-1 relative w-full">
+      <div className="absolute inset-0">
         <LocationMap
           ref={mapRef}
           locations={filteredLocations}

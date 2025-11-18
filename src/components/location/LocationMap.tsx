@@ -213,7 +213,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
 
     return (
       <div className="relative">
-        <div ref={mapContainer} className="h-full w-full rounded-lg border" />
+        <div ref={mapContainer} className="h-[600px] rounded-lg border" />
 
         {/* Empty state overlay */}
         {locations.length === 0 && (
