@@ -98,8 +98,28 @@ export const useCampaignVersions = () => {
     },
   });
 
+  // Delete version
+  const deleteVersion = useMutation({
+    mutationFn: async (versionId: string) => {
+      const { error } = await supabase
+        .from("utm_campaign_versions")
+        .delete()
+        .eq("id", versionId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-versions"] });
+      toast.success("Version deleted");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete version");
+    },
+  });
+
   return {
     useVersions,
     createVersion,
+    deleteVersion,
   };
 };
