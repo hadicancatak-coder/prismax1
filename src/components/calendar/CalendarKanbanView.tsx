@@ -100,7 +100,7 @@ export const CalendarKanbanView = ({
         <div key={column.id} className="bg-card border border-border rounded-lg overflow-hidden">
           {/* Column Header */}
           <div className="p-4 border-b border-border bg-card-hover">
-            <h3 className="font-semibold text-white mb-1">{column.label}</h3>
+            <h3 className="font-semibold text-foreground mb-1">{column.label}</h3>
             {column.dateRange && (
               <p className="text-xs text-gray-400">{column.dateRange}</p>
             )}
@@ -126,7 +126,7 @@ export const CalendarKanbanView = ({
                   >
                     {/* Task Header */}
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="text-sm font-medium text-white flex-1 line-clamp-2">
+                      <h4 className="text-sm font-medium text-card-foreground flex-1 line-clamp-2">
                         {task.title}
                       </h4>
                       {view !== 'today' && view !== 'day' && (

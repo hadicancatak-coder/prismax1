@@ -120,16 +120,16 @@ export const FilteredTasksDialog = ({
 
   const priorityColors = {
     High: "bg-destructive text-destructive-foreground",
-    Medium: "bg-yellow-500 text-white",
-    Low: "bg-blue-500 text-white"
+    Medium: "bg-warning text-warning-foreground",
+    Low: "bg-info text-info-foreground"
   };
 
   const statusColors = {
-    Pending: "bg-secondary text-secondary-foreground",
-    Ongoing: "bg-purple-500 text-white",
-    Completed: "bg-green-500 text-white",
+    Pending: "bg-pending text-pending-foreground",
+    Ongoing: "bg-info text-info-foreground",
+    Completed: "bg-success text-success-foreground",
     Failed: "bg-destructive text-destructive-foreground",
-    Blocked: "bg-orange-500 text-white"
+    Blocked: "bg-warning text-warning-foreground"
   };
 
   const toggleTaskSelection = (taskId: string) => {
