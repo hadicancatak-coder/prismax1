@@ -37,21 +37,22 @@ const UtmPlanner = () => {
           </svg>
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-blue-400 mb-1">Google Sheets Backup Available</h3>
+          <h3 className="text-sm font-medium text-blue-400 mb-1">UTM Link Verification Required</h3>
           <p className="text-sm text-muted-foreground mb-2">
-            For additional backup and reporting, you can export your UTM data to Google Sheets
+            You are responsibly on UTM links correctness. Check and ensure links are correct and working. System can make mistakes. You may use this{" "}
+            <a
+              href="https://docs.google.com/spreadsheets/d/1Desiq_cUDzdypT-Y54EUkKDWDj2ZJyQm0mHLpxhBFJs/edit?gid=1643442957#gid=1643442957"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 underline inline-flex items-center gap-1"
+            >
+              Google Sheets
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            {" "}to generate UTMs in case of an error here.
           </p>
-          <a
-            href="https://docs.google.com/spreadsheets"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-400 hover:text-blue-300 underline inline-flex items-center gap-1"
-          >
-            Open Google Sheets
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
         </div>
       </div>
 
