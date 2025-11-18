@@ -228,7 +228,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
           <div className="flex-1 flex flex-col overflow-hidden">
             <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
               <div className="flex items-center justify-between gap-4">
-                <DialogTitle className="text-xl pr-12">
+                <DialogTitle className="text-xl flex-1">
                   {isEditing ? (
                     <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
                   ) : (
@@ -239,6 +239,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                   variant={showComments ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowComments(!showComments)}
+                  className="shrink-0"
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Comments
