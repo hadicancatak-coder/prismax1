@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LocationDetailPopupProps {
   location: LocationWithDetails | null;
@@ -17,7 +18,6 @@ interface LocationDetailPopupProps {
 }
 
 export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDelete }: LocationDetailPopupProps) {
-  const { useAuth } = require('@/hooks/useAuth');
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
   const { getCampaignsByLocation } = useLocationCampaigns();
