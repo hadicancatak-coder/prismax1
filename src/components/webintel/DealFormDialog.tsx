@@ -80,165 +80,90 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampai
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Deal Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter deal name"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Deal Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter deal name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="website">Website</Label>
               <Select
-                value={formData.status}
-                onValueChange={(value: 'Active' | 'Pending' | 'Expired' | 'Cancelled') =>
-                  setFormData({ ...formData, status: value })
-                }
+                value={formData.website_id || undefined}
+                onValueChange={(value) => setFormData({ ...formData, website_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select website" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  {sites.map((site) => (
+                    <SelectItem key={site.id} value={site.id}>
+                      {site.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Select
-              value={formData.website_id || undefined}
-              onValueChange={(value) => setFormData({ ...formData, website_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select website" />
-              </SelectTrigger>
-              <SelectContent>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id}>{site.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="entity">Entity</Label>
-            <Select
-              value={formData.entity || undefined}
-              onValueChange={(value) => setFormData({ ...formData, entity: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select entity" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from(new Set(sites.map(s => s.entity).filter(Boolean))).sort().map((entity) => (
-                  <SelectItem key={entity} value={entity!}>{entity}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contact_name">Contact Name</Label>
-              <Input
-                id="contact_name"
-                value={formData.contact_name || ''}
-                onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                placeholder="Contact person name"
-              />
-            </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contact_email">Contact Email</Label>
-              <Input
-                id="contact_email"
-                type="email"
-                value={formData.contact_email || ''}
-                onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                placeholder="contact@example.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contract_link">Contract Link</Label>
-            <Input
-              id="contract_link"
-              value={formData.contract_link || ''}
-              onChange={(e) => setFormData({ ...formData, contract_link: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date || ''}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date || ''}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deal_value">Deal Value</Label>
+              <Label htmlFor="deal_value">Cost</Label>
               <Input
                 id="deal_value"
                 type="number"
                 value={formData.deal_value || ''}
-                onChange={(e) => setFormData({ ...formData, deal_value: parseFloat(e.target.value) || null })}
-                placeholder="0"
+                onChange={(e) => setFormData({ ...formData, deal_value: e.target.value ? Number(e.target.value) : null })}
+                placeholder="Deal value"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="entity">Entity</Label>
+            <Input
+              id="entity"
+              value={formData.entity}
+              onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
+              placeholder="Entity name"
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Campaigns</Label>
             <Command className="border rounded-lg">
               <CommandInput placeholder="Search campaigns..." />
-              <CommandList className="max-h-48">
+              <CommandList className="max-h-[200px]">
                 <CommandEmpty>No campaigns found</CommandEmpty>
                 <CommandGroup>
                   {campaigns.map((campaign) => (
-                    <CommandItem key={campaign.id} onSelect={() => toggleCampaign(campaign.id)}>
+                    <CommandItem
+                      key={campaign.id}
+                      onSelect={() => toggleCampaign(campaign.id)}
+                      className="flex items-center gap-2"
+                    >
                       <Checkbox
                         checked={selectedCampaignIds.includes(campaign.id)}
-                        className="mr-2"
+                        onCheckedChange={() => toggleCampaign(campaign.id)}
                       />
-                      {campaign.name}
+                      <span className="flex-1">{campaign.name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
               </CommandList>
             </Command>
             {selectedCampaignIds.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-1 mt-2">
                 {selectedCampaignIds.map((id) => {
-                  const campaign = campaigns.find(c => c.id === id);
+                  const campaign = campaigns.find((c) => c.id === id);
                   return campaign ? (
-                    <Badge key={id} variant="secondary">
+                    <Badge key={id} variant="secondary" className="gap-1">
                       {campaign.name}
                       <X
-                        className="ml-1 h-3 w-3 cursor-pointer"
+                        className="h-3 w-3 cursor-pointer"
                         onClick={() => toggleCampaign(id)}
                       />
                     </Badge>
@@ -248,52 +173,26 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampai
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label>UTM Links</Label>
-            <Command className="border rounded-lg">
-              <CommandInput placeholder="Search UTM links..." />
-              <CommandList className="max-h-48">
-                <CommandEmpty>No UTM links found</CommandEmpty>
-                <CommandGroup>
-                  {utmLinks.map((link) => (
-                    <CommandItem key={link.id} onSelect={() => toggleUtmLink(link.id)}>
-                      <Checkbox
-                        checked={selectedUtmLinkIds.includes(link.id)}
-                        className="mr-2"
-                      />
-                      {link.utm_campaign}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-            {selectedUtmLinkIds.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedUtmLinkIds.map((id) => {
-                  const link = utmLinks.find(l => l.id === id);
-                  return link ? (
-                    <Badge key={id} variant="secondary">
-                      {link.utm_campaign}
-                      <X
-                        className="ml-1 h-3 w-3 cursor-pointer"
-                        onClick={() => toggleUtmLink(id)}
-                      />
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            )}
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Start Date</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes || ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional notes about this deal"
-              rows={4}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="end_date">End Date</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
           </div>
         </div>
 
