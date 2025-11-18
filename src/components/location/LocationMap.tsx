@@ -95,7 +95,6 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
 
         const el = document.createElement('div');
         el.innerHTML = `<div style="position:relative;cursor:pointer;font-size:${isSelected?'32px':'24px'};transition:all 0.3s;filter:${isSelected?'drop-shadow(0 0 8px rgba(59,130,246,0.8))':isInCampaign?'drop-shadow(0 0 6px rgba(34,197,94,0.6))':'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'};transform:scale(${isSelected?1.2:1});${isSelectionMode?'animation:pulse 2s infinite':''}">${emoji}${isInCampaign?'<div style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:#22c55e;border:2px solid white;border-radius:50%"></div>':''}${isSelected&&isSelectionMode?'<div style="position:absolute;top:-4px;left:-4px;width:12px;height:12px;background:#3b82f6;border:2px solid white;border-radius:50%"></div>':''}</div><style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}</style>`;
-        el.addEventListener('click', () => onLocationClick(location));
 
         const marker = new mapboxgl.Marker(el).setLngLat([location.longitude, location.latitude]).addTo(map.current);
         
@@ -178,6 +177,12 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           }); 
         });
         marker.setPopup(popup);
+        
+        // Make marker click toggle the popup
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          marker.togglePopup();
+        });
         
         // Show popup on click
         el.addEventListener('click', (e) => {

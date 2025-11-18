@@ -11,6 +11,8 @@ import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCa
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
+import { CampaignDetailDialog } from "@/components/location/CampaignDetailDialog";
+import { PlannedCampaign } from "@/hooks/usePlannedCampaigns";
 
 interface Campaign {
   id: string;
@@ -59,6 +61,7 @@ function CampaignTrackingCard({
 }: CampaignTrackingCardProps) {
   const [localNotes, setLocalNotes] = useState(tracking.notes || "");
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const { useMetadata } = useCampaignMetadata();
   const { data: metadata } = useMetadata(tracking.campaign_id);
   const { useComments } = useCampaignComments();
@@ -74,7 +77,10 @@ function CampaignTrackingCard({
         {/* Header with Title, Version, and Remove Button */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 space-y-1">
-            <h4 className="font-semibold text-sm line-clamp-2">
+            <h4 
+              className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+              onClick={() => setDetailOpen(true)}
+            >
               {campaign.name}
             </h4>
             {metadata?.version_code && (
@@ -159,7 +165,7 @@ export function EntityCampaignTable({
   externalReviewerEmail,
 }: EntityCampaignTableProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: entity,
+    id: `entity-${entity}`,
     disabled: isExternal,
   });
 
