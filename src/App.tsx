@@ -38,7 +38,6 @@ import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
-import PublicComplianceReview from "./pages/PublicComplianceReview";
 import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
@@ -57,7 +56,6 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
               <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
-              <Route path="/review/:token" element={<PublicComplianceReview />} />
               <Route path="/campaigns-log/review/:token" element={<CampaignsLogExternal />} />
               <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route path="/" element={<Dashboard />} />
