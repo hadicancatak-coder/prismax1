@@ -21,26 +21,42 @@ export function expandRecurringTask(
   const occurrences: RecurringOccurrence[] = [];
   const rrule = task.recurrence_rrule;
 
-  // Weekly recurrence
-  if (rrule.includes('FREQ=WEEKLY') && task.recurrence_days_of_week) {
-    let currentDate = startOfDay(startDate);
+  // Weekly recurrence - parse BYDAY from RRULE
+  if (rrule.includes('FREQ=WEEKLY')) {
+    let daysOfWeek: number[] = [];
     
-    while (currentDate <= endDate) {
-      const dayOfWeek = currentDate.getDay(); // 0 = Sunday
-      
-      if (task.recurrence_days_of_week.includes(dayOfWeek)) {
-        const completionDateStr = format(currentDate, 'yyyy-MM-dd');
-        const completion = completions.find(c => c.completed_date === completionDateStr);
-        
-        occurrences.push({
-          taskId: task.id,
-          occurrenceDate: new Date(currentDate),
-          isCompleted: !!completion,
-          completionId: completion?.id,
-        });
+    // Parse BYDAY from RRULE (e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR")
+    if (rrule.includes('BYDAY=')) {
+      const match = rrule.match(/BYDAY=([A-Z,]+)/);
+      if (match) {
+        const dayMap: Record<string, number> = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+        daysOfWeek = match[1].split(',').map(d => dayMap[d]).filter(d => d !== undefined);
       }
+    } else if (task.recurrence_day_of_week !== null && task.recurrence_day_of_week !== undefined) {
+      // Fallback to legacy single day
+      daysOfWeek = [task.recurrence_day_of_week];
+    }
+    
+    if (daysOfWeek.length > 0) {
+      let currentDate = startOfDay(startDate);
       
-      currentDate = addDays(currentDate, 1);
+      while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay(); // 0 = Sunday
+        
+        if (daysOfWeek.includes(dayOfWeek)) {
+          const completionDateStr = format(currentDate, 'yyyy-MM-dd');
+          const completion = completions.find(c => c.completed_date === completionDateStr);
+          
+          occurrences.push({
+            taskId: task.id,
+            occurrenceDate: new Date(currentDate),
+            isCompleted: !!completion,
+            completionId: completion?.id,
+          });
+        }
+        
+        currentDate = addDays(currentDate, 1);
+      }
     }
   }
 
@@ -97,10 +113,25 @@ export function getRecurrenceLabel(task: any): string {
   
   const rrule = task.recurrence_rrule;
   
-  if (rrule.includes('FREQ=WEEKLY') && task.recurrence_days_of_week) {
+  if (rrule.includes('FREQ=WEEKLY')) {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dayNames = task.recurrence_days_of_week.map((d: number) => days[d]).join(', ');
-    return `Every ${dayNames}`;
+    let daysOfWeek: number[] = [];
+    
+    // Parse BYDAY from RRULE
+    if (rrule.includes('BYDAY=')) {
+      const match = rrule.match(/BYDAY=([A-Z,]+)/);
+      if (match) {
+        const dayMap: Record<string, number> = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+        daysOfWeek = match[1].split(',').map(d => dayMap[d]).filter(d => d !== undefined);
+      }
+    } else if (task.recurrence_day_of_week !== null && task.recurrence_day_of_week !== undefined) {
+      daysOfWeek = [task.recurrence_day_of_week];
+    }
+    
+    if (daysOfWeek.length > 0) {
+      const dayNames = daysOfWeek.map(d => days[d]).join(', ');
+      return `Every ${dayNames}`;
+    }
   }
   
   if (rrule.includes('FREQ=MONTHLY') && task.recurrence_day_of_month) {
