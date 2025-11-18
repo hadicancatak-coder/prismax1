@@ -162,78 +162,76 @@ export default function CampaignsLog() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col">
-        <div className="container mx-auto py-8 px-6 space-y-6 flex-shrink-0">
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="container mx-auto py-6 px-6 space-y-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-6">
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Campaign Log</h1>
-                <p className="text-muted-foreground mt-2 text-base">Track and manage campaign assignments across entities</p>
+            <div className="flex items-center gap-6 flex-1">
+              <div className="flex-1">
+                <h1 className="text-page-title">Campaign Log</h1>
+                <p className="text-muted-foreground mt-1 text-sm">Track and manage campaign assignments across entities</p>
               </div>
               <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-                <SelectTrigger className="w-[280px] h-11 font-medium"><SelectValue placeholder="Select entity" /></SelectTrigger>
+                <SelectTrigger className="w-[280px]"><SelectValue placeholder="Select entity" /></SelectTrigger>
                 <SelectContent className="z-[100]">{entities.map((e) => <SelectItem key={e.name} value={e.name}>{e.emoji} {e.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <Button onClick={() => setExternalAccessDialogOpen(true)} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+            <Button onClick={() => setExternalAccessDialogOpen(true)} className="flex-shrink-0">
               <ExternalLink className="h-4 w-4 mr-2" />
               Generate Review Link
             </Button>
           </div>
         </div>
 
-        <div className={cn("flex-1 overflow-hidden flex flex-col container mx-auto px-6 transition-all duration-300", !expandedCampaigns.has('library') && "h-[calc(100vh-220px)]")}>
-          {selectedEntity && <div className="flex-1 overflow-hidden mb-6"><EntityCampaignTable entity={selectedEntity} campaigns={transformedCampaigns} /></div>}
+        <div className={cn("flex-1 overflow-hidden flex flex-col container mx-auto px-6 transition-all duration-300", !expandedCampaigns.has('library') && "h-[calc(100vh-200px)]")}>
+          {selectedEntity && <div className="flex-1 overflow-hidden mb-4"><EntityCampaignTable entity={selectedEntity} campaigns={transformedCampaigns} /></div>}
         </div>
         
-        <div className="border-t-2 bg-card/80 backdrop-blur-sm shadow-lg flex-shrink-0">
+        <div className="border-t bg-card flex-shrink-0">
           <div className="container mx-auto px-6">
             <Collapsible open={expandedCampaigns.has('library')} onOpenChange={(open) => { const n = new Set(expandedCampaigns); open ? n.add('library') : n.delete('library'); setExpandedCampaigns(n); }}>
               <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between py-4 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-3 group">
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    <h3 className="font-bold text-lg">Campaign Library</h3>
-                    <Badge variant="secondary" className="ml-1 px-3 py-1 font-semibold">{filteredCampaigns.length}</Badge>
+                <button className="w-full flex items-center justify-between py-3 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-2">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold text-base">Campaign Library</h3>
+                    <Badge variant="secondary" className="ml-1">{filteredCampaigns.length}</Badge>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {selectedCampaigns.length > 0 && (
                       <Button 
                         onClick={(e) => { e.stopPropagation(); setBulkAssignDialogOpen(true); }} 
                         size="sm" 
-                        variant="default"
-                        className="shadow-sm hover:shadow-md transition-shadow"
+                        variant="secondary"
                       >
                         <Check className="h-4 w-4 mr-2" />
-                        Assign {selectedCampaigns.length} Campaign{selectedCampaigns.length > 1 ? 's' : ''}
+                        Assign {selectedCampaigns.length} Campaigns
                       </Button>
                     )}
                     <Button 
                       onClick={(e) => { e.stopPropagation(); setCreateCampaignDialogOpen(true); }} 
                       size="sm" 
                       variant="default"
-                      className="shadow-sm hover:shadow-md transition-shadow"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Campaign
                     </Button>
-                    <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:text-foreground", expandedCampaigns.has('library') && "rotate-180")} />
+                    <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-300", expandedCampaigns.has('library') && "rotate-180")} />
                   </div>
                 </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pb-6 space-y-4 transition-all duration-300" style={{ overflow: expandedCampaigns.has('library') ? 'visible' : 'hidden', maxHeight: expandedCampaigns.has('library') ? '600px' : '0px' }}>
-                <div className="flex items-center gap-4 pt-2">
+              <CollapsibleContent className="pb-4 space-y-3 transition-all duration-300" style={{ overflow: expandedCampaigns.has('library') ? 'visible' : 'hidden', maxHeight: expandedCampaigns.has('library') ? '600px' : '0px' }}>
+                <div className="flex items-center gap-3">
                   <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-11" />
+                    <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                   </div>
                   <Select value={libraryEntityFilter} onValueChange={setLibraryEntityFilter}>
-                    <SelectTrigger className="w-[220px] h-11"><SelectValue placeholder="Filter by entity" /></SelectTrigger>
+                    <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by entity" /></SelectTrigger>
                     <SelectContent className="z-[100]"><SelectItem value="all">All Entities</SelectItem>{entities.map((e) => <SelectItem key={e.name} value={e.name}>{e.emoji} {e.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <ScrollArea className="h-[500px] pr-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <ScrollArea className="h-[500px] pr-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                     {filteredCampaigns.map((c) => <div key={c.id} className="relative"><Checkbox checked={selectedCampaigns.includes(c.id)} onCheckedChange={() => setSelectedCampaigns(p => p.includes(c.id) ? p.filter(i => i !== c.id) : [...p, c.id])} className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm" /><DraggableCampaignCard campaign={c} isDragging={activeDragId === c.id} onClick={() => setSelectedCampaignId(c.id)} /></div>)}
                   </div>
                 </ScrollArea>
