@@ -5,13 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, X, MessageSquare } from "lucide-react";
+import { ExternalLink, X, MessageSquare, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
+import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
 import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Campaign {
   id: string;
@@ -60,105 +62,174 @@ function CampaignTrackingCard({
 }: CampaignTrackingCardProps) {
   const [localNotes, setLocalNotes] = useState(tracking.notes || "");
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsExpanded, setCommentsExpanded] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
   const { useMetadata } = useCampaignMetadata();
   const { data: metadata } = useMetadata(tracking.campaign_id);
   const { useComments } = useCampaignComments();
   const { data: comments = [] } = useComments(tracking.id);
+  const { useVersions } = useCampaignVersions();
+  const { data: versions = [] } = useVersions(tracking.campaign_id);
 
   if (!campaign) return null;
 
   const statusOption = STATUS_OPTIONS.find((s) => s.value === tracking.status);
 
   return (
-    <Card className="w-full border-2 min-w-[160px]">
-      <CardContent className="p-4 space-y-2.5">
-        {/* Header with Title, Version, and Remove Button */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 space-y-1">
-            <h4 
-              className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-              onClick={() => setDetailOpen(true)}
-            >
-              {campaign.name}
-            </h4>
-            {metadata?.version_code && (
-              <Badge variant="outline" className="text-xs">
-                {metadata.version_code}
-              </Badge>
+    <div className="space-y-2">
+      <Card className="w-full border-2 min-w-[160px]">
+        <CardContent className="p-4 space-y-2.5">
+          {/* Header with Title, Version, and Remove Button */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 space-y-1">
+              <h4 
+                className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+                onClick={() => setDetailOpen(true)}
+              >
+                {campaign.name}
+              </h4>
+              {metadata?.version_code && (
+                <Badge variant="outline" className="text-xs">
+                  {metadata.version_code}
+                </Badge>
+              )}
+            </div>
+            {!isExternal && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 flex-shrink-0"
+                onClick={onRemove}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
           </div>
-          {!isExternal && (
+
+          {/* Status Dropdown */}
+          <div>
+            <Select 
+              value={tracking.status} 
+              onValueChange={onUpdateStatus}
+              disabled={isExternal}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-xs">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Notes Textarea */}
+          <Textarea
+            value={localNotes}
+            onChange={(e) => setLocalNotes(e.target.value)}
+            onBlur={() => onUpdateNotes(localNotes)}
+            placeholder="Add notes..."
+            className="min-h-[60px] text-xs resize-none"
+            disabled={isExternal}
+          />
+
+          {/* Collapsible Comments Section */}
+          <Collapsible open={commentsExpanded} onOpenChange={setCommentsExpanded}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between gap-2 h-8 text-xs"
+              >
+                <span className="flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
+                </span>
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", commentsExpanded && "rotate-180")} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCommentsOpen(true)}
+                className="w-full text-xs"
+              >
+                View All Comments
+              </Button>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Version History Toggle */}
+          {versions.length > 0 && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 flex-shrink-0"
-              onClick={onRemove}
+              size="sm"
+              onClick={() => setShowVersions(!showVersions)}
+              className="w-full justify-between gap-2 h-8 text-xs"
             >
-              <X className="h-4 w-4" />
+              <span className="flex items-center gap-2">
+                <History className="h-3.5 w-3.5" />
+                {versions.length} {versions.length === 1 ? "Version" : "Versions"}
+              </span>
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showVersions && "rotate-180")} />
+            </Button>
+          )}
+        </CardContent>
+
+        <CampaignCommentsDialog
+          open={commentsOpen}
+          onOpenChange={setCommentsOpen}
+          trackingId={tracking.id}
+          campaignName={campaign.name}
+          entityName={entity}
+          isExternal={isExternal}
+          externalReviewerName={externalReviewerName}
+          externalReviewerEmail={externalReviewerEmail}
+        />
+        
+        <UtmCampaignDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          campaignId={tracking.campaign_id}
+        />
+      </Card>
+
+      {/* Version History as Child Rows */}
+      {showVersions && versions.length > 0 && (
+        <div className="ml-4 space-y-1">
+          {versions.slice(0, 3).map((version) => (
+            <Card key={version.id} className="border border-muted bg-muted/30">
+              <CardContent className="p-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">v{version.version_number}</Badge>
+                  <span className="text-xs text-muted-foreground line-clamp-1">{version.name}</span>
+                </div>
+                {version.version_notes && (
+                  <span className="text-xs text-muted-foreground line-clamp-1 max-w-[120px]">
+                    {version.version_notes}
+                  </span>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          {versions.length > 3 && (
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => setDetailOpen(true)}
+              className="text-xs h-auto p-1"
+            >
+              View all {versions.length} versions
             </Button>
           )}
         </div>
-
-        {/* Status Dropdown */}
-        <div>
-          <Select 
-            value={tracking.status} 
-            onValueChange={onUpdateStatus}
-            disabled={isExternal}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="text-xs">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Notes Textarea */}
-        <Textarea
-          value={localNotes}
-          onChange={(e) => setLocalNotes(e.target.value)}
-          onBlur={() => onUpdateNotes(localNotes)}
-          placeholder="Add notes..."
-          className="min-h-[60px] text-xs resize-none"
-          disabled={isExternal}
-        />
-
-        {/* Comments Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCommentsOpen(true)}
-          className="w-full justify-start gap-2 h-8 text-xs"
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          {comments.length} {comments.length === 1 ? "Comment" : "Comments"}
-        </Button>
-      </CardContent>
-
-      <CampaignCommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        trackingId={tracking.id}
-        campaignName={campaign.name}
-        entityName={entity}
-        isExternal={isExternal}
-        externalReviewerName={externalReviewerName}
-        externalReviewerEmail={externalReviewerEmail}
-      />
-      
-      <UtmCampaignDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        campaignId={tracking.campaign_id}
-      />
-    </Card>
+      )}
+    </div>
   );
 }
 
