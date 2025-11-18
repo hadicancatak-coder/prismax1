@@ -11,12 +11,15 @@ import { format } from "date-fns";
 interface LocationDetailPopupProps {
   location: LocationWithDetails | null;
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onEdit: () => void;
-  isAdmin: boolean;
+  onDelete: (id: string) => void;
 }
 
-export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }: LocationDetailPopupProps) {
+export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDelete }: LocationDetailPopupProps) {
+  const { useAuth } = require('@/hooks/useAuth');
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const { getCampaignsByLocation } = useLocationCampaigns();
   const { campaigns: allCampaigns } = usePlannedCampaigns();
   
@@ -28,7 +31,7 @@ export function LocationDetailPopup({ location, open, onClose, onEdit, isAdmin }
   ).filter(Boolean);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
