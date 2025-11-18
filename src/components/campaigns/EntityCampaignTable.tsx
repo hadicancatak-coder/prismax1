@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
+import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { UtmCampaignDetailDialog } from "./UtmCampaignDetailDialog";
-import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
+import { EntityCommentsDialog } from "./EntityCommentsDialog";
 
 interface Campaign {
   id: string;
   name: string;
-  notes: string | null;
 }
 
 interface CampaignTrackingCardProps {
@@ -31,15 +30,8 @@ interface EntityCampaignTableProps {
   isExternal?: boolean;
   externalReviewerName?: string;
   externalReviewerEmail?: string;
+  className?: string;
 }
-
-const STATUS_OPTIONS = [
-  { value: "Draft", label: "📝 Draft", color: "bg-gray-500" },
-  { value: "Live", label: "🟢 Live", color: "bg-green-500" },
-  { value: "Paused", label: "🟡 Paused", color: "bg-yellow-500" },
-  { value: "Testing", label: "🔵 Testing", color: "bg-blue-500" },
-  { value: "Stopped", label: "🔴 Stopped", color: "bg-red-500" },
-];
 
 function CampaignTrackingCard({
   tracking,
@@ -51,11 +43,8 @@ function CampaignTrackingCard({
   externalReviewerEmail,
 }: CampaignTrackingCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
 
   if (!campaign) return null;
-
-  const statusOption = STATUS_OPTIONS.find((s) => s.value === tracking.status);
 
   return (
     <>
@@ -63,44 +52,25 @@ function CampaignTrackingCard({
         className="w-full border-2 min-w-[160px] cursor-pointer hover:border-primary transition-colors"
         onClick={() => setDetailOpen(true)}
       >
-        <CardContent className="p-3 space-y-2">
+        <CardContent className="p-3">
           <div className="flex items-center justify-between gap-2">
             <h4 className="font-semibold text-sm line-clamp-1 flex-1">
               {campaign.name}
             </h4>
-            <div className="flex items-center gap-1">
+            {!isExternal && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCommentsOpen(true);
+                  onRemove();
                 }}
               >
-                <MessageSquare className="h-3.5 w-3.5" />
+                <X className="h-3.5 w-3.5" />
               </Button>
-              {!isExternal && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 flex-shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove();
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-          
-          {statusOption && (
-            <Badge variant="outline" className="text-xs">
-              {statusOption.label}
-            </Badge>
-          )}
         </CardContent>
       </Card>
 
@@ -108,17 +78,6 @@ function CampaignTrackingCard({
         open={detailOpen}
         onOpenChange={setDetailOpen}
         campaignId={tracking.campaign_id}
-      />
-
-      <CampaignCommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        trackingId={tracking.id}
-        campaignName={campaign.name}
-        entityName={entity}
-        isExternal={isExternal}
-        externalReviewerName={externalReviewerName}
-        externalReviewerEmail={externalReviewerEmail}
       />
     </>
   );
@@ -130,66 +89,87 @@ export function EntityCampaignTable({
   isExternal = false,
   externalReviewerName,
   externalReviewerEmail,
+  className,
 }: EntityCampaignTableProps) {
-  const { trackingRecords, deleteTracking, getEntityComments } = useCampaignEntityTracking();
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const { trackingRecords, deleteTracking } = useCampaignEntityTracking();
+  const { data: allCampaigns = [] } = useUtmCampaigns();
   const { setNodeRef, isOver } = useDroppable({ id: `entity-${entity}` });
 
-  const entityCampaigns = trackingRecords.filter((t) => t.entity === entity);
-  const entityComments = getEntityComments(entity);
+  const entityCampaigns = trackingRecords
+    .filter((t) => t.entity === entity)
+    .map((t) => ({
+      tracking: t,
+      campaign: allCampaigns.find((c) => c.id === t.campaign_id) || null,
+    }))
+    .filter((item) => item.campaign);
 
   const handleRemove = async (trackingId: string) => {
     try {
       await deleteTracking.mutateAsync(trackingId);
     } catch (error) {
-      console.error('Failed to remove campaign:', error);
+      console.error("Failed to remove campaign:", error);
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            {entity}
-            <Badge variant="secondary">{entityCampaigns.length}</Badge>
-          </CardTitle>
-          {entityComments && (
-            <p className="text-sm text-muted-foreground mt-1">{entityComments}</p>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 overflow-auto">
-          <div
-            ref={setNodeRef}
-            className={cn(
-              "min-h-[200px] p-2 rounded-lg border-2 border-dashed transition-colors",
-              isOver ? "border-primary bg-primary/5" : "border-muted-foreground/20"
-            )}
+    <>
+      <EntityCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        entityName={entity}
+        isExternal={isExternal}
+        externalReviewerName={externalReviewerName}
+        externalReviewerEmail={externalReviewerEmail}
+      />
+
+      <Card 
+        ref={setNodeRef}
+        className={cn(
+          "transition-all",
+          isOver && "ring-2 ring-primary ring-offset-2",
+          className
+        )}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-lg">{entity}</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCommentsOpen(true)}
+            className="h-8 gap-2"
           >
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {entityCampaigns.map((tracking) => {
-                const campaign = campaigns.find((c) => c.id === tracking.campaign_id);
-                return (
+            <MessageSquare className="h-4 w-4" />
+            Comments
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="min-h-[100px] space-y-2">
+            {entityCampaigns.length === 0 ? (
+              <div className="flex items-center justify-center h-[100px] border-2 border-dashed rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Drag campaigns here
+                </p>
+              </div>
+            ) : (
+              entityCampaigns.map(({ tracking, campaign }) => (
+                campaign && (
                   <CampaignTrackingCard
                     key={tracking.id}
                     tracking={tracking}
                     campaign={campaign}
-                    onRemove={() => handleRemove(tracking.id)}
                     entity={entity}
+                    onRemove={() => handleRemove(tracking.id)}
                     isExternal={isExternal}
                     externalReviewerName={externalReviewerName}
                     externalReviewerEmail={externalReviewerEmail}
                   />
-                );
-              })}
-            </div>
-            {entityCampaigns.length === 0 && (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                Drop campaigns here
-              </div>
+                )
+              ))
             )}
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
