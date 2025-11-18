@@ -11,8 +11,7 @@ import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCa
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { CampaignCommentsDialog } from "./CampaignCommentsDialog";
-import { CampaignDetailDialog } from "@/components/location/CampaignDetailDialog";
-import { PlannedCampaign } from "@/hooks/usePlannedCampaigns";
+import { CampaignDetailDialog } from "@/components/CampaignDetailDialog";
 
 interface Campaign {
   id: string;
@@ -152,6 +151,13 @@ function CampaignTrackingCard({
         isExternal={isExternal}
         externalReviewerName={externalReviewerName}
         externalReviewerEmail={externalReviewerEmail}
+      />
+      
+      <CampaignDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        campaignId={tracking.campaign_id}
+        onUpdate={() => {}}
       />
     </Card>
   );
