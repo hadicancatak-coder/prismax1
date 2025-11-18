@@ -305,6 +305,18 @@ export default function Tasks() {
               >
                 <Columns3 className="h-4 w-4" />
               </Button>
+              <Button
+                variant={viewMode === 'kanban-date' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('kanban-date');
+                  setBoardGroupBy('date');
+                }}
+                className="h-8 w-8 p-0"
+                title="Kanban by Date"
+              >
+                <Clock className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 

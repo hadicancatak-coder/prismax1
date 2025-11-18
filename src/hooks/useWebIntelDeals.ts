@@ -10,6 +10,7 @@ export interface WebIntelDeal {
   contact_email: string | null;
   contact_name: string | null;
   website_id: string | null;
+  entity: string | null;
   notes: string | null;
   start_date: string | null;
   end_date: string | null;

@@ -4468,6 +4468,7 @@ export type Database = {
           created_by: string | null
           deal_value: number | null
           end_date: string | null
+          entity: string | null
           id: string
           name: string
           notes: string | null
@@ -4484,6 +4485,7 @@ export type Database = {
           created_by?: string | null
           deal_value?: number | null
           end_date?: string | null
+          entity?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -4500,6 +4502,7 @@ export type Database = {
           created_by?: string | null
           deal_value?: number | null
           end_date?: string | null
+          entity?: string | null
           id?: string
           name?: string
           notes?: string | null

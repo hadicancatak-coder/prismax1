@@ -37,6 +37,7 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampai
     contact_email: deal?.contact_email || '',
     contact_name: deal?.contact_name || '',
     website_id: deal?.website_id || null,
+    entity: deal?.entity || '',
     notes: deal?.notes || '',
     start_date: deal?.start_date || '',
     end_date: deal?.end_date || '',
@@ -122,6 +123,23 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampai
               <SelectContent>
                 {sites.map((site) => (
                   <SelectItem key={site.id} value={site.id}>{site.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="entity">Entity</Label>
+            <Select
+              value={formData.entity || undefined}
+              onValueChange={(value) => setFormData({ ...formData, entity: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select entity" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from(new Set(sites.map(s => s.entity).filter(Boolean))).sort().map((entity) => (
+                  <SelectItem key={entity} value={entity!}>{entity}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
