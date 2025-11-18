@@ -213,19 +213,27 @@ export default function WebIntel() {
     try {
       let dealId: string;
       if (editingDeal) {
-        const result = await updateDeal.mutateAsync({ id: editingDeal.id, ...dealData });
-        dealId = result.id;
+        await updateDeal.mutateAsync({ id: editingDeal.id, ...dealData });
+        dealId = editingDeal.id;
       } else {
-        const result = await createDeal.mutateAsync(dealData);
-        dealId = result.id;
+        const newDeal = await createDeal.mutateAsync(dealData);
+        dealId = (typeof newDeal === 'string' ? newDeal : newDeal?.id) as string;
+      }
+      
+      if (!dealId) {
+        throw new Error("Failed to get deal ID");
       }
       
       // Add campaigns and UTM links
-      if (campaignIds.length > 0) {
-        await Promise.all(campaignIds.map(campaignId => addCampaignToDeal.mutateAsync({ dealId, campaignId })));
+      if (campaignIds && campaignIds.length > 0) {
+        await Promise.all(campaignIds.map(campaignId => 
+          addCampaignToDeal.mutateAsync({ dealId, campaignId })
+        ));
       }
-      if (utmLinkIds.length > 0) {
-        await Promise.all(utmLinkIds.map(utmLinkId => addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId })));
+      if (utmLinkIds && utmLinkIds.length > 0) {
+        await Promise.all(utmLinkIds.map(utmLinkId => 
+          addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId })
+        ));
       }
       
       toast.success(editingDeal ? "Deal updated successfully" : "Deal created successfully");
@@ -233,7 +241,7 @@ export default function WebIntel() {
       setEditingDeal(null);
     } catch (error: any) {
       console.error('Save deal error:', error);
-      toast.error(error.message || "Failed to save deal");
+      toast.error(error?.message || "Failed to save deal");
     }
   };
 

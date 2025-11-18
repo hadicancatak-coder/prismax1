@@ -48,7 +48,7 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
                         <span className="font-medium text-sm">{version.name}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
+                        {version.created_at && formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     {version.version_notes && (
