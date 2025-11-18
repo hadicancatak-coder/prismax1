@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 
 interface Campaign {
   id: string;
-  title: string;
-  description: string | null;
-  lp_link: string | null;
-  image_url: string | null;
-  entity: string[] | null;
+  name: string;
+  budget: number;
+  agency: string | null;
+  cities: string[];
+  notes: string | null;
 }
 
 interface DraggableCampaignCardProps {
@@ -47,55 +47,42 @@ export function DraggableCampaignCard({ campaign, isDragging }: DraggableCampaig
         >
           <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <h3 className="font-semibold text-sm line-clamp-2 flex-1">
-            {campaign.title}
+            {campaign.name}
           </h3>
         </div>
 
-        {/* Image Preview */}
-        {campaign.image_url && (
-          <div className="w-full h-24 rounded overflow-hidden bg-muted">
-            <img
-              src={campaign.image_url}
-              alt={campaign.title}
-              className="w-full h-full object-cover"
-            />
+        {/* Budget */}
+        <div className="text-xs text-muted-foreground">
+          Budget: ${campaign.budget.toLocaleString()}
+        </div>
+
+        {/* Agency */}
+        {campaign.agency && (
+          <div className="text-xs text-muted-foreground">
+            Agency: {campaign.agency}
           </div>
         )}
 
-        {/* LP Link */}
-        {campaign.lp_link && (
-          <a
-            href={campaign.lp_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            <span className="truncate">Landing Page</span>
-          </a>
-        )}
-
-        {/* Entity Tags */}
-        {campaign.entity && campaign.entity.length > 0 && (
+        {/* Cities */}
+        {campaign.cities && campaign.cities.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {campaign.entity.slice(0, 2).map((entity) => (
-              <Badge key={entity} variant="secondary" className="text-xs">
-                {entity}
+            {campaign.cities.slice(0, 2).map((city) => (
+              <Badge key={city} variant="secondary" className="text-xs">
+                {city}
               </Badge>
             ))}
-            {campaign.entity.length > 2 && (
+            {campaign.cities.length > 2 && (
               <Badge variant="secondary" className="text-xs">
-                +{campaign.entity.length - 2}
+                +{campaign.cities.length - 2}
               </Badge>
             )}
           </div>
         )}
 
-        {/* Description */}
-        {campaign.description && (
+        {/* Notes */}
+        {campaign.notes && (
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {campaign.description}
+            {campaign.notes}
           </p>
         )}
       </CardContent>

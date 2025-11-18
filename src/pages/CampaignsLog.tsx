@@ -13,13 +13,13 @@ import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 
 interface Campaign {
   id: string;
-  title: string;
-  description: string | null;
+  name: string;
+  budget: number;
   start_date: string;
   end_date: string;
-  entity: string[] | null;
-  lp_link: string | null;
-  image_url: string | null;
+  agency: string | null;
+  cities: string[];
+  status: string;
   notes: string | null;
 }
 
@@ -39,7 +39,7 @@ export default function CampaignsLog() {
   const fetchCampaigns = async () => {
     try {
       const { data, error } = await supabase
-        .from("campaigns")
+        .from("planned_campaigns")
         .select("*")
         .order("start_date", { ascending: false });
 
@@ -53,10 +53,10 @@ export default function CampaignsLog() {
     }
   };
 
-  // Get all unique entities from campaigns
+  // Get all unique cities from campaigns
   const allEntities = Array.from(
     new Set(
-      campaigns.flatMap((c) => c.entity || [])
+      campaigns.flatMap((c) => c.cities || [])
     )
   ).sort();
 
