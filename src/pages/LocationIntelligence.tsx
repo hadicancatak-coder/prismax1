@@ -15,6 +15,7 @@ import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDial
 import { BulkLocationUploadDialog } from "@/components/location/BulkLocationUploadDialog";
 import { CampaignsListDialog } from "@/components/location/CampaignsListDialog";
 import { VendorsDialog } from "@/components/location/VendorsDialog";
+import { CampaignDetailDialog } from "@/components/location/CampaignDetailDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ export default function LocationIntelligence() {
   const [clickedCoordinates, setClickedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<LocationMapRef>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [selectedCampaignForDetail, setSelectedCampaignForDetail] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
     cities: [],
@@ -139,6 +141,10 @@ export default function LocationIntelligence() {
       ...prev,
       agencies: [agency]
     }));
+  };
+
+  const handleViewCampaign = (campaignId: string) => {
+    setSelectedCampaignForDetail(campaignId);
   };
 
   // Set up right-click context menu on map
@@ -367,8 +373,20 @@ export default function LocationIntelligence() {
         locations={selectedLocations}
       />
       <BulkLocationUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
-      <CampaignsListDialog open={campaignsListOpen} onClose={() => setCampaignsListOpen(false)} onCreateNew={() => { setCampaignsListOpen(false); setPlannerOpen(true); }} />
+      <CampaignsListDialog 
+        open={campaignsListOpen} 
+        onClose={() => setCampaignsListOpen(false)} 
+        onCreateNew={() => { setCampaignsListOpen(false); setPlannerOpen(true); }} 
+        onViewCampaign={handleViewCampaign}
+      />
       <VendorsDialog open={vendorsOpen} onClose={() => setVendorsOpen(false)} locations={locations} onFilterByAgency={handleFilterByAgency} />
+      {selectedCampaignForDetail && (
+        <CampaignDetailDialog
+          campaign={campaigns.find(c => c.id === selectedCampaignForDetail) || null}
+          open={!!selectedCampaignForDetail}
+          onClose={() => setSelectedCampaignForDetail(null)}
+        />
+      )}
     </div>
   );
 }

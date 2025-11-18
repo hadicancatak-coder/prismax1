@@ -268,7 +268,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude *</Label>
+              <Label htmlFor="latitude">Latitude * {initialCoordinates && <span className="text-xs text-muted-foreground ml-2">(from map click)</span>}</Label>
               <Input
                 id="latitude"
                 type="number"
@@ -276,11 +276,12 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 value={formData.latitude}
                 onChange={(e) => setFormData({ ...formData, latitude: Number(e.target.value) })}
                 required
+                className={initialCoordinates ? "border-primary" : ""}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude *</Label>
+              <Label htmlFor="longitude">Longitude * {initialCoordinates && <span className="text-xs text-muted-foreground ml-2">(from map click)</span>}</Label>
               <Input
                 id="longitude"
                 type="number"
@@ -288,6 +289,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 value={formData.longitude}
                 onChange={(e) => setFormData({ ...formData, longitude: Number(e.target.value) })}
                 required
+                className={initialCoordinates ? "border-primary" : ""}
               />
             </div>
           </div>
