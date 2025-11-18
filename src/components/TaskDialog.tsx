@@ -506,7 +506,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   className="font-semibold text-lg"
                 />
               ) : (
-                <span>{task.title}</span>
+                <span className="text-2xl font-semibold">{task.title}</span>
               )}
             </DialogTitle>
             <div className="flex items-center gap-2">
@@ -965,9 +965,16 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                       if (!task.recurrence_rrule || task.recurrence_rrule === 'none') return 'No Recurrence';
                       if (task.recurrence_rrule.includes('DAILY')) return 'Daily';
                       if (task.recurrence_rrule.includes('WEEKLY')) {
-                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                        const dayName = days[task.recurrence_day_of_week || 0];
-                        return `Weekly on ${dayName}`;
+                        const match = task.recurrence_rrule.match(/BYDAY=([A-Z,]+)/);
+                        if (match) {
+                          const dayMap: Record<string, string> = { 
+                            SU: 'Sunday', MO: 'Monday', TU: 'Tuesday', WE: 'Wednesday', 
+                            TH: 'Thursday', FR: 'Friday', SA: 'Saturday' 
+                          };
+                          const dayNames = match[1].split(',').map(d => dayMap[d]).join(', ');
+                          return `Weekly on ${dayNames}`;
+                        }
+                        return 'Weekly';
                       }
                       if (task.recurrence_rrule.includes('MONTHLY')) {
                         const day = task.recurrence_day_of_month || 1;
