@@ -903,6 +903,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_external: boolean | null
+          request_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -914,6 +915,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_external?: boolean | null
+          request_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -925,6 +927,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_external?: boolean | null
+          request_type?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -987,6 +990,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           email_verified: boolean | null
+          entity: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
@@ -998,6 +1002,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
+          entity?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -1009,6 +1014,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
+          entity?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null

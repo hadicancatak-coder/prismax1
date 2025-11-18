@@ -6,6 +6,7 @@ export interface CampaignComment {
   id: string;
   campaign_tracking_id: string;
   comment_text: string;
+  request_type: string;
   author_name: string | null;
   author_email: string | null;
   author_id: string | null;
@@ -38,12 +39,14 @@ export const useCampaignComments = () => {
     mutationFn: async ({
       trackingId,
       commentText,
+      requestType = 'Comment',
       isExternal = false,
       authorName,
       authorEmail,
     }: {
       trackingId: string;
       commentText: string;
+      requestType?: string;
       isExternal?: boolean;
       authorName?: string;
       authorEmail?: string;
@@ -55,6 +58,7 @@ export const useCampaignComments = () => {
         .insert({
           campaign_tracking_id: trackingId,
           comment_text: commentText,
+          request_type: requestType,
           is_external: isExternal,
           author_name: authorName || user?.email || "Anonymous",
           author_email: authorEmail || user?.email,

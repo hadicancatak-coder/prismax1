@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useExternalAccess } from "@/hooks/useExternalAccess";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { Copy, ExternalLink, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +32,8 @@ export function ExternalAccessDialog({
   onOpenChange,
 }: ExternalAccessDialogProps) {
   const { generateLink } = useExternalAccess();
+  const { data: entities = [] } = useSystemEntities();
+  const [selectedEntity, setSelectedEntity] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [reviewerEmail, setReviewerEmail] = useState("");
   const [expiration, setExpiration] = useState("never");
@@ -40,6 +43,11 @@ export function ExternalAccessDialog({
 
   const handleGenerateLink = async () => {
     // Validate inputs
+    if (!selectedEntity) {
+      toast.error("Please select an entity");
+      return;
+    }
+
     if (!reviewerName.trim()) {
       toast.error("Please enter reviewer name");
       return;
@@ -65,6 +73,7 @@ export function ExternalAccessDialog({
       }
 
       const result = await generateLink.mutateAsync({
+        entity: selectedEntity,
         reviewerName,
         reviewerEmail,
         expiresAt,
@@ -85,6 +94,7 @@ export function ExternalAccessDialog({
   };
 
   const handleClose = () => {
+    setSelectedEntity("");
     setReviewerName("");
     setReviewerEmail("");
     setExpiration("never");
@@ -110,7 +120,23 @@ export function ExternalAccessDialog({
           {!linkGenerated ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="reviewer-name">Reviewer Name</Label>
+                <Label htmlFor="entity">Entity *</Label>
+                <Select value={selectedEntity} onValueChange={setSelectedEntity}>
+                  <SelectTrigger id="entity">
+                    <SelectValue placeholder="Choose entity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                  {entities.map((entity) => (
+                    <SelectItem key={entity.name} value={entity.name}>
+                      {entity.emoji} {entity.name}
+                    </SelectItem>
+                  ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reviewer-name">Reviewer Name *</Label>
                 <Input
                   id="reviewer-name"
                   value={reviewerName}
@@ -121,7 +147,7 @@ export function ExternalAccessDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="reviewer-email">
-                  Reviewer Email (@cfi.trade)
+                  Reviewer Email (@cfi.trade) *
                 </Label>
                 <Input
                   id="reviewer-email"

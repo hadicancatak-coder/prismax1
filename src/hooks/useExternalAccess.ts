@@ -6,13 +6,13 @@ import { randomUUID } from "crypto";
 export interface ExternalAccess {
   id: string;
   access_token: string;
-  reviewer_name: string | null;
+  entity: string;
   reviewer_email: string;
-  email_verified: boolean;
+  reviewer_name: string | null;
   expires_at: string | null;
-  created_at: string;
-  created_by: string | null;
   is_active: boolean;
+  email_verified: boolean;
+  created_at: string;
 }
 
 const generateUniqueToken = () => {
@@ -23,10 +23,12 @@ export const useExternalAccess = () => {
   // Generate access link
   const generateLink = useMutation({
     mutationFn: async ({
+      entity,
       reviewerName,
       reviewerEmail,
       expiresAt,
     }: {
+      entity: string;
       reviewerName: string;
       reviewerEmail: string;
       expiresAt?: string;
@@ -38,6 +40,7 @@ export const useExternalAccess = () => {
         .from("campaign_external_access")
         .insert({
           access_token: token,
+          entity,
           reviewer_name: reviewerName,
           reviewer_email: reviewerEmail,
           expires_at: expiresAt || null,
