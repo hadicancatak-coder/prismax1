@@ -16,9 +16,10 @@ interface Campaign {
 interface DraggableCampaignCardProps {
   campaign: Campaign;
   isDragging?: boolean;
+  onClick?: () => void;
 }
 
-export function DraggableCampaignCard({ campaign, isDragging }: DraggableCampaignCardProps) {
+export function DraggableCampaignCard({ campaign, isDragging, onClick }: DraggableCampaignCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: campaign.id,
   });
@@ -34,49 +35,59 @@ export function DraggableCampaignCard({ campaign, isDragging }: DraggableCampaig
       ref={setNodeRef}
       style={style}
       className={cn(
-        "w-full transition-all cursor-grab active:cursor-grabbing hover:shadow-lg border-2",
+        "w-full transition-all hover:shadow-lg border-2",
         isDragging && "opacity-50 shadow-xl scale-105"
       )}
     >
       <CardContent className="p-3 space-y-2">
-        {/* Drag Handle */}
-        <div
-          {...listeners}
-          {...attributes}
-          className="flex items-center gap-2 cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <h3 className="font-semibold text-sm line-clamp-2 flex-1">
+        {/* Header with Drag Handle */}
+        <div className="flex items-center gap-2">
+          {/* Drag Handle - Only this part is draggable */}
+          <div
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          </div>
+          {/* Title - Clickable */}
+          <h3 
+            className="font-semibold text-sm line-clamp-2 flex-1 cursor-pointer hover:text-primary transition-colors"
+            onClick={onClick}
+          >
             {campaign.name}
           </h3>
         </div>
 
-        {/* Campaign Type */}
-        <Badge variant="outline" className="text-xs w-fit">
-          {campaign.campaign_type}
-        </Badge>
-
-        {/* Description */}
-        {campaign.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {campaign.description}
-          </p>
-        )}
-
-        {/* Landing Page */}
-        {campaign.landing_page && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <ExternalLink className="h-3 w-3" />
-            <span className="truncate">{new URL(campaign.landing_page).hostname}</span>
-          </div>
-        )}
-
-        {/* Status */}
-        {!campaign.is_active && (
-          <Badge variant="secondary" className="text-xs w-fit">
-            Inactive
+        {/* Content - Clickable */}
+        <div className="cursor-pointer space-y-2" onClick={onClick}>
+          {/* Campaign Type */}
+          <Badge variant="outline" className="text-xs w-fit">
+            {campaign.campaign_type}
           </Badge>
-        )}
+
+          {/* Description */}
+          {campaign.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              {campaign.description}
+            </p>
+          )}
+
+          {/* Landing Page */}
+          {campaign.landing_page && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ExternalLink className="h-3 w-3" />
+              <span className="truncate">{new URL(campaign.landing_page).hostname}</span>
+            </div>
+          )}
+
+          {/* Status */}
+          {!campaign.is_active && (
+            <Badge variant="secondary" className="text-xs w-fit">
+              Inactive
+            </Badge>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

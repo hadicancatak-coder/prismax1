@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
 import { ExternalAccessDialog } from "@/components/campaigns/ExternalAccessDialog";
+import { UtmCampaignDetailDialog } from "@/components/campaigns/UtmCampaignDetailDialog";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
@@ -22,10 +23,12 @@ export default function CampaignsLog() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [externalAccessDialogOpen, setExternalAccessDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<string>("");
+  const [libraryEntityFilter, setLibraryEntityFilter] = useState<string>("all");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { data: entities = [] } = useSystemEntities();
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useUtmCampaigns();
-  const { createTracking } = useCampaignEntityTracking();
+  const { createTracking, getEntitiesForCampaign } = useCampaignEntityTracking();
   
   useEffect(() => {
     if (entities.length > 0 && !selectedEntity) {
@@ -71,7 +74,16 @@ export default function CampaignsLog() {
     landing_page: c.landing_page, is_active: c.is_active, notes: null,
   }));
 
-  const filteredCampaigns = transformedCampaigns.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredCampaigns = transformedCampaigns.filter((c) => {
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+    
+    // Apply entity filter
+    if (libraryEntityFilter === "all") return true;
+    
+    const campaignEntities = getEntitiesForCampaign(c.id);
+    return campaignEntities.some(tracking => tracking.entity === libraryEntityFilter);
+  });
 
   if (isLoadingCampaigns) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
 
@@ -134,13 +146,38 @@ export default function CampaignsLog() {
               </CollapsibleTrigger>
               <CollapsibleContent className="pb-4 space-y-3 overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search campaigns..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1" />
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search campaigns..." 
+                      value={searchTerm} 
+                      onChange={(e) => setSearchTerm(e.target.value)} 
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={libraryEntityFilter} onValueChange={setLibraryEntityFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by Entity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Entities</SelectItem>
+                      {entities.map((entity) => (
+                        <SelectItem key={entity.id} value={entity.name}>
+                          {entity.emoji} {entity.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ScrollArea className="h-40">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 pr-4">
                     {filteredCampaigns.map((campaign) => (
-                      <DraggableCampaignCard key={campaign.id} campaign={campaign} isDragging={activeDragId === campaign.id} />
+                      <DraggableCampaignCard 
+                        key={campaign.id} 
+                        campaign={campaign} 
+                        isDragging={activeDragId === campaign.id}
+                        onClick={() => setSelectedCampaignId(campaign.id)}
+                      />
                     ))}
                   </div>
                   {filteredCampaigns.length === 0 && <div className="text-center text-muted-foreground py-8">No campaigns found</div>}
@@ -156,6 +193,14 @@ export default function CampaignsLog() {
       </DragOverlay>
 
       <ExternalAccessDialog open={externalAccessDialogOpen} onOpenChange={setExternalAccessDialogOpen} />
+      
+      {selectedCampaignId && (
+        <UtmCampaignDetailDialog
+          campaignId={selectedCampaignId}
+          open={!!selectedCampaignId}
+          onOpenChange={(open) => !open && setSelectedCampaignId(null)}
+        />
+      )}
     </DndContext>
   );
 }
