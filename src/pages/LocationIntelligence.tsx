@@ -120,7 +120,7 @@ export default function LocationIntelligence() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden">
       {/* Full-screen Map */}
       <div className="absolute inset-0">
         <LocationMap
