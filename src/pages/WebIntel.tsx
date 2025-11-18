@@ -109,9 +109,8 @@ export default function WebIntel() {
       {isLoadingDeals ? <TableSkeleton /> : (
         <DealsTableView
           deals={deals}
-          dealCampaigns={dealCampaigns}
-          getCampaignsByDeal={getCampaignsByDeal}
-          getUtmLinksByDeal={getUtmLinksByDeal}
+          getCampaignCount={(dealId) => getCampaignsByDeal(dealId).length}
+          getUtmLinkCount={(dealId) => getUtmLinksByDeal(dealId).length}
           getWebsiteName={() => 'N/A'}
           onView={handleViewDeal}
           onEdit={handleEditDeal}
@@ -133,7 +132,16 @@ export default function WebIntel() {
         onOpenChange={(open) => { setDealDetailDialogOpen(open); if (!open) setViewingDeal(null); }}
         deal={viewingDeal}
         onEdit={() => { setDealDetailDialogOpen(false); handleEditDeal(viewingDeal); }}
-        onDelete={() => { setDealDetailDialogOpen(false); handleDeleteDeal(viewingDeal.id); }}
+        onDelete={() => { setDealDetailDialogOpen(false); handleDeleteDeal(viewingDeal?.id); }}
+        campaigns={viewingDeal ? getCampaignsByDeal(viewingDeal.id).map(dc => {
+          const campaign = campaigns.find(c => c.id === dc.campaign_id);
+          return { id: dc.campaign_id, name: campaign?.name || 'Unknown Campaign' };
+        }) : []}
+        utmLinks={viewingDeal ? getUtmLinksByDeal(viewingDeal.id).map(du => {
+          const link = utmLinks.find(l => l.id === du.utm_link_id);
+          return { id: du.utm_link_id, utm_campaign: link?.campaign_name || '', final_url: link?.base_url || '' };
+        }) : []}
+        websiteName={'N/A'}
       />
 
       <AlertDialog open={deleteDealConfirmId !== null} onOpenChange={(open) => !open && setDeleteDealConfirmId(null)}>
