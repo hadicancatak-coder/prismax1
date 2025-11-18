@@ -226,37 +226,23 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0 space-y-2">
-              <div className="flex items-start justify-between gap-4">
-                <DialogTitle className="text-xl pr-8">{campaign?.name || "Campaign Details"}</DialogTitle>
-                <div className="flex-1 min-w-0">
-                  <DialogTitle className="text-xl mb-1">
-                    {isEditing ? (
-                      <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
-                    ) : (
-                      campaign.name
-                    )}
-                  </DialogTitle>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Created {format(new Date(campaign.created_at), 'MMM d, yyyy')}</span>
-                    {campaign.last_used_at && (
-                      <>
-                        <span>•</span>
-                        <span>Last used {format(new Date(campaign.last_used_at), 'MMM d, yyyy')}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant={showComments ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowComments(!showComments)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Comments
-                  </Button>
-                </div>
+            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                <DialogTitle className="text-xl pr-8">
+                  {isEditing ? (
+                    <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
+                  ) : (
+                    campaign.name
+                  )}
+                </DialogTitle>
+                <Button
+                  variant={showComments ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowComments(!showComments)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Comments
+                </Button>
               </div>
             </DialogHeader>
 
@@ -311,9 +297,8 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                         <p className="text-sm text-muted-foreground">Not live on any entity yet</p>
                       ) : (
                         entities.map((entityTracking) => (
-                          <Badge key={entityTracking.id} variant="secondary" className="gap-1">
+                          <Badge key={entityTracking.id} variant="secondary">
                             {entityTracking.entity}
-                            <span className="text-xs opacity-70">({entityTracking.status})</span>
                           </Badge>
                         ))
                       )}
