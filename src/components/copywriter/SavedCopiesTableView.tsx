@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Upload } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
@@ -200,19 +200,6 @@ export function SavedCopiesTableView({
     }
   };
 
-  const handleSync = async (copy: CopywriterCopy) => {
-    try {
-      const languagesToSync = activeLanguages.filter((lang) => {
-        const content = copy[`content_${lang}` as keyof CopywriterCopy];
-        return content && typeof content === "string" && content.trim() !== "";
-      }) as ("en" | "ar" | "az" | "es")[];
-
-      await syncCopyToPlanners({ copy, languages: languagesToSync });
-      toast({ title: "Copy synced to planners" });
-    } catch (error) {
-      toast({ title: "Failed to sync copy", variant: "destructive" });
-    }
-  };
 
   const toggleSelectAll = () => {
     if (selected.length === copies.length) {
@@ -435,12 +422,12 @@ export function SavedCopiesTableView({
                     <SelectTrigger className="h-8 text-xs border-0">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="in_review">In Review</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
+                      <SelectContent className="z-50 bg-background">
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="in_review">In Review</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
                   </Select>
                 </TableCell>
                 {allLanguages.map((lang) => renderLanguageColumns(null, lang, true))}
@@ -542,7 +529,7 @@ export function SavedCopiesTableView({
                       <SelectTrigger className="h-8 text-xs border-0">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-background">
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="in_review">In Review</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
@@ -553,22 +540,12 @@ export function SavedCopiesTableView({
                   {allLanguages.map((lang) => renderLanguageColumns(copy, lang, false))}
                   <TableCell className="min-h-[44px] p-2">
                     <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => handleSync(copy)}
-                        disabled={isGuest}
-                        title="Sync to planners"
-                      >
-                        <Upload className="h-3 w-3" />
-                      </Button>
                       <AlertDialog open={showDeleteConfirm === copy.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
                         <AlertDialogTrigger asChild>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                             disabled={isGuest}
                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(copy.id); }}
                           >

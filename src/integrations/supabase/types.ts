@@ -1653,6 +1653,42 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          comment_text: string
+          created_at: string | null
+          entity: string
+          id: string
+          is_external: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          comment_text: string
+          created_at?: string | null
+          entity: string
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          comment_text?: string
+          created_at?: string | null
+          entity?: string
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       entity_presets: {
         Row: {
           created_at: string | null
