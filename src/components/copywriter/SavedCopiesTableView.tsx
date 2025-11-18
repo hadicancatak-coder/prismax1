@@ -422,7 +422,7 @@ export function SavedCopiesTableView({
                     <SelectTrigger className="h-8 text-xs border-0">
                       <SelectValue />
                     </SelectTrigger>
-                      <SelectContent className="z-50 bg-background">
+                      <SelectContent position="popper" sideOffset={4} className="z-[100] bg-background border shadow-md">
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="in_review">In Review</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
@@ -529,7 +529,7 @@ export function SavedCopiesTableView({
                       <SelectTrigger className="h-8 text-xs border-0">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-background">
+                      <SelectContent position="popper" sideOffset={4} className="z-[100] bg-background border shadow-md">
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="in_review">In Review</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
