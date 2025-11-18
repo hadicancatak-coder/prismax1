@@ -15,7 +15,11 @@ interface CampaignVersionHistoryProps {
 export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryProps) {
   const [selectedVersion, setSelectedVersion] = useState<CampaignVersion | null>(null);
   const { useVersions } = useCampaignVersions();
-  const { data: versions = [], isLoading } = useVersions(campaignId);
+  const { data: versions = [], isLoading, error } = useVersions(campaignId);
+
+  if (error) {
+    console.error('Version history error:', error);
+  }
 
   return (
     <>
@@ -30,36 +34,43 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
           <ScrollArea className="h-[300px] pr-4">
             {isLoading ? (
               <div className="text-sm text-muted-foreground">Loading versions...</div>
+            ) : error ? (
+              <div className="text-sm text-destructive">Error loading versions</div>
             ) : versions.length === 0 ? (
               <div className="text-sm text-muted-foreground text-center py-8">
                 No versions yet. Save a version to track changes.
               </div>
             ) : (
               <div className="space-y-3">
-                {versions.map((version) => (
-                  <div
-                    key={version.id}
-                    className="border rounded-lg p-3 hover:bg-accent/50 cursor-pointer transition-colors"
-                    onClick={() => setSelectedVersion(version)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">v{version.version_number}</Badge>
-                        <span className="font-medium text-sm">{version.name}</span>
+                {versions.map((version) => {
+                  const createdDate = version.created_at ? new Date(version.created_at) : null;
+                  const isValidDate = createdDate && !isNaN(createdDate.getTime());
+                  
+                  return (
+                    <div
+                      key={version.id}
+                      className="border rounded-lg p-3 hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedVersion(version)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">v{version.version_number}</Badge>
+                          <span className="font-medium text-sm">{version.name}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {isValidDate 
+                            ? formatDistanceToNow(createdDate, { addSuffix: true })
+                            : 'Date unavailable'}
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {version.created_at && !isNaN(new Date(version.created_at).getTime()) 
-                          ? formatDistanceToNow(new Date(version.created_at), { addSuffix: true })
-                          : 'Invalid date'}
-                      </span>
+                      {version.version_notes && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {version.version_notes}
+                        </p>
+                      )}
                     </div>
-                    {version.version_notes && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {version.version_notes}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
@@ -144,7 +155,16 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
             )}
 
             <div className="text-xs text-muted-foreground border-t pt-3">
-              Created {formatDistanceToNow(new Date(selectedVersion?.created_at || ""), { addSuffix: true })}
+              {(() => {
+                try {
+                  const date = selectedVersion?.created_at ? new Date(selectedVersion.created_at) : null;
+                  return date && !isNaN(date.getTime())
+                    ? `Created ${formatDistanceToNow(date, { addSuffix: true })}`
+                    : 'Creation date unavailable';
+                } catch {
+                  return 'Creation date unavailable';
+                }
+              })()}
             </div>
           </div>
         </DialogContent>
