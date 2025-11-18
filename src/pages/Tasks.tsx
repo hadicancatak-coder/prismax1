@@ -274,25 +274,37 @@ export default function Tasks() {
               )}
             </Button>
 
-            <div className="ml-auto">
-              <Select 
-                value={viewMode} 
-                onValueChange={(v) => {
-                  setViewMode(v as any);
-                  if (v === 'kanban-status') setBoardGroupBy('status');
-                  if (v === 'kanban-date') setBoardGroupBy('date');
-                }}
+            <div className="ml-auto flex gap-1">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className="h-8 w-8 p-0"
+                title="Table View"
               >
-                <SelectTrigger className="w-[160px] h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="table">Table View</SelectItem>
-                  <SelectItem value="grid">Grid View</SelectItem>
-                  <SelectItem value="kanban-status">Kanban by Status</SelectItem>
-                  <SelectItem value="kanban-date">Kanban by Date</SelectItem>
-                </SelectContent>
-              </Select>
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 w-8 p-0"
+                title="Grid View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'kanban-status' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('kanban-status');
+                  setBoardGroupBy('status');
+                }}
+                className="h-8 w-8 p-0"
+                title="Kanban by Status"
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
