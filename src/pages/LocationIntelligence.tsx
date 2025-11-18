@@ -158,7 +158,7 @@ export default function LocationIntelligence() {
         onCreateCampaign={() => setPlannerOpen(true)}
         onViewCampaigns={() => setCampaignsListOpen(true)}
         onViewVendors={() => setVendorsOpen(true)}
-        disabled={!isAdmin}
+        isAdmin={isAdmin}
       >
         <div className="absolute inset-0">
           <LocationMap
@@ -180,14 +180,16 @@ export default function LocationIntelligence() {
           <Filter className="h-4 w-4 mr-2" />Filters {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
         </Button>
         {showFilters && (
-          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300 max-h-[500px] overflow-y-auto">
-            <LocationFilters 
-              filters={filters} 
-              onFiltersChange={setFilters} 
-              availableCities={cities} 
-              availableAgencies={agencies} 
-              availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
-            />
+          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300">
+            <div className="max-h-[500px] overflow-y-auto">
+              <LocationFilters 
+                filters={filters} 
+                onFiltersChange={setFilters} 
+                availableCities={cities} 
+                availableAgencies={agencies} 
+                availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
+              />
+            </div>
           </div>
         )}
       </div>

@@ -44,7 +44,40 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
       mapboxgl.accessToken = MAPBOX_TOKEN;
       map.current = new mapboxgl.Map({ container: mapContainer.current, style: "mapbox://styles/mapbox/streets-v12", center: [55.2708, 25.2048], zoom: 8 });
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-      return () => { map.current?.remove(); };
+      
+      // Inject custom CSS for popup z-index and styling
+      const style = document.createElement('style');
+      style.textContent = `
+        .mapboxgl-popup {
+          z-index: 150 !important;
+        }
+        .mapboxgl-popup-content {
+          background: hsl(var(--card)) !important;
+          color: hsl(var(--card-foreground)) !important;
+          border: 1px solid hsl(var(--border)) !important;
+          border-radius: 0.5rem !important;
+          padding: 0 !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+          max-width: 260px !important;
+        }
+        .mapboxgl-popup-close-button {
+          color: hsl(var(--muted-foreground)) !important;
+          font-size: 20px !important;
+          padding: 4px 8px !important;
+        }
+        .mapboxgl-popup-close-button:hover {
+          background: hsl(var(--muted)) !important;
+          color: hsl(var(--foreground)) !important;
+        }
+      `;
+      if (mapContainer.current) {
+        mapContainer.current.appendChild(style);
+      }
+      
+      return () => { 
+        map.current?.remove(); 
+        style.remove();
+      };
     }, []);
 
     useEffect(() => {
@@ -65,8 +98,85 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         el.addEventListener('click', () => onLocationClick(location));
 
         const marker = new mapboxgl.Marker(el).setLngLat([location.longitude, location.latitude]).addTo(map.current);
-        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px' }).setHTML(`<div style="padding:12px;min-width:240px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><h3 style="font-weight:600;font-size:1rem">${location.name}</h3>${location.manual_score?`<span style="font-size:0.75rem;padding:2px 8px;border-radius:4px;background:rgba(139,92,246,0.1);color:#8B5CF6">${location.manual_score}/10</span>`:''}</div><div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"><div style="font-size:0.875rem">📍 ${location.city}</div><div style="font-size:0.875rem">🏷️ ${location.type}</div>${location.agency?`<div style="font-size:0.875rem">🏢 ${location.agency}</div>`:''}${location.price_per_month?`<div style="font-size:0.875rem">💰 AED ${location.price_per_month.toLocaleString()}/mo</div>`:''}</div><div style="display:flex;gap:8px">${isSelectionMode?`<button class="popup-btn" style="flex:1;padding:6px 12px;font-size:0.875rem;background:#8B5CF6;color:white;border:none;border-radius:6px;cursor:pointer">${isSelected?'Remove':'Add to Campaign'}</button>`:`<button class="popup-btn" style="flex:1;padding:6px 12px;font-size:0.875rem;border:1px solid #e5e7eb;background:white;border-radius:6px;cursor:pointer">View Details</button>${isAdmin?'<button class="popup-btn-edit" style="padding:6px 12px;font-size:0.875rem;border:1px solid #e5e7eb;background:white;border-radius:6px;cursor:pointer">Edit</button>':''}`}</div></div>`);
-        popup.on('open', () => { popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => btn.addEventListener('click', () => { onLocationClick(location); popup.remove(); })); });
+        
+        // Enhanced popup HTML with better styling
+        const popupHTML = `
+          <div class="p-3 min-w-[240px] max-w-[260px]">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-semibold text-base pr-2">${location.name}</h3>
+              ${location.manual_score ? `
+                <span class="text-xs font-medium px-2 py-1 rounded" style="background: hsl(var(--primary) / 0.1); color: hsl(var(--primary));">
+                  ${location.manual_score}/10
+                </span>
+              ` : ''}
+            </div>
+            
+            <div class="space-y-1.5 mb-3 text-sm">
+              <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
+                <span>📍</span>
+                <span>${location.city}</span>
+              </div>
+              <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
+                <span>🏷️</span>
+                <span>${location.type}</span>
+              </div>
+              ${location.agency ? `
+                <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
+                  <span>🏢</span>
+                  <span>${location.agency}</span>
+                </div>
+              ` : ''}
+              ${location.price_per_month ? `
+                <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
+                  <span>💰</span>
+                  <span>AED ${location.price_per_month.toLocaleString()}/mo</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="flex gap-2">
+              ${isSelectionMode ? `
+                <button 
+                  class="flex-1 px-3 py-1.5 text-sm rounded transition-colors popup-btn"
+                  style="background: hsl(var(--primary)); color: hsl(var(--primary-foreground));"
+                  onmouseover="this.style.opacity='0.9'"
+                  onmouseout="this.style.opacity='1'"
+                >
+                  ${isSelected ? 'Remove' : 'Add to Campaign'}
+                </button>
+              ` : `
+                <button 
+                  class="flex-1 px-3 py-1.5 text-sm rounded transition-colors popup-btn"
+                  style="border: 1px solid hsl(var(--border)); background: hsl(var(--background));"
+                  onmouseover="this.style.background='hsl(var(--muted))'"
+                  onmouseout="this.style.background='hsl(var(--background))'"
+                >
+                  View Details
+                </button>
+                ${isAdmin ? `
+                  <button 
+                    class="px-3 py-1.5 text-sm rounded transition-colors popup-btn-edit"
+                    style="border: 1px solid hsl(var(--border)); background: hsl(var(--background));"
+                    onmouseover="this.style.background='hsl(var(--muted))'"
+                    onmouseout="this.style.background='hsl(var(--background))'"
+                  >
+                    Edit
+                  </button>
+                ` : ''}
+              `}
+            </div>
+          </div>
+        `;
+        
+        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup' }).setHTML(popupHTML);
+        popup.on('open', () => { 
+          popup.getElement()?.querySelectorAll('.popup-btn,.popup-btn-edit').forEach(btn => {
+            btn.addEventListener('click', () => { 
+              onLocationClick(location); 
+              popup.remove(); 
+            });
+          }); 
+        });
         marker.setPopup(popup);
         markers.current.push(marker);
       });
