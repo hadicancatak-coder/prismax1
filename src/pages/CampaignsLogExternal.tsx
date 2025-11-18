@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, ExternalLink as ExternalLinkIcon } from "lucide-react";
+import { Eye, ExternalLink as ExternalLinkIcon, MessageSquare, MousePointerClick, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useExternalAccess } from "@/hooks/useExternalAccess";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
@@ -152,30 +153,56 @@ export default function CampaignsLogExternal() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Banner */}
-      <div className="bg-amber-100 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-800 py-3 px-4 flex-shrink-0">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            <span className="font-semibold">
-              External Review Mode - {accessData.entity}
-            </span>
-          </div>
-          <div className="text-sm">
-            {accessData.reviewer_name} ({accessData.reviewer_email})
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto py-4 px-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Eye className="h-6 w-6 text-primary" />
+                Campaign Review: {accessData?.entity}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Viewing as {name} ({email})
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex flex-col container mx-auto py-6 px-4">
+      {/* Usage Guide */}
+      <div className="container mx-auto py-6 px-6">
+        <Alert className="mb-6 bg-primary/5 border-primary/20">
+          <CheckCircle className="h-4 w-4 text-primary" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">How to use this review page:</p>
+              <ul className="space-y-1 text-sm">
+                <li className="flex items-start gap-2">
+                  <MousePointerClick className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                  <span><strong>Click on any campaign card</strong> to view its full details, images, and metadata</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MessageSquare className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                  <span><strong>Click the "Comments" button</strong> at the top right to add feedback or tag team members (use @)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MessageSquare className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                  <span><strong>Add campaign-specific comments</strong> by opening a campaign and using the comments section there</span>
+                </li>
+              </ul>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        {/* Campaign Table */}
         <EntityCampaignTable
           entity={accessData.entity}
           campaigns={transformedCampaigns}
           isExternal={true}
-          externalReviewerName={accessData.reviewer_name}
-          externalReviewerEmail={accessData.reviewer_email}
+          externalReviewerName={name}
+          externalReviewerEmail={email}
         />
       </div>
     </div>
