@@ -199,12 +199,21 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
               )}
             </div>
 
-            {campaign.description && !isEditing && (
-              <div>
-                <Label>Description</Label>
-                <p className="mt-1 text-sm text-muted-foreground">{campaign.description}</p>
+            <div>
+              <Label>Active Entities</Label>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {entities.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Not live on any entity yet</p>
+                ) : (
+                  entities.map((entityTracking) => (
+                    <Badge key={entityTracking.id} variant="secondary" className="gap-1">
+                      {entityTracking.entity}
+                      <span className="text-xs">({entityTracking.status})</span>
+                    </Badge>
+                  ))
+                )}
               </div>
-            )}
+            </div>
 
             {isEditing && (
               <>

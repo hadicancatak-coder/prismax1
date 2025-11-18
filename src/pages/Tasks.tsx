@@ -221,104 +221,104 @@ export default function Tasks() {
           </div>
         </div>
 
-        {/* Consolidated Filters - Collapsible */}
+        {/* Consolidated Filters - Single Row */}
         <Card className="p-2">
-        <div className="space-y-2">
-          {/* Always Visible - Single Compact Row */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Input
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 h-8 text-sm"
-            />
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px] h-8 text-sm">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Ongoing">Ongoing</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Failed">Failed</SelectItem>
-                <SelectItem value="Blocked">Blocked</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-2">
+            {/* Main Filter Row - Always visible, no wrapping */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-32 sm:w-48 md:w-64 h-8 text-sm flex-shrink-0"
+              />
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Ongoing">Ongoing</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
-              <SelectTrigger className="w-[130px] h-8 text-sm">
-                <SelectValue placeholder="Task Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="generic">Generic</SelectItem>
-                <SelectItem value="campaign">Campaigns</SelectItem>
-                <SelectItem value="recurring">Recurring</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
+                <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="generic">Generic</SelectItem>
+                  <SelectItem value="campaign">Campaign</SelectItem>
+                  <SelectItem value="recurring">Recurring</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              className="h-8 gap-1.5 text-sm"
-            >
-              {filtersExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              More Filters
-              {(selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter) && (
-                <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-xs">
-                  {[selectedAssignees.length > 0, selectedTeams.length > 0, dateFilter].filter(Boolean).length}
-                </Badge>
-              )}
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+                className="h-8 gap-1.5 text-xs flex-shrink-0 px-2"
+              >
+                {filtersExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                More
+                {(selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter) && (
+                  <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-xs">
+                    {[selectedAssignees.length > 0, selectedTeams.length > 0, dateFilter].filter(Boolean).length}
+                  </Badge>
+                )}
+              </Button>
 
-            <div className="ml-auto flex gap-1">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="h-8 w-8 p-0"
-                title="Table View"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-8 w-8 p-0"
-                title="Grid View"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban-status' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setViewMode('kanban-status');
-                  setBoardGroupBy('status');
-                }}
-                className="h-8 w-8 p-0"
-                title="Kanban by Status"
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban-date' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setViewMode('kanban-date');
-                  setBoardGroupBy('date');
-                }}
-                className="h-8 w-8 p-0"
-                title="Kanban by Date"
-              >
-                <Clock className="h-4 w-4" />
-              </Button>
+              <div className="ml-auto flex gap-1 flex-shrink-0">
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="h-8 w-8 p-0"
+                  title="Table"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-8 w-8 p-0"
+                  title="Grid"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'kanban-status' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setViewMode('kanban-status');
+                    setBoardGroupBy('status');
+                  }}
+                  className="h-8 w-8 p-0"
+                  title="Kanban Status"
+                >
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'kanban-date' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setViewMode('kanban-date');
+                    setBoardGroupBy('date');
+                  }}
+                  className="h-8 w-8 p-0"
+                  title="Kanban Date"
+                >
+                  <Clock className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
 
           {/* Expandable Filters Section */}
           {filtersExpanded && (
