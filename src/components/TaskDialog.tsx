@@ -423,21 +423,25 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           fetchTask();
         } else {
           // Members can update all fields EXCEPT completing/failing
-          const { error } = await supabase.from('tasks').update({
+          const updates: any = {
             title: editedTask.title,
             description: editedTask.description,
             status: editedTask.status,
             priority: editedTask.priority,
-            entity: editedTask.entity,
+            entity: editedTask.entity || [],
             project_id: editedTask.project_id,
             due_at: editedTask.due_at,
-            jira_links: editedTask.jira_links,
-            recurrence_rrule: editedTask.recurrence_rrule,
-            recurrence_day_of_week: editedTask.recurrence_day_of_week,
-            recurrence_day_of_month: editedTask.recurrence_day_of_month,
-            blocker_reason: editedTask.blocker_reason,
-            checklist: editedTask.checklist
-          }).eq('id', taskId);
+            jira_links: Array.isArray(editedTask.jira_links) ? editedTask.jira_links : [],
+            recurrence_rrule: editedTask.recurrence_rrule || null,
+            recurrence_day_of_week: editedTask.recurrence_day_of_week || null,
+            recurrence_day_of_month: editedTask.recurrence_day_of_month || null,
+            recurrence_days_of_week: Array.isArray(editedTask.recurrence_days_of_week) ? editedTask.recurrence_days_of_week : null,
+            blocker_reason: editedTask.blocker_reason || null,
+            checklist: Array.isArray(editedTask.checklist) ? editedTask.checklist : [],
+            updated_by: user?.id
+          };
+
+          const { error } = await supabase.from('tasks').update(updates).eq('id', taskId);
           
           if (error) throw error;
           
@@ -453,15 +457,18 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
           description: editedTask.description,
           status: editedTask.status,
           priority: editedTask.priority,
-          entity: editedTask.entity,
+          entity: editedTask.entity || [],
           project_id: editedTask.project_id,
           due_at: editedTask.due_at,
-          jira_links: editedTask.jira_links,
-          recurrence_rrule: editedTask.recurrence_rrule,
-          recurrence_day_of_week: editedTask.recurrence_day_of_week,
-          recurrence_day_of_month: editedTask.recurrence_day_of_month,
-          blocker_reason: editedTask.blocker_reason,
-          failure_reason: editedTask.failure_reason,
+          jira_links: Array.isArray(editedTask.jira_links) ? editedTask.jira_links : [],
+          recurrence_rrule: editedTask.recurrence_rrule || null,
+          recurrence_day_of_week: editedTask.recurrence_day_of_week || null,
+          recurrence_day_of_month: editedTask.recurrence_day_of_month || null,
+          recurrence_days_of_week: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : null,
+          blocker_reason: editedTask.blocker_reason || null,
+          failure_reason: editedTask.failure_reason || null,
+          checklist: Array.isArray(editedTask.checklist) ? editedTask.checklist : [],
+          updated_by: user?.id
         };
         
         // Generate RRULE from multi-day selection
@@ -542,7 +549,15 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               {!editMode && !showComments && (
                 <Button variant="outline" size="sm" onClick={() => {
                   setEditMode(true);
-                  setEditedTask({...task});
+                  // Properly initialize editedTask with all fields
+                  setEditedTask({
+                    ...task,
+                    entity: task.entity || [],
+                    jira_links: Array.isArray(task.jira_links) ? task.jira_links : [],
+                    checklist: Array.isArray(task.checklist) ? task.checklist : [],
+                    teams: Array.isArray(task.teams) ? task.teams : [],
+                    recurrence_days_of_week: Array.isArray(task.recurrence_days_of_week) ? task.recurrence_days_of_week : null,
+                  });
                   
                   // Parse existing RRULE for days
                   if (task.recurrence_rrule?.includes('BYDAY=')) {
@@ -582,7 +597,10 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                       <DropdownMenuItem onClick={async () => {
                         const { error } = await supabase
                           .from('tasks')
-                          .update({ status: 'Completed' })
+                          .update({ 
+                            status: 'Completed',
+                            updated_by: user?.id 
+                          })
                           .eq('id', taskId);
                         if (error) {
                           toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -1224,7 +1242,10 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                         
                         const { error } = await supabase
                           .from("tasks")
-                          .update({ due_at: date.toISOString() })
+                          .update({ 
+                            due_at: date.toISOString(),
+                            updated_by: user?.id 
+                          })
                           .eq("id", taskId);
                         
                         if (error) {
