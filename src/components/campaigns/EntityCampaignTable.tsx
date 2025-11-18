@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, MessageSquare } from "lucide-react";
+import { MessageSquare, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CampaignEntityTracking, useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
@@ -17,7 +17,6 @@ interface Campaign {
 interface CampaignTrackingCardProps {
   tracking: CampaignEntityTracking;
   campaign: Campaign | undefined;
-  onRemove: () => void;
   entity: string;
   isExternal?: boolean;
   externalReviewerName?: string;
@@ -36,41 +35,53 @@ interface EntityCampaignTableProps {
 function CampaignTrackingCard({
   tracking,
   campaign,
-  onRemove,
   entity,
   isExternal = false,
   externalReviewerName,
   externalReviewerEmail,
 }: CampaignTrackingCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `entity-campaign-${tracking.id}`,
+    data: { trackingId: tracking.id, campaignId: tracking.campaign_id },
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
 
   if (!campaign) return null;
 
   return (
     <>
       <div
-        className="relative group cursor-pointer transition-all duration-200 hover:scale-105"
-        onClick={() => setDetailOpen(true)}
+        ref={setNodeRef}
+        style={style}
+        className="relative group transition-all duration-200"
       >
-        <Card className="border-2 border-border bg-card hover:border-primary">
+        <Card className="border-2 border-border bg-card hover:border-primary cursor-pointer">
           <CardContent className="p-3">
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium line-clamp-2 flex-1">
+            <div className="flex items-center gap-2">
+              {/* Drag Handle */}
+              {!isExternal && (
+                <div
+                  {...listeners}
+                  {...attributes}
+                  className="cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1 transition-colors flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              {/* Campaign Name */}
+              <p 
+                className="text-sm font-medium line-clamp-2 flex-1"
+                onClick={() => setDetailOpen(true)}
+              >
                 {campaign.name}
               </p>
-              {!isExternal && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove();
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -94,7 +105,7 @@ export function EntityCampaignTable({
   className,
 }: EntityCampaignTableProps) {
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const { trackingRecords, deleteTracking } = useCampaignEntityTracking();
+  const { trackingRecords } = useCampaignEntityTracking();
   const { data: allCampaigns = [] } = useUtmCampaigns();
   const { setNodeRef, isOver } = useDroppable({ id: `entity-${entity}` });
 
@@ -105,14 +116,6 @@ export function EntityCampaignTable({
       campaign: allCampaigns.find((c) => c.id === t.campaign_id) || null,
     }))
     .filter((item) => item.campaign);
-
-  const handleRemove = async (trackingId: string) => {
-    try {
-      await deleteTracking.mutateAsync(trackingId);
-    } catch (error) {
-      console.error("Failed to remove campaign:", error);
-    }
-  };
 
   return (
     <>
@@ -128,7 +131,7 @@ export function EntityCampaignTable({
       <Card 
         ref={setNodeRef}
         className={cn(
-          "transition-all bg-slate-800 dark:bg-slate-900",
+          "transition-all bg-card shadow-md hover:shadow-lg",
           isOver && "ring-2 ring-primary ring-offset-2",
           className
         )}
@@ -162,7 +165,6 @@ export function EntityCampaignTable({
                       tracking={tracking}
                       campaign={campaign}
                       entity={entity}
-                      onRemove={() => handleRemove(tracking.id)}
                       isExternal={isExternal}
                       externalReviewerName={externalReviewerName}
                       externalReviewerEmail={externalReviewerEmail}
