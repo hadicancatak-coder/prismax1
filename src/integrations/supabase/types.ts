@@ -893,12 +893,57 @@ export type Database = {
           },
         ]
       }
+      campaign_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          campaign_tracking_id: string | null
+          comment_text: string
+          created_at: string | null
+          id: string
+          is_external: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          campaign_tracking_id?: string | null
+          comment_text: string
+          created_at?: string | null
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          campaign_tracking_id?: string | null
+          comment_text?: string
+          created_at?: string | null
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_comments_campaign_tracking_id_fkey"
+            columns: ["campaign_tracking_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_entity_tracking"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_entity_tracking: {
         Row: {
           campaign_id: string
           created_at: string
           created_by: string | null
           entity: string
+          entity_comments: string | null
           id: string
           notes: string | null
           status: string
@@ -909,6 +954,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           entity: string
+          entity_comments?: string | null
           id?: string
           notes?: string | null
           status?: string
@@ -919,6 +965,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           entity?: string
+          entity_comments?: string | null
           id?: string
           notes?: string | null
           status?: string
@@ -933,6 +980,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      campaign_external_access: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          created_by: string | null
+          email_verified: boolean | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          reviewer_email: string
+          reviewer_name: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          created_by?: string | null
+          email_verified?: boolean | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          reviewer_email: string
+          reviewer_name?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          created_by?: string | null
+          email_verified?: boolean | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          reviewer_email?: string
+          reviewer_name?: string | null
+        }
+        Relationships: []
       }
       campaign_locations: {
         Row: {
@@ -966,6 +1049,47 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "media_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_metadata: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          image_file_size: number | null
+          image_url: string | null
+          updated_at: string | null
+          utm_campaign_id: string | null
+          version_code: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_file_size?: number | null
+          image_url?: string | null
+          updated_at?: string | null
+          utm_campaign_id?: string | null
+          version_code?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_file_size?: number | null
+          image_url?: string | null
+          updated_at?: string | null
+          utm_campaign_id?: string | null
+          version_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_metadata_utm_campaign_id_fkey"
+            columns: ["utm_campaign_id"]
+            isOneToOne: true
+            referencedRelation: "utm_campaigns"
             referencedColumns: ["id"]
           },
         ]

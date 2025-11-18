@@ -1,0 +1,123 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { randomUUID } from "crypto";
+
+export interface ExternalAccess {
+  id: string;
+  access_token: string;
+  reviewer_name: string | null;
+  reviewer_email: string;
+  email_verified: boolean;
+  expires_at: string | null;
+  created_at: string;
+  created_by: string | null;
+  is_active: boolean;
+}
+
+const generateUniqueToken = () => {
+  return crypto.randomUUID();
+};
+
+export const useExternalAccess = () => {
+  // Generate access link
+  const generateLink = useMutation({
+    mutationFn: async ({
+      reviewerName,
+      reviewerEmail,
+      expiresAt,
+    }: {
+      reviewerName: string;
+      reviewerEmail: string;
+      expiresAt?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const token = generateUniqueToken();
+      
+      const { data, error } = await supabase
+        .from("campaign_external_access")
+        .insert({
+          access_token: token,
+          reviewer_name: reviewerName,
+          reviewer_email: reviewerEmail,
+          expires_at: expiresAt || null,
+          created_by: user?.id,
+          is_active: true,
+          email_verified: false,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        ...data,
+        url: `${window.location.origin}/campaigns-log/review/${token}`,
+      };
+    },
+    onSuccess: () => {
+      toast.success("Review link generated");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to generate link");
+    },
+  });
+
+  // Verify token
+  const verifyToken = async (token: string): Promise<ExternalAccess> => {
+    const { data, error } = await supabase
+      .from("campaign_external_access")
+      .select("*")
+      .eq("access_token", token)
+      .eq("is_active", true)
+      .single();
+    
+    if (error) throw new Error("Invalid or inactive token");
+    
+    // Check expiration
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      throw new Error("Link has expired");
+    }
+    
+    return data as ExternalAccess;
+  };
+
+  // Update verification status
+  const verifyEmail = useMutation({
+    mutationFn: async ({
+      token,
+      reviewerName,
+      reviewerEmail,
+    }: {
+      token: string;
+      reviewerName: string;
+      reviewerEmail: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("campaign_external_access")
+        .update({
+          reviewer_name: reviewerName,
+          reviewer_email: reviewerEmail,
+          email_verified: true,
+        })
+        .eq("access_token", token)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Email verified successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Verification failed");
+    },
+  });
+
+  return {
+    generateLink,
+    verifyToken,
+    verifyEmail,
+  };
+};
