@@ -181,34 +181,6 @@ export function CampaignLibrary() {
           </Table>
         </CardContent>
       </Card>
-
-      {editingCampaign && (
-        <EditCampaignDialog
-          campaign={editingCampaign}
-          open={!!editingCampaign}
-          onOpenChange={(open) => !open && setEditingCampaign(null)}
-        />
-      )}
-
-      <AlertDialog open={!!deletingCampaign} onOpenChange={(open) => !open && setDeletingCampaign(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Campaign?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deletingCampaign?.name}"? This action cannot be undone.
-              {deletingCampaign && deletingCampaign.usage_count > 0 && (
-                <span className="block mt-2 text-destructive font-medium">
-                  Warning: This campaign has been used {deletingCampaign.usage_count} times.
-                </span>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   );
 }
