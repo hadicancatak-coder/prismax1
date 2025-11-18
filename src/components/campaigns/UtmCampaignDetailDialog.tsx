@@ -216,24 +216,27 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "max-h-[85vh] overflow-hidden p-0 transition-all duration-300",
-        showComments ? "max-w-[1400px]" : "max-w-4xl"
-      )}>
-        <div className="flex h-full">
+      <DialogContent 
+        className={cn(
+          "max-h-[90vh] p-0 gap-0 transition-all duration-300",
+          showComments ? "max-w-[1400px]" : "max-w-4xl"
+        )}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
+        <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DialogHeader className="px-6 pt-6 pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <DialogTitle className="text-2xl mb-2">
+            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <DialogTitle className="text-xl mb-1">
                     {isEditing ? (
-                      <Input value={name} onChange={(e) => setName(e.target.value)} className="text-2xl font-semibold" />
+                      <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
                     ) : (
                       campaign.name
                     )}
                   </DialogTitle>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Created {format(new Date(campaign.created_at), 'MMM d, yyyy')}</span>
                     {campaign.last_used_at && (
                       <>
@@ -243,7 +246,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <Button
                     variant={showComments ? "default" : "outline"}
                     size="sm"
@@ -252,9 +255,6 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Comments
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </DialogHeader>
@@ -262,11 +262,11 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
             <Separator />
 
             <ScrollArea className="flex-1 px-6 py-4">
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Campaign Info */}
-                <Card className="p-4 space-y-4">
+                <Card className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">Campaign Information</h3>
+                    <h3 className="font-semibold">Campaign Information</h3>
                     {isEditing ? (
                       <Button onClick={handleSave} size="sm">
                         <Save className="h-4 w-4 mr-2" />
@@ -384,10 +384,10 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
 
                 {/* Versions Log */}
                 <Card className="p-4">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Activity className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-lg">Version History</h3>
+                      <Activity className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">Version History</h3>
                     </div>
                     <Button onClick={() => setIsAddingVersion(!isAddingVersion)} size="sm" variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
@@ -502,9 +502,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
           {showComments && (
             <>
               <Separator orientation="vertical" className="h-full" />
-              <div className="w-[500px] flex flex-col border-l">
-                <div className="px-4 py-3 border-b">
-                  <h3 className="font-semibold">Comments & Activity</h3>
+              <div className="w-[500px] flex flex-col">
+                <div className="px-4 py-3 border-b shrink-0">
+                  <h3 className="font-semibold text-sm">Comments & Activity</h3>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <CampaignComments campaignId={campaignId} />
