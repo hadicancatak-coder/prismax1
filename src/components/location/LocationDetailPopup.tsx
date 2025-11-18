@@ -155,10 +155,10 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                 {campaignDetails.map((campaign) => campaign && (
                   <div
                     key={campaign.id}
-                    className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between"
+                    className="p-3 rounded-lg bg-muted border border-border flex items-center justify-between"
                   >
                     <div>
-                      <p className="font-medium text-white">{campaign.name}</p>
+                      <p className="font-medium text-foreground">{campaign.name}</p>
                       <p className="text-sm text-gray-400">
                         {format(new Date(campaign.start_date), "PP")} - {format(new Date(campaign.end_date), "PP")}
                       </p>

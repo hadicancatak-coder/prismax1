@@ -181,7 +181,7 @@ export function AnnouncementsSection() {
       case "urgent":
         return "bg-destructive text-destructive-foreground";
       case "high":
-        return "bg-orange-500 text-white";
+        return "bg-warning text-warning-foreground";
       case "normal":
         return "bg-primary text-primary-foreground";
       default:

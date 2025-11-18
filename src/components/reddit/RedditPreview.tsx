@@ -9,7 +9,7 @@ export function RedditPreview({ adData }: RedditPreviewProps) {
   const isRTL = adData.language === "AR";
 
   return (
-    <Card className="max-w-2xl mx-auto bg-white border shadow-sm">
+    <Card className="max-w-2xl mx-auto bg-card border shadow-sm">
       <div className="flex gap-2 p-2">
         {/* Voting Section */}
         <div className="flex flex-col items-center gap-1 px-2">
@@ -45,7 +45,7 @@ export function RedditPreview({ adData }: RedditPreviewProps) {
 
           {/* Link Preview Card */}
           {adData.linkUrl && (
-            <div className="border rounded p-3 bg-gray-50 mb-3">
+            <div className="border rounded p-3 bg-muted mb-3">
               <p className="text-xs text-muted-foreground mb-1">
                 {new URL(adData.linkUrl).hostname}
               </p>

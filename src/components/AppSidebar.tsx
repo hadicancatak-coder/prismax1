@@ -105,7 +105,7 @@ export function AppSidebar() {
             />
             {open && (
               <div className="flex flex-col">
-                <span className="text-section-title text-white font-semibold">Prisma</span>
+                <span className="text-section-title text-foreground font-semibold">Prisma</span>
                 {userName && (
                   <span className="text-metadata text-gray-300 mt-0.5">
                     {userName}
