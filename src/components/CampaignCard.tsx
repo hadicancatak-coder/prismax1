@@ -28,7 +28,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 
   return (
     <Card 
-      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+      className="overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-smooth cursor-pointer"
       onClick={onClick}
     >
       {imageUrl && (

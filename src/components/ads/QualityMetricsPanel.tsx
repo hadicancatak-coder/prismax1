@@ -109,7 +109,7 @@ export function QualityMetricsPanel({
       {/* Compliance Check Card */}
       <Collapsible open={complianceOpen} onOpenChange={setComplianceOpen}>
         <CollapsibleTrigger asChild>
-          <Card className="cursor-pointer hover:bg-muted/30 transition-colors">
+          <Card className="cursor-pointer hover:bg-muted/30 hover:shadow-sm transition-smooth">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

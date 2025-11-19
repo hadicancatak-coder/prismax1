@@ -19,7 +19,7 @@ export const TaskStatsCards = ({
   return (
     <div className="flex items-center gap-8 py-6 border-b border-border">
       <div 
-        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
+        className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-3 rounded-lg"
         onClick={() => onCardClick('all')}
       >
         <div className="text-metadata mb-1">Total Tasks</div>
@@ -27,7 +27,7 @@ export const TaskStatsCards = ({
       </div>
       <div className="w-px h-12 bg-border" />
       <div 
-        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
+        className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-3 rounded-lg"
         onClick={() => onCardClick('overdue')}
       >
         <div className="text-metadata mb-1">Overdue</div>
@@ -35,7 +35,7 @@ export const TaskStatsCards = ({
       </div>
       <div className="w-px h-12 bg-border" />
       <div 
-        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
+        className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-3 rounded-lg"
         onClick={() => onCardClick('ongoing')}
       >
         <div className="text-metadata mb-1">In Progress</div>
@@ -43,7 +43,7 @@ export const TaskStatsCards = ({
       </div>
       <div className="w-px h-12 bg-border" />
       <div 
-        className="flex-1 cursor-pointer transition-smooth hover:opacity-80"
+        className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-3 rounded-lg"
         onClick={() => onCardClick('completed')}
       >
         <div className="text-metadata mb-1">Completed</div>

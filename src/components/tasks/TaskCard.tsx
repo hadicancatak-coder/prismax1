@@ -238,7 +238,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
 
   return (
     <Card 
-      className="p-5 hover:shadow-lg transition-shadow duration-200 border-l-4 relative group"
+      className="p-5 hover:shadow-lg hover:-translate-y-0.5 transition-smooth border-l-4 relative group"
       style={{ borderLeftColor: getPriorityColor(task.priority) }}
     >
       {/* Priority and Status badges */}

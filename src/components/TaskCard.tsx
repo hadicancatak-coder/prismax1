@@ -89,7 +89,7 @@ export const TaskCard = ({ task }: { task: Task }) => {
 
   return (
     <>
-      <Card className={cn("p-5 transition-all hover:shadow-lg cursor-pointer group", getPriorityBorderClass())} onClick={() => setDialogOpen(true)}>
+      <Card className={cn("p-5 transition-smooth hover:shadow-lg hover:-translate-y-0.5 cursor-pointer group", getPriorityBorderClass())} onClick={() => setDialogOpen(true)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-semibold text-gray-900 mb-1.5 truncate group-hover:text-primary transition-colors">{task.title}</h3>
