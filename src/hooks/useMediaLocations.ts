@@ -120,11 +120,8 @@ export interface MediaLocation {
   latitude: number;
   longitude: number;
   notes?: string;
-  manual_score?: number;
   image_url?: string;
   agency?: string;
-  price_per_month?: number;
-  est_daily_traffic?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;
