@@ -51,8 +51,6 @@ export default function LocationIntelligence() {
     agencies: [],
     categories: [],
     campaignId: undefined,
-    priceRange: { min: 0, max: 1000000 },
-    scoreRange: { min: 0, max: 10 },
   });
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
@@ -71,10 +69,6 @@ export default function LocationIntelligence() {
         if (!category || !filters.categories.includes(category)) return false;
       }
       if (filters.campaignId && !campaignLocationIds.includes(loc.id)) return false;
-      const price = loc.price_per_month || 0;
-      if (price < filters.priceRange.min || price > filters.priceRange.max) return false;
-      const score = loc.manual_score || 0;
-      if (score < filters.scoreRange.min || score > filters.scoreRange.max) return false;
       return true;
     });
   }, [locations, filters, campaignLocationIds]);
@@ -281,20 +275,29 @@ export default function LocationIntelligence() {
 
       <div className="absolute top-4 left-4 z-30 flex flex-col gap-2 max-w-sm">
         <LocationSearch locations={filteredLocations} onLocationSelect={handleLocationSelect} />
-        <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-background/95 backdrop-blur-md shadow-xl border">
-          <Filter className="h-4 w-4 mr-2" />Filters {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          onClick={() => setShowFilters(!showFilters)} 
+          className="bg-background/95 backdrop-blur-md shadow-xl border gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+          {(filters.cities.length + filters.agencies.length + filters.categories.length + (filters.campaignId ? 1 : 0)) > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+              {filters.cities.length + filters.agencies.length + filters.categories.length + (filters.campaignId ? 1 : 0)}
+            </Badge>
+          )}
         </Button>
-        {showFilters && (
-          <div className="bg-background/98 backdrop-blur-lg rounded-lg shadow-2xl border-2 p-4 transition-all duration-300 max-w-sm">
-            <LocationFilters 
-              filters={filters} 
-              onFiltersChange={setFilters} 
-              availableCities={cities} 
-              availableAgencies={agencies} 
-              availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))} 
-            />
-          </div>
-        )}
+        <LocationFilters 
+          filters={filters} 
+          onFiltersChange={setFilters} 
+          availableCities={cities} 
+          availableAgencies={agencies} 
+          availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
+        />
       </div>
 
       <div className="absolute top-4 right-4 z-10 flex gap-2">
