@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/tasks/TaskCard";
+import { TaskDialog } from "@/components/TaskDialog";
 import { Upload, Users, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,6 +46,8 @@ export default function Profile() {
     failed: [] 
   });
   const [uploading, setUploading] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   const { kpis } = useKPIs();
   
@@ -507,7 +510,10 @@ export default function Profile() {
                     entity: task.entity || undefined,
                     recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none',
                   }}
-                  onClick={() => {}}
+                  onClick={() => {
+                    setSelectedTaskId(task.id);
+                    setTaskDialogOpen(true);
+                  }}
                 />
               ))
             ) : (
@@ -519,6 +525,13 @@ export default function Profile() {
         ))}
       </Tabs>
 
+      {selectedTaskId && (
+        <TaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          taskId={selectedTaskId}
+        />
+      )}
     </div>
   );
 }
