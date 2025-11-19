@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, X, FolderOpen, Target, ChevronDown, ChevronUp, MapPin, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
+import { useMediaLocations, MediaLocation, LocationWithDetails, getLocationCategory } from "@/hooks/useMediaLocations";
 import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
 import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
 import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
@@ -25,15 +25,15 @@ import { cn } from "@/lib/utils";
 export default function LocationIntelligence() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
-  const { locations, isLoading, deleteLocation } = useMediaLocations();
+  const { locations, isLoading, deleteLocation, getLocationWithDetails } = useMediaLocations();
   const { campaigns } = usePlannedCampaigns();
   const { campaignLocations, getLocationsByCampaign } = useLocationCampaigns();
   
   const [selectedLocations, setSelectedLocations] = useState<MediaLocation[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<MediaLocation | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationWithDetails | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<MediaLocation | null>(null);
+  const [editingLocation, setEditingLocation] = useState<LocationWithDetails | null>(null);
   const [plannerOpen, setPlannerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   
@@ -87,8 +87,11 @@ export default function LocationIntelligence() {
   };
 
   const handleViewDetails = (location: MediaLocation) => {
-    setSelectedLocation(location);
-    setDetailOpen(true);
+    const locationWithDetails = getLocationWithDetails(location.id);
+    if (locationWithDetails) {
+      setSelectedLocation(locationWithDetails);
+      setDetailOpen(true);
+    }
   };
 
   const handleMapClick = (coords: { lat: number; lng: number }) => {
@@ -99,11 +102,14 @@ export default function LocationIntelligence() {
 
   const handleLocationSelect = (location: MediaLocation) => {
     mapRef.current?.flyToLocation(location);
-    setSelectedLocation(location);
-    setDetailOpen(true);
+    const locationWithDetails = getLocationWithDetails(location.id);
+    if (locationWithDetails) {
+      setSelectedLocation(locationWithDetails);
+      setDetailOpen(true);
+    }
   };
 
-  const handleEdit = (location: MediaLocation) => {
+  const handleEdit = (location: LocationWithDetails) => {
     setEditingLocation(location);
     setFormOpen(true);
   };
@@ -359,14 +365,14 @@ export default function LocationIntelligence() {
       <LocationDetailPopup 
         open={detailOpen} 
         onOpenChange={setDetailOpen} 
-        location={selectedLocation ? { ...selectedLocation, historic_prices: [], past_campaigns: [] } : null} 
+        location={selectedLocation} 
         onEdit={() => selectedLocation && handleEdit(selectedLocation)} 
         onDelete={() => selectedLocation && handleDelete(selectedLocation.id)} 
       />
       <LocationFormDialog 
         open={formOpen} 
         onClose={() => { setFormOpen(false); setEditingLocation(null); setClickedCoordinates(null); }} 
-        location={editingLocation ? { ...editingLocation, historic_prices: [], past_campaigns: [] } : null} 
+        location={editingLocation} 
         initialCoordinates={clickedCoordinates} 
       />
       <CampaignPlannerDialog
