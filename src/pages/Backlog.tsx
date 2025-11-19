@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDialog } from "@/components/TaskDialog";
 import { Calendar, AlertCircle, Clock, User } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -144,10 +145,10 @@ export default function Backlog() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div className="bg-primary p-4 rounded-lg mb-6">
-        <h1 className="text-3xl font-bold text-primary-foreground mb-2">📋 Backlog</h1>
-        <p className="text-primary-foreground/90">Unscheduled tasks waiting to be planned</p>
-      </div>
+      <PageHeader
+        title="Backlog"
+        description="Unscheduled tasks waiting to be planned"
+      />
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">

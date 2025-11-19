@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -89,10 +90,10 @@ export default function BlockersPage() {
 
   return (
     <div className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold flex items-center gap-2">
-        <AlertCircle className="h-8 w-8 text-destructive" />
-        Task Blockers
-      </h1>
+      <PageHeader
+        title="Task Blockers"
+        description="Manage and resolve task blockers"
+      />
 
       <div className="space-y-6">
         <div>

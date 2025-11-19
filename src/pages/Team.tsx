@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Phone, Users, Search, Edit, Grid3x3, List, Download, Settings, Target } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { TEAMS } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -186,14 +187,10 @@ export default function Team() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between mb-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Team Directory</h1>
-          <p className="text-muted-foreground text-sm">
-            Connect with your team members ({filteredProfiles.length} members)
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="Team Directory"
+        description={`Connect with your team members (${filteredProfiles.length} members)`}
+        actions={<div className="flex items-center gap-2">
           {userRole === "admin" && (
             <Button onClick={exportToCSV} variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
@@ -219,8 +216,8 @@ export default function Team() {
               </SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Copy, Edit, Trash2, Star, Upload, Table as TableIcon, Grid } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -220,13 +221,10 @@ export default function SavedElementsPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Saved Elements Library</h1>
-          <p className="text-muted-foreground">Manage and reuse your saved campaigns, ad groups, and ads</p>
-        </div>
-        
-        <div className="flex gap-2 items-center">
+      <PageHeader
+        title="Saved Elements Library"
+        description="Manage and reuse your saved campaigns, ad groups, and ads"
+        actions={<div className="flex gap-2 items-center">
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "table")}>
             <TabsList>
               <TabsTrigger value="grid">
@@ -258,8 +256,8 @@ export default function SavedElementsPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="grid grid-cols-12 gap-6">
         <Card className="col-span-3">

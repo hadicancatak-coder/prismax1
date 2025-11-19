@@ -113,8 +113,10 @@ export default function Profile() {
 
     if (allTasks) {
       setTasks({
+        all: allTasks,
+        ongoing: allTasks.filter(t => t.status === "Ongoing"),
         completed: allTasks.filter(t => t.status === "Completed"),
-        pending: allTasks.filter(t => t.status === "Ongoing" || t.status === "Pending"),
+        pending: allTasks.filter(t => t.status === "Pending"),
         blocked: allTasks.filter(t => t.status === "Blocked"),
         failed: allTasks.filter(t => t.status === "Failed"),
       });
@@ -428,15 +430,17 @@ export default function Profile() {
         </Card>
       )}
 
-      <Tabs defaultValue="completed" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full max-w-3xl grid-cols-6">
+          <TabsTrigger value="all">All ({tasks.all.length})</TabsTrigger>
+          <TabsTrigger value="ongoing">Ongoing ({tasks.ongoing.length})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({tasks.completed.length})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({tasks.pending.length})</TabsTrigger>
           <TabsTrigger value="blocked">Blocked ({tasks.blocked.length})</TabsTrigger>
           <TabsTrigger value="failed">Failed ({tasks.failed.length})</TabsTrigger>
         </TabsList>
 
-        {["completed", "pending", "blocked", "failed"].map((status) => (
+        {["all", "ongoing", "completed", "pending", "blocked", "failed"].map((status) => (
           <TabsContent key={status} value={status} className="mt-6 space-y-4">
             {tasks[status].length > 0 ? (
               tasks[status].map((task: any) => (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelDeals } from "@/hooks/useWebIntelDeals";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
@@ -95,16 +96,16 @@ export default function WebIntel() {
 
   return (
     <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Deals Management</h1>
-          <p className="text-muted-foreground">Track and manage partnership deals and campaigns</p>
-        </div>
-        <Button onClick={() => { setEditingDeal(null); setDealFormDialogOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Deal
-        </Button>
-      </div>
+      <PageHeader
+        title="Deals Management"
+        description="Track and manage partnership deals and campaigns"
+        actions={
+          <Button onClick={() => { setEditingDeal(null); setDealFormDialogOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Deal
+          </Button>
+        }
+      />
 
       {isLoadingDeals ? <TableSkeleton /> : (
         <DealsTableView

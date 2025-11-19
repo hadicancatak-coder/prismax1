@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Info, Sparkles, Mail } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function About() {
   const currentVersion = "1.4.0";
@@ -87,18 +88,18 @@ export default function About() {
 
   return (
     <div className="p-8 space-y-6 max-w-4xl mx-auto animate-fade-in">
+      <PageHeader
+        title="Prisma"
+        description="Comprehensive Task & Campaign Management Platform"
+      />
+
       {/* App Information */}
       <Card className="p-8">
         <div className="flex items-start gap-6">
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <Info className="h-12 w-12 text-primary" />
-          </div>
           <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">Prisma</h1>
             <Badge variant="secondary" className="mb-4">
               Version {currentVersion}
             </Badge>
-            <p className="text-lg text-muted-foreground mb-4">Comprehensive Task & Campaign Management Platform</p>
             <p className="text-sm text-muted-foreground">
               Prisma is a powerful platform designed to streamline task management, campaign coordination, and team
               collaboration. Built with security and efficiency in mind, it helps teams stay organized and productive.
