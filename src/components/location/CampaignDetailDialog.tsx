@@ -216,7 +216,7 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
       <CampaignPlannerDialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
-        locations={[]}
+        locations={locations}
         campaign={campaign}
         mode="edit"
       />
