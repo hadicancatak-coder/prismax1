@@ -49,7 +49,7 @@ export function EntityCommentsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px] p-6">
         <DialogHeader className="space-y-2">
-          <DialogTitle className="pr-12">Entity Comments</DialogTitle>
+          <DialogTitle>Entity Comments</DialogTitle>
           <DialogDescription>
             Overall comments for {entityName}
           </DialogDescription>
