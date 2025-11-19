@@ -85,7 +85,7 @@ export function WebIntelStats({ sites }: WebIntelStatsProps) {
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="hover:shadow-md hover:-translate-y-0.5 transition-smooth">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

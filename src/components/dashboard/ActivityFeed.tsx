@@ -48,7 +48,7 @@ export function ActivityFeed() {
       <div className="space-y-3 max-h-[400px] overflow-y-auto">
         {activities.length > 0 ? (
           activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0">
+            <div key={activity.id} className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={activity.user?.avatar_url} />
                 <AvatarFallback className="bg-muted text-muted-foreground">{activity.user?.name?.[0] || "?"}</AvatarFallback>

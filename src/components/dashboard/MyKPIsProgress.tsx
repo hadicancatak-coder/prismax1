@@ -104,7 +104,7 @@ export function MyKPIsProgress() {
             </div>
             <div className="space-y-3">
               {kpis.slice(0, 3).map((kpi, idx) => (
-                <div key={idx} className="space-y-2">
+                <div key={idx} className="space-y-2 p-3 rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
                   <div className="flex items-center justify-between text-body">
                     <span className="line-clamp-1">{kpi.description}</span>
                     <span className="text-muted-foreground ml-2">{kpi.weight}%</span>
@@ -141,7 +141,7 @@ export function MyKPIsProgress() {
             </div>
             <div className="space-y-3">
               {quarterlyKpis.slice(0, 2).map((kpi, idx) => (
-                <div key={idx} className="space-y-2">
+                <div key={idx} className="space-y-2 p-3 rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
                   <div className="flex items-center justify-between text-body">
                     <span className="line-clamp-1">{kpi.description}</span>
                     <span className="text-muted-foreground ml-2">{kpi.weight}%</span>
