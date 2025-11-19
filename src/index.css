@@ -243,6 +243,35 @@ All colors MUST be HSL.
     @apply hover:bg-[#2C3237] transition-colors;
   }
 
+  /* Animation Utility Classes */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+
+  .hover-lift:hover {
+    @apply shadow-lg -translate-y-0.5;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-scale:hover {
+    @apply scale-[1.02];
+  }
+
+  .hover-glow {
+    @apply transition-all duration-200;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(0, 82, 204, 0.3);
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-150 ease-in-out;
+  }
+
   /* React Data Grid Dark Theme Overrides */
   .rdg {
     --rdg-background-color: #1a1f25;

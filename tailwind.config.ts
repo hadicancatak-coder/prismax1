@@ -159,6 +159,30 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        "scale-in": {
+          "0%": { 
+            transform: "scale(0.95)", 
+            opacity: "0" 
+          },
+          "100%": { 
+            transform: "scale(1)", 
+            opacity: "1" 
+          }
+        },
+        "slide-up": {
+          "0%": { 
+            transform: "translateY(10px)", 
+            opacity: "0" 
+          },
+          "100%": { 
+            transform: "translateY(0)", 
+            opacity: "1" 
+          }
+        },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.8" }
+        },
         "shimmer": {
           "0%": { 
             backgroundPosition: "-1000px 0"
@@ -172,6 +196,9 @@ export default {
         "accordion-down": "accordion-down 150ms ease-in-out",
         "accordion-up": "accordion-up 150ms ease-in-out",
         "fade-in": "fade-in 150ms ease-in-out",
+        "scale-in": "scale-in 200ms ease-out",
+        "slide-up": "slide-up 200ms ease-out",
+        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
         "shimmer": "shimmer 2s infinite linear",
       },
     },

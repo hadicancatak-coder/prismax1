@@ -135,7 +135,7 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
               filteredLocations.map((location) => {
                 const category = getLocationCategory(location.type);
                 return (
-                <TableRow key={location.id}>
+                <TableRow key={location.id} className="hover:bg-muted/50 transition-smooth">
                   <TableCell className="font-medium">{location.name}</TableCell>
                   <TableCell>{location.city}</TableCell>
                   <TableCell>
@@ -174,15 +174,15 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => onView(location)}>
+                      <Button size="sm" variant="ghost" onClick={() => onView(location)} className="transition-smooth hover:scale-105">
                         <Eye className="h-4 w-4" />
                       </Button>
                       {isAdmin && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => onEdit(location)}>
+                          <Button size="sm" variant="ghost" onClick={() => onEdit(location)} className="transition-smooth hover:scale-105">
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setDeleteId(location.id)}>
+                          <Button size="sm" variant="ghost" onClick={() => setDeleteId(location.id)} className="transition-smooth hover:scale-105">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
