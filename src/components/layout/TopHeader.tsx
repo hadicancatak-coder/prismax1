@@ -31,7 +31,7 @@ export function TopHeader() {
         {/* Create Button with Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1 min-h-[36px]">
+            <Button variant="default" size="sm" className="gap-1 min-h-[36px]">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Create</span>
             </Button>
