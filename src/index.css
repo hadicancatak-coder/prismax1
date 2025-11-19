@@ -69,7 +69,24 @@ All colors MUST be HSL.
     --gray-800: 220 15% 16%;
     --gray-900: 220 26% 14%;
     
-    /* Spacing */
+    /* Typography Scale - Semantic sizing */
+    --text-metadata: 0.75rem;      /* 12px - timestamps, micro labels, badges */
+    --text-body-sm: 0.875rem;      /* 14px - secondary text, descriptions */
+    --text-body: 1rem;             /* 16px - primary body text */
+    --text-heading-sm: 1.125rem;   /* 18px - card titles, small headers */
+    --text-heading-md: 1.25rem;    /* 20px - section headers, dialog titles */
+    --text-heading-lg: 1.5rem;     /* 24px - page subtitles */
+    --text-page-title: 1.875rem;   /* 30px - main page headers */
+    
+    /* Spacing Scale - Semantic naming */
+    --space-xs: 0.5rem;            /* 8px - tight spacing (gap between icons) */
+    --space-sm: 0.75rem;           /* 12px - compact spacing (button gaps) */
+    --space-md: 1rem;              /* 16px - standard spacing (form fields) */
+    --space-lg: 1.5rem;            /* 24px - section spacing */
+    --space-xl: 2rem;              /* 32px - major section spacing */
+    --space-2xl: 3rem;             /* 48px - page section dividers */
+    
+    /* Legacy spacing vars (keeping for compatibility) */
     --spacing-1: 0.25rem;
     --spacing-2: 0.5rem;
     --spacing-3: 0.75rem;
@@ -79,9 +96,16 @@ All colors MUST be HSL.
     --spacing-12: 3rem;
     --spacing-16: 4rem;
     --spacing-24: 6rem;
+    
+    /* Border Radius Scale */
+    --radius-sm: 0.375rem;         /* 6px - small elements */
+    --radius-md: 0.5rem;           /* 8px - standard (default) */
+    --radius-lg: 0.75rem;          /* 12px - cards, dialogs */
+    --radius-xl: 1rem;             /* 16px - large surfaces */
 
     /* Transitions */
     --transition: 150ms ease-in-out;
+    --transition-smooth: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   .dark {
     /* Dark mode already default */

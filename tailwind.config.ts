@@ -105,7 +105,20 @@ export default {
         md: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
       },
       borderRadius: {
-        DEFAULT: "0.25rem", /* 4px */
+        'sm': 'var(--radius-sm)',      /* 6px */
+        DEFAULT: 'var(--radius-md)',    /* 8px */
+        'md': 'var(--radius-md)',       /* 8px */
+        'lg': 'var(--radius-lg)',       /* 12px */
+        'xl': 'var(--radius-xl)',       /* 16px */
+      },
+      fontSize: {
+        'metadata': 'var(--text-metadata)',        /* 12px */
+        'body-sm': 'var(--text-body-sm)',          /* 14px */
+        'body': 'var(--text-body)',                /* 16px */
+        'heading-sm': 'var(--text-heading-sm)',    /* 18px */
+        'heading-md': 'var(--text-heading-md)',    /* 20px */
+        'heading-lg': 'var(--text-heading-lg)',    /* 24px */
+        'page-title': 'var(--text-page-title)',    /* 30px */
       },
       spacing: {
         '1': 'var(--spacing-1)',
@@ -118,6 +131,20 @@ export default {
         '16': 'var(--spacing-16)',
         '24': 'var(--spacing-24)',
         '48': '12rem', /* 48px rhythm */
+        'xs': 'var(--space-xs)',      /* 8px */
+        'sm': 'var(--space-sm)',      /* 12px */
+        'md': 'var(--space-md)',      /* 16px */
+        'lg': 'var(--space-lg)',      /* 24px */
+        'xl': 'var(--space-xl)',      /* 32px */
+        '2xl': 'var(--space-2xl)',    /* 48px */
+      },
+      gap: {
+        'xs': 'var(--space-xs)',      /* 8px */
+        'sm': 'var(--space-sm)',      /* 12px */
+        'md': 'var(--space-md)',      /* 16px */
+        'lg': 'var(--space-lg)',      /* 24px */
+        'xl': 'var(--space-xl)',      /* 32px */
+        '2xl': 'var(--space-2xl)',    /* 48px */
       },
       keyframes: {
         "accordion-down": {
