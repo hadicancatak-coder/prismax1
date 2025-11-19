@@ -61,7 +61,7 @@ function CampaignTrackingCard({
         style={style}
         className="relative group transition-all duration-200"
       >
-        <Card className="border-2 border-border bg-card hover:border-primary cursor-pointer">
+        <Card className="border-2 border-border bg-card hover:border-primary hover:shadow-md transition-smooth cursor-pointer">
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
               {/* Drag Handle */}

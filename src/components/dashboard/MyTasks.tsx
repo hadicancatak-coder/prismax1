@@ -133,7 +133,7 @@ export function MyTasks() {
           <div
             key={category.label}
             onClick={() => navigate("/tasks")}
-            className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-card-hover border border-border/50 cursor-pointer transition-all group"
+            className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-card-hover border border-border/50 cursor-pointer transition-smooth hover:shadow-md hover:-translate-y-0.5 group"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center">
