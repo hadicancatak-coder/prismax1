@@ -92,9 +92,9 @@ export function NeedsAttention() {
               </Badge>
             </div>
             {data.overdueTasks.slice(0, 3).map((task: any) => (
-              <p key={task.id} className="text-sm text-muted-foreground ml-6 mb-1">
+              <div key={task.id} className="text-sm text-muted-foreground ml-6 mb-1 hover:bg-muted/30 transition-smooth cursor-pointer rounded px-2 py-1">
                 • {task.title}
-              </p>
+              </div>
             ))}
           </div>
         )}
@@ -109,9 +109,9 @@ export function NeedsAttention() {
               </Badge>
             </div>
             {data.blockers.slice(0, 3).map((blocker: any) => (
-              <p key={blocker.id} className="text-sm text-muted-foreground ml-6 mb-1">
+              <div key={blocker.id} className="text-sm text-muted-foreground ml-6 mb-1 hover:bg-muted/30 transition-smooth cursor-pointer rounded px-2 py-1">
                 • {blocker.title}
-              </p>
+              </div>
             ))}
           </div>
         )}
@@ -126,9 +126,9 @@ export function NeedsAttention() {
               </Badge>
             </div>
             {data.pendingApprovals.slice(0, 3).map((task: any) => (
-              <p key={task.id} className="text-sm text-muted-foreground ml-6 mb-1">
+              <div key={task.id} className="text-sm text-muted-foreground ml-6 mb-1 hover:bg-muted/30 transition-smooth cursor-pointer rounded px-2 py-1">
                 • {task.title}
-              </p>
+              </div>
             ))}
           </div>
         )}

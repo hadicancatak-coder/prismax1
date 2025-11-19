@@ -23,7 +23,6 @@ interface CampaignPlannerDialogProps {
 
 export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode = 'create' }: CampaignPlannerDialogProps) {
   const { createCampaign, updateCampaign, getPlacementsForCampaign } = usePlannedCampaigns();
-  const { allPrices } = useMediaLocations();
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -77,8 +76,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       const defaultDuration = 1;
       
       const placementsWithCosts = locations.map(location => {
-        const priceData = allPrices.find(p => p.location_id === location.id);
-        const basePrice = priceData?.price || location.price_per_month || 0;
+        const basePrice = location.price_per_month || 0;
         return {
           location,
           cost: basePrice * defaultDuration
@@ -88,7 +86,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       setSuggestedPlacements(placementsWithCosts);
       setManualSelections(new Set(locations.map(l => l.id)));
     }
-  }, [mode, campaign, locations, open, getPlacementsForCampaign, allPrices]);
+  }, [mode, campaign, locations, open, getPlacementsForCampaign]);
 
   const cities = Array.from(new Set(locations.map(l => l.city))).sort();
   
@@ -125,14 +123,14 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
         formData.budget, 
         duration, 
         selectedCities, 
-        allPrices,
+        [], // Historic prices removed
         formData.start_date,
         formData.end_date
       );
       setSuggestedPlacements(suggestions);
       setManualSelections(new Set(suggestions.map(s => s.location.id)));
     }
-  }, [formData.budget, selectedCities, locations, allPrices, mode]);
+  }, [formData.budget, selectedCities, locations, mode]);
   
   // Calculate reach metrics with useMemo instead of useEffect
   const reachMetrics = useMemo(() => {
@@ -408,10 +406,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
                     {(showAllLocations ? availableLocations : suggestedPlacements.map(s => s.location))
                       .map(location => {
                         const suggestedItem = suggestedPlacements.find(s => s.location.id === location.id);
-                        const locationPrices = allPrices.filter(p => p.location_id === location.id);
-                        const avgPrice = locationPrices.length > 0
-                          ? locationPrices.reduce((sum, p) => sum + p.price, 0) / locationPrices.length
-                          : (location.price_per_month || 0);
+                        const avgPrice = location.price_per_month || 0;
                         const cost = suggestedItem?.cost || (avgPrice * duration);
                         const isSelected = manualSelections.has(location.id);
                         const isAISuggested = !!suggestedItem && !showAllLocations;
