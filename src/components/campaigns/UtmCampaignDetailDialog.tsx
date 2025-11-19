@@ -499,6 +499,145 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
           )}
         </div>
       </DialogContent>
+
+      {/* Version Detail Dialog */}
+      <Dialog open={!!editingVersionId} onOpenChange={() => setEditingVersionId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>
+              Version {versions.find(v => v.id === editingVersionId)?.version_number} Details
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[calc(90vh-120px)]">
+            {editingVersionId && (() => {
+              const version = versions.find(v => v.id === editingVersionId);
+              if (!version) return null;
+
+              return (
+                <div className="space-y-6 p-4">
+                  {/* Version Info */}
+                  <div className="grid gap-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Version Number</Label>
+                      <p className="text-heading-md font-semibold">v{version.version_number}</p>
+                    </div>
+
+                    <div>
+                      <Label className="text-muted-foreground">Campaign Name</Label>
+                      <p className="font-medium">{version.name}</p>
+                    </div>
+
+                    {version.landing_page && (
+                      <div>
+                        <Label className="text-muted-foreground">Landing Page</Label>
+                        <a
+                          href={version.landing_page}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-xs"
+                        >
+                          {version.landing_page}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+
+                    {version.description && (
+                      <div>
+                        <Label className="text-muted-foreground">Description</Label>
+                        <p className="text-body-sm">{version.description}</p>
+                      </div>
+                    )}
+
+                    {version.version_notes && (
+                      <div>
+                        <Label className="text-muted-foreground">Version Notes</Label>
+                        <p className="text-body-sm italic">{version.version_notes}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Creative Assets */}
+                  <div className="space-y-sm">
+                    <h4 className="font-semibold">Creative Assets</h4>
+                    
+                    {version.image_url ? (
+                      <div>
+                        <Label className="text-muted-foreground">Image</Label>
+                        <img
+                          src={version.image_url}
+                          alt={`Version ${version.version_number}`}
+                          className="mt-sm w-full max-w-md rounded-lg border border-border"
+                        />
+                        {version.image_file_size && (
+                          <p className="text-metadata text-muted-foreground mt-xs">
+                            Size: {(version.image_file_size / 1024).toFixed(1)} KB
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-body-sm text-muted-foreground italic">No image uploaded</p>
+                    )}
+
+                    {version.asset_link && (
+                      <div>
+                        <Label className="text-muted-foreground">Asset Link</Label>
+                        <a
+                          href={version.asset_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-xs text-body-sm"
+                        >
+                          {version.asset_link}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Entities */}
+                  <div className="space-y-sm">
+                    <h4 className="font-semibold">Entities Live</h4>
+                    {entities && entities.length > 0 ? (
+                      <div className="flex flex-wrap gap-sm">
+                        {entities.map((entity) => (
+                          <Badge key={entity.id} variant="outline">
+                            {entity.entity}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-body-sm text-muted-foreground italic">
+                        Not live on any entities yet
+                      </p>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Metadata */}
+                  <div className="grid grid-cols-2 gap-sm text-body-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Created</Label>
+                      <p>{format(new Date(version.created_at), "PPp")}</p>
+                    </div>
+                    {version.created_by && (
+                      <div>
+                        <Label className="text-muted-foreground">Created By</Label>
+                        <p>{version.created_by}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
