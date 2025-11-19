@@ -43,6 +43,7 @@ import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
 import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import DOMPurify from 'dompurify';
 
 interface TaskDialogProps {
   open: boolean;
@@ -648,7 +649,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               ) : (
                 <div 
                   className="text-sm text-muted-foreground mt-1 min-h-[40px] p-2 rounded border border-transparent prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: task.description || "No description" }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(task.description || "No description") }}
                 />
               )}
             </div>
