@@ -26,6 +26,14 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | 'delete' | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  
+  // PHASE 1 FIX: Truncate description for readability
+  const truncateText = (text: string | null, maxLength: number) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+  
   const isOverdue = (dueDate: string | null, status: string) => {
     if (!dueDate || status === 'Completed') return false;
     return new Date(dueDate) < new Date();
@@ -335,10 +343,10 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
         {task.title}
       </h3>
       
-      {/* Task description */}
+      {/* Task description - PHASE 1 FIX: Truncated to 150 chars */}
       {task.description && (
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2 cursor-pointer" onClick={onClick}>
-          {task.description}
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 cursor-pointer" onClick={onClick}>
+          {truncateText(task.description, 150)}
         </p>
       )}
       

@@ -73,6 +73,7 @@ export function CreateUtmCampaignDialog({ open, onOpenChange }: CreateUtmCampaig
               placeholder="Enter campaign name"
               className="mt-1"
               disabled={createMutation.isPending}
+              maxLength={100}
               required
             />
           </div>
@@ -99,6 +100,7 @@ export function CreateUtmCampaignDialog({ open, onOpenChange }: CreateUtmCampaig
               className="mt-1"
               rows={3}
               disabled={createMutation.isPending}
+              maxLength={500}
             />
           </div>
 

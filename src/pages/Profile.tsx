@@ -136,44 +136,31 @@ export default function Profile() {
 
     console.log('🔍 Profile fetchTasks - mappedTasks sample:', mappedTasks[0]);
 
-    // Filter based on visibility settings (matching useTasks.ts logic)
+    // PHASE 1 FIX: Profile page shows ONLY assigned tasks
     const visibleTasks = mappedTasks.filter((task: any) => {
-      // Admins see everything
-      if (userRole === 'admin') {
-        console.log('✅ Admin sees all - task:', task.title);
-        return true;
-      }
-      
-      // Global visibility tasks are visible to everyone
-      if (task.visibility === 'global') {
-        console.log('✅ Global visibility - task:', task.title);
-        return true;
-      }
-      
-      // For private tasks, check if target user is assigned or part of team
-      const isDirectAssignee = task.assignees?.some((a: any) => {
-        const match = a.user_id === targetUserId;
-        console.log('🔍 Checking assignee:', a.user_id, 'vs', targetUserId, '=', match);
-        return match;
-      });
+      // Direct assignee check
+      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === targetUserId);
+
+      // Team membership check
       const userTeams = targetProfile.teams || [];
       const taskTeams = Array.isArray(task.teams) 
         ? task.teams 
         : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
       const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
-      
-      console.log('🔍 Private task check:', task.title, {
-        isDirectAssignee,
-        isTeamMember,
-        userTeams,
-        taskTeams,
-        assignees: task.assignees
-      });
-      
-      return isDirectAssignee || isTeamMember;
-    });
 
-    console.log('🔍 Profile fetchTasks - visibleTasks count:', visibleTasks.length);
+      // ✅ PROFILE PAGE RULE: Only show tasks where user is involved
+      // This fixes the bug where ALL global tasks were showing
+      if (!isDirectAssignee && !isTeamMember) {
+        return false; // User is NOT involved - don't show
+      }
+
+      // Apply visibility rules for private tasks
+      if (task.visibility === 'private' && !isDirectAssignee && !isTeamMember) {
+        return false;
+      }
+
+      return true; // User IS involved - show the task
+    });
 
     setTasks({
       all: visibleTasks,
