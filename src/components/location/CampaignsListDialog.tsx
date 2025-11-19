@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlannedCampaigns, PlannedCampaign, calculateDuration } from "@/hooks/usePlannedCampaigns";
-import { DollarSign, MapPin, Building2, Calendar, Search, Plus, FolderOpen } from "lucide-react";
+import { MapPin, Building2, Calendar, Search, Plus, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
 
 interface CampaignsListDialogProps {

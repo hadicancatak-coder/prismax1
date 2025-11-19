@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,21 +39,45 @@ export function NotificationBell() {
   const fetchNotifications = async () => {
     const { data } = await supabase
       .from("notifications")
-      .select("*")
+      .select(`
+        *,
+        actor:profiles!notifications_actor_id_fkey(id, full_name, avatar_url)
+      `)
       .eq("user_id", user?.id)
       .is("read_at", null)
       .order("created_at", { ascending: false })
       .limit(5);
 
-    setNotifications(data || []);
-    setUnreadCount((data || []).length);
+    // Enrich notifications with comment text for comment_mention type
+    const enrichedNotifications = await Promise.all(
+      (data || []).map(async (notification) => {
+        const payload = notification.payload_json as any;
+        if (notification.type === "comment_mention" && payload?.comment_id) {
+          const { data: comment } = await supabase
+            .from("comments")
+            .select("body")
+            .eq("id", payload.comment_id)
+            .single();
+          
+          return {
+            ...notification,
+            commentPreview: comment?.body?.substring(0, 60) || ""
+          };
+        }
+        return notification;
+      })
+    );
+
+    setNotifications(enrichedNotifications);
+    setUnreadCount(enrichedNotifications.length);
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "task_assigned": return "📋";
       case "campaign_assigned": return "🚀";
-      case "mention": return "💬";
+      case "mention":
+      case "comment_mention": return "💬";
       case "deadline_reminder_3days": return "⏰";
       case "deadline_reminder_1day": return "🔔";
       case "deadline_reminder_overdue": return "❗";
@@ -67,13 +92,41 @@ export function NotificationBell() {
 
   const getNotificationMessage = (notification: any) => {
     const payload = notification.payload_json;
+    const actorName = notification.actor?.full_name || "Someone";
+    
     switch (notification.type) {
       case "task_assigned":
-        return `New task: ${payload.task_title}`;
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{actorName} assigned you:</div>
+            <div className="text-muted-foreground">{payload.task_title}</div>
+          </div>
+        );
       case "campaign_assigned":
-        return `Assigned to campaign: ${payload.campaign_title}`;
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{actorName} assigned you to campaign:</div>
+            <div className="text-muted-foreground">{payload.campaign_title}</div>
+          </div>
+        );
+      case "comment_mention":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{actorName} mentioned you in {payload.task_title}</div>
+            {notification.commentPreview && (
+              <div className="text-muted-foreground text-metadata italic">
+                "{notification.commentPreview}{notification.commentPreview.length >= 60 ? '...' : ''}"
+              </div>
+            )}
+          </div>
+        );
       case "mention":
-        return `Mentioned in "${payload.task_title}"`;
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{actorName} mentioned you:</div>
+            <div className="text-muted-foreground">{payload.task_title}</div>
+          </div>
+        );
       case "task_updated":
         return payload.message || `"${payload.task_title}" updated`;
       case "deadline_reminder_3days":
@@ -113,24 +166,24 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="end">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Notifications</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/notifications")}
-          >
-            View All
-          </Button>
+      <PopoverContent className="w-96 p-0" align="end">
+        <div className="flex items-center justify-between p-md border-b border-border">
+          <h3 className="text-heading-sm font-semibold">Notifications</h3>
+          {unreadCount > 0 && (
+            <Badge variant="secondary">{unreadCount} new</Badge>
+          )}
         </div>
-        <ScrollArea className="h-[300px]">
-          {notifications.length > 0 ? (
-            <div className="space-y-2">
+        
+        <ScrollArea className="h-[400px]">
+          {notifications.length === 0 ? (
+            <div className="p-md text-center text-muted-foreground">
+              No new notifications
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
               {notifications.map((notification) => (
-                <div
+                <button
                   key={notification.id}
-                  className="p-3 bg-muted/30 rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={async () => {
                     await supabase
                       .from("notifications")
@@ -138,32 +191,47 @@ export function NotificationBell() {
                       .eq("id", notification.id);
                     navigate("/notifications");
                   }}
+                  className="w-full p-sm hover:bg-card-hover transition-colors text-left flex gap-sm items-start"
                 >
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg flex-shrink-0">{getNotificationIcon(notification.type)}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-foreground font-medium mb-1 line-clamp-2">
-                        {getNotificationMessage(notification)}
-                      </p>
-                      {notification.payload_json?.message && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 mb-1">
-                          {notification.payload_json.message}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(notification.created_at).toLocaleString()}
-                      </p>
+                  {notification.actor ? (
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={notification.actor.avatar_url} />
+                      <AvatarFallback className="text-metadata">
+                        {notification.actor.full_name?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="text-xl flex-shrink-0">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-body-sm">
+                      {getNotificationMessage(notification)}
+                    </div>
+                    <div className="text-metadata text-muted-foreground mt-1">
+                      {new Date(notification.created_at).toLocaleDateString()} at{" "}
+                      {new Date(notification.created_at).toLocaleTimeString([], { 
+                        hour: "2-digit", 
+                        minute: "2-digit" 
+                      })}
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
-            </div>
-          ) : (
-            <div className="text-center text-muted-foreground py-8">
-              No new notifications
             </div>
           )}
         </ScrollArea>
+        
+        <div className="p-sm border-t border-border">
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={() => navigate("/notifications")}
+          >
+            View All Notifications
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
