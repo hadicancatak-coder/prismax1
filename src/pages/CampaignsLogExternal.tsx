@@ -11,6 +11,7 @@ import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
 import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function CampaignsLogExternal() {
   const { token } = useParams<{ token: string }>();
@@ -157,17 +158,11 @@ export default function CampaignsLogExternal() {
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto py-4 px-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Eye className="h-6 w-6 text-primary" />
-                Campaign Review: {accessData?.entity}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Viewing as {name} ({email})
-              </p>
-            </div>
-          </div>
+          <PageHeader 
+            title={`Campaign Review: ${accessData?.entity}`}
+            description={`Viewing as ${name} (${email})`}
+            icon={Eye}
+          />
         </div>
       </div>
 
