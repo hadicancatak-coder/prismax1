@@ -44,7 +44,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
-  const { createLocation, updateLocation, upsertPrices, locations } = useMediaLocations();
+  const { createLocation, updateLocation, locations } = useMediaLocations();
 
   const validateRow = (row: any): string[] => {
     const errors: string[] = [];
@@ -266,13 +266,7 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
           createdCount++;
         }
 
-        // Handle historic prices
-        if (row.historicPrices && row.historicPrices.length > 0 && locationId) {
-          await upsertPrices.mutateAsync({
-            locationId,
-            prices: row.historicPrices,
-          });
-        }
+        // Note: Historic prices feature removed in Phase 5 cleanup
       } catch (error) {
         console.error(`Failed to process row ${row.lineNumber}:`, error);
         errorCount++;

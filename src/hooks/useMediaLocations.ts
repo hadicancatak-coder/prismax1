@@ -130,27 +130,8 @@ export interface MediaLocation {
   updated_at: string;
 }
 
-export interface HistoricPrice {
-  id: string;
-  location_id: string;
-  year: number;
-  price: number;
-  created_at: string;
-}
-
-export interface PastCampaign {
-  id: string;
-  location_id: string;
-  campaign_name: string;
-  budget: number;
-  campaign_date: string;
-  notes?: string;
-  created_at: string;
-}
-
 export interface LocationWithDetails extends MediaLocation {
-  historic_prices: HistoricPrice[];
-  past_campaigns: PastCampaign[];
+  // Historic prices and past campaigns tables removed in Phase 5
 }
 
 export const useMediaLocations = () => {
@@ -166,32 +147,6 @@ export const useMediaLocations = () => {
 
       if (error) throw error;
       return data as MediaLocation[];
-    },
-  });
-
-  const { data: allPrices = [] } = useQuery({
-    queryKey: ["location-prices"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("location_historic_prices")
-        .select("*")
-        .order("year", { ascending: false });
-
-      if (error) throw error;
-      return data as HistoricPrice[];
-    },
-  });
-
-  const { data: allCampaigns = [] } = useQuery({
-    queryKey: ["location-campaigns"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("location_past_campaigns")
-        .select("*")
-        .order("campaign_date", { ascending: false });
-
-      if (error) throw error;
-      return data as PastCampaign[];
     },
   });
 
@@ -253,46 +208,6 @@ export const useMediaLocations = () => {
     },
   });
 
-  const upsertPrices = useMutation({
-    mutationFn: async ({ locationId, prices }: { locationId: string; prices: Array<{ year: number; price: number }> }) => {
-      // Delete existing prices first
-      await supabase
-        .from("location_historic_prices")
-        .delete()
-        .eq("location_id", locationId);
-
-      // Insert new prices
-      const { error } = await supabase
-        .from("location_historic_prices")
-        .insert(prices.map(p => ({ location_id: locationId, ...p })));
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["location-prices"] });
-    },
-  });
-
-  const upsertCampaigns = useMutation({
-    mutationFn: async ({ locationId, campaigns }: { locationId: string; campaigns: Array<Omit<PastCampaign, "id" | "location_id" | "created_at">> }) => {
-      // Delete existing campaigns first
-      await supabase
-        .from("location_past_campaigns")
-        .delete()
-        .eq("location_id", locationId);
-
-      // Insert new campaigns
-      const { error } = await supabase
-        .from("location_past_campaigns")
-        .insert(campaigns.map(c => ({ location_id: locationId, ...c })));
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["location-campaigns"] });
-    },
-  });
-
   const uploadImage = async (file: File, locationId: string): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${locationId}-${Date.now()}.${fileExt}`;
@@ -317,21 +232,15 @@ export const useMediaLocations = () => {
 
     return {
       ...location,
-      historic_prices: allPrices.filter(p => p.location_id === locationId),
-      past_campaigns: allCampaigns.filter(c => c.location_id === locationId),
     };
   };
 
   return {
     locations,
     isLoading,
-    allPrices,
-    allCampaigns,
     createLocation,
     updateLocation,
     deleteLocation,
-    upsertPrices,
-    upsertCampaigns,
     uploadImage,
     getLocationWithDetails,
   };

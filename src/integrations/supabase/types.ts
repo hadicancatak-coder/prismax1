@@ -2095,76 +2095,6 @@ export type Database = {
           },
         ]
       }
-      location_historic_prices: {
-        Row: {
-          created_at: string
-          id: string
-          location_id: string
-          price: number
-          year: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          location_id: string
-          price: number
-          year: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          location_id?: string
-          price?: number
-          year?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "location_historic_prices_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "media_locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      location_past_campaigns: {
-        Row: {
-          budget: number
-          campaign_date: string
-          campaign_name: string
-          created_at: string
-          id: string
-          location_id: string
-          notes: string | null
-        }
-        Insert: {
-          budget: number
-          campaign_date: string
-          campaign_name: string
-          created_at?: string
-          id?: string
-          location_id: string
-          notes?: string | null
-        }
-        Update: {
-          budget?: number
-          campaign_date?: string
-          campaign_name?: string
-          created_at?: string
-          id?: string
-          location_id?: string
-          notes?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "location_past_campaigns_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "media_locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       media_locations: {
         Row: {
           agency: string | null
@@ -4813,21 +4743,6 @@ export type Database = {
           name: string | null
         }
         Relationships: []
-      }
-      task_comment_counts: {
-        Row: {
-          comment_count: number | null
-          task_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Functions: {
