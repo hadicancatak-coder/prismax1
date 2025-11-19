@@ -111,7 +111,7 @@ export default function Profile() {
       return;
     }
 
-    // Fetch all tasks with assignees (similar to useTasks.ts)
+    // Fetch all tasks with assignees (EXACT match to useTasks.ts)
     const { data: allTasksData, error } = await supabase
       .from("tasks")
       .select(`
@@ -120,7 +120,7 @@ export default function Profile() {
           user_id,
           profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams)
         ),
-        profiles:created_by(name)
+        task_comment_counts(comment_count)
       `)
       .order("created_at", { ascending: false });
 
