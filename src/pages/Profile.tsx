@@ -36,7 +36,14 @@ export default function Profile() {
   const [tagline, setTagline] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any>({ completed: [], pending: [], blocked: [], failed: [] });
+  const [tasks, setTasks] = useState<any>({ 
+    all: [], 
+    ongoing: [], 
+    completed: [], 
+    pending: [], 
+    blocked: [], 
+    failed: [] 
+  });
   const [uploading, setUploading] = useState(false);
 
   const { kpis } = useKPIs();
