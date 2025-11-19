@@ -36,33 +36,25 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-2xl">{location.name}</DialogTitle>
-              <div className="flex gap-2 mt-2 flex-wrap">
-                <Badge variant="secondary">{location.city}</Badge>
-                <Badge variant="outline">{location.type}</Badge>
-                {location.manual_score && (
-                  <Badge>Score: {location.manual_score}/10</Badge>
-                )}
-                {location.agency && (
-                  <Badge variant="default">🏢 {location.agency}</Badge>
-                )}
-                {location.price_per_month && (
-                  <Badge variant="secondary">
-                    💰 AED {location.price_per_month.toLocaleString()}/mo
-                  </Badge>
-                )}
-                {location.est_daily_traffic && (
-                  <Badge variant="secondary">
-                    👥 {location.est_daily_traffic.toLocaleString()} daily
-                  </Badge>
-                )}
-                {getLocationCategory(location.type) && (
-                  <Badge variant="outline">
-                    {LOCATION_CATEGORIES[getLocationCategory(location.type)!].emoji}{" "}
-                    {getLocationCategory(location.type)}
-                  </Badge>
-                )}
-              </div>
+            <DialogTitle className="text-2xl">{location.name}</DialogTitle>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <Badge variant="secondary">{location.city}</Badge>
+              <Badge variant="outline">{location.type}</Badge>
+              {location.agency && (
+                <Badge variant="default">🏢 {location.agency}</Badge>
+              )}
+              {location.est_daily_traffic && (
+                <Badge variant="secondary">
+                  👥 {location.est_daily_traffic.toLocaleString()} daily
+                </Badge>
+              )}
+              {getLocationCategory(location.type) && (
+                <Badge variant="outline">
+                  {LOCATION_CATEGORIES[getLocationCategory(location.type)!].emoji}{" "}
+                  {getLocationCategory(location.type)}
+                </Badge>
+              )}
+            </div>
             </div>
             {isAdmin && (
               <Button size="sm" onClick={onEdit}>
@@ -93,12 +85,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                   <span className="font-medium">{location.agency}</span>
                 </div>
               )}
-              {location.price_per_month && (
-                <div>
-                  <span className="text-muted-foreground">Price/Month:</span>{' '}
-                  <span className="font-medium">AED {location.price_per_month.toLocaleString()}</span>
-                </div>
-              )}
               {location.est_daily_traffic && (
                 <div>
                   <span className="text-muted-foreground">Daily Traffic:</span>{' '}
@@ -126,28 +112,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
             )}
           </div>
 
-          {location.historic_prices.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">Historic Prices</h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Price</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {location.historic_prices.map((price) => (
-                    <TableRow key={price.id}>
-                      <TableCell>{price.year}</TableCell>
-                      <TableCell>${price.price.toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
           {campaignDetails.length > 0 && (
             <div>
               <h4 className="font-semibold mb-2">Associated Campaigns ({campaignDetails.length})</h4>
@@ -169,34 +133,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {location.past_campaigns.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">Past Campaigns</h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Budget</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Notes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {location.past_campaigns.map((campaign) => (
-                    <TableRow key={campaign.id}>
-                      <TableCell className="font-medium">{campaign.campaign_name}</TableCell>
-                      <TableCell>${campaign.budget.toLocaleString()}</TableCell>
-                      <TableCell>{format(new Date(campaign.campaign_date), "PP")}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {campaign.notes || "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </div>
           )}
         </div>
