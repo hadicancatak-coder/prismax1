@@ -55,8 +55,8 @@ export function FloatingFilterBox({
   ];
 
   return (
-    <div className="absolute top-20 left-4 z-[100] w-80 max-w-[calc(100vw-2rem)]">
-      <div className="relative rounded-xl border-2 border-border/40 bg-background/95 backdrop-blur-md shadow-xl shadow-black/20 overflow-hidden">
+    <div className="relative w-80 max-w-[calc(100vw-2rem)]">
+      <div className="relative rounded-xl border border-border/40 bg-card/98 backdrop-blur-md shadow-2xl overflow-hidden">
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 pointer-events-none" />
         

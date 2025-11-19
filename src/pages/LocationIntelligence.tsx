@@ -213,15 +213,6 @@ export default function LocationIntelligence() {
           isAdmin={isAdmin}
           ref={mapRef}
         />
-        
-        {/* Floating Filter Box */}
-        <FloatingFilterBox
-          filters={filters}
-          onFiltersChange={setFilters}
-          availableCities={cities}
-          availableAgencies={agencies}
-          campaigns={campaigns || []}
-        />
       </div>
 
       {/* Custom context menu portal */}
@@ -297,18 +288,31 @@ export default function LocationIntelligence() {
 
       <div className="absolute top-4 left-4 z-30 flex flex-col gap-2 max-w-sm">
         <LocationSearch locations={filteredLocations} onLocationSelect={handleLocationSelect} />
+        
+        {/* Floating Filter Box below search */}
+        <FloatingFilterBox
+          filters={filters}
+          onFiltersChange={setFilters}
+          availableCities={cities}
+          availableAgencies={agencies}
+          campaigns={campaigns || []}
+        />
       </div>
 
       <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <Button onClick={() => setCampaignsListOpen(true)} variant="secondary" className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
+        <Button onClick={() => setCampaignsListOpen(true)} variant="secondary" className="bg-background/90 backdrop-blur-md shadow-xl border border-border/20">
           <FolderOpen className="h-4 w-4 mr-2" />Campaigns
         </Button>
         {isAdmin && (
           <>
-            <Button onClick={() => { setEditingLocation(null); setFormOpen(true); }} className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
+            <Button onClick={() => { 
+              setEditingLocation(null); 
+              setClickedCoordinates(null); 
+              setFormOpen(true); 
+            }} className="bg-background/90 backdrop-blur-md shadow-xl border border-border/20">
               <Plus className="h-4 w-4 mr-2" />Add Location
             </Button>
-            <Button onClick={() => setUploadOpen(true)} variant="secondary" className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
+            <Button onClick={() => setUploadOpen(true)} variant="secondary" className="bg-background/90 backdrop-blur-md shadow-xl border border-border/20">
               <Upload className="h-4 w-4 mr-2" />Bulk Upload
             </Button>
           </>
