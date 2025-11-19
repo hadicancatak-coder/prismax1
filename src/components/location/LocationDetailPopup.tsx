@@ -40,16 +40,8 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
               <div className="flex gap-2 mt-2 flex-wrap">
                 <Badge variant="secondary">{location.city}</Badge>
                 <Badge variant="outline">{location.type}</Badge>
-                {location.manual_score && (
-                  <Badge>Score: {location.manual_score}/10</Badge>
-                )}
                 {location.agency && (
                   <Badge variant="default">🏢 {location.agency}</Badge>
-                )}
-                {location.price_per_month && (
-                  <Badge variant="secondary">
-                    💰 AED {location.price_per_month.toLocaleString()}/mo
-                  </Badge>
                 )}
                 {location.est_daily_traffic && (
                   <Badge variant="secondary">
