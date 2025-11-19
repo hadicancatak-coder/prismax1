@@ -28,6 +28,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
     const markers = useRef<mapboxgl.Marker[]>([]);
     const highlightMarker = useRef<mapboxgl.Marker | null>(null);
     const selectedLocationIds = selectedLocationId || [];
+    const prevLocationsLength = useRef(0);
 
     useImperativeHandle(ref, () => ({
       flyToLocation: (location: MediaLocation) => {
@@ -151,18 +152,18 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
               ` : `
                 <button 
                   class="flex-1 px-3 py-1.5 text-sm rounded transition-colors popup-btn"
-                  style="border: 1px solid hsl(var(--border)); background: hsl(var(--background));"
-                  onmouseover="this.style.background='hsl(var(--muted))'"
-                  onmouseout="this.style.background='hsl(var(--background))'"
+                  style="background: hsl(var(--primary)); color: hsl(var(--primary-foreground));"
+                  onmouseover="this.style.opacity='0.9'"
+                  onmouseout="this.style.opacity='1'"
                 >
                   View Details
                 </button>
                 ${isAdmin ? `
                   <button 
                     class="px-3 py-1.5 text-sm rounded transition-colors popup-btn-edit"
-                    style="border: 1px solid hsl(var(--border)); background: hsl(var(--background));"
-                    onmouseover="this.style.background='hsl(var(--muted))'"
-                    onmouseout="this.style.background='hsl(var(--background))'"
+                    style="background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground));"
+                    onmouseover="this.style.opacity='0.9'"
+                    onmouseout="this.style.opacity='1'"
                   >
                     Edit
                   </button>
@@ -172,8 +173,14 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           </div>
         `;
         
-        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px', className: 'location-popup', closeButton: true, closeOnClick: true }).setHTML(popupHTML);
-        popup.on('open', () => { 
+        const popup = new mapboxgl.Popup({ 
+          offset: 25, 
+          closeButton: true, 
+          closeOnClick: false, 
+          maxWidth: '280px' 
+        }).setHTML(popupHTML);
+        
+        popup.on('open', () => {
           const popupEl = popup.getElement();
           if (!popupEl) return;
           
@@ -222,12 +229,24 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         markers.current.push(marker);
       });
 
-      if (locations.length > 0) {
+      // Only fit bounds on initial load (not when adding locations one by one)
+      const isInitialLoad = prevLocationsLength.current === 0 && locations.length > 0;
+      const isAddingSingleLocation = locations.length === prevLocationsLength.current + 1;
+      
+      if (isInitialLoad && !isAddingSingleLocation) {
         const bounds = new mapboxgl.LngLatBounds();
-        locations.forEach(loc => { if (loc.latitude && loc.longitude) bounds.extend([loc.longitude, loc.latitude]); });
-        if (!bounds.isEmpty()) map.current.fitBounds(bounds, { padding: 100, maxZoom: 12 });
+        locations.forEach(loc => { 
+          if (loc.latitude && loc.longitude) {
+            bounds.extend([loc.longitude, loc.latitude]); 
+          }
+        });
+        if (!bounds.isEmpty()) {
+          map.current.fitBounds(bounds, { padding: 100, maxZoom: 12 });
+        }
       }
-    }, [locations, selectedLocationIds, campaignLocationIds, selectionMode, isAdmin]);
+      
+      prevLocationsLength.current = locations.length;
+    }, [locations, selectedLocationIds, campaignLocationIds, selectionMode, isAdmin, onLocationClick, onViewDetails, onEdit]);
 
     return <div className="relative w-full h-full"><div ref={mapContainer} className="absolute inset-0" /></div>;
   }

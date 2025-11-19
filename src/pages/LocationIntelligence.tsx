@@ -204,6 +204,15 @@ export default function LocationIntelligence() {
           isAdmin={isAdmin}
           ref={mapRef}
         />
+        
+        {/* Floating Filter Box */}
+        <FloatingFilterBox
+          filters={filters}
+          onFiltersChange={setFilters}
+          availableCities={cities}
+          availableAgencies={agencies}
+          campaigns={campaigns || []}
+        />
       </div>
 
       {/* Custom context menu portal */}
@@ -222,6 +231,7 @@ export default function LocationIntelligence() {
             <button
               onClick={() => {
                 setEditingLocation(null);
+                setClickedCoordinates(null);
                 setFormOpen(true);
                 setContextMenuPos(null);
               }}
