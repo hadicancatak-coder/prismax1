@@ -30,7 +30,6 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
         <PageHeader
           title="Search Ads Planner"
           description="Create and manage search advertising campaigns"
-          icon={Search}
         />
       </div>
 

@@ -26,7 +26,6 @@ export default function DisplayPlanner() {
         <PageHeader
           title="Display Ads Planner"
           description="Create and manage display advertising campaigns"
-          icon={Monitor}
         />
       </div>
 

@@ -285,7 +285,7 @@ export default function LocationIntelligence() {
           <Filter className="h-4 w-4 mr-2" />Filters {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
         </Button>
         {showFilters && (
-          <div className="bg-background/90 backdrop-blur-md rounded-lg shadow-xl border border-white/10 p-4 transition-all duration-300 max-w-sm">
+          <div className="bg-popover/95 backdrop-blur-md rounded-lg shadow-xl border p-4 transition-all duration-300 max-w-sm z-20">
             <LocationFilters 
               filters={filters} 
               onFiltersChange={setFilters} 
