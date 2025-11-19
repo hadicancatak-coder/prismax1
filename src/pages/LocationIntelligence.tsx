@@ -1,14 +1,13 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, X, FolderOpen, Target, ChevronDown, ChevronUp, Filter, MapPin, Layers } from "lucide-react";
+import { Plus, Upload, X, FolderOpen, Target, ChevronDown, ChevronUp, MapPin, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMediaLocations, MediaLocation, getLocationCategory } from "@/hooks/useMediaLocations";
 import { usePlannedCampaigns } from "@/hooks/usePlannedCampaigns";
 import { useLocationCampaigns } from "@/hooks/useLocationCampaigns";
 import { LocationMap, LocationMapRef } from "@/components/location/LocationMap";
 import { LocationSearch } from "@/components/location/LocationSearch";
-import { LocationFilters } from "@/components/location/LocationFilters";
-import type { LocationFilters as Filters } from "@/components/location/LocationFilters";
+import { FloatingFilterBox } from "@/components/location/FloatingFilterBox";
 import { LocationDetailPopup } from "@/components/location/LocationDetailPopup";
 import { LocationFormDialog } from "@/components/location/LocationFormDialog";
 import { CampaignPlannerDialog } from "@/components/location/CampaignPlannerDialog";
@@ -37,7 +36,7 @@ export default function LocationIntelligence() {
   const [editingLocation, setEditingLocation] = useState<MediaLocation | null>(null);
   const [plannerOpen, setPlannerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  
   const [campaignsListOpen, setCampaignsListOpen] = useState(false);
   const [vendorsOpen, setVendorsOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState<'normal' | 'campaign-select'>('normal');
@@ -46,7 +45,12 @@ export default function LocationIntelligence() {
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [selectedCampaignForDetail, setSelectedCampaignForDetail] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState<Filters>({
+  const [filters, setFilters] = useState<{
+    cities: string[];
+    agencies: string[];
+    categories: string[];
+    campaignId?: string;
+  }>({
     cities: [],
     agencies: [],
     categories: [],
@@ -275,29 +279,6 @@ export default function LocationIntelligence() {
 
       <div className="absolute top-4 left-4 z-30 flex flex-col gap-2 max-w-sm">
         <LocationSearch locations={filteredLocations} onLocationSelect={handleLocationSelect} />
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          onClick={() => setShowFilters(!showFilters)} 
-          className="bg-background/95 backdrop-blur-md shadow-xl border gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-          {(filters.cities.length + filters.agencies.length + filters.categories.length + (filters.campaignId ? 1 : 0)) > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-              {filters.cities.length + filters.agencies.length + filters.categories.length + (filters.campaignId ? 1 : 0)}
-            </Badge>
-          )}
-        </Button>
-        <LocationFilters 
-          filters={filters} 
-          onFiltersChange={setFilters} 
-          availableCities={cities} 
-          availableAgencies={agencies} 
-          availableCampaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-        />
       </div>
 
       <div className="absolute top-4 right-4 z-10 flex gap-2">
