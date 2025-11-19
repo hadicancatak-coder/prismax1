@@ -55,13 +55,13 @@ export function FloatingFilterBox({
   ];
 
   return (
-    <div className="absolute top-4 left-4 z-[100] w-80 max-w-[calc(100vw-2rem)]">
-      <div className="relative rounded-xl border-2 border-white/20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-xl shadow-black/10 overflow-hidden">
+    <div className="absolute top-20 left-4 z-[100] w-80 max-w-[calc(100vw-2rem)]">
+      <div className="relative rounded-xl border-2 border-border/40 bg-background/95 backdrop-blur-md shadow-xl shadow-black/20 overflow-hidden">
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 pointer-events-none" />
         
         {/* Header */}
-        <div className="relative p-3 flex items-center justify-between border-b border-white/10">
+        <div className="relative p-3 flex items-center justify-between border-b border-border/50">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-primary" />
             <span className="font-semibold text-foreground">Filters</span>
