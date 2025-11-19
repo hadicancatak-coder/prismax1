@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,6 @@ import { format } from "date-fns";
 import { BlockerDialog } from "@/components/BlockerDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { ReportDialog } from "@/components/ReportDialog";
-import { PageHeader } from "@/components/layout/PageHeader";
 import Team from "./Team";
 
 export default function TeamBase() {
@@ -215,10 +215,10 @@ export default function TeamBase() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div className="bg-gradient-primary p-4 rounded-lg mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">🏢 Base</h1>
-        <p className="text-muted-foreground">Manage blockers, projects, team directory, and shared resources</p>
-      </div>
+      <PageHeader
+        title="Base"
+        description="Manage blockers, projects, team directory, and shared resources"
+      />
 
       <Tabs defaultValue="team" className="w-full">
         <TabsList className="grid w-full grid-cols-4">

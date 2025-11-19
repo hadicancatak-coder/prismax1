@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertCircle, ExternalLink, FileSpreadsheet, Plus, Trash2, LogOut, Settings, Loader2 } from 'lucide-react';
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -63,12 +64,10 @@ export default function ReportsLog() {
   if (!apiConfigured) {
     return (
       <div className="container mx-auto p-6 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Reports Log</h1>
-          <p className="text-muted-foreground">
-            Integrate your Google Sheets for powerful reporting capabilities
-          </p>
-        </div>
+        <PageHeader
+          title="Reports Log"
+          description="Integrate your Google Sheets for powerful reporting capabilities"
+        />
 
         <Tabs defaultValue="guide" className="space-y-6">
           <TabsList>
@@ -132,17 +131,10 @@ export default function ReportsLog() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <FileSpreadsheet className="h-8 w-8" />
-            Reports Log
-          </h1>
-          <p className="text-muted-foreground">
-            Manage and access your Google Sheets reports
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title="Reports Log"
+        description="Manage and access your Google Sheets reports"
+        actions={<div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -161,8 +153,8 @@ export default function ReportsLog() {
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">

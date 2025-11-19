@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { Activity, User, FileText, Briefcase, Flag, AlertCircle, CheckSquare, FolderKanban, Megaphone, Rocket } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -209,15 +210,10 @@ export default function ActivityLog() {
 
   return (
     <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Activity className="h-8 w-8" />
-          Activity Log
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Track all changes and activities across your workspace
-        </p>
-      </div>
+      <PageHeader
+        title="Activity Log"
+        description="Track all changes and activities across your workspace"
+      />
 
       {/* Filters */}
       <Card>

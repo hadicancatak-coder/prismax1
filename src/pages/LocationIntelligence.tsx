@@ -279,13 +279,13 @@ export default function LocationIntelligence() {
         document.body
       )}
 
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-sm">
+      <div className="absolute top-4 left-4 z-30 flex flex-col gap-2 max-w-sm">
         <LocationSearch locations={filteredLocations} onLocationSelect={handleLocationSelect} />
-        <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
+        <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-background/95 backdrop-blur-md shadow-xl border">
           <Filter className="h-4 w-4 mr-2" />Filters {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
         </Button>
         {showFilters && (
-          <div className="bg-popover/95 backdrop-blur-md rounded-lg shadow-xl border p-4 transition-all duration-300 max-w-sm z-20">
+          <div className="bg-background/98 backdrop-blur-lg rounded-lg shadow-2xl border-2 p-4 transition-all duration-300 max-w-sm">
             <LocationFilters 
               filters={filters} 
               onFiltersChange={setFilters} 

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ExternalLink, Trash2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -91,12 +92,10 @@ export default function Reports() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Reports</h1>
-          <p className="text-muted-foreground">Access shared Google Sheets and Slides</p>
-        </div>
-        {userRole === "admin" && (
+      <PageHeader
+        title="Reports"
+        description="Access shared Google Sheets and Slides"
+        actions={userRole === "admin" ? (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 bg-gradient-primary hover:shadow-glow transition-all">
@@ -134,8 +133,8 @@ export default function Reports() {
               </form>
             </DialogContent>
           </Dialog>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {reports.map((report) => (
