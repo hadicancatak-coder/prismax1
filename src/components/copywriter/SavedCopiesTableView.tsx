@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment, MouseEvent } from "react";
 import { CopywriterCopy } from "@/hooks/useCopywriterCopies";
 import {
   useUpdateCopywriterCopy,
@@ -179,7 +179,7 @@ export function SavedCopiesTableView({
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (showDeleteConfirm) {
