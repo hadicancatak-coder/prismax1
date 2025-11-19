@@ -50,7 +50,7 @@ export function SavedAdsTableView({ ads }: SavedAdsTableViewProps) {
             </TableRow>
           ) : (
             ads.map((ad) => (
-              <TableRow key={ad.id}>
+              <TableRow key={ad.id} className="hover:bg-muted/50 transition-smooth cursor-pointer">
                 <TableCell className="font-medium">{ad.name}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{ad.entity}</Badge>

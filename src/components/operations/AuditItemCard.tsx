@@ -87,7 +87,7 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 hover:shadow-md transition-smooth">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-1">
           {getStatusIcon()}

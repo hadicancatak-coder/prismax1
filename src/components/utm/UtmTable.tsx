@@ -137,7 +137,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
           </TableHeader>
           <TableBody>
             {links.map((link) => (
-              <TableRow key={link.id}>
+              <TableRow key={link.id} className="hover:bg-muted/50 transition-smooth">
                 <TableCell className="font-medium">
                   <div className="max-w-[200px]">
                     <div className="truncate">{link.name}</div>

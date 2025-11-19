@@ -168,7 +168,7 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
           </TableHeader>
           <TableBody>
             {sortedElements.map((element) => (
-              <TableRow key={element.id}>
+              <TableRow key={element.id} className="hover:bg-muted/50 transition-smooth">
                 <TableCell>
                   <Checkbox
                     checked={selectedIds.includes(element.id)}

@@ -103,7 +103,7 @@ export function OverdueTasks() {
       
       <div className="space-y-3">
         {overdueTasks.map((task) => (
-          <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0">
+          <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
             <Clock className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-medium text-body text-foreground">{task.title}</p>

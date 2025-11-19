@@ -76,7 +76,7 @@ export function UpcomingCampaigns() {
         {campaigns.map((campaign: any) => (
           <div
             key={campaign.id}
-            className="py-3 border-b border-border last:border-0 hover:opacity-80 transition-smooth"
+            className="py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer rounded-lg px-2"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">

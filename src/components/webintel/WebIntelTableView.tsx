@@ -146,7 +146,7 @@ export function WebIntelTableView({
           {sortedSites.map((site) => {
             const lastCampaign = getLastCampaign(site.id);
             return (
-              <TableRow key={site.id}>
+              <TableRow key={site.id} className="hover:bg-muted/50 transition-smooth cursor-pointer">
                 <TableCell className="font-medium">{site.name}</TableCell>
                 <TableCell className="max-w-xs truncate">
                   <a 
