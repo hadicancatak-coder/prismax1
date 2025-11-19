@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Copy, Edit, Trash2, Star, Upload } from "lucide-react";
+import { Search, Copy, Edit, Trash2, Star, Upload, Table as TableIcon, Grid } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ENTITIES } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { UpdateGoogleStatusDialog } from "@/components/ads/UpdateGoogleStatusDialog";
+import { SavedElementsTableView } from "@/components/ads/SavedElementsTableView";
 
 export default function SavedElementsPage() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ export default function SavedElementsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -31,6 +33,7 @@ export default function SavedElementsPage() {
   const [editDialog, setEditDialog] = useState<{element: any} | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [editedEntity, setEditedEntity] = useState<string[]>([]);
+  const [editedStatus, setEditedStatus] = useState<string>("");
   
   // Import dialog state
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -115,6 +118,7 @@ export default function SavedElementsPage() {
     setEditDialog({ element });
     setEditedContent(String(element.content));
     setEditedEntity(element.entity || []);
+    setEditedStatus(element.google_status || '');
   };
 
   const handleSaveEdit = async () => {
@@ -125,6 +129,7 @@ export default function SavedElementsPage() {
       .update({
         content: editedContent,
         entity: editedEntity,
+        google_status: editedStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', editDialog.element.id);
@@ -222,6 +227,19 @@ export default function SavedElementsPage() {
         </div>
         
         <div className="flex gap-2 items-center">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "table")}>
+            <TabsList>
+              <TabsTrigger value="grid">
+                <Grid className="h-4 w-4 mr-2" />
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="table">
+                <TableIcon className="h-4 w-4 mr-2" />
+                Table
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
           <Button onClick={() => setShowUploadDialog(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
             Import from Sheets
@@ -329,6 +347,10 @@ export default function SavedElementsPage() {
             </CardHeader>
           </Card>
 
+          {viewMode === "table" ? (
+            <SavedElementsTableView elements={filteredElements} onRefresh={() => queryClient.invalidateQueries({ queryKey: ['saved-elements'] })} />
+          ) : (
+            <>
           {(typeFilter === 'all' || typeFilter === 'headline') && elementsByType.headline.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">Headlines ({elementsByType.headline.length})</h3>
@@ -520,6 +542,8 @@ export default function SavedElementsPage() {
               </CardContent>
             </Card>
           )}
+          </>
+          )}
         </div>
       </div>
 
@@ -554,6 +578,23 @@ export default function SavedElementsPage() {
                     {ENTITIES.map(entity => (
                       <SelectItem key={entity} value={entity}>{entity}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Status</Label>
+                <Select 
+                  value={editedStatus || "pending"} 
+                  onValueChange={(val) => setEditedStatus(val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="Clear">Clear</SelectItem>
+                    <SelectItem value="Bad">Bad</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
