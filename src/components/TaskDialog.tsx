@@ -540,6 +540,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                   value={editedTask?.title || ""}
                   onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
                   className="font-semibold text-lg"
+                  maxLength={200}
                 />
               ) : (
                 <span className="text-2xl font-semibold">{task.title}</span>
