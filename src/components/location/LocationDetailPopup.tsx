@@ -85,12 +85,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                   <span className="font-medium">{location.agency}</span>
                 </div>
               )}
-              {location.price_per_month && (
-                <div>
-                  <span className="text-muted-foreground">Price/Month:</span>{' '}
-                  <span className="font-medium">AED {location.price_per_month.toLocaleString()}</span>
-                </div>
-              )}
               {location.est_daily_traffic && (
                 <div>
                   <span className="text-muted-foreground">Daily Traffic:</span>{' '}
