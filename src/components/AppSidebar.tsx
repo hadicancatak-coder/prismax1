@@ -87,11 +87,11 @@ export function AppSidebar() {
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
       ? `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-primary ml-[-4px]' : 'justify-center px-0 border-l-4 border-primary ml-[-4px]'} py-3 text-primary font-medium transition-smooth`
-      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent ml-[-4px]' : 'justify-center px-0'} py-3 text-gray-200 hover:text-primary hover:border-l-primary/20 transition-smooth`;
+      : `flex items-center ${open ? 'gap-3 px-3 border-l-4 border-transparent ml-[-4px]' : 'justify-center px-0'} py-3 text-sidebar-foreground hover:text-primary hover:border-l-primary/20 transition-smooth`;
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Sidebar collapsible="icon" className="bg-black/20 backdrop-blur-md border-r border-white/10">
+      <Sidebar collapsible="icon" className="bg-sidebar-background backdrop-blur-md border-r border-sidebar-border">
         <SidebarContent className={`overflow-y-auto sidebar-scroll ${open ? 'px-4 py-8 space-y-8' : 'px-2 py-6 space-y-6'}`}>
           {/* Logo and User Section - Clickable to navigate to Dashboard */}
           <div 
@@ -107,7 +107,7 @@ export function AppSidebar() {
               <div className="flex flex-col">
                 <span className="text-section-title text-foreground font-semibold">Prisma</span>
                 {userName && (
-                  <span className="text-metadata text-gray-300 mt-0.5">
+                  <span className="text-metadata text-muted-foreground mt-0.5">
                     {userName}
                   </span>
                 )}
@@ -117,7 +117,7 @@ export function AppSidebar() {
 
           {/* Core Features */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-gray-300 uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Core</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -140,7 +140,7 @@ export function AppSidebar() {
 
           {/* Ads */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-gray-300 uppercase tracking-wider px-3 mb-3">Ads</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Ads</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {adsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -163,7 +163,7 @@ export function AppSidebar() {
 
           {/* Media */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-gray-300 uppercase tracking-wider px-3 mb-3">Media</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Media</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {mediaItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -186,7 +186,7 @@ export function AppSidebar() {
 
           {/* Operations */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-gray-300 uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
