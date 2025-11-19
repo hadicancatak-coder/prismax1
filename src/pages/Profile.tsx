@@ -95,6 +95,8 @@ export default function Profile() {
   const fetchTasks = async () => {
     const targetUserId = userId || user?.id;
     
+    console.log('🔍 Profile fetchTasks - targetUserId:', targetUserId);
+    
     // Get the profile for the target user (with teams)
     const { data: targetProfile } = await supabase
       .from("profiles")
@@ -102,10 +104,15 @@ export default function Profile() {
       .eq("user_id", targetUserId)
       .single();
     
-    if (!targetProfile) return;
+    console.log('🔍 Profile fetchTasks - targetProfile:', targetProfile);
+    
+    if (!targetProfile) {
+      console.log('❌ No target profile found');
+      return;
+    }
 
     // Fetch all tasks with assignees (similar to useTasks.ts)
-    const { data: allTasksData } = await supabase
+    const { data: allTasksData, error } = await supabase
       .from("tasks")
       .select(`
         *,
@@ -117,6 +124,8 @@ export default function Profile() {
       `)
       .order("created_at", { ascending: false });
 
+    console.log('🔍 Profile fetchTasks - allTasksData count:', allTasksData?.length, 'error:', error);
+
     if (!allTasksData) return;
 
     // Map tasks and apply visibility filtering (same logic as useTasks.ts)
@@ -125,24 +134,46 @@ export default function Profile() {
       assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || []
     }));
 
+    console.log('🔍 Profile fetchTasks - mappedTasks sample:', mappedTasks[0]);
+
     // Filter based on visibility settings (matching useTasks.ts logic)
     const visibleTasks = mappedTasks.filter((task: any) => {
       // Admins see everything
-      if (userRole === 'admin') return true;
+      if (userRole === 'admin') {
+        console.log('✅ Admin sees all - task:', task.title);
+        return true;
+      }
       
       // Global visibility tasks are visible to everyone
-      if (task.visibility === 'global') return true;
+      if (task.visibility === 'global') {
+        console.log('✅ Global visibility - task:', task.title);
+        return true;
+      }
       
       // For private tasks, check if target user is assigned or part of team
-      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === targetUserId);
+      const isDirectAssignee = task.assignees?.some((a: any) => {
+        const match = a.user_id === targetUserId;
+        console.log('🔍 Checking assignee:', a.user_id, 'vs', targetUserId, '=', match);
+        return match;
+      });
       const userTeams = targetProfile.teams || [];
       const taskTeams = Array.isArray(task.teams) 
         ? task.teams 
         : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
       const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
       
+      console.log('🔍 Private task check:', task.title, {
+        isDirectAssignee,
+        isTeamMember,
+        userTeams,
+        taskTeams,
+        assignees: task.assignees
+      });
+      
       return isDirectAssignee || isTeamMember;
     });
+
+    console.log('🔍 Profile fetchTasks - visibleTasks count:', visibleTasks.length);
 
     setTasks({
       all: visibleTasks,
