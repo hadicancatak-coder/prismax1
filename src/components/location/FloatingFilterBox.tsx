@@ -56,12 +56,12 @@ export function FloatingFilterBox({
 
   return (
     <div className="relative w-80 max-w-[calc(100vw-2rem)]">
-      <div className="relative rounded-xl border border-border/40 bg-card/98 backdrop-blur-md shadow-2xl overflow-hidden">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 pointer-events-none" />
+      <div className="relative rounded-xl border border-border/30 bg-background/75 backdrop-blur-lg shadow-2xl overflow-hidden">
+        {/* Gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background/40 to-accent/8 pointer-events-none" />
         
         {/* Header */}
-        <div className="relative p-3 flex items-center justify-between border-b border-border/50">
+        <div className="relative p-3 flex items-center justify-between border-b border-border/30 bg-background/20">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-primary" />
             <span className="font-semibold text-foreground">Filters</span>
@@ -89,7 +89,7 @@ export function FloatingFilterBox({
         {isExpanded && (
           <div className="relative">
             <ScrollArea className="max-h-[calc(100vh-200px)]">
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 bg-gradient-to-b from-transparent via-background/10 to-transparent">
                 {/* Cities Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Cities</label>
