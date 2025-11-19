@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function Security() {
   const { user } = useAuth();
@@ -187,10 +188,11 @@ export default function Security() {
 
   return (
     <div className="p-8 space-y-6 max-w-4xl mx-auto animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold">Security Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your account security and authentication</p>
-      </div>
+      <PageHeader 
+        title="Security Settings" 
+        description="Manage your account security and authentication"
+        icon={Shield}
+      />
 
       {/* Change Password */}
       <Card className="p-6">

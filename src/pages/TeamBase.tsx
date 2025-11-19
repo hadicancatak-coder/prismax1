@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { BlockerDialog } from "@/components/BlockerDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { ReportDialog } from "@/components/ReportDialog";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Team from "./Team";
 
 export default function TeamBase() {

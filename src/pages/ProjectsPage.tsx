@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar, Edit, Trash2, Users } from "lucide-react";
+import { Plus, Calendar, Edit, Trash2, Users, FolderKanban } from "lucide-react";
 import { format } from "date-fns";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function ProjectsPage() {
   const { user, userRole } = useAuth();
@@ -156,13 +157,15 @@ export default function ProjectsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Projects</h1>
-        {userRole === "admin" && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />New Project</Button>
-            </DialogTrigger>
+      <PageHeader 
+        title="Projects" 
+        icon={FolderKanban}
+        actions={
+          userRole === "admin" && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="mr-2 h-4 w-4" />New Project</Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Project</DialogTitle>
@@ -238,8 +241,9 @@ export default function ProjectsPage() {
               </div>
             </DialogContent>
           </Dialog>
-        )}
-      </div>
+        )
+      }
+      />
 
       <div className="grid gap-6">
         {projects.map((project) => (
