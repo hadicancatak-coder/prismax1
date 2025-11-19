@@ -4744,6 +4744,21 @@ export type Database = {
         }
         Relationships: []
       }
+      task_comment_counts: {
+        Row: {
+          comment_count: number | null
+          task_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_actual_hours: { Args: { task_uuid: string }; Returns: number }
