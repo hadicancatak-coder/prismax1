@@ -263,15 +263,62 @@ function replaceCellRefs(expr: string, data: SpreadsheetData): string {
   });
 }
 
-// Evaluate a mathematical expression
+// Safe mathematical expression evaluator using AST-based whitelist approach
 function evaluateExpression(expr: string): number {
   try {
     // Remove spaces
     expr = expr.replace(/\s/g, '');
     
-    // Use Function constructor to safely evaluate (only numbers and operators)
-    // This is safer than eval() but still should only be used with validated input
-    const result = new Function('return ' + expr)();
+    // Tokenize the expression
+    const tokens = expr.match(/(\d+\.?\d*|[+\-*/()%])/g);
+    if (!tokens) return 0;
+    
+    // Validate tokens - only allow numbers and safe operators
+    const validTokens = /^[\d+\-*/.()%\s]+$/;
+    if (!validTokens.test(expr)) return 0;
+    
+    // Parse and evaluate using a simple recursive descent parser
+    let pos = 0;
+    
+    const parseNumber = (): number => {
+      const token = tokens[pos++];
+      return parseFloat(token);
+    };
+    
+    const parseFactor = (): number => {
+      if (tokens[pos] === '(') {
+        pos++; // skip '('
+        const result = parseExpression();
+        pos++; // skip ')'
+        return result;
+      }
+      return parseNumber();
+    };
+    
+    const parseTerm = (): number => {
+      let result = parseFactor();
+      while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/' || tokens[pos] === '%')) {
+        const op = tokens[pos++];
+        const right = parseFactor();
+        if (op === '*') result *= right;
+        else if (op === '/') result = right !== 0 ? result / right : 0;
+        else if (op === '%') result = right !== 0 ? result % right : 0;
+      }
+      return result;
+    };
+    
+    const parseExpression = (): number => {
+      let result = parseTerm();
+      while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+        const op = tokens[pos++];
+        const right = parseTerm();
+        if (op === '+') result += right;
+        else if (op === '-') result -= right;
+      }
+      return result;
+    };
+    
+    const result = parseExpression();
     return typeof result === 'number' && !isNaN(result) ? result : 0;
   } catch {
     return 0;
