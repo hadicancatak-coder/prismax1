@@ -21,10 +21,10 @@ export function LocationStats({ locations }: LocationStatsProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-3 mb-6">
-      <Card>
+      <Card className="hover-lift">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Locations</CardTitle>
-          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <MapPin className="h-4 w-4 text-muted-foreground transition-smooth group-hover:text-primary" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalLocations}</div>
@@ -34,10 +34,10 @@ export function LocationStats({ locations }: LocationStatsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover-lift">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">City Distribution</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <TrendingUp className="h-4 w-4 text-muted-foreground transition-smooth group-hover:text-primary" />
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-1">
@@ -53,13 +53,13 @@ export function LocationStats({ locations }: LocationStatsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover-lift">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
+          <Star className="h-4 w-4 text-muted-foreground transition-smooth group-hover:text-warning" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{avgScore}/10</div>
+          <div className="text-2xl font-bold animate-pulse-subtle">{avgScore}/10</div>
           <p className="text-xs text-muted-foreground mt-1">
             Based on {locations.filter(l => l.manual_score).length} rated locations
           </p>

@@ -39,11 +39,11 @@ export function CampaignsSection() {
           const duration = calculateDuration(campaign.start_date, campaign.end_date);
           
           return (
-            <Card 
-              key={campaign.id} 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleViewCampaign(campaign)}
-            >
+          <Card 
+            key={campaign.id} 
+            interactive
+            onClick={() => handleViewCampaign(campaign)}
+          >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{campaign.name}</CardTitle>
