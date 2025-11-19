@@ -66,7 +66,7 @@ export function CampaignCommentsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px] p-6">
         <DialogHeader className="space-y-2">
-          <DialogTitle className="pr-12">Campaign Comments</DialogTitle>
+          <DialogTitle>Campaign Comments</DialogTitle>
           <DialogDescription>
             {campaignName} in {entityName}
           </DialogDescription>

@@ -532,7 +532,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`max-h-[90vh] flex flex-col transition-all duration-300 ${showComments ? "max-w-6xl" : "max-w-3xl"}`}>
-        <DialogHeader className="pr-8">
+        <DialogHeader>
           <div className="flex items-center justify-between gap-2 mb-2">
             <DialogTitle className="flex-1">
               {editMode ? (
