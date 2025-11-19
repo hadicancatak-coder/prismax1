@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import DOMPurify from "dompurify";
 
 interface TaskCardProps {
   task: any;
@@ -30,8 +31,24 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   // PHASE 1 FIX: Truncate description for readability
   const truncateText = (text: string | null, maxLength: number) => {
     if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    // Strip HTML tags for length calculation
+    const stripped = text.replace(/<[^>]*>/g, '');
+    if (stripped.length <= maxLength) return text;
+    // Find a good breaking point
+    const truncated = stripped.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    const breakPoint = lastSpace > maxLength * 0.8 ? lastSpace : maxLength;
+    // Return original HTML up to break point (approximate)
+    return text.substring(0, breakPoint) + '...';
+  };
+  
+  const sanitizeAndTruncateHtml = (html: string | null) => {
+    if (!html) return '';
+    const truncated = truncateText(html, 150);
+    return DOMPurify.sanitize(truncated, { 
+      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br', 'p', 'span'],
+      ALLOWED_ATTR: ['href', 'target']
+    });
   };
   
   const isOverdue = (dueDate: string | null, status: string) => {
@@ -343,11 +360,13 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
         {task.title}
       </h3>
       
-      {/* Task description - PHASE 1 FIX: Truncated to 150 chars */}
+      {/* Task description - PHASE 1 FIX: Truncated to 150 chars with HTML rendering */}
       {task.description && (
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 cursor-pointer" onClick={onClick}>
-          {truncateText(task.description, 150)}
-        </p>
+        <div 
+          className="text-sm text-muted-foreground mb-4 line-clamp-3 cursor-pointer prose prose-invert prose-sm max-w-none"
+          onClick={onClick}
+          dangerouslySetInnerHTML={{ __html: sanitizeAndTruncateHtml(task.description) }}
+        />
       )}
       
       {/* Footer with metadata */}
