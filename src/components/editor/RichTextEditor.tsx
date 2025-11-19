@@ -58,26 +58,27 @@ export function RichTextEditor({
     onBlur: () => {
       onBlur?.();
     },
-    editorProps: {
-      attributes: {
-        class: cn(
-          'prose prose-sm max-w-none focus:outline-none min-h-[80px]',
-          'prose-headings:font-semibold prose-headings:text-foreground',
-          'prose-p:text-foreground prose-p:my-2',
-          'prose-strong:text-foreground prose-strong:font-bold',
-          'prose-em:text-foreground prose-em:italic',
-          'prose-ul:list-disc prose-ul:pl-4 prose-ul:text-foreground',
-          'prose-ol:list-decimal prose-ol:pl-4 prose-ol:text-foreground',
-          'prose-li:text-foreground',
-          'prose-a:text-primary prose-a:underline prose-a:cursor-pointer hover:prose-a:text-primary/80',
-          '[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
-          '[&_p.is-editor-empty:first-child]:before:text-muted-foreground',
-          '[&_p.is-editor-empty:first-child]:before:float-left',
-          '[&_p.is-editor-empty:first-child]:before:pointer-events-none',
-          '[&_p.is-editor-empty:first-child]:before:h-0',
-        ),
+      editorProps: {
+        attributes: {
+          class: cn(
+            'prose prose-sm max-w-none focus:outline-none min-h-[80px]',
+            'prose-headings:font-semibold prose-headings:text-foreground',
+            'prose-p:text-foreground prose-p:my-2 prose-p:break-words',
+            'prose-strong:text-foreground prose-strong:font-bold',
+            'prose-em:text-foreground prose-em:italic',
+            'prose-ul:list-disc prose-ul:pl-4 prose-ul:text-foreground',
+            'prose-ol:list-decimal prose-ol:pl-4 prose-ol:text-foreground',
+            'prose-li:text-foreground prose-li:break-words',
+            'prose-a:text-primary prose-a:underline prose-a:cursor-pointer hover:prose-a:text-primary/80 prose-a:break-all',
+            '[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
+            '[&_p.is-editor-empty:first-child]:before:text-muted-foreground',
+            '[&_p.is-editor-empty:first-child]:before:float-left',
+            '[&_p.is-editor-empty:first-child]:before:pointer-events-none',
+            '[&_p.is-editor-empty:first-child]:before:h-0',
+            'break-words overflow-wrap-anywhere',
+          ),
+        },
       },
-    },
   });
 
   useEffect(() => {

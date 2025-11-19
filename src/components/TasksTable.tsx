@@ -257,8 +257,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                         </Badge>
                       )}
                       {task.comments_count > 0 && (
-                        <Badge variant="outline" className="text-xs px-2.5 py-0.5">
-                          💬 {task.comments_count}
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1">
+                          <span>💬</span>
+                          <span>{task.comments_count}</span>
                         </Badge>
                       )}
                     </div>
