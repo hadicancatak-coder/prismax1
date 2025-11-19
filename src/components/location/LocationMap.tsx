@@ -19,6 +19,7 @@ interface LocationMapProps {
 
 export interface LocationMapRef {
   flyToLocation: (location: MediaLocation) => void;
+  map?: React.RefObject<mapboxgl.Map>;
 }
 
 export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
@@ -40,6 +41,7 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
         highlightMarker.current = new mapboxgl.Marker(el).setLngLat([Number(location.longitude), Number(location.latitude)]).addTo(map.current);
         setTimeout(() => { highlightMarker.current?.remove(); highlightMarker.current = null; }, 3000);
       },
+      map: map,
     }));
 
     useEffect(() => {

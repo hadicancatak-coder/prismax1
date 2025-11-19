@@ -149,11 +149,20 @@ export default function LocationIntelligence() {
   useEffect(() => {
     // Wait for map to be ready
     const timer = setTimeout(() => {
-      const mapContainer = document.querySelector('.mapboxgl-canvas-container');
+      const mapContainer = document.querySelector('.mapboxgl-canvas');
       if (!mapContainer) return;
 
       const handleContextMenu = (e: MouseEvent) => {
         e.preventDefault();
+        
+        // Get map instance from ref
+        const mapInstance = (mapRef.current as any)?.map?.current;
+        if (mapInstance) {
+          // Convert screen coordinates to map coordinates
+          const point = mapInstance.unproject([e.clientX, e.clientY]);
+          setClickedCoordinates({ lat: point.lat, lng: point.lng });
+        }
+        
         setContextMenuPos({ x: e.clientX, y: e.clientY });
       };
 
@@ -231,7 +240,6 @@ export default function LocationIntelligence() {
             <button
               onClick={() => {
                 setEditingLocation(null);
-                setClickedCoordinates(null);
                 setFormOpen(true);
                 setContextMenuPos(null);
               }}
