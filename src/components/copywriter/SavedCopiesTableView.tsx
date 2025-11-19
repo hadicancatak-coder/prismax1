@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { CopywriterCopy } from "@/hooks/useCopywriterCopies";
 import {
   useUpdateCopywriterCopy,
@@ -374,7 +374,7 @@ export function SavedCopiesTableView({
               <TableHead className="h-10 w-[140px] border-r text-xs font-semibold">Campaign</TableHead>
               <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Type</TableHead>
               {allLanguages.map((lang) => (
-                <>
+                <Fragment key={lang}>
                   <TableHead key={`${lang}-content`} className="h-10 w-[250px] border-r text-xs font-semibold">
                     {LANGUAGE_LABELS[lang]}
                   </TableHead>
@@ -387,7 +387,7 @@ export function SavedCopiesTableView({
                   <TableHead key={`${lang}-status`} className="h-10 w-[140px] border-r text-xs font-semibold">
                     Status
                   </TableHead>
-                </>
+                </Fragment>
               ))}
               <TableHead className="h-10 w-[100px] text-xs font-semibold">Actions</TableHead>
             </TableRow>
@@ -420,19 +420,6 @@ export function SavedCopiesTableView({
                         <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="min-h-[44px] border-r p-2">
-                  <Select value={newRow.status} onValueChange={(v) => setNewRow({ ...newRow, status: v })}>
-                    <SelectTrigger className="h-8 text-xs border-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                      <SelectContent position="popper" sideOffset={4} className="z-[1000] bg-popover border shadow-md">
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="in_review">In Review</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
                   </Select>
                 </TableCell>
                 {allLanguages.map((lang) => renderLanguageColumns(null, lang, true))}
