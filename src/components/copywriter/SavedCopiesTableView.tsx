@@ -33,7 +33,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const ELEMENT_TYPES = ["headline", "description", "primary_text", "callout", "sitelink"];
+const ELEMENT_TYPES = ["headline", "description", "primary_text"];
+
+const CHAR_LIMITS: Record<string, number | null> = {
+  headline: 45,
+  primary_text: 120,
+  description: null,
+};
 
 const formatElementType = (type: string): string => {
   return type
@@ -109,10 +115,10 @@ export function SavedCopiesTableView({
         content_ar: "",
         content_es: "",
         content_az: "",
-        char_limit_en: null,
-        char_limit_ar: null,
-        char_limit_es: null,
-        char_limit_az: null,
+        char_limit_en: CHAR_LIMITS.headline,
+        char_limit_ar: CHAR_LIMITS.headline,
+        char_limit_es: CHAR_LIMITS.headline,
+        char_limit_az: CHAR_LIMITS.headline,
         status: "draft",
       });
       setTimeout(() => {
