@@ -95,39 +95,63 @@ export default function Profile() {
   const fetchTasks = async () => {
     const targetUserId = userId || user?.id;
     
-    // Get the profile.id for the target user
-    const { data: profile } = await supabase
+    // Get the profile for the target user (with teams)
+    const { data: targetProfile } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, user_id, teams")
       .eq("user_id", targetUserId)
       .single();
     
-    if (!profile) return;
-    
-    // Get task IDs assigned to this user
-    const { data: assignedTaskIds } = await supabase
-      .from("task_assignees")
-      .select("task_id")
-      .eq("user_id", profile.id);
-    
-    const taskIds = assignedTaskIds?.map(a => a.task_id) || [];
-    
-    // Fetch full task details
-    const { data: allTasks } = await supabase
-      .from("tasks")
-      .select("*, profiles:created_by(name)")
-      .in("id", taskIds.length > 0 ? taskIds : ['00000000-0000-0000-0000-000000000000']);
+    if (!targetProfile) return;
 
-    if (allTasks) {
-      setTasks({
-        all: allTasks,
-        ongoing: allTasks.filter(t => t.status === "Ongoing"),
-        completed: allTasks.filter(t => t.status === "Completed"),
-        pending: allTasks.filter(t => t.status === "Pending"),
-        blocked: allTasks.filter(t => t.status === "Blocked"),
-        failed: allTasks.filter(t => t.status === "Failed"),
-      });
-    }
+    // Fetch all tasks with assignees (similar to useTasks.ts)
+    const { data: allTasksData } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        task_assignees(
+          user_id,
+          profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams)
+        ),
+        profiles:created_by(name)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (!allTasksData) return;
+
+    // Map tasks and apply visibility filtering (same logic as useTasks.ts)
+    const mappedTasks = allTasksData.map((task: any) => ({
+      ...task,
+      assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || []
+    }));
+
+    // Filter based on visibility settings (matching useTasks.ts logic)
+    const visibleTasks = mappedTasks.filter((task: any) => {
+      // Admins see everything
+      if (userRole === 'admin') return true;
+      
+      // Global visibility tasks are visible to everyone
+      if (task.visibility === 'global') return true;
+      
+      // For private tasks, check if target user is assigned or part of team
+      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === targetUserId);
+      const userTeams = targetProfile.teams || [];
+      const taskTeams = Array.isArray(task.teams) 
+        ? task.teams 
+        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
+      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
+      
+      return isDirectAssignee || isTeamMember;
+    });
+
+    setTasks({
+      all: visibleTasks,
+      ongoing: visibleTasks.filter(t => t.status === "Ongoing"),
+      completed: visibleTasks.filter(t => t.status === "Completed"),
+      pending: visibleTasks.filter(t => t.status === "Pending"),
+      blocked: visibleTasks.filter(t => t.status === "Blocked"),
+      failed: visibleTasks.filter(t => t.status === "Failed"),
+    });
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
