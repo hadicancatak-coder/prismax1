@@ -4,6 +4,7 @@ import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
 import SearchAdEditor from "@/components/search/SearchAdEditor";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -25,17 +26,12 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Page Header */}
       <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-background">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-            <Search className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-page-title">Search Ads Planner</h1>
-            <p className="text-sm text-muted-foreground">Create and manage search advertising campaigns</p>
-          </div>
-        </div>
+        <PageHeader
+          title="Search Ads Planner"
+          description="Create and manage search advertising campaigns"
+          icon={Search}
+        />
       </div>
 
       <div className="flex-1 relative">
