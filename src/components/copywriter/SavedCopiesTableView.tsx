@@ -298,15 +298,12 @@ export function SavedCopiesTableView({
             disabled={isGuest}
           />
         </TableCell>
-        <TableCell className="min-h-[44px] border-r p-2">
-          {getStatusBadge(count, limit)}
-        </TableCell>
       </>
     );
   };
 
   const allLanguages = ["en", "ar", ...activeLanguages.filter((l) => l !== "en" && l !== "ar")];
-  const totalWidth = 50 + 200 + 140 + 100 + allLanguages.length * 530 + 100;
+  const totalWidth = 50 + 200 + 140 + 100 + allLanguages.length * 390 + 100;
 
   const handleBulkStatusChange = async (status: string) => {
     try {
@@ -383,9 +380,6 @@ export function SavedCopiesTableView({
                   </TableHead>
                   <TableHead key={`${lang}-limit`} className="h-10 w-[80px] border-r text-xs font-semibold text-center">
                     Limit
-                  </TableHead>
-                  <TableHead key={`${lang}-status`} className="h-10 w-[140px] border-r text-xs font-semibold">
-                    Status
                   </TableHead>
                 </Fragment>
               ))}
