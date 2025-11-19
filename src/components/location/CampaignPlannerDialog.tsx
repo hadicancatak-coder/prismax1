@@ -59,7 +59,7 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       setSelectedCities(uniqueCities);
       setManualSelections(new Set(locations.map(l => l.id)));
     }
-  }, [mode, campaign, locations, open, getPlacementsForCampaign]);
+  }, [mode, campaign, locations, open]);
 
   const cities = Array.from(new Set(allLocations.map(l => l.city))).sort();
   
