@@ -285,9 +285,14 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim() || !user) return;
+    
+    // Prevent double submission
+    const trimmedComment = newComment.trim();
+    setNewComment(""); // Clear immediately to prevent double-click issues
 
     // Validate comment length (500 characters max)
-    if (newComment.trim().length > 500) {
+    if (trimmedComment.length > 500) {
+      setNewComment(trimmedComment); // Restore comment on validation error
       toast({
         title: "Comment too long",
         description: "Comments must be 500 characters or less",
@@ -302,7 +307,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         .insert({
           task_id: taskId,
           author_id: user.id,
-          body: newComment.trim(),
+          body: trimmedComment,
         })
         .select()
         .single();
@@ -310,7 +315,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
       if (error) throw error;
 
       // Parse @mentions (support both @name and @username)
-      const mentions = newComment.match(/@(\w+)/g) || [];
+      const mentions = trimmedComment.match(/@(\w+)/g) || [];
       
       for (const mention of mentions) {
         const username = mention.substring(1);
@@ -333,7 +338,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
               payload_json: { 
                 task_id: taskId, 
                 comment_id: comment.id, 
-                message: newComment.trim(),
+                message: trimmedComment,
                 task_title: task.title
               },
             });
@@ -343,13 +348,14 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
         }
       }
 
-      setNewComment("");
+      // Comment already cleared at the start to prevent double-submission
       toast({ title: "Comment posted", description: "Your comment has been added" });
       
       // Immediately refetch comments to show the new one
       await fetchComments();
     } catch (error: any) {
       console.error("Error posting comment:", error);
+      setNewComment(trimmedComment); // Restore comment on error
       toast({ title: "Error", description: error.message || "Failed to post comment", variant: "destructive" });
     }
   };
@@ -1477,6 +1483,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
+                            e.stopPropagation();
                             handleCommentSubmit();
                           }
                         }}
