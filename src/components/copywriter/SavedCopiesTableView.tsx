@@ -306,7 +306,7 @@ export function SavedCopiesTableView({
   };
 
   const allLanguages = ["en", "ar", ...activeLanguages.filter((l) => l !== "en" && l !== "ar")];
-  const totalWidth = 50 + 200 + 140 + 100 + 120 + allLanguages.length * 530 + 100;
+  const totalWidth = 50 + 200 + 140 + 100 + allLanguages.length * 530 + 100;
 
   const handleBulkStatusChange = async (status: string) => {
     try {
@@ -322,9 +322,9 @@ export function SavedCopiesTableView({
 
   const handleBulkExport = () => {
     const selectedCopies = copies.filter(c => selected.includes(c.id));
-    const csv = ["Entity,Campaign,Type,Status,Content EN,Content AR,Content ES,Content AZ"]
+    const csv = ["Entity,Campaign,Type,Content EN,Content AR,Content ES,Content AZ"]
       .concat(selectedCopies.map(c => 
-        `"${c.entity.join(',')}","${c.campaigns?.join(',') || ''}","${c.element_type}","${c.status}","${c.content_en || ''}","${c.content_ar || ''}","${c.content_es || ''}","${c.content_az || ''}"`
+        `"${c.entity.join(',')}","${c.campaigns?.join(',') || ''}","${c.element_type}","${c.content_en || ''}","${c.content_ar || ''}","${c.content_es || ''}","${c.content_az || ''}"`
       ))
       .join('\n');
     
@@ -373,7 +373,6 @@ export function SavedCopiesTableView({
               <TableHead className="h-10 w-[200px] border-r text-xs font-semibold">Entity</TableHead>
               <TableHead className="h-10 w-[140px] border-r text-xs font-semibold">Campaign</TableHead>
               <TableHead className="h-10 w-[100px] border-r text-xs font-semibold">Type</TableHead>
-              <TableHead className="h-10 w-[120px] border-r text-xs font-semibold">Status</TableHead>
               {allLanguages.map((lang) => (
                 <>
                   <TableHead key={`${lang}-content`} className="h-10 w-[250px] border-r text-xs font-semibold">
@@ -520,26 +519,6 @@ export function SavedCopiesTableView({
                         {ELEMENT_TYPES.map((t) => (
                           <SelectItem key={t} value={t}>{formatElementType(t)}</SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="min-h-[44px] border-r p-2">
-                    <Select
-                      value={copy.status || "draft"}
-                      onValueChange={(v) => {
-                        console.log('Status change:', { id: copy.id, status: v });
-                        handleUpdateField(copy.id, "status", v);
-                      }}
-                      disabled={isGuest}
-                    >
-                      <SelectTrigger className="h-8 text-xs border-0">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent position="popper" sideOffset={4} className="z-[1000] bg-popover border shadow-md">
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="in_review">In Review</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
