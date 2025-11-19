@@ -28,19 +28,25 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
-    name: campaign?.name || "",
-    start_date: campaign?.start_date || "",
-    end_date: campaign?.end_date || "",
-    agency: campaign?.agency || "",
-    notes: campaign?.notes || "",
+    name: "",
+    start_date: "",
+    end_date: "",
+    agency: "",
+    notes: "",
   });
   
-  const [selectedCities, setSelectedCities] = useState<string[]>(campaign?.cities || []);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [manualSelections, setManualSelections] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setInitialized(false);
+      return;
+    }
+    
+    if (initialized) return;
     
     if (mode === 'edit' && campaign) {
       setFormData({
@@ -54,12 +60,14 @@ export function CampaignPlannerDialog({ open, onClose, locations, campaign, mode
       
       const existingPlacements = getPlacementsForCampaign(campaign.id);
       setManualSelections(new Set(existingPlacements.map(p => p.location_id)));
+      setInitialized(true);
     } else if (mode === 'create' && locations.length > 0) {
       const uniqueCities = Array.from(new Set(locations.map(l => l.city)));
       setSelectedCities(uniqueCities);
       setManualSelections(new Set(locations.map(l => l.id)));
+      setInitialized(true);
     }
-  }, [mode, campaign, locations, open]);
+  }, [open, initialized, mode, campaign?.id, locations.length]);
 
   const cities = Array.from(new Set(allLocations.map(l => l.city))).sort();
   
