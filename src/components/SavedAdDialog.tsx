@@ -150,33 +150,32 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <DialogTitle className="flex items-center justify-between">
-                {isEditing ? (
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="text-xl font-semibold"
-                  />
-                ) : (
-                  <span>{ad.name}</span>
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                {ad.entity && `Entity: ${ad.entity} • `}
-                {ad.campaign_name && `Campaign: ${ad.campaign_name} • `}
-                {ad.ad_group_name && `Ad Group: ${ad.ad_group_name} • `}
-                Created: {new Date(ad.created_at).toLocaleDateString()}
-              </DialogDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleDuplicate}>
-              <Copy className="w-4 h-4 mr-2" />
-              Duplicate
-            </Button>
-          </div>
+        <DialogHeader className="shrink-0 px-6 pt-6 pb-2">
+          <DialogTitle>
+            {isEditing ? (
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="text-xl font-semibold"
+              />
+            ) : (
+              <span>{ad.name}</span>
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {ad.entity && `Entity: ${ad.entity} • `}
+            {ad.campaign_name && `Campaign: ${ad.campaign_name} • `}
+            {ad.ad_group_name && `Ad Group: ${ad.ad_group_name} • `}
+            Created: {new Date(ad.created_at).toLocaleDateString()}
+          </DialogDescription>
         </DialogHeader>
+        
+        <div className="px-6 pb-2 flex items-center justify-end gap-2 border-b shrink-0">
+          <Button variant="outline" size="sm" onClick={handleDuplicate}>
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate
+          </Button>
+        </div>
 
         <Tabs defaultValue="preview" className="flex-1 flex flex-col min-h-0">
           <TabsList className="shrink-0 mx-6 mt-2">

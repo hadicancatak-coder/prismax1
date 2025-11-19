@@ -4,6 +4,27 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * IMPORTANT: Never place action buttons inside DialogHeader with justify-between.
+ * The DialogHeader has pr-24 padding to prevent overlap with the X close button.
+ * 
+ * ✅ CORRECT:
+ * <DialogHeader>
+ *   <DialogTitle>Title</DialogTitle>
+ * </DialogHeader>
+ * <div className="px-6 pb-2 flex justify-end gap-2">
+ *   <Button>Action</Button>
+ * </div>
+ * 
+ * ❌ WRONG:
+ * <DialogHeader>
+ *   <div className="flex justify-between">
+ *     <DialogTitle>Title</DialogTitle>
+ *     <Button>Action</Button> // Will overlap X button!
+ *   </div>
+ * </DialogHeader>
+ */
+
 const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;

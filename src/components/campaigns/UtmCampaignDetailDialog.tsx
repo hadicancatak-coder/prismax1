@@ -226,28 +226,26 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
-              <div className="flex items-center justify-between gap-4">
-                <DialogTitle className="text-xl flex-1">
-                  {isEditing ? (
-                    <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
-                  ) : (
-                    campaign.name
-                  )}
-                </DialogTitle>
-                <Button
-                  variant={showComments ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowComments(!showComments)}
-                  className="shrink-0"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Comments
-                </Button>
-              </div>
+            <DialogHeader className="px-6 pt-6 pb-2 border-b-0 shrink-0">
+              <DialogTitle className="text-xl">
+                {isEditing ? (
+                  <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
+                ) : (
+                  campaign.name
+                )}
+              </DialogTitle>
             </DialogHeader>
-
-            <Separator />
+            
+            <div className="px-6 pb-3 border-b flex items-center justify-end gap-2 shrink-0">
+              <Button
+                variant={showComments ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowComments(!showComments)}
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Comments
+              </Button>
+            </div>
 
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-4">
