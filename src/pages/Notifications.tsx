@@ -30,6 +30,7 @@ export default function Notifications() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [enrichedData, setEnrichedData] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
     if (!user) return;
@@ -69,10 +70,69 @@ export default function Notifications() {
       .eq("user_id", user?.id)
       .order("created_at", { ascending: false });
 
-    if (!error) {
+    if (!error && data) {
       setNotifications(data || []);
+      await enrichNotificationData(data);
     }
     setLoading(false);
+  };
+
+  const enrichNotificationData = async (notifs: any[]) => {
+    const enriched = new Map();
+
+    for (const notif of notifs) {
+      const payload = notif.payload_json;
+      const data: any = {};
+
+      try {
+        // Fetch comment data for comment_mention type
+        if (notif.type === "comment_mention" && payload.comment_id) {
+          const { data: comment } = await supabase
+            .from("comments")
+            .select("body")
+            .eq("id", payload.comment_id)
+            .single();
+          
+          if (comment) {
+            data.commentBody = comment.body;
+          }
+        }
+
+        // Fetch profile data for mentioned_by
+        if (payload.mentioned_by) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name, avatar_url")
+            .eq("user_id", payload.mentioned_by)
+            .single();
+          
+          if (profile) {
+            data.mentionedByName = profile.name;
+            data.mentionedByAvatar = profile.avatar_url;
+          }
+        }
+
+        // Fetch profile data for assigned_by
+        if (payload.assigned_by) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name, avatar_url")
+            .eq("user_id", payload.assigned_by)
+            .single();
+          
+          if (profile) {
+            data.assignedByName = profile.name;
+            data.assignedByAvatar = profile.avatar_url;
+          }
+        }
+
+        enriched.set(notif.id, data);
+      } catch (error) {
+        console.error("Error enriching notification:", error);
+      }
+    }
+
+    setEnrichedData(enriched);
   };
 
   const applyFilters = () => {
@@ -168,38 +228,93 @@ export default function Notifications() {
     );
   };
 
-  const getNotificationMessage = (notification: any) => {
+  const getNotificationTitle = (notification: any) => {
     const payload = notification.payload_json;
     switch (notification.type) {
       case "task_assigned":
-        return `You have been assigned a new task: ${payload.task_title}`;
+        return "Task Assigned";
       case "comment_mention":
-        return `You were mentioned in "${payload.task_title}"`;
+        return "Mentioned in Comment";
       case "task_updated":
-        return payload.message || `Task "${payload.task_title}" was updated`;
+        return "Task Updated";
       case "announcement":
-        return `${payload.title}: ${payload.message}`;
+        return payload.title || "Announcement";
       case "campaign_converted_to_task":
-        return payload.message || `Campaign converted to task`;
+        return "Campaign Converted";
       case "deadline_reminder_3days":
-        return `⏰ Task "${payload.task_title}" due in 3 days`;
+        return "Deadline Reminder";
       case "deadline_reminder_1day":
-        return `🔔 Task "${payload.task_title}" due tomorrow!`;
+        return "Due Tomorrow";
       case "deadline_reminder_overdue":
-        return `❗ Task "${payload.task_title}" is ${payload.days_overdue} days overdue`;
+        return "Task Overdue";
       case "campaign_starting_soon":
-        return `🚀 Campaign "${payload.campaign_title}" launches in 3 days`;
+        return "Campaign Launch";
       case "task_status_changed":
-        return `Task "${payload.task_title}" moved to ${payload.new_status}`;
+        return "Status Changed";
       case "campaign_status_changed":
-        return `Campaign "${payload.campaign_title}" moved to ${payload.new_status}`;
+        return "Campaign Status Changed";
       case "blocker_resolved":
-        return `✅ Blocker resolved for "${payload.task_title}"`;
+        return "Blocker Resolved";
       case "approval_pending":
-        return `⏳ Approval pending for "${payload.task_title}" (${payload.days_pending} days)`;
+        return "Approval Pending";
+      default:
+        return "Notification";
+    }
+  };
+
+  const getNotificationMessage = (notification: any) => {
+    const payload = notification.payload_json;
+    const data = enrichedData.get(notification.id) || {};
+    
+    switch (notification.type) {
+      case "task_assigned":
+        const assignedBy = data.assignedByName || "Someone";
+        return `${assignedBy} assigned you to a task`;
+      case "comment_mention":
+        const mentionedBy = data.mentionedByName || "Someone";
+        return `${mentionedBy} mentioned you in a comment`;
+      case "task_updated":
+        return payload.message || "Task was updated";
+      case "announcement":
+        return payload.message;
+      case "campaign_converted_to_task":
+        return payload.message || "Campaign converted to task";
+      case "deadline_reminder_3days":
+        return "Due in 3 days";
+      case "deadline_reminder_1day":
+        return "Due tomorrow";
+      case "deadline_reminder_overdue":
+        return `${payload.days_overdue} days overdue`;
+      case "campaign_starting_soon":
+        return "Launches in 3 days";
+      case "task_status_changed":
+        return `Moved to ${payload.new_status}`;
+      case "campaign_status_changed":
+        return `Moved to ${payload.new_status}`;
+      case "blocker_resolved":
+        return "Blocker has been resolved";
+      case "approval_pending":
+        return `Pending approval for ${payload.days_pending} days`;
       default:
         return "You have a new notification";
     }
+  };
+
+  const getTaskOrCampaignTitle = (notification: any) => {
+    const payload = notification.payload_json;
+    return payload.task_title || payload.campaign_title || null;
+  };
+
+  const getContentPreview = (notification: any) => {
+    const data = enrichedData.get(notification.id) || {};
+    
+    if (notification.type === "comment_mention" && data.commentBody) {
+      // Strip HTML and truncate
+      const text = data.commentBody.replace(/<[^>]*>/g, '');
+      return text.length > 120 ? text.substring(0, 120) + "..." : text;
+    }
+    
+    return null;
   };
 
   const getPriorityBadge = (type: string) => {
@@ -325,56 +440,94 @@ export default function Notifications() {
             <div key={group}>
               <h2 className="text-metadata uppercase tracking-wide mb-3">{group}</h2>
               <div className="space-y-2">
-                {notifs.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
-                      notification.read_at ? "bg-background" : "bg-muted/30 border-l-2 border-l-primary"
-                    } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
-                        <Checkbox
-                          checked={selectedIds.includes(notification.id)}
-                          onCheckedChange={() => toggleSelect(notification.id)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex-1">
-                          <p className="text-body text-foreground mb-2">{getNotificationMessage(notification)}</p>
-                          <div className="flex items-center gap-3 text-metadata">
-                            <span>{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}</span>
-                            {!notification.read_at && (
-                              <Badge variant="outline">New</Badge>
+                {notifs.map((notification) => {
+                  const taskTitle = getTaskOrCampaignTitle(notification);
+                  const contentPreview = getContentPreview(notification);
+                  
+                  return (
+                    <div
+                      key={notification.id}
+                      className={`p-4 border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
+                        notification.read_at ? "bg-background" : "bg-muted/30 border-l-4 border-l-primary"
+                      } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <Checkbox
+                            checked={selectedIds.includes(notification.id)}
+                            onCheckedChange={() => toggleSelect(notification.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-1 flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0 space-y-2">
+                            {/* Title and type */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-heading-sm font-semibold text-foreground">
+                                {getNotificationTitle(notification)}
+                              </span>
+                              {!notification.read_at && (
+                                <Badge variant="default" className="bg-primary/20 text-primary border-primary/30">
+                                  New
+                                </Badge>
+                              )}
+                              {getPriorityBadge(notification.type)}
+                            </div>
+
+                            {/* Task/Campaign title if available */}
+                            {taskTitle && (
+                              <div className="text-body font-medium text-foreground">
+                                {taskTitle}
+                              </div>
                             )}
-                            {getPriorityBadge(notification.type)}
+
+                            {/* Message */}
+                            <p className="text-body-sm text-muted-foreground">
+                              {getNotificationMessage(notification)}
+                            </p>
+
+                            {/* Content preview (e.g., comment text) */}
+                            {contentPreview && (
+                              <div className="text-body-sm text-muted-foreground italic bg-muted/50 p-2 rounded border-l-2 border-border">
+                                "{contentPreview}"
+                              </div>
+                            )}
+
+                            {/* Metadata */}
+                            <div className="flex items-center gap-3 text-metadata text-muted-foreground">
+                              <span>{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}</span>
+                              <span>•</span>
+                              <span className="capitalize">{notification.type.replace(/_/g, " ")}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                        {!notification.read_at && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => markAsRead(notification.id)}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {(userRole === "admin" || notification.user_id === user?.id) && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteNotification(notification.id)}
-                            className="hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {!notification.read_at && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => markAsRead(notification.id)}
+                              title="Mark as read"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {(userRole === "admin" || notification.user_id === user?.id) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteNotification(notification.id)}
+                              className="hover:bg-destructive/10 hover:text-destructive"
+                              title="Delete notification"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )
