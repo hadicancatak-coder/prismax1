@@ -30,7 +30,6 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
     longitude: 0,
     notes: "",
     agency: "",
-    est_daily_traffic: undefined as number | undefined,
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -70,7 +69,6 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         longitude: Number(location.longitude),
         notes: location.notes || "",
         agency: location.agency || "",
-        est_daily_traffic: location.est_daily_traffic,
       });
       setImagePreview(location.image_url || null);
     } else if (initialCoordinates) {
@@ -82,7 +80,6 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         longitude: initialCoordinates.lng,
         notes: "",
         agency: "",
-        est_daily_traffic: undefined,
       });
       setImageFile(null);
       setImagePreview(null);
@@ -97,7 +94,6 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
         longitude: 0,
         notes: "",
         agency: "",
-        est_daily_traffic: undefined,
       });
       setImageFile(null);
       setImagePreview(null);
@@ -235,17 +231,6 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 value={formData.agency}
                 onChange={(e) => setFormData({ ...formData, agency: e.target.value })}
                 placeholder="e.g., Mediahub, Starcom"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="est_daily_traffic">Est. Daily Traffic</Label>
-              <Input
-                id="est_daily_traffic"
-                type="number"
-                value={formData.est_daily_traffic || ""}
-                onChange={(e) => setFormData({ ...formData, est_daily_traffic: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Estimated daily impressions"
               />
             </div>
 

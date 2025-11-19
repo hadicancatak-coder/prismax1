@@ -111,11 +111,6 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
           <div class="p-3 min-w-[240px] max-w-[260px]">
             <div class="flex items-start justify-between mb-2">
               <h3 class="font-semibold text-base pr-2">${location.name}</h3>
-              ${location.manual_score ? `
-                <span class="text-xs font-medium px-2 py-1 rounded" style="background: hsl(var(--primary) / 0.1); color: hsl(var(--primary));">
-                  ${location.manual_score}/10
-                </span>
-              ` : ''}
             </div>
             
             <div class="space-y-1.5 mb-3 text-sm">
@@ -131,12 +126,6 @@ export const LocationMap = forwardRef<LocationMapRef, LocationMapProps>(
                 <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
                   <span>🏢</span>
                   <span>${location.agency}</span>
-                </div>
-              ` : ''}
-              ${location.price_per_month ? `
-                <div class="flex items-center gap-2" style="color: hsl(var(--muted-foreground));">
-                  <span>💰</span>
-                  <span>AED ${location.price_per_month.toLocaleString()}/mo</span>
                 </div>
               ` : ''}
             </div>

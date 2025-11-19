@@ -74,26 +74,6 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
       }
     }
 
-    if (row["Manual Score"]) {
-      const score = parseInt(row["Manual Score"]);
-      if (isNaN(score) || score < 1 || score > 10) {
-        errors.push('Manual Score must be 1-10');
-      }
-    }
-
-    if (row["Price Per Month"]) {
-      const price = parseFloat(row["Price Per Month"]);
-      if (isNaN(price) || price < 0) {
-        errors.push('Invalid Price Per Month');
-      }
-    }
-
-    if (row["Est. Daily Traffic"]) {
-      const traffic = parseInt(row["Est. Daily Traffic"]);
-      if (isNaN(traffic) || traffic < 0) {
-        errors.push('Invalid Est. Daily Traffic');
-      }
-    }
 
     if (row.Notes && row.Notes.length > 1000) {
       errors.push('Notes must be less than 1000 characters');
@@ -246,9 +226,6 @@ export function BulkLocationUploadDialog({ open, onClose }: BulkLocationUploadDi
           const updates: any = {};
           
           if (!existingLoc?.agency && locationData.agency) updates.agency = locationData.agency;
-          if (!existingLoc?.price_per_month && locationData.price_per_month) updates.price_per_month = locationData.price_per_month;
-          if (!existingLoc?.est_daily_traffic && locationData.est_daily_traffic) updates.est_daily_traffic = locationData.est_daily_traffic;
-          if (!existingLoc?.manual_score && locationData.manual_score) updates.manual_score = locationData.manual_score;
           if (!existingLoc?.notes && locationData.notes) updates.notes = locationData.notes;
 
           if (Object.keys(updates).length > 0) {

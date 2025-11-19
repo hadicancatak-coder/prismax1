@@ -43,11 +43,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
               {location.agency && (
                 <Badge variant="default">🏢 {location.agency}</Badge>
               )}
-              {location.est_daily_traffic && (
-                <Badge variant="secondary">
-                  👥 {location.est_daily_traffic.toLocaleString()} daily
-                </Badge>
-              )}
               {getLocationCategory(location.type) && (
                 <Badge variant="outline">
                   {LOCATION_CATEGORIES[getLocationCategory(location.type)!].emoji}{" "}
@@ -83,12 +78,6 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                 <div>
                   <span className="text-muted-foreground">Agency:</span>{' '}
                   <span className="font-medium">{location.agency}</span>
-                </div>
-              )}
-              {location.est_daily_traffic && (
-                <div>
-                  <span className="text-muted-foreground">Daily Traffic:</span>{' '}
-                  <span className="font-medium">{location.est_daily_traffic.toLocaleString()}</span>
                 </div>
               )}
               {getLocationCategory(location.type) && (
@@ -128,7 +117,7 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                       </p>
                     </div>
                     <Badge variant="secondary" className="transition-smooth">
-                      Budget: AED {campaign.budget.toLocaleString()}
+                      {format(new Date(campaign.start_date), "MMM")} - {format(new Date(campaign.end_date), "MMM yyyy")}
                     </Badge>
                   </div>
                 ))}
