@@ -1105,7 +1105,6 @@ export type Database = {
       }
       campaign_placements: {
         Row: {
-          allocated_budget: number
           campaign_id: string | null
           created_at: string | null
           id: string
@@ -1113,7 +1112,6 @@ export type Database = {
           notes: string | null
         }
         Insert: {
-          allocated_budget: number
           campaign_id?: string | null
           created_at?: string | null
           id?: string
@@ -1121,7 +1119,6 @@ export type Database = {
           notes?: string | null
         }
         Update: {
-          allocated_budget?: number
           campaign_id?: string | null
           created_at?: string | null
           id?: string
@@ -2101,15 +2098,12 @@ export type Database = {
           city: string
           created_at: string
           created_by: string | null
-          est_daily_traffic: number | null
           id: string
           image_url: string | null
           latitude: number
           longitude: number
-          manual_score: number | null
           name: string
           notes: string | null
-          price_per_month: number | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
@@ -2118,15 +2112,12 @@ export type Database = {
           city: string
           created_at?: string
           created_by?: string | null
-          est_daily_traffic?: number | null
           id?: string
           image_url?: string | null
           latitude: number
           longitude: number
-          manual_score?: number | null
           name: string
           notes?: string | null
-          price_per_month?: number | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -2135,15 +2126,12 @@ export type Database = {
           city?: string
           created_at?: string
           created_by?: string | null
-          est_daily_traffic?: number | null
           id?: string
           image_url?: string | null
           latitude?: number
           longitude?: number
-          manual_score?: number | null
           name?: string
           notes?: string | null
-          price_per_month?: number | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -2558,7 +2546,6 @@ export type Database = {
       planned_campaigns: {
         Row: {
           agency: string | null
-          budget: number
           cities: string[]
           created_at: string | null
           created_by: string | null
@@ -2572,7 +2559,6 @@ export type Database = {
         }
         Insert: {
           agency?: string | null
-          budget: number
           cities: string[]
           created_at?: string | null
           created_by?: string | null
@@ -2586,7 +2572,6 @@ export type Database = {
         }
         Update: {
           agency?: string | null
-          budget?: number
           cities?: string[]
           created_at?: string | null
           created_by?: string | null

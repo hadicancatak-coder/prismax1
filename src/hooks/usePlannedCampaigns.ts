@@ -6,7 +6,6 @@ import { MediaLocation } from "./useMediaLocations";
 export interface PlannedCampaign {
   id: string;
   name: string;
-  budget: number;
   start_date: string;
   end_date: string;
   agency?: string;
@@ -22,7 +21,6 @@ export interface CampaignPlacement {
   id: string;
   campaign_id: string;
   location_id: string;
-  allocated_budget: number;
   notes?: string;
   created_at: string;
 }
@@ -35,11 +33,7 @@ export const calculateDuration = (startDate: string, endDate: string): number =>
   return Math.max(1, Math.round(diffDays / 30)); // in months
 };
 
-export const getSeasonalMultiplier = (startDate: string, endDate: string): {
-  reachMultiplier: number;
-  priceMultiplier: number;
-  season: string;
-} => {
+export const getSeasonIndicator = (startDate: string, endDate: string): string => {
   const start = new Date(startDate);
   const end = new Date(endDate);
   
@@ -64,60 +58,12 @@ export const getSeasonalMultiplier = (startDate: string, endDate: string): {
   });
   
   if (hasUAEPeak) {
-    return {
-      reachMultiplier: 1.125, // +12.5% average of 10-15%
-      priceMultiplier: 1.0,
-      season: 'UAE Peak Season (Nov-Mar)'
-    };
+    return 'UAE Peak Season (Nov-Mar)';
   } else if (hasGCCSummer) {
-    return {
-      reachMultiplier: 0.825, // -17.5% average of 15-20%
-      priceMultiplier: 0.9, // -10% cheaper
-      season: 'GCC Summer (Jun-Aug)'
-    };
+    return 'GCC Summer (Jun-Aug)';
   }
   
-  return {
-    reachMultiplier: 1.0,
-    priceMultiplier: 1.0,
-    season: 'Regular Season'
-  };
-};
-
-export const calculateReach = (
-  placements: Array<{ location: MediaLocation; cost: number }>,
-  durationMonths: number,
-  startDate: string,
-  endDate: string
-): { totalReach: number; seasonalInfo: any; cpm: number } => {
-  const { reachMultiplier, season } = getSeasonalMultiplier(startDate, endDate);
-  
-  const baseReach = placements.reduce((sum, p) => {
-    const dailyTraffic = p.location.est_daily_traffic || 0;
-    const days = durationMonths * 30;
-    return sum + (dailyTraffic * days);
-  }, 0);
-  
-  const adjustedReach = Math.round(baseReach * reachMultiplier);
-  const totalCost = placements.reduce((sum, p) => sum + p.cost, 0);
-  const cpm = adjustedReach > 0 ? (totalCost / adjustedReach) * 1000 : 0;
-  
-  return {
-    totalReach: adjustedReach,
-    seasonalInfo: { season, reachMultiplier },
-    cpm
-  };
-};
-
-export const suggestPlacements = (
-  locations: MediaLocation[],
-  budget: number,
-  duration: number,
-  cities: string[],
-  historicPrices: Array<{ id: string; location_id: string; year: number; price: number; created_at: string }>,
-  startDate?: string,
-  endDate?: string
-): Array<{ location: MediaLocation; cost: number }> => {
+  return 'Regular Season';
   // Filter by selected cities only
   const filteredLocations = locations.filter(loc => cities.includes(loc.city));
   
