@@ -4,6 +4,7 @@ import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
 import { DisplayAdEditor } from "@/components/ads/DisplayAdEditor";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Monitor } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -21,17 +22,12 @@ export default function DisplayPlanner() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Page Header */}
       <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-background">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-            <Monitor className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-page-title">Display Ads Planner</h1>
-            <p className="text-sm text-muted-foreground">Create and manage display advertising campaigns</p>
-          </div>
-        </div>
+        <PageHeader
+          title="Display Ads Planner"
+          description="Create and manage display advertising campaigns"
+          icon={Monitor}
+        />
       </div>
 
       <div className="flex-1 relative">
