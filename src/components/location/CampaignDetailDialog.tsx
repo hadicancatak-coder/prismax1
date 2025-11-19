@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlannedCampaigns, PlannedCampaign, calculateDuration, calculateReach } from "@/hooks/usePlannedCampaigns";
+import { usePlannedCampaigns, PlannedCampaign, calculateDuration, getSeasonIndicator } from "@/hooks/usePlannedCampaigns";
 import { useMediaLocations } from "@/hooks/useMediaLocations";
-import { Download, Trash2, Pencil } from "lucide-react";
+import { Download, Trash2, Pencil, Calendar, MapPin } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CampaignPlannerDialog } from "./CampaignPlannerDialog";
+import { format } from "date-fns";
 
 interface CampaignDetailDialogProps {
   campaign: PlannedCampaign | null;
@@ -37,40 +38,11 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
     }).filter(p => p.location);
   }, [campaign, locations, getPlacementsForCampaign]);
 
-  const totalCost = placementsData.reduce((sum, p) => sum + p.placement.allocated_budget, 0);
-
-  // Calculate impressions and CPM
-  const campaignMetrics = useMemo(() => {
-    if (!campaign || placementsData.length === 0) {
-      return { totalReach: 0, cpm: 0, season: 'Regular Season' };
-    }
-    
-    const duration = calculateDuration(campaign.start_date, campaign.end_date);
-    const placementsWithLocations = placementsData.map(p => ({
-      location: p.location!,
-      cost: p.placement.allocated_budget
-    }));
-    
-    const { totalReach, cpm, seasonalInfo } = calculateReach(
-      placementsWithLocations,
-      duration,
-      campaign.start_date,
-      campaign.end_date
-    );
-    
-    return {
-      totalReach,
-      cpm: cpm.toFixed(2),
-      season: seasonalInfo.season
-    };
-  }, [campaign, placementsData]);
-
   const exportToCSV = () => {
     if (!campaign) return;
 
     const headers = [
       "Campaign Name",
-      "Budget",
       "Start Date",
       "End Date",
       "Duration (months)",
@@ -78,15 +50,13 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
       "Location Name",
       "City",
       "Type",
-      "Score",
-      "Monthly Price",
-      "Total Cost",
       "Notes"
     ];
 
-    const rows = placementsData.map(({ placement, location, duration }) => [
+    const duration = calculateDuration(campaign.start_date, campaign.end_date);
+    
+    const rows = placementsData.map(({ placement, location }) => [
       campaign.name,
-      campaign.budget,
       campaign.start_date,
       campaign.end_date,
       duration,
@@ -94,9 +64,6 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
       location!.name,
       location!.city,
       location!.type,
-      location!.manual_score || '',
-      location!.price_per_month || '',
-      placement.allocated_budget,
       placement.notes || ''
     ]);
 
@@ -114,24 +81,30 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
 
   const handleDelete = async () => {
     if (!campaign) return;
-    await deleteCampaign.mutateAsync(campaign.id);
-    setDeleteDialogOpen(false);
-    onClose();
+    
+    try {
+      await deleteCampaign.mutateAsync(campaign.id);
+      setDeleteDialogOpen(false);
+      onClose();
+    } catch (error) {
+      console.error("Failed to delete campaign:", error);
+    }
   };
 
   if (!campaign) return null;
 
   const duration = calculateDuration(campaign.start_date, campaign.end_date);
+  const season = getSeasonIndicator(campaign.start_date, campaign.end_date);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <div className="flex items-start justify-between">
               <div>
-                <DialogTitle className="text-2xl">{campaign.name}</DialogTitle>
-                <div className="flex gap-2 mt-2">
+                <DialogTitle className="text-page-title">{campaign.name}</DialogTitle>
+                <div className="flex gap-sm mt-sm flex-wrap">
                   <Badge variant={
                     campaign.status === 'active' ? 'default' : 
                     campaign.status === 'completed' ? 'secondary' : 
@@ -139,21 +112,22 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
                   }>
                     {campaign.status}
                   </Badge>
-                  {campaign.cities.map(city => (
-                    <Badge key={city} variant="outline">{city}</Badge>
-                  ))}
+                  <Badge variant="outline">{duration} month{duration !== 1 ? 's' : ''}</Badge>
+                  {season !== 'Regular Season' && (
+                    <Badge variant="secondary">{season}</Badge>
+                  )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+              <div className="flex gap-sm">
+                <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToCSV}>
+                <Button size="sm" variant="outline" onClick={exportToCSV}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export CSV
+                  Export
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                <Button size="sm" variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>
@@ -161,160 +135,108 @@ export function CampaignDetailDialog({ campaign, open, onClose }: CampaignDetail
             </div>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Campaign Info */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 border rounded-lg bg-accent/50">
+          <div className="flex-1 overflow-y-auto space-y-section p-card">
+            {/* Campaign Overview */}
+            <div className="grid gap-md grid-cols-2">
               <div>
-                <div className="text-sm text-muted-foreground">Budget</div>
-                <div className="text-lg font-semibold">AED {campaign.budget.toLocaleString()}</div>
+                <div className="flex items-center gap-sm text-body-sm text-muted-foreground mb-xs">
+                  <Calendar className="h-4 w-4" />
+                  <span>Campaign Period</span>
+                </div>
+                <p className="text-body-sm font-medium">
+                  {format(new Date(campaign.start_date), "MMM d, yyyy")} → {format(new Date(campaign.end_date), "MMM d, yyyy")}
+                </p>
               </div>
+
               <div>
-                <div className="text-sm text-muted-foreground">Actual Cost</div>
-                <div className="text-lg font-semibold">AED {totalCost.toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Est. Impressions</div>
-                <div className="text-lg font-semibold">{campaignMetrics.totalReach.toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">CPM</div>
-                <div className="text-lg font-semibold">AED {campaignMetrics.cpm}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Duration</div>
-                <div className="text-lg font-semibold">{duration} month{duration !== 1 ? 's' : ''}</div>
+                <div className="flex items-center gap-sm text-body-sm text-muted-foreground mb-xs">
+                  <MapPin className="h-4 w-4" />
+                  <span>Target Cities</span>
+                </div>
+                <p className="text-body-sm font-medium">{campaign.cities.join(', ')}</p>
               </div>
             </div>
 
-            {/* Season info badge */}
-            {campaignMetrics.season !== 'Regular Season' && (
-              <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                <Badge variant="outline" className="bg-primary/10">
-                  {campaignMetrics.season}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Campaign runs during seasonal period
-                </span>
+            {/* Agency & Notes */}
+            {(campaign.agency || campaign.notes) && (
+              <div className="space-y-md">
+                {campaign.agency && (
+                  <div>
+                    <span className="text-body-sm text-muted-foreground">Agency:</span>
+                    <p className="text-body-sm font-medium mt-xs">{campaign.agency}</p>
+                  </div>
+                )}
+                {campaign.notes && (
+                  <div>
+                    <span className="text-body-sm text-muted-foreground">Notes:</span>
+                    <p className="text-body-sm mt-xs">{campaign.notes}</p>
+                  </div>
+                )}
               </div>
             )}
 
-            {campaign.agency && (
-              <div className="text-sm">
-                <span className="text-muted-foreground">Agency: </span>
-                <span className="font-medium">{campaign.agency}</span>
-              </div>
-            )}
-
-            {campaign.notes && (
+            {/* Placements */}
+            {placementsData.length > 0 && (
               <div>
-                <div className="text-sm text-muted-foreground mb-1">Notes</div>
-                <div className="p-3 bg-accent rounded-lg text-sm">{campaign.notes}</div>
-              </div>
-            )}
-
-            {/* Placements Table */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Campaign Placements</h3>
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Location</TableHead>
-                      <TableHead>City</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Score</TableHead>
-                      <TableHead>Agency</TableHead>
-                      <TableHead>Monthly Price</TableHead>
-                      <TableHead>Total Cost</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {placementsData.length === 0 ? (
+                <h3 className="text-heading-md font-semibold mb-md">
+                  Media Placements ({placementsData.length})
+                </h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                          No placements found
-                        </TableCell>
+                        <TableHead>Location</TableHead>
+                        <TableHead>City</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Agency</TableHead>
+                        <TableHead>Notes</TableHead>
                       </TableRow>
-                    ) : (
-                      placementsData.map(({ placement, location }) => (
+                    </TableHeader>
+                    <TableBody>
+                      {placementsData.map(({ placement, location }) => (
                         <TableRow key={placement.id}>
                           <TableCell className="font-medium">{location!.name}</TableCell>
                           <TableCell>{location!.city}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{location!.type}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {location!.manual_score ? (
-                              <Badge>{location!.manual_score}/10</Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {location!.agency || <span className="text-muted-foreground">-</span>}
-                          </TableCell>
-                          <TableCell>
-                            {location!.price_per_month ? (
-                              `AED ${location!.price_per_month.toLocaleString()}`
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            AED {placement.allocated_budget.toLocaleString()}
+                          <TableCell>{location!.type}</TableCell>
+                          <TableCell>{location!.agency || '—'}</TableCell>
+                          <TableCell className="text-muted-foreground text-body-sm">
+                            {placement.notes || '—'}
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Budget Summary */}
-            <div className="flex justify-between items-center p-4 border rounded-lg bg-accent/50">
-              <span className="font-semibold">Total Campaign Cost:</span>
-              <span className="text-2xl font-bold">AED {totalCost.toLocaleString()}</span>
-            </div>
-
-            {totalCost !== campaign.budget && (
-              <div className="flex justify-between items-center p-3 border rounded-lg">
-                <span className="text-sm text-muted-foreground">
-                  {totalCost < campaign.budget ? 'Under Budget' : 'Over Budget'}:
-                </span>
-                <span className={`font-semibold ${totalCost < campaign.budget ? 'text-green-600' : 'text-destructive'}`}>
-                  AED {Math.abs(campaign.budget - totalCost).toLocaleString()}
-                </span>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
 
+      <CampaignPlannerDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        locations={[]}
+        campaign={campaign}
+        mode="edit"
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogTitle>Delete Campaign?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{campaign.name}"? This will also delete all associated placements. This action cannot be undone.
+              This will permanently delete "{campaign.name}" and all its placements. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete Campaign
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <CampaignPlannerDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        locations={locations}
-        campaign={campaign}
-        mode="edit"
-      />
     </>
   );
 }

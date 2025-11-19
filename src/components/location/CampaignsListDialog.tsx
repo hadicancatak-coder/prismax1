@@ -132,10 +132,9 @@ export function CampaignsListDialog({
                       </div>
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-3.5 w-3.5" />
-                          <span>AED {campaign.budget.toLocaleString()}</span>
+                          <Calendar className="h-3.5 w-3.5" />
                           <span className="text-xs">
-                            ({calculateDuration(campaign.start_date, campaign.end_date)} days)
+                            {calculateDuration(campaign.start_date, campaign.end_date)} months
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
