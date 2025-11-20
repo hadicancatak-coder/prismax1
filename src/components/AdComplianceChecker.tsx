@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { checkCompliance, type ComplianceIssue } from "@/lib/adQualityScore";
+import { useEntityAdRules } from "@/hooks/useEntityAdRules";
 
 interface AdComplianceCheckerProps {
   headlines: string[];
@@ -18,7 +19,15 @@ export const AdComplianceChecker = ({
   callouts,
   entity,
 }: AdComplianceCheckerProps) => {
-  const issues = checkCompliance(headlines, descriptions, sitelinks, callouts, entity);
+  const { rules } = useEntityAdRules(entity);
+  const issues = checkCompliance(
+    headlines, 
+    descriptions, 
+    sitelinks, 
+    callouts, 
+    entity,
+    rules ? { prohibited_words: rules.prohibited_words, competitor_names: rules.competitor_names } : undefined
+  );
   const errors = issues.filter(i => i.severity === 'error');
   const warnings = issues.filter(i => i.severity === 'warning');
 
