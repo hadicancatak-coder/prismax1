@@ -441,7 +441,22 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         onSave(data.id);
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to save ad");
+      console.error('Save ad error:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to save ad";
+      
+      if (error.message?.includes('Failed to fetch')) {
+        errorMessage = "Network error: Unable to connect to server. Please check your internet connection and try again.";
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = "An ad with this name already exists. Please use a different name.";
+      } else if (error.code === '23505') {
+        errorMessage = "Duplicate entry detected. Please modify your ad details.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
