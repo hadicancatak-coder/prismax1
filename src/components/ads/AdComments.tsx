@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAdComments, useCreateAdComment, useDeleteAdComment } from '@/hooks/useAdComments';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { CommentText } from '@/components/CommentText';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,7 +108,7 @@ export function AdComments({ adId }: AdCommentsProps) {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
-                <p className="text-sm mt-1">{comment.body}</p>
+                <CommentText text={comment.body} className="text-sm mt-1" />
               </div>
             </div>
           ))

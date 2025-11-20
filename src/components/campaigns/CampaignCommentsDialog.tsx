@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2, Send } from "lucide-react";
+import { CommentText } from "@/components/CommentText";
 
 interface CampaignCommentsDialogProps {
   open: boolean;

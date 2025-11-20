@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send } from "lucide-react";
 import { useCampaignComments } from "@/hooks/useCampaignComments";
 import { formatDistanceToNow } from "date-fns";
+import { CommentText } from "@/components/CommentText";
 
 interface CampaignCommentsProps {
   campaignId: string;
@@ -66,9 +67,10 @@ export function CampaignComments({ campaignId }: CampaignCommentsProps) {
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {comment.comment_text}
-                  </p>
+                  <CommentText 
+                    text={comment.comment_text}
+                    className="text-sm text-muted-foreground"
+                  />
                 </div>
               ))}
             </div>
