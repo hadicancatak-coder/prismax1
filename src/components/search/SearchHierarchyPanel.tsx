@@ -5,12 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Plus, Folder, FileText, Trash2, Copy } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Folder, FileText, Trash2, Copy, Edit, Search, ChevronsDown, ChevronsUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { calculateAdStrength } from "@/lib/adQualityScore";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreateCampaignDialog } from "../ads/CreateCampaignDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ENTITIES } from "@/lib/constants";
 import { DeleteAdDialog } from "./DeleteAdDialog";
@@ -33,6 +34,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
   const [expandedAdGroups, setExpandedAdGroups] = useState<Set<string>>(new Set());
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
   const [showCreateAdGroup, setShowCreateAdGroup] = useState<{campaignId: string; campaignName: string} | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Delete dialogs
   const [deleteAdDialog, setDeleteAdDialog] = useState<{ad: any} | null>(null);
@@ -110,6 +112,36 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
     });
   };
 
+  const expandAllCampaigns = () => {
+    setExpandedCampaigns(new Set(campaigns.map(c => c.id)));
+    const allAdGroups = campaigns.flatMap(c => 
+      adGroups.filter(ag => ag.campaign_id === c.id).map(ag => ag.id)
+    );
+    setExpandedAdGroups(new Set(allAdGroups));
+  };
+
+  const collapseAllCampaigns = () => {
+    setExpandedCampaigns(new Set());
+    setExpandedAdGroups(new Set());
+  };
+
+  // Filter campaigns based on search query
+  const filteredCampaigns = campaigns.filter(campaign => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    const matchesCampaign = campaign.name.toLowerCase().includes(query);
+    
+    const campaignAdGroups = adGroups.filter(ag => ag.campaign_id === campaign.id);
+    const matchesAdGroup = campaignAdGroups.some(ag => ag.name.toLowerCase().includes(query));
+    
+    const campaignAds = campaignAdGroups.flatMap(ag => 
+      ads.filter(ad => ad.ad_group_id === ag.id)
+    );
+    const matchesAd = campaignAds.some(ad => ad.name.toLowerCase().includes(query));
+    
+    return matchesCampaign || matchesAdGroup || matchesAd;
+  });
+
   const handleCampaignCreated = () => {
     setShowCreateCampaign(false);
     queryClient.invalidateQueries({ queryKey: ['campaigns-hierarchy'] });
@@ -171,12 +203,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
 
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
-          {campaigns.length === 0 ? (
+          {filteredCampaigns.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No campaigns yet. Create one to get started.
+              {searchQuery ? 'No matching results found.' : 'No campaigns yet. Create one to get started.'}
             </div>
           ) : (
-            campaigns.map(campaign => {
+            filteredCampaigns.map(campaign => {
               const campaignAdGroups = getAdGroupsForCampaign(campaign.id);
               const isExpanded = expandedCampaigns.has(campaign.id);
 
