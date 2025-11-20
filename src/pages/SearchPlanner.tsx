@@ -114,7 +114,7 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
-          {/* LEFT: Hierarchy (always visible) */}
+          {/* LEFT: Hierarchy */}
           <ResizablePanel defaultSize={30} minSize={25}>
             <SearchHierarchyPanel
               onEditAd={handleEditAd}
@@ -126,67 +126,35 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
           
           <ResizableHandle withHandle />
           
-          {/* MIDDLE: Editor Form or Campaign Preview */}
-          <ResizablePanel defaultSize={40} minSize={30}>
-            {editorContext ? (
-              <ScrollArea className="h-full">
-                <div className="p-md">
-                  <SearchAdEditor
-                    ad={editorContext.ad}
-                    adGroup={editorContext.adGroup}
-                    campaign={editorContext.campaign}
-                    entity={editorContext.entity}
-                    adType={adType}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    showHeader={false}
-                    onFieldChange={handleFieldChange}
-                  />
-                </div>
-              </ScrollArea>
-            ) : campaignContext ? (
+          {/* RIGHT: Campaign Preview OR Ad Editor (with integrated preview) */}
+          <ResizablePanel defaultSize={70} minSize={50}>
+            {campaignContext ? (
               <CampaignPreviewPanel
                 campaign={campaignContext.campaign}
                 adGroups={adGroups}
                 ads={campaignAds}
                 entity={campaignContext.entity}
-                onViewAllAds={() => {
-                  // This would expand the campaign in the hierarchy
-                  // For now just clear to show hierarchy
-                  setCampaignContext(null);
-                }}
+                onViewAllAds={() => setCampaignContext(null)}
+              />
+            ) : editorContext ? (
+              <SearchAdEditor
+                ad={editorContext.ad}
+                adGroup={editorContext.adGroup}
+                campaign={editorContext.campaign}
+                entity={editorContext.entity}
+                adType={adType}
+                onSave={handleSave}
+                onCancel={handleCancel}
+                showHeader={false}
+                onFieldChange={handleFieldChange}
               />
             ) : (
               <div className="h-full flex items-center justify-center p-md bg-muted/30">
                 <div className="text-center space-y-sm">
                   <p className="text-body text-muted-foreground">
-                    Select a campaign to preview
-                  </p>
-                  <p className="text-body-sm text-muted-foreground">
-                    or select an ad to edit
+                    Select a campaign to preview or an ad to edit
                   </p>
                 </div>
-              </div>
-            )}
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          {/* RIGHT: Preview */}
-          <ResizablePanel defaultSize={30} minSize={25}>
-            {editorContext ? (
-              <AdPreviewPanel
-                ad={editorContext.ad}
-                campaign={editorContext.campaign}
-                entity={editorContext.entity}
-                adType={adType}
-                {...editorState}
-              />
-            ) : (
-              <div className="h-full flex items-center justify-center p-md bg-muted/30">
-                <p className="text-body text-muted-foreground">
-                  Preview will appear here
-                </p>
               </div>
             )}
           </ResizablePanel>
