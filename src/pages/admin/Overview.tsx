@@ -72,32 +72,39 @@ export default function Overview() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-8 py-6 border-b border-border">
-        <div>
-          <div className="text-metadata">Total Users</div>
-          <div className="text-4xl font-semibold text-foreground mt-1">{stats.users}</div>
-        </div>
-        <div className="w-px h-12 bg-border" />
-        <div>
-          <div className="text-metadata">Total Tasks</div>
-          <div className="text-4xl font-semibold text-foreground mt-1">{stats.tasks}</div>
-        </div>
-        <div className="w-px h-12 bg-border" />
-        <div>
-          <div className="text-metadata">Unresolved Errors</div>
-          <div className="text-4xl font-semibold text-destructive mt-1">{stats.unresolvedErrors}</div>
-        </div>
-        <div className="w-px h-12 bg-border" />
-        <div>
-          <div className="text-metadata">Pending Approvals</div>
-          <div className="text-4xl font-semibold text-foreground mt-1">{stats.pendingApprovals}</div>
-        </div>
+      {/* Task Analytics Dashboard - Primary Focus */}
+      <div>
+        <h2 className="text-heading-lg font-bold mb-sm">Task Analytics by User</h2>
+        <p className="text-body-sm text-muted-foreground mb-md">
+          Track individual team member performance and workload distribution
+        </p>
+        <TaskAnalyticsDashboard />
       </div>
 
-      {/* Task Analytics Dashboard */}
+      {/* System-wide Stats - Secondary */}
       <div>
-        <h3 className="text-section-title mb-6">Task Analytics</h3>
-        <TaskAnalyticsDashboard />
+        <h3 className="text-heading-md font-semibold mb-md">System Overview</h3>
+        <div className="flex items-center gap-8 p-card bg-card rounded-lg border border-border">
+          <div>
+            <div className="text-metadata text-muted-foreground">Total Users</div>
+            <div className="text-4xl font-semibold text-foreground mt-1">{stats.users}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div>
+            <div className="text-metadata text-muted-foreground">Total Tasks</div>
+            <div className="text-4xl font-semibold text-foreground mt-1">{stats.tasks}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div>
+            <div className="text-metadata text-muted-foreground">Unresolved Errors</div>
+            <div className="text-4xl font-semibold text-destructive mt-1">{stats.unresolvedErrors}</div>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div>
+            <div className="text-metadata text-muted-foreground">Pending Approvals</div>
+            <div className="text-4xl font-semibold text-foreground mt-1">{stats.pendingApprovals}</div>
+          </div>
+        </div>
       </div>
     </div>
   );

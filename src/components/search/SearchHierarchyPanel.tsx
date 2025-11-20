@@ -25,10 +25,11 @@ import { FixedSizeList } from "react-window";
 interface SearchHierarchyPanelProps {
   onEditAd: (ad: any, adGroup: any, campaign: any, entity: string) => void;
   onCreateAd: (adGroup: any, campaign: any, entity: string) => void;
+  onCampaignClick?: (campaign: any, entity: string) => void;
   adType?: "search" | "display";
 }
 
-export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }: SearchHierarchyPanelProps) {
+export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, adType = "search" }: SearchHierarchyPanelProps) {
   const queryClient = useQueryClient();
   const [selectedEntity, setSelectedEntity] = useState<string>("UAE");
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
@@ -309,16 +310,31 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
 
               return (
                 <Collapsible key={campaign.id} open={isExpanded}>
-                  <div 
-                    className="group flex items-center gap-2 cursor-pointer p-2.5 pl-3 hover:bg-accent/50 rounded-lg transition-all border border-transparent hover:border-border hover:shadow-sm"
-                    onClick={() => toggleCampaign(campaign.id)}
-                  >
-                    {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                    <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="flex-1 font-medium text-sm">{campaign.name}</span>
-                    <Badge variant="secondary" className="text-xs font-normal">
-                      {campaignAdGroups.length}
-                    </Badge>
+                  <div className="space-y-0.5">
+                    <div 
+                      className="group flex items-center gap-2 cursor-pointer p-2.5 pl-3 hover:bg-accent/50 rounded-lg transition-all border border-transparent hover:border-border hover:shadow-sm"
+                    >
+                      <div 
+                        className="flex items-center gap-2 flex-1"
+                        onClick={() => toggleCampaign(campaign.id)}
+                      >
+                        {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span 
+                          className="flex-1 font-medium text-sm hover:text-primary transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onCampaignClick) {
+                              onCampaignClick(campaign, selectedEntity);
+                            }
+                          }}
+                        >
+                          {campaign.name}
+                        </span>
+                        <Badge variant="secondary" className="text-xs font-normal">
+                          {campaignAdGroups.length}
+                        </Badge>
+                      </div>
                     
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button 
@@ -358,6 +374,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
                       </Button>
                     </div>
                   </div>
+                </div>
                   
                   <CollapsibleContent>
                     <div className="space-y-0.5 mt-1">
