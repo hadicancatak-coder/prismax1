@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEntityComments } from "@/hooks/useEntityComments";
 import { formatDistanceToNow } from "date-fns";
+import { CommentText } from "@/components/CommentText";
 
 interface EntityCommentsDialogProps {
   open: boolean;
@@ -87,7 +88,7 @@ export function EntityCommentsDialog({
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap">{comment.comment_text}</p>
+                    <CommentText text={comment.comment_text} className="text-sm" />
                   </div>
                 </div>
               ))

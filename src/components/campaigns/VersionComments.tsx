@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useVersionComments } from "@/hooks/useVersionComments";
 import { useAuth } from "@/hooks/useAuth";
+import { CommentText } from "@/components/CommentText";
 import { formatDistanceToNow } from "date-fns";
 
 interface VersionCommentsProps {
@@ -94,7 +95,7 @@ export function VersionComments({ versionId, campaignId, entity }: VersionCommen
                   </Button>
                 )}
               </div>
-              <p className="text-body-sm text-foreground whitespace-pre-wrap">{comment.comment_text}</p>
+              <CommentText text={comment.comment_text} className="text-body-sm text-foreground" />
             </div>
           ))}
         </div>

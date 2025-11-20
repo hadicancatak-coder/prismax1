@@ -44,6 +44,7 @@ import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/worki
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import DOMPurify from 'dompurify';
+import { CommentText } from "@/components/CommentText";
 
 interface TaskDialogProps {
   open: boolean;
@@ -1426,23 +1427,12 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                                   })}
                                 </span>
                               </div>
-                              <p className="text-sm whitespace-pre-wrap break-words">
-                                {comment.body.split(/(@\w+)/g).map((part: string, i: number) => {
-                                  if (part.startsWith('@')) {
-                                    const username = part.substring(1);
-                                    const mentioned = profiles.find(
-                                      p => p.name?.toLowerCase() === username.toLowerCase() ||
-                                           p.username?.toLowerCase() === username.toLowerCase()
-                                    );
-                                    return mentioned ? (
-                                      <span key={i} className="text-primary font-semibold cursor-pointer hover:underline">
-                                        {part}
-                                      </span>
-                                    ) : part;
-                                  }
-                                  return part;
-                                })}
-                              </p>
+                              <CommentText 
+                                text={comment.body}
+                                className="text-sm"
+                                enableMentions={true}
+                                profiles={profiles}
+                              />
                             </div>
                           </div>
                         );
