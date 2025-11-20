@@ -388,11 +388,11 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                 </Card>
 
                 {/* Versions Log */}
-                <Card className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                <Card className="p-card">
+                  <div className="flex items-center justify-between mb-md">
+                    <div className="flex items-center gap-sm">
                       <Activity className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold">Version History</h3>
+                      <h3 className="font-semibold text-heading-md">Version History</h3>
                     </div>
                     <Button onClick={() => setIsAddingVersion(!isAddingVersion)} size="sm" variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
@@ -401,8 +401,8 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                   </div>
 
                   {isAddingVersion && (
-                    <Card className="p-4 mb-4 border-2 border-primary/20">
-                      <div className="space-y-3">
+                    <Card className="p-md mb-md border-2 border-primary/20 bg-card">
+                      <div className="space-y-sm">
                         <div>
                           <Label>Version Notes *</Label>
                           <Textarea
@@ -414,18 +414,28 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                           />
                         </div>
                         <div>
-                          <Label htmlFor="version-image">Attach Asset (optional)</Label>
-                          <Input id="version-image" type="file" accept="image/*" onChange={handleImageUpload} className="mt-1 cursor-pointer" />
+                          <Label htmlFor="version-image">Attach Asset (Image up to 2MB or Link)</Label>
+                          <Input
+                            id="version-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="mt-1 cursor-pointer"
+                          />
                         </div>
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="outline" size="sm" onClick={() => {
-                            setIsAddingVersion(false);
-                            setVersionNotes("");
-                            setImageFile(null);
-                          }}>
+                        <div className="flex gap-sm justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsAddingVersion(false);
+                              setVersionNotes("");
+                              setImageFile(null);
+                            }}
+                          >
                             Cancel
                           </Button>
-                          <Button size="sm" onClick={handleAddVersion}>
+                          <Button size="sm" onClick={handleAddVersion} disabled={!versionNotes.trim()}>
                             <Save className="h-4 w-4 mr-2" />
                             Save Version
                           </Button>
@@ -439,61 +449,200 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : versions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm">
+                    <div className="text-center py-8 text-muted-foreground text-body-sm">
                       No versions yet. Create your first version to track changes.
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {versions.map((version, index) => {
+                    <Accordion type="single" collapsible className="space-y-sm">
+                      {versions.map((version) => {
                         const createdDate = version.created_at ? new Date(version.created_at) : null;
                         const isValidDate = createdDate && !isNaN(createdDate.getTime());
-                        
+                        const isEditing = editingInlineVersionId === version.id;
+
                         return (
-                          <div
+                          <AccordionItem
                             key={version.id}
-                            className="border rounded-lg p-3 hover:bg-accent/50 transition-colors"
+                            value={version.id}
+                            className="border rounded-lg bg-card hover:bg-card-hover transition-smooth"
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <Badge variant="outline" className="flex-shrink-0">v{version.version_number}</Badge>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm truncate">{version.name}</div>
+                            <AccordionTrigger className="px-md py-sm hover:no-underline">
+                              <div className="flex items-center gap-sm flex-1">
+                                <Badge variant="outline" className="flex-shrink-0">
+                                  v{version.version_number}
+                                </Badge>
+                                <div className="flex-1 text-left">
+                                  <div className="font-medium text-body">{version.name}</div>
                                   {version.version_notes && (
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                    <p className="text-body-sm text-muted-foreground mt-xs line-clamp-1">
                                       {version.version_notes}
                                     </p>
                                   )}
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                  {isValidDate 
+                                <span className="text-body-sm text-muted-foreground whitespace-nowrap">
+                                  {isValidDate
                                     ? format(createdDate, 'MMM d, yyyy')
                                     : 'Date unavailable'}
                                 </span>
-                                <div className="flex items-center gap-xs">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingInlineVersionId(version.id)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setDeletingVersionId(version.id)}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
                               </div>
-                            </div>
-                          </div>
+                            </AccordionTrigger>
+
+                            <AccordionContent className="px-md pb-md pt-0">
+                              {isEditing ? (
+                                // Edit Mode
+                                <div className="space-y-sm pt-sm border-t">
+                                  <div>
+                                    <Label>Version Notes</Label>
+                                    <Textarea
+                                      value={editVersionNotes}
+                                      onChange={(e) => setEditVersionNotes(e.target.value)}
+                                      placeholder="Version notes..."
+                                      rows={3}
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label>Asset (Image or Link)</Label>
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => setEditVersionImage(e.target.files?.[0] || null)}
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label>Asset Link</Label>
+                                    <Input
+                                      value={editVersionAssetLink}
+                                      onChange={(e) => setEditVersionAssetLink(e.target.value)}
+                                      placeholder="https://..."
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  <div className="flex gap-sm justify-end pt-sm">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingInlineVersionId(null);
+                                        setEditVersionNotes("");
+                                        setEditVersionImage(null);
+                                        setEditVersionAssetLink("");
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          let imageUrl = version.image_url;
+                                          let imageFileSize = version.image_file_size;
+
+                                          if (editVersionImage) {
+                                            const uploadResult = await uploadImage.mutateAsync({
+                                              file: editVersionImage,
+                                              campaignId,
+                                            });
+                                            imageUrl = uploadResult.publicUrl;
+                                            imageFileSize = editVersionImage.size;
+                                          }
+
+                                          await updateVersion.mutateAsync({
+                                            versionId: version.id,
+                                            versionNotes: editVersionNotes || version.version_notes,
+                                            imageUrl,
+                                            imageFileSize,
+                                            assetLink: editVersionAssetLink || version.asset_link,
+                                          });
+
+                                          setEditingInlineVersionId(null);
+                                          setEditVersionNotes("");
+                                          setEditVersionImage(null);
+                                          setEditVersionAssetLink("");
+                                        } catch (error) {
+                                          toast.error("Failed to update version");
+                                        }
+                                      }}
+                                    >
+                                      <Save className="h-4 w-4 mr-2" />
+                                      Save Changes
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // View Mode
+                                <div className="space-y-sm pt-sm border-t">
+                                  {version.version_notes && (
+                                    <div>
+                                      <Label className="text-muted-foreground">Notes</Label>
+                                      <p className="text-body-sm mt-xs">{version.version_notes}</p>
+                                    </div>
+                                  )}
+
+                                  {version.image_url && (
+                                    <div>
+                                      <Label className="text-muted-foreground">Asset</Label>
+                                      <img
+                                        src={version.image_url}
+                                        alt={`Version ${version.version_number}`}
+                                        className="mt-xs w-full max-w-md rounded-lg border border-border"
+                                      />
+                                      {version.image_file_size && (
+                                        <p className="text-metadata text-muted-foreground mt-xs">
+                                          Size: {(version.image_file_size / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {version.asset_link && (
+                                    <div>
+                                      <Label className="text-muted-foreground">Asset Link</Label>
+                                      <a
+                                        href={version.asset_link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline flex items-center gap-xs text-body-sm mt-xs"
+                                      >
+                                        {version.asset_link}
+                                        <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    </div>
+                                  )}
+
+                                  <div className="flex gap-sm justify-end pt-sm border-t">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingInlineVersionId(version.id);
+                                        setEditVersionNotes(version.version_notes || "");
+                                        setEditVersionAssetLink(version.asset_link || "");
+                                      }}
+                                    >
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setDeletingVersionId(version.id)}
+                                      className="text-destructive hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
                         );
                       })}
-                    </div>
+                    </Accordion>
                   )}
                 </Card>
               </div>
