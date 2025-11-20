@@ -41,15 +41,16 @@ export default function CampaignReview() {
       try {
         const result = await verifyToken(token);
         setAccessData(result);
-        setVerified(result.email_verified);
         
-        if (!result.email_verified) {
-          setEmail(result.reviewer_email);
-          setName(result.reviewer_name || "");
-        } else {
-          // Load campaign data
-          await loadCampaignData(result.entity, result.campaign_id);
-        }
+        // Always load campaign data immediately
+        await loadCampaignData(result.entity, result.campaign_id);
+        
+        // Set verified to true (no email check needed)
+        setVerified(true);
+        
+        // Pre-fill name and email if available
+        setEmail(result.reviewer_email || "");
+        setName(result.reviewer_name || "");
       } catch (error: any) {
         toast.error(error.message || "Invalid or expired link");
         navigate("/");
@@ -112,7 +113,8 @@ export default function CampaignReview() {
     }
   };
 
-  const handleEmailVerification = async () => {
+  const handleCommentWithDetails = async (versionId: string, campaignId: string) => {
+    // Validate email on first comment
     if (!email.endsWith("@cfi.trade")) {
       toast.error("Email must be from @cfi.trade domain");
       return;
@@ -123,21 +125,23 @@ export default function CampaignReview() {
       return;
     }
 
-    setVerifying(true);
-    try {
-      await verifyEmail.mutateAsync({
-        token: token!,
-        reviewerName: name,
-        reviewerEmail: email,
-      });
-      setVerified(true);
-      await loadCampaignData(accessData.entity, accessData.campaign_id);
-      toast.success("Access granted!");
-    } catch (error: any) {
-      toast.error(error.message || "Verification failed");
-    } finally {
-      setVerifying(false);
+    // Update access record with name/email if not set
+    if (!accessData.reviewer_name || !accessData.email_verified) {
+      try {
+        await verifyEmail.mutateAsync({
+          token: token!,
+          reviewerName: name,
+          reviewerEmail: email,
+        });
+        setAccessData({ ...accessData, reviewer_name: name, reviewer_email: email, email_verified: true });
+      } catch (error: any) {
+        toast.error("Failed to verify email: " + error.message);
+        return;
+      }
     }
+
+    // Now submit the comment
+    await handleCommentSubmit(versionId, campaignId);
   };
 
   const handleCommentSubmit = async (versionId: string, campaignId: string) => {
@@ -178,67 +182,34 @@ export default function CampaignReview() {
     );
   }
 
-  if (!verified) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-md">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-sm">
-              <Eye className="h-5 w-5" />
-              Email Verification Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-md">
-            <div className="space-y-sm">
-              <Label htmlFor="name">Your Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-              />
-            </div>
-            <div className="space-y-sm">
-              <Label htmlFor="email">Email (@cfi.trade)</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@cfi.trade"
-              />
-            </div>
-            <Button
-              onClick={handleEmailVerification}
-              disabled={verifying}
-              className="w-full"
-            >
-              {verifying ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Verifying...
-                </>
-              ) : (
-                "Verify & Access"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // No verification screen needed - directly show content
 
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className="min-h-screen bg-background pb-20">
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto py-md px-md">
           <div className="flex items-center gap-sm">
             <Eye className="h-6 w-6 text-primary" />
-            <div>
+            <div className="flex-1">
               <h1 className="text-page-title">Campaign Review</h1>
               <p className="text-body-sm text-muted-foreground">
-                {accessData?.entity} • Viewing as {name} ({email})
+                {accessData?.entity}
               </p>
+            </div>
+            {/* Name & Email Inputs for first-time visitors */}
+            <div className="flex items-center gap-sm">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your Name"
+                className="w-[150px]"
+              />
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@cfi.trade"
+                className="w-[200px]"
+              />
             </div>
           </div>
         </div>
@@ -311,7 +282,7 @@ export default function CampaignReview() {
                             className="min-h-[100px]"
                           />
                           <Button
-                            onClick={() => handleCommentSubmit(version.id, campaign.id)}
+                            onClick={() => handleCommentWithDetails(version.id, campaign.id)}
                             disabled={!comments[version.id]?.trim() || submitting[version.id]}
                             size="sm"
                           >
@@ -329,10 +300,10 @@ export default function CampaignReview() {
       </div>
 
       {/* Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border py-sm">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-primary/5 to-accent/5 border-t border-border py-md backdrop-blur-sm">
         <div className="container mx-auto px-md">
-          <p className="text-body text-center text-foreground flex items-center justify-center gap-xs">
-            PerMar loves <Heart className="h-4 w-4 text-destructive fill-destructive" /> {accessData?.entity} - Sales Team
+          <p className="text-body text-center text-foreground flex items-center justify-center gap-xs font-medium">
+            PerMar loves <Heart className="h-5 w-5 text-destructive fill-destructive animate-pulse" /> {accessData?.entity} - Sales Team
           </p>
         </div>
       </div>

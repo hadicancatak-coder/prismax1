@@ -1602,6 +1602,45 @@ export type Database = {
           },
         ]
       }
+      entity_ad_rules: {
+        Row: {
+          competitor_names: string[] | null
+          created_at: string | null
+          created_by: string | null
+          custom_validation_rules: Json | null
+          entity: string
+          id: string
+          is_active: boolean | null
+          prohibited_words: string[] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          competitor_names?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_validation_rules?: Json | null
+          entity: string
+          id?: string
+          is_active?: boolean | null
+          prohibited_words?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          competitor_names?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_validation_rules?: Json | null
+          entity?: string
+          id?: string
+          is_active?: boolean | null
+          prohibited_words?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       entity_campaigns: {
         Row: {
           campaign_id: string | null

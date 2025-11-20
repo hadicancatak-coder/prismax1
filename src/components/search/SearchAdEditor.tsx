@@ -24,6 +24,10 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { BestPracticeValidator } from "./BestPracticeValidator";
+import { DKITemplateEditor } from "./DKITemplateEditor";
+import { HeadlineDiversityChecker } from "./HeadlineDiversityChecker";
 
 interface SearchAdEditorProps {
   ad: any;
