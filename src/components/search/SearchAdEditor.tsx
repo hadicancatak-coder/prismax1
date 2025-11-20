@@ -1000,72 +1000,76 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
-                    <Input
-                      id="path2"
-                      placeholder="path2"
-                      value={path2}
-                      onChange={(e) => setPath2(e.target.value)}
-                      maxLength={15}
-                    />
-                  </div>
-                </div>
+                          <Input
+                            id="path2"
+                            placeholder="path2"
+                            value={path2}
+                            onChange={(e) => setPath2(e.target.value)}
+                            maxLength={15}
+                          />
+                        </div>
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="business-name">Business Name</Label>
-                  <Input
-                    id="business-name"
-                    placeholder="Your Business Name"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    maxLength={25}
+                      <div className="space-y-2">
+                        <Label htmlFor="business-name">Business Name (optional)</Label>
+                        <Input
+                          id="business-name"
+                          placeholder="Your Business Name"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+
+        {/* Validation Tools Accordion */}
+        {isEditMode && (
+          <div className="mt-6 border-t border-border pt-6">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="validation">
+                <AccordionTrigger className="text-body-sm font-semibold">
+                  📊 Best Practice Validation & Scoring
+                </AccordionTrigger>
+                <AccordionContent>
+                  <BestPracticeValidator
+                    headlines={headlines.filter(h => h.trim())}
+                    descriptions={descriptions.filter(d => d.trim())}
+                    entity={entity}
+                    primaryKeyword={campaign?.primary_keyword}
                   />
-                </div>
-              </>
-            )}
-
-              <div className="mt-6 border-t border-border pt-6">
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="validation">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      📊 Best Practice Validation & Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <BestPracticeValidator
-                        headlines={headlines.filter(h => h.trim())}
-                        descriptions={descriptions.filter(d => d.trim())}
-                        entity={entity}
-                        primaryKeyword={campaign?.primary_keyword}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="dki">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      🔄 Dynamic Keyword Insertion (DKI)
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <DKITemplateEditor
-                        headlines={headlines}
-                        onUpdate={(newHeadlines) => {
-                          setHeadlines(newHeadlines);
-                        }}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="diversity">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      📈 Headline Diversity Check
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <HeadlineDiversityChecker
-                        headlines={headlines.filter(h => h.trim())}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            )}
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="dki">
+                <AccordionTrigger className="text-body-sm font-semibold">
+                  🔄 Dynamic Keyword Insertion (DKI)
+                </AccordionTrigger>
+                <AccordionContent>
+                  <DKITemplateEditor
+                    headlines={headlines}
+                    onUpdate={(newHeadlines) => {
+                      setHeadlines(newHeadlines);
+                    }}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="diversity">
+                <AccordionTrigger className="text-body-sm font-semibold">
+                  📈 Headline Diversity Check
+                </AccordionTrigger>
+                <AccordionContent>
+                  <HeadlineDiversityChecker
+                    headlines={headlines.filter(h => h.trim())}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
 
             {isEditMode && (
               <Button onClick={() => handleSave(false)} disabled={isSaving} className="w-full">
