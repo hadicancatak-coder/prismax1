@@ -25,11 +25,15 @@ import { toast } from "sonner";
 interface ExternalAccessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  campaignId?: string;
+  campaignName?: string;
 }
 
 export function ExternalAccessDialog({
   open,
   onOpenChange,
+  campaignId,
+  campaignName,
 }: ExternalAccessDialogProps) {
   const { generateLink } = useExternalAccess();
   const { data: entities = [] } = useSystemEntities();
@@ -77,6 +81,7 @@ export function ExternalAccessDialog({
         reviewerName,
         reviewerEmail,
         expiresAt,
+        campaignId,
       });
 
       setGeneratedLink(result.url);
@@ -112,7 +117,10 @@ export function ExternalAccessDialog({
             Generate External Review Link
           </DialogTitle>
           <DialogDescription>
-            Share this link with external reviewers to get comments
+            {campaignId 
+              ? `Share this link for external review of "${campaignName}"`
+              : "Share this link with external reviewers to get comments"
+            }
           </DialogDescription>
         </DialogHeader>
 

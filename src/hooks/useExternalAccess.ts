@@ -7,6 +7,7 @@ export interface ExternalAccess {
   id: string;
   access_token: string;
   entity: string;
+  campaign_id: string | null;
   reviewer_email: string;
   reviewer_name: string | null;
   expires_at: string | null;
@@ -27,11 +28,13 @@ export const useExternalAccess = () => {
       reviewerName,
       reviewerEmail,
       expiresAt,
+      campaignId,
     }: {
       entity: string;
       reviewerName: string;
       reviewerEmail: string;
       expiresAt?: string;
+      campaignId?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       const token = generateUniqueToken();
@@ -47,6 +50,7 @@ export const useExternalAccess = () => {
           created_by: user?.id,
           is_active: true,
           email_verified: false,
+          campaign_id: campaignId || null,
         })
         .select()
         .single();
@@ -55,7 +59,7 @@ export const useExternalAccess = () => {
       
       return {
         ...data,
-        url: `${window.location.origin}/campaigns-log/review/${token}`,
+        url: `${window.location.origin}/campaign-review/${token}`,
       };
     },
     onSuccess: () => {

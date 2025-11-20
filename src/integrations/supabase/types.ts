@@ -987,6 +987,7 @@ export type Database = {
       campaign_external_access: {
         Row: {
           access_token: string
+          campaign_id: string | null
           created_at: string | null
           created_by: string | null
           email_verified: boolean | null
@@ -999,6 +1000,7 @@ export type Database = {
         }
         Insert: {
           access_token: string
+          campaign_id?: string | null
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
@@ -1011,6 +1013,7 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          campaign_id?: string | null
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
@@ -1021,7 +1024,15 @@ export type Database = {
           reviewer_email?: string
           reviewer_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaign_external_access_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campaign_locations: {
         Row: {
@@ -1754,6 +1765,60 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      external_campaign_review_comments: {
+        Row: {
+          access_token: string
+          campaign_id: string
+          comment_text: string
+          comment_type: string | null
+          created_at: string | null
+          entity: string
+          id: string
+          reviewer_email: string
+          reviewer_name: string
+          version_id: string | null
+        }
+        Insert: {
+          access_token: string
+          campaign_id: string
+          comment_text: string
+          comment_type?: string | null
+          created_at?: string | null
+          entity: string
+          id?: string
+          reviewer_email: string
+          reviewer_name: string
+          version_id?: string | null
+        }
+        Update: {
+          access_token?: string
+          campaign_id?: string
+          comment_text?: string
+          comment_type?: string | null
+          created_at?: string | null
+          entity?: string
+          id?: string
+          reviewer_email?: string
+          reviewer_name?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_campaign_review_comments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_campaign_review_comments_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaign_versions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       google_sheets_reports: {
         Row: {
@@ -3975,6 +4040,63 @@ export type Database = {
             columns: ["utm_campaign_id"]
             isOneToOne: false
             referencedRelation: "utm_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utm_campaign_version_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          campaign_id: string
+          comment_text: string
+          created_at: string | null
+          entity: string | null
+          id: string
+          is_external: boolean | null
+          updated_at: string | null
+          version_id: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          campaign_id: string
+          comment_text: string
+          created_at?: string | null
+          entity?: string | null
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+          version_id: string
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          campaign_id?: string
+          comment_text?: string
+          created_at?: string | null
+          entity?: string | null
+          id?: string
+          is_external?: boolean | null
+          updated_at?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_campaign_version_comments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utm_campaign_version_comments_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "utm_campaign_versions"
             referencedColumns: ["id"]
           },
         ]
