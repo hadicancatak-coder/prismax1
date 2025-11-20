@@ -167,6 +167,100 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
     queryClient.invalidateQueries({ queryKey: ['ads-hierarchy'] });
   };
 
+  // Virtualized Ad List Component
+  interface VirtualizedAdListProps {
+    ads: any[];
+    onEditAd: (ad: any) => void;
+    onDuplicateAd: (ad: any) => void;
+    onDeleteAd: (ad: any) => void;
+  }
+
+  const VirtualizedAdList = ({ ads, onEditAd, onDuplicateAd, onDeleteAd }: VirtualizedAdListProps) => {
+    const AdRow = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const ad = ads[index];
+      const strengthResult = calculateAdStrength(
+        Array.isArray(ad.headlines) ? ad.headlines : [],
+        Array.isArray(ad.descriptions) ? ad.descriptions : [],
+        ad.sitelinks || [],
+        ad.callouts || []
+      );
+
+      const strength = typeof strengthResult === 'number' ? strengthResult : strengthResult.score;
+
+      const strengthColor = 
+        strength >= 80 ? "text-success" :
+        strength >= 60 ? "text-warning" :
+        "text-destructive";
+
+      return (
+        <div style={style}>
+          <div 
+            className="group flex items-center gap-3 p-2 pl-14 hover:bg-accent/20 rounded-lg cursor-pointer transition-all"
+            onClick={() => onEditAd(ad)}
+          >
+            <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="flex-1 text-sm truncate">{ad.name}</span>
+            <Badge variant="outline" className={`text-xs ${strengthColor}`}>
+              {strength}%
+            </Badge>
+            
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-background"
+                onClick={() => onEditAd(ad)}
+                title="Edit"
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-background"
+                onClick={() => onDuplicateAd(ad)}
+                title="Duplicate"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                onClick={() => onDeleteAd(ad)}
+                title="Delete"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Only virtualize if we have many ads (>20)
+    if (ads.length <= 20) {
+      return (
+        <div className="space-y-0.5">
+          {ads.map((ad, index) => (
+            <AdRow key={ad.id} index={index} style={{}} />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <FixedSizeList
+        height={Math.min(ads.length * 42, 400)} // 42px per item, max 400px
+        itemCount={ads.length}
+        itemSize={42}
+        width="100%"
+      >
+        {AdRow}
+      </FixedSizeList>
+    );
+  };
+
   const getAdGroupsForCampaign = (campaignId: string) => {
     return adGroups.filter(ag => ag.campaign_id === campaignId);
   };
