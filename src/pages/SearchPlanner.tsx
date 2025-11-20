@@ -3,6 +3,8 @@ import SearchAdEditor from "@/components/search/SearchAdEditor";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
+import { AdPreviewPanel } from "@/components/search/AdPreviewPanel";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -19,6 +21,19 @@ interface SearchPlannerProps {
 
 export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
+  const [editorState, setEditorState] = useState<any>({
+    headlines: [],
+    descriptions: [],
+    sitelinks: [],
+    callouts: [],
+    landingPage: '',
+    businessName: '',
+    language: 'EN',
+    name: '',
+    longHeadline: '',
+    shortHeadlines: [],
+    ctaText: ''
+  });
 
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad, adGroup, campaign, entity });
@@ -36,6 +51,10 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
     setEditorContext(null);
   };
 
+  const handleFieldChange = (fields: any) => {
+    setEditorState(fields);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-background">
@@ -46,37 +65,66 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
       </div>
 
       <div className="flex-1 overflow-hidden">
-        {editorContext ? (
-          <SearchAdEditor
-            ad={editorContext.ad}
-            adGroup={editorContext.adGroup}
-            campaign={editorContext.campaign}
-            entity={editorContext.entity}
-            adType={adType}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
-        ) : (
-          <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={40} minSize={30}>
-              <SearchHierarchyPanel
-                onEditAd={handleEditAd}
-                onCreateAd={handleCreateAd}
-                adType={adType}
-              />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={60} minSize={40}>
-              <div className="h-full flex items-center justify-center p-8 bg-muted/30">
-                <div className="text-center space-y-2">
-                  <p className="text-body text-muted-foreground">
-                    Select an ad from the hierarchy to edit
-                  </p>
+        <ResizablePanelGroup direction="horizontal">
+          {/* LEFT: Hierarchy (always visible) */}
+          <ResizablePanel defaultSize={30} minSize={25}>
+            <SearchHierarchyPanel
+              onEditAd={handleEditAd}
+              onCreateAd={handleCreateAd}
+              adType={adType}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* MIDDLE: Editor Form */}
+          <ResizablePanel defaultSize={40} minSize={30}>
+            {editorContext ? (
+              <ScrollArea className="h-full">
+                <div className="p-md">
+                  <SearchAdEditor
+                    ad={editorContext.ad}
+                    adGroup={editorContext.adGroup}
+                    campaign={editorContext.campaign}
+                    entity={editorContext.entity}
+                    adType={adType}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    showHeader={false}
+                    onFieldChange={handleFieldChange}
+                  />
                 </div>
+              </ScrollArea>
+            ) : (
+              <div className="h-full flex items-center justify-center p-md bg-muted/30">
+                <p className="text-body text-muted-foreground">
+                  Select an ad to edit or create a new one
+                </p>
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        )}
+            )}
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* RIGHT: Preview */}
+          <ResizablePanel defaultSize={30} minSize={25}>
+            {editorContext ? (
+              <AdPreviewPanel
+                ad={editorContext.ad}
+                campaign={editorContext.campaign}
+                entity={editorContext.entity}
+                adType={adType}
+                {...editorState}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center p-md bg-muted/30">
+                <p className="text-body text-muted-foreground">
+                  Preview will appear here
+                </p>
+              </div>
+            )}
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

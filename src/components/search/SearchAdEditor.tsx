@@ -167,7 +167,32 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
 
   const toggleDKI = (index: number) => {
     const updated = [...dkiEnabled];
-    updated[index] = !updated[index];
+    const newHeadlines = [...headlines];
+    
+    if (!updated[index]) {
+      // Enabling DKI - insert {KW} if not already present
+      if (!newHeadlines[index].includes('{KW}') && 
+          !newHeadlines[index].includes('{kw}') && 
+          !newHeadlines[index].includes('{Kw}')) {
+        // If headline is empty, just add {KW}
+        // Otherwise, add it at the beginning
+        newHeadlines[index] = newHeadlines[index].trim() 
+          ? `{KW} ${newHeadlines[index]}` 
+          : '{KW}';
+        setHeadlines(newHeadlines);
+      }
+      updated[index] = true;
+    } else {
+      // Disabling DKI - remove {KW} placeholders
+      newHeadlines[index] = newHeadlines[index]
+        .replace(/{KW}/gi, '')
+        .replace(/{kw}/gi, '')
+        .replace(/{Kw}/gi, '')
+        .trim();
+      setHeadlines(newHeadlines);
+      updated[index] = false;
+    }
+    
     setDkiEnabled(updated);
   };
 
