@@ -25,8 +25,7 @@ export const AdComplianceChecker = ({
     descriptions, 
     sitelinks, 
     callouts, 
-    entity,
-    rules ? { prohibited_words: rules.prohibited_words, competitor_names: rules.competitor_names } : undefined
+    entity
   );
   const errors = issues.filter(i => i.severity === 'error');
   const warnings = issues.filter(i => i.severity === 'warning');
