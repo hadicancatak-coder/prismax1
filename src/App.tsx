@@ -49,7 +49,7 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Sonner position="top-right" expand={false} richColors closeButton />
+          <Sonner position="bottom-right" expand={false} richColors closeButton />
           <GlobalBubbleMenu />
           <Routes>
               <Route path="/auth" element={<Auth />} />
