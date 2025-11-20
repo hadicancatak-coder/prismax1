@@ -46,16 +46,16 @@ export const useEntityAdRules = (entity?: string) => {
         id: entityRules?.id || globalRules?.id || "",
         entity: entity,
         prohibited_words: [
-          ...(globalRules?.prohibited_words || []),
-          ...(entityRules?.prohibited_words || []),
+          ...(Array.isArray(globalRules?.prohibited_words) ? globalRules.prohibited_words : []),
+          ...(Array.isArray(entityRules?.prohibited_words) ? entityRules.prohibited_words : []),
         ],
         competitor_names: [
-          ...(globalRules?.competitor_names || []),
-          ...(entityRules?.competitor_names || []),
+          ...(Array.isArray(globalRules?.competitor_names) ? globalRules.competitor_names : []),
+          ...(Array.isArray(entityRules?.competitor_names) ? entityRules.competitor_names : []),
         ],
         custom_validation_rules: [
-          ...(globalRules?.custom_validation_rules || []),
-          ...(entityRules?.custom_validation_rules || []),
+          ...(Array.isArray(globalRules?.custom_validation_rules) ? globalRules.custom_validation_rules : []),
+          ...(Array.isArray(entityRules?.custom_validation_rules) ? entityRules.custom_validation_rules : []),
         ],
         is_active: true,
         created_at: entityRules?.created_at || globalRules?.created_at || new Date().toISOString(),
