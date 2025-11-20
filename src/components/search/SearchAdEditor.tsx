@@ -28,6 +28,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { BestPracticeValidator } from "./BestPracticeValidator";
 import { DKITemplateEditor } from "./DKITemplateEditor";
 import { HeadlineDiversityChecker } from "./HeadlineDiversityChecker";
+import { AdComplianceChecker } from "../AdComplianceChecker";
 
 interface SearchAdEditorProps {
   ad: any;
@@ -312,24 +313,24 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     );
   };
 
-  const handleSave = async () => {
+  const handleSave = async (silent: boolean = false) => {
     if (!user?.id) {
-      toast.error("You must be logged in to create ads");
+      if (!silent) toast.error("You must be logged in to create ads");
       return;
     }
 
     if (!name.trim()) {
-      toast.error("Please enter an ad name");
+      if (!silent) toast.error("Please enter an ad name");
       return;
     }
 
     if (!headlines[0]?.trim()) {
-      toast.error("Please enter at least one headline");
+      if (!silent) toast.error("Please enter at least one headline");
       return;
     }
 
     if (!descriptions[0]?.trim()) {
-      toast.error("Please enter at least one description");
+      if (!silent) toast.error("Please enter at least one description");
       return;
     }
 
@@ -507,7 +508,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         />
 
         <div className="flex gap-2 mt-6">
-          <Button onClick={handleSave} disabled={isSaving || !ctaText}>
+          <Button onClick={() => handleSave(false)} disabled={isSaving || !ctaText}>
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? "Saving..." : ad?.id ? "Update Ad" : "Create Ad"}
           </Button>
@@ -626,24 +627,38 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                     >
                       <div className="space-y-3">
                         {headlines.map((headline, index) => (
-                          <SortableHeadlineInput
-                            key={`headline-${index}`}
-                            id={`headline-${index}`}
-                            index={index}
-                            headline={headline}
-                            isDkiEnabled={dkiEnabled[index]}
-                            onUpdate={(value) => updateHeadline(index, value)}
-                            onToggleDki={() => toggleDKI(index)}
-                            renderActions={() => (
-                              <FieldActions
-                                value={headline}
-                                elementType="headline"
-                                onSelect={(content) => updateHeadline(index, content)}
-                                onSave={() => handleSaveElement('headline', headline)}
-                                isEmpty={!headline.trim()}
-                              />
-                            )}
-                          />
+                           <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor={`headline-${index}`}>
+                                Headline {index + 1}
+                                <span className={
+                                  headline.length < 24 ? "ml-2 text-success" :
+                                  headline.length < 29 ? "ml-2 text-warning" :
+                                  "ml-2 text-destructive"
+                                }>
+                                  {headline.length}/30
+                                </span>
+                              </Label>
+                            </div>
+                            <SortableHeadlineInput
+                              key={`headline-${index}`}
+                              id={`headline-${index}`}
+                              index={index}
+                              headline={headline}
+                              isDkiEnabled={dkiEnabled[index]}
+                              onUpdate={(value) => updateHeadline(index, value)}
+                              onToggleDki={() => toggleDKI(index)}
+                              renderActions={() => (
+                                <FieldActions
+                                  value={headline}
+                                  elementType="headline"
+                                  onSelect={(content) => updateHeadline(index, content)}
+                                  onSave={() => handleSaveElement('headline', headline)}
+                                  isEmpty={!headline.trim()}
+                                />
+                              )}
+                            />
+                          </div>
                         ))}
                       </div>
                     </SortableContext>
@@ -732,23 +747,38 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             <div className="space-y-2">
               <Label>Descriptions (4 max, 90 chars each)</Label>
               {isEditMode ? (
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-3">
                   {descriptions.map((description, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
-                        value={description}
-                        onChange={(e) => updateDescription(index, e.target.value)}
-                        maxLength={90}
-                        className="flex-1"
-                      />
-                      <FieldActions
-                        value={description}
-                        elementType="description"
-                        onSelect={(content) => updateDescription(index, content)}
-                        onSave={() => handleSaveElement('description', description)}
-                        isEmpty={!description.trim()}
-                      />
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`description-${index}`}>
+                          Description {index + 1}
+                          <span className={
+                            description.length < 72 ? "ml-2 text-success" :
+                            description.length < 86 ? "ml-2 text-warning" :
+                            "ml-2 text-destructive"
+                          }>
+                            {description.length}/90
+                          </span>
+                        </Label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          id={`description-${index}`}
+                          placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
+                          value={description}
+                          onChange={(e) => updateDescription(index, e.target.value)}
+                          maxLength={90}
+                          className="flex-1"
+                        />
+                        <FieldActions
+                          value={description}
+                          elementType="description"
+                          onSelect={(content) => updateDescription(index, content)}
+                          onSave={() => handleSaveElement('description', description)}
+                          isEmpty={!description.trim()}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -763,6 +793,52 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                 </div>
               )}
             </div>
+
+            {/* Validation Tools Accordion */}
+            {isEditMode && (
+              <div className="mt-6">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="validation">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      📊 Best Practice Validation & Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <BestPracticeValidator
+                        headlines={headlines.filter(h => h.trim())}
+                        descriptions={descriptions.filter(d => d.trim())}
+                        entity={entity}
+                        primaryKeyword={campaign?.primary_keyword}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="dki">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      🔄 Dynamic Keyword Insertion (DKI)
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <DKITemplateEditor
+                        headlines={headlines}
+                        onUpdate={(newHeadlines) => {
+                          setHeadlines(newHeadlines);
+                        }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="diversity">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      📈 Headline Diversity Check
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <HeadlineDiversityChecker
+                        headlines={headlines.filter(h => h.trim())}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
 
             {isEditMode && (
               <>
@@ -868,8 +944,54 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               </>
             )}
 
+            {/* Validation Tools Accordion */}
             {isEditMode && (
-              <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <div className="mt-6 border-t border-border pt-6">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="validation">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      📊 Best Practice Validation & Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <BestPracticeValidator
+                        headlines={headlines.filter(h => h.trim())}
+                        descriptions={descriptions.filter(d => d.trim())}
+                        entity={entity}
+                        primaryKeyword={campaign?.primary_keyword}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="dki">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      🔄 Dynamic Keyword Insertion (DKI)
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <DKITemplateEditor
+                        headlines={headlines}
+                        onUpdate={(newHeadlines) => {
+                          setHeadlines(newHeadlines);
+                        }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="diversity">
+                    <AccordionTrigger className="text-body-sm font-semibold">
+                      📈 Headline Diversity Check
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <HeadlineDiversityChecker
+                        headlines={headlines.filter(h => h.trim())}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
+
+            {isEditMode && (
+              <Button onClick={() => handleSave(false)} disabled={isSaving} className="w-full">
                 {isSaving && <span className="mr-2">⏳</span>}
                 <Save className="mr-2 h-4 w-4" />
                 {ad?.id ? "Update Ad" : "Create Ad"}
@@ -960,6 +1082,22 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                     ))}
                   </AlertDescription>
                 </Alert>
+              )}
+
+              {/* Enhanced Compliance Check with Entity Rules */}
+              {(headlines.some(h => h.trim()) || descriptions.some(d => d.trim())) && (
+                <div className="border-t border-border pt-4 mt-4">
+                  <h4 className="text-body-sm font-semibold mb-3 text-foreground">
+                    Compliance Check
+                  </h4>
+                  <AdComplianceChecker
+                    headlines={headlines.filter(h => h.trim())}
+                    descriptions={descriptions.filter(d => d.trim())}
+                    sitelinks={sitelinks.filter(s => s.description).map(s => s.description)}
+                    callouts={callouts.filter(c => c.trim())}
+                    entity={entity}
+                  />
+                </div>
               )}
             </div>
           </ScrollArea>
