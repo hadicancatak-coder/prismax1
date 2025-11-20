@@ -29,6 +29,8 @@ import { BestPracticeValidator } from "./BestPracticeValidator";
 import { DKITemplateEditor } from "./DKITemplateEditor";
 import { HeadlineDiversityChecker } from "./HeadlineDiversityChecker";
 import { AdComplianceChecker } from "../AdComplianceChecker";
+import { InlineComplianceValidator } from "./InlineComplianceValidator";
+import { Plus } from "lucide-react";
 
 interface SearchAdEditorProps {
   ad: any;
@@ -60,6 +62,10 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   const [businessName, setBusinessName] = useState("");
   const [language, setLanguage] = useState("EN");
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Progressive disclosure state
+  const [visibleHeadlineCount, setVisibleHeadlineCount] = useState(3);
+  const [visibleDescriptionCount, setVisibleDescriptionCount] = useState(2);
 
   // Display ad specific state
   const [longHeadline, setLongHeadline] = useState("");
@@ -649,12 +655,12 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                     onDragEnd={handleDragEnd}
                   >
                     <SortableContext
-                      items={headlines.map((_, i) => `headline-${i}`)}
+                      items={headlines.slice(0, visibleHeadlineCount).map((_, i) => `headline-${i}`)}
                       strategy={verticalListSortingStrategy}
                     >
                       <div className="space-y-3">
-                        {headlines.map((headline, index) => (
-                           <div className="space-y-2">
+                        {headlines.slice(0, visibleHeadlineCount).map((headline, index) => (
+                           <div key={index} className="space-y-2">
                             <div className="flex items-center gap-2">
                               <Label htmlFor={`headline-${index}`}>
                                 Headline {index + 1}
@@ -666,9 +672,13 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                                   {headline.length}/30
                                 </span>
                               </Label>
+                              <InlineComplianceValidator 
+                                value={headline} 
+                                entity={entity} 
+                                fieldType="headline" 
+                              />
                             </div>
                             <SortableHeadlineInput
-                              key={`headline-${index}`}
                               id={`headline-${index}`}
                               index={index}
                               headline={headline}
@@ -687,6 +697,18 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                             />
                           </div>
                         ))}
+                        {visibleHeadlineCount < 15 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setVisibleHeadlineCount(Math.min(visibleHeadlineCount + 3, 15))}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add More Headlines ({15 - visibleHeadlineCount} remaining)
+                          </Button>
+                        )}
                       </div>
                     </SortableContext>
                   </DndContext>
@@ -868,86 +890,116 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             )}
 
             {isEditMode && (
-              <>
-                <div className="space-y-2">
-                  <Label>Sitelinks (5 max, 25 chars for description)</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {sitelinks.map((sitelink, index) => (
-                      <div key={index} className="flex gap-2">
-                        <div className="flex-1 space-y-1">
+              <Accordion type="multiple" defaultValue={[]} className="w-full">
+                <AccordionItem value="sitelinks">
+                  <AccordionTrigger className="text-body-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>Sitelinks</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {sitelinks.filter(s => s.description.trim()).length}/5
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">5 max, 25 chars for description</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {sitelinks.map((sitelink, index) => (
+                          <div key={index} className="flex gap-2">
+                            <div className="flex-1 space-y-1">
+                              <Input
+                                placeholder={`Link description ${index + 1}`}
+                                value={sitelink.description}
+                                onChange={(e) => updateSitelink(index, 'description', e.target.value)}
+                                maxLength={25}
+                              />
+                              <Input
+                                placeholder={`Link URL ${index + 1}`}
+                                value={sitelink.link}
+                                onChange={(e) => updateSitelink(index, 'link', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                            <FieldActions
+                              value={sitelink.description}
+                              elementType="sitelink"
+                              onSelect={(content) => updateSitelink(index, 'description', content)}
+                              onSave={() => handleSaveElement('sitelink', sitelink)}
+                              isEmpty={!sitelink.description.trim() && !sitelink.link.trim()}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="callouts">
+                  <AccordionTrigger className="text-body-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>Callouts</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {callouts.filter(c => c.trim()).length}/4
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">4 max, 25 chars each</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {callouts.map((callout, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
+                              value={callout}
+                              onChange={(e) => updateCallout(index, e.target.value)}
+                              maxLength={25}
+                              className="flex-1"
+                            />
+                            <FieldActions
+                              value={callout}
+                              elementType="callout"
+                              onSelect={(content) => updateCallout(index, content)}
+                              onSave={() => handleSaveElement('callout', callout)}
+                              isEmpty={!callout.trim()}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="paths">
+                  <AccordionTrigger className="text-body-sm font-medium">
+                    Paths & Extensions
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="landing-page">Final URL</Label>
+                        <Input
+                          id="landing-page"
+                          type="url"
+                          placeholder="https://example.com"
+                          value={landingPage}
+                          onChange={(e) => setLandingPage(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="path1">Path 1 (Max 15 chars)</Label>
                           <Input
-                            placeholder={`Link description ${index + 1}`}
-                            value={sitelink.description}
-                            onChange={(e) => updateSitelink(index, 'description', e.target.value)}
-                            maxLength={25}
-                          />
-                          <Input
-                            placeholder={`Link URL ${index + 1}`}
-                            value={sitelink.link}
-                            onChange={(e) => updateSitelink(index, 'link', e.target.value)}
-                            className="text-sm"
+                            id="path1"
+                            placeholder="path1"
+                            value={path1}
+                            onChange={(e) => setPath1(e.target.value)}
+                            maxLength={15}
                           />
                         </div>
-                        <FieldActions
-                          value={sitelink.description}
-                          elementType="sitelink"
-                          onSelect={(content) => updateSitelink(index, 'description', content)}
-                          onSave={() => handleSaveElement('sitelink', sitelink)}
-                          isEmpty={!sitelink.description.trim() && !sitelink.link.trim()}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Callouts (4 max, 25 chars each)</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {callouts.map((callout, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          placeholder={`Callout ${index + 1} (e.g., "24/7 Support")`}
-                          value={callout}
-                          onChange={(e) => updateCallout(index, e.target.value)}
-                          maxLength={25}
-                          className="flex-1"
-                        />
-                        <FieldActions
-                          value={callout}
-                          elementType="callout"
-                          onSelect={(content) => updateCallout(index, content)}
-                          onSave={() => handleSaveElement('callout', callout)}
-                          isEmpty={!callout.trim()}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="landing-page">Final URL</Label>
-                  <Input
-                    id="landing-page"
-                    type="url"
-                    placeholder="https://example.com"
-                    value={landingPage}
-                    onChange={(e) => setLandingPage(e.target.value)}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="path1">Path 1 (Max 15 chars)</Label>
-                    <Input
-                      id="path1"
-                      placeholder="path1"
-                      value={path1}
-                      onChange={(e) => setPath1(e.target.value)}
-                      maxLength={15}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
                     <Input
                       id="path2"
                       placeholder="path2"
@@ -971,8 +1023,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               </>
             )}
 
-            {/* Validation Tools Accordion */}
-            {isEditMode && (
               <div className="mt-6 border-t border-border pt-6">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="validation">

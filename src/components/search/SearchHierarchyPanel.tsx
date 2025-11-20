@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,7 @@ import { DeleteCampaignDialog } from "./DeleteCampaignDialog";
 import { DuplicateAdDialog } from "./DuplicateAdDialog";
 import { DuplicateAdGroupDialog } from "./DuplicateAdGroupDialog";
 import { DuplicateCampaignDialog } from "./DuplicateCampaignDialog";
+import { FixedSizeList } from "react-window";
 
 interface SearchHierarchyPanelProps {
   onEditAd: (ad: any, adGroup: any, campaign: any, entity: string) => void;
@@ -320,57 +321,21 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, adType = "search" }
                                 </div>
                                 
                                 <CollapsibleContent>
-                                  <div className="space-y-0.5 mt-1 ml-6">
+                                  <div className="mt-1 ml-6">
                                       {adGroupAds.length === 0 ? (
                                         <div className="text-xs text-muted-foreground py-2 px-2">
                                           No ads yet
                                         </div>
                                       ) : (
-                                        adGroupAds.map(ad => (
-                                          <div 
-                                            key={ad.id} 
-                                            className="group flex items-center gap-3 p-2 pl-14 hover:bg-accent/20 rounded-lg cursor-pointer transition-all"
-                                            onClick={() => onEditAd(ad, adGroup, campaign, selectedEntity)}
-                                          >
-                                            <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                            <span className="flex-1 text-sm truncate">{ad.name}</span>
-                                            {ad.approval_status && (
-                                              <Badge variant="outline" className="text-xs font-normal">
-                                                {ad.approval_status}
-                                              </Badge>
-                                            )}
-                                            
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                              <Button 
-                                                size="icon" 
-                                                variant="ghost" 
-                                                className="h-6 w-6"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setDuplicateAdDialog({ ad });
-                                                }}
-                                                title="Duplicate"
-                                              >
-                                                <Copy className="h-3 w-3" />
-                                              </Button>
-                                              <Button 
-                                                size="icon" 
-                                                variant="ghost" 
-                                                className="h-6 w-6 hover:bg-destructive/10 text-destructive"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setDeleteAdDialog({ ad });
-                                                }}
-                                                title="Delete"
-                                              >
-                                                <Trash2 className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        ))
+                                        <VirtualizedAdList
+                                          ads={adGroupAds}
+                                          onEditAd={(ad) => onEditAd(ad, adGroup, campaign, selectedEntity)}
+                                          onDuplicateAd={(ad) => setDuplicateAdDialog({ ad })}
+                                          onDeleteAd={(ad) => setDeleteAdDialog({ ad })}
+                                        />
                                       )}
-                                    </div>
-                                  </CollapsibleContent>
+                                  </div>
+                                </CollapsibleContent>
                                 </Collapsible>
                             );
                           })
