@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
 import SearchAdEditor from "@/components/search/SearchAdEditor";
-import { Button } from "@/components/ui/button";
-import { Menu, X, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdPlannerLayout } from "@/components/search/AdPlannerLayout";
+import { AdStructureTab } from "@/components/search/AdStructureTab";
+import { AdEditorTab } from "@/components/search/AdEditorTab";
+import { AdToolsTab } from "@/components/search/AdToolsTab";
+import { AdLibraryTab } from "@/components/search/AdLibraryTab";
+import { AdBatchTab } from "@/components/search/AdBatchTab";
+import { AdPreviewPanel } from "@/components/search/AdPreviewPanel";
+import { AdQuickActions } from "@/components/search/AdQuickActions";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -20,9 +24,23 @@ interface SearchPlannerProps {
 }
 
 export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
-  const [view, setView] = useState<ViewState>('hierarchy');
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
-  const [showHierarchy, setShowHierarchy] = useState(false);
+
+  const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
+    setEditorContext({ ad, adGroup, campaign, entity });
+  };
+
+  const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
+    setEditorContext({ ad: {}, adGroup, campaign, entity });
+  };
+
+  const handleSave = () => {
+    setEditorContext(null);
+  };
+
+  const handleCancel = () => {
+    setEditorContext(null);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -33,107 +51,36 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
         />
       </div>
 
-      <div className="flex-1 relative">
-        {/* Mobile Toggle Button */}
-      <div className="md:hidden fixed top-20 left-4 z-50">
-        <Button
-          size="icon"
-          onClick={() => setShowHierarchy(!showHierarchy)}
-          className="shadow-lg"
-        >
-          {showHierarchy ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      {/* Mobile Overlay Panel */}
-      {showHierarchy && (
-        <div className="md:hidden fixed inset-0 bg-background z-40 overflow-auto pt-16">
-          <SearchHierarchyPanel
-            adType={adType}
-            onEditAd={(ad, adGroup, campaign, entity) => {
-              setEditorContext({ ad, adGroup, campaign, entity });
-              setView('ad-editor');
-              setShowHierarchy(false);
-            }}
-            onCreateAd={(adGroup, campaign, entity) => {
-              setEditorContext({ ad: {}, adGroup, campaign, entity });
-              setView('ad-editor');
-              setShowHierarchy(false);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Desktop Layout */}
-      <ResizablePanelGroup direction="horizontal" className="hidden md:flex">
-        {/* Left Panel: Hierarchy Tree */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-          <SearchHierarchyPanel
-            adType={adType}
-            onEditAd={(ad, adGroup, campaign, entity) => {
-              setEditorContext({ ad, adGroup, campaign, entity });
-              setView('ad-editor');
-            }}
-            onCreateAd={(adGroup, campaign, entity) => {
-              setEditorContext({ ad: {}, adGroup, campaign, entity });
-              setView('ad-editor');
-            }}
-          />
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Right Panel: Ad Editor or Empty State */}
-        <ResizablePanel defaultSize={70} minSize={50}>
-          {view === 'ad-editor' && editorContext ? (
-            <SearchAdEditor
-              ad={editorContext.ad}
-              adGroup={editorContext.adGroup}
-              campaign={editorContext.campaign}
-              entity={editorContext.entity}
-              adType={adType}
-              onSave={(adId) => {
-                setView('hierarchy');
-                setEditorContext(null);
-              }}
-              onCancel={() => {
-                setView('hierarchy');
-                setEditorContext(null);
-              }}
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              Select an ad to edit or create a new one from the left panel
-            </div>
-          )}
-        </ResizablePanel>
-      </ResizablePanelGroup>
-
-      {/* Mobile Layout */}
-      <div className="md:hidden h-full">
-        {view === 'ad-editor' && editorContext ? (
+      <div className="flex-1 overflow-hidden">
+        {editorContext ? (
           <SearchAdEditor
             ad={editorContext.ad}
             adGroup={editorContext.adGroup}
             campaign={editorContext.campaign}
             entity={editorContext.entity}
             adType={adType}
-            onSave={(adId) => {
-              setView('hierarchy');
-              setEditorContext(null);
-            }}
-            onCancel={() => {
-              setView('hierarchy');
-              setEditorContext(null);
-            }}
+            onSave={handleSave}
+            onCancel={handleCancel}
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-muted-foreground px-4 text-center">
-            Tap the menu button to select an ad or create a new one
-          </div>
+          <AdPlannerLayout
+            structureTab={
+              <AdStructureTab
+                adType={adType}
+                onEditAd={handleEditAd}
+                onCreateAd={handleCreateAd}
+              />
+            }
+            editorTab={<AdEditorTab onSave={handleSave} onCancel={handleCancel} />}
+            toolsTab={<AdToolsTab />}
+            libraryTab={<AdLibraryTab />}
+            batchTab={<AdBatchTab />}
+            previewPanel={<AdPreviewPanel />}
+          />
         )}
       </div>
-      </div>
+
+      <AdQuickActions />
     </div>
   );
 }
