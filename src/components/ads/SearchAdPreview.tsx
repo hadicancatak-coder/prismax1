@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Star } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import { renderDKI } from '@/lib/dkiRenderer';
 
 interface SearchAdPreviewProps {
   headlines: string[];
@@ -32,8 +33,18 @@ const parseUrlSafely = (url: string | null | undefined): { hostname: string; pat
 export function SearchAdPreview(props: SearchAdPreviewProps) {
   const { hostname: displayUrl, pathname: pathUrl } = parseUrlSafely(props.landingPage);
   
+  // Render DKI templates with sample keyword
+  const sampleKeyword = "Premium Services";
+  const renderedHeadlines = props.headlines.map(h => {
+    if (h.includes('{KW}') || h.includes('{kw}') || h.includes('{Kw}') || h.includes('{DEFAULT:')) {
+      const result = renderDKI(h, sampleKeyword);
+      return result.rendered;
+    }
+    return h;
+  });
+  
   // Get first 3 headlines and 2 descriptions (Google Ads limit)
-  const activeHeadlines = props.headlines.filter(h => h.trim()).slice(0, 3);
+  const activeHeadlines = renderedHeadlines.filter(h => h.trim()).slice(0, 3);
   const activeDescriptions = props.descriptions.filter(d => d.trim()).slice(0, 2);
   const activeSitelinks = (props.sitelinks || [])
     .filter(s => {

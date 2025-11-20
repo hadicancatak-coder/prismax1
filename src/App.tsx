@@ -16,6 +16,7 @@ import UsersManagement from "./pages/admin/UsersManagement";
 import Config from "./pages/admin/Config";
 import SecurityPage from "./pages/admin/SecurityPage";
 import Logs from "./pages/admin/Logs";
+import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import ReportsLog from "./pages/ReportsLog";
@@ -65,6 +66,7 @@ const App = () => (
                   <Route path="config" element={<Config />} />
                   <Route path="security" element={<SecurityPage />} />
                   <Route path="logs" element={<Logs />} />
+                  <Route path="ad-rules" element={<AdRulesManagement />} />
                 </Route>
                 <Route path="/team-base" element={<TeamBase />} />
                 <Route path="/ads" element={<Navigate to="/ads/search" replace />} />

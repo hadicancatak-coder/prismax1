@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DisplayAdEditor } from "@/components/ads/DisplayAdEditor";
+import SearchAdEditor from "@/components/search/SearchAdEditor";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
@@ -43,11 +43,12 @@ export default function DisplayPlanner() {
 
       <div className="flex-1 overflow-hidden">
         {editorContext ? (
-          <DisplayAdEditor
+          <SearchAdEditor
             ad={editorContext.ad}
             adGroup={editorContext.adGroup}
             campaign={editorContext.campaign}
             entity={editorContext.entity}
+            adType="display"
             onSave={handleSave}
             onCancel={handleCancel}
           />
