@@ -1,18 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DisplayAdEditor } from "@/components/ads/DisplayAdEditor";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AdPlannerLayout } from "@/components/search/AdPlannerLayout";
-import { AdStructureTab } from "@/components/search/AdStructureTab";
-import { AdEditorTab } from "@/components/search/AdEditorTab";
-import { AdToolsTab } from "@/components/search/AdToolsTab";
-import { AdLibraryTab } from "@/components/search/AdLibraryTab";
-import { AdBatchTab } from "@/components/search/AdBatchTab";
-import { AdPreviewPanel } from "@/components/search/AdPreviewPanel";
-import { AdQuickActions } from "@/components/search/AdQuickActions";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, Layout } from "lucide-react";
 
 type ViewState = 'hierarchy' | 'ad-editor';
 
@@ -25,14 +15,6 @@ interface EditorContext {
 
 export default function DisplayPlanner() {
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
-  const [useNewLayout, setUseNewLayout] = useState(() => {
-    const saved = localStorage.getItem('ad-planner-layout');
-    return saved === 'new';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('ad-planner-layout', useNewLayout ? 'new' : 'old');
-  }, [useNewLayout]);
 
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad, adGroup, campaign, entity });
@@ -53,30 +35,10 @@ export default function DisplayPlanner() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-background">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title="Display Ads Planner"
-            description="Create and manage display advertising campaigns"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setUseNewLayout(!useNewLayout)}
-            className="gap-sm"
-          >
-            {useNewLayout ? (
-              <>
-                <Layout className="h-4 w-4" />
-                Classic View
-              </>
-            ) : (
-              <>
-                <LayoutGrid className="h-4 w-4" />
-                New Layout
-              </>
-            )}
-          </Button>
-        </div>
+        <PageHeader
+          title="Display Ads Planner"
+          description="Create and manage display advertising campaigns"
+        />
       </div>
 
       <div className="flex-1 overflow-hidden">
@@ -88,21 +50,6 @@ export default function DisplayPlanner() {
             entity={editorContext.entity}
             onSave={handleSave}
             onCancel={handleCancel}
-          />
-        ) : useNewLayout ? (
-          <AdPlannerLayout
-            structureTab={
-              <AdStructureTab
-                adType="display"
-                onEditAd={handleEditAd}
-                onCreateAd={handleCreateAd}
-              />
-            }
-            editorTab={<AdEditorTab onSave={handleSave} onCancel={handleCancel} />}
-            toolsTab={<AdToolsTab />}
-            libraryTab={<AdLibraryTab />}
-            batchTab={<AdBatchTab />}
-            previewPanel={<AdPreviewPanel />}
           />
         ) : (
           <ResizablePanelGroup direction="horizontal">
@@ -126,8 +73,6 @@ export default function DisplayPlanner() {
           </ResizablePanelGroup>
         )}
       </div>
-
-      <AdQuickActions />
     </div>
   );
 }
