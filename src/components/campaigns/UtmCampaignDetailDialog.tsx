@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useUpdateUtmCampaign } from "@/hooks/useUtmCampaigns";
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
+import { VersionComments } from "./VersionComments";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignComments } from "./CampaignComments";
@@ -636,10 +637,18 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                                       Delete
                                     </Button>
                                   </div>
-                                </div>
-                              )}
-                            </AccordionContent>
-                          </AccordionItem>
+                      </div>
+                    )}
+                    
+                    {/* Version Comments */}
+                    <div className="border-t border-border pt-md">
+                      <VersionComments
+                        versionId={version.id}
+                        campaignId={campaign.id}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
                         );
                       })}
                     </Accordion>

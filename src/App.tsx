@@ -40,6 +40,7 @@ import WebIntel from "./pages/WebIntel";
 import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
+import CampaignReview from "./pages/CampaignReview";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/copywriter" element={<CopyWriter />} />
                 <Route path="/security" element={<Security />} />
                 <Route path="/kpis" element={<KPIs />} />
+                <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
                 <Route path="/campaigns-log" element={<CampaignsLog />} />
                 <Route path="/location-intelligence" element={<LocationIntelligence />} />
                 <Route path="/web-intel" element={<WebIntel />} />
