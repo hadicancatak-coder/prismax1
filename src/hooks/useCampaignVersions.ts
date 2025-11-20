@@ -98,6 +98,45 @@ export const useCampaignVersions = () => {
     },
   });
 
+  // Update version
+  const updateVersion = useMutation({
+    mutationFn: async ({
+      versionId,
+      versionNotes,
+      imageUrl,
+      imageFileSize,
+      assetLink,
+    }: {
+      versionId: string;
+      versionNotes?: string;
+      imageUrl?: string;
+      imageFileSize?: number;
+      assetLink?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("utm_campaign_versions")
+        .update({
+          version_notes: versionNotes,
+          image_url: imageUrl,
+          image_file_size: imageFileSize,
+          asset_link: assetLink,
+        })
+        .eq("id", versionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-versions"] });
+      toast.success("Version updated");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update version");
+    },
+  });
+
   // Delete version
   const deleteVersion = useMutation({
     mutationFn: async (versionId: string) => {
@@ -120,6 +159,7 @@ export const useCampaignVersions = () => {
   return {
     useVersions,
     createVersion,
+    updateVersion,
     deleteVersion,
   };
 };

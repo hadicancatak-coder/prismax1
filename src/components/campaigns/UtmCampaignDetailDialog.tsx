@@ -15,11 +15,27 @@ import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignComments } from "./CampaignComments";
-import { Loader2, FileImage, ExternalLink, Save, X, MessageCircle, Plus, MoreVertical, Edit, Trash2, Activity } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Card } from "@/components/ui/card";
+import { Loader2, FileImage, ExternalLink, Save, X, MessageCircle, Plus, Edit, Trash2, Activity, File, Calendar, User } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UtmCampaignDetailDialogProps {
   open: boolean;
@@ -37,7 +53,11 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const [versionNotes, setVersionNotes] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [isAddingVersion, setIsAddingVersion] = useState(false);
-  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
+  const [editingInlineVersionId, setEditingInlineVersionId] = useState<string | null>(null);
+  const [editVersionNotes, setEditVersionNotes] = useState("");
+  const [editVersionImage, setEditVersionImage] = useState<File | null>(null);
+  const [editVersionAssetLink, setEditVersionAssetLink] = useState("");
+  const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
 
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["utm-campaign", campaignId],
@@ -71,7 +91,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const updateMutation = useUpdateUtmCampaign();
   const { upsertMetadata, uploadImage } = useCampaignMetadata();
   const { getEntitiesForCampaign } = useCampaignEntityTracking();
-  const { useVersions, createVersion, deleteVersion } = useCampaignVersions();
+  const { useVersions, createVersion, updateVersion, deleteVersion } = useCampaignVersions();
   const { data: versions = [], isLoading: versionsLoading } = useVersions(campaignId);
   
   const entities = getEntitiesForCampaign(campaignId);
