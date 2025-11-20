@@ -182,8 +182,8 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
       const strengthResult = calculateAdStrength(
         Array.isArray(ad.headlines) ? ad.headlines : [],
         Array.isArray(ad.descriptions) ? ad.descriptions : [],
-        ad.sitelinks || [],
-        ad.callouts || []
+        (ad.sitelinks || []).map((s: any) => s?.description || s?.text || ''),
+        (ad.callouts || []).map((c: any) => c?.text || c || '')
       );
 
       const strength = typeof strengthResult === 'number' ? strengthResult : strengthResult.score;
