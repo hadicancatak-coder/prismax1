@@ -85,45 +85,55 @@ export function AdPreviewPanel(props: AdPreviewPanelProps) {
   };
   
   return (
-    <div className="h-full overflow-auto p-md bg-muted/30">
-      <div className="space-y-md">
+    <div className="h-full overflow-auto bg-muted/30">
+      <div className="sticky top-0 z-10 bg-background border-b p-md">
+        <h3 className="text-heading-sm font-semibold">Live Preview</h3>
+        <p className="text-metadata text-muted-foreground">See how your ad will appear</p>
+      </div>
+      
+      <div className="p-md space-y-md">
         {/* Ad Strength Score */}
-        <Card>
+        <Card className="border-l-4 border-l-primary">
           <CardHeader className="pb-sm">
-            <CardTitle className="text-body">Ad Strength</CardTitle>
+            <CardTitle className="text-body flex items-center gap-xs">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Ad Strength
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-sm">
             <div className="flex items-center gap-sm">
-              <Progress value={adStrength.score} className="flex-1" />
-              <Badge variant={getStrengthBadge(adStrength.strength)}>
+              <Progress value={adStrength.score} className="flex-1 h-2" />
+              <Badge variant={getStrengthBadge(adStrength.strength)} className="font-semibold">
                 {adStrength.strength.toUpperCase()}
               </Badge>
             </div>
             <p className="text-metadata text-muted-foreground">
-              Score: {adStrength.score}/100
+              {adStrength.score}/100 points
             </p>
           </CardContent>
         </Card>
         
         {/* Preview Navigation for Search Ads */}
         {props.adType === "search" && combinations.length > 1 && (
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center p-sm bg-muted/50 rounded-md">
             <Button 
               size="sm" 
-              variant="outline"
+              variant="ghost"
               onClick={() => setCombinationIndex(i => Math.max(0, i - 1))}
               disabled={combinationIndex === 0}
+              className="h-8"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-metadata text-muted-foreground">
-              Combination {combinationIndex + 1} of {combinations.length}
+            <span className="text-body-sm font-medium">
+              Preview {combinationIndex + 1} of {combinations.length}
             </span>
             <Button 
               size="sm" 
-              variant="outline"
+              variant="ghost"
               onClick={() => setCombinationIndex(i => Math.min(combinations.length - 1, i + 1))}
               disabled={combinationIndex >= combinations.length - 1}
+              className="h-8"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -131,11 +141,8 @@ export function AdPreviewPanel(props: AdPreviewPanelProps) {
         )}
         
         {/* Preview */}
-        <Card>
-          <CardHeader className="pb-sm">
-            <CardTitle className="text-body">Live Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Card className="bg-gradient-to-br from-background to-muted/20">
+          <CardContent className="p-md">
             {props.adType === "search" ? (
               combinations.length > 0 ? (
                 <SearchAdPreview
@@ -165,46 +172,61 @@ export function AdPreviewPanel(props: AdPreviewPanelProps) {
           </CardContent>
         </Card>
         
-        {/* Critical Issues */}
+        {/* Suggestions */}
         {adStrength.suggestions.length > 0 && (
-          <Alert>
-            <AlertDescription>
-              <p className="text-body-sm font-medium mb-xs">Suggestions:</p>
-              <ul className="list-disc pl-4 space-y-xs text-body-sm">
+          <Card className="border-l-4 border-l-warning bg-warning/5">
+            <CardContent className="p-md">
+              <p className="text-body-sm font-semibold mb-sm flex items-center gap-xs">
+                <Lightbulb className="h-4 w-4 text-warning" />
+                Improvement Tips
+              </p>
+              <ul className="space-y-xs text-body-sm text-foreground">
                 {adStrength.suggestions.slice(0, 3).map((suggestion, idx) => (
-                  <li key={idx}>{suggestion}</li>
+                  <li key={idx} className="flex items-start gap-xs">
+                    <span className="text-warning mt-0.5">•</span>
+                    <span>{suggestion}</span>
+                  </li>
                 ))}
               </ul>
-            </AlertDescription>
-          </Alert>
+            </CardContent>
+          </Card>
         )}
 
         {/* Best Practice Hints */}
-        <div className="space-y-xs">
+        <div className="space-y-sm">
           {props.headlines.filter(h => h.trim()).length < 8 && (
-            <div className="flex items-start gap-xs p-sm bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-start gap-sm p-sm bg-primary/10 border border-primary/30 rounded-md hover:bg-primary/15 transition-smooth">
               <Lightbulb className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-body-sm text-foreground">
-                Add {8 - props.headlines.filter(h => h.trim()).length}+ more headlines to reach "Excellent"
-              </p>
+              <div className="flex-1">
+                <p className="text-body-sm font-medium text-foreground mb-0.5">Add More Headlines</p>
+                <p className="text-metadata text-muted-foreground">
+                  {8 - props.headlines.filter(h => h.trim()).length} more needed for "Excellent" rating
+                </p>
+              </div>
             </div>
           )}
           
           {props.descriptions.some(d => d.trim() && d.length < 60) && (
-            <div className="flex items-start gap-xs p-sm bg-warning/5 border border-warning/20 rounded-lg">
+            <div className="flex items-start gap-sm p-sm bg-warning/10 border border-warning/30 rounded-md hover:bg-warning/15 transition-smooth">
               <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-              <p className="text-body-sm text-foreground">
-                Some descriptions are short. Use full 90 chars for better performance
-              </p>
+              <div className="flex-1">
+                <p className="text-body-sm font-medium text-foreground mb-0.5">Expand Descriptions</p>
+                <p className="text-metadata text-muted-foreground">
+                  Use all 90 characters for better performance
+                </p>
+              </div>
             </div>
           )}
           
           {props.sitelinks.filter(s => s.description?.trim()).length === 0 && (
-            <div className="flex items-start gap-xs p-sm bg-muted/50 border border-border/50 rounded-lg">
+            <div className="flex items-start gap-sm p-sm bg-muted/70 border border-border rounded-md hover:bg-muted transition-smooth">
               <Sparkles className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-body-sm text-muted-foreground">
-                Add sitelinks to increase ad real estate and CTR
-              </p>
+              <div className="flex-1">
+                <p className="text-body-sm font-medium text-foreground mb-0.5">Add Sitelinks</p>
+                <p className="text-metadata text-muted-foreground">
+                  Increase ad space and click-through rate
+                </p>
+              </div>
             </div>
           )}
         </div>

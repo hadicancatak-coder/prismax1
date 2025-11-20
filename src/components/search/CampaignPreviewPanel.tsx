@@ -83,73 +83,72 @@ export function CampaignPreviewPanel({
   }, [ads]);
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      <div className="border-b p-md">
-        <h2 className="text-heading-md font-semibold mb-1">{campaign.name}</h2>
-        <p className="text-body-sm text-muted-foreground">Campaign Overview</p>
+    <div className="h-full flex flex-col bg-muted/30">
+      <div className="border-b bg-background p-md">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-heading-md font-semibold truncate mb-xs">{campaign.name}</h2>
+            <div className="flex items-center gap-sm flex-wrap">
+              <Badge variant="outline" className="gap-xs">
+                <Target className="h-3 w-3" />
+                {entity}
+              </Badge>
+              <Badge variant="outline" className="gap-xs">
+                <Globe className="h-3 w-3" />
+                {campaign.languages?.join(', ') || 'EN'}
+              </Badge>
+              {campaign.budget_monthly && (
+                <Badge variant="outline" className="gap-xs">
+                  <DollarSign className="h-3 w-3" />
+                  ${campaign.budget_monthly}/mo
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-md space-y-md">
-        {/* Campaign Info Cards */}
-        <div className="grid grid-cols-2 gap-sm">
-          <Card className="p-sm border-border/50">
-            <div className="flex items-center gap-sm mb-xs">
-              <Target className="h-4 w-4 text-primary" />
-              <span className="text-metadata font-medium text-muted-foreground">Entity</span>
-            </div>
-            <p className="text-body font-semibold">{entity}</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-sm">
+          <Card className="p-sm bg-card hover:bg-accent/50 transition-smooth border-l-4 border-l-primary">
+            <p className="text-metadata text-muted-foreground mb-xs">Ad Groups</p>
+            <p className="text-heading-lg font-bold">{adGroups.length}</p>
           </Card>
 
-          <Card className="p-sm border-border/50">
-            <div className="flex items-center gap-sm mb-xs">
-              <Globe className="h-4 w-4 text-primary" />
-              <span className="text-metadata font-medium text-muted-foreground">Languages</span>
-            </div>
-            <p className="text-body font-semibold">
-              {campaign.languages?.join(', ') || 'EN'}
-            </p>
+          <Card className="p-sm bg-card hover:bg-accent/50 transition-smooth border-l-4 border-l-success">
+            <p className="text-metadata text-muted-foreground mb-xs">Total Ads</p>
+            <p className="text-heading-lg font-bold">{ads.length}</p>
           </Card>
-
-          {campaign.budget_monthly && (
-            <Card className="p-sm border-border/50">
-              <div className="flex items-center gap-sm mb-xs">
-                <DollarSign className="h-4 w-4 text-primary" />
-                <span className="text-metadata font-medium text-muted-foreground">Budget</span>
-              </div>
-              <p className="text-body font-semibold">${campaign.budget_monthly}/mo</p>
-            </Card>
-          )}
-
-          <Card className="p-sm border-border/50">
-            <div className="flex items-center gap-sm mb-xs">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span className="text-metadata font-medium text-muted-foreground">Status</span>
-            </div>
-            <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-              {campaign.status || 'draft'}
-            </Badge>
+          
+          <Card className="p-sm bg-card hover:bg-accent/50 transition-smooth border-l-4 border-l-warning">
+            <p className="text-metadata text-muted-foreground mb-xs">Active</p>
+            <p className="text-heading-lg font-bold text-success">{statusCounts.active}</p>
           </Card>
         </div>
 
-        {/* Campaign Stats */}
-        <Card className="p-md border-border/50">
-          <h3 className="text-body-sm font-semibold mb-sm">Campaign Statistics</h3>
-          <div className="space-y-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-body-sm text-muted-foreground">Ad Groups</span>
-              <Badge variant="secondary">{adGroups.length}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-body-sm text-muted-foreground">Total Ads</span>
-              <Badge variant="secondary">{ads.length}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
+        {/* Quality Metrics */}
+        <Card className="p-md border-border">
+          <h3 className="text-body font-semibold mb-md flex items-center gap-xs">
+            <div className="h-1 w-8 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
+            Quality Metrics
+          </h3>
+          
+          <div className="space-y-md">
+            <div className="flex items-center justify-between p-sm bg-muted/50 rounded-md">
               <span className="text-body-sm text-muted-foreground">Avg Headline Length</span>
-              <span className="text-body-sm font-medium">{avgCharUsage.headlines} chars</span>
+              <div className="text-right">
+                <span className="text-body font-semibold">{avgCharUsage.headlines}</span>
+                <span className="text-metadata text-muted-foreground"> / 30 chars</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
+            
+            <div className="flex items-center justify-between p-sm bg-muted/50 rounded-md">
               <span className="text-body-sm text-muted-foreground">Avg Description Length</span>
-              <span className="text-body-sm font-medium">{avgCharUsage.descriptions} chars</span>
+              <div className="text-right">
+                <span className="text-body font-semibold">{avgCharUsage.descriptions}</span>
+                <span className="text-metadata text-muted-foreground"> / 90 chars</span>
+              </div>
             </div>
           </div>
         </Card>
