@@ -38,9 +38,11 @@ interface SearchAdEditorProps {
   onSave: (adId?: string) => void;
   onCancel: () => void;
   adType?: "search" | "display";
+  showHeader?: boolean;
+  onFieldChange?: (fields: any) => void;
 }
 
-export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType }: SearchAdEditorProps) {
+export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType, showHeader = true, onFieldChange }: SearchAdEditorProps) {
   const adType = ad?.ad_type || propAdType || "search";
   const { user } = useAuth();
   const { copy } = useCopyToClipboard();
