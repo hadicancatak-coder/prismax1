@@ -4,13 +4,21 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { SearchHierarchyPanel } from "@/components/search/SearchHierarchyPanel";
 import { AdPreviewPanel } from "@/components/search/AdPreviewPanel";
+import { CampaignPreviewPanel } from "@/components/search/CampaignPreviewPanel";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-type ViewState = 'hierarchy' | 'ad-editor';
+type ViewState = 'hierarchy' | 'ad-editor' | 'campaign-preview';
 
 interface EditorContext {
   ad: any;
   adGroup: any;
+  campaign: any;
+  entity: string;
+}
+
+interface CampaignContext {
   campaign: any;
   entity: string;
 }
@@ -21,6 +29,7 @@ interface SearchPlannerProps {
 
 export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
+  const [campaignContext, setCampaignContext] = useState<CampaignContext | null>(null);
   const [editorState, setEditorState] = useState<any>({
     headlines: [],
     descriptions: [],
@@ -35,12 +44,50 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
     ctaText: ''
   });
 
+  // Fetch ad groups and ads for campaign preview
+  const { data: adGroups = [] } = useQuery({
+    queryKey: ['ad-groups-for-campaign', campaignContext?.campaign?.id],
+    queryFn: async () => {
+      if (!campaignContext?.campaign?.id) return [];
+      const { data } = await supabase
+        .from('ad_groups')
+        .select('*')
+        .eq('campaign_id', campaignContext.campaign.id);
+      return data || [];
+    },
+    enabled: !!campaignContext?.campaign?.id
+  });
+
+  const { data: campaignAds = [] } = useQuery({
+    queryKey: ['ads-for-campaign', campaignContext?.campaign?.id, adType],
+    queryFn: async () => {
+      if (!campaignContext?.campaign?.id) return [];
+      const adGroupIds = adGroups.map(ag => ag.id);
+      if (adGroupIds.length === 0) return [];
+      
+      const { data } = await supabase
+        .from('ads')
+        .select('*')
+        .in('ad_group_id', adGroupIds)
+        .eq('ad_type', adType);
+      return data || [];
+    },
+    enabled: !!campaignContext?.campaign?.id && adGroups.length > 0
+  });
+
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad, adGroup, campaign, entity });
+    setCampaignContext(null);
   };
 
   const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad: {}, adGroup, campaign, entity });
+    setCampaignContext(null);
+  };
+
+  const handleCampaignClick = (campaign: any, entity: string) => {
+    setCampaignContext({ campaign, entity });
+    setEditorContext(null);
   };
 
   const handleSave = () => {
@@ -49,6 +96,7 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
   const handleCancel = () => {
     setEditorContext(null);
+    setCampaignContext(null);
   };
 
   const handleFieldChange = (fields: any) => {
@@ -71,13 +119,14 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
             <SearchHierarchyPanel
               onEditAd={handleEditAd}
               onCreateAd={handleCreateAd}
+              onCampaignClick={handleCampaignClick}
               adType={adType}
             />
           </ResizablePanel>
           
           <ResizableHandle withHandle />
           
-          {/* MIDDLE: Editor Form */}
+          {/* MIDDLE: Editor Form or Campaign Preview */}
           <ResizablePanel defaultSize={40} minSize={30}>
             {editorContext ? (
               <ScrollArea className="h-full">
@@ -95,11 +144,28 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
                   />
                 </div>
               </ScrollArea>
+            ) : campaignContext ? (
+              <CampaignPreviewPanel
+                campaign={campaignContext.campaign}
+                adGroups={adGroups}
+                ads={campaignAds}
+                entity={campaignContext.entity}
+                onViewAllAds={() => {
+                  // This would expand the campaign in the hierarchy
+                  // For now just clear to show hierarchy
+                  setCampaignContext(null);
+                }}
+              />
             ) : (
               <div className="h-full flex items-center justify-center p-md bg-muted/30">
-                <p className="text-body text-muted-foreground">
-                  Select an ad to edit or create a new one
-                </p>
+                <div className="text-center space-y-sm">
+                  <p className="text-body text-muted-foreground">
+                    Select a campaign to preview
+                  </p>
+                  <p className="text-body-sm text-muted-foreground">
+                    or select an ad to edit
+                  </p>
+                </div>
               </div>
             )}
           </ResizablePanel>

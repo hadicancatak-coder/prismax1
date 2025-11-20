@@ -4,7 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lightbulb, AlertTriangle, Sparkles, X } from 'lucide-react';
 import { SearchAdPreview } from '@/components/ads/SearchAdPreview';
 import { DisplayAdPreview } from '@/components/ads/DisplayAdPreview';
 import { calculateAdStrength } from '@/lib/adQualityScore';
@@ -178,6 +178,36 @@ export function AdPreviewPanel(props: AdPreviewPanelProps) {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Best Practice Hints */}
+        <div className="space-y-xs">
+          {props.headlines.filter(h => h.trim()).length < 8 && (
+            <div className="flex items-start gap-xs p-sm bg-primary/5 border border-primary/20 rounded-lg">
+              <Lightbulb className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-body-sm text-foreground">
+                Add {8 - props.headlines.filter(h => h.trim()).length}+ more headlines to reach "Excellent"
+              </p>
+            </div>
+          )}
+          
+          {props.descriptions.some(d => d.trim() && d.length < 60) && (
+            <div className="flex items-start gap-xs p-sm bg-warning/5 border border-warning/20 rounded-lg">
+              <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-body-sm text-foreground">
+                Some descriptions are short. Use full 90 chars for better performance
+              </p>
+            </div>
+          )}
+          
+          {props.sitelinks.filter(s => s.description?.trim()).length === 0 && (
+            <div className="flex items-start gap-xs p-sm bg-muted/50 border border-border/50 rounded-lg">
+              <Sparkles className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <p className="text-body-sm text-muted-foreground">
+                Add sitelinks to increase ad real estate and CTR
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

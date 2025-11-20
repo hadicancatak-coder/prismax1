@@ -10,6 +10,8 @@ import { Settings, Save, RotateCcw } from "lucide-react";
 import { useEntityAdRules } from "@/hooks/useEntityAdRules";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { toast } from "sonner";
+import { RuleTestPanel } from "@/components/admin/RuleTestPanel";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function AdRulesManagement() {
   const [selectedEntity, setSelectedEntity] = useState("GLOBAL");
@@ -55,6 +57,68 @@ export default function AdRulesManagement() {
           Configure prohibited words, competitor names, and validation rules per entity
         </p>
       </div>
+
+      {/* Rules Overview Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-heading-lg">Rules Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Entity</TableHead>
+                <TableHead>Prohibited Words</TableHead>
+                <TableHead>Competitor Names</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allRules?.map((rule) => (
+                <TableRow key={rule.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEntity(rule.entity)}>
+                  <TableCell>
+                    <div className="flex items-center gap-sm">
+                      {rule.entity === 'GLOBAL' && (
+                        <Badge variant="outline" className="text-xs">Default</Badge>
+                      )}
+                      <span className="font-medium">{rule.entity}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {Array.isArray(rule.prohibited_words) ? rule.prohibited_words.length : 0}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {Array.isArray(rule.competitor_names) ? rule.competitor_names.length : 0}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-body-sm text-muted-foreground">
+                    {new Date(rule.updated_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedEntity(rule.entity);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Test Panel */}
+      <RuleTestPanel />
 
       <Card>
         <CardHeader>
