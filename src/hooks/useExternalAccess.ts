@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { randomUUID } from "crypto";
 
 export interface ExternalAccess {
   id: string;
@@ -59,7 +58,7 @@ export const useExternalAccess = () => {
       
       return {
         ...data,
-        url: `${window.location.origin}/campaign-review/${token}`,
+        url: `${window.location.origin}/campaigns-log/review/${token}`,
       };
     },
     onSuccess: () => {

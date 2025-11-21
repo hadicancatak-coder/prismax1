@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -255,6 +255,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                   campaign.name
                 )}
               </DialogTitle>
+              <DialogDescription>
+                View and manage campaign details, versions, and comments
+              </DialogDescription>
             </DialogHeader>
             
             <div className="px-6 pb-3 border-b flex items-center justify-end gap-2 shrink-0">

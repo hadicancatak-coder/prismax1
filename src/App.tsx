@@ -84,7 +84,6 @@ const App = () => (
                 <Route path="/copywriter" element={<CopyWriter />} />
                 <Route path="/security" element={<Security />} />
                 <Route path="/kpis" element={<KPIs />} />
-                <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
                 <Route path="/campaigns-log" element={<CampaignsLog />} />
                 <Route path="/location-intelligence" element={<LocationIntelligence />} />
                 <Route path="/web-intel" element={<WebIntel />} />
