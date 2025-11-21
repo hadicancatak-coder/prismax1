@@ -75,15 +75,24 @@ export default function CampaignReview() {
           .eq("id", campaignId)
           .single();
 
-        if (campError) throw campError;
+        if (campError) {
+          console.error("Campaign query error:", campError);
+          toast.error("Campaign not found or access denied");
+          throw campError;
+        }
+
         setCampaignData(campaign ? [campaign] : []);
 
         // Load versions
-        const { data: versionData } = await (supabase as any)
+        const { data: versionData, error: versionError } = await supabase
           .from("utm_campaign_versions")
-          .select("id, campaign_id, version_number, version_notes, image_url, asset_link")
-          .eq("campaign_id", campaignId)
+          .select("id, utm_campaign_id, version_number, version_notes, image_url, asset_link")
+          .eq("utm_campaign_id", campaignId)
           .order("version_number", { ascending: false });
+
+        if (versionError) {
+          console.error("Versions query error:", versionError);
+        }
         
         setVersions(versionData || []);
       } else {
@@ -94,25 +103,44 @@ export default function CampaignReview() {
           .eq("entity", entity)
           .eq("status", "Live");
 
-        if (trackError) throw trackError;
+        if (trackError) {
+          console.error("Tracking query error:", trackError);
+          toast.error("Failed to load entity campaigns");
+          throw trackError;
+        }
         
         const campaigns = tracking.map((t: any) => t.utm_campaigns).filter(Boolean);
+        
+        if (!campaigns || campaigns.length === 0) {
+          toast.info(`No live campaigns found for ${entity}`);
+        }
+        
         setCampaignData(campaigns);
 
         const campaignIds = campaigns.map((c: any) => c.id);
         if (campaignIds.length > 0) {
-          const { data: versionData } = await (supabase as any)
+          const { data: versionData, error: versionError } = await supabase
             .from("utm_campaign_versions")
-            .select("id, campaign_id, version_number, version_notes, image_url, asset_link")
-            .in("campaign_id", campaignIds)
+            .select("id, utm_campaign_id, version_number, version_notes, image_url, asset_link")
+            .in("utm_campaign_id", campaignIds)
             .order("version_number", { ascending: false });
+
+          if (versionError) {
+            console.error("Versions query error:", versionError);
+          }
 
           setVersions(versionData || []);
         }
       }
     } catch (error: any) {
-      toast.error("Failed to load campaign data");
-      console.error(error);
+      console.error("Error loading campaign data:", error);
+      if (error.message?.includes("expired")) {
+        toast.error("This review link has expired");
+      } else if (error.message?.includes("JWT")) {
+        toast.error("Invalid review link");
+      } else {
+        toast.error("Failed to load campaign data");
+      }
     }
   };
 
@@ -268,8 +296,18 @@ export default function CampaignReview() {
       </div>
 
       <div className="container mx-auto py-md px-md space-y-lg">
-        {campaignData?.map((campaign: any) => {
-          const campaignVersions = versions.filter((v) => v.campaign_id === campaign.id);
+        {!campaignData || campaignData.length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">
+                <p className="text-body">No campaigns available for review at this time.</p>
+                <p className="text-body-sm mt-2">Entity: {accessData?.entity}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          campaignData.map((campaign: any) => {
+            const campaignVersions = versions.filter((v) => v.utm_campaign_id === campaign.id);
           
           return (
             <Card key={campaign.id}>
@@ -348,7 +386,8 @@ export default function CampaignReview() {
               </CardContent>
             </Card>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Footer */}
