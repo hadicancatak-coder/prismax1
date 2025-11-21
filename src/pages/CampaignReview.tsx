@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatDistanceToNow } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CampaignReview() {
   const { token } = useParams<{ token: string }>();
@@ -42,15 +43,17 @@ export default function CampaignReview() {
         const result = await verifyToken(token);
         setAccessData(result);
         
-        // Always load campaign data immediately
-        await loadCampaignData(result.entity, result.campaign_id);
-        
-        // Set verified to true (no email check needed)
-        setVerified(true);
-        
-        // Pre-fill name and email if available
-        setEmail(result.reviewer_email || "");
-        setName(result.reviewer_name || "");
+        // Check if already verified
+        if (result.email_verified) {
+          setVerified(true);
+          setEmail(result.reviewer_email || "");
+          setName(result.reviewer_name || "");
+          await loadCampaignData(result.entity, result.campaign_id);
+        } else {
+          // Pre-fill email if available
+          setEmail(result.reviewer_email || "");
+          setName(result.reviewer_name || "");
+        }
       } catch (error: any) {
         toast.error(error.message || "Invalid or expired link");
         navigate("/");
@@ -113,10 +116,9 @@ export default function CampaignReview() {
     }
   };
 
-  const handleCommentWithDetails = async (versionId: string, campaignId: string) => {
-    // Validate email on first comment
+  const handleEmailVerification = async () => {
     if (!email.endsWith("@cfi.trade")) {
-      toast.error("Email must be from @cfi.trade domain");
+      toast.error("Please use your @cfi.trade email address");
       return;
     }
 
@@ -125,23 +127,21 @@ export default function CampaignReview() {
       return;
     }
 
-    // Update access record with name/email if not set
-    if (!accessData.reviewer_name || !accessData.email_verified) {
-      try {
-        await verifyEmail.mutateAsync({
-          token: token!,
-          reviewerName: name,
-          reviewerEmail: email,
-        });
-        setAccessData({ ...accessData, reviewer_name: name, reviewer_email: email, email_verified: true });
-      } catch (error: any) {
-        toast.error("Failed to verify email: " + error.message);
-        return;
-      }
+    setVerifying(true);
+    try {
+      await verifyEmail.mutateAsync({
+        token: token!,
+        reviewerName: name,
+        reviewerEmail: email,
+      });
+      
+      setVerified(true);
+      await loadCampaignData(accessData.entity, accessData.campaign_id);
+    } catch (error: any) {
+      toast.error("Verification failed: " + error.message);
+    } finally {
+      setVerifying(false);
     }
-
-    // Now submit the comment
-    await handleCommentSubmit(versionId, campaignId);
   };
 
   const handleCommentSubmit = async (versionId: string, campaignId: string) => {
@@ -182,7 +182,74 @@ export default function CampaignReview() {
     );
   }
 
-  // No verification screen needed - directly show content
+  // Show verification form if not verified
+  if (!verified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-md">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <div className="flex items-center gap-sm mb-sm">
+              <Eye className="h-6 w-6 text-primary" />
+              <CardTitle className="text-heading-lg">Campaign Review Access</CardTitle>
+            </div>
+            <p className="text-body-sm text-muted-foreground">
+              Entity: {accessData?.entity}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-md">
+            <Alert>
+              <AlertDescription>
+                Please verify your identity to access the campaign review. Only @cfi.trade email addresses are allowed.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-sm">
+              <div>
+                <Label htmlFor="name">Your Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Your CFI Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@cfi.trade"
+                  className="mt-1"
+                />
+                <p className="text-metadata text-muted-foreground mt-1">
+                  Only @cfi.trade email addresses are accepted
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleEmailVerification}
+              disabled={verifying || !name.trim() || !email.trim()}
+              className="w-full"
+            >
+              {verifying ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Access Campaign Review"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -193,23 +260,8 @@ export default function CampaignReview() {
             <div className="flex-1">
               <h1 className="text-page-title">Campaign Review</h1>
               <p className="text-body-sm text-muted-foreground">
-                {accessData?.entity}
+                {accessData?.entity} • Reviewing as {name}
               </p>
-            </div>
-            {/* Name & Email Inputs for first-time visitors */}
-            <div className="flex items-center gap-sm">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your Name"
-                className="w-[150px]"
-              />
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@cfi.trade"
-                className="w-[200px]"
-              />
             </div>
           </div>
         </div>
@@ -282,7 +334,7 @@ export default function CampaignReview() {
                             className="min-h-[100px]"
                           />
                           <Button
-                            onClick={() => handleCommentWithDetails(version.id, campaign.id)}
+                            onClick={() => handleCommentSubmit(version.id, campaign.id)}
                             disabled={!comments[version.id]?.trim() || submitting[version.id]}
                             size="sm"
                           >
