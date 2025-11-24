@@ -50,6 +50,31 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  
+  // Check for external pages FIRST, before any state initialization
+  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
+                                 location.pathname.startsWith('/campaigns-log/external/');
+  
+  // For external pages, render immediately without auth
+  if (isExternalReviewPage) {
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        session: null,
+        loading: false,
+        roleLoading: false,
+        userRole: null,
+        mfaVerified: false,
+        validateMfaSession: async () => false,
+        setMfaVerifiedStatus: () => {},
+        signOut: async () => {},
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
+  
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,11 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [mfaVerified, setMfaVerified] = useState<boolean>(false);
   const [skipNextValidation, setSkipNextValidation] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Skip all auth checks for external review pages
-  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
-                                 location.pathname.startsWith('/campaigns-log/external/');
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
   const lastActivityTime = useRef<number>(Date.now());
 
@@ -163,12 +183,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Skip all auth for external review pages
-    if (isExternalReviewPage) {
-      setLoading(false);
-      return;
-    }
-    
     let mounted = true;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -226,7 +240,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [isExternalReviewPage]);
+  }, []);
 
   // Periodic MFA validation (every 5 minutes) - Phase 1: Pass user to prevent closure
   useEffect(() => {
