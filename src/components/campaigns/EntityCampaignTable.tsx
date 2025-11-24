@@ -109,13 +109,30 @@ export function EntityCampaignTable({
   const { data: allCampaigns = [] } = useUtmCampaigns();
   const { setNodeRef, isOver } = useDroppable({ id: `entity-${entity}` });
 
-  const entityCampaigns = trackingRecords
-    .filter((t) => t.entity === entity)
-    .map((t) => ({
-      tracking: t,
-      campaign: allCampaigns.find((c) => c.id === t.campaign_id) || null,
-    }))
-    .filter((item) => item.campaign);
+  // For external users, use provided campaigns directly
+  // For internal users, use tracking records
+  const entityCampaigns = isExternal
+    ? campaigns.map((campaign) => ({
+        tracking: { 
+          id: campaign.id, 
+          campaign_id: campaign.id, 
+          entity, 
+          status: 'active',
+          notes: (campaign as any).notes || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          created_by: null,
+          entity_comments: null,
+        } as CampaignEntityTracking,
+        campaign,
+      }))
+    : trackingRecords
+        .filter((t) => t.entity === entity)
+        .map((t) => ({
+          tracking: t,
+          campaign: allCampaigns.find((c) => c.id === t.campaign_id) || null,
+        }))
+        .filter((item) => item.campaign);
 
   return (
     <>

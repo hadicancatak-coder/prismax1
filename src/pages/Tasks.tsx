@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -97,49 +97,47 @@ export default function Tasks() {
     }
   ];
 
-  let filteredTasks = (data || []).filter((task: any) => {
-    const assigneeMatch = selectedAssignees.length === 0 || 
-      task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
-    
-    // Fix team filtering - check task.teams directly AND assignee teams
-    const teamMatch = selectedTeams.length === 0 || 
-      task.assignees?.some((assignee: any) => 
-        assignee.teams?.some((team: string) => selectedTeams.includes(team))
-      );
-    
-    let dateMatch = true;
-    if (dateFilter) {
-      if (!task.due_at) {
-        dateMatch = dateFilter.label === "Backlog";
-      } else {
-        const dueDate = new Date(task.due_at);
-        dateMatch = dueDate >= dateFilter.startDate && dueDate <= dateFilter.endDate;
+  const filteredTasks = useMemo(() => {
+    return (data || []).filter((task: any) => {
+      const assigneeMatch = selectedAssignees.length === 0 || 
+        task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
+      
+      const teamMatch = selectedTeams.length === 0 || 
+        task.assignees?.some((assignee: any) => 
+          assignee.teams?.some((team: string) => selectedTeams.includes(team))
+        );
+      
+      let dateMatch = true;
+      if (dateFilter) {
+        if (!task.due_at) {
+          dateMatch = dateFilter.label === "Backlog";
+        } else {
+          const dueDate = new Date(task.due_at);
+          dateMatch = dueDate >= dateFilter.startDate && dueDate <= dateFilter.endDate;
+        }
+      }
+      
+      const statusMatch = statusFilters.length === 0 || statusFilters.includes(task.status);
+      
+      const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
+      
+      const searchMatch = debouncedSearch === "" || 
+        task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
+      
+      return assigneeMatch && teamMatch && dateMatch && statusMatch && taskTypeMatch && searchMatch;
+    });
+  }, [data, selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch]);
+
+  const finalFilteredTasks = useMemo(() => {
+    if (activeQuickFilter) {
+      const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
+      if (quickFilterDef) {
+        return filteredTasks.filter(quickFilterDef.filter);
       }
     }
-    
-    const statusMatch = statusFilters.length === 0 || statusFilters.includes(task.status);
-    
-    const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
-    
-    const searchMatch = debouncedSearch === "" || 
-      task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
-    
-    return assigneeMatch && teamMatch && dateMatch && statusMatch && taskTypeMatch && searchMatch;
-  });
-
-  // Apply filter recalculation when dependencies change
-  useEffect(() => {
-    // Force re-render when filters change
-    setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, debouncedSearch]);
-
-  if (activeQuickFilter) {
-    const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
-    if (quickFilterDef) {
-      filteredTasks = filteredTasks.filter(quickFilterDef.filter);
-    }
-  }
+    return filteredTasks;
+  }, [filteredTasks, activeQuickFilter]);
 
   const tasks = data || [];
 
@@ -152,6 +150,10 @@ export default function Tasks() {
   }
 
   const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilters.length !== 4 || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch, activeQuickFilter]);
 
   const clearAllFilters = () => {
     setSelectedAssignees([]);
@@ -167,6 +169,7 @@ export default function Tasks() {
   const handleBulkComplete = async () => {
     await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status: 'Completed' }).eq('id', id)));
     setSelectedTaskIds([]);
+    refetch();
   };
 
   const handleBulkStatusChange = async (status: string) => {
@@ -174,6 +177,7 @@ export default function Tasks() {
       supabase.from('tasks').update({ status: status as any }).eq('id', id)
     ));
     setSelectedTaskIds([]);
+    refetch();
   };
 
   const handleBulkPriorityChange = async (priority: string) => {
@@ -181,15 +185,17 @@ export default function Tasks() {
       supabase.from('tasks').update({ priority: priority as any }).eq('id', id)
     ));
     setSelectedTaskIds([]);
+    refetch();
   };
 
   const handleBulkDelete = async () => {
     await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').delete().eq('id', id)));
     setSelectedTaskIds([]);
+    refetch();
   };
 
   const handleBulkExport = () => {
-    const selectedTasks = filteredTasks.filter(t => selectedTaskIds.includes(t.id));
+    const selectedTasks = finalFilteredTasks.filter(t => selectedTaskIds.includes(t.id));
     exportTasksToCSV(selectedTasks);
   };
 
@@ -321,13 +327,13 @@ export default function Tasks() {
               Clear All Filters
             </Button>
             <span className="text-xs text-muted-foreground">
-              Showing {filteredTasks.length} of {data?.length || 0} tasks
+              Showing {finalFilteredTasks.length} of {data?.length || 0} tasks
             </span>
           </div>
         )}
 
       {/* Task Views */}
-      {filteredTasks.length === 0 ? (
+      {finalFilteredTasks.length === 0 ? (
         <div className="py-12 text-center">
           <div className="flex flex-col items-center">
             <div className="bg-muted p-6 rounded-full mb-4">
@@ -353,7 +359,7 @@ export default function Tasks() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredTasks.length)}-{Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -375,14 +381,14 @@ export default function Tasks() {
           {/* Paginated Task Views */}
           {(() => {
             const startIndex = (currentPage - 1) * itemsPerPage;
-            const paginatedTasks = filteredTasks.slice(startIndex, startIndex + itemsPerPage);
-            const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+            const paginatedTasks = finalFilteredTasks.slice(startIndex, startIndex + itemsPerPage);
+            const totalPages = Math.ceil(finalFilteredTasks.length / itemsPerPage);
 
             return (
               <>
                 {viewMode === 'table' && (
-                  filteredTasks.length > 100 ? (
-                    <TasksTableVirtualized tasks={filteredTasks} onTaskUpdate={refetch} />
+                  finalFilteredTasks.length > 100 ? (
+                    <TasksTableVirtualized tasks={finalFilteredTasks} onTaskUpdate={refetch} />
                   ) : (
                     <TasksTable 
                       tasks={paginatedTasks} 
@@ -395,7 +401,7 @@ export default function Tasks() {
                 {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
                 {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && (
                   <TaskBoardView 
-                    tasks={filteredTasks} 
+                    tasks={finalFilteredTasks} 
                     onTaskClick={handleTaskClick}
                     groupBy={boardGroupBy}
                   />

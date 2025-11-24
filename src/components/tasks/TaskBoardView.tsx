@@ -287,9 +287,10 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
       {groups.map(group => {
         const groupTasks = filterTasksByGroup(group);
         const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
+        const taskIds = groupTasks.map(t => t.id);
         
         return (
-          <SortableContext key={group} id={group} items={[group]} strategy={verticalListSortingStrategy}>
+          <SortableContext key={group} id={group} items={taskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col min-h-[600px]">
               <div className={cn("rounded-t-lg p-3 border-b", color)}>
                 <div className="flex items-center justify-between">
@@ -302,8 +303,17 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
               
               <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
                 <div className="space-y-2">
-                  {groupTasks.map(task => (
-                    <Card key={task.id} className="p-3 group cursor-pointer hover-lift transition-smooth" onClick={() => onTaskClick(task.id)}>
+                  {groupTasks.map(task => {
+                    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+                    const style = {
+                      transform: CSS.Transform.toString(transform),
+                      transition,
+                      opacity: isDragging ? 0.5 : 1,
+                    };
+                    
+                    return (
+                    <div key={task.id} ref={setNodeRef} style={style} {...attributes} {...listeners}>
+                    <Card className="p-3 group cursor-pointer hover-lift transition-smooth" onClick={() => onTaskClick(task.id)}>
                       <div className="flex items-start justify-between mb-2">
                         <Badge 
                           variant="outline"
@@ -388,7 +398,9 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
                         )}
                       </div>
                     </Card>
-                  ))}
+                    </div>
+                  );
+                  })}
                 </div>
               </ScrollArea>
             </div>
