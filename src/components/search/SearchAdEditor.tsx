@@ -130,7 +130,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   }, [adType, longHeadline, shortHeadlines, displayDescriptions, ctaText, entity]);
 
   useEffect(() => {
-    if (ad && ad.id) {
+    if (ad) {
       setName(ad.name || "");
       setHeadlines([...(ad.headlines || []), ...Array(15).fill("")].slice(0, 15));
       setDescriptions([...(ad.descriptions || []), ...Array(4).fill("")].slice(0, 4));
