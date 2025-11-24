@@ -59,6 +59,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [skipNextValidation, setSkipNextValidation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Skip all auth checks for external review pages
+  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
+                                 location.pathname.startsWith('/campaigns-log/external/');
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
   const lastActivityTime = useRef<number>(Date.now());
 
@@ -159,8 +163,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    let mounted = true;
+    // Skip all auth for external review pages
+    if (isExternalReviewPage) {
+      setLoading(false);
+      return;
+    }
     
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
@@ -216,7 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isExternalReviewPage]);
 
   // Periodic MFA validation (every 5 minutes) - Phase 1: Pass user to prevent closure
   useEffect(() => {
