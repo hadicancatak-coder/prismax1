@@ -344,9 +344,17 @@ export default function CalendarView() {
 
     // Filter by selected user
     return expandedTasks.filter(task => {
-      const userMatch = !selectedUserId || 
-        task.assignees?.some((a: any) => a.user_id === selectedUserId);
-      return userMatch;
+      // If no user filter, show all tasks
+      if (!selectedUserId) return true;
+      
+      // Show tasks assigned to the selected user
+      const isAssignedToUser = task.assignees?.some((a: any) => a.user_id === selectedUserId);
+      
+      // Also show global unassigned tasks for all users
+      const isGlobalUnassigned = task.visibility === 'global' && 
+        (!task.assignees || task.assignees.length === 0);
+      
+      return isAssignedToUser || isGlobalUnassigned;
     });
   }, [allTasks, dateView, dateRange, selectedUserId, completions]);
 
