@@ -230,7 +230,7 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
         // Update task status
         await supabase
           .from('tasks')
-          .update({ status: targetGroup })
+          .update({ status: targetGroup as 'Pending' | 'Ongoing' | 'Blocked' | 'Completed' | 'Failed' })
           .eq('id', taskId);
         
         toast({
@@ -302,113 +302,100 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
               
               <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
                 <div className="space-y-2">
-                {groupTasks.map(task => (
-                  <DraggableTask
-                    key={task.id}
-                    task={task}
-                    onClick={() => onTaskClick(task.id)}
-                    onComplete={(e) => handleComplete(task, e)}
-                    onDuplicate={(e) => handleDuplicate(task, e)}
-                    onDelete={() => setShowDeleteConfirm(task.id)}
-                    openDropdown={openDropdown}
-                    setOpenDropdown={setOpenDropdown}
-                    processingAction={processingAction}
-                    priorityColors={priorityColors}
-                    showDeleteConfirm={showDeleteConfirm}
-                    setShowDeleteConfirm={setShowDeleteConfirm}
-                    handleDelete={handleDelete}
-                  />
-                ))}
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge 
-                        variant="outline"
-                        className={cn(priorityColors[task.priority as keyof typeof priorityColors])}
-                      >
-                        {task.priority}
-                      </Badge>
-
-                      <DropdownMenu open={openDropdown === task.id} onOpenChange={(open) => setOpenDropdown(open ? task.id : null)}>
-                        <DropdownMenuTrigger 
-                          onClick={(e) => e.stopPropagation()}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  {groupTasks.map(task => (
+                    <Card key={task.id} className="p-3 group cursor-pointer hover-lift transition-smooth" onClick={() => onTaskClick(task.id)}>
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge 
+                          variant="outline"
+                          className={cn(priorityColors[task.priority as keyof typeof priorityColors])}
                         >
-                          <MoreVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem 
-                            onClick={(e) => handleComplete(task, e)} 
-                            disabled={processingAction !== null}
-                          >
-                            {processingAction?.taskId === task.id && processingAction?.action === 'complete' ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                            )}
-                            Mark Completed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={(e) => handleDuplicate(task, e)} 
-                            disabled={processingAction !== null}
-                          >
-                            {processingAction?.taskId === task.id && processingAction?.action === 'duplicate' ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Copy className="mr-2 h-4 w-4" />
-                            )}
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setShowDeleteConfirm(task.id);
-                            }} 
-                            disabled={processingAction !== null} 
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {userRole === 'admin' ? 'Delete' : 'Request Delete'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                          {task.priority}
+                        </Badge>
 
-                    <p className="font-medium mt-2 text-sm line-clamp-2 cursor-pointer" onClick={() => onTaskClick(task.id)}>
-                      {task.title}
-                    </p>
-                    <div className="flex items-center justify-between mt-3 cursor-pointer" onClick={() => onTaskClick(task.id)}>
-                      <div className="flex -space-x-2">
-                        {task.assignees?.slice(0, 3).map((assignee: any) => (
-                          <Avatar key={assignee.user_id} className="h-5 w-5 border-2 border-background">
-                            <AvatarImage src={assignee.avatar_url} />
-                            <AvatarFallback className="text-[10px]">
-                              {assignee.name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
-                        {task.assignees?.length > 3 && (
-                          <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                            <span className="text-[8px] font-medium">+{task.assignees.length - 3}</span>
-                          </div>
+                        <DropdownMenu open={openDropdown === task.id} onOpenChange={(open) => setOpenDropdown(open ? task.id : null)}>
+                          <DropdownMenuTrigger 
+                            onClick={(e) => e.stopPropagation()}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem 
+                              onClick={(e) => handleComplete(task, e)} 
+                              disabled={processingAction !== null}
+                            >
+                              {processingAction?.taskId === task.id && processingAction?.action === 'complete' ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                              )}
+                              Mark Completed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => handleDuplicate(task, e)} 
+                              disabled={processingAction !== null}
+                            >
+                              {processingAction?.taskId === task.id && processingAction?.action === 'duplicate' ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                              )}
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowDeleteConfirm(task.id);
+                              }} 
+                              disabled={processingAction !== null} 
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {userRole === 'admin' ? 'Delete' : 'Request Delete'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <p className="font-medium mt-2 text-body-sm line-clamp-2">
+                        {task.title}
+                      </p>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex -space-x-2">
+                          {task.assignees?.slice(0, 3).map((assignee: any) => (
+                            <Avatar key={assignee.user_id} className="h-5 w-5 border-2 border-background">
+                              <AvatarImage src={assignee.avatar_url} />
+                              <AvatarFallback className="text-[10px]">
+                                {assignee.name?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
+                          {task.assignees?.length > 3 && (
+                            <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                              <span className="text-[8px] font-medium">+{task.assignees.length - 3}</span>
+                            </div>
+                          )}
+                        </div>
+                        {task.due_at && (
+                          <span className={cn(
+                            "text-metadata",
+                            isOverdue(task.due_at, task.status) && "text-destructive font-medium"
+                          )}>
+                            {format(new Date(task.due_at), 'MMM d')}
+                          </span>
                         )}
                       </div>
-                      {task.due_at && (
-                        <span className={cn(
-                          "text-xs",
-                          isOverdue(task.due_at, task.status) && "text-destructive font-medium"
-                        )}>
-                          {format(new Date(task.due_at), 'MMM d')}
-                        </span>
-                      )}
-                    </div>
-                  </Card>
+                    </Card>
                   ))}
-              </div>
-            </ScrollArea>
-          </div>
+                </div>
+              </ScrollArea>
+            </div>
+          </SortableContext>
         );
       })}
+      </div>
 
       <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
         <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
@@ -450,6 +437,6 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DndContext>
   );
 };
