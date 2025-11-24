@@ -18,14 +18,26 @@ export function DeleteAdDialog({ open, onOpenChange, ad, onSuccess }: DeleteAdDi
   const queryClient = useQueryClient();
 
   const handleDelete = async () => {
+    // Defensive checks
+    if (!ad || !ad.id) {
+      toast.error("Invalid ad data. Cannot delete.");
+      console.error("DeleteAdDialog: Invalid ad object", ad);
+      return;
+    }
+
     setIsDeleting(true);
     try {
+      console.log("Attempting to delete ad:", { id: ad.id, name: ad.name });
+      
       const { error } = await supabase
         .from('ads')
         .delete()
         .eq('id', ad.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error from Supabase:", error);
+        throw error;
+      }
 
       // Invalidate queries to refresh the UI
       await queryClient.invalidateQueries({ queryKey: ['ads'] });
@@ -36,7 +48,9 @@ export function DeleteAdDialog({ open, onOpenChange, ad, onSuccess }: DeleteAdDi
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete ad");
+      console.error("Delete ad error:", error);
+      const errorMessage = error.message || error.details || "Failed to delete ad. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }
