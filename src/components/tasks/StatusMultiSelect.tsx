@@ -54,7 +54,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[140px] h-8 text-sm flex-shrink-0 justify-between"
+          className="w-[100px] h-8 text-sm flex-shrink-0 justify-between"
         >
           <span className="truncate">
             {value.length === 0

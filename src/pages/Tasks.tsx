@@ -237,7 +237,9 @@ export default function Tasks() {
               
               <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
                 <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
-                  <SelectValue placeholder="Type" />
+                  <SelectValue>
+                    {taskTypeFilter === 'all' ? 'Type' : taskTypeFilter.charAt(0).toUpperCase() + taskTypeFilter.slice(1)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
