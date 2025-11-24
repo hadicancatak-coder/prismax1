@@ -312,10 +312,10 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                 <Collapsible key={campaign.id} open={isExpanded}>
                   <div className="space-y-0.5">
                     <div 
-                      className="group flex items-center gap-2 cursor-pointer p-2.5 pl-3 hover:bg-accent/50 rounded-lg transition-all border border-transparent hover:border-border hover:shadow-sm"
+                      className="group flex items-center gap-2 p-2.5 pl-3 hover:bg-accent/50 rounded-lg transition-all border border-transparent hover:border-border hover:shadow-sm"
                     >
                       <div 
-                        className="flex items-center gap-2 flex-1"
+                        className="flex items-center gap-2 flex-1 cursor-pointer"
                         onClick={() => toggleCampaign(campaign.id)}
                       >
                         {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -336,12 +336,15 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         </Badge>
                       </div>
                     
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                       <Button 
                         size="icon" 
                         variant="ghost" 
                         className="h-7 w-7 hover:bg-background"
-                        onClick={() => setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
+                        }}
                         title="Create ad group"
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -350,11 +353,14 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         size="icon" 
                         variant="ghost" 
                         className="h-7 w-7 hover:bg-background"
-                        onClick={() => setDuplicateCampaignDialog({ 
-                          campaign, 
-                          adGroupsCount: campaignAdGroups.length, 
-                          adsCount: getTotalAdsForCampaign(campaign.id) 
-                        })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDuplicateCampaignDialog({ 
+                            campaign, 
+                            adGroupsCount: campaignAdGroups.length, 
+                            adsCount: getTotalAdsForCampaign(campaign.id) 
+                          });
+                        }}
                         title="Duplicate"
                       >
                         <Copy className="h-3.5 w-3.5" />
@@ -363,11 +369,14 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         size="icon" 
                         variant="ghost" 
                         className="h-7 w-7 hover:bg-destructive/10 text-destructive"
-                        onClick={() => setDeleteCampaignDialog({ 
-                          campaign, 
-                          adGroupsCount: campaignAdGroups.length, 
-                          adsCount: getTotalAdsForCampaign(campaign.id) 
-                        })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteCampaignDialog({ 
+                            campaign, 
+                            adGroupsCount: campaignAdGroups.length, 
+                            adsCount: getTotalAdsForCampaign(campaign.id) 
+                          });
+                        }}
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -390,24 +399,27 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded}>
                                 <div 
-                                  className="group flex items-center gap-2 cursor-pointer p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all"
-                                  onClick={() => toggleAdGroup(adGroup.id)}
+                                  className="group flex items-center gap-2 p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all"
                                 >
-                                  {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                                  <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="flex-1 text-sm">{adGroup.name}</span>
-                                  <Badge variant="outline" className="text-xs font-normal">
-                                    {adGroupAds.length}
-                                  </Badge>
+                                  <div 
+                                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                                    onClick={() => toggleAdGroup(adGroup.id)}
+                                  >
+                                    {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                                    <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                    <span className="flex-1 text-sm">{adGroup.name}</span>
+                                    <Badge variant="outline" className="text-xs font-normal">
+                                      {adGroupAds.length}
+                                    </Badge>
+                                  </div>
                                   
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
                                       className="h-7 w-7 hover:bg-background"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        console.log('Creating ad for ad group:', adGroup);
                                         onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
                                       title="Create ad"
@@ -418,7 +430,10 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       size="icon" 
                                       variant="ghost" 
                                       className="h-7 w-7 hover:bg-background"
-                                      onClick={() => setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length })}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                      }}
                                       title="Duplicate"
                                     >
                                       <Copy className="h-3.5 w-3.5" />
@@ -427,7 +442,10 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       size="icon" 
                                       variant="ghost" 
                                       className="h-7 w-7 hover:bg-destructive/10 text-destructive"
-                                      onClick={() => setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length })}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
+                                      }}
                                       title="Delete"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />

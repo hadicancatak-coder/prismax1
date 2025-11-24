@@ -948,23 +948,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
             )}
 
 
-        {/* Unified Best Practice Checker */}
-        {isEditMode && (
-          <div className="mt-6 border-t border-border pt-6">
-            <UnifiedBestPracticeChecker
-              headlines={headlines}
-              descriptions={descriptions}
-              entity={entity}
-              onHeadlinesUpdate={setHeadlines}
-              dkiEnabled={dkiEnabled}
-              onDkiToggle={(index, enabled) => {
-                const newDkiEnabled = [...dkiEnabled];
-                newDkiEnabled[index] = enabled;
-                setDkiEnabled(newDkiEnabled);
-              }}
-            />
-          </div>
-        )}
+        {/* Unified Best Practice Checker - Removed from left, will be on right */}
 
             {isEditMode && (
               <Button onClick={() => handleSave(false)} disabled={isSaving} className="w-full">
@@ -1072,6 +1056,24 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                     sitelinks={sitelinks.filter(s => s.description).map(s => s.description)}
                     callouts={callouts.filter(c => c.trim())}
                     entity={entity}
+                  />
+                </div>
+              )}
+
+              {/* Unified Best Practice Checker - BELOW PREVIEWS */}
+              {isEditMode && (
+                <div className="border-t border-border pt-md mt-md">
+                  <UnifiedBestPracticeChecker
+                    headlines={headlines}
+                    descriptions={descriptions}
+                    entity={entity}
+                    onHeadlinesUpdate={setHeadlines}
+                    dkiEnabled={dkiEnabled}
+                    onDkiToggle={(index, enabled) => {
+                      const newDkiEnabled = [...dkiEnabled];
+                      newDkiEnabled[index] = enabled;
+                      setDkiEnabled(newDkiEnabled);
+                    }}
                   />
                 </div>
               )}
