@@ -364,8 +364,8 @@ export default function CalendarView() {
       // If no user filter, show all tasks
       if (!selectedUserId) return true;
       
-      // Show tasks assigned to the selected user
-      const isAssignedToUser = task.assignees?.some((a: any) => a.user_id === selectedUserId);
+      // Show tasks assigned to the selected user (check both id and user_id for compatibility)
+      const isAssignedToUser = task.assignees?.some((a: any) => a.id === selectedUserId || a.user_id === selectedUserId);
       
       // Also show global unassigned tasks for all users
       const isGlobalUnassigned = task.visibility === 'global' && 

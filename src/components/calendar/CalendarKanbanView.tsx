@@ -160,12 +160,7 @@ export const CalendarKanbanView = ({
                         </span>
                       )}
                       
-                      {/* Debug indicator for recurring tasks */}
-                      {task.isRecurringOccurrence && (
-                        <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-400">
-                          👥 {task.assignees?.length || 0} | {task.visibility}
-                        </Badge>
-                      )}
+                      {/* Recurring task indicator removed - no longer needed */}
                     </div>
 
                     {/* Task Description Preview */}

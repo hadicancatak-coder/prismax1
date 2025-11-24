@@ -41,29 +41,24 @@ export default function CampaignReview() {
       }
 
       try {
-        console.log('🔍 Verifying token:', token);
         const result = await verifyToken(token);
-        console.log('✅ Token verified successfully:', result);
         setAccessData(result);
         
         // Check if already verified
         if (result.email_verified) {
-          console.log('✅ Email already verified, loading campaign data');
           setVerified(true);
           setEmail(result.reviewer_email || "");
           setName(result.reviewer_name || "");
           await loadCampaignData(result.entity, result.campaign_id);
         } else {
-          console.log('⚠️ Email not verified yet, showing verification form');
           // Pre-fill email if available
           setEmail(result.reviewer_email || "");
           setName(result.reviewer_name || "");
         }
       } catch (error: any) {
-        console.error("❌ Token verification failed:", error);
-        console.error("Error details:", { message: error.message, code: error.code, details: error.details });
+        console.error("Token verification failed:", error);
         setAccessData(null);
-        toast.error("Failed to verify review link: " + (error.message || "Unknown error"));
+        toast.error(error.message || "This review link is invalid or has expired");
       } finally {
         setLoading(false);
       }
