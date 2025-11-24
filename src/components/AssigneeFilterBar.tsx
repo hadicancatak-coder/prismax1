@@ -75,84 +75,78 @@ export function AssigneeFilterBar({
   const teams = ["SocialUA", "PPC", "PerMar"];
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">Assignee:</span>
-        <Select
-          value={selectedAssignees.length > 0 ? "selected" : "all"}
-          onValueChange={(value) => {
-            if (value === "all") clearAssigneeFilters();
-          }}
-        >
-          <SelectTrigger className="bg-background w-[180px]">
-            <SelectValue>
-              {selectedAssignees.length > 0
-                ? `${selectedAssignees.length} selected`
-                : "All"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">All Assignees</SelectItem>
-            {users.map((user) => (
-              <div
-                key={user.user_id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleAssignee(user.user_id);
-                }}
-                className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedAssignees.includes(user.user_id)}
-                  onChange={() => {}}
-                  className="cursor-pointer"
-                />
-                <span>{user.username || user.name}</span>
-              </div>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="flex items-center gap-1.5">
+      <Select
+        value={selectedAssignees.length > 0 ? "selected" : "all"}
+        onValueChange={(value) => {
+          if (value === "all") clearAssigneeFilters();
+        }}
+      >
+        <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+          <SelectValue>
+            {selectedAssignees.length > 0
+              ? `${selectedAssignees.length} selected`
+              : "Assignee"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-background z-50">
+          <SelectItem value="all">All Assignees</SelectItem>
+          {users.map((user) => (
+            <div
+              key={user.user_id}
+              onClick={(e) => {
+                e.preventDefault();
+                toggleAssignee(user.user_id);
+              }}
+              className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={selectedAssignees.includes(user.user_id)}
+                onChange={() => {}}
+                className="cursor-pointer"
+              />
+              <span>{user.username || user.name}</span>
+            </div>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">Team:</span>
-        <Select
-          value={selectedTeams.length > 0 ? "selected" : "all"}
-          onValueChange={(value) => {
-            if (value === "all") clearTeamFilters();
-          }}
-        >
-          <SelectTrigger className="bg-background w-[180px]">
-            <SelectValue>
-              {selectedTeams.length > 0
-                ? `${selectedTeams.length} selected`
-                : "All"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">All Teams</SelectItem>
-            {teams.map((team) => (
-              <div
-                key={team}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleTeam(team);
-                }}
-                className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTeams.includes(team)}
-                  onChange={() => {}}
-                  className="cursor-pointer"
-                />
-                <span>{team}</span>
-              </div>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select
+        value={selectedTeams.length > 0 ? "selected" : "all"}
+        onValueChange={(value) => {
+          if (value === "all") clearTeamFilters();
+        }}
+      >
+        <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+          <SelectValue>
+            {selectedTeams.length > 0
+              ? `${selectedTeams.length} selected`
+              : "Team"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-background z-50">
+          <SelectItem value="all">All Teams</SelectItem>
+          {teams.map((team) => (
+            <div
+              key={team}
+              onClick={(e) => {
+                e.preventDefault();
+                toggleTeam(team);
+              }}
+              className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={selectedTeams.includes(team)}
+                onChange={() => {}}
+                className="cursor-pointer"
+              />
+              <span>{team}</span>
+            </div>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

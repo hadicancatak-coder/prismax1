@@ -73,56 +73,41 @@ export function TaskDateFilterBar({
   ];
 
   return (
-    <div className="flex items-center gap-2">
-      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <PopoverTrigger asChild>
-          <Button 
-            variant={customRange ? "default" : "outline"} 
-            size="sm"
-            className="min-w-[140px]"
-          >
-            <CalendarIcon className="h-4 w-4 mr-2" />
+    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant={customRange ? "default" : "outline"} 
+          size="sm"
+          className="w-[140px] h-8 text-sm flex-shrink-0"
+        >
+          <CalendarIcon className="h-4 w-4 mr-1.5" />
+          <span className="truncate">
             {customRange 
               ? `${format(customRange.from, 'MMM d')} - ${format(customRange.to, 'MMM d')}`
-              : "Select Date Range"
+              : "Date"
             }
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 z-[200]" align="start">
-          <DateRangePicker
-            value={customRange}
-            onChange={(range) => {
-              setCustomRange(range);
-              if (range) {
-                onFilterChange({
-                  label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`,
-                  startDate: range.from,
-                  endDate: range.to
-                });
-              } else {
-                onFilterChange(null);
-              }
-            }}
-            onApply={() => setCalendarOpen(false)}
-            presets="full"
-          />
-        </PopoverContent>
-      </Popover>
-
-      {onTaskTypeChange && (
-        <Select value={selectedTaskType} onValueChange={onTaskTypeChange}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Task Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {taskTypeOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    </div>
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 z-[200]" align="start">
+        <DateRangePicker
+          value={customRange}
+          onChange={(range) => {
+            setCustomRange(range);
+            if (range) {
+              onFilterChange({
+                label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`,
+                startDate: range.from,
+                endDate: range.to
+              });
+            } else {
+              onFilterChange(null);
+            }
+          }}
+          onApply={() => setCalendarOpen(false)}
+          presets="full"
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
