@@ -129,6 +129,11 @@ export default function DisplayPlanner() {
                 ads={campaignAds}
                 entity={campaignContext.entity}
                 onViewAllAds={() => setCampaignContext(null)}
+                onEditAd={handleEditAd}
+                onCreateAd={handleCreateAd}
+                onCreateAdGroup={(campaign, entity) => {
+                  // Optionally handle creating ad group inline
+                }}
               />
             ) : editorContext ? (
               <SearchAdEditor

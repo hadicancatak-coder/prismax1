@@ -137,6 +137,11 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
                 ads={campaignAds}
                 entity={campaignContext.entity}
                 onViewAllAds={() => setCampaignContext(null)}
+                onEditAd={handleEditAd}
+                onCreateAd={handleCreateAd}
+                onCreateAdGroup={(campaign, entity) => {
+                  // Optionally handle creating ad group inline
+                }}
               />
             ) : editorContext ? (
               <SearchAdEditor
