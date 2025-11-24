@@ -36,8 +36,7 @@ export default function CampaignReview() {
   useEffect(() => {
     const verify = async () => {
       if (!token) {
-        toast.error("Invalid review link");
-        navigate("/");
+        setLoading(false);
         return;
       }
 
@@ -57,15 +56,15 @@ export default function CampaignReview() {
           setName(result.reviewer_name || "");
         }
       } catch (error: any) {
-        toast.error(error.message || "Invalid or expired link");
-        navigate("/");
+        console.error("Token verification error:", error);
+        setAccessData(null);
       } finally {
         setLoading(false);
       }
     };
 
     verify();
-  }, [token, verifyToken, navigate]);
+  }, [token, verifyToken]);
 
   const loadCampaignData = async (entity: string, campaignId?: string) => {
     try {
@@ -237,6 +236,26 @@ export default function CampaignReview() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show error if no access data or invalid token
+  if (!accessData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-md">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-heading-lg text-destructive">Invalid Review Link</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <AlertDescription>
+                This review link is invalid or has expired. Please request a new link from the campaign manager.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
       </div>
     );
   }
