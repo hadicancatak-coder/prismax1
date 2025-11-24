@@ -300,7 +300,7 @@ export default function CalendarView() {
           
           // Convert each occurrence to a task-like object
           occurrences.forEach(occ => {
-            expandedTasks.push({
+            const expandedTask = {
               ...task,
               id: `${task.id}::${occ.occurrenceDate.getTime()}`,
               originalTaskId: task.id,
@@ -308,10 +308,24 @@ export default function CalendarView() {
               status: occ.isCompleted ? 'Completed' : task.status,
               isRecurringOccurrence: true,
               completionId: occ.completionId,
-              // Explicitly preserve assignees and visibility for filtering
-              assignees: task.assignees || [],
-              visibility: task.visibility,
+              // CRITICAL: Explicitly preserve these fields with defensive handling
+              assignees: Array.isArray(task.assignees) ? task.assignees : [],
+              visibility: task.visibility || 'private',
+              // Add explicit check for debugging
+              _debug_has_assignees: !!task.assignees && task.assignees.length > 0
+            };
+            
+            console.log('🔍 Expanded recurring task:', {
+              id: task.id,
+              title: task.title,
+              occurrenceDate: occ.occurrenceDate,
+              assignees: expandedTask.assignees,
+              visibility: expandedTask.visibility,
+              selectedUserId,
+              hasAssignees: expandedTask._debug_has_assignees
             });
+            
+            expandedTasks.push(expandedTask);
           });
         } else {
           // For List view, show recurring task once with aggregated completion status
@@ -346,7 +360,7 @@ export default function CalendarView() {
     });
 
     // Filter by selected user
-    return expandedTasks.filter(task => {
+    const filtered = expandedTasks.filter(task => {
       // If no user filter, show all tasks
       if (!selectedUserId) return true;
       
@@ -359,6 +373,15 @@ export default function CalendarView() {
       
       return isAssignedToUser || isGlobalUnassigned;
     });
+    
+    console.log('✅ Tasks after user filter:', {
+      total: expandedTasks.length,
+      filtered: filtered.length,
+      selectedUserId,
+      recurringTasks: filtered.filter(t => t.isRecurringOccurrence).length
+    });
+    
+    return filtered;
   }, [allTasks, dateView, dateRange, selectedUserId, completions]);
 
   // Sort tasks based on selected option
