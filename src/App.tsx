@@ -41,6 +41,7 @@ import WebIntel from "./pages/WebIntel";
 import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
 import CampaignReview from "./pages/CampaignReview";
+import CampaignsLogExternal from "./pages/CampaignsLogExternal";
 import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
@@ -55,7 +56,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
               <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
-              <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
+          <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
+          <Route path="/campaigns-log/external/:token" element={<CampaignsLogExternal />} />
               <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/tasks" element={<Tasks />} />

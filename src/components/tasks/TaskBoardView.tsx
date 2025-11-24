@@ -312,8 +312,15 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
                     };
                     
                     return (
-                    <div key={task.id} ref={setNodeRef} style={style} {...attributes} {...listeners}>
-                    <Card className="p-3 group cursor-pointer hover-lift transition-smooth" onClick={() => onTaskClick(task.id)}>
+                    <Card 
+                      key={task.id} 
+                      ref={setNodeRef} 
+                      style={style} 
+                      className="p-3 group cursor-grab active:cursor-grabbing hover-lift transition-smooth" 
+                      onClick={() => onTaskClick(task.id)}
+                      {...attributes} 
+                      {...listeners}
+                    >
                       <div className="flex items-start justify-between mb-2">
                         <Badge 
                           variant="outline"
@@ -398,7 +405,6 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
                         )}
                       </div>
                     </Card>
-                    </div>
                   );
                   })}
                 </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteAdDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface DeleteAdDialogProps {
 
 export function DeleteAdDialog({ open, onOpenChange, ad, onSuccess }: DeleteAdDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -24,6 +26,11 @@ export function DeleteAdDialog({ open, onOpenChange, ad, onSuccess }: DeleteAdDi
         .eq('id', ad.id);
 
       if (error) throw error;
+
+      // Invalidate queries to refresh the UI
+      await queryClient.invalidateQueries({ queryKey: ['ads'] });
+      await queryClient.invalidateQueries({ queryKey: ['ad-campaigns'] });
+      await queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
 
       toast.success(`"${ad.name}" deleted successfully`);
       onSuccess();
