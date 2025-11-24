@@ -30,6 +30,8 @@ export default function CampaignReview() {
   const [versions, setVersions] = useState<any[]>([]);
   const [comments, setComments] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
+  const [entityComment, setEntityComment] = useState("");
+  const [submittingEntityComment, setSubmittingEntityComment] = useState(false);
 
   useEffect(() => {
     const verify = async () => {
@@ -199,6 +201,35 @@ export default function CampaignReview() {
       toast.error("Failed to submit comment");
     } finally {
       setSubmitting({ ...submitting, [versionId]: false });
+    }
+  };
+
+  const handleEntityCommentSubmit = async () => {
+    if (!entityComment.trim()) return;
+
+    setSubmittingEntityComment(true);
+    try {
+      const { error } = await supabase
+        .from("external_campaign_review_comments")
+        .insert({
+          campaign_id: null,
+          version_id: null,
+          entity: accessData.entity,
+          reviewer_name: name,
+          reviewer_email: email,
+          comment_text: entityComment,
+          comment_type: "entity_feedback",
+          access_token: token!,
+        });
+
+      if (error) throw error;
+      
+      setEntityComment("");
+      toast.success("Entity feedback submitted");
+    } catch (error: any) {
+      toast.error("Failed to submit entity feedback");
+    } finally {
+      setSubmittingEntityComment(false);
     }
   };
 
@@ -388,6 +419,42 @@ export default function CampaignReview() {
           );
         })
         )}
+
+        {/* Entity-Level Feedback Section */}
+        <Card className="bg-accent/5 border-2 border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              General Feedback for {accessData?.entity}
+            </CardTitle>
+            <p className="text-body-sm text-muted-foreground">
+              Share your overall thoughts or comments about this entity's campaigns
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-md">
+            <Textarea
+              value={entityComment}
+              onChange={(e) => setEntityComment(e.target.value)}
+              placeholder="Your general feedback for the entity..."
+              className="min-h-[120px]"
+            />
+            <div className="flex justify-end">
+              <Button
+                onClick={handleEntityCommentSubmit}
+                disabled={!entityComment.trim() || submittingEntityComment}
+              >
+                {submittingEntityComment ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Entity Feedback"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Footer */}

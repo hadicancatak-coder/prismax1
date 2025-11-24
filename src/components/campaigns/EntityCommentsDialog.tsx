@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useEntityComments } from "@/hooks/useEntityComments";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { CommentText } from "@/components/CommentText";
+import { ExternalLink } from "lucide-react";
 
 interface EntityCommentsDialogProps {
   open: boolean;
@@ -27,7 +31,38 @@ export function EntityCommentsDialog({
 }: EntityCommentsDialogProps) {
   const [newComment, setNewComment] = useState("");
   const { useComments, addComment } = useEntityComments();
-  const { data: comments = [], isLoading } = useComments(entityName);
+  const { data: internalComments = [], isLoading: loadingInternal } = useComments(entityName);
+  
+  // Fetch external comments
+  const { data: externalComments = [], isLoading: loadingExternal } = useQuery({
+    queryKey: ["external-entity-comments", entityName],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_campaign_review_comments")
+        .select("*")
+        .eq("entity", entityName)
+        .eq("comment_type", "entity_feedback")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Merge and sort all comments
+  const allComments = [
+    ...internalComments.map(c => ({ ...c, isExternal: c.is_external || false })),
+    ...externalComments.map(c => ({ 
+      id: c.id,
+      entity: c.entity,
+      comment_text: c.comment_text,
+      author_name: c.reviewer_name,
+      author_email: c.reviewer_email,
+      created_at: c.created_at,
+      isExternal: true,
+    }))
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const isLoading = loadingInternal || loadingExternal;
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -62,12 +97,12 @@ export function EntityCommentsDialog({
               <div className="text-center text-sm text-muted-foreground py-8">
                 Loading comments...
               </div>
-            ) : comments.length === 0 ? (
+            ) : allComments.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-8">
                 No comments yet. Be the first to add one!
               </div>
             ) : (
-              comments.map((comment) => (
+              allComments.map((comment) => (
                 <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/50">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
@@ -75,11 +110,17 @@ export function EntityCommentsDialog({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm">
                         {comment.author_name || "Anonymous"}
                       </span>
-                      {comment.is_external && comment.author_email && (
+                      {comment.isExternal && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          External
+                        </Badge>
+                      )}
+                      {comment.isExternal && comment.author_email && (
                         <span className="text-xs text-muted-foreground">
                           ({comment.author_email})
                         </span>

@@ -16,6 +16,7 @@ import { VersionComments } from "./VersionComments";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignComments } from "./CampaignComments";
+import { ExternalReviewComments } from "./ExternalReviewComments";
 import { Loader2, FileImage, ExternalLink, Save, X, MessageCircle, Plus, Edit, Trash2, Activity, File, Calendar, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -50,7 +51,6 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const [landingPage, setLandingPage] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [assetLink, setAssetLink] = useState("");
   const [versionNotes, setVersionNotes] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [isAddingVersion, setIsAddingVersion] = useState(false);
@@ -82,7 +82,6 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
       setName(data.name || "");
       setLandingPage(data.landing_page || "");
       setDescription(data.description || "");
-      setAssetLink(data.campaign_metadata?.asset_link || "");
       
       return data;
     },
@@ -103,7 +102,6 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
       setName(campaign.name || "");
       setLandingPage(campaign.landing_page || "");
       setDescription(campaign.description || "");
-      setAssetLink(campaign.campaign_metadata?.asset_link || "");
       setImageFile(null);
     }
   };
@@ -144,27 +142,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         landing_page: landingPage || null,
       });
 
-      let imageUrl = campaign?.campaign_metadata?.image_url;
-      let imageFileSize = campaign?.campaign_metadata?.image_file_size;
-
-      if (imageFile) {
-        const result = await uploadImage.mutateAsync({ 
-          campaignId, 
-          file: imageFile 
-        });
-        imageUrl = result.publicUrl;
-        imageFileSize = result.fileSize;
-      }
-
-      await upsertMetadata.mutateAsync({
-        campaignId,
-        imageUrl,
-        imageFileSize,
-        assetLink: assetLink || undefined,
-      });
-
       setIsEditing(false);
-      setImageFile(null);
       toast.success("Campaign updated successfully");
     } catch (error) {
       toast.error("Failed to update campaign");
@@ -197,7 +175,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         description: description || undefined,
         imageUrl,
         imageFileSize,
-        assetLink: assetLink || undefined,
+        assetLink: "",
         versionNotes,
       });
 
@@ -330,65 +308,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
 
                   {isEditing && (
                     <>
-                      <div>
-                        <Label htmlFor="asset-image">Campaign Asset (Image, max 2MB)</Label>
-                        <div className="mt-1 space-y-2">
-                          <Input id="asset-image" type="file" accept="image/*" onChange={handleImageUpload} className="cursor-pointer" />
-                          {campaign.campaign_metadata?.image_url && !imageFile && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <FileImage className="h-4 w-4" />
-                              <span>Current image: {(campaign.campaign_metadata.image_file_size || 0) / 1024}KB</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="asset-link">External Asset Link (for files &gt;2MB)</Label>
-                        <Input
-                          id="asset-link"
-                          value={assetLink}
-                          onChange={(e) => setAssetLink(e.target.value)}
-                          placeholder="https://drive.google.com/..."
-                          className="mt-1"
-                        />
-                      </div>
                     </>
                   )}
 
-                  {!isEditing && campaign.campaign_metadata && (
-                    <div>
-                      <Label>Assets</Label>
-                      <div className="mt-2 space-y-2">
-                        {campaign.campaign_metadata.image_url && (
-                          <a
-                            href={campaign.campaign_metadata.image_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-primary hover:underline"
-                          >
-                            <FileImage className="h-4 w-4" />
-                            View Image ({(campaign.campaign_metadata.image_file_size || 0) / 1024}KB)
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                        {campaign.campaign_metadata.asset_link && (
-                          <a
-                            href={campaign.campaign_metadata.asset_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-primary hover:underline"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            External Asset Link
-                          </a>
-                        )}
-                        {!campaign.campaign_metadata.image_url && !campaign.campaign_metadata.asset_link && (
-                          <p className="text-sm text-muted-foreground">No assets uploaded</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </Card>
 
                 {/* Versions Log */}
@@ -644,11 +566,19 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                     )}
                     
                     {/* Version Comments */}
-                    <div className="border-t border-border pt-md">
-                      <VersionComments
-                        versionId={version.id}
-                        campaignId={campaign.id}
-                      />
+                    <div className="border-t border-border pt-md space-y-md">
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Internal Comments</h4>
+                        <VersionComments
+                          versionId={version.id}
+                          campaignId={campaign.id}
+                        />
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">External Feedback</h4>
+                        <ExternalReviewComments versionId={version.id} />
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
