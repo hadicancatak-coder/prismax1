@@ -7,11 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useExternalAccess } from "@/hooks/useExternalAccess";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatDistanceToNow } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Create an anonymous client for public access - bypasses auth completely
+const anonClient = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  }
+);
 
 export default function CampaignReview() {
   const { token } = useParams<{ token: string }>();
@@ -70,8 +82,8 @@ export default function CampaignReview() {
   const loadCampaignData = async (entity: string, campaignId?: string) => {
     try {
       if (campaignId) {
-        // Single campaign review - use anon access without auth
-        const { data: campaign, error: campError } = await supabase
+        // Single campaign review - use anon client without auth
+        const { data: campaign, error: campError } = await anonClient
           .from("utm_campaigns")
           .select("*")
           .eq("id", campaignId)
@@ -86,7 +98,7 @@ export default function CampaignReview() {
         setCampaignData(campaign ? [campaign] : []);
 
         // Load versions
-        const { data: versionData, error: versionError } = await supabase
+        const { data: versionData, error: versionError } = await anonClient
           .from("utm_campaign_versions")
           .select("id, utm_campaign_id, version_number, version_notes, image_url, asset_link")
           .eq("utm_campaign_id", campaignId)
@@ -99,7 +111,7 @@ export default function CampaignReview() {
         setVersions(versionData || []);
       } else {
         // Entity-wide review - load all campaigns for entity
-        const { data: tracking, error: trackError } = await supabase
+        const { data: tracking, error: trackError } = await anonClient
           .from("campaign_entity_tracking")
           .select("campaign_id, utm_campaigns(*)")
           .eq("entity", entity)
@@ -121,7 +133,7 @@ export default function CampaignReview() {
 
         const campaignIds = campaigns.map((c: any) => c.id);
         if (campaignIds.length > 0) {
-          const { data: versionData, error: versionError } = await supabase
+          const { data: versionData, error: versionError } = await anonClient
             .from("utm_campaign_versions")
             .select("id, utm_campaign_id, version_number, version_notes, image_url, asset_link")
             .in("utm_campaign_id", campaignIds)
@@ -180,7 +192,7 @@ export default function CampaignReview() {
 
     setSubmitting({ ...submitting, [versionId]: true });
     try {
-      const { error } = await supabase
+      const { error } = await anonClient
         .from("external_campaign_review_comments")
         .insert({
           campaign_id: campaignId,
@@ -209,7 +221,7 @@ export default function CampaignReview() {
 
     setSubmittingEntityComment(true);
     try {
-      const { error } = await supabase
+      const { error } = await anonClient
         .from("external_campaign_review_comments")
         .insert({
           campaign_id: null,
