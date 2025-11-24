@@ -997,6 +997,7 @@ export type Database = {
           is_active: boolean | null
           reviewer_email: string
           reviewer_name: string | null
+          updated_at: string | null
         }
         Insert: {
           access_token: string
@@ -1010,6 +1011,7 @@ export type Database = {
           is_active?: boolean | null
           reviewer_email: string
           reviewer_name?: string | null
+          updated_at?: string | null
         }
         Update: {
           access_token?: string
@@ -1023,6 +1025,7 @@ export type Database = {
           is_active?: boolean | null
           reviewer_email?: string
           reviewer_name?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
