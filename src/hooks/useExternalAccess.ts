@@ -71,6 +71,8 @@ export const useExternalAccess = () => {
 
   // Verify token
   const verifyToken = async (token: string): Promise<ExternalAccess> => {
+    console.log('🔐 Verifying external access token:', token);
+    
     const { data, error } = await supabase
       .from("campaign_external_access")
       .select("*")
@@ -78,13 +80,19 @@ export const useExternalAccess = () => {
       .eq("is_active", true)
       .single();
     
-    if (error) throw new Error("Invalid or inactive token");
+    console.log('📊 Token query result:', { hasData: !!data, error: error?.message, errorCode: error?.code });
+    
+    if (error) {
+      console.error('❌ Supabase error details:', error);
+      throw new Error(`Token verification failed: ${error.message}`);
+    }
     
     // Check expiration
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
       throw new Error("Link has expired");
     }
     
+    console.log('✅ Token verified successfully:', data);
     return data as ExternalAccess;
   };
 
