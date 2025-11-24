@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // For external pages, render immediately without auth
   if (isExternalReviewPage) {
+    console.log('🌐 External review page detected, bypassing all auth:', location.pathname);
     return (
       <AuthContext.Provider value={{
         user: null,
@@ -68,7 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         mfaVerified: false,
         validateMfaSession: async () => false,
         setMfaVerifiedStatus: () => {},
-        signOut: async () => {},
+        signOut: async () => {
+          console.log('Sign out called on external review page - ignoring');
+        },
       }}>
         {children}
       </AuthContext.Provider>
