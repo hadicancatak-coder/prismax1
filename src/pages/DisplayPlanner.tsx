@@ -107,7 +107,7 @@ export default function DisplayPlanner() {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* LEFT: Hierarchy */}
           <ResizablePanel defaultSize={30} minSize={25}>
             <SearchHierarchyPanel
