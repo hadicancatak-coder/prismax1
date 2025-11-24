@@ -25,11 +25,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BestPracticeValidator } from "./BestPracticeValidator";
-import { DKITemplateEditor } from "./DKITemplateEditor";
-import { HeadlineDiversityChecker } from "./HeadlineDiversityChecker";
+import { UnifiedBestPracticeChecker } from "./UnifiedBestPracticeChecker";
 import { AdComplianceChecker } from "../AdComplianceChecker";
-import { InlineComplianceValidator } from "./InlineComplianceValidator";
 import { Plus } from "lucide-react";
 
 interface SearchAdEditorProps {
@@ -687,11 +684,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                                   {headline.length}/30
                                 </span>
                               </Label>
-                              <InlineComplianceValidator 
-                                value={headline} 
-                                entity={entity} 
-                                fieldType="headline" 
-                              />
                             </div>
                             <SortableHeadlineInput
                               id={`headline-${index}`}
@@ -818,51 +810,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               )}
             </div>
 
-            {/* Single Consolidated Validation Section */}
-            {isEditMode && adType === 'search' && (
-              <div className="mt-6">
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="validation">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      📊 Best Practice Validation & Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <BestPracticeValidator
-                        headlines={headlines.filter(h => h.trim())}
-                        descriptions={descriptions.filter(d => d.trim())}
-                        entity={entity}
-                        primaryKeyword={campaign?.primary_keyword}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="dki">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      🔄 Dynamic Keyword Insertion (DKI)
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <DKITemplateEditor
-                        headlines={headlines}
-                        onUpdate={(newHeadlines) => {
-                          setHeadlines(newHeadlines);
-                        }}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="diversity">
-                    <AccordionTrigger className="text-body-sm font-semibold">
-                      📈 Headline Diversity Check
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <HeadlineDiversityChecker
-                        headlines={headlines.filter(h => h.trim())}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            )}
 
             {isEditMode && (
               <Accordion type="multiple" defaultValue={[]} className="w-full">
@@ -1000,49 +947,22 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               </Accordion>
             )}
 
-        {/* Validation Tools Accordion */}
+
+        {/* Unified Best Practice Checker */}
         {isEditMode && (
           <div className="mt-6 border-t border-border pt-6">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="validation">
-                <AccordionTrigger className="text-body-sm font-semibold">
-                  📊 Best Practice Validation & Scoring
-                </AccordionTrigger>
-                <AccordionContent>
-                  <BestPracticeValidator
-                    headlines={headlines.filter(h => h.trim())}
-                    descriptions={descriptions.filter(d => d.trim())}
-                    entity={entity}
-                    primaryKeyword={campaign?.primary_keyword}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="dki">
-                <AccordionTrigger className="text-body-sm font-semibold">
-                  🔄 Dynamic Keyword Insertion (DKI)
-                </AccordionTrigger>
-                <AccordionContent>
-                  <DKITemplateEditor
-                    headlines={headlines}
-                    onUpdate={(newHeadlines) => {
-                      setHeadlines(newHeadlines);
-                    }}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="diversity">
-                <AccordionTrigger className="text-body-sm font-semibold">
-                  📈 Headline Diversity Check
-                </AccordionTrigger>
-                <AccordionContent>
-                  <HeadlineDiversityChecker
-                    headlines={headlines.filter(h => h.trim())}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <UnifiedBestPracticeChecker
+              headlines={headlines}
+              descriptions={descriptions}
+              entity={entity}
+              onHeadlinesUpdate={setHeadlines}
+              dkiEnabled={dkiEnabled}
+              onDkiToggle={(index, enabled) => {
+                const newDkiEnabled = [...dkiEnabled];
+                newDkiEnabled[index] = enabled;
+                setDkiEnabled(newDkiEnabled);
+              }}
+            />
           </div>
         )}
 
