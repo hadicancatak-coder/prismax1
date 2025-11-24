@@ -2,8 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
-import { ChevronDown, Target, Calendar, DollarSign, Globe } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronDown, Target, Calendar, DollarSign, Globe, Plus, ChevronRight, Folder, FileText } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { calculateAdStrength } from "@/lib/adQualityScore";
 
 interface CampaignPreviewPanelProps {
   campaign: any;
@@ -11,6 +13,9 @@ interface CampaignPreviewPanelProps {
   ads: any[];
   entity: string;
   onViewAllAds?: () => void;
+  onEditAd?: (ad: any, adGroup: any, campaign: any, entity: string) => void;
+  onCreateAd?: (adGroup: any, campaign: any, entity: string) => void;
+  onCreateAdGroup?: (campaign: any, entity: string) => void;
 }
 
 export function CampaignPreviewPanel({ 
@@ -18,16 +23,29 @@ export function CampaignPreviewPanel({
   adGroups, 
   ads, 
   entity,
-  onViewAllAds 
+  onViewAllAds,
+  onEditAd,
+  onCreateAd,
+  onCreateAdGroup
 }: CampaignPreviewPanelProps) {
   
-  // Get a sample ad for preview
-  const sampleAd = useMemo(() => {
-    if (ads.length === 0) return null;
-    // Pick a random ad to show variety
-    const randomIndex = Math.floor(Math.random() * ads.length);
-    return ads[randomIndex];
-  }, [ads]);
+  const [expandedAdGroups, setExpandedAdGroups] = useState<Set<string>>(new Set());
+
+  const toggleAdGroup = (adGroupId: string) => {
+    setExpandedAdGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(adGroupId)) {
+        next.delete(adGroupId);
+      } else {
+        next.add(adGroupId);
+      }
+      return next;
+    });
+  };
+
+  const getAdsForAdGroup = (adGroupId: string) => {
+    return ads.filter(ad => ad.ad_group_id === adGroupId);
+  };
 
   // Calculate status distribution
   const statusCounts = useMemo(() => {
@@ -123,99 +141,105 @@ export function CampaignPreviewPanel({
           
           <Card className="p-sm bg-card hover:bg-accent/50 transition-smooth border-l-4 border-l-warning">
             <p className="text-metadata text-muted-foreground mb-xs">Active</p>
-            <p className="text-heading-lg font-bold text-success">{statusCounts.active}</p>
+            <p className="text-heading-lg font-bold text-success">{ads.filter(ad => ad.approval_status === 'active').length}</p>
           </Card>
         </div>
 
-        {/* Quality Metrics */}
+        {/* Ad Groups with Ads */}
         <Card className="p-md border-border">
-          <h3 className="text-body font-semibold mb-md flex items-center gap-xs">
-            <div className="h-1 w-8 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
-            Quality Metrics
-          </h3>
-          
-          <div className="space-y-md">
-            <div className="flex items-center justify-between p-sm bg-muted/50 rounded-md">
-              <span className="text-body-sm text-muted-foreground">Avg Headline Length</span>
-              <div className="text-right">
-                <span className="text-body font-semibold">{avgCharUsage.headlines}</span>
-                <span className="text-metadata text-muted-foreground"> / 30 chars</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between p-sm bg-muted/50 rounded-md">
-              <span className="text-body-sm text-muted-foreground">Avg Description Length</span>
-              <div className="text-right">
-                <span className="text-body font-semibold">{avgCharUsage.descriptions}</span>
-                <span className="text-metadata text-muted-foreground"> / 90 chars</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Status Distribution */}
-        <Card className="p-md border-border/50">
-          <h3 className="text-body-sm font-semibold mb-sm">Status Distribution</h3>
-          <div className="space-y-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-body-sm text-muted-foreground">Draft</span>
-              <Badge variant="outline">{statusCounts.draft}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-body-sm text-muted-foreground">Active</span>
-              <Badge variant="default">{statusCounts.active}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-body-sm text-muted-foreground">Paused</span>
-              <Badge variant="secondary">{statusCounts.paused}</Badge>
-            </div>
-          </div>
-        </Card>
-
-        {/* Sample Ad Preview */}
-        {sampleAd && (
-          <Card className="p-md border-border/50">
-            <h3 className="text-body-sm font-semibold mb-sm flex items-center gap-2">
-              Sample Ad Preview
-              <Badge variant="outline" className="text-xs">Random</Badge>
+          <div className="flex items-center justify-between mb-md">
+            <h3 className="text-body font-semibold flex items-center gap-xs">
+              <div className="h-1 w-8 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
+              Ad Groups & Ads
             </h3>
-            <div className="bg-muted/30 rounded-lg p-sm">
-              <SearchAdPreview
-                headlines={sampleAd.headlines || []}
-                descriptions={sampleAd.descriptions || []}
-                sitelinks={sampleAd.sitelinks || []}
-                landingPage={sampleAd.landing_page || ''}
-                businessName={sampleAd.business_name || ''}
-              />
+            {onCreateAdGroup && (
+              <Button size="sm" variant="outline" onClick={() => onCreateAdGroup(campaign, entity)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Ad Group
+              </Button>
+            )}
+          </div>
+
+          {adGroups.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No ad groups yet. Create one to get started.
             </div>
-            <p className="text-xs text-muted-foreground mt-sm">
-              Ad: {sampleAd.name}
-            </p>
-          </Card>
-        )}
+          ) : (
+            <div className="space-y-sm">
+              {adGroups.map(adGroup => {
+                const adGroupAds = getAdsForAdGroup(adGroup.id);
+                const isExpanded = expandedAdGroups.has(adGroup.id);
 
-        {/* Action Button */}
-        {ads.length > 0 && (
-          <Button 
-            onClick={onViewAllAds}
-            variant="outline" 
-            className="w-full"
-          >
-            <ChevronDown className="h-4 w-4 mr-2" />
-            View All {ads.length} Ads
-          </Button>
-        )}
+                return (
+                  <Collapsible key={adGroup.id} open={isExpanded} onOpenChange={() => toggleAdGroup(adGroup.id)}>
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center gap-2 p-sm bg-muted/50 hover:bg-muted transition-smooth cursor-pointer">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          <Folder className="h-4 w-4 text-primary" />
+                          <span className="flex-1 text-left font-medium text-body-sm">{adGroup.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {adGroupAds.length} ads
+                          </Badge>
+                        </div>
+                      </CollapsibleTrigger>
 
-        {ads.length === 0 && (
-          <Card className="p-lg border-dashed text-center">
-            <p className="text-body-sm text-muted-foreground">
-              No ads in this campaign yet.
-            </p>
-            <p className="text-metadata text-muted-foreground mt-xs">
-              Create ad groups and ads to see them here.
-            </p>
-          </Card>
-        )}
+                      <CollapsibleContent>
+                        <div className="p-sm space-y-xs bg-background">
+                          {onCreateAd && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="w-full justify-start text-muted-foreground hover:text-foreground"
+                              onClick={() => onCreateAd(adGroup, campaign, entity)}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              New Ad in {adGroup.name}
+                            </Button>
+                          )}
+                          
+                          {adGroupAds.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-2 px-2">No ads yet</p>
+                          ) : (
+                            <div className="space-y-xs">
+                              {adGroupAds.map(ad => {
+                                const strengthResult = calculateAdStrength(
+                                  Array.isArray(ad.headlines) ? ad.headlines : [],
+                                  Array.isArray(ad.descriptions) ? ad.descriptions : [],
+                                  (ad.sitelinks || []).map((s: any) => s?.description || s?.text || ''),
+                                  (ad.callouts || []).map((c: any) => c?.text || c || '')
+                                );
+                                const strength = typeof strengthResult === 'number' ? strengthResult : strengthResult.score;
+                                const strengthColor = 
+                                  strength >= 80 ? "text-success" :
+                                  strength >= 60 ? "text-warning" :
+                                  "text-destructive";
+
+                                return (
+                                  <div 
+                                    key={ad.id}
+                                    className="flex items-center gap-2 p-2 hover:bg-accent/50 rounded-md cursor-pointer transition-smooth group"
+                                    onClick={() => onEditAd && onEditAd(ad, adGroup, campaign, entity)}
+                                  >
+                                    <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                    <span className="flex-1 text-sm truncate">{ad.name}</span>
+                                    <Badge variant="outline" className={`text-xs ${strengthColor}`}>
+                                      {strength}%
+                                    </Badge>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
