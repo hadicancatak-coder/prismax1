@@ -398,9 +398,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
 
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded}>
-                                <div 
-                                  className="group flex items-center gap-2 p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all"
-                                >
+                                <div className="group flex items-center gap-2 p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all">
                                   <div 
                                     className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
                                     onClick={() => toggleAdGroup(adGroup.id)}
@@ -413,14 +411,16 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                     </Badge>
                                   </div>
                                   
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 flex-shrink-0 pointer-events-none group-hover:pointer-events-auto">
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 flex-shrink-0">
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background pointer-events-auto"
+                                      className="h-7 w-7 hover:bg-background"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                      }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        e.preventDefault();
                                         onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
                                       title="Create ad"
@@ -430,10 +430,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background pointer-events-auto"
+                                      className="h-7 w-7 hover:bg-background"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                      }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        e.preventDefault();
                                         setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
                                       }}
                                       title="Duplicate"
@@ -443,10 +445,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-destructive/10 text-destructive pointer-events-auto"
+                                      className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                      }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        e.preventDefault();
                                         setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
                                       }}
                                       title="Delete"
