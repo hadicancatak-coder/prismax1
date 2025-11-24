@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskBoardViewProps {
   tasks: any[];
@@ -26,6 +29,11 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<{ taskId: string; action: 'complete' | 'duplicate' | 'delete' } | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
   
   const statusGroups = ['Pending', 'Ongoing', 'Blocked', 'Completed', 'Failed'];
   const dateGroups = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'Later'];
@@ -206,31 +214,111 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    const taskId = active.id as string;
+    const targetGroup = over.id as string;
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      if (groupBy === 'status') {
+        // Update task status
+        await supabase
+          .from('tasks')
+          .update({ status: targetGroup })
+          .eq('id', taskId);
+        
+        toast({
+          title: "Task moved",
+          description: `Task moved to ${targetGroup}`,
+        });
+      } else {
+        // Update task date based on date group
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let newDate: Date;
+        
+        switch (targetGroup) {
+          case 'Today':
+            newDate = today;
+            break;
+          case 'Tomorrow':
+            newDate = addDays(today, 1);
+            break;
+          case 'This Week':
+            newDate = addDays(today, 3);
+            break;
+          case 'Later':
+            newDate = addDays(today, 14);
+            break;
+          default:
+            return;
+        }
+        
+        await supabase
+          .from('tasks')
+          .update({ due_at: newDate.toISOString() })
+          .eq('id', taskId);
+        
+        toast({
+          title: "Due date updated",
+          description: `Task moved to ${targetGroup}`,
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
       {groups.map(group => {
         const groupTasks = filterTasksByGroup(group);
         const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
         
         return (
-          <div key={group} className="flex flex-col min-h-[600px]">
-            <div className={cn("rounded-t-lg p-3 border-b", color)}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{group}</h3>
-                <Badge variant="secondary">
-                  {groupTasks.length}
-                </Badge>
+          <SortableContext key={group} id={group} items={[group]} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col min-h-[600px]">
+              <div className={cn("rounded-t-lg p-3 border-b", color)}>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">{group}</h3>
+                  <Badge variant="secondary">
+                    {groupTasks.length}
+                  </Badge>
+                </div>
               </div>
-            </div>
-            
-            <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
-              <div className="space-y-2">
-                {groupTasks
-                .map(task => (
-                  <Card 
+              
+              <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
+                <div className="space-y-2">
+                {groupTasks.map(task => (
+                  <DraggableTask
                     key={task.id}
-                    className="p-3 hover:shadow-md transition-shadow animate-fade-in relative group"
-                  >
+                    task={task}
+                    onClick={() => onTaskClick(task.id)}
+                    onComplete={(e) => handleComplete(task, e)}
+                    onDuplicate={(e) => handleDuplicate(task, e)}
+                    onDelete={() => setShowDeleteConfirm(task.id)}
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
+                    processingAction={processingAction}
+                    priorityColors={priorityColors}
+                    showDeleteConfirm={showDeleteConfirm}
+                    setShowDeleteConfirm={setShowDeleteConfirm}
+                    handleDelete={handleDelete}
+                  />
+                ))}
                     <div className="flex items-start justify-between mb-2">
                       <Badge 
                         variant="outline"
