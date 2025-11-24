@@ -569,7 +569,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="flex-col lg:flex-row">
+    <ResizablePanelGroup direction="horizontal" className="h-full flex-col lg:flex-row">
       {/* Form Panel */}
       <ResizablePanel defaultSize={50} minSize={40} className="min-h-[50vh] lg:min-h-0">
         <ScrollArea className="h-full">
