@@ -83,7 +83,27 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
   const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
     console.log('handleCreateAd called', { adGroup, campaign, entity });
-    setEditorContext({ ad: {}, adGroup, campaign, entity });
+    // Create a new ad object with default values
+    const newAd = {
+      name: `New ${adType === 'search' ? 'Search' : 'Display'} Ad`,
+      ad_group_id: adGroup.id,
+      ad_group_name: adGroup.name,
+      campaign_name: campaign.name,
+      entity: entity,
+      ad_type: adType,
+      headlines: [],
+      descriptions: [],
+      sitelinks: [],
+      callouts: [],
+      landing_page: '',
+      business_name: '',
+      language: 'EN',
+      long_headline: '',
+      short_headlines: [],
+      cta_text: '',
+      approval_status: 'draft'
+    };
+    setEditorContext({ ad: newAd, adGroup, campaign, entity });
     setCampaignContext(null);
   };
 
