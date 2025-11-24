@@ -228,36 +228,34 @@ export default function CampaignsLog() {
         <div className="border-t bg-card flex-shrink-0">
           <div className="container mx-auto px-6">
             <Collapsible open={expandedCampaigns.has('library')} onOpenChange={(open) => { const n = new Set(expandedCampaigns); open ? n.add('library') : n.delete('library'); setExpandedCampaigns(n); }}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between py-3 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-2">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="font-semibold text-base">Campaign Library</h3>
-                    <Badge variant="secondary" className="ml-1">{filteredCampaigns.length}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {selectedCampaigns.length > 0 && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); setBulkAssignDialogOpen(true); }} 
-                        size="sm" 
-                        variant="secondary"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Assign {selectedCampaigns.length} Campaigns
-                      </Button>
-                    )}
+              <div className="w-full flex items-center justify-between py-3 rounded-lg px-2">
+                <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded px-2 py-1 flex-1">
+                  <GripVertical className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-semibold text-base">Campaign Library</h3>
+                  <Badge variant="secondary" className="ml-1">{filteredCampaigns.length}</Badge>
+                  <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-300 ml-auto", expandedCampaigns.has('library') && "rotate-180")} />
+                </CollapsibleTrigger>
+                <div className="flex items-center gap-2">
+                  {selectedCampaigns.length > 0 && (
                     <Button 
-                      onClick={(e) => { e.stopPropagation(); setCreateCampaignDialogOpen(true); }} 
+                      onClick={() => setBulkAssignDialogOpen(true)} 
                       size="sm" 
-                      variant="default"
+                      variant="secondary"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Campaign
+                      <Check className="h-4 w-4 mr-2" />
+                      Assign {selectedCampaigns.length} Campaigns
                     </Button>
-                    <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-300", expandedCampaigns.has('library') && "rotate-180")} />
-                  </div>
-                </button>
-              </CollapsibleTrigger>
+                  )}
+                  <Button 
+                    onClick={() => setCreateCampaignDialogOpen(true)} 
+                    size="sm" 
+                    variant="default"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Campaign
+                  </Button>
+                </div>
+              </div>
               <CollapsibleContent className="pb-4 space-y-3 transition-all duration-300" style={{ overflow: expandedCampaigns.has('library') ? 'visible' : 'hidden', maxHeight: expandedCampaigns.has('library') ? '600px' : '0px' }}>
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1 max-w-md">
