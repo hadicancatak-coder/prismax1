@@ -405,7 +405,11 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       size="icon" 
                                       variant="ghost" 
                                       className="h-7 w-7 hover:bg-background"
-                                      onClick={() => onCreateAd(adGroup, campaign, selectedEntity)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log('Creating ad for ad group:', adGroup);
+                                        onCreateAd(adGroup, campaign, selectedEntity);
+                                      }}
                                       title="Create ad"
                                     >
                                       <Plus className="h-3.5 w-3.5" />

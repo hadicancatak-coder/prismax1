@@ -70,7 +70,7 @@ export default function CampaignReview() {
   const loadCampaignData = async (entity: string, campaignId?: string) => {
     try {
       if (campaignId) {
-        // Single campaign review
+        // Single campaign review - use anon access without auth
         const { data: campaign, error: campError } = await supabase
           .from("utm_campaigns")
           .select("*")
@@ -79,7 +79,7 @@ export default function CampaignReview() {
 
         if (campError) {
           console.error("Campaign query error:", campError);
-          toast.error("Campaign not found or access denied");
+          toast.error("Campaign not found");
           throw campError;
         }
 

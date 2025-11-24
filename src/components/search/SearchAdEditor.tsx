@@ -766,46 +766,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                   )}
                 </div>
               )}
-              
-              {/* Pattern Distribution Summary */}
-              {headlines.filter(h => h.trim()).length > 0 && (
-                <div className="p-3 bg-muted/30 rounded-lg space-y-2 mt-2">
-                  <div className="text-xs font-medium text-muted-foreground">Headline Pattern Mix:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {(() => {
-                      const patterns = headlines
-                        .filter(h => h.trim())
-                        .map(h => detectHeadlinePattern(h))
-                        .filter(p => p.type !== 'none');
-                      
-                      const counts = patterns.reduce((acc, p) => {
-                        acc[p.type] = (acc[p.type] || 0) + 1;
-                        return acc;
-                      }, {} as Record<string, number>);
-                      
-                      const genericCount = headlines.filter(h => h.trim()).filter(h => detectHeadlinePattern(h).type === 'none').length;
-                      
-                      return (
-                        <>
-                          {Object.entries(counts).map(([type, count]) => {
-                            const pattern = patterns.find(p => p.type === type)!;
-                            return (
-                              <Badge key={type} variant="secondary" className="text-xs">
-                                {pattern.indicator} {type}: {count}
-                              </Badge>
-                            );
-                          })}
-                          {genericCount > 0 && (
-                            <Badge variant="outline" className="text-xs text-muted-foreground">
-                              Generic: {genericCount}
-                            </Badge>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -858,8 +818,8 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
               )}
             </div>
 
-            {/* Validation Tools Accordion */}
-            {isEditMode && (
+            {/* Single Consolidated Validation Section */}
+            {isEditMode && adType === 'search' && (
               <div className="mt-6">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="validation">
