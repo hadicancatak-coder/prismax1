@@ -287,8 +287,28 @@ export default function CalendarView() {
 
     const expandedTasks: any[] = [];
 
+    // Debug logging for recurring task expansion
+    console.log('🔄 Starting task expansion:', {
+      totalTasks: allTasks.length,
+      recurringTasks: allTasks.filter(t => t.task_type === 'recurring').length,
+      viewMode,
+      dateView,
+      startDate: format(startDate, 'yyyy-MM-dd HH:mm'),
+      endDate: format(endDate, 'yyyy-MM-dd HH:mm'),
+      selectedUserId
+    });
+
     allTasks.forEach(task => {
       if (task.task_type === 'recurring' && task.recurrence_rrule) {
+        console.log('🔍 Expanding recurring task:', {
+          id: task.id,
+          title: task.title,
+          rrule: task.recurrence_rrule,
+          visibility: task.visibility,
+          assigneesCount: task.assignees?.length || 0,
+          viewMode
+        });
+
         // For Kanban view, expand recurring task into occurrences
         if (viewMode === 'kanban') {
           const occurrences = expandRecurringTask(
@@ -297,6 +317,12 @@ export default function CalendarView() {
             endDate,
             completions.filter(c => c.task_id === task.id)
           );
+
+          console.log('📅 Occurrences generated:', {
+            taskId: task.id,
+            count: occurrences.length,
+            dates: occurrences.map(o => format(o.occurrenceDate, 'yyyy-MM-dd'))
+          });
           
           // Convert each occurrence to a task-like object
           occurrences.forEach(occ => {
@@ -612,6 +638,8 @@ export default function CalendarView() {
                       <TabsList className="h-9">
                         <TabsTrigger value="today" className="h-8 px-2 text-xs">Today</TabsTrigger>
                         <TabsTrigger value="tomorrow" className="h-8 px-2 text-xs">Tomorrow</TabsTrigger>
+                        <TabsTrigger value="week" className="h-8 px-2 text-xs">Week</TabsTrigger>
+                        <TabsTrigger value="month" className="h-8 px-2 text-xs">Month</TabsTrigger>
                         <TabsTrigger value="custom" className="h-8 px-2 text-xs">Custom</TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -667,7 +695,13 @@ export default function CalendarView() {
                     <Button
                       variant={viewMode === 'kanban' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setViewMode('kanban')}
+                      onClick={() => {
+                        setViewMode('kanban');
+                        // Auto-switch to week view for better kanban experience
+                        if (dateView === 'today' || dateView === 'tomorrow') {
+                          setDateView('week');
+                        }
+                      }}
                       className="h-9 w-9 p-0"
                       title="Kanban View"
                     >
