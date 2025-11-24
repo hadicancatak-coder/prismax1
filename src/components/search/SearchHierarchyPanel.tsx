@@ -160,6 +160,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
     queryClient.invalidateQueries({ queryKey: ['campaigns-hierarchy'] });
     queryClient.invalidateQueries({ queryKey: ['ad-groups-hierarchy'] });
     queryClient.invalidateQueries({ queryKey: ['ads-hierarchy'] });
+    queryClient.invalidateQueries({ queryKey: ['ads'] });
+    queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
+    queryClient.invalidateQueries({ queryKey: ['ad-campaigns'] });
   };
 
   const handleDuplicateSuccess = () => {

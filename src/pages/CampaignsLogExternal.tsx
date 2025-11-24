@@ -12,6 +12,7 @@ import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable"
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CampaignsLogExternal() {
   const { token } = useParams<{ token: string }>();
@@ -84,12 +85,50 @@ export default function CampaignsLogExternal() {
     }
   };
 
-  // Transform campaigns to expected format
-  const transformedCampaigns = campaigns.map(c => ({
-    id: c.id,
-    name: c.name,
-    notes: null,
-  }));
+  // Fetch tracking records for this entity (for external access)
+  const [entityCampaigns, setEntityCampaigns] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchEntityCampaigns = async () => {
+      if (!accessData?.entity) return;
+      
+      try {
+        // Fetch tracking records for this entity
+        const { data: trackingData, error: trackingError } = await supabase
+          .from('campaign_entity_tracking')
+          .select('campaign_id')
+          .eq('entity', accessData.entity);
+        
+        if (trackingError) {
+          console.error('Failed to fetch tracking data:', trackingError);
+          return;
+        }
+        
+        if (!trackingData || trackingData.length === 0) {
+          setEntityCampaigns([]);
+          return;
+        }
+        
+        // Get campaign IDs
+        const campaignIds = trackingData.map(t => t.campaign_id);
+        
+        // Fetch campaigns that are tracked for this entity
+        const filteredCampaigns = campaigns
+          .filter(c => campaignIds.includes(c.id))
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            notes: null,
+          }));
+        
+        setEntityCampaigns(filteredCampaigns);
+      } catch (error) {
+        console.error('Error fetching entity campaigns:', error);
+      }
+    };
+    
+    fetchEntityCampaigns();
+  }, [accessData, campaigns]);
 
   if (loading) {
     return (
@@ -194,7 +233,7 @@ export default function CampaignsLogExternal() {
         {/* Campaign Table */}
         <EntityCampaignTable
           entity={accessData.entity}
-          campaigns={transformedCampaigns}
+          campaigns={entityCampaigns}
           isExternal={true}
           externalReviewerName={name}
           externalReviewerEmail={email}
