@@ -525,54 +525,58 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   // Display ad editing not yet supported with full UI - show basic message
   if (adType === "display") {
     return (
-      <div className="h-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">
-            {ad?.id ? "Edit Display Ad" : "Create Display Ad"}
-          </h2>
-          <Button variant="ghost" onClick={onCancel}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
+      <div className="h-full flex flex-col">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">
+                {ad?.id ? "Edit Display Ad" : "Create Display Ad"}
+              </h2>
+              <Button variant="ghost" onClick={onCancel}>
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </div>
 
-        {displayCompliance.length > 0 && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>
-              <ul className="list-disc pl-4 space-y-1">
-                {displayCompliance.map((issue, idx) => (
-                  <li key={idx}>{issue}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
+            {displayCompliance.length > 0 && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {displayCompliance.map((issue, idx) => (
+                      <li key={idx}>{issue}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
 
-        <DisplayAdCreator
-          businessName={businessName}
-          setBusinessName={setBusinessName}
-          longHeadline={longHeadline}
-          setLongHeadline={setLongHeadline}
-          shortHeadlines={shortHeadlines}
-          setShortHeadlines={setShortHeadlines}
-          descriptions={displayDescriptions}
-          setDescriptions={setDisplayDescriptions}
-          ctaText={ctaText}
-          setCtaText={setCtaText}
-          landingPage={landingPage}
-          setLandingPage={setLandingPage}
-          adEntity={entity}
-        />
+            <DisplayAdCreator
+              businessName={businessName}
+              setBusinessName={setBusinessName}
+              longHeadline={longHeadline}
+              setLongHeadline={setLongHeadline}
+              shortHeadlines={shortHeadlines}
+              setShortHeadlines={setShortHeadlines}
+              descriptions={displayDescriptions}
+              setDescriptions={setDisplayDescriptions}
+              ctaText={ctaText}
+              setCtaText={setCtaText}
+              landingPage={landingPage}
+              setLandingPage={setLandingPage}
+              adEntity={entity}
+            />
 
-        <div className="flex gap-2 mt-6">
-          <Button onClick={() => handleSave(false)} disabled={isSaving || !ctaText}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Saving..." : ad?.id ? "Update Ad" : "Create Ad"}
-          </Button>
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
+            <div className="flex gap-2 mt-6">
+              <Button onClick={() => handleSave(false)} disabled={isSaving || !ctaText}>
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? "Saving..." : ad?.id ? "Update Ad" : "Create Ad"}
+              </Button>
+              <Button variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
       </div>
     );
   }
