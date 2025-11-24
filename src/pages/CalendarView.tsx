@@ -330,7 +330,7 @@ export default function CalendarView() {
               ...task,
               id: `${task.id}::${occ.occurrenceDate.getTime()}`,
               originalTaskId: task.id,
-              due_at: occ.occurrenceDate.toISOString(),
+              due_at: format(occ.occurrenceDate, 'yyyy-MM-dd\'T\'HH:mm:ss'),
               status: occ.isCompleted ? 'Completed' : task.status,
               isRecurringOccurrence: true,
               completionId: occ.completionId,
