@@ -69,9 +69,6 @@ export default function CampaignReview() {
 
   const loadCampaignData = async (entity: string, campaignId?: string) => {
     try {
-      // Ensure anonymous access - clear any existing session
-      await supabase.auth.signOut({ scope: 'local' });
-
       if (campaignId) {
         // Single campaign review - use anon access without auth
         const { data: campaign, error: campError } = await supabase

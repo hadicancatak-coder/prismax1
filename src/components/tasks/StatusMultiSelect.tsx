@@ -57,10 +57,8 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
           className="w-[100px] h-8 text-sm flex-shrink-0 justify-between"
         >
           <span className="truncate">
-            {value.length === 0
-              ? "Select status..."
-              : value.length === statuses.length
-              ? "All statuses"
+            {value.length === 0 || value.length === statuses.length
+              ? "Status"
               : `${value.length} selected`}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
