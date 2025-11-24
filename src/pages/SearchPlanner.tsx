@@ -149,7 +149,7 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
           <ResizableHandle withHandle />
           
           {/* RIGHT: Campaign Preview OR Ad Editor (with integrated preview) */}
-          <ResizablePanel defaultSize={70} minSize={50} className="h-full overflow-hidden">
+          <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto">
             {campaignContext ? (
               <CampaignPreviewPanel
                 campaign={campaignContext.campaign}

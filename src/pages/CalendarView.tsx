@@ -308,6 +308,9 @@ export default function CalendarView() {
               status: occ.isCompleted ? 'Completed' : task.status,
               isRecurringOccurrence: true,
               completionId: occ.completionId,
+              // Explicitly preserve assignees and visibility for filtering
+              assignees: task.assignees || [],
+              visibility: task.visibility,
             });
           });
         } else {
