@@ -76,11 +76,13 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
   });
 
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
+    console.log('handleEditAd called', { ad, adGroup, campaign, entity });
     setEditorContext({ ad, adGroup, campaign, entity });
     setCampaignContext(null);
   };
 
   const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
+    console.log('handleCreateAd called', { adGroup, campaign, entity });
     setEditorContext({ ad: {}, adGroup, campaign, entity });
     setCampaignContext(null);
   };

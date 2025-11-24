@@ -14,6 +14,8 @@ import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { AuditItemComments } from "./AuditItemComments";
 import { useAuditItemComments } from "@/hooks/useAuditItemComments";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { FileText } from "lucide-react";
 
 interface AuditItemCardProps {
   item: OperationAuditItem;
@@ -28,6 +30,7 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   const deleteItem = useDeleteOperationItem();
   const [isDeleting, setIsDeleting] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const { data: comments } = useAuditItemComments(item.id);
   const [localContent, setLocalContent] = useState(item.content);
   const debouncedContent = useDebouncedValue(localContent, 500);

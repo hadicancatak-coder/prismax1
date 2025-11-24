@@ -129,8 +129,9 @@ export default function Operations() {
                         </div>
                         <h3 className="text-body font-medium mb-1">{log.title}</h3>
                         {log.description && (
-                          <p className="text-body text-muted-foreground">
-                            {log.description}
+                          <p className="text-body text-muted-foreground line-clamp-2">
+                            {log.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+                            {log.description.replace(/<[^>]*>/g, '').length > 100 && '...'}
                           </p>
                         )}
                       </div>

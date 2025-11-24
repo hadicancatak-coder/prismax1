@@ -2465,6 +2465,7 @@ export type Database = {
           id: string
           item_id: string
           parent_id: string | null
+          task_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2474,6 +2475,7 @@ export type Database = {
           id?: string
           item_id: string
           parent_id?: string | null
+          task_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -2483,6 +2485,7 @@ export type Database = {
           id?: string
           item_id?: string
           parent_id?: string | null
+          task_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2498,6 +2501,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "operation_audit_item_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operation_audit_item_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
