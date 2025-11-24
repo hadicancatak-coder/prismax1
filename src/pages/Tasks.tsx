@@ -139,7 +139,12 @@ export default function Tasks() {
     return filteredTasks;
   }, [filteredTasks, activeQuickFilter]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch, activeQuickFilter]);
+
   const tasks = data || [];
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilters.length !== 4 || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
 
   if (isLoading) {
     return (
@@ -148,12 +153,6 @@ export default function Tasks() {
       </div>
     );
   }
-
-  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilters.length !== 4 || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch, activeQuickFilter]);
 
   const clearAllFilters = () => {
     setSelectedAssignees([]);
