@@ -235,17 +235,6 @@ export default function Tasks() {
                 onChange={setStatusFilters}
               />
               
-              <Select value={taskTypeFilter} onValueChange={(val) => setTaskTypeFilter(val as any)}>
-                <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="Failed">Failed</SelectItem>
-                  <SelectItem value="Blocked">Blocked</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
                 <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
                   <SelectValue placeholder="Type" />
