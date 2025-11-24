@@ -117,7 +117,7 @@ export default function Tasks() {
         }
       }
       
-      const statusMatch = statusFilters.includes(task.status);
+      const statusMatch = statusFilters.length === 0 || statusFilters.includes(task.status);
       
       const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
       

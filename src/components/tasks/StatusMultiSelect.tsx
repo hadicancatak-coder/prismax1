@@ -17,10 +17,11 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 const statuses = [
-  { value: "To Do", label: "To Do" },
-  { value: "In Progress", label: "In Progress" },
+  { value: "Pending", label: "Pending" },
+  { value: "Ongoing", label: "Ongoing" },
   { value: "Blocked", label: "Blocked" },
   { value: "Completed", label: "Completed" },
+  { value: "Failed", label: "Failed" },
 ];
 
 interface StatusMultiSelectProps {
