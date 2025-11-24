@@ -103,10 +103,8 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
       cta_text: '',
       approval_status: 'draft'
     };
-    console.log('📝 Setting editor context with new ad:', newAd);
     setEditorContext({ ad: newAd, adGroup, campaign, entity });
     setCampaignContext(null);
-    console.log('✅ Editor context set, should show editor now');
   };
 
   const handleCampaignClick = (campaign: any, entity: string) => {
