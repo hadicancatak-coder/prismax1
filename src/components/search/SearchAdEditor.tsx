@@ -42,10 +42,13 @@ interface SearchAdEditorProps {
 }
 
 export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType, showHeader = true, onFieldChange }: SearchAdEditorProps) {
+  console.log('🎨 SearchAdEditor rendering with:', { ad, adGroup, campaign, entity, propAdType });
   const adType = ad?.ad_type || propAdType || "search";
+  console.log('📌 adType determined as:', adType);
   const { user } = useAuth();
   const { copy } = useCopyToClipboard();
   const [isEditMode, setIsEditMode] = useState(!ad?.id); // New ads start in edit mode
+  console.log('✏️ isEditMode:', isEditMode, 'ad.id:', ad?.id);
   const [previewCombination, setPreviewCombination] = useState(0);
   const [name, setName] = useState("");
   const [headlines, setHeadlines] = useState<string[]>(Array(15).fill(""));
