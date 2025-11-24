@@ -402,24 +402,25 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                   className="group flex items-center gap-2 p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all"
                                 >
                                   <div 
-                                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                                    className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
                                     onClick={() => toggleAdGroup(adGroup.id)}
                                   >
                                     {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                                     <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                    <span className="flex-1 text-sm">{adGroup.name}</span>
-                                    <Badge variant="outline" className="text-xs font-normal">
+                                    <span className="flex-1 text-sm truncate">{adGroup.name}</span>
+                                    <Badge variant="outline" className="text-xs font-normal flex-shrink-0">
                                       {adGroupAds.length}
                                     </Badge>
                                   </div>
                                   
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 flex-shrink-0 pointer-events-none group-hover:pointer-events-auto">
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background"
+                                      className="h-7 w-7 hover:bg-background pointer-events-auto"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        e.preventDefault();
                                         onCreateAd(adGroup, campaign, selectedEntity);
                                       }}
                                       title="Create ad"
@@ -429,9 +430,10 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background"
+                                      className="h-7 w-7 hover:bg-background pointer-events-auto"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        e.preventDefault();
                                         setDuplicateAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
                                       }}
                                       title="Duplicate"
@@ -441,9 +443,10 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                     <Button 
                                       size="icon" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                                      className="h-7 w-7 hover:bg-destructive/10 text-destructive pointer-events-auto"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        e.preventDefault();
                                         setDeleteAdGroupDialog({ adGroup, adsCount: adGroupAds.length });
                                       }}
                                       title="Delete"
