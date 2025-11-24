@@ -121,7 +121,7 @@ export default function DisplayPlanner() {
           <ResizableHandle withHandle />
           
           {/* RIGHT: Campaign Preview OR Ad Editor (with integrated preview) */}
-          <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto">
+          <ResizablePanel defaultSize={70} minSize={50}>
             {campaignContext ? (
               <CampaignPreviewPanel
                 campaign={campaignContext.campaign}

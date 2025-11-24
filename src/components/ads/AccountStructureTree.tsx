@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Layers, Plus, Search, ChevronsRight, ChevronsDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -36,6 +36,7 @@ export function AccountStructureTree({
   const [moveDialogState, setMoveDialogState] = useState<{open: boolean, adId: string, currentAdGroupId?: string} | null>(null);
   const [duplicateDialogState, setDuplicateDialogState] = useState<{open: boolean, adId: string} | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Fetch entities from entity_presets
   const { data: entityPresets } = useQuery({
@@ -147,8 +148,13 @@ export function AccountStructureTree({
       .eq('id', deleteConfirmId);
     
     if (error) {
-      toast.error("Failed to delete ad");
+      console.error('Delete ad error:', error);
+      toast.error("Failed to delete ad: " + (error.message || "Unknown error"));
     } else {
+      // Invalidate queries to refresh the UI
+      await queryClient.invalidateQueries({ queryKey: ['ads'] });
+      await queryClient.invalidateQueries({ queryKey: ['ad-campaigns'] });
+      await queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
       toast.success("Ad deleted successfully");
     }
     
