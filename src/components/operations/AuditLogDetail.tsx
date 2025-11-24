@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { EditAuditLogDialog } from "./EditAuditLogDialog";
 import { DeleteAuditLogDialog } from "./DeleteAuditLogDialog";
+import { ConvertAllToTaskButton } from "./ConvertAllToTaskButton";
 
 export function AuditLogDetail() {
   const { id } = useParams<{ id: string }>();
@@ -186,6 +187,17 @@ export function AuditLogDetail() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
+              {!log.task_id && items.length > 0 && (
+                <ConvertAllToTaskButton
+                  auditLogId={id!}
+                  title={log.title}
+                  description={log.description}
+                  entity={log.entity}
+                  deadline={log.deadline}
+                  items={items}
+                  assignees={[]}
+                />
+              )}
               <BulkItemsInput auditLogId={id!} />
             </div>
           </div>

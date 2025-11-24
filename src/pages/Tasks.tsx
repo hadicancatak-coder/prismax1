@@ -11,6 +11,7 @@ import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
+import { StatusMultiSelect } from "@/components/tasks/StatusMultiSelect";
 
 import { TaskGridView } from "@/components/tasks/TaskGridView";
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
@@ -32,12 +33,11 @@ import { useToast } from "@/hooks/use-toast";
 export default function Tasks() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilters, setStatusFilters] = useState<string[]>(['Pending', 'Ongoing', 'Blocked', 'Failed']);
   const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'generic' | 'campaign' | 'recurring'>('all');
   const [showCompleted, setShowCompleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,7 +117,7 @@ export default function Tasks() {
       }
     }
     
-    const statusMatch = statusFilter === "all" || task.status === statusFilter;
+    const statusMatch = statusFilters.length === 0 || statusFilters.includes(task.status);
     
     const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
     
@@ -132,7 +132,7 @@ export default function Tasks() {
   useEffect(() => {
     // Force re-render when filters change
     setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilter, debouncedSearch]);
+  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, debouncedSearch]);
 
   if (activeQuickFilter) {
     const quickFilterDef = quickFilters.find(f => f.label === activeQuickFilter);
@@ -151,13 +151,13 @@ export default function Tasks() {
     );
   }
 
-  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilter !== "all" || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilters.length !== 4 || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
 
   const clearAllFilters = () => {
     setSelectedAssignees([]);
     setSelectedTeams([]);
     setDateFilter(null);
-    setStatusFilter("all");
+    setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
     setTaskTypeFilter("all");
     setActiveQuickFilter(null);
     setSearchQuery("");
@@ -211,10 +211,6 @@ export default function Tasks() {
             <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={() => setTemplateDialogOpen(true)} variant="outline" className="min-h-[44px]">
-              <ListTodo className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Template</span>
-            </Button>
             <Button onClick={() => setDialogOpen(true)} className="min-h-[44px]">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">New Task</span>
@@ -234,15 +230,17 @@ export default function Tasks() {
                 className="w-32 sm:w-48 md:w-64 h-8 text-sm flex-shrink-0"
               />
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <StatusMultiSelect
+                value={statusFilters}
+                onChange={setStatusFilters}
+              />
+              
+              <Select value={taskTypeFilter} onValueChange={(val) => setTaskTypeFilter(val as any)}>
                 <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Ongoing">Ongoing</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
                   <SelectItem value="Failed">Failed</SelectItem>
                   <SelectItem value="Blocked">Blocked</SelectItem>
                 </SelectContent>
@@ -486,11 +484,6 @@ export default function Tasks() {
       )}
 
       <CreateTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-      <TaskTemplateDialog 
-        open={templateDialogOpen} 
-        onOpenChange={setTemplateDialogOpen}
-        onCreateFromTemplate={() => {}}
-      />
       {selectedTaskId && (
         <TaskDialog
           open={taskDialogOpen}
