@@ -884,52 +884,55 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             {/* Comments (View/Edit only) */}
             {!isCreate && taskId && (
               <div className="space-y-2">
-                <Collapsible open={showComments} onOpenChange={setShowComments}>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4" />
-                        Comments ({comments.length})
-                      </span>
-                      {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="border rounded-md p-4 space-y-4 max-h-[300px] overflow-y-auto mt-2">
-                      {comments.map((comment) => (
-                        <div key={comment.id} className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="font-medium">{comment.author?.name}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {format(new Date(comment.created_at), "PPP 'at' p")}
-                            </span>
-                          </div>
-                          <CommentText text={comment.body} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowComments(!showComments)}
+                  className="w-full justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Comments ({comments.length})
+                  </span>
+                  {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+                
+                {showComments && (
+                  <div className="border rounded-md p-4 space-y-4 max-h-[300px] overflow-y-auto">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">{comment.author?.name}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {format(new Date(comment.created_at), "PPP 'at' p")}
+                          </span>
                         </div>
-                      ))}
-                      
-                      {!isReadOnly && (
-                        <div className="space-y-2">
-                          <RichTextEditor
-                            value={newComment}
-                            onChange={setNewComment}
-                            placeholder="Add a comment..."
-                            minHeight="60px"
-                          />
-                          <Button type="button" onClick={handleAddComment} size="sm" className="w-full">
-                            <Send className="h-4 w-4 mr-2" />
-                            Send Comment
-                          </Button>
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                        <CommentText text={comment.body} />
+                      </div>
+                    ))}
+                    
+                    {!isReadOnly && (
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Add a comment..."
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAddComment();
+                            }
+                          }}
+                        />
+                        <Button type="button" size="sm" onClick={handleAddComment} className="w-full">
+                          <Send className="h-4 w-4 mr-2" />
+                          Send
+                        </Button>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
               </div>
             )}
 
