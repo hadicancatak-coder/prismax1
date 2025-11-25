@@ -12,7 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, AlertTriangle, MessageCircle, Activity } from "lucide-react";
+import { CalendarIcon, AlertTriangle, MessageCircle, Activity, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -30,7 +30,6 @@ import { BlockerDialog } from "./BlockerDialog";
 import { useTaskChangeLogs } from "@/hooks/useTaskChangeLogs";
 import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import DOMPurify from 'dompurify';
 import { CommentText } from "@/components/CommentText";
 import { useQueryClient } from "@tanstack/react-query";
@@ -697,6 +696,21 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               </div>
             )}
 
+            {/* Task Type */}
+            <div className="space-y-2">
+              <Label>Task Type</Label>
+              <Select value={taskType} onValueChange={setTaskType} disabled={isReadOnly}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="generic">General Task</SelectItem>
+                  <SelectItem value="campaign">Campaign</SelectItem>
+                  <SelectItem value="recurring">Recurring</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Teams (Admin only) */}
             {userRole === 'admin' && (
               <div className="space-y-2">
@@ -704,6 +718,43 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                 <TeamsMultiSelect
                   selectedTeams={selectedTeams}
                   onChange={setSelectedTeams}
+                />
+              </div>
+            )}
+
+            {/* Project */}
+            <div className="space-y-2">
+              <Label>Project</Label>
+              <Input
+                placeholder="No Project"
+                value="No Project"
+                disabled
+                className="bg-muted"
+              />
+            </div>
+
+            {/* Linked Blocker */}
+            {!isCreate && taskId ? (
+              <div className="space-y-2">
+                <Label>Linked Blocker</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setBlockerDialogOpen(true)}
+                  disabled={isReadOnly}
+                >
+                  {status === "Blocked" ? "View/Update Blocker" : "No blocker"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Linked Blocker</Label>
+                <Input
+                  placeholder="No blocker"
+                  value="No blocker"
+                  disabled
+                  className="bg-muted"
                 />
               </div>
             )}
@@ -720,34 +771,153 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               </div>
             )}
 
-            {/* Checklist (View/Edit only) */}
+            {/* Dependencies */}
+            <div className="space-y-2">
+              <Label>Dependencies</Label>
+              {!isCreate && taskId ? (
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between" disabled={isReadOnly}>
+                      <span>View Dependencies</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="p-2">
+                      <TaskDependenciesSection taskId={taskId} currentStatus={status} />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <Input
+                  placeholder="No dependencies"
+                  value=""
+                  disabled
+                  className="bg-muted"
+                />
+              )}
+            </div>
+
+            {/* Checklist */}
+            <div className="space-y-2">
+              <Label>Checklist</Label>
+              {!isCreate && taskId ? (
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between" disabled={isReadOnly}>
+                      <span>View Checklist</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="p-2">
+                      <TaskChecklistSection taskId={taskId} />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <Input
+                  placeholder="No checklist items"
+                  value=""
+                  disabled
+                  className="bg-muted"
+                />
+              )}
+            </div>
+
+            {/* Comments (View/Edit only) */}
             {!isCreate && taskId && (
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button type="button" variant="outline" className="w-full justify-between">
-                    Checklist
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <TaskChecklistSection taskId={taskId} />
-                </CollapsibleContent>
-              </Collapsible>
+              <div className="space-y-2 border-t pt-4">
+                <Collapsible open={showComments} onOpenChange={setShowComments}>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4" />
+                        Comments ({comments.length})
+                      </span>
+                      {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border rounded-md p-4 space-y-3 max-h-[300px] overflow-y-auto mt-2">
+                      {comments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center">No comments yet</p>
+                      ) : (
+                        comments.map((comment) => (
+                          <div key={comment.id} className="flex gap-2 p-2 rounded bg-muted/30">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm">{comment.author?.name || 'Unknown'}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(comment.created_at), 'MMM d, h:mm a')}
+                                </span>
+                              </div>
+                              <CommentText text={comment.body} />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      
+                      {!isReadOnly && (
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Input
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAddComment();
+                              }
+                            }}
+                          />
+                          <Button type="button" size="sm" onClick={handleAddComment}>
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             )}
 
-            {/* Dependencies (View/Edit only) */}
+            {/* Activity Log (View/Edit only) */}
             {!isCreate && taskId && (
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button type="button" variant="outline" className="w-full justify-between">
-                    Dependencies
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <TaskDependenciesSection taskId={taskId} currentStatus={status} />
-                </CollapsibleContent>
-              </Collapsible>
+              <div className="space-y-2">
+                <Collapsible open={showActivity} onOpenChange={setShowActivity}>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-4 w-4" />
+                        Activity Log
+                      </span>
+                      {showActivity ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border rounded-md p-4 space-y-2 max-h-[300px] overflow-y-auto mt-2">
+                      {changeLogsLoading ? (
+                        <p className="text-sm text-muted-foreground">Loading...</p>
+                      ) : changeLogs.length > 0 ? (
+                        changeLogs.map((log) => (
+                          <ActivityLogEntry 
+                            key={log.id}
+                            field_name={log.field_name}
+                            old_value={log.old_value}
+                            new_value={log.new_value}
+                            description={log.description}
+                            changed_at={log.changed_at}
+                            profiles={log.profiles}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No activity yet</p>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             )}
 
             {/* Comments (View/Edit only) */}
