@@ -395,7 +395,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Task details and team discussion</Label>
               <Input
                 id="title"
                 value={title}
@@ -418,21 +418,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Priority */}
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select value={priority} onValueChange={(v: any) => setPriority(v)} disabled={isReadOnly}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Status */}
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -450,70 +435,34 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {/* Due Date */}
-            <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isReadOnly || recurrence !== "none"}
-                    className="w-full justify-start"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {recurrence !== "none" ? "N/A (Recurring)" : dueDate ? format(dueDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              {workingDaysWarning && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    {workingDaysWarning}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-
-            {/* Jira Link */}
-            <div className="space-y-2">
-              <Label>Jira Link</Label>
-              <Input
-                type="url"
-                placeholder="https://jira.company.com/browse/TASK-123"
-                value={jiraLink}
-                onChange={(e) => setJiraLink(e.target.value)}
-                disabled={isReadOnly}
-              />
-            </div>
-
-            {/* Assignees */}
-            {!isCreate && (
+              {/* Priority */}
               <div className="space-y-2">
-                <Label>Assignees</Label>
+                <Label>Priority</Label>
+                <Select value={priority} onValueChange={(v: any) => setPriority(v)} disabled={isReadOnly}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Assignees - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Assignees</Label>
+              {!isCreate && taskId ? (
                 <MultiAssigneeSelector
                   entityType="task"
-                  entityId={taskId || ''}
+                  entityId={taskId}
                   assignees={realtimeAssignees}
                   onAssigneesChange={refetchAssignees}
                 />
-              </div>
-            )}
-
-            {isCreate && userRole === 'admin' && (
-              <div className="space-y-2">
-                <Label>Assignees</Label>
+              ) : isCreate && userRole === 'admin' ? (
                 <div className="border rounded-md p-2 min-h-[42px]">
                   {selectedAssignees.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -531,13 +480,28 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       ))}
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">No assignees</span>
+                    <span className="text-sm text-muted-foreground">Select assignees</span>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <Input placeholder="No teams assigned" value="" disabled className="bg-muted" />
+              )}
+            </div>
 
-            {/* Countries/Entity */}
+            {/* Teams - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Teams</Label>
+              {userRole === 'admin' ? (
+                <TeamsMultiSelect
+                  selectedTeams={selectedTeams}
+                  onChange={setSelectedTeams}
+                />
+              ) : (
+                <Input placeholder="No teams assigned" value="" disabled className="bg-muted" />
+              )}
+            </div>
+
+            {/* Countries/Entity - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Countries (Entity)</Label>
               <Popover>
@@ -561,6 +525,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 setEntities(entities.filter(c => c !== ent));
                               }
                             }}
+                            disabled={isReadOnly}
                           />
                           <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer">
                             {ent}
@@ -591,50 +556,29 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               )}
             </div>
 
-            {/* Recurrence */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Recurrence</Label>
-                <Select 
-                  value={recurrence} 
-                  onValueChange={(value) => {
-                    setRecurrence(value);
-                    if (value !== "none") setDueDate(undefined);
-                    if (value !== "weekly") setRecurrenceDaysOfWeek([]);
-                    if (value !== "monthly") setRecurrenceDayOfMonth(null);
-                  }}
-                  disabled={isReadOnly}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Recurrence</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Task Type */}
-              <div className="space-y-2">
-                <Label>Task Type</Label>
-                <Select 
-                  value={recurrence !== "none" ? "recurring" : taskType} 
-                  onValueChange={(v) => setTaskType(v)}
-                  disabled={isReadOnly || recurrence !== "none"}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="generic">Generic</SelectItem>
-                    <SelectItem value="campaign">Campaign</SelectItem>
-                    <SelectItem value="recurring" disabled>Recurring (auto-set)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Recurrence - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Recurring Task</Label>
+              <Select 
+                value={recurrence} 
+                onValueChange={(value) => {
+                  setRecurrence(value);
+                  if (value !== "none") setDueDate(undefined);
+                  if (value !== "weekly") setRecurrenceDaysOfWeek([]);
+                  if (value !== "monthly") setRecurrenceDayOfMonth(null);
+                }}
+                disabled={isReadOnly}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Recurrence</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Weekly Recurrence Days */}
@@ -696,33 +640,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               </div>
             )}
 
-            {/* Task Type */}
-            <div className="space-y-2">
-              <Label>Task Type</Label>
-              <Select value={taskType} onValueChange={setTaskType} disabled={isReadOnly}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="generic">General Task</SelectItem>
-                  <SelectItem value="campaign">Campaign</SelectItem>
-                  <SelectItem value="recurring">Recurring</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Teams (Admin only) */}
-            {userRole === 'admin' && (
-              <div className="space-y-2">
-                <Label>Teams</Label>
-                <TeamsMultiSelect
-                  selectedTeams={selectedTeams}
-                  onChange={setSelectedTeams}
-                />
-              </div>
-            )}
-
-            {/* Project */}
+            {/* Project - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Project</Label>
               <Input
@@ -733,10 +651,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               />
             </div>
 
-            {/* Linked Blocker */}
-            {!isCreate && taskId ? (
-              <div className="space-y-2">
-                <Label>Linked Blocker</Label>
+            {/* Linked Blocker - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Linked Blocker</Label>
+              {!isCreate && taskId ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -746,32 +664,63 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                 >
                   {status === "Blocked" ? "View/Update Blocker" : "No blocker"}
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label>Linked Blocker</Label>
+              ) : (
                 <Input
                   placeholder="No blocker"
                   value="No blocker"
                   disabled
                   className="bg-muted"
                 />
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Campaign Attached Ads */}
-            {taskType === 'campaign' && !isCreate && (
-              <div className="space-y-2">
-                <Label>Attached Ads</Label>
-                <AttachedAdsSection 
-                  attachedAds={attachedAds}
-                  onAdsChange={setAttachedAds}
-                  editable={!isReadOnly}
-                />
-              </div>
-            )}
+            {/* Jira Links - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Jira Links</Label>
+              <Input
+                type="url"
+                placeholder="https://jira.company.com/browse/TASK-123"
+                value={jiraLink}
+                onChange={(e) => setJiraLink(e.target.value)}
+                disabled={isReadOnly}
+              />
+            </div>
 
-            {/* Dependencies */}
+            {/* Due Date - ALWAYS SHOW */}
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isReadOnly || recurrence !== "none"}
+                    className="w-full justify-start"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {recurrence !== "none" ? "N/A (Recurring)" : dueDate ? format(dueDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {workingDaysWarning && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {workingDaysWarning}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {/* Dependencies - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Dependencies</Label>
               {!isCreate && taskId ? (
@@ -783,7 +732,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="p-2">
+                    <div className="p-2 mt-2">
                       <TaskDependenciesSection taskId={taskId} currentStatus={status} />
                     </div>
                   </CollapsibleContent>
@@ -798,7 +747,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               )}
             </div>
 
-            {/* Checklist */}
+            {/* Checklist - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Checklist</Label>
               {!isCreate && taskId ? (
@@ -810,7 +759,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="p-2">
+                    <div className="p-2 mt-2">
                       <TaskChecklistSection taskId={taskId} />
                     </div>
                   </CollapsibleContent>
