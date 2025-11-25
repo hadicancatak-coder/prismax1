@@ -350,33 +350,11 @@ export default function Tasks() {
         )}
 
       {/* Overdue Tasks Alert */}
-      {data?.filter(task => isTaskOverdue(task)).length > 0 && (
-        <Alert variant="destructive">
+      {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
+        <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            You have {data?.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Filter Warning - Some overdue tasks hidden */}
-      {data?.filter(task => isTaskOverdue(task)).length > 
-       finalFilteredTasks.filter(task => isTaskOverdue(task)).length && (
-        <Alert variant="warning" className="border-warning/30 bg-warning/5">
-          <AlertTriangle className="h-4 w-4 text-warning" />
-          <AlertDescription className="flex items-center justify-between">
-            <span className="text-warning">
-              Showing {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} of {data?.filter(task => isTaskOverdue(task)).length} overdue tasks. 
-              Some are hidden by active filters.
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={clearAllFilters}
-              className="ml-4"
-            >
-              Clear Filters to See All
-            </Button>
+            You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
           </AlertDescription>
         </Alert>
       )}
