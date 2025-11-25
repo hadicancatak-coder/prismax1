@@ -34,6 +34,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import DOMPurify from 'dompurify';
 import { CommentText } from "@/components/CommentText";
 import { MentionAutocomplete } from "./MentionAutocomplete";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UnifiedTaskDialogProps {
   open: boolean;
@@ -1015,6 +1016,81 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         </div>
 
         {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} />}
+      </div>
+
+      {/* Comments Panel */}
+      {commentsPanelOpen && !isCreate && taskId && (
+        <div className="w-[400px] border-l flex flex-col overflow-hidden">
+          <div className="px-4 py-3 border-b">
+            <h3 className="text-heading-sm font-semibold">Comments & Activity</h3>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Activity Log */}
+            <div className="space-y-2">
+              <h4 className="text-body-sm font-medium">Activity</h4>
+              {changeLogsLoading ? (
+                <p className="text-body-sm text-muted-foreground">Loading...</p>
+              ) : changeLogs.length > 0 ? (
+                <div className="space-y-2">
+                  {changeLogs.map((log) => (
+                    <ActivityLogEntry 
+                      key={log.id}
+                      field_name={log.field_name}
+                      old_value={log.old_value}
+                      new_value={log.new_value}
+                      description={log.description}
+                      changed_at={log.changed_at}
+                      profiles={log.profiles}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-body-sm text-muted-foreground">No activity yet</p>
+              )}
+            </div>
+
+            {/* Comments */}
+            <div className="space-y-2">
+              <h4 className="text-body-sm font-medium">Comments ({comments.length})</h4>
+              {comments.map((comment) => (
+                <div key={comment.id} className="space-y-1 p-2 rounded-md bg-muted/30">
+                  <div className="flex items-center gap-2 text-body-sm">
+                    <span className="font-medium">{comment.author?.name}</span>
+                    <span className="text-muted-foreground text-metadata">
+                      {format(new Date(comment.created_at), "PPP 'at' p")}
+                    </span>
+                  </div>
+                  <CommentText text={comment.body} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Comment Input */}
+          {!isReadOnly && (
+            <div className="p-4 border-t space-y-2">
+              <MentionAutocomplete
+                value={newComment}
+                onChange={setNewComment}
+                users={users}
+                placeholder="Add a comment... (use @ to mention)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <Button type="button" size="sm" onClick={handleAddComment} className="w-full">
+                <Send className="h-4 w-4 mr-2" />
+                Send
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
       </DialogContent>
     </Dialog>
   );
