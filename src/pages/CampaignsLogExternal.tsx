@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Eye, ExternalLink as ExternalLinkIcon, MessageSquare, MousePointerClick, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export default function CampaignsLogExternal() {
   // Email verification form
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const hasSetInitialValues = useRef(false);
 
   // Verify token on mount
   useEffect(() => {
@@ -43,9 +44,10 @@ export default function CampaignsLogExternal() {
         setAccessData(result);
         setVerified(result.email_verified);
         
-        if (!result.email_verified) {
+        if (!result.email_verified && !hasSetInitialValues.current) {
           setEmail(result.reviewer_email);
           setName(result.reviewer_name || "");
+          hasSetInitialValues.current = true;
         }
       } catch (error: any) {
         toast.error(error.message || "Invalid or expired link");

@@ -17,6 +17,7 @@ import Config from "./pages/admin/Config";
 import SecurityPage from "./pages/admin/SecurityPage";
 import Logs from "./pages/admin/Logs";
 import AdRulesManagement from "./pages/admin/AdRulesManagement";
+import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import ReportsLog from "./pages/ReportsLog";
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="overview" element={<Overview />} />
                   <Route path="users" element={<UsersManagement />} />
                   <Route path="config" element={<Config />} />
+                  <Route path="external-links" element={<ExternalLinksManagement />} />
                   <Route path="security" element={<SecurityPage />} />
                   <Route path="logs" element={<Logs />} />
                   <Route path="ad-rules" element={<AdRulesManagement />} />

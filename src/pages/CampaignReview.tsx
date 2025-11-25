@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Eye, Heart, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ export default function CampaignReview() {
   const [entityComment, setEntityComment] = useState("");
   const [submittingEntityComment, setSubmittingEntityComment] = useState(false);
 
+  const hasSetInitialValues = useRef(false);
+
   useEffect(() => {
     const verify = async () => {
       if (!token) {
@@ -51,9 +53,12 @@ export default function CampaignReview() {
           setName(result.reviewer_name || "");
           await loadCampaignData(result.entity, result.campaign_id);
         } else {
-          // Pre-fill email if available
-          setEmail(result.reviewer_email || "");
-          setName(result.reviewer_name || "");
+          // Pre-fill email ONCE on initial load only
+          if (!hasSetInitialValues.current) {
+            setEmail(result.reviewer_email || "");
+            setName(result.reviewer_name || "");
+            hasSetInitialValues.current = true;
+          }
         }
       } catch (error: any) {
         console.error("Token verification failed:", error);
@@ -99,11 +104,11 @@ export default function CampaignReview() {
         setVersions(versionData || []);
       } else {
         // Entity-wide review - load all campaigns for entity
+        // Presence in tracking table = "live" for that entity
         const { data: tracking, error: trackError } = await supabase
           .from("campaign_entity_tracking")
           .select("campaign_id, utm_campaigns(*)")
-          .eq("entity", entity)
-          .eq("status", "Live");
+          .eq("entity", entity);
 
         if (trackError) {
           console.error("Tracking query error:", trackError);
@@ -114,7 +119,7 @@ export default function CampaignReview() {
         const campaigns = tracking.map((t: any) => t.utm_campaigns).filter(Boolean);
         
         if (!campaigns || campaigns.length === 0) {
-          toast.info(`No live campaigns found for ${entity}`);
+          console.log(`No campaigns found for ${entity}`);
         }
         
         setCampaignData(campaigns);
