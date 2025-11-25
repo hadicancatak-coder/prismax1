@@ -29,20 +29,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting reschedule_overdue_tasks...');
+    console.log('Starting notify_overdue_tasks...');
     
-    // Call the reschedule function
-    const { error } = await supabase.rpc('reschedule_overdue_tasks');
+    // Call the notification function (does NOT reschedule)
+    const { error } = await supabase.rpc('notify_overdue_tasks');
 
     if (error) {
-      console.error('Reschedule error:', error);
+      console.error('Notification error:', error);
       throw error;
     }
 
-    console.log('Reschedule completed successfully');
+    console.log('Overdue task notifications sent successfully');
     
     return new Response(
-      JSON.stringify({ success: true, message: 'Overdue tasks rescheduled' }),
+      JSON.stringify({ success: true, message: 'Overdue task notifications sent' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error: any) {

@@ -6,6 +6,7 @@ import { AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getDaysOverdue } from "@/lib/overdueHelpers";
 
 export function OverdueTasks() {
   const { user } = useAuth();
@@ -57,7 +58,8 @@ export function OverdueTasks() {
         .select("*")
         .in("id", taskIds)
         .lt("due_at", today.toISOString())
-        .neq("status", "Completed")
+        .neq("status", "Completed" as any)
+        .neq("status", "Backlog" as any)
         .order("due_at", { ascending: true })
         .limit(5);
 
@@ -102,17 +104,23 @@ export function OverdueTasks() {
       </div>
       
       <div className="space-y-3">
-        {overdueTasks.map((task) => (
-          <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
-            <Clock className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-body text-foreground">{task.title}</p>
-              <p className="text-metadata">
-                Due: {format(new Date(task.due_at), "MMM d, yyyy")}
-              </p>
+        {overdueTasks.map((task) => {
+          const daysOverdue = getDaysOverdue(task.due_at);
+          return (
+            <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-body text-foreground">{task.title}</p>
+                <p className="text-metadata text-destructive">
+                  {daysOverdue} day{daysOverdue !== 1 ? 's' : ''} overdue
+                </p>
+                <p className="text-metadata text-muted-foreground">
+                  Due: {format(new Date(task.due_at), "MMM d, yyyy")}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
