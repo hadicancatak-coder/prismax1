@@ -80,40 +80,176 @@ export const useTaskMutations = () => {
   // Helper mutation for completing tasks
   const completeTask = useMutation({
     mutationFn: async (id: string) => {
-      return updateTask.mutateAsync({ 
-        id, 
-        updates: { status: 'Completed' } 
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ status: 'Completed' })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      queryClient.setQueryData(['tasks'], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) =>
+          task.id === id ? { ...task, status: 'Completed', updated_at: new Date().toISOString() } : task
+        );
       });
+      
+      return { previousTasks };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Failed to complete task",
+        description: err.message,
+        variant: "destructive"
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Task completed", duration: 2000 });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
   // Helper mutation for updating deadline
   const updateDeadline = useMutation({
     mutationFn: async ({ id, due_at }: { id: string; due_at: string }) => {
-      return updateTask.mutateAsync({ 
-        id, 
-        updates: { due_at } 
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ due_at })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, due_at }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      queryClient.setQueryData(['tasks'], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) =>
+          task.id === id ? { ...task, due_at, updated_at: new Date().toISOString() } : task
+        );
       });
+      
+      return { previousTasks };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Failed to update deadline",
+        description: err.message,
+        variant: "destructive"
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Deadline updated", duration: 2000 });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
   // Helper mutation for updating status
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: any }) => {
-      return updateTask.mutateAsync({ 
-        id, 
-        updates: { status: status as any } 
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      queryClient.setQueryData(['tasks'], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) =>
+          task.id === id ? { ...task, status, updated_at: new Date().toISOString() } : task
+        );
       });
+      
+      return { previousTasks };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Failed to update status",
+        description: err.message,
+        variant: "destructive"
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Status updated", duration: 2000 });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
   // Helper mutation for updating priority
   const updatePriority = useMutation({
     mutationFn: async ({ id, priority }: { id: string; priority: any }) => {
-      return updateTask.mutateAsync({ 
-        id, 
-        updates: { priority: priority as any } 
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ priority })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, priority }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      queryClient.setQueryData(['tasks'], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) =>
+          task.id === id ? { ...task, priority, updated_at: new Date().toISOString() } : task
+        );
       });
+      
+      return { previousTasks };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Failed to update priority",
+        description: err.message,
+        variant: "destructive"
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Priority updated", duration: 2000 });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
