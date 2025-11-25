@@ -988,6 +988,7 @@ export type Database = {
         Row: {
           access_token: string
           campaign_id: string | null
+          click_count: number | null
           created_at: string | null
           created_by: string | null
           email_verified: boolean | null
@@ -995,6 +996,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean | null
+          last_accessed_at: string | null
           reviewer_email: string
           reviewer_name: string | null
           updated_at: string | null
@@ -1002,6 +1004,7 @@ export type Database = {
         Insert: {
           access_token: string
           campaign_id?: string | null
+          click_count?: number | null
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
@@ -1009,6 +1012,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_accessed_at?: string | null
           reviewer_email: string
           reviewer_name?: string | null
           updated_at?: string | null
@@ -1016,6 +1020,7 @@ export type Database = {
         Update: {
           access_token?: string
           campaign_id?: string | null
+          click_count?: number | null
           created_at?: string | null
           created_by?: string | null
           email_verified?: boolean | null
@@ -1023,6 +1028,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_accessed_at?: string | null
           reviewer_email?: string
           reviewer_name?: string | null
           updated_at?: string | null
@@ -3625,6 +3631,7 @@ export type Database = {
           approval_requested_at: string | null
           approval_requested_by: string | null
           assignee_id: string | null
+          auto_rescheduled_at: string | null
           blocker_id: string | null
           blocker_reason: string | null
           campaign_id: string | null
@@ -3670,6 +3677,7 @@ export type Database = {
           approval_requested_at?: string | null
           approval_requested_by?: string | null
           assignee_id?: string | null
+          auto_rescheduled_at?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null
@@ -3715,6 +3723,7 @@ export type Database = {
           approval_requested_at?: string | null
           approval_requested_by?: string | null
           assignee_id?: string | null
+          auto_rescheduled_at?: string | null
           blocker_id?: string | null
           blocker_reason?: string | null
           campaign_id?: string | null

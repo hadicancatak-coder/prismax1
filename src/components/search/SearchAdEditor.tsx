@@ -423,10 +423,21 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
           throw error;
         }
         
-        // Invalidate queries to refresh the ads list
-        await queryClient.invalidateQueries({ queryKey: ['ads'] });
-        await queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
-        await queryClient.invalidateQueries({ queryKey: ['ad-campaigns'] });
+        // Invalidate ALL ad-related queries with pattern matching
+        await queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0] as string;
+            return key?.includes('ad') || key === 'ads';
+          }
+        });
+        
+        // Force immediate refetch of all ad queries
+        await queryClient.refetchQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0] as string;
+            return key?.includes('ad') || key === 'ads';
+          }
+        });
         
         toast.success("Ad updated successfully");
         onSave(ad.id);
@@ -441,10 +452,21 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
           .single();
         if (error) throw error;
         
-        // Invalidate queries to refresh the ads list
-        await queryClient.invalidateQueries({ queryKey: ['ads'] });
-        await queryClient.invalidateQueries({ queryKey: ['ad-groups'] });
-        await queryClient.invalidateQueries({ queryKey: ['ad-campaigns'] });
+        // Invalidate ALL ad-related queries with pattern matching
+        await queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0] as string;
+            return key?.includes('ad') || key === 'ads';
+          }
+        });
+        
+        // Force immediate refetch of all ad queries
+        await queryClient.refetchQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0] as string;
+            return key?.includes('ad') || key === 'ads';
+          }
+        });
         
         toast.success("Ad created successfully");
         onSave(data.id);

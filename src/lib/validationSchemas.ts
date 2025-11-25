@@ -29,7 +29,7 @@ export const taskSchema = z.object({
   
   priority: z.enum(["Low", "Medium", "High"]),
   
-  status: z.enum(["Pending", "Ongoing", "Blocked", "Completed", "Failed"]),
+  status: z.enum(["Backlog", "Ongoing", "Blocked", "Completed", "Failed"]),
   
   recurrence_rrule: z.string()
     .regex(/^(FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY).*)?$/, "Invalid recurrence rule format")

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 const statuses = [
-  { value: "Pending", label: "Pending" },
+  { value: "Backlog", label: "Backlog" },
   { value: "Ongoing", label: "Ongoing" },
   { value: "Blocked", label: "Blocked" },
   { value: "Completed", label: "Completed" },
