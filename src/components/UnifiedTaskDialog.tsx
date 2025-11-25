@@ -1,0 +1,846 @@
+import { useState, useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { CalendarIcon, AlertTriangle, MessageCircle, Activity } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ENTITIES } from "@/lib/constants";
+import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
+import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
+import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MultiAssigneeSelector } from "./MultiAssigneeSelector";
+import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
+import { TaskChecklistSection } from "./TaskChecklistSection";
+import { TaskDependenciesSection } from "./TaskDependenciesSection";
+import { BlockerDialog } from "./BlockerDialog";
+import { useTaskChangeLogs } from "@/hooks/useTaskChangeLogs";
+import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import DOMPurify from 'dompurify';
+import { CommentText } from "@/components/CommentText";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface UnifiedTaskDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: 'create' | 'view' | 'edit';
+  taskId?: string; // Required for view/edit, not for create
+}
+
+export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedTaskDialogProps) {
+  const { user, userRole } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State management
+  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
+  const [status, setStatus] = useState<"Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed" | "Backlog">("Pending");
+  const [dueDate, setDueDate] = useState<Date>();
+  const [jiraLink, setJiraLink] = useState("");
+  const [entities, setEntities] = useState<string[]>([]);
+  const [recurrence, setRecurrence] = useState<string>("none");
+  const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
+  const [taskType, setTaskType] = useState<string>("generic");
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [attachedAds, setAttachedAds] = useState<any[]>([]);
+  const [workingDaysWarning, setWorkingDaysWarning] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // View/Edit mode specific
+  const [task, setTask] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [showComments, setShowComments] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { assignees: realtimeAssignees, refetch: refetchAssignees } = useRealtimeAssignees(
+    "task",
+    mode === 'create' ? '' : (taskId || '')
+  );
+  const { data: changeLogs = [], isLoading: changeLogsLoading } = useTaskChangeLogs(
+    mode === 'create' ? '' : (taskId || '')
+  );
+
+  const isReadOnly = mode === 'view';
+  const isCreate = mode === 'create';
+
+  // Fetch task data for view/edit modes
+  useEffect(() => {
+    if (open && !isCreate && taskId) {
+      fetchTask();
+      fetchComments();
+    }
+  }, [open, taskId, isCreate]);
+
+  // Fetch users for assignee selection
+  useEffect(() => {
+    if (open && userRole === "admin") {
+      fetchUsers();
+    }
+  }, [open, userRole]);
+
+  // Working days validation
+  useEffect(() => {
+    if (dueDate && selectedAssignees.length > 0 && users.length > 0) {
+      const assignedUsers = users.filter(u => selectedAssignees.includes(u.id));
+      const validation = validateDateForUsers(dueDate, assignedUsers);
+      
+      if (!validation.isValid) {
+        const usersList = validation.invalidUsers.map(u => 
+          `${u.name} (${formatWorkingDays(u.workingDays)})`
+        ).join(', ');
+        setWorkingDaysWarning(
+          `⚠️ ${getDayName(dueDate)} is outside working days for: ${usersList}`
+        );
+      } else {
+        setWorkingDaysWarning(null);
+      }
+    } else {
+      setWorkingDaysWarning(null);
+    }
+  }, [dueDate, selectedAssignees, users]);
+
+  // Auto-add team members
+  useEffect(() => {
+    if (selectedTeams.length > 0 && users.length > 0 && isCreate) {
+      fetchTeamMembersAndAssign();
+    }
+  }, [selectedTeams, isCreate]);
+
+  const fetchTask = async () => {
+    if (!taskId) return;
+    
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        project:projects(id, name),
+        campaign:campaigns(id, title)
+      `)
+      .eq("id", taskId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load task details",
+        variant: "destructive",
+      });
+    } else if (data) {
+      setTask(data);
+      setTitle(data.title);
+      setDescription(data.description || "");
+      setPriority(data.priority);
+      setStatus(data.status);
+      setDueDate(data.due_at ? new Date(data.due_at) : undefined);
+      setJiraLink(data.jira_link || "");
+      setEntities(data.entity || []);
+      setSelectedTeams(Array.isArray(data.teams) ? data.teams : []);
+      setTaskType(data.task_type || "generic");
+      
+      // Parse recurrence
+      if (data.recurrence_rrule) {
+        if (data.recurrence_rrule.includes('DAILY')) setRecurrence('daily');
+        else if (data.recurrence_rrule.includes('WEEKLY')) setRecurrence('weekly');
+        else if (data.recurrence_rrule.includes('MONTHLY')) setRecurrence('monthly');
+        
+        if (data.recurrence_days_of_week) {
+          setRecurrenceDaysOfWeek(data.recurrence_days_of_week);
+        }
+        if (data.recurrence_day_of_month) {
+          setRecurrenceDayOfMonth(data.recurrence_day_of_month);
+        }
+      }
+    }
+    setLoading(false);
+  };
+
+  const fetchComments = async () => {
+    if (!taskId) return;
+    
+    const { data } = await supabase
+      .from("comments")
+      .select(`
+        *,
+        author:profiles!comments_author_id_fkey(id, name, avatar_url, user_id)
+      `)
+      .eq("task_id", taskId)
+      .order("created_at", { ascending: true });
+
+    setComments(data || []);
+  };
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, user_id, name, working_days");
+    setUsers(data || []);
+  };
+
+  const fetchTeamMembersAndAssign = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, user_id, name, teams')
+      .not('teams', 'is', null);
+    
+    if (data) {
+      const teamMemberIds: string[] = [];
+      data.forEach(profile => {
+        if (Array.isArray(profile.teams)) {
+          const hasMatchingTeam = profile.teams.some(t => 
+            selectedTeams.includes(t)
+          );
+          if (hasMatchingTeam && !teamMemberIds.includes(profile.id)) {
+            teamMemberIds.push(profile.id);
+          }
+        }
+      });
+      
+      setSelectedAssignees(prev => [...new Set([...prev, ...teamMemberIds])]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Generate recurrence rule
+      let recurrenceRule = null;
+      if (recurrence !== "none") {
+        if (recurrence === "weekly" && recurrenceDaysOfWeek.length > 0) {
+          const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+          const byDay = recurrenceDaysOfWeek.map(d => dayMap[d]).join(',');
+          recurrenceRule = `FREQ=WEEKLY;BYDAY=${byDay}`;
+        } else if (recurrence === "monthly" && recurrenceDayOfMonth) {
+          recurrenceRule = `FREQ=MONTHLY;BYMONTHDAY=${recurrenceDayOfMonth}`;
+        } else if (recurrence === "daily") {
+          recurrenceRule = `FREQ=DAILY`;
+        }
+      }
+
+      const taskData = {
+        title: title.trim(),
+        description: description || null,
+        priority,
+        status,
+        due_at: dueDate?.toISOString() || null,
+        created_by: user!.id,
+        jira_link: jiraLink || null,
+        entity: entities.length > 0 ? entities : [],
+        recurrence_rrule: recurrenceRule,
+        recurrence_days_of_week: recurrence === 'weekly' ? recurrenceDaysOfWeek : null,
+        recurrence_day_of_month: recurrenceDayOfMonth,
+        teams: selectedTeams,
+        task_type: recurrence !== "none" ? 'recurring' : taskType,
+        visibility: "global" as const,
+      };
+
+      if (isCreate) {
+        // Create new task
+        const { data: createdTask, error } = await supabase
+          .from("tasks")
+          .insert([taskData])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Assign users
+        if (selectedAssignees.length > 0) {
+          const { data: creatorProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", user!.id)
+            .single();
+
+          if (creatorProfile) {
+            const assigneeInserts = selectedAssignees.map(profileId => ({
+              task_id: createdTask.id,
+              user_id: profileId,
+              assigned_by: creatorProfile.id,
+            }));
+
+            await supabase.from("task_assignees").insert(assigneeInserts);
+          }
+        }
+
+        toast({
+          title: "Success",
+          description: "Task created successfully",
+        });
+      } else {
+        // Update existing task
+        const { error } = await supabase
+          .from("tasks")
+          .update(taskData)
+          .eq("id", taskId!);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Task updated successfully",
+        });
+      }
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["recurring-tasks"] });
+      
+      // Reset and close
+      resetForm();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save task",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPriority("Medium");
+    setStatus("Pending");
+    setDueDate(undefined);
+    setJiraLink("");
+    setEntities([]);
+    setRecurrence("none");
+    setRecurrenceDaysOfWeek([]);
+    setRecurrenceDayOfMonth(null);
+    setTaskType("generic");
+    setSelectedTeams([]);
+    setSelectedAssignees([]);
+    setAttachedAds([]);
+    setValidationErrors({});
+    setWorkingDaysWarning(null);
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !taskId) return;
+
+    const { error } = await supabase.from("comments").insert({
+      task_id: taskId,
+      author_id: user!.id,
+      body: newComment.trim(),
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive",
+      });
+    } else {
+      setNewComment("");
+      fetchComments();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
+            {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
+          </DialogTitle>
+          {!isCreate && task && (
+            <DialogDescription>
+              Created {format(new Date(task.created_at), "PPP 'at' p")}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        <ScrollArea className="flex-1 pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter task title"
+                disabled={isReadOnly}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Enter task description"
+                disabled={isReadOnly}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Priority */}
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Select value={priority} onValueChange={(v: any) => setPriority(v)} disabled={isReadOnly}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={(v: any) => setStatus(v)} disabled={isReadOnly}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                    <SelectItem value="Backlog">Backlog</SelectItem>
+                    <SelectItem value="Blocked">Blocked</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isReadOnly || recurrence !== "none"}
+                    className="w-full justify-start"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {recurrence !== "none" ? "N/A (Recurring)" : dueDate ? format(dueDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {workingDaysWarning && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {workingDaysWarning}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {/* Jira Link */}
+            <div className="space-y-2">
+              <Label>Jira Link</Label>
+              <Input
+                type="url"
+                placeholder="https://jira.company.com/browse/TASK-123"
+                value={jiraLink}
+                onChange={(e) => setJiraLink(e.target.value)}
+                disabled={isReadOnly}
+              />
+            </div>
+
+            {/* Assignees */}
+            {!isCreate && (
+              <div className="space-y-2">
+                <Label>Assignees</Label>
+                <MultiAssigneeSelector
+                  entityType="task"
+                  entityId={taskId || ''}
+                  assignees={realtimeAssignees}
+                  onAssigneesChange={refetchAssignees}
+                />
+              </div>
+            )}
+
+            {isCreate && userRole === 'admin' && (
+              <div className="space-y-2">
+                <Label>Assignees</Label>
+                <div className="border rounded-md p-2 min-h-[42px]">
+                  {selectedAssignees.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {users.filter(u => selectedAssignees.includes(u.id)).map(u => (
+                        <Badge key={u.id} variant="secondary">
+                          {u.name}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAssignees(prev => prev.filter(id => id !== u.id))}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No assignees</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Countries/Entity */}
+            <div className="space-y-2">
+              <Label>Countries (Entity)</Label>
+              <Popover>
+                <PopoverTrigger asChild disabled={isReadOnly}>
+                  <Button variant="outline" className="w-full justify-start">
+                    {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-2">
+                      {ENTITIES.map((ent) => (
+                        <div key={ent} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`entity-${ent}`}
+                            checked={entities.includes(ent)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setEntities([...entities, ent]);
+                              } else {
+                                setEntities(entities.filter(c => c !== ent));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer">
+                            {ent}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+              {entities.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {entities.map((ent) => (
+                    <Badge key={ent} variant="secondary" className="text-xs">
+                      {ent}
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() => setEntities(entities.filter(c => c !== ent))}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recurrence */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Recurrence</Label>
+                <Select 
+                  value={recurrence} 
+                  onValueChange={(value) => {
+                    setRecurrence(value);
+                    if (value !== "none") setDueDate(undefined);
+                    if (value !== "weekly") setRecurrenceDaysOfWeek([]);
+                    if (value !== "monthly") setRecurrenceDayOfMonth(null);
+                  }}
+                  disabled={isReadOnly}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Recurrence</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Task Type */}
+              <div className="space-y-2">
+                <Label>Task Type</Label>
+                <Select 
+                  value={recurrence !== "none" ? "recurring" : taskType} 
+                  onValueChange={(v) => setTaskType(v)}
+                  disabled={isReadOnly || recurrence !== "none"}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="generic">Generic</SelectItem>
+                    <SelectItem value="campaign">Campaign</SelectItem>
+                    <SelectItem value="recurring" disabled>Recurring (auto-set)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Weekly Recurrence Days */}
+            {recurrence === "weekly" && (
+              <div className="space-y-2">
+                <Label>Days of Week</Label>
+                <div className="grid grid-cols-7 gap-2">
+                  {[
+                    { value: 1, label: 'Mon' },
+                    { value: 2, label: 'Tue' },
+                    { value: 3, label: 'Wed' },
+                    { value: 4, label: 'Thu' },
+                    { value: 5, label: 'Fri' },
+                    { value: 6, label: 'Sat' },
+                    { value: 0, label: 'Sun' },
+                  ].map(day => (
+                    <div
+                      key={day.value}
+                      onClick={() => {
+                        if (isReadOnly) return;
+                        if (recurrenceDaysOfWeek.includes(day.value)) {
+                          setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
+                        } else {
+                          setRecurrenceDaysOfWeek([...recurrenceDaysOfWeek, day.value].sort());
+                        }
+                      }}
+                      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                        isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'
+                      } ${
+                        recurrenceDaysOfWeek.includes(day.value) 
+                          ? 'border-primary bg-primary/10' 
+                          : 'border-border'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={recurrenceDaysOfWeek.includes(day.value)}
+                        disabled={isReadOnly}
+                      />
+                      <span className="text-xs">{day.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Monthly Recurrence Day */}
+            {recurrence === "monthly" && (
+              <div className="space-y-2">
+                <Label>Day of Month</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={recurrenceDayOfMonth || ""}
+                  onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || null)}
+                  placeholder="Day of month (1-31)"
+                  disabled={isReadOnly}
+                />
+              </div>
+            )}
+
+            {/* Teams (Admin only) */}
+            {userRole === 'admin' && (
+              <div className="space-y-2">
+                <Label>Teams</Label>
+                <TeamsMultiSelect
+                  selectedTeams={selectedTeams}
+                  onChange={setSelectedTeams}
+                />
+              </div>
+            )}
+
+            {/* Campaign Attached Ads */}
+            {taskType === 'campaign' && !isCreate && (
+              <div className="space-y-2">
+                <Label>Attached Ads</Label>
+                <AttachedAdsSection taskId={taskId || ''} />
+              </div>
+            )}
+
+            {/* Checklist (View/Edit only) */}
+            {!isCreate && taskId && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between">
+                    Checklist
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <TaskChecklistSection taskId={taskId} />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Dependencies (View/Edit only) */}
+            {!isCreate && taskId && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between">
+                    Dependencies
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <TaskDependenciesSection taskId={taskId} />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Comments (View/Edit only) */}
+            {!isCreate && taskId && (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowComments(!showComments)}
+                  className="w-full justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Comments ({comments.length})
+                  </span>
+                  {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+                
+                {showComments && (
+                  <div className="border rounded-md p-4 space-y-4 max-h-[300px] overflow-y-auto">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">{comment.author?.name}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {format(new Date(comment.created_at), "PPP 'at' p")}
+                          </span>
+                        </div>
+                        <CommentText body={comment.body} />
+                      </div>
+                    ))}
+                    
+                    {!isReadOnly && (
+                      <div className="flex gap-2">
+                        <RichTextEditor
+                          value={newComment}
+                          onChange={setNewComment}
+                          placeholder="Add a comment..."
+                          minHeight="60px"
+                        />
+                        <Button type="button" onClick={handleAddComment} size="sm">
+                          Send
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Activity Log (View/Edit only) */}
+            {!isCreate && taskId && (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowActivity(!showActivity)}
+                  className="w-full justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Activity Log
+                  </span>
+                  {showActivity ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+                
+                {showActivity && (
+                  <div className="border rounded-md p-4 space-y-2 max-h-[300px] overflow-y-auto">
+                    {changeLogsLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading...</p>
+                    ) : changeLogs.length > 0 ? (
+                      changeLogs.map((log) => (
+                        <ActivityLogEntry key={log.id} log={log} />
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No activity yet</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </form>
+        </ScrollArea>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {isReadOnly ? "Close" : "Cancel"}
+          </Button>
+          {!isReadOnly && (
+            <Button type="submit" onClick={handleSubmit} disabled={loading}>
+              {loading ? "Saving..." : isCreate ? "Create Task" : "Save Changes"}
+            </Button>
+          )}
+        </DialogFooter>
+
+        {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
