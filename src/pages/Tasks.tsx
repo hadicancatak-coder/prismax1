@@ -76,7 +76,7 @@ export default function Tasks() {
     {
       label: "Overdue",
       Icon: AlertCircle,
-      filter: (task: any) => task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed'
+      filter: (task: any) => isTaskOverdue(task)
     },
     {
       label: "Due Soon",
@@ -335,11 +335,11 @@ export default function Tasks() {
         )}
 
       {/* Overdue Tasks Alert */}
-      {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
+      {data?.filter(task => isTaskOverdue(task)).length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
+            You have {data?.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
           </AlertDescription>
         </Alert>
       )}

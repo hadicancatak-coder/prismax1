@@ -7,19 +7,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { UtmRuleBuilder } from "@/components/admin/UtmRuleBuilder";
 import { UtmRuleTestPanel } from "@/components/admin/UtmRuleTestPanel";
 import { RegenerateLinksDialog } from "@/components/admin/RegenerateLinksDialog";
 import { useUtmRules } from "@/hooks/useUtmRules";
 import { useUtmLpTypes } from "@/hooks/useUtmLpTypes";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { UtmRule } from "@/lib/utmRuleEngine";
-import { Plus, Edit, Trash, TestTube, RefreshCw, Info, AlertCircle } from "lucide-react";
+import { transformEntityUrl, detectUrlPattern } from "@/lib/entityUrlTransformer";
+import { Plus, Edit, Trash, TestTube, RefreshCw, Info, AlertCircle, Globe, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export function UtmAutomationTab() {
   const { rules, isLoading, saveRule, deleteRule, toggleRule } = useUtmRules();
   const { data: lpTypes = [] } = useUtmLpTypes();
+  const { data: entities = [] } = useSystemEntities();
   const [editingRule, setEditingRule] = useState<UtmRule | null>(null);
   const [testingRule, setTestingRule] = useState<UtmRule | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
@@ -28,6 +32,13 @@ export function UtmAutomationTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
   const [selectedLpType, setSelectedLpType] = useState<string>('all');
+  
+  // Entity Switch feature state
+  const [entitySwitchEnabled, setEntitySwitchEnabled] = useState(false);
+  const [sourceEntity, setSourceEntity] = useState<string>('');
+  const [targetEntity, setTargetEntity] = useState<string>('');
+  const [language, setLanguage] = useState<'en' | 'ar' | 'keep'>('keep');
+  const [previewUrl, setPreviewUrl] = useState('https://cfdibahrain.com/en/kw/open-account');
 
   // Filter and group rules
   const filteredRules = selectedLpType === 'all' 
@@ -81,6 +92,40 @@ export function UtmAutomationTab() {
         onError: () => toast.error('Failed to toggle rule'),
       }
     );
+  };
+
+  // Entity Switch handlers
+  const handlePreviewUrlChange = (url: string) => {
+    setPreviewUrl(url);
+  };
+
+  const getTransformedUrl = () => {
+    if (!sourceEntity || !targetEntity || !previewUrl) return previewUrl;
+    
+    const entityMappings = entities.map(e => ({
+      code: e.code,
+      name: e.name,
+      websiteParam: e.website_param,
+      urlCodes: [e.website_param?.toLowerCase() || e.code.toLowerCase(), e.code.toLowerCase()],
+    }));
+
+    return transformEntityUrl(
+      previewUrl,
+      { sourceEntity, targetEntity, language },
+      entityMappings
+    );
+  };
+
+  const handleApplyTransformation = () => {
+    if (!sourceEntity || !targetEntity) {
+      toast.error('Please select both source and target entities');
+      return;
+    }
+    
+    const transformedUrl = getTransformedUrl();
+    toast.success('URL transformation applied', {
+      description: transformedUrl,
+    });
   };
 
   if (isLoading) {
@@ -282,9 +327,127 @@ export function UtmAutomationTab() {
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
+          {/* Entity Switch Feature */}
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-sm text-heading-md">
+                    <Globe className="h-5 w-5 text-primary" />
+                    Entity Switch
+                  </CardTitle>
+                  <CardDescription className="text-metadata">
+                    Transform URLs between entities and languages
+                  </CardDescription>
+                </div>
+                <Switch
+                  checked={entitySwitchEnabled}
+                  onCheckedChange={setEntitySwitchEnabled}
+                />
+              </div>
+            </CardHeader>
+            
+            {entitySwitchEnabled && (
+              <CardContent className="space-y-md">
+                <div className="grid grid-cols-3 gap-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="source-entity" className="text-body-sm font-medium">Source Entity</Label>
+                    <Select value={sourceEntity} onValueChange={setSourceEntity}>
+                      <SelectTrigger id="source-entity">
+                        <SelectValue placeholder="Select source..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {entities.map(e => (
+                          <SelectItem key={e.code} value={e.code}>
+                            {e.emoji && <span className="mr-2">{e.emoji}</span>}
+                            {e.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="target-entity" className="text-body-sm font-medium">Target Entity</Label>
+                    <Select value={targetEntity} onValueChange={setTargetEntity}>
+                      <SelectTrigger id="target-entity">
+                        <SelectValue placeholder="Select target..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {entities.map(e => (
+                          <SelectItem key={e.code} value={e.code}>
+                            {e.emoji && <span className="mr-2">{e.emoji}</span>}
+                            {e.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="language-select" className="text-body-sm font-medium">Language</Label>
+                    <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'ar' | 'keep')}>
+                      <SelectTrigger id="language-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="keep">Keep Original</SelectItem>
+                        <SelectItem value="en">English (EN)</SelectItem>
+                        <SelectItem value="ar">Arabic (AR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="preview-url" className="text-body-sm font-medium">Preview URL</Label>
+                  <Input
+                    id="preview-url"
+                    value={previewUrl}
+                    onChange={(e) => handlePreviewUrlChange(e.target.value)}
+                    placeholder="https://cfdibahrain.com/en/kw/open-account"
+                    className="font-mono text-body-sm"
+                  />
+                </div>
+                
+                {/* Preview Section */}
+                {sourceEntity && targetEntity && (
+                  <div className="border rounded-lg p-md bg-muted/50 space-y-sm">
+                    <Label className="text-metadata text-muted-foreground">Transformation Preview</Label>
+                    <div className="space-y-sm">
+                      <div className="flex items-center gap-sm">
+                        <Badge variant="outline" className="shrink-0 text-metadata">Before</Badge>
+                        <code className="text-body-sm font-mono text-foreground truncate block">
+                          {previewUrl}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex items-center gap-sm">
+                        <Badge variant="default" className="shrink-0 text-metadata">After</Badge>
+                        <code className="text-body-sm font-mono text-primary truncate block">
+                          {getTransformedUrl()}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <Button 
+                  onClick={handleApplyTransformation} 
+                  className="w-full transition-smooth"
+                  disabled={!sourceEntity || !targetEntity}
+                >
+                  Apply Transformation
+                </Button>
+              </CardContent>
+            )}
+          </Card>
+
           {/* LP Type Filter */}
-          <div className="flex items-center gap-4 mb-4">
-            <Label htmlFor="lp-type-filter" className="whitespace-nowrap">Filter by LP Type:</Label>
+          <div className="flex items-center gap-md">
+            <Label htmlFor="lp-type-filter" className="whitespace-nowrap text-body-sm">Filter by LP Type:</Label>
             <Select value={selectedLpType} onValueChange={setSelectedLpType}>
               <SelectTrigger id="lp-type-filter" className="w-[200px]">
                 <SelectValue />
