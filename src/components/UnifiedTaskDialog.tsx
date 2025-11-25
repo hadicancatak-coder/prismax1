@@ -33,7 +33,7 @@ import { ActivityLogEntry } from "@/components/tasks/ActivityLogEntry";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import DOMPurify from 'dompurify';
 import { CommentText } from "@/components/CommentText";
-import { useQueryClient } from "@tanstack/react-query";
+import { MentionAutocomplete } from "./MentionAutocomplete";
 
 interface UnifiedTaskDialogProps {
   open: boolean;
@@ -49,6 +49,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   
   // Internal mode state to allow switching from view to edit
   const [internalMode, setInternalMode] = useState<'create' | 'view' | 'edit'>(mode);
+  
+  // Comments panel state
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   
   // State management
   const [loading, setLoading] = useState(false);
@@ -390,35 +393,53 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden p-0">
-        <div className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle>
-                {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
-              </DialogTitle>
-              {!isCreate && task && (
-                <DialogDescription>
-                  Created {format(new Date(task.created_at), "PPP 'at' p")}
-                </DialogDescription>
-              )}
+      <DialogContent className={cn(
+        "h-[90vh] flex flex-col overflow-hidden p-0 transition-all duration-300",
+        commentsPanelOpen ? "max-w-[1400px]" : "max-w-4xl"
+      )}>
+        <div className="flex h-full">
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <DialogTitle>
+                    {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
+                  </DialogTitle>
+                  {!isCreate && task && (
+                    <DialogDescription>
+                      Created {format(new Date(task.created_at), "PPP 'at' p")}
+                    </DialogDescription>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!isCreate && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
+                      className={cn(commentsPanelOpen && "bg-accent")}
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                    </Button>
+                  )}
+                  {!isCreate && isReadOnly && (
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => setInternalMode('edit')}
+                    >
+                      Edit Task
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-            {!isCreate && isReadOnly && (
-              <Button 
-                type="button" 
-                variant="default" 
-                size="sm"
-                onClick={() => setInternalMode('edit')}
-                className="flex-shrink-0"
-              >
-                Edit Task
-              </Button>
-            )}
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto px-6">
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
+            <div className="flex-1 overflow-y-auto px-6">
+              <form onSubmit={handleSubmit} className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Task details and team discussion</Label>
