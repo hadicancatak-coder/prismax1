@@ -3,6 +3,8 @@ import { FixedSizeList as List } from "react-window";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useTaskMutations } from "@/hooks/useTaskMutations";
 import { TaskDialog } from "./TaskDialog";
 import {
   AlertDialog,
@@ -26,7 +28,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +42,10 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const queryClient = useQueryClient();
+  const { updateStatus, updatePriority, completeTask } = useTaskMutations();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
+  const [editingTitle, setEditingTitle] = useState<{id: string; value: string} | null>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -152,25 +153,33 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
     }
   };
 
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
-    await supabase.from('tasks').update({ status: newStatus as any }).eq('id', taskId);
-    onTaskUpdate();
+  const handleStatusChange = (taskId: string, newStatus: string) => {
+    updateStatus.mutate({ id: taskId, status: newStatus }, {
+      onSuccess: () => onTaskUpdate()
+    });
   };
 
-  const handlePriorityChange = async (taskId: string, newPriority: string) => {
-    await supabase.from('tasks').update({ priority: newPriority as any }).eq('id', taskId);
-    onTaskUpdate();
+  const handlePriorityChange = (taskId: string, newPriority: string) => {
+    updatePriority.mutate({ id: taskId, priority: newPriority }, {
+      onSuccess: () => onTaskUpdate()
+    });
   };
 
-  const handleMarkCompleted = async (taskId: string) => {
+  const handleMarkCompleted = (taskId: string) => {
     setProcessingTaskId(taskId);
     setProcessingAction('complete');
-    await supabase.from('tasks').update({ status: 'Completed' }).eq('id', taskId);
-    onTaskUpdate();
-    setProcessingTaskId(null);
-    setProcessingAction(null);
-    setOpenDropdownId(null);
-    toast({ title: "Task marked as completed" });
+    completeTask.mutate(taskId, {
+      onSuccess: () => {
+        onTaskUpdate();
+        setProcessingTaskId(null);
+        setProcessingAction(null);
+        setOpenDropdownId(null);
+      },
+      onError: () => {
+        setProcessingTaskId(null);
+        setProcessingAction(null);
+      }
+    });
   };
 
   const handleDuplicate = async (taskId: string) => {
@@ -229,27 +238,26 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
           className="flex-1 px-4 py-2"
           onDoubleClick={(e) => {
             e.stopPropagation();
-            setEditingTaskId(task.id);
-            setEditValue(task.title);
+            setEditingTitle({ id: task.id, value: task.title });
           }}
         >
-          {editingTaskId === task.id ? (
+          {editingTitle?.id === task.id ? (
             <Input
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
+              value={editingTitle.value}
+              onChange={(e) => setEditingTitle({ id: task.id, value: e.target.value })}
               onBlur={async () => {
-                await supabase.from('tasks').update({ title: editValue }).eq('id', task.id);
-                setEditingTaskId(null);
+                await supabase.from('tasks').update({ title: editingTitle.value }).eq('id', task.id);
+                setEditingTitle(null);
                 onTaskUpdate();
               }}
               onKeyDown={async (e) => {
                 if (e.key === 'Enter') {
-                  await supabase.from('tasks').update({ title: editValue }).eq('id', task.id);
-                  setEditingTaskId(null);
+                  await supabase.from('tasks').update({ title: editingTitle.value }).eq('id', task.id);
+                  setEditingTitle(null);
                   onTaskUpdate();
                 }
                 if (e.key === 'Escape') {
-                  setEditingTaskId(null);
+                  setEditingTitle(null);
                 }
               }}
               onClick={(e) => e.stopPropagation()}

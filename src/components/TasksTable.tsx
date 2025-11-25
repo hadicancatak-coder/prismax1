@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useTaskMutations } from "@/hooks/useTaskMutations";
 import { TaskDialog } from "./TaskDialog";
 import {
   AlertDialog,
@@ -35,7 +37,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const queryClient = useQueryClient();
+  const { updateStatus, updatePriority, completeTask } = useTaskMutations();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -282,23 +284,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                 <TableCell className="py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={task.status}
-                    onValueChange={async (newStatus: any) => {
-                      const { error } = await supabase
-                        .from("tasks")
-                        .update({ status: newStatus as any })
-                        .eq("id", task.id);
-                      
-                      if (error) {
-                        toast({
-                          title: "Error updating status",
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      } else {
-                        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                        toast({ title: "Status updated" });
-                      }
+                    onValueChange={(newStatus: any) => {
+                      updateStatus.mutate({ id: task.id, status: newStatus });
                     }}
+                    disabled={updateStatus.isPending}
                   >
                     <SelectTrigger className="h-6 w-[100px] text-[10px]">
                       <SelectValue />
@@ -315,23 +304,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                 <TableCell className="hidden md:table-cell py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={task.priority}
-                    onValueChange={async (newPriority: any) => {
-                      const { error } = await supabase
-                        .from("tasks")
-                        .update({ priority: newPriority as any })
-                        .eq("id", task.id);
-                      
-                      if (error) {
-                        toast({
-                          title: "Error updating priority",
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      } else {
-                        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                        toast({ title: "Priority updated" });
-                      }
+                    onValueChange={(newPriority: any) => {
+                      updatePriority.mutate({ id: task.id, priority: newPriority });
                     }}
+                    disabled={updatePriority.isPending}
                   >
                     <SelectTrigger className="h-6 w-[90px] text-[10px]">
                       <SelectValue />
