@@ -358,49 +358,40 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {userRole === 'admin' && (
-                        <>
-                          <DropdownMenuItem 
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setProcessingTaskId(task.id);
-                              setProcessingAction('complete');
-                              
-                              const { error } = await supabase
-                                .from('tasks')
-                                .update({ status: 'Completed' })
-                                .eq('id', task.id);
-                              
-                              if (error) {
-                                toast({
-                                  title: "Error",
-                                  description: error.message,
-                                  variant: "destructive",
-                                });
-                              } else {
-                                toast({ title: "Task marked as completed" });
-                              }
-                              
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setProcessingTaskId(task.id);
+                          setProcessingAction('complete');
+                          
+                          completeTask.mutate(task.id, {
+                            onSuccess: () => {
                               setProcessingTaskId(null);
                               setProcessingAction(null);
                               setOpenDropdownId(null);
-                            }}
-                            disabled={processingTaskId !== null}
-                          >
-                            {processingTaskId === task.id && processingAction === 'complete' ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Completing...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Mark Completed
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
+                            },
+                            onError: () => {
+                              setProcessingTaskId(null);
+                              setProcessingAction(null);
+                            }
+                          });
+                        }}
+                        disabled={processingTaskId !== null}
+                      >
+                        {processingTaskId === task.id && processingAction === 'complete' ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Completing...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Mark Completed
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -459,11 +450,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                                 <Copy className="mr-2 h-4 w-4" />
                                 Duplicate
                               </>
-                            )}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      <DropdownMenuItem 
+                          )}
+                        </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={(e) => { 
                           e.stopPropagation(); 
                           setShowDeleteConfirm(task.id);
