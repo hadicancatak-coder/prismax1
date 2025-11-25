@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useTaskMutations } from "@/hooks/useTaskMutations";
-import { TaskDialog } from "./TaskDialog";
+import { UnifiedTaskDialog } from "./UnifiedTaskDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -405,10 +405,11 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
       </div>
 
       {/* Dialogs */}
-      <TaskDialog
+      <UnifiedTaskDialog
         taskId={selectedTaskId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        mode="view"
       />
 
       <AlertDialog open={!!showDeleteConfirm} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>

@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "@/components/tasks/TaskCard";
-import { TaskDialog } from "@/components/TaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Upload, Users, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -526,9 +526,10 @@ export default function Profile() {
       </Tabs>
 
       {selectedTaskId && (
-        <TaskDialog
+        <UnifiedTaskDialog
           open={taskDialogOpen}
           onOpenChange={setTaskDialogOpen}
+          mode="view"
           taskId={selectedTaskId}
         />
       )}

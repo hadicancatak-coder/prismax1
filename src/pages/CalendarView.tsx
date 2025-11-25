@@ -3,8 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { useQueryClient } from "@tanstack/react-query";
-import { TaskDialog } from "@/components/TaskDialog";
-import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from "date-fns";
@@ -905,16 +904,18 @@ export default function CalendarView() {
       </div>
 
       {selectedTaskId && (
-        <TaskDialog 
+        <UnifiedTaskDialog 
           open={taskDialogOpen} 
           onOpenChange={setTaskDialogOpen} 
+          mode="view"
           taskId={selectedTaskId} 
         />
       )}
 
-      <CreateTaskDialog 
+      <UnifiedTaskDialog 
         open={createTaskOpen}
         onOpenChange={setCreateTaskOpen}
+        mode="create"
       />
     </div>
   );

@@ -14,7 +14,7 @@ import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { AuditItemComments } from "./AuditItemComments";
 import { useAuditItemComments } from "@/hooks/useAuditItemComments";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { FileText } from "lucide-react";
 
 interface AuditItemCardProps {

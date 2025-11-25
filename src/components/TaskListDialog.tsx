@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { TaskDialog } from "./TaskDialog";
+import { UnifiedTaskDialog } from "./UnifiedTaskDialog";
 
 interface TaskListDialogProps {
   open: boolean;
@@ -77,7 +77,7 @@ export function TaskListDialog({ open, onOpenChange, tasks, title }: TaskListDia
       </Dialog>
 
       {selectedTaskId && (
-        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+        <UnifiedTaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} mode="view" taskId={selectedTaskId} />
       )}
     </>
   );

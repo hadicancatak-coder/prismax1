@@ -7,7 +7,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { TaskDialog } from "@/components/TaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Calendar, AlertCircle, Clock, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useNavigate } from "react-router-dom";
@@ -272,7 +272,7 @@ export default function Backlog() {
       </Card>
 
       {selectedTaskId && (
-        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={selectedTaskId} />
+        <UnifiedTaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} mode="view" taskId={selectedTaskId} />
       )}
     </div>
   );
