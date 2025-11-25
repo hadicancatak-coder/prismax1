@@ -159,8 +159,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       setStatus(data.status);
       setDueDate(data.due_at ? new Date(data.due_at) : undefined);
       setJiraLink(data.jira_link || "");
-      setEntities(data.entity || []);
-      setSelectedTeams(Array.isArray(data.teams) ? data.teams : []);
+      setEntities(Array.isArray(data.entity) ? data.entity.map(String) : []);
+      setSelectedTeams(Array.isArray(data.teams) ? data.teams.map(String) : []);
       setTaskType(data.task_type || "generic");
       
       // Parse recurrence
@@ -254,7 +254,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         }
       }
 
-      const taskData = {
+      const taskData: any = {
         title: title.trim(),
         description: description || null,
         priority,
@@ -712,7 +712,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             {taskType === 'campaign' && !isCreate && (
               <div className="space-y-2">
                 <Label>Attached Ads</Label>
-                <AttachedAdsSection taskId={taskId || ''} />
+                <AttachedAdsSection 
+                  attachedAds={attachedAds}
+                  onAdsChange={setAttachedAds}
+                  editable={!isReadOnly}
+                />
               </div>
             )}
 
@@ -741,7 +745,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <TaskDependenciesSection taskId={taskId} />
+                  <TaskDependenciesSection taskId={taskId} currentStatus={status} />
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -772,7 +776,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                             {format(new Date(comment.created_at), "PPP 'at' p")}
                           </span>
                         </div>
-                        <CommentText body={comment.body} />
+                        <CommentText text={comment.body} />
                       </div>
                     ))}
                     
@@ -816,7 +820,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       <p className="text-sm text-muted-foreground">Loading...</p>
                     ) : changeLogs.length > 0 ? (
                       changeLogs.map((log) => (
-                        <ActivityLogEntry key={log.id} log={log} />
+                  <ActivityLogEntry 
+                    key={log.id}
+                    field_name={log.field_name}
+                    old_value={log.old_value}
+                    new_value={log.new_value}
+                    description={log.description}
+                    changed_at={log.changed_at}
+                    profiles={log.profiles}
+                  />
                       ))
                     ) : (
                       <p className="text-sm text-muted-foreground">No activity yet</p>
