@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+// Task mutation hooks with optimistic updates for instant UI feedback
+
 interface UpdateTaskParams {
   id: string;
   updates: Partial<{
