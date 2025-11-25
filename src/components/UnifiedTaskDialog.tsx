@@ -390,32 +390,35 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-row items-center justify-between">
-          <div>
-            <DialogTitle>
-              {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
-            </DialogTitle>
-            {!isCreate && task && (
-              <DialogDescription>
-                Created {format(new Date(task.created_at), "PPP 'at' p")}
-              </DialogDescription>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden p-0">
+        <div className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <DialogTitle>
+                {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
+              </DialogTitle>
+              {!isCreate && task && (
+                <DialogDescription>
+                  Created {format(new Date(task.created_at), "PPP 'at' p")}
+                </DialogDescription>
+              )}
+            </div>
+            {!isCreate && isReadOnly && (
+              <Button 
+                type="button" 
+                variant="default" 
+                size="sm"
+                onClick={() => setInternalMode('edit')}
+                className="flex-shrink-0"
+              >
+                Edit Task
+              </Button>
             )}
           </div>
-          {!isCreate && isReadOnly && (
-            <Button 
-              type="button" 
-              variant="default" 
-              size="sm"
-              onClick={() => setInternalMode('edit')}
-            >
-              Edit Task
-            </Button>
-          )}
-        </DialogHeader>
+        </div>
 
-        <ScrollArea className="flex-1 max-h-[calc(90vh-180px)] pr-4">
-          <form onSubmit={handleSubmit} className="space-y-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Task details and team discussion</Label>
@@ -972,18 +975,20 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               </div>
             )}
           </form>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {isReadOnly ? "Close" : "Cancel"}
-          </Button>
-          {!isReadOnly && (
-            <Button type="submit" onClick={handleSubmit} disabled={loading}>
-              {loading ? "Saving..." : isCreate ? "Create Task" : "Save Changes"}
+        <div className="px-6 py-4 border-t flex-shrink-0">
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {isReadOnly ? "Close" : "Cancel"}
             </Button>
-          )}
-        </DialogFooter>
+            {!isReadOnly && (
+              <Button type="submit" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Saving..." : isCreate ? "Create Task" : "Save Changes"}
+              </Button>
+            )}
+          </div>
+        </div>
 
         {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} />}
       </DialogContent>
