@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { realtimeService } from "@/lib/realtimeService";
+import { mapStatusToUi } from "@/lib/taskStatusMapper";
 
 export interface TaskFilters {
   assignees?: string[];
@@ -44,10 +45,11 @@ export function useTasks(filters?: TaskFilters) {
 
     if (error) throw error;
 
-    // Map tasks and include comments count
+    // Map tasks and include comments count, transform DB status → UI status
     const allTasks = (data || []).map((task: any) => {
       return {
         ...task,
+        status: mapStatusToUi(task.status), // Transform Pending → Backlog
         assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
         comments_count: task.task_comment_counts?.[0]?.comment_count || 0
       };
