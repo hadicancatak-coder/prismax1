@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { getDaysOverdue } from "@/lib/overdueHelpers";
+import { useTaskMutations } from "@/hooks/useTaskMutations";
 
 interface TaskCardProps {
   task: any;
@@ -23,6 +24,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   const { userRole } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { completeTask, updateStatus, updatePriority } = useTaskMutations();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [processingAction, setProcessingAction] = useState<'complete' | 'duplicate' | 'delete' | null>(null);
@@ -82,85 +84,32 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
     Low: "bg-success/15 text-success border-success/30",
   };
 
-  const handleComplete = async (e: React.MouseEvent) => {
+  const handleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
-    setProcessingAction('complete');
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'Completed' })
-        .eq('id', task.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Task marked as completed",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setProcessingAction(null);
-      setOpenDropdown(false);
-    }
+    e.stopPropagation();
+    completeTask.mutate(task.id, {
+      onSuccess: () => {
+        setOpenDropdown(false);
+      }
+    });
   };
 
-  const handleStatusChange = async (newStatus: string, e: React.MouseEvent) => {
+  const handleStatusChange = (newStatus: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus as any })
-        .eq('id', task.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Task status updated to ${newStatus}`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      setStatusOpen(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    updateStatus.mutate({ id: task.id, status: newStatus }, {
+      onSuccess: () => {
+        setStatusOpen(false);
+      }
+    });
   };
 
-  const handlePriorityChange = async (newPriority: string, e: React.MouseEvent) => {
+  const handlePriorityChange = (newPriority: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ priority: newPriority as any })
-        .eq('id', task.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Task priority updated to ${newPriority}`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      setPriorityOpen(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    updatePriority.mutate({ id: task.id, priority: newPriority }, {
+      onSuccess: () => {
+        setPriorityOpen(false);
+      }
+    });
   };
 
   const handleDuplicate = async (e: React.MouseEvent) => {
