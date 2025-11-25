@@ -10,7 +10,7 @@
 export function isTaskOverdue(task: any): boolean {
   if (!task.due_at) return false;
   if (task.status === 'Completed') return false;
-  if (task.status === 'Backlog') return false;
+  if (task.status === 'Pending') return false;
   
   const dueDate = new Date(task.due_at);
   const today = new Date();
