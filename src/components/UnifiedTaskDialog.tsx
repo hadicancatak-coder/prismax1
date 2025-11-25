@@ -47,6 +47,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Internal mode state to allow switching from view to edit
+  const [internalMode, setInternalMode] = useState<'create' | 'view' | 'edit'>(mode);
+  
   // State management
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -84,8 +87,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     mode === 'create' ? '' : (taskId || '')
   );
 
-  const isReadOnly = mode === 'view';
-  const isCreate = mode === 'create';
+  // Reset internal mode when dialog opens/closes or mode prop changes
+  useEffect(() => {
+    if (open) {
+      setInternalMode(mode);
+    }
+  }, [open, mode]);
+
+  const isReadOnly = internalMode === 'view';
+  const isCreate = internalMode === 'create';
 
   // Fetch task data for view/edit modes
   useEffect(() => {
@@ -381,14 +391,26 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
-          </DialogTitle>
-          {!isCreate && task && (
-            <DialogDescription>
-              Created {format(new Date(task.created_at), "PPP 'at' p")}
-            </DialogDescription>
+        <DialogHeader className="flex-row items-center justify-between">
+          <div>
+            <DialogTitle>
+              {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
+            </DialogTitle>
+            {!isCreate && task && (
+              <DialogDescription>
+                Created {format(new Date(task.created_at), "PPP 'at' p")}
+              </DialogDescription>
+            )}
+          </div>
+          {!isCreate && isReadOnly && (
+            <Button 
+              type="button" 
+              variant="default" 
+              size="sm"
+              onClick={() => setInternalMode('edit')}
+            >
+              Edit Task
+            </Button>
           )}
         </DialogHeader>
 
@@ -859,88 +881,94 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             {/* Comments (View/Edit only) */}
             {!isCreate && taskId && (
               <div className="space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowComments(!showComments)}
-                  className="w-full justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    Comments ({comments.length})
-                  </span>
-                  {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-                
-                {showComments && (
-                  <div className="border rounded-md p-4 space-y-4 max-h-[300px] overflow-y-auto">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium">{comment.author?.name}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {format(new Date(comment.created_at), "PPP 'at' p")}
-                          </span>
+                <Collapsible open={showComments} onOpenChange={setShowComments}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4" />
+                        Comments ({comments.length})
+                      </span>
+                      {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border rounded-md p-4 space-y-4 max-h-[300px] overflow-y-auto mt-2">
+                      {comments.map((comment) => (
+                        <div key={comment.id} className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium">{comment.author?.name}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {format(new Date(comment.created_at), "PPP 'at' p")}
+                            </span>
+                          </div>
+                          <CommentText text={comment.body} />
                         </div>
-                        <CommentText text={comment.body} />
-                      </div>
-                    ))}
-                    
-                    {!isReadOnly && (
-                      <div className="flex gap-2">
-                        <RichTextEditor
-                          value={newComment}
-                          onChange={setNewComment}
-                          placeholder="Add a comment..."
-                          minHeight="60px"
-                        />
-                        <Button type="button" onClick={handleAddComment} size="sm">
-                          Send
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      ))}
+                      
+                      {!isReadOnly && (
+                        <div className="space-y-2">
+                          <RichTextEditor
+                            value={newComment}
+                            onChange={setNewComment}
+                            placeholder="Add a comment..."
+                            minHeight="60px"
+                          />
+                          <Button type="button" onClick={handleAddComment} size="sm" className="w-full">
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Comment
+                          </Button>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             )}
 
             {/* Activity Log (View/Edit only) */}
             {!isCreate && taskId && (
               <div className="space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowActivity(!showActivity)}
-                  className="w-full justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    Activity Log
-                  </span>
-                  {showActivity ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-                
-                {showActivity && (
-                  <div className="border rounded-md p-4 space-y-2 max-h-[300px] overflow-y-auto">
-                    {changeLogsLoading ? (
-                      <p className="text-sm text-muted-foreground">Loading...</p>
-                    ) : changeLogs.length > 0 ? (
-                      changeLogs.map((log) => (
-                  <ActivityLogEntry 
-                    key={log.id}
-                    field_name={log.field_name}
-                    old_value={log.old_value}
-                    new_value={log.new_value}
-                    description={log.description}
-                    changed_at={log.changed_at}
-                    profiles={log.profiles}
-                  />
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No activity yet</p>
-                    )}
-                  </div>
-                )}
+                <Collapsible open={showActivity} onOpenChange={setShowActivity}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-4 w-4" />
+                        Activity Log
+                      </span>
+                      {showActivity ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border rounded-md p-4 space-y-2 max-h-[300px] overflow-y-auto mt-2">
+                      {changeLogsLoading ? (
+                        <p className="text-sm text-muted-foreground">Loading...</p>
+                      ) : changeLogs.length > 0 ? (
+                        changeLogs.map((log) => (
+                          <ActivityLogEntry 
+                            key={log.id}
+                            field_name={log.field_name}
+                            old_value={log.old_value}
+                            new_value={log.new_value}
+                            description={log.description}
+                            changed_at={log.changed_at}
+                            profiles={log.profiles}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No activity yet</p>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             )}
           </form>
