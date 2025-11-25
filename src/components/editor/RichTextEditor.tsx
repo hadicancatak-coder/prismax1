@@ -33,7 +33,10 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable StarterKit's built-in link and other conflicting extensions
+        link: false,
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {

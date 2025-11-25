@@ -1,4 +1,5 @@
 import { parseISO, isWithinInterval, startOfDay, addDays, isSameDay, format } from 'date-fns';
+import { isDateWorkingDay } from './workingDaysHelper';
 
 export interface RecurringOccurrence {
   taskId: string;
@@ -9,12 +10,14 @@ export interface RecurringOccurrence {
 
 /**
  * Expands a recurring task into individual occurrences within a date range
+ * Respects assigned users' working days - only includes dates that are working days for ALL assignees
  */
 export function expandRecurringTask(
   task: any,
   startDate: Date,
   endDate: Date,
-  completions: any[] = []
+  completions: any[] = [],
+  assignees: Array<{ working_days: string | null }> = []
 ): RecurringOccurrence[] {
   if (!task.recurrence_rrule || task.task_type !== 'recurring') return [];
 
@@ -44,15 +47,22 @@ export function expandRecurringTask(
         const dayOfWeek = currentDate.getDay(); // 0 = Sunday
         
         if (daysOfWeek.includes(dayOfWeek)) {
-          const completionDateStr = format(currentDate, 'yyyy-MM-dd');
-          const completion = completions.find(c => c.completed_date === completionDateStr);
+          // Check if this date is a working day for all assignees
+          const isWorkingDayForAll = assignees.length === 0 || assignees.every(assignee => 
+            isDateWorkingDay(currentDate, assignee.working_days)
+          );
           
-          occurrences.push({
-            taskId: task.id,
-            occurrenceDate: new Date(currentDate),
-            isCompleted: !!completion,
-            completionId: completion?.id,
-          });
+          if (isWorkingDayForAll) {
+            const completionDateStr = format(currentDate, 'yyyy-MM-dd');
+            const completion = completions.find(c => c.completed_date === completionDateStr);
+            
+            occurrences.push({
+              taskId: task.id,
+              occurrenceDate: new Date(currentDate),
+              isCompleted: !!completion,
+              completionId: completion?.id,
+            });
+          }
         }
         
         currentDate = addDays(currentDate, 1);
@@ -67,15 +77,22 @@ export function expandRecurringTask(
     
     while (currentDate <= endDate) {
       if (currentDate >= startDate) {
-        const completionDateStr = format(currentDate, 'yyyy-MM-dd');
-        const completion = completions.find(c => c.completed_date === completionDateStr);
+        // Check if this date is a working day for all assignees
+        const isWorkingDayForAll = assignees.length === 0 || assignees.every(assignee => 
+          isDateWorkingDay(currentDate, assignee.working_days)
+        );
         
-        occurrences.push({
-          taskId: task.id,
-          occurrenceDate: new Date(currentDate),
-          isCompleted: !!completion,
-          completionId: completion?.id,
-        });
+        if (isWorkingDayForAll) {
+          const completionDateStr = format(currentDate, 'yyyy-MM-dd');
+          const completion = completions.find(c => c.completed_date === completionDateStr);
+          
+          occurrences.push({
+            taskId: task.id,
+            occurrenceDate: new Date(currentDate),
+            isCompleted: !!completion,
+            completionId: completion?.id,
+          });
+        }
       }
       
       // Move to next month
@@ -88,15 +105,22 @@ export function expandRecurringTask(
     let currentDate = startOfDay(startDate);
     
     while (currentDate <= endDate) {
-      const completionDateStr = format(currentDate, 'yyyy-MM-dd');
-      const completion = completions.find(c => c.completed_date === completionDateStr);
+      // Check if this date is a working day for all assignees
+      const isWorkingDayForAll = assignees.length === 0 || assignees.every(assignee => 
+        isDateWorkingDay(currentDate, assignee.working_days)
+      );
       
-      occurrences.push({
-        taskId: task.id,
-        occurrenceDate: new Date(currentDate),
-        isCompleted: !!completion,
-        completionId: completion?.id,
-      });
+      if (isWorkingDayForAll) {
+        const completionDateStr = format(currentDate, 'yyyy-MM-dd');
+        const completion = completions.find(c => c.completed_date === completionDateStr);
+        
+        occurrences.push({
+          taskId: task.id,
+          occurrenceDate: new Date(currentDate),
+          isCompleted: !!completion,
+          completionId: completion?.id,
+        });
+      }
       
       currentDate = addDays(currentDate, 1);
     }
