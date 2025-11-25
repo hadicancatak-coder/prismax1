@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { mapStatusToDb } from '@/lib/taskStatusMapper';
 
 // Task mutation hooks with optimistic updates for instant UI feedback
 
 interface UpdateTaskParams {
   id: string;
   updates: Partial<{
-    status: 'Backlog' | 'Ongoing' | 'Completed' | 'Failed' | 'Blocked';
+    status: 'Pending' | 'Ongoing' | 'Completed' | 'Failed' | 'Blocked'; // DB values
     priority: 'Low' | 'Medium' | 'High';
     due_at: string | null;
     title: string;
@@ -167,10 +168,11 @@ export const useTaskMutations = () => {
 
   // Helper mutation for updating status
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: any }) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const dbStatus = mapStatusToDb(status) as 'Pending' | 'Ongoing' | 'Completed' | 'Failed' | 'Blocked';
       const { data, error } = await supabase
         .from('tasks')
-        .update({ status })
+        .update({ status: dbStatus })
         .eq('id', id)
         .select()
         .single();
@@ -192,12 +194,20 @@ export const useTaskMutations = () => {
       return { previousTasks };
     },
     onError: (err: any, variables, context) => {
+      console.error('Task status update failed:', {
+        error: err,
+        variables,
+        errorMessage: err.message,
+        errorDetails: err.details,
+        hint: err.hint
+      });
+      
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
       toast({
         title: "Failed to update status",
-        description: err.message,
+        description: `${err.message}${err.hint ? ` - ${err.hint}` : ''}`,
         variant: "destructive"
       });
     },
