@@ -380,7 +380,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {isCreate ? "Create New Task" : isReadOnly ? "Task Details" : "Edit Task"}
@@ -392,8 +392,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
           )}
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <ScrollArea className="flex-1 max-h-[calc(90vh-180px)] pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Task details and team discussion</Label>
@@ -491,15 +491,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             {/* Countries/Entity - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Countries (Entity)</Label>
-              <Popover>
+              <Popover modal={true}>
                 <PopoverTrigger asChild disabled={isReadOnly}>
                   <Button variant="outline" className="w-full justify-start">
                     {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 bg-card z-50" align="start">
-                  <ScrollArea className="h-[300px] pr-4">
-                    <div className="space-y-2 p-1">
+                <PopoverContent className="w-80 bg-card z-[100]" align="start" side="bottom" sideOffset={5}>
+                  <ScrollArea className="h-[280px]">
+                    <div className="space-y-2 p-2 pr-4">
                       {ENTITIES.map((ent) => (
                         <div key={ent} className="flex items-center space-x-2">
                           <Checkbox
@@ -676,7 +676,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             {/* Due Date - ALWAYS SHOW */}
             <div className="space-y-2">
               <Label>Due Date</Label>
-              <Popover>
+              <Popover modal={true}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -688,7 +688,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {recurrence !== "none" ? "N/A (Recurring)" : dueDate ? format(dueDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 bg-card z-[100]" align="start" side="bottom" sideOffset={5}>
                   <Calendar
                     mode="single"
                     selected={dueDate}
