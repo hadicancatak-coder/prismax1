@@ -3638,7 +3638,7 @@ export type Database = {
           change_requested_fields: string[] | null
           checklist: Json | null
           created_at: string
-          created_by: string | null
+          created_by: string
           delete_requested_at: string | null
           delete_requested_by: string | null
           description: string | null
@@ -3684,7 +3684,7 @@ export type Database = {
           change_requested_fields?: string[] | null
           checklist?: Json | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           delete_requested_at?: string | null
           delete_requested_by?: string | null
           description?: string | null
@@ -3730,7 +3730,7 @@ export type Database = {
           change_requested_fields?: string[] | null
           checklist?: Json | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           delete_requested_at?: string | null
           delete_requested_by?: string | null
           description?: string | null
