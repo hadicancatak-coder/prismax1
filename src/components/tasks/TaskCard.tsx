@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loader2, ChevronDown } from "lucide-react";
+import { MessageSquare, Calendar, MoreVertical, CheckCircle, Copy, Trash2, Loader2, ChevronDown, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
+import { getDaysOverdue } from "@/lib/overdueHelpers";
 
 interface TaskCardProps {
   task: any;
@@ -52,8 +53,10 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   };
   
   const isOverdue = (dueDate: string | null, status: string) => {
-    if (!dueDate || status === 'Completed') return false;
-    return new Date(dueDate) < new Date();
+    if (!dueDate || status === 'Completed' || status === 'Backlog') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dueDate) < today;
   };
 
   const getPriorityColor = (priority: string) => {
@@ -66,7 +69,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   };
 
   const statusColors = {
-    Pending: "bg-pending/15 text-pending border-pending/30",
+    Backlog: "bg-pending/15 text-pending border-pending/30",
     Ongoing: "bg-primary/15 text-primary border-primary/30",
     Completed: "bg-success/15 text-success border-success/30",
     Failed: "bg-muted/15 text-muted-foreground border-muted/30",
@@ -263,7 +266,10 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
 
   return (
     <Card 
-      className="p-5 hover:shadow-lg hover:-translate-y-0.5 transition-smooth border-l-4 relative group"
+      className={cn(
+        "p-5 hover:shadow-lg hover:-translate-y-0.5 transition-smooth border-l-4 relative group",
+        isOverdue(task.due_at, task.status) && "bg-destructive/5"
+      )}
       style={{ borderLeftColor: getPriorityColor(task.priority) }}
     >
       {/* Priority and Status badges */}
@@ -299,7 +305,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
               </Badge>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={(e) => handleStatusChange('Pending', e)}>Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleStatusChange('Backlog', e)}>Backlog</DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => handleStatusChange('Ongoing', e)}>Ongoing</DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => handleStatusChange('Blocked', e)}>Blocked</DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => handleStatusChange('Completed', e)}>Completed</DropdownMenuItem>
@@ -310,6 +316,13 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
           {task.visibility && (
             <Badge variant={task.visibility === 'global' ? 'default' : 'secondary'} className="text-xs">
               {task.visibility === 'global' ? 'Global' : 'Private'}
+            </Badge>
+          )}
+
+          {isOverdue(task.due_at, task.status) && (
+            <Badge variant="destructive" className="text-xs">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              {getDaysOverdue(task.due_at)} day{getDaysOverdue(task.due_at) !== 1 ? 's' : ''} overdue
             </Badge>
           )}
         </div>

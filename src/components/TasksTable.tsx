@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, Trash2, CheckCircle, Copy, Loader2 } from "lucide-react";
+import { MoreVertical, Trash2, CheckCircle, Copy, Loader2, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,8 +111,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
   };
 
   const isOverdue = (dueDate: string | null, status: string) => {
-    if (!dueDate || status === 'Completed') return false;
-    return new Date(dueDate) < new Date();
+    if (!dueDate || status === 'Completed' || status === 'Backlog') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dueDate) < today;
   };
 
   const isDueToday = (dueDate: string | null) => {
@@ -203,7 +205,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   "cursor-pointer hover:bg-muted/50 transition-all h-10 border-b border-border last:border-0",
                   getRowBackgroundClass(task.status),
                   task.pending_approval && 'border-l-4 border-l-primary',
-                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive',
+                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive bg-destructive/5',
                   isDueToday(task.due_at) && 'border-l-4 border-l-warning',
                   isDueTomorrow(task.due_at) && 'border-l-4 border-l-accent'
                 )}
@@ -250,6 +252,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     />
                   ) : (
                     <div className="flex items-center gap-2">
+                      {isOverdue(task.due_at, task.status) && (
+                        <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                      )}
                       <span className="text-sm font-medium truncate">{task.title}</span>
                       {task.pending_approval && (
                         <Badge variant="default" className="text-xs px-2.5 py-0.5">
@@ -299,7 +304,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Backlog">Backlog</SelectItem>
                       <SelectItem value="Ongoing">Ongoing</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>

@@ -62,13 +62,14 @@ export function MyTasks() {
       .lt("due_at", tomorrow.toISOString())
       .neq("status", "Completed");
 
-    // Overdue tasks
+    // Overdue tasks (exclude Backlog)
     const { count: overdueCount } = await supabase
       .from("tasks")
       .select("*", { count: "exact", head: true })
       .in("id", taskIds)
       .lt("due_at", today.toISOString())
-      .neq("status", "Completed");
+      .neq("status", "Completed" as any)
+      .neq("status", "Backlog" as any);
 
     // This week's tasks
     const { count: weekCount } = await supabase

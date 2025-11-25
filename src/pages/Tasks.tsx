@@ -29,6 +29,9 @@ import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
 import { exportTasksToCSV } from "@/lib/taskExport";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import { isTaskOverdue } from "@/lib/overdueHelpers";
 
 export default function Tasks() {
   const { toast } = useToast();
@@ -330,6 +333,16 @@ export default function Tasks() {
             </span>
           </div>
         )}
+
+      {/* Overdue Tasks Alert */}
+      {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Task Views */}
       {finalFilteredTasks.length === 0 ? (

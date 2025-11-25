@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List } from "lucide-react";
+import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { CalendarKanbanView } from "@/components/calendar/CalendarKanbanView";
 import { expandRecurringTask, getRecurrenceLabel } from "@/lib/recurrenceExpander";
 import { useToast } from "@/hooks/use-toast";
+import { isTaskOverdue, getDaysOverdue } from "@/lib/overdueHelpers";
 
 // Sortable Task Item Component
 function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = false }: any) {
@@ -594,7 +595,12 @@ export default function CalendarView() {
   const completedToday = filteredTasks.filter(t => t.status === 'Completed').length;
   const totalToday = filteredTasks.length;
   const highPriorityCount = filteredTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
-  const upcomingCount = filteredTasks.filter(t => t.status === 'Pending').length;
+  const upcomingCount = filteredTasks.filter(t => t.status === 'Backlog').length;
+  
+  // Compute overdue tasks (exclude Backlog status)
+  const overdueTasks = useMemo(() => {
+    return (allTasks || []).filter(task => isTaskOverdue(task));
+  }, [allTasks]);
 
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
@@ -759,6 +765,46 @@ export default function CalendarView() {
             <ListSkeleton items={5} />
           ) : (
             <>
+              {/* Overdue Tasks Section */}
+              {overdueTasks.length > 0 && (
+                <Card className="border-l-4 border-l-destructive bg-destructive/5 mb-6">
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      <h3 className="text-section-title text-destructive">
+                        Overdue Tasks ({overdueTasks.length})
+                      </h3>
+                    </div>
+                    <p className="text-metadata text-muted-foreground mb-4">
+                      These tasks need your immediate attention
+                    </p>
+                    <div className="space-y-2">
+                      {overdueTasks.slice(0, 5).map(task => (
+                        <SortableTaskItem 
+                          key={task.id} 
+                          task={{
+                            ...task,
+                            overdueLabel: `${getDaysOverdue(task.due_at)} day${getDaysOverdue(task.due_at) !== 1 ? 's' : ''} overdue`
+                          }}
+                          onTaskClick={(id: string) => {
+                            setSelectedTaskId(id);
+                            setTaskDialogOpen(true);
+                          }}
+                          onTaskComplete={async (taskId, completed) => {
+                            await supabase
+                              .from('tasks')
+                              .update({ status: completed ? 'Completed' : 'Ongoing' })
+                              .eq('id', taskId);
+                            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                          }}
+                          isManualMode={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              )}
+
               {viewMode === 'list' ? (
                 <>
                   {activeTasks.length > 0 && sortOption !== "manual" && (

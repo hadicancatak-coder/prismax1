@@ -4998,6 +4998,7 @@ export type Database = {
         }
         Returns: string
       }
+      notify_overdue_tasks: { Args: never; Returns: undefined }
       regenerate_backup_codes: { Args: never; Returns: string[] }
       reschedule_overdue_tasks: { Args: never; Returns: undefined }
       search_content: {
