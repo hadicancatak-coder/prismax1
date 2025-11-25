@@ -1382,7 +1382,7 @@ export function TaskDialog({ open, onOpenChange, taskId }: TaskDialogProps) {
                               <AvatarImage src={comment.profiles?.avatar_url} />
                               <AvatarFallback>{comment.profiles?.name?.[0]}</AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 bg-muted rounded-lg p-3 relative">
+                            <div className="flex-1 min-w-0 bg-muted rounded-lg p-3 relative">
                               {comment.author_id === user?.id && (
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                   <Button
