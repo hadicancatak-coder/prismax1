@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { TaskDialog } from "@/components/TaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 
 export default function TimeTracking() {
   const { user } = useAuth();
@@ -341,7 +341,7 @@ export default function TimeTracking() {
       </Card>
 
       {viewTaskId && (
-        <TaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} taskId={viewTaskId} />
+        <UnifiedTaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} mode="view" taskId={viewTaskId} />
       )}
     </div>
   );

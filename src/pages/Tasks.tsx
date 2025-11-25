@@ -7,7 +7,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2, ChevronUp, ChevronDown, SlidersHorizontal, Calendar } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
-import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { TaskTemplateDialog } from "@/components/TaskTemplateDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
@@ -19,7 +19,7 @@ import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TaskDialog } from "@/components/TaskDialog";
+// Removed - using UnifiedTaskDialog
 import { useTasks } from "@/hooks/useTasks";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -484,11 +484,12 @@ export default function Tasks() {
         </>
       )}
 
-      <CreateTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <UnifiedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} mode="create" />
       {selectedTaskId && (
-        <TaskDialog
+        <UnifiedTaskDialog
           open={taskDialogOpen}
           onOpenChange={setTaskDialogOpen}
+          mode="view"
           taskId={selectedTaskId}
         />
       )}

@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Bell, Check, Trash2, Search, CheckCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { TaskDialog } from "@/components/TaskDialog";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns";
 import { AnnouncementsSection } from "@/components/AnnouncementsSection";
 import { NotificationDetailDialog } from "@/components/NotificationDetailDialog";
@@ -546,9 +546,10 @@ export default function Notifications() {
       </div>
 
       {selectedTaskId && (
-        <TaskDialog
+        <UnifiedTaskDialog
           open={taskDialogOpen}
           onOpenChange={setTaskDialogOpen}
+          mode="view"
           taskId={selectedTaskId}
         />
       )}

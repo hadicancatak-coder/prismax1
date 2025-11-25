@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useTaskMutations } from "@/hooks/useTaskMutations";
-import { TaskDialog } from "./TaskDialog";
+import { UnifiedTaskDialog } from "./UnifiedTaskDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -479,9 +479,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
       </div>
 
       {selectedTaskId && (
-        <TaskDialog
+        <UnifiedTaskDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+          mode="view"
           taskId={selectedTaskId}
         />
       )}
