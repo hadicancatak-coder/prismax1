@@ -272,7 +272,7 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         title: title.trim(),
         description: description.trim() || null,
         priority: recurrence !== "none" ? "High" : priority,
-        status: "Pending" as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
+        status: "Ongoing" as "Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed",
         due_at: recurrence !== "none" ? null : date?.toISOString(),
         jira_link: jiraLink.trim() || null,
         created_by: user.id,
