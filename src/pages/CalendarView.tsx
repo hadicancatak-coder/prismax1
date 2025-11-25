@@ -300,7 +300,8 @@ export default function CalendarView() {
     });
 
     allTasks.forEach(task => {
-      if (task.task_type === 'recurring' && task.recurrence_rrule) {
+      // Check for recurring task - either by type OR by presence of rrule (handles legacy/broken data)
+      if ((task.task_type === 'recurring' || task.recurrence_rrule) && task.recurrence_rrule) {
         console.log('🔍 Expanding recurring task:', {
           id: task.id,
           title: task.title,
@@ -316,7 +317,8 @@ export default function CalendarView() {
             task,
             startDate,
             endDate,
-            completions.filter(c => c.task_id === task.id)
+            completions.filter(c => c.task_id === task.id),
+            task.assignees || [] // Pass assignees for working days filtering
           );
 
           console.log('📅 Occurrences generated:', {
@@ -360,7 +362,8 @@ export default function CalendarView() {
             task,
             startDate,
             endDate,
-            completions.filter(c => c.task_id === task.id)
+            completions.filter(c => c.task_id === task.id),
+            task.assignees || [] // Pass assignees for working days filtering
           );
           
           if (occurrences.length > 0) {

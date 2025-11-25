@@ -283,7 +283,8 @@ export const CreateTaskDialog = ({ open, onOpenChange }: CreateTaskDialogProps) 
         recurrence_days_of_week: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : null,
         recurrence_day_of_month: recurrenceDayOfMonth,
         teams: selectedTeams,
-        task_type: taskType as 'generic' | 'campaign' | 'recurring',
+        // Auto-set task_type to 'recurring' when recurrence is selected, regardless of dropdown value
+        task_type: recurrence !== "none" ? 'recurring' : (taskType as 'generic' | 'campaign' | 'recurring'),
       };
 
       const { data, error } = await supabase.from("tasks").insert([taskData]).select();
