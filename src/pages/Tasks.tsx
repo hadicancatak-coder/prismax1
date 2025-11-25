@@ -76,7 +76,8 @@ export default function Tasks() {
     {
       label: "Overdue",
       Icon: AlertCircle,
-      filter: (task: any) => isTaskOverdue(task)
+      filter: (task: any) => isTaskOverdue(task),
+      clearOtherFilters: true
     },
     {
       label: "Due Soon",
@@ -161,11 +162,25 @@ export default function Tasks() {
     setSelectedAssignees([]);
     setSelectedTeams([]);
     setDateFilter(null);
-    setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
+    setStatusFilters(['Backlog', 'Ongoing', 'Blocked', 'Failed']);
     setTaskTypeFilter("all");
     setActiveQuickFilter(null);
     setSearchQuery("");
     setSelectedTaskIds([]);
+  };
+
+  const handleQuickFilter = (filterLabel: string) => {
+    const filter = quickFilters.find(f => f.label === filterLabel);
+    
+    if (activeQuickFilter === filterLabel) {
+      setActiveQuickFilter(null);
+    } else {
+      // If this filter needs to clear others (e.g., Overdue), clear all filters first
+      if (filter?.clearOtherFilters) {
+        clearAllFilters();
+      }
+      setActiveQuickFilter(filterLabel);
+    }
   };
 
   const handleBulkComplete = async () => {
@@ -340,6 +355,28 @@ export default function Tasks() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             You have {data?.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Filter Warning - Some overdue tasks hidden */}
+      {data?.filter(task => isTaskOverdue(task)).length > 
+       finalFilteredTasks.filter(task => isTaskOverdue(task)).length && (
+        <Alert variant="warning" className="border-warning/30 bg-warning/5">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-warning">
+              Showing {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} of {data?.filter(task => isTaskOverdue(task)).length} overdue tasks. 
+              Some are hidden by active filters.
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearAllFilters}
+              className="ml-4"
+            >
+              Clear Filters to See All
+            </Button>
           </AlertDescription>
         </Alert>
       )}
