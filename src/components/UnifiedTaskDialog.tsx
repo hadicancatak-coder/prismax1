@@ -23,6 +23,7 @@ import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
 import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MultiAssigneeSelector } from "./MultiAssigneeSelector";
+import { AssigneeMultiSelect } from "./AssigneeMultiSelect";
 import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
 import { TaskChecklistSection } from "./TaskChecklistSection";
 import { TaskDependenciesSection } from "./TaskDependenciesSection";
@@ -463,28 +464,14 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                   onAssigneesChange={refetchAssignees}
                 />
               ) : isCreate && userRole === 'admin' ? (
-                <div className="border rounded-md p-2 min-h-[42px]">
-                  {selectedAssignees.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {users.filter(u => selectedAssignees.includes(u.id)).map(u => (
-                        <Badge key={u.id} variant="secondary">
-                          {u.name}
-                          <button
-                            type="button"
-                            onClick={() => setSelectedAssignees(prev => prev.filter(id => id !== u.id))}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            ×
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Select assignees</span>
-                  )}
-                </div>
+                <AssigneeMultiSelect
+                  users={users.map(u => ({ user_id: u.id, name: u.name, username: u.username || '' }))}
+                  selectedUserIds={selectedAssignees}
+                  onSelectionChange={setSelectedAssignees}
+                  placeholder="Select assignees..."
+                />
               ) : (
-                <Input placeholder="No teams assigned" value="" disabled className="bg-muted" />
+                <Input placeholder="No assignees" value="" disabled className="bg-muted" />
               )}
             </div>
 
@@ -510,9 +497,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80">
+                <PopoverContent className="w-80 bg-card z-50" align="start">
                   <ScrollArea className="h-[300px] pr-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 p-1">
                       {ENTITIES.map((ent) => (
                         <div key={ent} className="flex items-center space-x-2">
                           <Checkbox
