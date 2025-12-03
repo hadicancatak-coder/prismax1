@@ -191,6 +191,16 @@ export default {
             backgroundPosition: "1000px 0"
           },
         },
+        "slide-in-right": {
+          "0%": { 
+            transform: "translateX(100%)",
+            opacity: "0"
+          },
+          "100%": { 
+            transform: "translateX(0)",
+            opacity: "1"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 150ms ease-in-out",
@@ -200,6 +210,7 @@ export default {
         "slide-up": "slide-up 200ms ease-out",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
         "shimmer": "shimmer 2s infinite linear",
+        "slide-in-right": "slide-in-right 200ms ease-out",
       },
     },
   },
