@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Plus, ExternalLink, Trash2, Calendar, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { Plus, ExternalLink, Trash2, Calendar, Users, AlertCircle, CheckCircle, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -17,7 +17,38 @@ import { format } from "date-fns";
 import { BlockerDialog } from "@/components/BlockerDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { ReportDialog } from "@/components/ReportDialog";
-import Team from "./Team";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+// Inline Team Directory component
+function TeamDirectory({ users }: { users: any[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {users.length > 0 ? users.map((member) => (
+        <Card key={member.user_id} className="p-4 hover:bg-card-hover transition-smooth">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className="bg-primary/20 text-primary">
+                {(member.name || member.username || "?").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground truncate">{member.name || member.username}</p>
+              {member.email && (
+                <p className="text-metadata text-muted-foreground truncate flex items-center gap-1">
+                  <Mail className="h-3 w-3" /> {member.email}
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )) : (
+        <Card className="p-8 text-center col-span-full">
+          <p className="text-muted-foreground">No team members found</p>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 export default function TeamBase() {
   const { user, userRole } = useAuth();
@@ -234,7 +265,7 @@ export default function TeamBase() {
         </TabsList>
 
         <TabsContent value="team" className="mt-6">
-          <Team />
+          <TeamDirectory users={allUsers} />
         </TabsContent>
 
         <TabsContent value="blockers" className="mt-6 space-y-4">

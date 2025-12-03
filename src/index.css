@@ -195,13 +195,24 @@ All colors MUST be HSL.
     background: hsl(var(--sidebar-primary) / 0.3);
   }
 
-  /* Hide scrollbar utility */
+  /* Hide scrollbar utility - for dropdowns, dialogs, etc */
   .hide-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
   .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scroll with hidden indicator */
+  .scroll-smooth-hidden {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scroll-smooth-hidden::-webkit-scrollbar {
     display: none;
   }
 }
