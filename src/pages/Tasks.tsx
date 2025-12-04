@@ -214,7 +214,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="px-6 md:px-12 py-8 space-y-6 relative">
+    <div className="theme-apple min-h-screen bg-background px-6 md:px-12 py-8 space-y-6 relative">
       <TaskBulkActionsBar
         selectedCount={selectedTaskIds.length}
         onClearSelection={() => setSelectedTaskIds([])}
@@ -225,27 +225,29 @@ export default function Tasks() {
         onExport={handleBulkExport}
       />
       <div className="max-w-7xl mx-auto w-full space-y-6">
+        {/* Apple-style Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-page-title text-foreground">Tasks</h1>
-            <p className="text-body text-muted-foreground">Manage and track your team's tasks</p>
+            <h1 className="text-[32px] font-semibold tracking-tight text-foreground">Tasks</h1>
+            <p className="text-[15px] text-muted-foreground mt-1">Manage and track your team's tasks</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button onClick={() => setDialogOpen(true)} className="min-h-[44px]">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">New Task</span>
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setDialogOpen(true)} 
+            className="rounded-full px-6 h-11 shadow-sm hover:shadow-md transition-all font-medium"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Task
+          </Button>
         </div>
 
-        {/* Consolidated Filters - Single Row */}
-        <Card className="p-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        {/* Apple-style Filter Bar */}
+        <Card className="p-3 rounded-2xl border-border/50 shadow-sm">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
             <Input
-              placeholder="Search..."
+              placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-32 sm:w-48 md:w-64 h-8 text-sm flex-shrink-0"
+              className="w-48 md:w-64 h-9 rounded-full bg-muted/50 border-0 px-4 text-[14px] placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
             
             <StatusMultiSelect
@@ -259,12 +261,12 @@ export default function Tasks() {
                 if (value === "all") setSelectedTags([]);
               }}
             >
-              <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+              <SelectTrigger className="w-[100px] h-9 rounded-full bg-muted/50 border-0 text-[13px]">
                 <SelectValue>
                   {selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">All Tags</SelectItem>
                 {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
                   <div
@@ -275,13 +277,13 @@ export default function Tasks() {
                         prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
                       );
                     }}
-                    className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
+                    className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50 rounded-lg text-[13px]"
                   >
                     <input
                       type="checkbox"
                       checked={selectedTags.includes(tag)}
                       onChange={() => {}}
-                      className="cursor-pointer"
+                      className="cursor-pointer rounded"
                     />
                     <span className="capitalize">{tag}</span>
                   </div>
@@ -305,52 +307,52 @@ export default function Tasks() {
               variant={hideRecurring ? 'outline' : 'secondary'}
               size="sm"
               onClick={() => setHideRecurring(!hideRecurring)}
-              className="h-8 text-xs flex-shrink-0"
+              className="h-9 text-[12px] rounded-full px-4 border-0 bg-muted/50"
               title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
             >
-              <RefreshCw className="h-3 w-3 mr-1" />
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               {hideRecurring ? "Show Recurring" : "Hide Recurring"}
             </Button>
 
-            <div className="ml-auto flex gap-1 flex-shrink-0">
+            <div className="ml-auto flex gap-1.5 flex-shrink-0 bg-muted/50 p-1 rounded-full">
               <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('table')}
-                className="h-8 w-8 p-0"
+                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'table' && "shadow-sm")}
                 title="Table"
               >
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="h-8 w-8 p-0"
+                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'grid' && "shadow-sm")}
                 title="Grid"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'kanban-status' ? 'default' : 'outline'}
+                variant={viewMode === 'kanban-status' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => {
                   setViewMode('kanban-status');
                   setBoardGroupBy('status');
                 }}
-                className="h-8 w-8 p-0"
+                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'kanban-status' && "shadow-sm")}
                 title="Kanban Status"
               >
                 <Columns3 className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'kanban-date' ? 'default' : 'outline'}
+                variant={viewMode === 'kanban-date' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => {
                   setViewMode('kanban-date');
                   setBoardGroupBy('date');
                 }}
-                className="h-8 w-8 p-0"
+                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'kanban-date' && "shadow-sm")}
                 title="Kanban Date"
               >
                 <Clock className="h-4 w-4" />
@@ -359,49 +361,54 @@ export default function Tasks() {
           </div>
         </Card>
 
-        {/* Clear All Filters */}
         {hasActiveFilters && (
-          <div className="flex items-center gap-2 pt-1 border-t">
+          <div className="flex items-center gap-3 pt-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              className="h-8 text-[12px] text-muted-foreground hover:text-foreground rounded-full px-4"
             >
-              <X className="h-3 w-3 mr-1" />
+              <X className="h-3.5 w-3.5 mr-1.5" />
               Clear All Filters
             </Button>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[12px] text-muted-foreground">
               Showing {finalFilteredTasks.length} of {data?.length || 0} tasks
             </span>
           </div>
         )}
 
-      {/* Overdue Tasks Alert */}
+      {/* Overdue Tasks Alert - Apple style */}
       {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
-        <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
-          </AlertDescription>
-        </Alert>
+        <Card className="p-4 rounded-2xl border-destructive/20 bg-destructive/5">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <span className="text-[14px] font-medium text-destructive">
+              You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
+            </span>
+          </div>
+        </Card>
       )}
 
       {/* Task Views */}
       {finalFilteredTasks.length === 0 ? (
-        <div className="py-12 text-center">
+        <div className="py-16 text-center">
           <div className="flex flex-col items-center">
-            <div className="bg-muted p-6 rounded-full mb-4">
-              <CheckCircle2 className="h-16 w-16 text-primary" />
+            <div className="bg-primary/10 p-8 rounded-full mb-6">
+              <CheckCircle2 className="h-12 w-12 text-primary" />
             </div>
-            <h2 className="text-section-title mb-2">All Clear! 🎉</h2>
-            <p className="text-body text-muted-foreground mb-6 max-w-md">
+            <h2 className="text-[22px] font-semibold text-foreground mb-2">All Clear!</h2>
+            <p className="text-[15px] text-muted-foreground mb-8 max-w-sm leading-relaxed">
               {tasks.length === 0 
-                ? "You don't have any tasks yet. Create your first task to get started on achieving your goals."
-                : "No tasks found matching your filters. Try adjusting your search criteria."}
+                ? "You don't have any tasks yet. Create your first task to get started."
+                : "No tasks found matching your filters. Try adjusting your search."}
             </p>
             {tasks.length === 0 && (
-              <Button size="lg" onClick={() => setDialogOpen(true)}>
+              <Button 
+                size="lg" 
+                onClick={() => setDialogOpen(true)}
+                className="rounded-full px-8 h-12 shadow-sm hover:shadow-md"
+              >
                 <Plus className="mr-2 h-5 w-5" />
                 Create Your First Task
               </Button>
@@ -410,20 +417,18 @@ export default function Tasks() {
         </div>
       ) : (
         <>
-          {/* Pagination Controls */}
+          {/* Apple-style Pagination Controls */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Items per page:</span>
+            <span className="text-[13px] text-muted-foreground">
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[13px] text-muted-foreground">Items per page:</span>
               <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[100px]">
+                <SelectTrigger className="w-[80px] h-9 rounded-full bg-muted/50 border-0 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="10">10</SelectItem>
                   <SelectItem value="20">20</SelectItem>
                   <SelectItem value="50">50</SelectItem>
