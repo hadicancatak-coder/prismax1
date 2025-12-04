@@ -14,6 +14,7 @@ interface PageHeaderProps {
 
 /**
  * Standardized page header with title, description, and optional actions
+ * Typography: H1=24px semibold, description=14px
  * Used at the top of every page for consistency
  */
 export function PageHeader({ 
@@ -25,10 +26,10 @@ export function PageHeader({
   className 
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col sm:flex-row sm:items-start justify-between gap-4", className)}>
+    <div className={cn("flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6", className)}>
       <div className="flex items-start gap-3 flex-1 min-w-0">
         {Icon && (
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Icon className="h-5 w-5 text-primary" />
           </div>
         )}
@@ -37,20 +38,21 @@ export function PageHeader({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
               {breadcrumb.map((item, index) => (
                 <span key={index} className="flex items-center gap-1.5">
-                  {index > 0 && <span>/</span>}
+                  {index > 0 && <span className="text-border">/</span>}
                   <span>{item}</span>
                 </span>
               ))}
             </div>
           )}
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">{title}</h1>
+          {/* H1: 24px semibold - Apple typography */}
+          <h1 className="text-[24px] font-semibold text-foreground tracking-tight leading-tight">{title}</h1>
           {description && (
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            <p className="text-[14px] text-muted-foreground mt-1.5">{description}</p>
           )}
         </div>
       </div>
       {actions && (
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {actions}
         </div>
       )}
