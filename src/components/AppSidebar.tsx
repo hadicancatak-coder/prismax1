@@ -42,8 +42,7 @@ import {
 
 const adsItems = [
   { title: "Search Planner", url: "/ads/search", icon: Megaphone },
-  { title: "Copy Writer", url: "/copywriter", icon: PenTool },
-  { title: "Saved Elements", url: "/ads/library", icon: Database },
+  { title: "Caption Library", url: "/ads/captions", icon: PenTool },
   { title: "UTM Planner", url: "/utm-planner", icon: Link2 },
 ];
 
