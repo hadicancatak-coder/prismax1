@@ -124,8 +124,18 @@ export function GlobalBubbleMenu() {
       return;
     }
 
-    const editorElement = (anchorNode as HTMLElement).closest?.('.ProseMirror') || 
-                          (anchorNode.parentElement?.closest?.('.ProseMirror'));
+    // Improved editor element detection - check node and parent hierarchy
+    let editorElement: Element | null = null;
+    if (anchorNode.nodeType === Node.ELEMENT_NODE) {
+      editorElement = (anchorNode as Element).closest?.('.ProseMirror');
+    }
+    if (!editorElement && anchorNode.parentElement) {
+      editorElement = anchorNode.parentElement.closest('.ProseMirror');
+    }
+    // Also check if we're inside any contenteditable
+    if (!editorElement && anchorNode.parentElement) {
+      editorElement = anchorNode.parentElement.closest('[contenteditable="true"]');
+    }
     
     if (!editorElement) {
       setShow(false);
