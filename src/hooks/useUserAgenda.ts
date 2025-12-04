@@ -70,19 +70,17 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     enabled: !!effectiveUserId,
   });
 
-  // Check if user is assigned to a task
+  // Check if user is assigned to a task - strict matching
   const isUserAssigned = useCallback((task: any) => {
     if (!task.assignees || task.assignees.length === 0) return false;
+    if (!effectiveUserId) return false;
     
     return task.assignees.some((a: any) => {
-      // Check multiple possible ID matches
-      if (a.user_id === effectiveUserId) return true;
-      if (a.id === profileId) return true;
-      // Also check if profile's user_id matches
-      if (a.user_id && a.user_id === effectiveUserId) return true;
-      return false;
+      // Primary check: assignee's user_id matches the effective user
+      const assigneeUserId = a.user_id || a.profiles?.user_id;
+      return assigneeUserId === effectiveUserId;
     });
-  }, [effectiveUserId, profileId]);
+  }, [effectiveUserId]);
 
   // Check if a recurring task occurs on the selected date
   const recurringTaskOccursOnDate = useCallback((task: any, targetDate: Date) => {
@@ -196,6 +194,38 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     }
   }, [effectiveUserId, agendaDate, allTasks?.length, profileId]);
 
+  // Get user display name for activity logging
+  const getUserDisplayName = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, email')
+      .eq('user_id', userId)
+      .single();
+    return data?.name || data?.email || 'User';
+  }, []);
+
+  // Log activity when adding/removing from agenda
+  const logAgendaActivity = useCallback(async (taskIds: string[], action: 'add' | 'remove', targetUserId: string) => {
+    const currentUser = user?.id;
+    if (!currentUser) return;
+    
+    const userName = await getUserDisplayName(currentUser);
+    const targetUserName = targetUserId === currentUser ? 'their' : await getUserDisplayName(targetUserId);
+    
+    const actionText = action === 'add' 
+      ? `${userName} added task to ${targetUserName === 'their' ? 'their' : `${targetUserName}'s`} agenda`
+      : `${userName} moved task to Pool from ${targetUserName === 'their' ? 'their' : `${targetUserName}'s`} agenda`;
+    
+    // Log for each task
+    for (const taskId of taskIds) {
+      await supabase.from('comments').insert({
+        task_id: taskId,
+        author_id: currentUser,
+        body: `📅 ${actionText}`,
+      });
+    }
+  }, [user?.id, getUserDisplayName]);
+
   // Add tasks to agenda
   const addToAgenda = useMutation({
     mutationFn: async (taskIds: string[]) => {
@@ -213,13 +243,17 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         .upsert(items, { onConflict: 'user_id,task_id,agenda_date' });
       
       if (error) throw error;
+      
+      // Log activity
+      await logAgendaActivity(taskIds, 'add', effectiveUserId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-agenda', effectiveUserId, agendaDate] });
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 
-  // Remove from agenda
+  // Remove from agenda (move to pool)
   const removeFromAgenda = useMutation({
     mutationFn: async (taskIds: string[]) => {
       if (!effectiveUserId) throw new Error('No user');
@@ -232,9 +266,13 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         .in('task_id', taskIds);
       
       if (error) throw error;
+      
+      // Log activity
+      await logAgendaActivity(taskIds, 'remove', effectiveUserId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-agenda', effectiveUserId, agendaDate] });
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 
@@ -246,11 +284,14 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     const result: any[] = [];
     const addedIds = new Set<string>();
     
-    // Add tasks that are in the agenda
+    // Add tasks that are in the agenda AND assigned to user (safety check for stale data)
     for (const task of allTasks) {
       if (agendaTaskIds.has(task.id) && !addedIds.has(task.id)) {
-        result.push(task);
-        addedIds.add(task.id);
+        // Only include if user is assigned (to filter out any stale agenda entries)
+        if (isUserAssigned(task)) {
+          result.push(task);
+          addedIds.add(task.id);
+        }
       }
     }
     
