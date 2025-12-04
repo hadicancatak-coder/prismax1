@@ -134,33 +134,34 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     return due.toDateString() === tomorrow.toDateString();
   };
 
-  const getRowBackgroundClass = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "bg-success/5";
-      case "Blocked":
-        return "bg-destructive/5";
-      case "Ongoing":
-        return "bg-primary/5";
-      case "Pending":
-        return "bg-pending/5";
-      default:
-        return "";
+  // Apple-style row backgrounds - clean white, accent bar for special states
+  const getRowClasses = (task: any) => {
+    const base = "bg-white hover:bg-[#fafafa] transition-all";
+    if (isOverdue(task.due_at, task.status)) {
+      return `${base} border-l-4 border-l-[#ff3b30]`;
     }
+    if (task.status === "Blocked") {
+      return `${base} border-l-4 border-l-[#ff9500]`;
+    }
+    if (isDueToday(task.due_at)) {
+      return `${base} border-l-4 border-l-[#007aff]`;
+    }
+    return base;
   };
 
-  const statusColors = {
-    Pending: "bg-pending/15 text-pending border-pending/30",
-    Ongoing: "bg-primary/15 text-primary border-primary/30",
-    Completed: "bg-success/15 text-success border-success/30",
-    Failed: "bg-muted/15 text-muted-foreground border-muted/30",
-    Blocked: "bg-destructive/15 text-destructive border-destructive/30",
+  const statusColors: Record<string, string> = {
+    Pending: "bg-[#007aff]/10 text-[#007aff] border-[#007aff]/20",
+    Ongoing: "bg-[#34c759]/10 text-[#34c759] border-[#34c759]/20",
+    Completed: "bg-[#8e8e93]/10 text-[#8e8e93] border-[#8e8e93]/20",
+    Failed: "bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/20",
+    Blocked: "bg-[#ff9500]/10 text-[#ff9500] border-[#ff9500]/20",
+    Backlog: "bg-[#8e8e93]/10 text-[#8e8e93] border-[#8e8e93]/20",
   };
 
-  const priorityColors = {
-    High: "bg-destructive/15 text-destructive border-destructive/30",
-    Medium: "bg-warning/15 text-warning border-warning/30",
-    Low: "bg-success/15 text-success border-success/30",
+  const priorityColors: Record<string, string> = {
+    High: "bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/20",
+    Medium: "bg-[#ff9500]/10 text-[#ff9500] border-[#ff9500]/20",
+    Low: "bg-[#34c759]/10 text-[#34c759] border-[#34c759]/20",
   };
 
   const handleRowClick = (taskId: string) => {
@@ -180,9 +181,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     <>
       <div className="overflow-x-auto">
         <Table className="table-auto w-full">
-          <TableHeader className="bg-muted/50 sticky top-0 z-10">
-            <TableRow>
-              <TableHead className="w-[40px]">
+          <TableHeader>
+            <TableRow className="bg-[#f9f9f9] border-b border-[#e6e6e6]">
+              <TableHead className="w-[40px] py-3">
                 <Checkbox
                   checked={selectedIds?.length === tasks.length && tasks.length > 0}
                   onCheckedChange={(checked) => {
@@ -190,13 +191,13 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   }}
                 />
               </TableHead>
-              <TableHead className="font-semibold text-xs w-auto">Task</TableHead>
-              <TableHead className="font-semibold text-xs w-auto hidden xl:table-cell">Description</TableHead>
-              <TableHead className="font-semibold text-xs w-[100px]">Status</TableHead>
-              <TableHead className="font-semibold text-xs w-[90px] hidden md:table-cell">Priority</TableHead>
-              <TableHead className="font-semibold text-xs w-[120px] hidden lg:table-cell">Assignee</TableHead>
-              <TableHead className="font-semibold text-xs w-[100px]">Due Date</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-auto py-3">Task</TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-auto hidden xl:table-cell py-3">Description</TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[100px] py-3">Status</TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[90px] hidden md:table-cell py-3">Priority</TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[120px] hidden lg:table-cell py-3">Assignee</TableHead>
+              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[100px] py-3">Due Date</TableHead>
+              <TableHead className="w-[50px] py-3"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -204,16 +205,13 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
               <TableRow
                 key={task.id}
                 className={cn(
-                  "cursor-pointer hover:bg-muted/50 transition-all h-10 border-b border-border last:border-0",
-                  getRowBackgroundClass(task.status),
-                  task.pending_approval && 'border-l-4 border-l-primary',
-                  isOverdue(task.due_at, task.status) && 'border-l-4 border-l-destructive bg-destructive/5',
-                  isDueToday(task.due_at) && 'border-l-4 border-l-warning',
-                  isDueTomorrow(task.due_at) && 'border-l-4 border-l-accent'
+                  "cursor-pointer h-14 border-t border-[#e6e6e6]",
+                  getRowClasses(task),
+                  task.pending_approval && 'border-l-4 border-l-[#007aff]'
                 )}
                 onClick={() => handleRowClick(task.id)}
               >
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selectedIds?.includes(task.id) || false}
                     onCheckedChange={(checked) => {
@@ -226,6 +224,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   />
                 </TableCell>
                 <TableCell
+                  className="py-4 px-3"
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     setEditingTaskId(task.id);
@@ -251,20 +250,21 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       }}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
+                      className="border-[#e5e5ea]"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
                       {isOverdue(task.due_at, task.status) && (
-                        <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                        <AlertTriangle className="h-4 w-4 text-[#ff3b30] flex-shrink-0" />
                       )}
-                      <span className="text-sm font-medium truncate">{task.title}</span>
+                      <span className="text-sm font-medium text-[#1c1c1e] truncate">{task.title}</span>
                       {task.pending_approval && (
-                        <Badge variant="default" className="text-xs px-2.5 py-0.5">
+                        <Badge variant="default" className="text-xs px-2.5 py-0.5 bg-[#007aff] text-white">
                           Pending
                         </Badge>
                       )}
                       {task.comments_count > 0 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1 border-[#e5e5ea] text-[#6e6e73]">
                           <span>💬</span>
                           <span>{task.comments_count}</span>
                         </Badge>
@@ -272,16 +272,16 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="py-1.5 px-3 hidden xl:table-cell">
+                <TableCell className="py-4 px-3 hidden xl:table-cell">
                   {task.description ? (
-                    <p className="text-xs text-muted-foreground line-clamp-1">
+                    <p className="text-[13px] text-[#6e6e73] line-clamp-1">
                       {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
                     </p>
                   ) : (
-                    <span className="text-xs text-muted-foreground">-</span>
+                    <span className="text-[13px] text-[#8e8e93]">-</span>
                   )}
                 </TableCell>
-                <TableCell className="py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
+                <TableCell className="py-4 px-3" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={task.status}
                     onValueChange={(newStatus: any) => {
@@ -289,19 +289,19 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     }}
                     disabled={updateStatus.isPending}
                   >
-                    <SelectTrigger className="h-6 w-[100px] text-[10px]">
+                    <SelectTrigger className="h-7 w-[100px] text-[11px] rounded-full border-[#e5e5ea] bg-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Backlog">Backlog</SelectItem>
-                      <SelectItem value="Ongoing">Ongoing</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Failed">Failed</SelectItem>
-                      <SelectItem value="Blocked">Blocked</SelectItem>
+                    <SelectContent className="rounded-xl border-[#e5e5ea]">
+                      <SelectItem value="Backlog" className="text-[13px]">Backlog</SelectItem>
+                      <SelectItem value="Ongoing" className="text-[13px]">Ongoing</SelectItem>
+                      <SelectItem value="Completed" className="text-[13px]">Completed</SelectItem>
+                      <SelectItem value="Failed" className="text-[13px]">Failed</SelectItem>
+                      <SelectItem value="Blocked" className="text-[13px]">Blocked</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="hidden md:table-cell py-1.5 px-3" onClick={(e) => e.stopPropagation()}>
+                <TableCell className="hidden md:table-cell py-4 px-3" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={task.priority}
                     onValueChange={(newPriority: any) => {
@@ -309,41 +309,41 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     }}
                     disabled={updatePriority.isPending}
                   >
-                    <SelectTrigger className="h-6 w-[90px] text-[10px]">
+                    <SelectTrigger className="h-7 w-[90px] text-[11px] rounded-full border-[#e5e5ea] bg-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Low">Low</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
+                    <SelectContent className="rounded-xl border-[#e5e5ea]">
+                      <SelectItem value="Low" className="text-[13px]">Low</SelectItem>
+                      <SelectItem value="Medium" className="text-[13px]">Medium</SelectItem>
+                      <SelectItem value="High" className="text-[13px]">High</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-1.5 px-3">
+                <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-4 px-3">
                   {task.assignees && task.assignees.length > 0 ? (
                     <div className="flex items-center gap-1">
                       {task.assignees.slice(0, 3).map((assignee: any) => (
-                        <Avatar key={assignee.id} className="h-5 w-5 border">
+                        <Avatar key={assignee.id} className="h-6 w-6 border border-[#e5e5ea]">
                           <AvatarImage src={assignee.avatar_url} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-[10px] bg-[#f2f2f7] text-[#6e6e73]">
                             {assignee.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       ))}
                       {task.assignees.length > 3 && (
-                        <span className="text-[10px] text-muted-foreground ml-1">
+                        <span className="text-[11px] text-[#6e6e73] ml-1">
                           +{task.assignees.length - 3}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground">-</span>
+                    <span className="text-[13px] text-[#8e8e93]">-</span>
                   )}
                 </TableCell>
-                <TableCell className="text-xs py-1.5 px-3">
+                <TableCell className="text-[13px] text-[#1c1c1e] py-4 px-3">
                   {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
                 </TableCell>
-                <TableCell className="py-1.5 px-2">
+                <TableCell className="py-4 px-2">
                   <DropdownMenu 
                     open={openDropdownId === task.id}
                     onOpenChange={(open) => {
