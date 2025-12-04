@@ -25,7 +25,6 @@ interface CreateAdDialogProps {
 const AD_ENTITIES = ['CFI', 'Fortrade', 'Libertex', 'Plus500', 'Trade360', 'Trading212', 'eToro', 'XTB'];
 
 export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialogProps) {
-  const [adType, setAdType] = useState<'search' | 'display'>('search');
   const [entity, setEntity] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [adGroupName, setAdGroupName] = useState('');
@@ -42,13 +41,8 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
   const [callouts, setCallouts] = useState<string[]>(Array(10).fill(''));
   const [businessName, setBusinessName] = useState('');
 
-  // Display ad fields
-  const [longHeadline, setLongHeadline] = useState('');
-  const [shortHeadlines, setShortHeadlines] = useState<string[]>(Array(5).fill(''));
-  const [ctaText, setCtaText] = useState('');
 
   const resetForm = () => {
-    setAdType('search');
     setEntity('');
     setCampaignName('');
     setAdGroupName('');
@@ -59,9 +53,6 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
     setSitelinks(Array(4).fill(''));
     setCallouts(Array(10).fill(''));
     setBusinessName('');
-    setLongHeadline('');
-    setShortHeadlines(Array(5).fill(''));
-    setCtaText('');
   };
 
   const handleSaveAsElement = async (elementType: 'headline' | 'description' | 'sitelink' | 'callout', content: string) => {
@@ -103,22 +94,14 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
         entity,
         campaign_name: campaignName,
         ad_group_name: adGroupName,
-        ad_type: adType,
+        ad_type: 'search',
         landing_page: landingPage,
         business_name: businessName,
+        headlines: headlines.filter(h => h.trim()),
+        descriptions: descriptions.filter(d => d.trim()),
+        sitelinks: sitelinks.filter(s => s.trim()),
+        callouts: callouts.filter(c => c.trim()),
       };
-
-      if (adType === 'search') {
-        adData.headlines = headlines.filter(h => h.trim());
-        adData.descriptions = descriptions.filter(d => d.trim());
-        adData.sitelinks = sitelinks.filter(s => s.trim());
-        adData.callouts = callouts.filter(c => c.trim());
-      } else {
-        adData.long_headline = longHeadline;
-        adData.short_headlines = shortHeadlines.filter(h => h.trim());
-        adData.descriptions = descriptions.filter(d => d.trim());
-        adData.cta_text = ctaText;
-      }
 
       const { error } = await supabase.from('ads').insert(adData);
 
@@ -126,7 +109,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
       toast({
         title: 'Success',
-        description: `${adType === 'search' ? 'Search' : 'Display'} ad created successfully!`,
+        description: 'Search ad created successfully!',
       });
 
       resetForm();
@@ -157,10 +140,9 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
           {/* Left Panel - Form Inputs */}
           <ResizablePanel defaultSize={50} minSize={40}>
             <ScrollArea className="h-[calc(95vh-180px)] px-6">
-              <Tabs value={adType} onValueChange={(value) => setAdType(value as 'search' | 'display')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
+              <Tabs value="search" className="w-full">
+                <TabsList className="grid w-full grid-cols-1 mb-4">
                   <TabsTrigger value="search">Search Ad</TabsTrigger>
-                  <TabsTrigger value="display">Display Ad</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="search" className="space-y-4 mt-0">
@@ -426,55 +408,6 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                   </div>
                 </TabsContent>
 
-                <TabsContent value="display" className="space-y-4 mt-0">
-                  {/* Common Fields */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Entity</Label>
-                      <Select value={entity || undefined} onValueChange={setEntity}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select entity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AD_ENTITIES.map((ent) => (
-                            <SelectItem key={ent} value={ent}>{ent}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Ad Name</Label>
-                      <Input value={adName} onChange={(e) => setAdName(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Campaign Name</Label>
-                      <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Ad Group Name</Label>
-                      <Input value={adGroupName} onChange={(e) => setAdGroupName(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <DisplayAdCreator
-                    businessName={businessName}
-                    setBusinessName={setBusinessName}
-                    longHeadline={longHeadline}
-                    setLongHeadline={setLongHeadline}
-                    shortHeadlines={shortHeadlines}
-                    setShortHeadlines={setShortHeadlines}
-                    descriptions={descriptions}
-                    setDescriptions={setDescriptions}
-                    ctaText={ctaText}
-                    setCtaText={setCtaText}
-                    landingPage={landingPage}
-                    setLandingPage={setLandingPage}
-                    adEntity={entity}
-                  />
-                </TabsContent>
               </Tabs>
             </ScrollArea>
           </ResizablePanel>
@@ -490,25 +423,14 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                   <h3 className="font-semibold">Live Preview</h3>
                 </div>
 
-                {adType === 'search' ? (
-                  <SearchAdPreview
-                    headlines={headlines}
-                    descriptions={descriptions}
-                    landingPage={landingPage}
-                    businessName={businessName}
-                    sitelinks={sitelinks}
-                    callouts={callouts}
-                  />
-                ) : (
-                  <DisplayAdPreview
-                    businessName={businessName}
-                    longHeadline={longHeadline}
-                    shortHeadlines={shortHeadlines}
-                    descriptions={descriptions}
-                    ctaText={ctaText}
-                    landingPage={landingPage}
-                  />
-                )}
+                <SearchAdPreview
+                  headlines={headlines}
+                  descriptions={descriptions}
+                  landingPage={landingPage}
+                  businessName={businessName}
+                  sitelinks={sitelinks}
+                  callouts={callouts}
+                />
               </div>
             </ScrollArea>
           </ResizablePanel>
