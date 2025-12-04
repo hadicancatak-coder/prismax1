@@ -2,20 +2,17 @@ import { useState } from "react";
 import SearchAdEditor from "@/components/search/SearchAdEditor";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { SearchPlannerStructurePanel } from "@/components/search-planner";
-import { CampaignPreviewPanel } from "@/components/search/CampaignPreviewPanel";
+import { SearchPlannerStructurePanel, SearchPlannerPreviewPanel, SearchPlannerQualityPanel } from "@/components/search-planner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
+import { Search, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditorContext {
   ad: any;
   adGroup: any;
-  campaign: any;
-  entity: string;
-}
-
-interface CampaignContext {
   campaign: any;
   entity: string;
 }
@@ -26,41 +23,10 @@ interface SearchPlannerProps {
 
 export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
-  const [campaignContext, setCampaignContext] = useState<CampaignContext | null>(null);
-
-  const { data: adGroups = [] } = useQuery({
-    queryKey: ['ad-groups-for-campaign', campaignContext?.campaign?.id],
-    queryFn: async () => {
-      if (!campaignContext?.campaign?.id) return [];
-      const { data } = await supabase
-        .from('ad_groups')
-        .select('*')
-        .eq('campaign_id', campaignContext.campaign.id);
-      return data || [];
-    },
-    enabled: !!campaignContext?.campaign?.id
-  });
-
-  const { data: campaignAds = [] } = useQuery({
-    queryKey: ['ads-for-campaign', campaignContext?.campaign?.id, adType],
-    queryFn: async () => {
-      if (!campaignContext?.campaign?.id) return [];
-      const adGroupIds = adGroups.map(ag => ag.id);
-      if (adGroupIds.length === 0) return [];
-      
-      const { data } = await supabase
-        .from('ads')
-        .select('*')
-        .in('ad_group_id', adGroupIds)
-        .eq('ad_type', adType);
-      return data || [];
-    },
-    enabled: !!campaignContext?.campaign?.id && adGroups.length > 0
-  });
+  const [rightPanelTab, setRightPanelTab] = useState<"preview" | "quality">("preview");
 
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad, adGroup, campaign, entity });
-    setCampaignContext(null);
   };
 
   const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
@@ -81,11 +47,11 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
       approval_status: 'draft'
     };
     setEditorContext({ ad: newAd, adGroup, campaign, entity });
-    setCampaignContext(null);
   };
 
   const handleCampaignClick = (campaign: any, entity: string) => {
-    setCampaignContext({ campaign, entity });
+    // When campaign is clicked, we could show campaign-level info
+    // For now, just clear the editor context
     setEditorContext(null);
   };
 
@@ -95,8 +61,14 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
   const handleCancel = () => {
     setEditorContext(null);
-    setCampaignContext(null);
   };
+
+  // Extract current ad data for preview/quality panels
+  const currentAd = editorContext?.ad;
+  const headlines = Array.isArray(currentAd?.headlines) ? currentAd.headlines : [];
+  const descriptions = Array.isArray(currentAd?.descriptions) ? currentAd.descriptions : [];
+  const sitelinks = Array.isArray(currentAd?.sitelinks) ? currentAd.sitelinks : [];
+  const callouts = Array.isArray(currentAd?.callouts) ? currentAd.callouts : [];
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
@@ -113,7 +85,7 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
           {/* LEFT: Structure Panel */}
-          <ResizablePanel defaultSize={25} minSize={20} maxSize={35} className="bg-card">
+          <ResizablePanel defaultSize={22} minSize={18} maxSize={30} className="bg-card">
             <SearchPlannerStructurePanel
               onEditAd={handleEditAd}
               onCreateAd={handleCreateAd}
@@ -124,20 +96,9 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
           
           <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-smooth" />
           
-          {/* RIGHT: Editor or Preview */}
-          <ResizablePanel defaultSize={75} minSize={50} className="overflow-auto bg-background">
-            {campaignContext ? (
-              <CampaignPreviewPanel
-                campaign={campaignContext.campaign}
-                adGroups={adGroups}
-                ads={campaignAds}
-                entity={campaignContext.entity}
-                onViewAllAds={() => setCampaignContext(null)}
-                onEditAd={handleEditAd}
-                onCreateAd={handleCreateAd}
-                onCreateAdGroup={() => {}}
-              />
-            ) : editorContext ? (
+          {/* MIDDLE: Ad Editor */}
+          <ResizablePanel defaultSize={48} minSize={35} className="overflow-hidden bg-background">
+            {editorContext ? (
               <SearchAdEditor
                 ad={editorContext.ad}
                 adGroup={editorContext.adGroup}
@@ -152,12 +113,70 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
               <div className="h-full flex items-center justify-center p-lg">
                 <div className="text-center space-y-md">
                   <div className="w-20 h-20 rounded-2xl bg-muted/30 flex items-center justify-center mx-auto">
-                    <Search className="h-10 w-10 text-muted-foreground/50" />
+                    <FileText className="h-10 w-10 text-muted-foreground/50" />
                   </div>
                   <div className="space-y-xs">
-                    <h3 className="text-heading-sm font-medium text-foreground">No selection</h3>
+                    <h3 className="text-heading-sm font-medium text-foreground">Select an Ad to Edit</h3>
                     <p className="text-body-sm text-muted-foreground max-w-sm">
-                      Select a campaign to preview or an ad to edit from the structure panel
+                      Choose an ad from the structure panel on the left, or create a new one within an ad group
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </ResizablePanel>
+
+          <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-smooth" />
+
+          {/* RIGHT: Preview & Quality Panel */}
+          <ResizablePanel defaultSize={30} minSize={25} maxSize={40} className="bg-muted/30">
+            {editorContext ? (
+              <div className="h-full flex flex-col">
+                {/* Tabs for Preview/Quality */}
+                <div className="border-b border-border bg-card/50 px-md pt-md">
+                  <Tabs value={rightPanelTab} onValueChange={(v) => setRightPanelTab(v as "preview" | "quality")}>
+                    <TabsList className="w-full grid grid-cols-2">
+                      <TabsTrigger value="preview" className="text-body-sm">
+                        Preview
+                      </TabsTrigger>
+                      <TabsTrigger value="quality" className="text-body-sm">
+                        Quality & Compliance
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  {rightPanelTab === "preview" ? (
+                    <SearchPlannerPreviewPanel
+                      headlines={headlines}
+                      descriptions={descriptions}
+                      sitelinks={sitelinks}
+                      callouts={callouts}
+                      landingPage={currentAd?.landing_page || ""}
+                      businessName={currentAd?.business_name || ""}
+                    />
+                  ) : (
+                    <SearchPlannerQualityPanel
+                      headlines={headlines}
+                      descriptions={descriptions}
+                      sitelinks={sitelinks}
+                      callouts={callouts}
+                      entity={editorContext.entity}
+                    />
+                  )}
+                </ScrollArea>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center p-lg">
+                <div className="text-center space-y-md">
+                  <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto">
+                    <Search className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                  <div className="space-y-xs">
+                    <h3 className="text-body font-medium text-muted-foreground">No Ad Selected</h3>
+                    <p className="text-body-sm text-muted-foreground/70">
+                      Preview and quality scores will appear here
                     </p>
                   </div>
                 </div>
