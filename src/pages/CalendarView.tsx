@@ -26,7 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-// Sortable Task Item Component - Clean single row
+// Sortable Task Item Component - Clean single row with design system tokens
 function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false, showRemove = false, isSelected, onSelect }: any) {
   const {
     attributes,
@@ -46,14 +46,18 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 py-2.5 px-3 hover:bg-muted/50 transition-smooth cursor-pointer group border-b border-border last:border-0",
-        isDragging && "z-50 bg-background shadow-lg rounded-lg border-2 border-dashed border-primary",
-        isSelected && "bg-primary/5"
+        "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
+        "hover:bg-card-hover",
+        isDragging && "z-50 bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
+        isSelected && "bg-primary/5",
+        isOverdue && "border-l-4 border-l-destructive"
       )}
       onClick={() => onTaskClick(task.id)}
     >
@@ -62,6 +66,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
           checked={isSelected}
           onCheckedChange={() => onSelect(task.id)}
           onClick={(e) => e.stopPropagation()}
+          className="border-border"
         />
       )}
       
@@ -80,33 +85,42 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         checked={task.status === 'Completed'}
         onCheckedChange={(checked) => onTaskComplete(task.id, checked as boolean)}
         onClick={(e) => e.stopPropagation()}
+        className="border-border"
       />
       
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className={cn(
-          "text-body-sm font-medium truncate",
+          "text-[14px] font-medium text-foreground truncate",
           task.status === 'Completed' && "line-through text-muted-foreground"
         )}>
           {task.title}
         </span>
         <Badge variant="outline" className={cn(
-          "text-[10px] px-1.5 py-0 flex-shrink-0",
-          task.priority === 'High' && 'border-destructive text-destructive',
-          task.priority === 'Medium' && 'border-primary text-primary',
-          task.priority === 'Low' && 'border-border text-muted-foreground'
+          "text-[10px] px-1.5 py-0 flex-shrink-0 rounded-full",
+          task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
+          task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
+          task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
         )}>
           {task.priority}
         </Badge>
-        {task.isRecurringOccurrence && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 flex-shrink-0">
+        {(task.isRecurringOccurrence || task.task_type === 'recurring' || task.recurrence_rrule) && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary flex-shrink-0 rounded-full">
             <RotateCcw className="h-2.5 w-2.5 mr-1" />
             {getRecurrenceLabel(task)}
           </Badge>
         )}
         {task.isAutoAdded && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted flex-shrink-0">
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted border-border text-muted-foreground flex-shrink-0 rounded-full">
             Auto
           </Badge>
+        )}
+        {task.due_at && (
+          <span className={cn(
+            "text-[12px] flex-shrink-0",
+            isOverdue ? "text-destructive" : "text-muted-foreground"
+          )}>
+            {isOverdue ? "Overdue: " : ""}{format(new Date(task.due_at), 'MMM d')}
+          </span>
         )}
       </div>
       
@@ -128,13 +142,16 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
   );
 }
 
-// Task Pool Item - combined for overdue and available
+// Task Pool Item - combined for overdue and available with design system tokens
 function TaskPoolItem({ task, onTaskClick, onAdd, isOverdue = false }: any) {
+  const isRecurring = task.task_type === 'recurring' || task.recurrence_rrule;
+  
   return (
     <div
       className={cn(
-        "flex items-center gap-2 py-2 px-3 hover:bg-muted/50 transition-smooth cursor-pointer group border-b border-border last:border-0",
-        isOverdue && "bg-destructive/5"
+        "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
+        "hover:bg-card-hover",
+        isOverdue && "bg-destructive/5 border-l-4 border-l-destructive"
       )}
       onClick={() => onTaskClick(task.id)}
     >
@@ -142,20 +159,26 @@ function TaskPoolItem({ task, onTaskClick, onAdd, isOverdue = false }: any) {
         <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
       )}
       <div className="flex-1 min-w-0">
-        <span className="text-body-sm truncate block">{task.title}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] text-foreground font-medium truncate">{task.title}</span>
+          {isRecurring && (
+            <RotateCcw className="h-3 w-3 text-primary flex-shrink-0" />
+          )}
+        </div>
         {task.due_at && (
           <span className={cn(
-            "text-metadata",
+            "text-[12px]",
             isOverdue ? "text-destructive" : "text-muted-foreground"
           )}>
-            {isOverdue ? "Overdue: " : "Due: "}{format(new Date(task.due_at), 'MMM dd')}
+            {isOverdue ? "Overdue: " : "Due: "}{format(new Date(task.due_at), 'MMM d')}
           </span>
         )}
       </div>
       <Badge variant="outline" className={cn(
-        "text-[9px] px-1 py-0 flex-shrink-0",
-        task.priority === 'High' && 'border-destructive text-destructive',
-        task.priority === 'Medium' && 'border-primary text-primary'
+        "text-[10px] px-1.5 py-0 flex-shrink-0 rounded-full",
+        task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
+        task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
+        task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
       )}>
         {task.priority}
       </Badge>
@@ -167,9 +190,10 @@ function TaskPoolItem({ task, onTaskClick, onAdd, isOverdue = false }: any) {
             e.stopPropagation();
             onAdd([task.id]);
           }}
-          className="opacity-0 group-hover:opacity-100 flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 flex-shrink-0 h-7 w-7"
+          title="Add to agenda"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4 text-primary" />
         </Button>
       )}
     </div>
@@ -548,11 +572,11 @@ export default function CalendarView() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-6 lg:px-8 pt-8 pb-8">
-      <div className="max-w-[1440px] mx-auto">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8 pt-8 pb-8">
         {/* Header */}
-        <header className="mb-6">
-          <div className="flex items-center justify-between mb-5">
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-[24px] font-semibold text-foreground tracking-tight">My Agenda</h1>
               <p className="text-[14px] text-muted-foreground mt-1">{getDateLabel()}</p>
@@ -561,13 +585,13 @@ export default function CalendarView() {
               {/* Admin User Filter */}
               {userRole === 'admin' && (
                 <Select value={selectedUserId || user?.id || ''} onValueChange={(v) => setSelectedUserId(v === user?.id ? null : v)}>
-                  <SelectTrigger className="w-[200px] h-10 rounded-lg bg-card border-border text-[14px]">
-                    <Users className="h-4 w-4 mr-2" />
+                  <SelectTrigger className="w-[200px] h-10 rounded-xl bg-card border-border text-[14px]">
+                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
                     <SelectValue placeholder="View user agenda" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl bg-popover border-border shadow-lg">
                     {allUsers.map(u => (
-                      <SelectItem key={u.user_id} value={u.user_id}>
+                      <SelectItem key={u.user_id} value={u.user_id} className="rounded-lg">
                         {u.name || u.email}
                       </SelectItem>
                     ))}
@@ -588,23 +612,23 @@ export default function CalendarView() {
                 setDateView(v as typeof dateView);
                 if (v !== "custom") setDateRange(null);
               }}>
-                <TabsList className="h-10 rounded-lg bg-muted/50 p-1">
-                  <TabsTrigger value="today" className="h-8 px-4 rounded-md text-[13px]">Today</TabsTrigger>
-                  <TabsTrigger value="tomorrow" className="h-8 px-4 rounded-md text-[13px]">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="week" className="h-8 px-4 rounded-md text-[13px]">Week</TabsTrigger>
-                  <TabsTrigger value="custom" className="h-8 px-4 rounded-md text-[13px]">Custom</TabsTrigger>
+                <TabsList className="h-10 rounded-xl bg-muted p-1">
+                  <TabsTrigger value="today" className="h-8 px-4 rounded-lg text-[13px] data-[state=active]:bg-card data-[state=active]:shadow-sm">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow" className="h-8 px-4 rounded-lg text-[13px] data-[state=active]:bg-card data-[state=active]:shadow-sm">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="week" className="h-8 px-4 rounded-lg text-[13px] data-[state=active]:bg-card data-[state=active]:shadow-sm">Week</TabsTrigger>
+                  <TabsTrigger value="custom" className="h-8 px-4 rounded-lg text-[13px] data-[state=active]:bg-card data-[state=active]:shadow-sm">Custom</TabsTrigger>
                 </TabsList>
               </Tabs>
 
               {dateView === "custom" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-10 px-4 rounded-lg text-[13px]">
+                    <Button variant="outline" className="h-10 px-4 rounded-xl text-[13px] border-border">
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       Pick date
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-xl shadow-lg" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-xl shadow-lg border-border" align="start">
                     <DateRangePicker
                       value={dateRange}
                       onChange={(range) => {
@@ -619,13 +643,13 @@ export default function CalendarView() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-card p-1 rounded-lg border border-border">
+            <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
               <Button
                 variant={viewMode === 'table' ? 'default' : 'ghost'}
                 size="icon"
                 onClick={() => setViewMode('table')}
                 title="Table view"
-                className="h-9 w-9 rounded-md"
+                className={cn("h-8 w-8 rounded-lg", viewMode !== 'table' && "text-muted-foreground")}
               >
                 <Table className="h-4 w-4" />
               </Button>
@@ -634,7 +658,7 @@ export default function CalendarView() {
                 size="icon"
                 onClick={() => setViewMode('kanban')}
                 title="Kanban view"
-                className="h-9 w-9 rounded-md"
+                className={cn("h-8 w-8 rounded-lg", viewMode !== 'kanban' && "text-muted-foreground")}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -643,7 +667,7 @@ export default function CalendarView() {
                 size="icon"
                 onClick={() => setViewMode('gantt')}
                 title="Gantt view"
-                className="h-9 w-9 rounded-md"
+                className={cn("h-8 w-8 rounded-lg", viewMode !== 'gantt' && "text-muted-foreground")}
               >
                 <GanttChart className="h-4 w-4" />
               </Button>
@@ -764,18 +788,19 @@ export default function CalendarView() {
           </Card>
         ) : (
           // Table View (Default)
-          <div className={cn("grid gap-6", showTaskPool ? "grid-cols-1 lg:grid-cols-4" : "grid-cols-1")}>
-            {/* My Agenda - 75% or full width */}
-            <div className={showTaskPool ? "lg:col-span-3" : ""}>
-              <Card>
+          <div className={cn("grid gap-6", showTaskPool ? "grid-cols-1 lg:grid-cols-[1fr_380px]" : "grid-cols-1")}>
+            {/* My Agenda - Main column */}
+            <div>
+              <Card className="bg-card border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
                 {/* Toolbar */}
-                <div className="flex items-center justify-between p-3 border-b border-border">
+                <div className="flex items-center justify-between p-4 border-b border-border bg-card">
                   <div className="flex items-center gap-3">
                     <Checkbox 
                       checked={selectedIds.size === activeTasks.length && activeTasks.length > 0}
                       onCheckedChange={selectAll}
+                      className="border-border"
                     />
-                    <span className="text-body-sm text-muted-foreground">
+                    <span className="text-[14px] text-muted-foreground">
                       {selectedIds.size > 0 ? `${selectedIds.size} selected` : `${activeTasks.length} tasks`}
                     </span>
                   </div>
@@ -783,12 +808,12 @@ export default function CalendarView() {
                   <div className="flex items-center gap-2">
                     {selectedIds.size > 0 && (
                       <>
-                        <Button variant="outline" size="sm" onClick={handleBulkComplete}>
-                          <Check className="h-4 w-4 mr-1" />
+                        <Button variant="outline" size="sm" onClick={handleBulkComplete} className="rounded-lg h-8 text-[13px]">
+                          <Check className="h-4 w-4 mr-1.5" />
                           Complete
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleBulkRemove}>
-                          <Trash2 className="h-4 w-4 mr-1" />
+                        <Button variant="outline" size="sm" onClick={handleBulkRemove} className="rounded-lg h-8 text-[13px]">
+                          <Trash2 className="h-4 w-4 mr-1.5" />
                           Remove
                         </Button>
                       </>
@@ -797,7 +822,7 @@ export default function CalendarView() {
                     <select
                       value={sortOption}
                       onChange={(e) => setSortOption(e.target.value)}
-                      className="h-8 px-2 text-body-sm bg-background border border-input rounded-md"
+                      className="h-8 px-3 text-[13px] bg-muted border-0 rounded-lg text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="priority">Priority</option>
                       <option value="due_time">Due Date</option>
@@ -826,9 +851,14 @@ export default function CalendarView() {
                     >
                       <div>
                         {activeTasks.length === 0 ? (
-                          <div className="p-8 text-center">
-                            <p className="text-muted-foreground mb-2">No tasks in your agenda</p>
-                            <p className="text-metadata text-muted-foreground">Add tasks from the Task Pool →</p>
+                          <div className="p-12 text-center">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                              <CalendarIcon className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                            <p className="text-[16px] font-medium text-foreground mb-1">No tasks in your agenda</p>
+                            <p className="text-[14px] text-muted-foreground">
+                              {showTaskPool ? "Add tasks from the Task Pool →" : "Create a new task to get started"}
+                            </p>
                           </div>
                         ) : (
                           activeTasks.map((task) => (
@@ -854,27 +884,27 @@ export default function CalendarView() {
                 {completedTasks.length > 0 && (
                   <Collapsible open={completedExpanded} onOpenChange={setCompletedExpanded}>
                     <CollapsibleTrigger asChild>
-                      <div className="flex items-center gap-2 p-3 border-t border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-smooth">
+                      <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-smooth">
                         {completedExpanded ? (
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <span className="text-body-sm font-medium text-muted-foreground">
+                        <span className="text-[14px] font-medium text-muted-foreground">
                           Completed Today ({completedTasks.length})
                         </span>
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="bg-muted/20">
+                      <div className="bg-muted/10">
                         {completedTasks.map((task) => (
                           <div
                             key={task.id}
-                            className="flex items-center gap-3 py-2 px-3 border-b border-border last:border-0 cursor-pointer hover:bg-muted/30"
+                            className="flex items-center gap-3 py-3 px-4 border-b border-border last:border-0 cursor-pointer hover:bg-muted/20 transition-smooth"
                             onClick={() => openTaskDialog(task.id)}
                           >
-                            <Checkbox checked disabled className="opacity-50" />
-                            <span className="text-body-sm text-muted-foreground line-through">{task.title}</span>
+                            <Checkbox checked disabled className="opacity-50 border-border" />
+                            <span className="text-[14px] text-muted-foreground line-through">{task.title}</span>
                           </div>
                         ))}
                       </div>
@@ -886,22 +916,25 @@ export default function CalendarView() {
 
             {/* Task Pool - 25% - Only shown for non-week views */}
             {showTaskPool && (
-              <div className="lg:col-span-1">
-                <Card>
-                  <div className="p-3 border-b border-border">
-                    <h3 className="text-body-sm font-semibold flex items-center gap-2">
+              <div className="lg:col-span-1 min-w-[320px]">
+                <Card className="bg-card border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+                  <div className="p-4 border-b border-border bg-card">
+                    <h3 className="text-[16px] font-semibold text-foreground flex items-center gap-2">
                       Task Pool
-                      <Badge variant="secondary" className="text-xs">{taskPoolCount}</Badge>
+                      <Badge variant="secondary" className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {taskPoolCount}
+                      </Badge>
                     </h3>
+                    <p className="text-[12px] text-muted-foreground mt-1">Add tasks to your agenda</p>
                   </div>
                   
-                  <ScrollArea className="max-h-[calc(100vh-300px)]">
+                  <ScrollArea className="max-h-[calc(100vh-350px)]">
                     {/* Overdue Section */}
                     {overdueTasks.length > 0 && (
                       <div>
-                        <div className="px-3 py-2 bg-destructive/10 flex items-center gap-2">
-                          <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                          <span className="text-metadata font-medium text-destructive">
+                        <div className="px-4 py-2.5 bg-destructive/5 flex items-center gap-2 border-b border-destructive/10">
+                          <AlertTriangle className="h-4 w-4 text-destructive" />
+                          <span className="text-[12px] font-semibold text-destructive uppercase tracking-wide">
                             Overdue ({overdueTasks.length})
                           </span>
                         </div>
@@ -920,9 +953,9 @@ export default function CalendarView() {
                     {/* Available Section */}
                     {availableTasks.length > 0 && (
                       <div>
-                        <div className="px-3 py-2 bg-muted/50 flex items-center gap-2">
-                          <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-metadata font-medium text-muted-foreground">
+                        <div className="px-4 py-2.5 bg-muted/30 flex items-center gap-2 border-b border-border">
+                          <Plus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">
                             Available ({availableTasks.length})
                           </span>
                         </div>
@@ -938,8 +971,12 @@ export default function CalendarView() {
                     )}
 
                     {taskPoolCount === 0 && (
-                      <div className="p-4 text-center">
-                        <p className="text-metadata text-muted-foreground">All caught up!</p>
+                      <div className="p-8 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                          <Check className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-[14px] font-medium text-foreground">All caught up!</p>
+                        <p className="text-[12px] text-muted-foreground mt-1">No pending tasks to add</p>
                       </div>
                     )}
                   </ScrollArea>
