@@ -144,6 +144,65 @@ All colors MUST be HSL.
     --pending: 207 90% 54%;
     --pending-foreground: 0 0% 100%;
   }
+
+  /* Apple-like Light Theme - Apply with class="theme-apple" */
+  .theme-apple {
+    /* Canvas & Surfaces */
+    --background: 0 0% 98%;           /* #FAFAFA - light canvas */
+    --foreground: 0 0% 7%;            /* #121212 - near black text */
+    --card: 0 0% 100%;                /* Pure white cards */
+    --card-foreground: 0 0% 7%;
+    --card-hover: 0 0% 97%;           /* Very subtle hover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    
+    /* Primary - iOS Blue */
+    --primary: 211 100% 50%;          /* #007AFF - iOS blue */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 211 100% 45%;
+    
+    /* Secondary & Muted */
+    --secondary: 0 0% 96%;            /* Very light gray */
+    --secondary-foreground: 0 0% 7%;
+    --secondary-hover: 0 0% 93%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --muted-hover: 0 0% 92%;
+    
+    /* Accent */
+    --accent: 211 100% 96%;           /* Very light blue */
+    --accent-foreground: 211 100% 50%;
+    --accent-hover: 211 100% 93%;
+    
+    /* Destructive - iOS Red */
+    --destructive: 0 100% 59%;        /* #FF3B30 */
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders - Very subtle */
+    --border: 0 0% 90%;               /* Light gray border */
+    --input: 0 0% 90%;
+    --ring: 211 100% 50%;
+    
+    /* Status colors - iOS style */
+    --success: 142 71% 45%;           /* iOS green */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 100% 50%;           /* iOS orange */
+    --warning-foreground: 0 0% 100%;
+    --info: 211 100% 50%;
+    --info-foreground: 0 0% 100%;
+    --pending: 211 100% 50%;
+    --pending-foreground: 0 0% 100%;
+    
+    /* Sidebar - Light */
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 0 0% 35%;
+    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 211 100% 50%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 211 100% 50%;
+  }
 }
 
 @layer base {
@@ -159,6 +218,12 @@ All colors MUST be HSL.
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
+  }
+
+  /* SF Pro system font for Apple theme */
+  .theme-apple {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.022em;
   }
 
   .font-handwriting {

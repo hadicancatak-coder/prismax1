@@ -37,7 +37,7 @@ export function useTasks(filters?: TaskFilters) {
         *,
         task_assignees(
           user_id,
-          profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams)
+          profiles!task_assignees_user_id_fkey(id, user_id, name, avatar_url, teams, working_days)
         ),
         task_comment_counts(comment_count)
       `)
