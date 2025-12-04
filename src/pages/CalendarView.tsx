@@ -2,22 +2,23 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
+import { useUserAgenda } from "@/hooks/useUserAgenda";
 import { useQueryClient } from "@tanstack/react-query";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List, AlertTriangle } from "lucide-react";
+import { CalendarIcon, GripVertical, Info, RotateCcw, LayoutGrid, List, AlertTriangle, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { CompletedTasksSection } from "@/components/tasks/CompletedTasksSection";
-import { TaskSortDropdown, SortOption } from "@/components/tasks/TaskSortDropdown";
+import { AgendaTaskPool } from "@/components/calendar/AgendaTaskPool";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -29,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isTaskOverdue, getDaysOverdue } from "@/lib/overdueHelpers";
 
 // Sortable Task Item Component
-function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = false }: any) {
+function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false, showRemove = false }: any) {
   const {
     attributes,
     listeners,
@@ -124,6 +125,11 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = fa
               {getRecurrenceLabel(task)} • {task.completedCount}/{task.occurrenceCount}
             </Badge>
           )}
+          {task.isAutoAdded && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-muted border-muted-foreground/30">
+              Auto
+            </Badge>
+          )}
         </div>
         {task.description && (
           <p className="text-metadata line-clamp-1">
@@ -131,6 +137,20 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, isManualMode = fa
           </p>
         )}
       </div>
+      {showRemove && onRemoveFromAgenda && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemoveFromAgenda([task.id]);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Remove from agenda"
+        >
+          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -148,14 +168,39 @@ export default function CalendarView() {
   const [dateView, setDateView] = useState<"today" | "yesterday" | "tomorrow" | "week" | "month" | "custom">("today");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [focusMode, setFocusMode] = useState(false);
-  const [sortOption, setSortOption] = useState<SortOption>(() => {
-    return (localStorage.getItem("agenda-sort") as SortOption) || "priority";
+  const [sortOption, setSortOption] = useState<string>(() => {
+    return localStorage.getItem("agenda-sort") || "priority";
   });
   const [userTaskOrder, setUserTaskOrder] = useState<Record<string, number>>({});
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [completions, setCompletions] = useState<any[]>([]);
   const currentDate = new Date();
   const { toast } = useToast();
+
+  // Calculate the selected date for agenda
+  const selectedDate = useMemo(() => {
+    switch (dateView) {
+      case "yesterday": return subDays(new Date(), 1);
+      case "tomorrow": return addDays(new Date(), 1);
+      default: return dateRange?.from || new Date();
+    }
+  }, [dateView, dateRange]);
+
+  // Use the agenda hook
+  const { 
+    agendaTasks, 
+    availableTasks, 
+    agendaItems,
+    addToAgenda, 
+    removeFromAgenda,
+    isAdding,
+    isLoading: agendaLoading 
+  } = useUserAgenda({
+    userId: selectedUserId || user?.id,
+    date: selectedDate,
+    allTasks: allTasks || [],
+    completions,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -165,11 +210,16 @@ export default function CalendarView() {
     })
   );
 
+  // Fetch users for admin filter
   useEffect(() => {
-    if (userRole === 'admin') {
-      fetchUsers();
-    }
-  }, [userRole]);
+    const fetchUsers = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, user_id, name, username");
+      setUsers(data || []);
+    };
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("agenda-sort", sortOption);
@@ -208,13 +258,6 @@ export default function CalendarView() {
     setUserTaskOrder(orderMap);
   };
 
-  const fetchUsers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, user_id, name, username");
-    setUsers(data || []);
-  };
-
   useEffect(() => {
     if (!user) return;
     
@@ -222,7 +265,7 @@ export default function CalendarView() {
       const { data } = await supabase
         .from('recurring_task_completions')
         .select('*')
-        .order('completed_date', { ascending: false});
+        .order('completed_date', { ascending: false });
       
       setCompletions(data || []);
     };
@@ -246,194 +289,37 @@ export default function CalendarView() {
     };
   }, [user]);
 
-  const filteredTasks = useMemo(() => {
-    if (!allTasks) return [];
-
-    let startDate: Date;
-    let endDate: Date;
-
-    switch (dateView) {
-      case "yesterday":
-        startDate = startOfDay(subDays(new Date(), 1));
-        endDate = endOfDay(subDays(new Date(), 1));
-        break;
-      case "tomorrow":
-        startDate = startOfDay(addDays(new Date(), 1));
-        endDate = endOfDay(addDays(new Date(), 1));
-        break;
-      case "week":
-        startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
-        endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
-        break;
-      case "month":
-        startDate = startOfMonth(new Date());
-        endDate = endOfMonth(new Date());
-        break;
-      case "custom":
-        if (dateRange?.from) {
-          startDate = startOfDay(dateRange.from);
-          endDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-        } else {
-          startDate = startOfDay(new Date());
-          endDate = endOfDay(new Date());
-        }
-        break;
-      case "today":
-      default:
-        startDate = startOfDay(new Date());
-        endDate = endOfDay(new Date());
-        break;
-    }
-
-    const expandedTasks: any[] = [];
-
-    // Debug logging for recurring task expansion
-    console.log('🔄 Starting task expansion:', {
-      totalTasks: allTasks.length,
-      recurringTasks: allTasks.filter(t => t.task_type === 'recurring').length,
-      viewMode,
-      dateView,
-      startDate: format(startDate, 'yyyy-MM-dd HH:mm'),
-      endDate: format(endDate, 'yyyy-MM-dd HH:mm'),
-      selectedUserId
+  // Enrich agenda tasks with auto-added flag
+  const enrichedAgendaTasks = useMemo(() => {
+    return agendaTasks.map(task => {
+      const agendaItem = agendaItems.find(item => item.task_id === task.id);
+      return {
+        ...task,
+        isAutoAdded: agendaItem?.is_auto_added || false,
+      };
     });
-
-    allTasks.forEach(task => {
-      // Check for recurring task - either by type OR by presence of rrule (handles legacy/broken data)
-      if ((task.task_type === 'recurring' || task.recurrence_rrule) && task.recurrence_rrule) {
-        console.log('🔍 Expanding recurring task:', {
-          id: task.id,
-          title: task.title,
-          rrule: task.recurrence_rrule,
-          visibility: task.visibility,
-          assigneesCount: task.assignees?.length || 0,
-          viewMode
-        });
-
-        // For Kanban view, expand recurring task into occurrences
-        if (viewMode === 'kanban') {
-          const occurrences = expandRecurringTask(
-            task,
-            startDate,
-            endDate,
-            completions.filter(c => c.task_id === task.id),
-            task.assignees || [] // Pass assignees for working days filtering
-          );
-
-          console.log('📅 Occurrences generated:', {
-            taskId: task.id,
-            count: occurrences.length,
-            dates: occurrences.map(o => format(o.occurrenceDate, 'yyyy-MM-dd'))
-          });
-          
-          // Convert each occurrence to a task-like object
-          occurrences.forEach(occ => {
-            const expandedTask = {
-              ...task,
-              id: `${task.id}::${occ.occurrenceDate.getTime()}`,
-              originalTaskId: task.id,
-              due_at: format(occ.occurrenceDate, 'yyyy-MM-dd\'T\'HH:mm:ss'),
-              status: occ.isCompleted ? 'Completed' : task.status,
-              isRecurringOccurrence: true,
-              completionId: occ.completionId,
-              // CRITICAL: Explicitly preserve these fields with defensive handling
-              assignees: Array.isArray(task.assignees) ? task.assignees : [],
-              visibility: task.visibility || 'private',
-              // Add explicit check for debugging
-              _debug_has_assignees: !!task.assignees && task.assignees.length > 0
-            };
-            
-            console.log('🔍 Expanded recurring task:', {
-              id: task.id,
-              title: task.title,
-              occurrenceDate: occ.occurrenceDate,
-              assignees: expandedTask.assignees,
-              visibility: expandedTask.visibility,
-              selectedUserId,
-              hasAssignees: expandedTask._debug_has_assignees
-            });
-            
-            expandedTasks.push(expandedTask);
-          });
-        } else {
-          // For List view, show recurring task once with aggregated completion status
-          const occurrences = expandRecurringTask(
-            task,
-            startDate,
-            endDate,
-            completions.filter(c => c.task_id === task.id),
-            task.assignees || [] // Pass assignees for working days filtering
-          );
-          
-          if (occurrences.length > 0) {
-            // Show as pending if any occurrence is not completed
-            const hasIncomplete = occurrences.some(occ => !occ.isCompleted);
-            expandedTasks.push({
-              ...task,
-              status: hasIncomplete ? task.status : 'Completed',
-              isRecurringTask: true,
-              occurrenceCount: occurrences.length,
-              completedCount: occurrences.filter(occ => occ.isCompleted).length,
-            });
-          }
-        }
-      } else if (task.due_at) {
-        // Regular task with due date
-        const dueDate = new Date(task.due_at);
-        const inDateRange = dueDate >= startDate && dueDate <= endDate;
-        
-        if (inDateRange) {
-          expandedTasks.push(task);
-        }
-      }
-    });
-
-    // Filter by selected user
-    const filtered = expandedTasks.filter(task => {
-      // If no user filter, show all tasks
-      if (!selectedUserId) return true;
-      
-      // Show tasks assigned to the selected user (check both id and user_id for compatibility)
-      const isAssignedToUser = task.assignees?.some((a: any) => a.id === selectedUserId || a.user_id === selectedUserId);
-      
-      // Also show global unassigned tasks for all users
-      const isGlobalUnassigned = task.visibility === 'global' && 
-        (!task.assignees || task.assignees.length === 0);
-      
-      return isAssignedToUser || isGlobalUnassigned;
-    });
-    
-    console.log('✅ Tasks after user filter:', {
-      total: expandedTasks.length,
-      filtered: filtered.length,
-      selectedUserId,
-      recurringTasks: filtered.filter(t => t.isRecurringOccurrence).length
-    });
-    
-    return filtered;
-  }, [allTasks, dateView, dateRange, selectedUserId, completions]);
+  }, [agendaTasks, agendaItems]);
 
   // Sort tasks based on selected option
-  const sortedTasks = useMemo(() => {
-    const tasks = [...filteredTasks];
+  const sortedAgendaTasks = useMemo(() => {
+    const tasks = [...enrichedAgendaTasks];
     
     switch (sortOption) {
       case "priority":
         const priorityOrder = { High: 0, Medium: 1, Low: 2 };
-        return tasks.sort((a, b) => priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]);
+        return tasks.sort((a, b) => (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 2));
       
       case "due_time":
-        return tasks.sort((a, b) => new Date(a.due_at).getTime() - new Date(b.due_at).getTime());
+        return tasks.sort((a, b) => new Date(a.due_at || 0).getTime() - new Date(b.due_at || 0).getTime());
       
       case "status":
         const statusOrder = { Pending: 0, Ongoing: 1, Blocked: 2, Completed: 3, Failed: 4 };
-        return tasks.sort((a, b) => statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]);
+        return tasks.sort((a, b) => (statusOrder[a.status as keyof typeof statusOrder] || 0) - (statusOrder[b.status as keyof typeof statusOrder] || 0));
       
       case "alphabetical":
         return tasks.sort((a, b) => a.title.localeCompare(b.title));
       
       case "manual":
-        // Use user-specific order from user_task_order table
         return tasks.sort((a, b) => {
           const orderA = userTaskOrder[a.id] ?? 999999;
           const orderB = userTaskOrder[b.id] ?? 999999;
@@ -443,11 +329,11 @@ export default function CalendarView() {
       default:
         return tasks;
     }
-  }, [filteredTasks, sortOption, userTaskOrder]);
+  }, [enrichedAgendaTasks, sortOption, userTaskOrder]);
 
   // Split tasks into active and completed
-  const activeTasks = sortedTasks.filter(t => t.status !== 'Completed');
-  const completedTasks = sortedTasks.filter(t => t.status === 'Completed');
+  const activeTasks = sortedAgendaTasks.filter(t => t.status !== 'Completed');
+  const completedTasks = sortedAgendaTasks.filter(t => t.status === 'Completed');
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     // Check if this is a recurring occurrence
@@ -456,12 +342,11 @@ export default function CalendarView() {
       const occurrenceDate = new Date(parseInt(timestamp));
       
       if (completed) {
-        // Mark this specific date as complete
         const { error } = await supabase
           .from('recurring_task_completions')
           .insert({
             task_id: originalTaskId,
-            completed_by: user.id,
+            completed_by: user?.id,
             completed_date: format(occurrenceDate, 'yyyy-MM-dd'),
             completed_at: new Date().toISOString(),
           });
@@ -469,36 +354,30 @@ export default function CalendarView() {
         if (error) {
           toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
-          // Log completion to task comments
           await supabase.from('comments').insert({
             task_id: originalTaskId,
-            author_id: user.id,
+            author_id: user?.id,
             body: `✓ Completed recurring instance for ${format(occurrenceDate, 'EEEE, MMMM dd, yyyy')}`,
           });
-          
           toast({ title: "Marked complete", description: `Completed for ${format(occurrenceDate, 'MMM dd')}` });
         }
       } else {
-        // Unmark completion
-        const task = filteredTasks.find(t => t.id === taskId);
+        const task = sortedAgendaTasks.find(t => t.id === taskId);
         if (task?.completionId) {
           await supabase
             .from('recurring_task_completions')
             .delete()
             .eq('id', task.completionId);
           
-          // Log uncompletion to comments
           await supabase.from('comments').insert({
             task_id: originalTaskId,
-            author_id: user.id,
+            author_id: user?.id,
             body: `↺ Unmarked completion for ${format(occurrenceDate, 'EEEE, MMMM dd, yyyy')}`,
           });
-          
           toast({ title: "Unmarked", description: "Completion removed" });
         }
       }
     } else {
-      // Regular task completion
       const { error } = await supabase
         .from('tasks')
         .update({ 
@@ -534,18 +413,15 @@ export default function CalendarView() {
     
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // Create new order
     const reorderedTasks = [...activeTasks];
     const [movedTask] = reorderedTasks.splice(oldIndex, 1);
     reorderedTasks.splice(newIndex, 0, movedTask);
 
-    // Determine current date scope
     let dateScope: string = dateView;
     if (dateView === 'custom' && dateRange?.from) {
       dateScope = `custom-${format(dateRange.from, 'yyyy-MM-dd')}`;
     }
 
-    // Save user-specific task order to user_task_order table
     const orderPromises = reorderedTasks.map((task, index) => 
       supabase
         .from('user_task_order')
@@ -561,11 +437,7 @@ export default function CalendarView() {
 
     try {
       await Promise.all(orderPromises);
-      
-      // Refresh the user's task order
       await fetchUserTaskOrder();
-      
-      // Invalidate query to refresh
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error saving task order:', error);
@@ -594,12 +466,7 @@ export default function CalendarView() {
     }
   };
 
-  const completedToday = filteredTasks.filter(t => t.status === 'Completed').length;
-  const totalToday = filteredTasks.length;
-  const highPriorityCount = filteredTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
-  const upcomingCount = filteredTasks.filter(t => t.status === 'Backlog').length;
-  
-  // Compute overdue tasks (exclude Backlog status)
+  // Compute overdue tasks
   const overdueTasks = useMemo(() => {
     return (allTasks || []).filter(task => isTaskOverdue(task));
   }, [allTasks]);
@@ -612,25 +479,27 @@ export default function CalendarView() {
             <h1 className="text-page-title mb-2">Agenda</h1>
             <p className="text-muted-foreground">{format(currentDate, 'EEEE, MMMM d, yyyy')}</p>
             
-            {userRole === 'admin' && users.length > 0 && (
-              <div className="mt-4 max-w-xs mx-auto sm:mx-0">
-                <Select value={selectedUserId || undefined} onValueChange={(value) => setSelectedUserId(value === 'all' ? null : value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Users" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.user_id}>
-                        {user.name || user.username || 'Unknown User'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* User Filter - Available to all users */}
+            <div className="mt-4 max-w-xs">
+              <Select 
+                value={selectedUserId || user?.id || ''} 
+                onValueChange={(value) => setSelectedUserId(value === user?.id ? null : value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="My Agenda" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={user?.id || ''}>My Agenda</SelectItem>
+                  {userRole === 'admin' && users.filter(u => u.user_id !== user?.id).map((u) => (
+                    <SelectItem key={u.id} value={u.user_id}>
+                      {u.name || u.username || 'Unknown User'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Date View and Filters Section - Single Row */}
+            {/* Date View and Filters */}
             <div className="mt-6">
               <Card className="p-3">
                 <div className="flex items-center gap-2 justify-between">
@@ -677,17 +546,16 @@ export default function CalendarView() {
 
                   {/* Right Section - Sort and View */}
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Select value={sortOption} onValueChange={(v) => setSortOption(v as any)}>
+                    <Select value={sortOption} onValueChange={setSortOption}>
                       <SelectTrigger className="h-9 w-[80px] text-xs">
                         <span>Sort</span>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="due_date_asc">Due: Earliest</SelectItem>
-                        <SelectItem value="due_date_desc">Due: Latest</SelectItem>
-                        <SelectItem value="created_at_desc">Newest First</SelectItem>
-                        <SelectItem value="created_at_asc">Oldest First</SelectItem>
-                        <SelectItem value="priority_high">Priority: High</SelectItem>
-                        <SelectItem value="manual">Manual Order</SelectItem>
+                        <SelectItem value="priority">Priority</SelectItem>
+                        <SelectItem value="due_time">Due Date</SelectItem>
+                        <SelectItem value="status">Status</SelectItem>
+                        <SelectItem value="alphabetical">A-Z</SelectItem>
+                        <SelectItem value="manual">Manual</SelectItem>
                       </SelectContent>
                     </Select>
                     
@@ -705,7 +573,6 @@ export default function CalendarView() {
                       size="sm"
                       onClick={() => {
                         setViewMode('kanban');
-                        // Auto-switch to week view for better kanban experience
                         if (dateView === 'today' || dateView === 'tomorrow') {
                           setDateView('week');
                         }
@@ -744,175 +611,184 @@ export default function CalendarView() {
         </div>
       )}
 
-      {/* Centered content - removed sidebar */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto mt-6 lg:mt-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-section-title">
-            {dateView === "today" && "Today's Tasks"} 
-            {dateView === "yesterday" && "Yesterday's Tasks"}
-            {dateView === "tomorrow" && "Tomorrow's Tasks"}
-            {dateView === "week" && "This Week's Tasks"}
-            {dateView === "month" && "This Month's Tasks"}
-            {dateView === "custom" && "Custom Range Tasks"}
-            ({activeTasks.length})
-          </h2>
-          {focusMode && (
-            <Button variant="outline" size="sm" onClick={() => setFocusMode(false)}>
-            Exit Focus Mode
-            </Button>
-          )}
-        </div>
-        <div>
-          {isLoading ? (
-            <ListSkeleton items={5} />
-          ) : (
-            <>
-              {/* Overdue Tasks Section */}
-              {overdueTasks.length > 0 && (
-                <Card className="border-l-4 border-l-destructive bg-destructive/5 mb-6">
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                      <h3 className="text-section-title text-destructive">
-                        Overdue Tasks ({overdueTasks.length})
-                      </h3>
-                    </div>
-                    <p className="text-metadata text-muted-foreground mb-4">
-                      These tasks need your immediate attention
-                    </p>
-                    <div className="space-y-2">
-                      {overdueTasks.slice(0, 5).map(task => (
-                        <SortableTaskItem 
-                          key={task.id} 
-                          task={{
-                            ...task,
-                            overdueLabel: `${getDaysOverdue(task.due_at)} day${getDaysOverdue(task.due_at) !== 1 ? 's' : ''} overdue`
-                          }}
-                          onTaskClick={(id: string) => {
-                            setSelectedTaskId(id);
-                            setTaskDialogOpen(true);
-                          }}
-                          onTaskComplete={async (taskId, completed) => {
-                            await supabase
-                              .from('tasks')
-                              .update({ status: completed ? 'Completed' : 'Ongoing' })
-                              .eq('id', taskId);
-                            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                          }}
-                          isManualMode={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {viewMode === 'list' ? (
-                <>
-                  {activeTasks.length > 0 && sortOption !== "manual" && (
-                    <Alert className="mb-4 border-primary/50 bg-primary/5">
-                      <Info className="h-4 w-4 text-primary" />
-                      <AlertDescription className="text-sm">
-                        💡 <strong>Tip:</strong> Switch to "Manual Order" in the sort dropdown to drag & drop tasks into your preferred order
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={activeTasks.map(t => t.id)}
-                      strategy={verticalListSortingStrategy}
-                      disabled={sortOption !== "manual"}
-                    >
-                      <div className="space-y-2">
-                        {activeTasks.length === 0 ? (
-                          <p className="text-muted-foreground text-center py-8">No active tasks for this period</p>
-                        ) : (
-                          activeTasks.map((task) => (
-                            <SortableTaskItem
-                              key={task.id}
-                              task={task}
-                              onTaskClick={(id: string) => {
-                                // For recurring tasks in list view or occurrences in kanban, extract original ID
-                                const originalId = id.includes('::') ? id.split('::')[0] : id;
-                                setSelectedTaskId(originalId);
-                                setTaskDialogOpen(true);
-                              }}
-                              onTaskComplete={(taskId, completed) => {
-                                // For recurring tasks in list view, don't allow checkbox completion
-                                // User must open the task dialog to complete individual occurrences
-                                if (task.isRecurringTask) {
-                                  setSelectedTaskId(taskId);
-                                  setTaskDialogOpen(true);
-                                  return;
-                                }
-                                handleTaskComplete(taskId, completed);
-                              }}
-                              isManualMode={sortOption === "manual"}
-                            />
-                          ))
-                        )}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-
-                  <CompletedTasksSection
-                    tasks={completedTasks}
+        {/* Overdue Tasks Alert */}
+        {overdueTasks.length > 0 && (
+          <Card className="border-l-4 border-l-destructive bg-destructive/5 mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <h3 className="text-heading-sm font-semibold text-destructive">
+                  Overdue Tasks ({overdueTasks.length})
+                </h3>
+              </div>
+              <p className="text-metadata text-muted-foreground mb-4">
+                These tasks need your immediate attention
+              </p>
+              <div className="space-y-2">
+                {overdueTasks.slice(0, 3).map(task => (
+                  <SortableTaskItem 
+                    key={task.id} 
+                    task={{
+                      ...task,
+                      overdueLabel: `${getDaysOverdue(task.due_at)} day${getDaysOverdue(task.due_at) !== 1 ? 's' : ''} overdue`
+                    }}
                     onTaskClick={(id: string) => {
-                      // Extract original task ID if this is a recurring occurrence
-    const originalId = id.includes('::') ? id.split('::')[0] : id;
-                      setSelectedTaskId(originalId);
+                      setSelectedTaskId(id);
                       setTaskDialogOpen(true);
                     }}
                     onTaskComplete={handleTaskComplete}
+                    isManualMode={false}
                   />
-                </>
-              ) : (
-                <CalendarKanbanView
-                  tasks={activeTasks}
-                  view={
-                    dateView === 'today' || dateView === 'yesterday' || dateView === 'tomorrow' 
-                      ? 'day' 
-                      : dateView === 'custom'
-                      ? 'week' 
-                      : dateView as 'week' | 'month'
-                  }
-                  dateView={dateView}
-                  workingDays={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
-                  selectedDate={
-                    dateView === 'yesterday' ? subDays(currentDate, 1) :
-                    dateView === 'tomorrow' ? addDays(currentDate, 1) :
-                    dateView === 'week' ? startOfWeek(currentDate, { weekStartsOn: 1 }) :
-                    dateView === 'month' ? startOfMonth(currentDate) :
-                    dateRange?.from || currentDate
-                  }
-                  onTaskClick={(id: string) => {
-                    // Extract original task ID if this is a recurring occurrence
-                    const originalId = id.includes('::') ? id.split('::')[0] : id;
-                    setSelectedTaskId(originalId);
-                    setTaskDialogOpen(true);
-                  }}
-                />
-              )}
-            </>
-          )}
+                ))}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Split View: My Agenda + Available Tasks */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* My Agenda Section - 2/3 width */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-heading-md font-semibold">
+                My Agenda
+                <span className="text-muted-foreground font-normal ml-2">({activeTasks.length})</span>
+              </h2>
+            </div>
+
+            {isLoading || agendaLoading ? (
+              <ListSkeleton items={5} />
+            ) : (
+              <>
+                {viewMode === 'list' ? (
+                  <>
+                    {activeTasks.length > 0 && sortOption !== "manual" && (
+                      <Alert className="mb-4 border-primary/50 bg-primary/5">
+                        <Info className="h-4 w-4 text-primary" />
+                        <AlertDescription className="text-sm">
+                          Switch to "Manual" sort to drag & drop tasks into your preferred order
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <Card className="overflow-hidden">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={activeTasks.map(t => t.id)}
+                          strategy={verticalListSortingStrategy}
+                          disabled={sortOption !== "manual"}
+                        >
+                          <div className="divide-y divide-border px-4">
+                            {activeTasks.length === 0 ? (
+                              <p className="text-muted-foreground text-center py-8">
+                                No tasks in your agenda. Add tasks from the pool →
+                              </p>
+                            ) : (
+                              activeTasks.map((task) => (
+                                <SortableTaskItem
+                                  key={task.id}
+                                  task={task}
+                                  onTaskClick={(id: string) => {
+                                    const originalId = id.includes('::') ? id.split('::')[0] : id;
+                                    setSelectedTaskId(originalId);
+                                    setTaskDialogOpen(true);
+                                  }}
+                                  onTaskComplete={(taskId: string, completed: boolean) => {
+                                    if (task.isRecurringTask) {
+                                      setSelectedTaskId(taskId);
+                                      setTaskDialogOpen(true);
+                                      return;
+                                    }
+                                    handleTaskComplete(taskId, completed);
+                                  }}
+                                  onRemoveFromAgenda={removeFromAgenda}
+                                  isManualMode={sortOption === "manual"}
+                                  showRemove={!task.isAutoAdded}
+                                />
+                              ))
+                            )}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    </Card>
+
+                    <CompletedTasksSection
+                      tasks={completedTasks}
+                      onTaskClick={(id: string) => {
+                        const originalId = id.includes('::') ? id.split('::')[0] : id;
+                        setSelectedTaskId(originalId);
+                        setTaskDialogOpen(true);
+                      }}
+                      onTaskComplete={handleTaskComplete}
+                    />
+                  </>
+                ) : (
+                  <CalendarKanbanView
+                    tasks={activeTasks}
+                    view={
+                      dateView === 'today' || dateView === 'yesterday' || dateView === 'tomorrow' 
+                        ? 'day' 
+                        : dateView === 'custom'
+                        ? 'week' 
+                        : dateView as 'week' | 'month'
+                    }
+                    dateView={dateView}
+                    workingDays={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                    selectedDate={
+                      dateView === 'yesterday' ? subDays(currentDate, 1) :
+                      dateView === 'tomorrow' ? addDays(currentDate, 1) :
+                      dateView === 'week' ? startOfWeek(currentDate, { weekStartsOn: 1 }) :
+                      dateView === 'month' ? startOfMonth(currentDate) :
+                      dateRange?.from || currentDate
+                    }
+                    onTaskClick={(id: string) => {
+                      const originalId = id.includes('::') ? id.split('::')[0] : id;
+                      setSelectedTaskId(originalId);
+                      setTaskDialogOpen(true);
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Available Tasks Pool - 1/3 width */}
+          <div className="lg:col-span-1">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-heading-md font-semibold">
+                Available Tasks
+                <span className="text-muted-foreground font-normal ml-2">({availableTasks.length})</span>
+              </h2>
+            </div>
+            
+            <AgendaTaskPool
+              tasks={availableTasks}
+              onAddToAgenda={addToAgenda}
+              onTaskClick={(id) => {
+                setSelectedTaskId(id);
+                setTaskDialogOpen(true);
+              }}
+              isAdding={isAdding}
+            />
+          </div>
         </div>
       </div>
 
-      {selectedTaskId && (
-        <UnifiedTaskDialog 
-          open={taskDialogOpen} 
-          onOpenChange={setTaskDialogOpen} 
-          mode="view"
-          taskId={selectedTaskId} 
-        />
-      )}
-
-      <UnifiedTaskDialog 
+      {/* Task Dialogs */}
+      <UnifiedTaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        taskId={selectedTaskId}
+        mode="view"
+      />
+      
+      <UnifiedTaskDialog
         open={createTaskOpen}
         onOpenChange={setCreateTaskOpen}
         mode="create"

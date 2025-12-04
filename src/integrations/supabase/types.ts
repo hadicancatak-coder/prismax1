@@ -3883,6 +3883,44 @@ export type Database = {
           },
         ]
       }
+      user_agenda: {
+        Row: {
+          added_at: string | null
+          agenda_date: string
+          created_at: string | null
+          id: string
+          is_auto_added: boolean | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          agenda_date: string
+          created_at?: string | null
+          id?: string
+          is_auto_added?: boolean | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          agenda_date?: string
+          created_at?: string | null
+          id?: string
+          is_auto_added?: boolean | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_agenda_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_board_access: {
         Row: {
           access_count: number | null
