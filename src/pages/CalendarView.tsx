@@ -548,24 +548,24 @@ export default function CalendarView() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background px-6 lg:px-8 pt-8 pb-8">
+      <div className="max-w-[1440px] mx-auto">
         {/* Header */}
         <header className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h1 className="text-page-title font-bold">My Agenda</h1>
-              <p className="text-muted-foreground">{getDateLabel()}</p>
+              <h1 className="text-[24px] font-semibold text-foreground tracking-tight">My Agenda</h1>
+              <p className="text-[14px] text-muted-foreground mt-1">{getDateLabel()}</p>
             </div>
             <div className="flex items-center gap-3">
               {/* Admin User Filter */}
               {userRole === 'admin' && (
                 <Select value={selectedUserId || user?.id || ''} onValueChange={(v) => setSelectedUserId(v === user?.id ? null : v)}>
-                  <SelectTrigger className="w-[200px] h-9">
+                  <SelectTrigger className="w-[200px] h-10 rounded-lg bg-card border-border text-[14px]">
                     <Users className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="View user agenda" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl bg-popover border-border shadow-lg">
                     {allUsers.map(u => (
                       <SelectItem key={u.user_id} value={u.user_id}>
                         {u.name || u.email}
@@ -574,37 +574,37 @@ export default function CalendarView() {
                   </SelectContent>
                 </Select>
               )}
-              <Button onClick={() => setCreateTaskOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={() => setCreateTaskOpen(true)} className="rounded-full px-6 h-10 gap-2 shadow-sm text-[14px] font-medium">
+                <Plus className="h-4 w-4" />
                 New Task
               </Button>
             </div>
           </div>
 
           {/* Date Tabs + View Options */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <Tabs value={dateView} onValueChange={(v) => {
                 setDateView(v as typeof dateView);
                 if (v !== "custom") setDateRange(null);
               }}>
-                <TabsList className="h-9">
-                  <TabsTrigger value="today" className="h-8 px-3">Today</TabsTrigger>
-                  <TabsTrigger value="tomorrow" className="h-8 px-3">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="week" className="h-8 px-3">Week</TabsTrigger>
-                  <TabsTrigger value="custom" className="h-8 px-3">Custom</TabsTrigger>
+                <TabsList className="h-10 rounded-lg bg-muted/50 p-1">
+                  <TabsTrigger value="today" className="h-8 px-4 rounded-md text-[13px]">Today</TabsTrigger>
+                  <TabsTrigger value="tomorrow" className="h-8 px-4 rounded-md text-[13px]">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="week" className="h-8 px-4 rounded-md text-[13px]">Week</TabsTrigger>
+                  <TabsTrigger value="custom" className="h-8 px-4 rounded-md text-[13px]">Custom</TabsTrigger>
                 </TabsList>
               </Tabs>
 
               {dateView === "custom" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9">
+                    <Button variant="outline" className="h-10 px-4 rounded-lg text-[13px]">
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       Pick date
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-xl shadow-lg" align="start">
                     <DateRangePicker
                       value={dateRange}
                       onChange={(range) => {
@@ -619,28 +619,31 @@ export default function CalendarView() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-card p-1 rounded-lg border border-border">
               <Button
-                variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="icon"
                 onClick={() => setViewMode('table')}
                 title="Table view"
+                className="h-9 w-9 rounded-md"
               >
                 <Table className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="icon"
                 onClick={() => setViewMode('kanban')}
                 title="Kanban view"
+                className="h-9 w-9 rounded-md"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'gantt' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                variant={viewMode === 'gantt' ? 'default' : 'ghost'}
+                size="icon"
                 onClick={() => setViewMode('gantt')}
                 title="Gantt view"
+                className="h-9 w-9 rounded-md"
               >
                 <GanttChart className="h-4 w-4" />
               </Button>

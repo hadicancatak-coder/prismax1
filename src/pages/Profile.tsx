@@ -266,273 +266,277 @@ export default function Profile() {
       .slice(0, 2);
   };
 
-  if (!profile) return <div className="p-8">Loading...</div>;
+  if (!profile) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <Card className="p-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-32 w-32">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="text-2xl">{profile.name?.[0]?.toUpperCase()}</AvatarFallback>
-            </Avatar>
-            {isOwnProfile && (
-              <label>
-                <Button variant="outline" size="sm" disabled={uploading} asChild>
-                  <span className="cursor-pointer">
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploading ? "Uploading..." : "Upload Photo"}
-                  </span>
-                </Button>
-                <input type="file" accept="image/png" onChange={handleAvatarUpload} className="hidden" />
-              </label>
-            )}
-          </div>
+    <div className="min-h-screen bg-background pt-8 pb-8 px-8 lg:px-12">
+      <div className="max-w-[1280px] mx-auto space-y-6">
+        {/* Profile Header Card */}
+        <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-28 w-28 border-2 border-border">
+                <AvatarImage src={profile.avatar_url} />
+                <AvatarFallback className="text-2xl bg-muted">{profile.name?.[0]?.toUpperCase()}</AvatarFallback>
+              </Avatar>
+              {isOwnProfile && (
+                <label>
+                  <Button variant="outline" size="sm" disabled={uploading} asChild className="rounded-full h-9 px-4 text-[13px]">
+                    <span className="cursor-pointer">
+                      <Upload className="h-4 w-4 mr-2" />
+                      {uploading ? "Uploading..." : "Upload Photo"}
+                    </span>
+                  </Button>
+                  <input type="file" accept="image/png" onChange={handleAvatarUpload} className="hidden" />
+                </label>
+              )}
+            </div>
 
-          <div className="flex-1 space-y-4">
-            {editing && isOwnProfile ? (
-              <>
-                <div>
-                  <Label>Name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior Developer" />
-                </div>
-                <div>
-                  <Label>Phone Number</Label>
-                  <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Tagline</Label>
-                  <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." />
-                </div>
-                <div>
-                  <Label className="mb-3 block">Teams</Label>
-                  <div className="space-y-2">
-                    {TEAMS.map((team) => (
-                      <div key={team} className="flex items-center gap-2">
-                        <Checkbox
-                          id={team}
-                          checked={selectedTeams.includes(team)}
-                          onCheckedChange={() => toggleTeam(team)}
-                        />
-                        <Label htmlFor={team} className="cursor-pointer">
+            <div className="flex-1 space-y-4">
+              {editing && isOwnProfile ? (
+                <>
+                  <div>
+                    <Label className="text-[13px] text-muted-foreground">Name</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} className="h-10 rounded-lg mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[13px] text-muted-foreground">Title</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior Developer" className="h-10 rounded-lg mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[13px] text-muted-foreground">Phone Number</Label>
+                    <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-10 rounded-lg mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[13px] text-muted-foreground">Tagline</Label>
+                    <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." className="rounded-lg mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[13px] text-muted-foreground mb-3 block">Teams</Label>
+                    <div className="space-y-2">
+                      {TEAMS.map((team) => (
+                        <div key={team} className="flex items-center gap-2">
+                          <Checkbox
+                            id={team}
+                            checked={selectedTeams.includes(team)}
+                            onCheckedChange={() => toggleTeam(team)}
+                          />
+                          <Label htmlFor={team} className="cursor-pointer text-[14px]">
+                            {team}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <Button onClick={handleSave} className="rounded-full h-10 px-6 text-[14px]">Save Changes</Button>
+                    <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full h-10 px-6 text-[14px]">Cancel</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-[24px] font-semibold text-foreground">{profile.name}</h1>
+                  {profile.title && <p className="text-[16px] text-muted-foreground">{profile.title}</p>}
+                  {profile.tagline && <p className="text-[14px] text-foreground/80">{profile.tagline}</p>}
+                  {profile.phone_number && <p className="text-[14px] text-muted-foreground">{profile.phone_number}</p>}
+                  <p className="text-[14px] text-muted-foreground">{profile.email}</p>
+                  
+                  {profile.teams && profile.teams.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {profile.teams.map((team: string) => (
+                        <Badge key={team} variant="secondary" className="rounded-full px-3 py-1 text-[13px]">
                           {team}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSave}>Save</Button>
-                  <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold">{profile.name}</h1>
-                {profile.title && <p className="text-lg text-muted-foreground">{profile.title}</p>}
-                {profile.tagline && <p className="text-sm">{profile.tagline}</p>}
-                {profile.phone_number && <p className="text-sm text-muted-foreground">{profile.phone_number}</p>}
-                <p className="text-sm text-muted-foreground">{profile.email}</p>
-                
-                {profile.teams && profile.teams.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {profile.teams.map((team: string) => (
-                      <Badge key={team} variant="secondary">
-                        {team}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                
-                {isOwnProfile && (
-                  <Button onClick={() => setEditing(true)} variant="outline">Edit Profile</Button>
-                )}
-              </>
-            )}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {isOwnProfile && (
+                    <Button onClick={() => setEditing(true)} variant="outline" className="rounded-full h-10 px-6 text-[14px] mt-2">
+                      Edit Profile
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </Card>
 
-      {/* Notification Preferences - Only for own profile */}
-      {isOwnProfile && (
-        <Collapsible defaultOpen={false}>
-          <Card>
-            <CollapsibleTrigger className="w-full">
-              <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold">Notification Preferences</h3>
-                    <p className="text-sm text-muted-foreground">Manage your notification settings</p>
+        {/* Notification Preferences - Only for own profile */}
+        {isOwnProfile && (
+          <Collapsible defaultOpen={false}>
+            <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)]">
+              <CollapsibleTrigger className="w-full">
+                <div className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-2xl px-6 py-5">
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <h3 className="text-[18px] font-medium text-foreground">Notification Preferences</h3>
+                      <p className="text-[13px] text-muted-foreground mt-1">Manage your notification settings</p>
+                    </div>
+                    <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
                   </div>
-                  <ChevronDown className="h-5 w-5 transition-transform data-[state=open]:rotate-180" />
                 </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-6 pb-6">
-                <NotificationPreferences />
-              </div>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      )}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6">
+                  <NotificationPreferences />
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        )}
 
-      {/* KPIs Section */}
-      {profileKPIs.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-            <Target className="h-5 w-5" />
-            Key Performance Indicators ({profileKPIs.length})
-          </h2>
-          <div className="space-y-4">
-            {profileKPIs.map((kpi) => {
-              const assignment = kpi.assignments?.find(a => a.user_id === (userId || user?.id));
-              return (
-                <Card key={kpi.id}>
-                  <CardHeader>
+        {/* KPIs Section */}
+        {profileKPIs.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
+            <h2 className="text-[20px] font-medium flex items-center gap-2 mb-5 text-foreground">
+              <Target className="h-5 w-5 text-primary" />
+              Key Performance Indicators ({profileKPIs.length})
+            </h2>
+            <div className="space-y-4">
+              {profileKPIs.map((kpi) => {
+                const assignment = kpi.assignments?.find(a => a.user_id === (userId || user?.id));
+                return (
+                  <div key={kpi.id} className="bg-muted/30 rounded-xl p-5 border border-border">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{kpi.name}</h3>
-                        {kpi.description && <p className="text-sm text-muted-foreground mt-1">{kpi.description}</p>}
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline">Weight: {kpi.weight}%</Badge>
-                          <Badge variant="outline">{kpi.type}</Badge>
-                          <Badge variant="outline">{kpi.period}</Badge>
-                          <Badge variant={assignment?.status === 'approved' ? 'default' : assignment?.status === 'pending' ? 'secondary' : 'destructive'}>
+                        <h3 className="font-medium text-[16px] text-foreground">{kpi.name}</h3>
+                        {kpi.description && <p className="text-[13px] text-muted-foreground mt-1">{kpi.description}</p>}
+                        <div className="flex items-center gap-2 mt-3 flex-wrap">
+                          <Badge variant="outline" className="rounded-full text-[12px]">Weight: {kpi.weight}%</Badge>
+                          <Badge variant="outline" className="rounded-full text-[12px]">{kpi.type}</Badge>
+                          <Badge variant="outline" className="rounded-full text-[12px]">{kpi.period}</Badge>
+                          <Badge variant={assignment?.status === 'approved' ? 'default' : assignment?.status === 'pending' ? 'secondary' : 'destructive'} className="rounded-full text-[12px]">
                             {assignment?.status || 'pending'}
                           </Badge>
                         </div>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
                     {kpi.targets && kpi.targets.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-sm">Targets</h4>
+                      <div className="space-y-3 mt-5">
+                        <h4 className="font-medium text-[13px] text-muted-foreground">Targets</h4>
                         {kpi.targets.map((target) => {
                           const progress = target.target_value > 0 ? (target.current_value / target.target_value) * 100 : 0;
                           return (
                             <div key={target.id} className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{target.target_name}</span>
+                              <div className="flex items-center justify-between text-[14px]">
+                                <span className="font-medium text-foreground">{target.target_name}</span>
                                 <span className="text-muted-foreground">{target.current_value} / {target.target_value} {target.unit}</span>
                               </div>
                               <Progress value={progress} className="h-2" />
-                              <Badge variant="outline" className="text-xs">{target.target_type}</Badge>
+                              <Badge variant="outline" className="text-[11px] rounded-full">{target.target_type}</Badge>
                             </div>
                           );
                         })}
                       </div>
                     )}
                     {assignment?.notes && (
-                      <div>
-                        <h4 className="font-medium text-sm mb-1">Assignment Notes</h4>
-                        <p className="text-sm text-muted-foreground">{assignment.notes}</p>
+                      <div className="mt-4">
+                        <h4 className="font-medium text-[13px] text-muted-foreground mb-1">Assignment Notes</h4>
+                        <p className="text-[14px] text-foreground/80">{assignment.notes}</p>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </Card>
-      )}
+        )}
 
-      {/* Team Members */}
-      {teamMembers.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5" />
-            Team Members ({teamMembers.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teamMembers.map((member) => (
-              <Card
-                key={member.user_id}
-                className="p-4 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => navigate(`/profile/${member.user_id}`)}
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={member.avatar_url} />
-                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium truncate">{member.name}</h3>
-                    {member.username && (
-                      <p className="text-sm text-muted-foreground truncate">
-                        @{member.username}
-                      </p>
-                    )}
-                    {member.title && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {member.title}
-                      </p>
-                    )}
+        {/* Team Members */}
+        {teamMembers.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
+            <h2 className="text-[20px] font-medium flex items-center gap-2 mb-5 text-foreground">
+              <Users className="h-5 w-5 text-primary" />
+              Team Members ({teamMembers.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {teamMembers.map((member) => (
+                <div
+                  key={member.user_id}
+                  className="p-4 bg-muted/30 rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => navigate(`/profile/${member.user_id}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border border-border">
+                      <AvatarImage src={member.avatar_url} />
+                      <AvatarFallback className="bg-muted text-[14px]">{getInitials(member.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-[14px] text-foreground truncate">{member.name}</h3>
+                      {member.username && (
+                        <p className="text-[13px] text-muted-foreground truncate">
+                          @{member.username}
+                        </p>
+                      )}
+                      {member.title && (
+                        <p className="text-[12px] text-muted-foreground truncate">
+                          {member.title}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </Card>
-            ))}
+              ))}
+            </div>
           </div>
-        </Card>
-      )}
+        )}
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-6">
-          <TabsTrigger value="all">All ({tasks.all.length})</TabsTrigger>
-          <TabsTrigger value="ongoing">Ongoing ({tasks.ongoing.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({tasks.completed.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({tasks.pending.length})</TabsTrigger>
-          <TabsTrigger value="blocked">Blocked ({tasks.blocked.length})</TabsTrigger>
-          <TabsTrigger value="failed">Failed ({tasks.failed.length})</TabsTrigger>
-        </TabsList>
+        {/* Tasks Section */}
+        <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full max-w-3xl grid-cols-6 h-10 rounded-lg bg-muted/50 p-1">
+              <TabsTrigger value="all" className="rounded-md text-[13px]">All ({tasks.all.length})</TabsTrigger>
+              <TabsTrigger value="ongoing" className="rounded-md text-[13px]">Ongoing ({tasks.ongoing.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="rounded-md text-[13px]">Completed ({tasks.completed.length})</TabsTrigger>
+              <TabsTrigger value="pending" className="rounded-md text-[13px]">Pending ({tasks.pending.length})</TabsTrigger>
+              <TabsTrigger value="blocked" className="rounded-md text-[13px]">Blocked ({tasks.blocked.length})</TabsTrigger>
+              <TabsTrigger value="failed" className="rounded-md text-[13px]">Failed ({tasks.failed.length})</TabsTrigger>
+            </TabsList>
 
-        {["all", "ongoing", "completed", "pending", "blocked", "failed"].map((status) => (
-          <TabsContent key={status} value={status} className="mt-6 space-y-4">
-            {tasks[status].length > 0 ? (
-              tasks[status].map((task: any) => (
-                <TaskCard
-                  key={task.id}
-                  task={{
-                    id: task.id,
-                    title: task.title,
-                    description: task.description || "",
-                    assignee: "Multi-assignee",
-                    status: task.status,
-                    priority: task.priority,
-                    dueDate: task.due_at,
-                    timeTracked: "0h 00m",
-                    entity: task.entity || undefined,
-                    recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none',
-                  }}
-                  onClick={() => {
-                    setSelectedTaskId(task.id);
-                    setTaskDialogOpen(true);
-                  }}
-                />
-              ))
-            ) : (
-              <Card className="p-8 text-center">
-                <p className="text-muted-foreground">No {status} tasks</p>
-              </Card>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+            {["all", "ongoing", "completed", "pending", "blocked", "failed"].map((status) => (
+              <TabsContent key={status} value={status} className="mt-5 space-y-3">
+                {tasks[status].length > 0 ? (
+                  tasks[status].map((task: any) => (
+                    <TaskCard
+                      key={task.id}
+                      task={{
+                        id: task.id,
+                        title: task.title,
+                        description: task.description || "",
+                        assignee: "Multi-assignee",
+                        status: task.status,
+                        priority: task.priority,
+                        dueDate: task.due_at,
+                        timeTracked: "0h 00m",
+                        entity: task.entity || undefined,
+                        recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none',
+                      }}
+                      onClick={() => {
+                        setSelectedTaskId(task.id);
+                        setTaskDialogOpen(true);
+                      }}
+                    />
+                  ))
+                ) : (
+                  <div className="p-8 text-center bg-muted/30 rounded-xl border border-border">
+                    <p className="text-[14px] text-muted-foreground">No {status} tasks</p>
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
 
-      {selectedTaskId && (
-        <UnifiedTaskDialog
-          open={taskDialogOpen}
-          onOpenChange={setTaskDialogOpen}
-          mode="view"
-          taskId={selectedTaskId}
-        />
-      )}
+        {selectedTaskId && (
+          <UnifiedTaskDialog
+            open={taskDialogOpen}
+            onOpenChange={setTaskDialogOpen}
+            mode="view"
+            taskId={selectedTaskId}
+          />
+        )}
+      </div>
     </div>
   );
 }
