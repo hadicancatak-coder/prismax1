@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, AlertTriangle, MessageCircle, Send, ChevronDown, ChevronRight, X, Pencil, Eye } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -355,6 +356,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     } else {
       setNewComment("");
       fetchComments();
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -389,11 +394,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     <Button
                       type="button"
                       variant={sidePanelOpen ? "secondary" : "ghost"}
-                      size="icon"
+                      size="icon-sm"
                       onClick={() => setSidePanelOpen(!sidePanelOpen)}
                       title="Comments & Activity"
                     >
-                      <MessageCircle className="h-5 w-5" />
+                      <MessageCircle className="h-4 w-4" />
                     </Button>
                   )}
                   {!isCreate && isReadOnly && (
@@ -795,9 +800,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   onClick={() => setSidePanelOpen(false)}
-                  className="h-8 w-8"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -830,22 +834,64 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
                 {/* Comments */}
                 <div className="space-y-3">
-                  <h4 className="text-body-sm font-medium text-muted-foreground">Comments ({comments.length})</h4>
+                  <h4 className="text-body-sm font-medium text-muted-foreground">
+                    Comments {comments.length > 0 && `(${comments.length})`}
+                  </h4>
                   {comments.length === 0 ? (
-                    <p className="text-body-sm text-muted-foreground">No comments yet</p>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-body-sm">No comments yet</p>
+                      <p className="text-metadata">Be the first to comment</p>
+                    </div>
                   ) : (
                     <div className="space-y-3">
-                      {comments.map((comment) => (
-                        <div key={comment.id} className="space-y-1 p-3 rounded-lg bg-muted/30">
-                          <div className="flex items-center gap-2">
-                            <span className="text-body-sm font-medium">{comment.author?.name}</span>
-                            <span className="text-muted-foreground text-metadata">
-                              {format(new Date(comment.created_at), "MMM d, h:mm a")}
-                            </span>
+                      {comments.map((comment) => {
+                        const isCurrentUser = comment.author?.user_id === user?.id;
+                        return (
+                          <div 
+                            key={comment.id} 
+                            className={cn(
+                              "flex gap-3",
+                              isCurrentUser && "flex-row-reverse"
+                            )}
+                          >
+                            <Avatar className="h-8 w-8 shrink-0">
+                              <AvatarFallback className="text-metadata bg-primary/10 text-primary">
+                                {comment.author?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className={cn(
+                              "flex-1 max-w-[85%]",
+                              isCurrentUser && "flex flex-col items-end"
+                            )}>
+                              <div className={cn(
+                                "rounded-lg px-3 py-2",
+                                isCurrentUser 
+                                  ? "bg-primary text-primary-foreground rounded-tr-none" 
+                                  : "bg-muted/50 rounded-tl-none"
+                              )}>
+                                {!isCurrentUser && (
+                                  <div className="text-metadata font-medium mb-1">
+                                    {comment.author?.name}
+                                  </div>
+                                )}
+                                <CommentText 
+                                  text={comment.body} 
+                                  className={cn(
+                                    "text-body-sm",
+                                    isCurrentUser && "text-primary-foreground"
+                                  )}
+                                  enableMentions
+                                  profiles={users}
+                                />
+                              </div>
+                              <span className="text-metadata text-muted-foreground mt-1">
+                                {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                              </span>
+                            </div>
                           </div>
-                          <CommentText text={comment.body} />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                   <div ref={messagesEndRef} />
@@ -853,32 +899,39 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               </div>
 
               {/* Comment Input */}
-              {!isReadOnly && (
-                <div className="p-4 border-t border-border space-y-3">
+              <div className="p-4 border-t border-border">
+                <div className="flex flex-col gap-2">
                   <MentionAutocomplete
                     value={newComment}
                     onChange={setNewComment}
                     users={users}
-                    placeholder="Add a comment... (use @ to mention)"
+                    placeholder="Write a comment... Use @ to mention"
+                    minRows={2}
+                    maxRows={4}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
                         handleAddComment();
                       }
                     }}
                   />
-                  <Button 
-                    type="button" 
-                    size="sm" 
-                    onClick={handleAddComment} 
-                    className="w-full"
-                    disabled={!newComment.trim()}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-metadata text-muted-foreground">
+                      {newComment.trim() ? `⌘+Enter to send` : ''}
+                    </span>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || isReadOnly}
+                      className="gap-2"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Send
+                    </Button>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
