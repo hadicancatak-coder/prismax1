@@ -34,6 +34,7 @@ import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
 import About from "./pages/About";
+import HowTo from "./pages/HowTo";
 import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
 import CaptionLibrary from "./pages/CaptionLibrary";
@@ -93,6 +94,7 @@ const App = () => (
                   <Route path="/location-intelligence" element={<LocationIntelligence />} />
                   <Route path="/web-intel" element={<WebIntel />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/how-to" element={<HowTo />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

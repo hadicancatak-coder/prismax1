@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Mail, Edit, Save, X } from "lucide-react";
+import { Edit, Save, X, BookOpen } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
@@ -26,17 +24,28 @@ function renderMarkdown(content: string) {
   const lines = content.split('\n');
   const elements: JSX.Element[] = [];
   let inList = false;
-  let listItems: string[] = [];
+  let listItems: { text: string; isNumbered: boolean; number?: number }[] = [];
 
   const flushList = () => {
     if (listItems.length > 0) {
-      elements.push(
-        <ul key={`list-${elements.length}`} className="space-y-1 list-disc list-inside ml-4 mb-4">
-          {listItems.map((item, i) => (
-            <li key={i} className="text-body-sm text-muted-foreground">{item}</li>
-          ))}
-        </ul>
-      );
+      const isNumbered = listItems[0].isNumbered;
+      if (isNumbered) {
+        elements.push(
+          <ol key={`list-${elements.length}`} className="space-y-1 list-decimal list-inside ml-4 mb-4">
+            {listItems.map((item, i) => (
+              <li key={i} className="text-body-sm text-muted-foreground">{item.text}</li>
+            ))}
+          </ol>
+        );
+      } else {
+        elements.push(
+          <ul key={`list-${elements.length}`} className="space-y-1 list-disc list-inside ml-4 mb-4">
+            {listItems.map((item, i) => (
+              <li key={i} className="text-body-sm text-muted-foreground">{item.text}</li>
+            ))}
+          </ul>
+        );
+      }
       listItems = [];
     }
     inList = false;
@@ -61,7 +70,10 @@ function renderMarkdown(content: string) {
       );
     } else if (trimmed.startsWith('- ')) {
       inList = true;
-      listItems.push(trimmed.replace('- ', ''));
+      listItems.push({ text: trimmed.replace('- ', ''), isNumbered: false });
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      inList = true;
+      listItems.push({ text: trimmed.replace(/^\d+\.\s/, ''), isNumbered: true });
     } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
       flushList();
       elements.push(
@@ -88,13 +100,12 @@ function renderMarkdown(content: string) {
   return elements;
 }
 
-export default function About() {
+export default function HowTo() {
   const { userRole } = useAuth();
   const [pageData, setPageData] = useState<CMSPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState("");
-  const [editVersion, setEditVersion] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -105,11 +116,11 @@ export default function About() {
     const { data, error } = await supabase
       .from('cms_pages')
       .select('*')
-      .eq('slug', 'about')
+      .eq('slug', 'how-to')
       .single();
 
     if (error) {
-      console.error('Error fetching about page:', error);
+      console.error('Error fetching how-to page:', error);
     } else {
       setPageData(data);
     }
@@ -119,7 +130,6 @@ export default function About() {
   const handleEdit = () => {
     if (pageData) {
       setEditContent(pageData.content);
-      setEditVersion(pageData.version || '');
       setEditDialogOpen(true);
     }
   };
@@ -132,7 +142,6 @@ export default function About() {
       .from('cms_pages')
       .update({
         content: editContent,
-        version: editVersion,
         updated_at: new Date().toISOString(),
       })
       .eq('id', pageData.id);
@@ -147,13 +156,11 @@ export default function About() {
     setSaving(false);
   };
 
-  const currentVersion = pageData?.version || "2.0";
-
   return (
     <div className="p-8 space-y-6 max-w-4xl mx-auto animate-fade-in">
       <PageHeader
-        title="Prisma"
-        description="Comprehensive Task & Campaign Management Platform"
+        title="How to Use Prisma"
+        description="Learn how to get the most out of the platform"
         actions={
           userRole === 'admin' ? (
             <Button variant="outline" onClick={handleEdit} className="gap-2">
@@ -164,27 +171,11 @@ export default function About() {
         }
       />
 
-      {/* App Information */}
-      <Card className="p-8 bg-card border-border">
-        <div className="flex items-start gap-6">
-          <div className="flex-1">
-            <Badge variant="secondary" className="mb-4">
-              Version {currentVersion}
-            </Badge>
-            <p className="text-body-sm text-muted-foreground">
-              Prisma is a powerful platform designed to streamline task management, campaign coordination, and team
-              collaboration. Built with security and efficiency in mind, it helps teams stay organized and productive.
-              Created by and for the CFI Global Performance Marketing Team.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {/* CMS Content */}
+      {/* Content */}
       <Card className="p-6 bg-card border-border">
         <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="text-heading-md font-semibold">What's New</h2>
+          <BookOpen className="h-5 w-5 text-primary" />
+          <h2 className="text-heading-md font-semibold">User Guide</h2>
         </div>
 
         {loading ? (
@@ -202,48 +193,13 @@ export default function About() {
         )}
       </Card>
 
-      {/* Support & Contact */}
-      <Card className="p-6 bg-card border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Mail className="h-5 w-5 text-primary" />
-          <h2 className="text-heading-sm font-semibold">Support & Contact</h2>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <p className="text-body-sm font-medium">Support Email</p>
-            <a href="mailto:h.catak@cfi.trade" className="text-body-sm text-primary hover:underline">
-              h.catak@cfi.trade
-            </a>
-          </div>
-
-          <div>
-            <p className="text-body-sm font-medium">Organization</p>
-            <p className="text-body-sm text-muted-foreground">PerMar at CFI Financial Group</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Footer */}
-      <div className="text-center text-metadata text-muted-foreground pt-4">
-        <p>© 2025 Prisma. All rights reserved.</p>
-      </div>
-
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Edit About Page</DialogTitle>
+            <DialogTitle>Edit How To Page</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Version</Label>
-              <Input
-                value={editVersion}
-                onChange={(e) => setEditVersion(e.target.value)}
-                placeholder="e.g., 2.0"
-              />
-            </div>
             <div className="space-y-2">
               <Label>Content (Markdown)</Label>
               <Textarea
