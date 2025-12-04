@@ -915,6 +915,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                     "text-body-sm",
                                     isCurrentUser && "text-primary-foreground"
                                   )}
+                                  linkClassName={isCurrentUser ? "text-primary-foreground underline" : "text-primary underline"}
                                   enableMentions
                                   profiles={users}
                                 />
@@ -957,7 +958,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       type="button" 
                       size="sm" 
                       onClick={handleAddComment}
-                      disabled={!newComment.trim() || isReadOnly}
+                      disabled={!newComment.trim()}
                       className={cn(
                         "gap-2 transition-all duration-200",
                         newComment.trim() 

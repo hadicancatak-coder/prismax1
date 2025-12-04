@@ -54,11 +54,14 @@ export function TaskAssigneeSelector({
       try {
         if (isSelected) {
           // Remove assignee
-          await supabase
+          const { error } = await supabase
             .from('task_assignees')
             .delete()
             .eq('task_id', taskId)
             .eq('user_id', userId);
+          
+          if (error) throw error;
+          toast.success('Assignee removed');
         } else {
           // Get current user's profile for assigned_by
           const { data: profile } = await supabase
@@ -68,13 +71,16 @@ export function TaskAssigneeSelector({
             .single();
 
           if (profile) {
-            await supabase
+            const { error } = await supabase
               .from('task_assignees')
               .insert({
                 task_id: taskId,
                 user_id: userId,
                 assigned_by: profile.id,
               });
+            
+            if (error) throw error;
+            toast.success('Assignee added');
           }
         }
       } catch (error: any) {
@@ -94,13 +100,14 @@ export function TaskAssigneeSelector({
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <div
           role="combobox"
           aria-expanded={open}
-          disabled={disabled}
+          tabIndex={disabled ? -1 : 0}
           className={cn(
-            "w-full justify-between min-h-[44px] h-auto py-2 px-3",
+            "flex items-center w-full justify-between min-h-[44px] h-auto py-2 px-3 rounded border border-input bg-background",
+            "hover:bg-accent hover:text-accent-foreground transition-smooth cursor-pointer",
+            disabled && "pointer-events-none opacity-50",
             selectedUsers.length === 0 && "text-muted-foreground"
           )}
         >
@@ -125,13 +132,15 @@ export function TaskAssigneeSelector({
                     </Avatar>
                     <span className="text-metadata">{selectedUser.name}</span>
                     {!disabled && (
-                      <button
-                        type="button"
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => removeUser(selectedUser.id, e)}
-                        className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition-smooth"
+                        onKeyDown={(e) => e.key === 'Enter' && removeUser(selectedUser.id, e as any)}
+                        className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition-smooth cursor-pointer"
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </span>
                     )}
                   </Badge>
                 ))}
@@ -139,7 +148,7 @@ export function TaskAssigneeSelector({
             )}
           </div>
           <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        </div>
       </PopoverTrigger>
       <PopoverContent className="w-[320px] p-0 bg-popover z-[100]" align="start">
         <Command>

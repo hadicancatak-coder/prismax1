@@ -63,12 +63,15 @@ export function TagsMultiSelect({ value, onChange, disabled = false }: TagsMulti
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <div
           role="combobox"
           aria-expanded={open}
-          disabled={disabled}
-          className="w-full justify-between h-auto min-h-[44px] py-2 transition-smooth"
+          tabIndex={disabled ? -1 : 0}
+          className={cn(
+            "flex items-center w-full justify-between h-auto min-h-[44px] py-2 px-3 rounded border border-input bg-background",
+            "hover:bg-accent hover:text-accent-foreground transition-smooth cursor-pointer",
+            disabled && "pointer-events-none opacity-50"
+          )}
         >
           <div className="flex flex-wrap gap-1.5 flex-1">
             {value.length === 0 ? (
@@ -82,20 +85,22 @@ export function TagsMultiSelect({ value, onChange, disabled = false }: TagsMulti
                 >
                   {getTagLabel(tag)}
                   {!disabled && (
-                    <button
-                      type="button"
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => removeTag(tag, e)}
-                      className="ml-1 rounded-full hover:bg-foreground/10 p-0.5 transition-smooth"
+                      onKeyDown={(e) => e.key === 'Enter' && removeTag(tag, e as any)}
+                      className="ml-1 rounded-full hover:bg-foreground/10 p-0.5 transition-smooth cursor-pointer"
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </span>
                   )}
                 </Badge>
               ))
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        </div>
       </PopoverTrigger>
       <PopoverContent 
         className="w-[300px] p-0 bg-popover border-border z-[100]" 
