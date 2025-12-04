@@ -43,6 +43,6 @@ export const useTaskChangeLogs = (taskId: string) => {
 
       return logsWithProfiles as TaskChangeLog[];
     },
-    enabled: !!taskId && taskId !== "undefined",
+    enabled: !!taskId && taskId !== "undefined" && taskId !== "",
   });
 };

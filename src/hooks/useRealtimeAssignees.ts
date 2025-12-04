@@ -16,6 +16,13 @@ export function useRealtimeAssignees(
   const [loading, setLoading] = useState(true);
 
   const fetchAssignees = async () => {
+    // Skip query if entityId is empty or undefined
+    if (!entityId || entityId === '') {
+      setAssignees([]);
+      setLoading(false);
+      return;
+    }
+
     let data: any = null;
 
     if (entityType === "task") {
@@ -59,6 +66,13 @@ export function useRealtimeAssignees(
   };
 
   useEffect(() => {
+    // Skip subscription setup if entityId is empty
+    if (!entityId || entityId === '') {
+      setAssignees([]);
+      setLoading(false);
+      return;
+    }
+
     fetchAssignees();
 
     const tableName =

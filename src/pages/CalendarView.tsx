@@ -228,7 +228,7 @@ export default function CalendarView() {
   useEffect(() => {
     if (userRole === 'admin') {
       const fetchUsers = async () => {
-        const { data } = await supabase.from('profiles').select('id, name, email').order('name');
+        const { data } = await supabase.from('profiles').select('user_id, name, email').order('name');
         setAllUsers(data || []);
       };
       fetchUsers();
@@ -567,7 +567,7 @@ export default function CalendarView() {
                   </SelectTrigger>
                   <SelectContent>
                     {allUsers.map(u => (
-                      <SelectItem key={u.id} value={u.id}>
+                      <SelectItem key={u.user_id} value={u.user_id}>
                         {u.name || u.email}
                       </SelectItem>
                     ))}
