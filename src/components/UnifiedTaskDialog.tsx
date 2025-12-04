@@ -895,11 +895,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                               </AvatarFallback>
                             </Avatar>
                             <div className={cn(
-                              "flex-1 max-w-[85%]",
+                              "flex-1 min-w-0 max-w-[85%]",
                               isCurrentUser && "flex flex-col items-end"
                             )}>
                               <div className={cn(
-                                "rounded-lg px-3 py-2",
+                                "rounded-lg px-3 py-2 max-w-full overflow-hidden",
                                 isCurrentUser 
                                   ? "bg-primary text-primary-foreground rounded-tr-none" 
                                   : "bg-muted/50 rounded-tl-none"
@@ -912,10 +912,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 <CommentText 
                                   text={comment.body} 
                                   className={cn(
-                                    "text-body-sm",
+                                    "text-body-sm break-all overflow-wrap-anywhere",
                                     isCurrentUser && "text-primary-foreground"
                                   )}
-                                  linkClassName={isCurrentUser ? "text-primary-foreground underline" : "text-primary underline"}
+                                  linkClassName={isCurrentUser ? "text-primary-foreground underline break-all" : "text-primary underline break-all"}
                                   enableMentions
                                   profiles={users}
                                 />

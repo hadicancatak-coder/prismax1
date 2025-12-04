@@ -487,6 +487,12 @@ All colors MUST be HSL.
   .hover-bg-subtle {
     @apply hover:bg-[#2C3237] transition-colors;
   }
+
+  /* Text wrapping utilities */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 
 /* Page Transition Animations */
