@@ -371,10 +371,13 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
-        sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
-      )}>
+      <DialogContent 
+        hideCloseButton
+        className={cn(
+          "h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
+          sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
+        )}
+      >
         <div className="flex h-full">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -425,6 +428,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       View
                     </Button>
                   )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onOpenChange(false)}
+                    title="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               {!isCreate && task && (
@@ -924,7 +936,12 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       size="sm" 
                       onClick={handleAddComment}
                       disabled={!newComment.trim() || isReadOnly}
-                      className="gap-2"
+                      className={cn(
+                        "gap-2 transition-all duration-200",
+                        newComment.trim() 
+                          ? "bg-primary hover:bg-primary-hover shadow-md" 
+                          : "opacity-50"
+                      )}
                     >
                       <Send className="h-3.5 w-3.5" />
                       Send
