@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, isSameDay } from 'date-fns';
 import { expandRecurringTask } from '@/lib/recurrenceExpander';
 
 interface AgendaItem {
@@ -27,6 +27,26 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
   const queryClient = useQueryClient();
   const effectiveUserId = userId || user?.id;
   const agendaDate = format(date, 'yyyy-MM-dd');
+  const [profileId, setProfileId] = useState<string | null>(null);
+
+  // Fetch user's profile ID once
+  useEffect(() => {
+    if (!effectiveUserId) return;
+    
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', effectiveUserId)
+        .single();
+      
+      if (data) {
+        setProfileId(data.id);
+      }
+    };
+    
+    fetchProfile();
+  }, [effectiveUserId]);
 
   // Fetch agenda items for user on specific date
   const { data: agendaItems = [], isLoading, refetch } = useQuery({
@@ -50,88 +70,105 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     enabled: !!effectiveUserId,
   });
 
+  // Check if user is assigned to a task
+  const isUserAssigned = useCallback((task: any) => {
+    if (!task.assignees || task.assignees.length === 0) return false;
+    
+    return task.assignees.some((a: any) => {
+      // Check multiple possible ID matches
+      if (a.user_id === effectiveUserId) return true;
+      if (a.id === profileId) return true;
+      // Also check if profile's user_id matches
+      if (a.user_id && a.user_id === effectiveUserId) return true;
+      return false;
+    });
+  }, [effectiveUserId, profileId]);
+
+  // Check if a recurring task occurs on the selected date
+  const recurringTaskOccursOnDate = useCallback((task: any, targetDate: Date) => {
+    if (!task.recurrence_rrule) return false;
+    
+    const dateStart = startOfDay(targetDate);
+    const dateEnd = new Date(dateStart);
+    dateEnd.setHours(23, 59, 59, 999);
+    
+    try {
+      const occurrences = expandRecurringTask(
+        task,
+        dateStart,
+        dateEnd,
+        completions.filter(c => c.task_id === task.id),
+        task.assignees || []
+      );
+      
+      return occurrences.length > 0;
+    } catch (error) {
+      console.error('Error expanding recurring task:', task.id, error);
+      return false;
+    }
+  }, [completions]);
+
   // Auto-populate agenda based on rules
   const autoPopulateAgenda = useCallback(async () => {
-    if (!effectiveUserId || !allTasks?.length) return;
+    if (!effectiveUserId || !allTasks?.length || !profileId) return;
 
-    const today = format(startOfDay(new Date()), 'yyyy-MM-dd');
-    const isToday = agendaDate === today;
+    const today = startOfDay(new Date());
+    const selectedDateStart = startOfDay(date);
+    const isToday = isSameDay(selectedDateStart, today);
     
-    // Get user's profile to find their profile ID
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', effectiveUserId)
-      .single();
-    
-    if (!profile) return;
-    
-    const profileId = profile.id;
     const tasksToAdd: { task_id: string; is_auto_added: boolean }[] = [];
     const existingTaskIds = new Set(agendaItems.map(item => item.task_id));
 
-    allTasks.forEach(task => {
+    for (const task of allTasks) {
       // Skip if already in agenda
-      if (existingTaskIds.has(task.id)) return;
+      if (existingTaskIds.has(task.id)) continue;
       
       // Skip completed, failed, or backlog tasks
-      if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') return;
+      if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') continue;
       
       // Check if user is assigned to this task
-      const isAssigned = task.assignees?.some((a: any) => 
-        a.id === profileId || a.user_id === effectiveUserId
-      );
-      
-      if (!isAssigned) return;
+      const assigned = isUserAssigned(task);
+      if (!assigned) continue;
 
-      // Rule 1: Due tasks (including overdue) - add to today's agenda only
-      if (task.due_at && isToday) {
-        const taskDueDate = new Date(task.due_at);
-        const todayDate = startOfDay(new Date());
-        // If task is due today OR overdue, add to today's agenda
-        if (taskDueDate <= todayDate) {
+      // RULE: Recurring tasks - check if they occur on the selected date
+      // This should be checked FIRST and always auto-add if recurring on this date
+      const hasRecurrence = task.task_type === 'recurring' || task.recurrence_rrule;
+      if (hasRecurrence && task.recurrence_rrule) {
+        const occursToday = recurringTaskOccursOnDate(task, date);
+        if (occursToday) {
           tasksToAdd.push({ task_id: task.id, is_auto_added: true });
-          return;
+          continue;
         }
       }
 
-      // Rule 2: Task due on specific future date
+      // RULE: Task due on the selected date
       if (task.due_at) {
-        const taskDueDate = format(new Date(task.due_at), 'yyyy-MM-dd');
-        if (taskDueDate === agendaDate) {
+        const taskDueDate = startOfDay(new Date(task.due_at));
+        
+        // If viewing today and task is overdue or due today
+        if (isToday && taskDueDate <= today) {
           tasksToAdd.push({ task_id: task.id, is_auto_added: true });
-          return;
+          continue;
+        }
+        
+        // If task is due on the selected date (future dates)
+        if (isSameDay(taskDueDate, selectedDateStart)) {
+          tasksToAdd.push({ task_id: task.id, is_auto_added: true });
+          continue;
         }
       }
 
-      // Rule 3: High priority tasks - auto add to today only
+      // RULE: High priority tasks - auto add to today only
       if (isToday && task.priority === 'High') {
         tasksToAdd.push({ task_id: task.id, is_auto_added: true });
-        return;
+        continue;
       }
-
-      // Rule 3: Recurring tasks - check if they occur on this date
-      if ((task.task_type === 'recurring' || task.recurrence_rrule) && task.recurrence_rrule) {
-        const dateStart = startOfDay(date);
-        const dateEnd = new Date(dateStart);
-        dateEnd.setHours(23, 59, 59, 999);
-        
-        const occurrences = expandRecurringTask(
-          task,
-          dateStart,
-          dateEnd,
-          completions.filter(c => c.task_id === task.id),
-          task.assignees || []
-        );
-        
-        if (occurrences.length > 0) {
-          tasksToAdd.push({ task_id: task.id, is_auto_added: true });
-        }
-      }
-    });
+    }
 
     // Bulk insert new auto-populated items
     if (tasksToAdd.length > 0) {
+      console.log('Auto-adding tasks to agenda:', tasksToAdd.map(t => t.task_id));
+      
       const { error } = await supabase
         .from('user_agenda')
         .upsert(
@@ -144,18 +181,20 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
           { onConflict: 'user_id,task_id,agenda_date' }
         );
       
-      if (!error) {
+      if (error) {
+        console.error('Error auto-populating agenda:', error);
+      } else {
         refetch();
       }
     }
-  }, [effectiveUserId, agendaDate, allTasks, agendaItems, completions, date, refetch]);
+  }, [effectiveUserId, agendaDate, allTasks, agendaItems, date, profileId, isUserAssigned, recurringTaskOccursOnDate, refetch]);
 
   // Run auto-populate when dependencies change
   useEffect(() => {
-    if (effectiveUserId && allTasks?.length > 0) {
+    if (effectiveUserId && allTasks?.length > 0 && profileId) {
       autoPopulateAgenda();
     }
-  }, [effectiveUserId, agendaDate, allTasks?.length]);
+  }, [effectiveUserId, agendaDate, allTasks?.length, profileId]);
 
   // Add tasks to agenda
   const addToAgenda = useMutation({
@@ -199,19 +238,47 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     },
   });
 
-  // Get tasks that are in the agenda
+  // Get tasks that are in the agenda (including recurring task instances)
   const agendaTasks = useMemo(() => {
-    if (!allTasks || !agendaItems.length) return [];
+    if (!allTasks) return [];
     
     const agendaTaskIds = new Set(agendaItems.map(item => item.task_id));
-    return allTasks.filter(task => agendaTaskIds.has(task.id));
-  }, [allTasks, agendaItems]);
+    const result: any[] = [];
+    const addedIds = new Set<string>();
+    
+    // Add tasks that are in the agenda
+    for (const task of allTasks) {
+      if (agendaTaskIds.has(task.id) && !addedIds.has(task.id)) {
+        result.push(task);
+        addedIds.add(task.id);
+      }
+    }
+    
+    // Also include recurring tasks that occur today but might not be in agenda yet
+    // (for immediate display before auto-populate runs)
+    for (const task of allTasks) {
+      if (addedIds.has(task.id)) continue;
+      if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') continue;
+      if (!isUserAssigned(task)) continue;
+      
+      const hasRecurrence = task.task_type === 'recurring' || task.recurrence_rrule;
+      if (hasRecurrence && task.recurrence_rrule) {
+        const occursToday = recurringTaskOccursOnDate(task, date);
+        if (occursToday) {
+          result.push({ ...task, isRecurringOccurrence: true });
+          addedIds.add(task.id);
+        }
+      }
+    }
+    
+    return result;
+  }, [allTasks, agendaItems, date, isUserAssigned, recurringTaskOccursOnDate]);
 
   // Get tasks available to add (assigned to user but not in agenda)
   const availableTasks = useMemo(() => {
     if (!allTasks || !effectiveUserId) return [];
     
-    const agendaTaskIds = new Set(agendaItems.map(item => item.task_id));
+    const agendaTaskIds = new Set(agendaTasks.map(t => t.id));
     
     return allTasks.filter(task => {
       // Not already in agenda
@@ -221,12 +288,12 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
       if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') return false;
       
       // Must be assigned to user or global/unassigned
-      const profile = task.assignees?.find((a: any) => a.user_id === effectiveUserId);
+      const assigned = isUserAssigned(task);
       const isGlobalUnassigned = task.visibility === 'global' && (!task.assignees || task.assignees.length === 0);
       
-      return profile || isGlobalUnassigned;
+      return assigned || isGlobalUnassigned;
     });
-  }, [allTasks, agendaItems, effectiveUserId]);
+  }, [allTasks, agendaTasks, effectiveUserId, isUserAssigned]);
 
   return {
     agendaItems,
