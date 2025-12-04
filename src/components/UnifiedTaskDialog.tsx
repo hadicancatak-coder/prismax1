@@ -604,7 +604,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                   </div>
                 </div>
 
-                {/* === ADVANCED SETTINGS (Collapsed) === */}
+                {/* === ADVANCED SETTINGS (Collapsed) - Only show in Edit/Create mode === */}
+                {!isReadOnly && (
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                   <CollapsibleTrigger asChild>
                     <Button 
@@ -808,6 +809,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     )}
                   </CollapsibleContent>
                 </Collapsible>
+                )}
               </form>
             </div>
 

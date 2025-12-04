@@ -516,7 +516,6 @@ export default function CalendarView() {
                         <TabsTrigger value="today" className="h-8 px-2 text-xs">Today</TabsTrigger>
                         <TabsTrigger value="tomorrow" className="h-8 px-2 text-xs">Tomorrow</TabsTrigger>
                         <TabsTrigger value="week" className="h-8 px-2 text-xs">Week</TabsTrigger>
-                        <TabsTrigger value="month" className="h-8 px-2 text-xs">Month</TabsTrigger>
                         <TabsTrigger value="custom" className="h-8 px-2 text-xs">Custom</TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -664,13 +663,10 @@ export default function CalendarView() {
               <>
                 {viewMode === 'list' ? (
                   <>
-                    {activeTasks.length > 0 && sortOption !== "manual" && (
-                      <Alert className="mb-4 border-primary/50 bg-primary/5">
-                        <Info className="h-4 w-4 text-primary" />
-                        <AlertDescription className="text-sm">
-                          Switch to "Manual" sort to drag & drop tasks into your preferred order
-                        </AlertDescription>
-                      </Alert>
+                    {activeTasks.length > 0 && sortOption === "manual" && (
+                      <p className="text-xs text-muted-foreground mb-3 px-1">
+                        Drag tasks to reorder your priorities
+                      </p>
                     )}
                     
                     <Card className="overflow-hidden">
