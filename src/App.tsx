@@ -25,7 +25,6 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
 import SearchPlanner from "./pages/SearchPlanner";
-import DisplayPlanner from "./pages/DisplayPlanner";
 import SavedElementsPage from "./pages/SavedElementsPage";
 import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
@@ -75,7 +74,6 @@ const App = () => (
                 <Route path="/team-base" element={<TeamBase />} />
                 <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
                 <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
-                <Route path="/ads/display" element={<DisplayPlanner />} />
                 <Route path="/ads/library" element={<SavedElementsPage />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile/:userId?" element={<Profile />} />

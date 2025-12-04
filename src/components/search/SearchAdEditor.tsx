@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import { Save, ChevronLeft, Copy, BookmarkPlus, Download, Edit } from "lucide-react";
 import { SearchAdPreview } from "@/components/ads/SearchAdPreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { calculateAdStrength, checkCompliance, detectHeadlinePattern, getHeadlinePositionRecommendation, checkDisplayAdCompliance } from "@/lib/adQualityScore";
-import { DisplayAdCreator } from "@/components/ads/DisplayAdCreator";
+import { calculateAdStrength, checkCompliance, detectHeadlinePattern, getHeadlinePositionRecommendation } from "@/lib/adQualityScore";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -116,19 +115,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     );
   }, [headlines, descriptions, sitelinks, callouts, entity]);
 
-  // Display ad compliance
-  const displayCompliance = useMemo(() => {
-    if (adType === "display") {
-      return checkDisplayAdCompliance(
-        longHeadline,
-        shortHeadlines,
-        displayDescriptions,
-        ctaText,
-        entity
-      );
-    }
-    return [];
-  }, [adType, longHeadline, shortHeadlines, displayDescriptions, ctaText, entity]);
+  // Compliance is only for search ads now
 
   useEffect(() => {
     if (ad) {
@@ -381,26 +368,16 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
         approval_status: "approved"
       };
 
-      if (adType === "display") {
-        // Display ad specific data
-        baseData.long_headline = longHeadline;
-        baseData.short_headlines = shortHeadlines.filter(h => h.trim());
-        baseData.descriptions = displayDescriptions.filter(d => d.trim());
-        baseData.cta_text = ctaText;
-        baseData.ad_strength = 0;
-        baseData.compliance_issues = displayCompliance.map(issue => ({ message: issue }));
-      } else {
-        // Search ad specific data
-        baseData.headlines = headlines.filter(h => h.trim()).map((h, i) => {
-          const originalIndex = headlines.indexOf(h);
-          return dkiEnabled[originalIndex] ? `{Keyword:${h}}` : h;
-        });
-        baseData.descriptions = descriptions.filter(d => d.trim());
-        baseData.sitelinks = sitelinks.filter(s => s.description.trim() || s.link.trim());
-        baseData.callouts = callouts.filter(c => c.trim());
-        baseData.ad_strength = adStrength.score;
-        baseData.compliance_issues = complianceIssues.map(issue => ({ ...issue }));
-      }
+      // Search ad specific data
+      baseData.headlines = headlines.filter(h => h.trim()).map((h, i) => {
+        const originalIndex = headlines.indexOf(h);
+        return dkiEnabled[originalIndex] ? `{Keyword:${h}}` : h;
+      });
+      baseData.descriptions = descriptions.filter(d => d.trim());
+      baseData.sitelinks = sitelinks.filter(s => s.description.trim() || s.link.trim());
+      baseData.callouts = callouts.filter(c => c.trim());
+      baseData.ad_strength = adStrength.score;
+      baseData.compliance_issues = complianceIssues.map(issue => ({ ...issue }));
 
       if (ad?.id) {
         // Get current auth user directly to ensure correct ID
@@ -544,64 +521,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     descriptions: descriptions.filter(d => d)
   };
 
-  // Display ad editing not yet supported with full UI - show basic message
-  if (adType === "display") {
-    return (
-      <div className="h-full flex flex-col">
-        <ScrollArea className="h-full">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">
-                {ad?.id ? "Edit Display Ad" : "Create Display Ad"}
-              </h2>
-              <Button variant="ghost" onClick={onCancel}>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-            </div>
-
-            {displayCompliance.length > 0 && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {displayCompliance.map((issue, idx) => (
-                      <li key={idx}>{issue}</li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <DisplayAdCreator
-              businessName={businessName}
-              setBusinessName={setBusinessName}
-              longHeadline={longHeadline}
-              setLongHeadline={setLongHeadline}
-              shortHeadlines={shortHeadlines}
-              setShortHeadlines={setShortHeadlines}
-              descriptions={displayDescriptions}
-              setDescriptions={setDisplayDescriptions}
-              ctaText={ctaText}
-              setCtaText={setCtaText}
-              landingPage={landingPage}
-              setLandingPage={setLandingPage}
-              adEntity={entity}
-            />
-
-            <div className="flex gap-2 mt-6">
-              <Button onClick={() => handleSave(false)} disabled={isSaving || !ctaText}>
-                <Save className="mr-2 h-4 w-4" />
-                {isSaving ? "Saving..." : ad?.id ? "Update Ad" : "Create Ad"}
-              </Button>
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    );
-  }
+  // Only search ads are supported now
 
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full flex-col lg:flex-row">

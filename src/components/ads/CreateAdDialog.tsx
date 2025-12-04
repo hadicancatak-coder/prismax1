@@ -7,13 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
-import { DisplayAdCreator } from './DisplayAdCreator';
 import { ElementQuickInsert } from './ElementQuickInsert';
 import { useSaveSocialElement } from '@/hooks/useSocialAdElements';
 import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import { Copy, Save, Sparkles } from 'lucide-react';
 import { SearchAdPreview } from './SearchAdPreview';
-import { DisplayAdPreview } from './DisplayAdPreview';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';

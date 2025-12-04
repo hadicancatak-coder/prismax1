@@ -9,13 +9,11 @@ import { Loader2, Save, X, AlertCircle, Sparkles } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchAdPreview } from "./SearchAdPreview";
-import { DisplayAdPreview } from "./DisplayAdPreview";
 import { ElementQuickInsert } from "./ElementQuickInsert";
 import { AdVariationGeneratorDialog } from "./AdVariationGeneratorDialog";
 import { QualityMetricsPanel } from "./QualityMetricsPanel";
 import { AdVersionHistory } from "./AdVersionHistory";
 import { AdBreadcrumbs } from "./AdBreadcrumbs";
-import { DisplayAdCreator } from "./DisplayAdCreator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -280,234 +278,172 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
         <ResizablePanel defaultSize={55} minSize={40}>
           <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
-              {/* Ad Type Tabs */}
-              <Tabs value={adType} onValueChange={(v) => handleFieldChange(setAdType)(v as "search" | "display")}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="search">Search Ad</TabsTrigger>
-                  <TabsTrigger value="display">Display Ad</TabsTrigger>
-                </TabsList>
+              {/* Basic Info */}
+              <Card className="mt-4">
+                <CardContent className="pt-6 space-y-4">
+                  <div>
+                    <Label htmlFor="adName">Ad Name *</Label>
+                    <Input
+                      id="adName"
+                      value={adName}
+                      onChange={(e) => handleFieldChange(setAdName)(e.target.value)}
+                      placeholder="e.g., CFI Trading Platform - UK"
+                    />
+                  </div>
 
-                {/* Basic Info */}
-                <Card className="mt-4">
-                  <CardContent className="pt-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="adName">Ad Name *</Label>
-                      <Input
-                        id="adName"
-                        value={adName}
-                        onChange={(e) => handleFieldChange(setAdName)(e.target.value)}
-                        placeholder="e.g., CFI Trading Platform - UK"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="campaign">Campaign</Label>
-                        <Select value={campaign} onValueChange={handleFieldChange(setCampaign)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select campaign" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {campaigns.map((c: any) => (
-                              <SelectItem key={c.id} value={c.name}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="adGroup">Ad Group</Label>
-                        <Input
-                          id="adGroup"
-                          value={adGroup}
-                          onChange={(e) => handleFieldChange(setAdGroup)(e.target.value)}
-                          placeholder="e.g., Trading Platforms"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="entity">Entity</Label>
-                      <Select value={entity} onValueChange={handleFieldChange(setEntity)}>
+                      <Label htmlFor="campaign">Campaign</Label>
+                      <Select value={campaign} onValueChange={handleFieldChange(setCampaign)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select entity" />
+                          <SelectValue placeholder="Select campaign" />
                         </SelectTrigger>
                         <SelectContent>
-                          <ScrollArea className="max-h-[200px]">
-                            {entities.flatMap((preset: any) => 
-                              preset.entities.map((entityName: string) => (
-                                <SelectItem key={`${preset.id}-${entityName}`} value={entityName}>
-                                  {entityName}
-                                </SelectItem>
-                              ))
-                            )}
-                          </ScrollArea>
+                          {campaigns.map((c: any) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Search Ad Fields */}
-                <TabsContent value="search" className="space-y-4">
-                  {/* Headlines */}
-                  <Card>
-                    <CardContent className="pt-6 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>Headlines (3-15)</Label>
-                        <Button size="sm" variant="outline" onClick={addHeadline} disabled={headlines.length >= 15}>
-                          Add Headline
-                        </Button>
-                      </div>
-                      {headlines.map((headline, index) => (
-                        <div key={index} className="flex gap-2 items-start">
-                          <div className="flex-1">
-                            <Input
-                              value={headline}
-                              onChange={(e) => updateHeadline(index, e.target.value)}
-                              placeholder={`Headline ${index + 1}`}
-                              maxLength={30}
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {headline.length}/30 characters
-                            </p>
-                          </div>
-                          <ElementQuickInsert
-                            elementType="headline"
-                            onInsert={(content) => updateHeadline(index, content)}
-                          />
-                          {headlines.length > 3 && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeHeadline(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* Descriptions */}
-                  <Card>
-                    <CardContent className="pt-6 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>Descriptions (2-4)</Label>
-                        <Button size="sm" variant="outline" onClick={addDescription} disabled={descriptions.length >= 4}>
-                          Add Description
-                        </Button>
-                      </div>
-                      {descriptions.map((description, index) => (
-                        <div key={index} className="flex gap-2 items-start">
-                          <div className="flex-1">
-                            <Input
-                              value={description}
-                              onChange={(e) => updateDescription(index, e.target.value)}
-                              placeholder={`Description ${index + 1}`}
-                              maxLength={90}
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {description.length}/90 characters
-                            </p>
-                          </div>
-                          <ElementQuickInsert
-                            elementType="description"
-                            onInsert={(content) => updateDescription(index, content)}
-                          />
-                          {descriptions.length > 2 && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeDescription(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* URL Fields */}
-                  <Card>
-                    <CardContent className="pt-6 space-y-4">
-                      <div>
-                        <Label htmlFor="finalUrl">Final URL</Label>
-                        <Input
-                          id="finalUrl"
-                          value={finalUrl}
-                          onChange={(e) => handleFieldChange(setFinalUrl)(e.target.value)}
-                          placeholder="https://example.com/landing-page"
-                          className={finalUrl && !finalUrl.match(/^https?:\/\//) ? 'border-amber-500' : ''}
-                        />
-                        {finalUrl && !finalUrl.match(/^https?:\/\//) && (
-                          <p className="text-xs text-amber-600 mt-1">
-                            💡 Tip: URL should start with https:// or http://
-                          </p>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="path1">Path 1</Label>
-                          <Input
-                            id="path1"
-                            value={path1}
-                            onChange={(e) => handleFieldChange(setPath1)(e.target.value)}
-                            placeholder="trading"
-                            maxLength={15}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="path2">Path 2</Label>
-                          <Input
-                            id="path2"
-                            value={path2}
-                            onChange={(e) => handleFieldChange(setPath2)(e.target.value)}
-                            placeholder="platform"
-                            maxLength={15}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="businessName">Business Name</Label>
-                        <Input
-                          id="businessName"
-                          value={businessName}
-                          onChange={(e) => handleFieldChange(setBusinessName)(e.target.value)}
-                          placeholder="Your Business"
-                          maxLength={25}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Display Ad Fields */}
-                <TabsContent value="display" className="space-y-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <DisplayAdCreator
-                        businessName={businessName}
-                        setBusinessName={(val) => handleFieldChange(setBusinessName)(val)}
-                        longHeadline={longHeadline}
-                        setLongHeadline={(val) => handleFieldChange(setLongHeadline)(val)}
-                        shortHeadlines={headlines}
-                        setShortHeadlines={(val) => handleFieldChange(setHeadlines)(val)}
-                        descriptions={descriptions}
-                        setDescriptions={(val) => handleFieldChange(setDescriptions)(val)}
-                        ctaText={ctaText}
-                        setCtaText={(val) => handleFieldChange(setCtaText)(val)}
-                        landingPage={finalUrl}
-                        setLandingPage={(val) => handleFieldChange(setFinalUrl)(val)}
-                        adEntity={entity}
+                    <div>
+                      <Label htmlFor="adGroup">Ad Group</Label>
+                      <Input
+                        id="adGroup"
+                        value={adGroup}
+                        onChange={(e) => handleFieldChange(setAdGroup)(e.target.value)}
+                        placeholder="e.g., Trading Platforms"
                       />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="entity">Entity</Label>
+                    <Select value={entity} onValueChange={handleFieldChange(setEntity)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select entity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <ScrollArea className="max-h-[200px]">
+                          {entities.flatMap((preset: any) => 
+                            preset.entities.map((entityName: string) => (
+                              <SelectItem key={`${preset.id}-${entityName}`} value={entityName}>
+                                {entityName}
+                              </SelectItem>
+                            ))
+                          )}
+                        </ScrollArea>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Headlines */}
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Headlines (3-15)</Label>
+                    <Button size="sm" variant="outline" onClick={addHeadline} disabled={headlines.length >= 15}>
+                      Add Headline
+                    </Button>
+                  </div>
+                  {headlines.map((headline, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <Input
+                          value={headline}
+                          onChange={(e) => updateHeadline(index, e.target.value)}
+                          placeholder={`Headline ${index + 1}`}
+                          maxLength={30}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {headline.length}/30 characters
+                        </p>
+                      </div>
+                      <ElementQuickInsert
+                        elementType="headline"
+                        onInsert={(content) => updateHeadline(index, content)}
+                      />
+                      {headlines.length > 3 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeHeadline(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Descriptions */}
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Descriptions (2-4)</Label>
+                    <Button size="sm" variant="outline" onClick={addDescription} disabled={descriptions.length >= 4}>
+                      Add Description
+                    </Button>
+                  </div>
+                  {descriptions.map((description, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <Input
+                          value={description}
+                          onChange={(e) => updateDescription(index, e.target.value)}
+                          placeholder={`Description ${index + 1}`}
+                          maxLength={90}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {description.length}/90 characters
+                        </p>
+                      </div>
+                      <ElementQuickInsert
+                        elementType="description"
+                        onInsert={(content) => updateDescription(index, content)}
+                      />
+                      {descriptions.length > 2 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeDescription(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* URL Fields */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div>
+                    <Label htmlFor="finalUrl">Final URL</Label>
+                    <Input
+                      id="finalUrl"
+                      value={finalUrl}
+                      onChange={(e) => handleFieldChange(setFinalUrl)(e.target.value)}
+                      placeholder="https://example.com/landing-page"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="businessName">Business Name</Label>
+                    <Input
+                      id="businessName"
+                      value={businessName}
+                      onChange={(e) => handleFieldChange(setBusinessName)(e.target.value)}
+                      placeholder="Your Business"
+                      maxLength={25}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
             </div>
           </ScrollArea>
@@ -523,26 +459,14 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
               <Card className="p-4">
                 <h3 className="text-sm font-semibold mb-3">Live Preview</h3>
                 <div className="scale-95 origin-top">
-                  {adType === "search" ? (
-                    <SearchAdPreview
-                      headlines={headlines.filter(h => h.trim())}
-                      descriptions={descriptions.filter(d => d.trim())}
-                      landingPage={finalUrl}
-                      businessName={businessName}
-                      sitelinks={sitelinks.map(s => ({ text: s.text, url: s.url || '' }))}
-                      callouts={callouts}
-                    />
-                  ) : (
-                    <DisplayAdPreview
-                      businessName={businessName}
-                      longHeadline={longHeadline}
-                      shortHeadlines={headlines.filter(h => h.trim())}
-                      descriptions={descriptions.filter(d => d.trim())}
-                      ctaText={ctaText}
-                      landingPage={finalUrl}
-                      language={language}
-                    />
-                  )}
+                  <SearchAdPreview
+                    headlines={headlines.filter(h => h.trim())}
+                    descriptions={descriptions.filter(d => d.trim())}
+                    landingPage={finalUrl}
+                    businessName={businessName}
+                    sitelinks={sitelinks.map(s => ({ text: s.text, url: s.url || '' }))}
+                    callouts={callouts}
+                  />
                 </div>
               </Card>
 
