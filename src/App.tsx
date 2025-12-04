@@ -19,6 +19,7 @@ import SecurityPage from "./pages/admin/SecurityPage";
 import Logs from "./pages/admin/Logs";
 import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
+import KPIsManagement from "./pages/admin/KPIsManagement";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import Profile from "./pages/Profile";
@@ -26,7 +27,6 @@ import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
 import SearchPlanner from "./pages/SearchPlanner";
 import SavedElementsPage from "./pages/SavedElementsPage";
-import Backlog from "./pages/Backlog";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ActivityLog from "./pages/ActivityLog";
@@ -66,6 +66,7 @@ const App = () => (
                   <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                     <Route path="overview" element={<Overview />} />
                     <Route path="users" element={<UsersManagement />} />
+                    <Route path="kpis" element={<KPIsManagement />} />
                     <Route path="config" element={<Config />} />
                     <Route path="external-links" element={<ExternalLinksManagement />} />
                     <Route path="security" element={<SecurityPage />} />

@@ -90,16 +90,16 @@ All colors MUST be HSL.
   }
 
   /* ========================================
-     DARK THEME (Refined)
+     DARK THEME (Apple-inspired, refined contrast)
      ======================================== */
   .dark {
-    /* Canvas & Surfaces */
-    --background: 225 16% 6%;        /* #0b0c10 */
-    --foreground: 210 40% 98%;       /* #f9fafb */
-    --card: 230 12% 10%;             /* #171822 */
+    /* Canvas & Surfaces - Lighter, more readable */
+    --background: 220 15% 9%;        /* Softer dark background */
+    --foreground: 210 40% 98%;       /* #f9fafb - crisp white text */
+    --card: 220 14% 13%;             /* Elevated card surfaces */
     --card-foreground: 210 40% 98%;
-    --card-hover: 230 10% 13%;       /* #1f202a */
-    --popover: 230 12% 10%;
+    --card-hover: 220 16% 16%;       /* Subtle hover state */
+    --popover: 220 14% 13%;
     --popover-foreground: 210 40% 98%;
     
     /* Primary - iOS Blue (dark) */
@@ -107,64 +107,64 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
     --primary-hover: 211 100% 55%;
     
-    /* Secondary & Muted */
-    --secondary: 230 12% 10%;
+    /* Secondary & Muted - Better contrast */
+    --secondary: 220 14% 13%;
     --secondary-foreground: 210 40% 98%;
-    --secondary-hover: 230 10% 15%;
-    --muted: 230 10% 15%;
-    --muted-foreground: 220 9% 55%;  /* #6b7280 */
-    --muted-hover: 230 10% 18%;
+    --secondary-hover: 220 16% 16%;
+    --muted: 220 14% 18%;            /* Lighter muted areas */
+    --muted-foreground: 220 13% 65%; /* Better readable secondary text */
+    --muted-hover: 220 14% 22%;
     
     /* Accent */
-    --accent: 211 100% 50% / 0.1;
-    --accent-foreground: 211 100% 50%;
-    --accent-hover: 211 100% 50% / 0.15;
+    --accent: 211 100% 50% / 0.12;
+    --accent-foreground: 211 100% 60%;
+    --accent-hover: 211 100% 50% / 0.18;
     
     /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Borders */
-    --border: 230 10% 18%;           /* #2b2d3a */
-    --border-subtle: 230 10% 18%;
-    --input: 230 10% 18%;
+    /* Borders - More visible */
+    --border: 220 18% 26%;           /* Clearer borders */
+    --border-subtle: 220 16% 22%;
+    --input: 220 16% 14%;            /* Input backgrounds */
     --ring: 211 100% 50%;
     
-    /* Status colors */
-    --success: 142 76% 36%;
+    /* Status colors - Adjusted for dark mode */
+    --success: 142 76% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
+    --info: 199 89% 55%;
     --info-foreground: 0 0% 100%;
-    --pending: 207 90% 54%;
+    --pending: 207 90% 58%;
     --pending-foreground: 0 0% 100%;
     
     /* Danger soft for alerts (dark) */
-    --danger-soft: 0 72% 51% / 0.1;
-    --danger-text: 0 72% 65%;
+    --danger-soft: 0 72% 51% / 0.12;
+    --danger-text: 0 72% 70%;
     
-    /* Sidebar - darker */
-    --sidebar-background: 225 16% 4%;
-    --sidebar-foreground: 220 9% 63%;
+    /* Sidebar - Matches new palette */
+    --sidebar-background: 220 16% 11%;
+    --sidebar-foreground: 220 13% 70%;
     --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 230 10% 13%;
-    --sidebar-accent-foreground: 211 100% 50%;
-    --sidebar-border: 230 10% 12%;
+    --sidebar-accent: 220 16% 16%;
+    --sidebar-accent-foreground: 211 100% 60%;
+    --sidebar-border: 220 18% 20%;
     --sidebar-ring: 211 100% 50%;
 
-    /* Grayscale palette - dark mode */
+    /* Grayscale palette - dark mode (consistent with new tokens) */
     --gray-50: 210 40% 98%;
-    --gray-100: 220 14% 96%;
-    --gray-200: 220 13% 91%;
-    --gray-300: 220 13% 82%;
-    --gray-400: 220 9% 55%;
-    --gray-500: 220 9% 46%;
-    --gray-600: 220 13% 28%;
-    --gray-700: 220 14% 20%;
+    --gray-100: 220 14% 90%;
+    --gray-200: 220 13% 80%;
+    --gray-300: 220 13% 70%;
+    --gray-400: 220 13% 55%;
+    --gray-500: 220 13% 45%;
+    --gray-600: 220 14% 30%;
+    --gray-700: 220 15% 22%;
     --gray-800: 220 15% 16%;
-    --gray-900: 220 26% 14%;
+    --gray-900: 220 15% 11%;
   }
 
   /* Typography Scale - Semantic sizing */
