@@ -7,7 +7,6 @@ import { CampaignPreviewPanel } from "@/components/search/CampaignPreviewPanel";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type ViewState = 'hierarchy' | 'ad-editor' | 'campaign-preview';
 
@@ -123,7 +122,8 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-      <div className="px-6 py-4 border-b border-border bg-card/50">
+      {/* Header */}
+      <div className="px-8 py-6 border-b border-border bg-card/50">
         <PageHeader
           icon={Search}
           title="Search Ads Planner"
@@ -131,10 +131,11 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
         />
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
           {/* LEFT: Hierarchy */}
-          <ResizablePanel defaultSize={30} minSize={25} className="bg-card/30">
+          <ResizablePanel defaultSize={28} minSize={22} className="bg-card/30">
             <SearchHierarchyPanel
               onEditAd={handleEditAd}
               onCreateAd={handleCreateAd}
@@ -143,10 +144,10 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-border" />
+          <ResizableHandle withHandle className="bg-border hover:bg-primary/20 transition-colors" />
           
           {/* RIGHT: Campaign Preview OR Ad Editor */}
-          <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto bg-background">
+          <ResizablePanel defaultSize={72} minSize={50} className="overflow-auto bg-background">
             {campaignContext ? (
               <CampaignPreviewPanel
                 campaign={campaignContext.campaign}
@@ -172,14 +173,16 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
               />
             ) : (
               <div className="h-full flex items-center justify-center p-8">
-                <div className="text-center space-y-3">
-                  <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto">
-                    <Search className="h-8 w-8 text-muted-foreground" />
+                <div className="text-center space-y-4">
+                  <div className="w-20 h-20 rounded-2xl bg-muted/30 flex items-center justify-center mx-auto">
+                    <Search className="h-10 w-10 text-muted-foreground/50" />
                   </div>
-                  <h3 className="text-lg font-medium text-foreground">No selection</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    Select a campaign to preview or an ad to edit from the hierarchy panel
-                  </p>
+                  <div className="space-y-2">
+                    <h3 className="text-[18px] font-medium text-foreground">No selection</h3>
+                    <p className="text-[14px] text-muted-foreground max-w-sm">
+                      Select a campaign to preview or an ad to edit from the hierarchy panel
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
