@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, Trash2, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, Users } from "lucide-react";
+import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, ArrowRightFromLine, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Sortable Task Item Component - Clean single row with design system tokens
-function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false, showRemove = false, isSelected, onSelect }: any) {
+function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false, isSelected, onSelect }: any) {
   const {
     attributes,
     listeners,
@@ -124,7 +124,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         )}
       </div>
       
-      {showRemove && onRemoveFromAgenda && (
+      {onRemoveFromAgenda && (
         <Button
           variant="ghost"
           size="icon-xs"
@@ -133,9 +133,9 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
             onRemoveFromAgenda([task.id]);
           }}
           className="opacity-0 group-hover:opacity-100"
-          title="Remove from agenda"
+          title="Move to Pool"
         >
-          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+          <ArrowRightFromLine className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
         </Button>
       )}
     </div>
@@ -819,8 +819,8 @@ export default function CalendarView() {
                           Complete
                         </Button>
                         <Button variant="outline" size="sm" onClick={handleBulkRemove} className="rounded-lg h-8 text-[13px]">
-                          <Trash2 className="h-4 w-4 mr-1.5" />
-                          Remove
+                          <ArrowRightFromLine className="h-4 w-4 mr-1.5" />
+                          Move to Pool
                         </Button>
                       </>
                     )}
@@ -875,7 +875,6 @@ export default function CalendarView() {
                               onTaskComplete={handleTaskComplete}
                               onRemoveFromAgenda={removeFromAgenda}
                               isManualMode={sortOption === "manual"}
-                              showRemove={!task.isAutoAdded}
                               isSelected={selectedIds.has(task.id)}
                               onSelect={toggleSelection}
                             />
