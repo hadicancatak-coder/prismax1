@@ -214,7 +214,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="theme-apple min-h-screen bg-background px-6 md:px-12 py-8 space-y-6 relative">
+    <div className="theme-apple min-h-screen bg-[#f5f5f7] relative">
       <TaskBulkActionsBar
         selectedCount={selectedTaskIds.length}
         onClearSelection={() => setSelectedTaskIds([])}
@@ -224,298 +224,303 @@ export default function Tasks() {
         onPriorityChange={handleBulkPriorityChange}
         onExport={handleBulkExport}
       />
-      <div className="max-w-7xl mx-auto w-full space-y-6">
+      
+      <div className="max-w-6xl mx-auto px-12 py-8">
         {/* Apple-style Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-10 mb-6">
           <div>
-            <h1 className="text-[32px] font-semibold tracking-tight text-foreground">Tasks</h1>
-            <p className="text-[15px] text-muted-foreground mt-1">Manage and track your team's tasks</p>
+            <h1 className="text-2xl font-semibold text-[#1c1c1e] tracking-tight">Tasks</h1>
+            <p className="text-[13px] text-[#6e6e73] mt-1">Manage and track your team's tasks</p>
           </div>
-          <Button 
+          <button 
             onClick={() => setDialogOpen(true)} 
-            className="rounded-full px-6 h-11 shadow-sm hover:shadow-md transition-all font-medium"
+            className="bg-[#007aff] hover:bg-[#006be6] text-white rounded-full px-5 py-2.5 text-sm font-medium shadow-sm transition-all flex items-center gap-2"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             New Task
-          </Button>
+          </button>
         </div>
 
-        {/* Apple-style Filter Bar */}
-        <Card className="p-3 rounded-2xl border-border/50 shadow-sm">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-            <Input
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-48 md:w-64 h-9 rounded-full bg-muted/50 border-0 px-4 text-[14px] placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
-            />
-            
-            <StatusMultiSelect
-              value={statusFilters}
-              onChange={setStatusFilters}
-            />
-            
-            <Select
-              value={selectedTags.length > 0 ? "selected" : "all"}
-              onValueChange={(value) => {
-                if (value === "all") setSelectedTags([]);
+        {/* Apple-style Toolbar */}
+        <div className="flex items-center gap-3 bg-[#f2f2f7] rounded-2xl px-4 py-2 border border-[#e5e5ea] shadow-inner mb-6">
+          <Input
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-48 md:w-64 h-9 rounded-full bg-white border border-[#e5e5ea] px-4 text-[13px] text-[#1c1c1e] placeholder:text-[#6e6e73] focus-visible:ring-1 focus-visible:ring-[#007aff]/30"
+          />
+          
+          <StatusMultiSelect
+            value={statusFilters}
+            onChange={setStatusFilters}
+          />
+          
+          <Select
+            value={selectedTags.length > 0 ? "selected" : "all"}
+            onValueChange={(value) => {
+              if (value === "all") setSelectedTags([]);
+            }}
+          >
+            <SelectTrigger className="w-[100px] h-9 rounded-full bg-white border border-[#e5e5ea] px-3 text-[13px] text-[#1c1c1e]">
+              <SelectValue>
+                {selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl bg-white border border-[#e5e5ea]">
+              <SelectItem value="all" className="text-[13px]">All Tags</SelectItem>
+              {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
+                <div
+                  key={tag}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedTags(prev => 
+                      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                    );
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f2f2f7] rounded-lg text-[13px] text-[#1c1c1e]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onChange={() => {}}
+                    className="cursor-pointer rounded"
+                  />
+                  <span className="capitalize">{tag}</span>
+                </div>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <AssigneeFilterBar
+            selectedAssignees={selectedAssignees}
+            onAssigneesChange={setSelectedAssignees}
+          />
+          
+          <TaskDateFilterBar
+            value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null}
+            onFilterChange={setDateFilter}
+            onStatusChange={() => {}}
+            selectedStatus="all"
+          />
+
+          <button
+            onClick={() => setHideRecurring(!hideRecurring)}
+            className={cn(
+              "h-9 text-[12px] rounded-full px-3 py-1.5 border border-[#e5e5ea] bg-white text-[#1c1c1e] transition-all flex items-center gap-1.5",
+              !hideRecurring && "bg-[#007aff] text-white border-[#007aff]"
+            )}
+            title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            {hideRecurring ? "Show Recurring" : "Hide Recurring"}
+          </button>
+
+          <div className="ml-auto flex gap-1.5 flex-shrink-0 bg-white p-1 rounded-full border border-[#e5e5ea]">
+            <button
+              onClick={() => setViewMode('table')}
+              className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center transition-all",
+                viewMode === 'table' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+              )}
+              title="Table"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center transition-all",
+                viewMode === 'grid' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+              )}
+              title="Grid"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('kanban-status');
+                setBoardGroupBy('status');
               }}
+              className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center transition-all",
+                viewMode === 'kanban-status' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+              )}
+              title="Kanban Status"
             >
-              <SelectTrigger className="w-[100px] h-9 rounded-full bg-muted/50 border-0 text-[13px]">
-                <SelectValue>
-                  {selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="all">All Tags</SelectItem>
-                {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
-                  <div
-                    key={tag}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedTags(prev => 
-                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-                      );
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50 rounded-lg text-[13px]"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(tag)}
-                      onChange={() => {}}
-                      className="cursor-pointer rounded"
-                    />
-                    <span className="capitalize">{tag}</span>
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <AssigneeFilterBar
-              selectedAssignees={selectedAssignees}
-              onAssigneesChange={setSelectedAssignees}
-            />
-            
-            <TaskDateFilterBar
-              value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null}
-              onFilterChange={setDateFilter}
-              onStatusChange={() => {}}
-              selectedStatus="all"
-            />
-
-            <Button
-              variant={hideRecurring ? 'outline' : 'secondary'}
-              size="sm"
-              onClick={() => setHideRecurring(!hideRecurring)}
-              className="h-9 text-[12px] rounded-full px-4 border-0 bg-muted/50"
-              title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
+              <Columns3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('kanban-date');
+                setBoardGroupBy('date');
+              }}
+              className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center transition-all",
+                viewMode === 'kanban-date' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+              )}
+              title="Kanban Date"
             >
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-              {hideRecurring ? "Show Recurring" : "Hide Recurring"}
-            </Button>
-
-            <div className="ml-auto flex gap-1.5 flex-shrink-0 bg-muted/50 p-1 rounded-full">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'table' && "shadow-sm")}
-                title="Table"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'grid' && "shadow-sm")}
-                title="Grid"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban-status' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => {
-                  setViewMode('kanban-status');
-                  setBoardGroupBy('status');
-                }}
-                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'kanban-status' && "shadow-sm")}
-                title="Kanban Status"
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban-date' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => {
-                  setViewMode('kanban-date');
-                  setBoardGroupBy('date');
-                }}
-                className={cn("h-8 w-8 p-0 rounded-full", viewMode === 'kanban-date' && "shadow-sm")}
-                title="Kanban Date"
-              >
-                <Clock className="h-4 w-4" />
-              </Button>
-            </div>
+              <Clock className="h-4 w-4" />
+            </button>
           </div>
-        </Card>
+        </div>
 
+        {/* Clear Filters */}
         {hasActiveFilters && (
-          <div className="flex items-center gap-3 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
+          <div className="flex items-center gap-3 mb-4">
+            <button
               onClick={clearAllFilters}
-              className="h-8 text-[12px] text-muted-foreground hover:text-foreground rounded-full px-4"
+              className="h-8 text-[12px] text-[#6e6e73] hover:text-[#1c1c1e] rounded-full px-4 transition-colors flex items-center gap-1.5"
             >
-              <X className="h-3.5 w-3.5 mr-1.5" />
+              <X className="h-3.5 w-3.5" />
               Clear All Filters
-            </Button>
-            <span className="text-[12px] text-muted-foreground">
+            </button>
+            <span className="text-[12px] text-[#6e6e73]">
               Showing {finalFilteredTasks.length} of {data?.length || 0} tasks
             </span>
           </div>
         )}
 
-      {/* Overdue Tasks Alert - Apple style */}
-      {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
-        <Card className="p-4 rounded-2xl border-destructive/20 bg-destructive/5">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span className="text-[14px] font-medium text-destructive">
-              You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
-            </span>
-          </div>
-        </Card>
-      )}
-
-      {/* Task Views */}
-      {finalFilteredTasks.length === 0 ? (
-        <div className="py-16 text-center">
-          <div className="flex flex-col items-center">
-            <div className="bg-primary/10 p-8 rounded-full mb-6">
-              <CheckCircle2 className="h-12 w-12 text-primary" />
-            </div>
-            <h2 className="text-[22px] font-semibold text-foreground mb-2">All Clear!</h2>
-            <p className="text-[15px] text-muted-foreground mb-8 max-w-sm leading-relaxed">
-              {tasks.length === 0 
-                ? "You don't have any tasks yet. Create your first task to get started."
-                : "No tasks found matching your filters. Try adjusting your search."}
-            </p>
-            {tasks.length === 0 && (
-              <Button 
-                size="lg" 
-                onClick={() => setDialogOpen(true)}
-                className="rounded-full px-8 h-12 shadow-sm hover:shadow-md"
-              >
-                <Plus className="mr-2 h-5 w-5" />
-                Create Your First Task
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Apple-style Pagination Controls */}
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-muted-foreground">
-              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
-            </span>
+        {/* Overdue Tasks Alert - Apple soft style */}
+        {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
+          <div className="bg-[#fff5f5] border border-[#ffdada] rounded-xl py-3 px-4 mb-6">
             <div className="flex items-center gap-3">
-              <span className="text-[13px] text-muted-foreground">Items per page:</span>
-              <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[80px] h-9 rounded-full bg-muted/50 border-0 text-[13px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
+              <AlertTriangle className="h-4 w-4 text-[#b40000]" />
+              <span className="text-sm text-[#b40000]">
+                You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
+              </span>
             </div>
           </div>
+        )}
 
-          {/* Paginated Task Views */}
-          {(() => {
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const paginatedTasks = finalFilteredTasks.slice(startIndex, startIndex + itemsPerPage);
-            const totalPages = Math.ceil(finalFilteredTasks.length / itemsPerPage);
+        {/* Task Views - Wrapped in floating card */}
+        {finalFilteredTasks.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-12 text-center">
+            <div className="flex flex-col items-center">
+              <div className="bg-[#007aff]/10 p-8 rounded-full mb-6">
+                <CheckCircle2 className="h-12 w-12 text-[#007aff]" />
+              </div>
+              <h2 className="text-[22px] font-semibold text-[#1c1c1e] mb-2">All Clear!</h2>
+              <p className="text-[15px] text-[#6e6e73] mb-8 max-w-sm leading-relaxed">
+                {tasks.length === 0 
+                  ? "You don't have any tasks yet. Create your first task to get started."
+                  : "No tasks found matching your filters. Try adjusting your search."}
+              </p>
+              {tasks.length === 0 && (
+                <button 
+                  onClick={() => setDialogOpen(true)}
+                  className="bg-[#007aff] hover:bg-[#006be6] text-white rounded-full px-8 py-3 text-sm font-medium shadow-sm transition-all"
+                >
+                  <Plus className="mr-2 h-5 w-5 inline" />
+                  Create Your First Task
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[13px] text-[#6e6e73]">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-[13px] text-[#6e6e73]">Items per page:</span>
+                <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[80px] h-9 rounded-full bg-white border border-[#e5e5ea] text-[13px] text-[#1c1c1e]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl bg-white border border-[#e5e5ea]">
+                    <SelectItem value="10" className="text-[13px]">10</SelectItem>
+                    <SelectItem value="20" className="text-[13px]">20</SelectItem>
+                    <SelectItem value="50" className="text-[13px]">50</SelectItem>
+                    <SelectItem value="100" className="text-[13px]">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-            return (
-              <>
-                {viewMode === 'table' && (
-                  finalFilteredTasks.length > 100 ? (
-                    <TasksTableVirtualized tasks={finalFilteredTasks} onTaskUpdate={refetch} />
-                  ) : (
-                    <TasksTable 
-                      tasks={paginatedTasks} 
-                      onTaskUpdate={refetch}
-                      selectedIds={selectedTaskIds}
-                      onSelectionChange={setSelectedTaskIds}
-                    />
-                  )
-                )}
-                {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
-                {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && (
-                  <TaskBoardView 
-                    tasks={finalFilteredTasks} 
-                    onTaskClick={handleTaskClick}
-                    groupBy={boardGroupBy}
-                  />
-                )}
+            {/* Floating Card for Task List */}
+            <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-4">
+              {/* Paginated Task Views */}
+              {(() => {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const paginatedTasks = finalFilteredTasks.slice(startIndex, startIndex + itemsPerPage);
+                const totalPages = Math.ceil(finalFilteredTasks.length / itemsPerPage);
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <Pagination className="mt-6">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                return (
+                  <>
+                    {viewMode === 'table' && (
+                      finalFilteredTasks.length > 100 ? (
+                        <TasksTableVirtualized tasks={finalFilteredTasks} onTaskUpdate={refetch} />
+                      ) : (
+                        <TasksTable 
+                          tasks={paginatedTasks} 
+                          onTaskUpdate={refetch}
+                          selectedIds={selectedTaskIds}
+                          onSelectionChange={setSelectedTaskIds}
                         />
-                      </PaginationItem>
-                      
-                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <PaginationItem key={pageNum}>
-                            <PaginationLink
-                              onClick={() => setCurrentPage(pageNum)}
-                              isActive={currentPage === pageNum}
-                            >
-                              {pageNum}
-                            </PaginationLink>
+                      )
+                    )}
+                    {viewMode === 'grid' && <TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} />}
+                    {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && (
+                      <TaskBoardView 
+                        tasks={finalFilteredTasks} 
+                        onTaskClick={handleTaskClick}
+                        groupBy={boardGroupBy}
+                      />
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <Pagination className="mt-6">
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                            />
                           </PaginationItem>
-                        );
-                      })}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                          className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                )}
-              </>
-            );
-          })()}
-        </>
-      )}
+                          
+                          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <PaginationItem key={pageNum}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(pageNum)}
+                                  isActive={currentPage === pageNum}
+                                >
+                                  {pageNum}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+                          
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </>
+        )}
 
       <UnifiedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} mode="create" />
       {selectedTaskId && (
