@@ -69,21 +69,14 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
       if (error) throw error;
     },
     onMutate: async (taskId) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      
-      // Snapshot previous value
       const previousTasks = queryClient.getQueryData(['tasks']);
-      
-      // Optimistically update
       queryClient.setQueryData(['tasks'], (old: any) => 
         old?.filter((task: any) => task.id !== taskId)
       );
-      
       return { previousTasks };
     },
     onError: (error: any, taskId, context) => {
-      // Rollback on error
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
@@ -98,9 +91,6 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
       setShowDeleteConfirm(null);
       setOpenDropdownId(null);
     },
-    onSettled: () => {
-      // Realtime subscription in useTasks.ts handles invalidation
-    }
   });
 
   useEffect(() => {
@@ -126,42 +116,19 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     return due.toDateString() === today.toDateString();
   };
 
-  const isDueTomorrow = (dueDate: string | null) => {
-    if (!dueDate) return false;
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const due = new Date(dueDate);
-    return due.toDateString() === tomorrow.toDateString();
-  };
-
-  // Apple-style row backgrounds - clean white, accent bar for special states
+  // Row styling with semantic tokens
   const getRowClasses = (task: any) => {
-    const base = "bg-white hover:bg-[#fafafa] transition-all";
+    const base = "bg-card hover:bg-card-hover transition-all";
     if (isOverdue(task.due_at, task.status)) {
-      return `${base} border-l-4 border-l-[#ff3b30]`;
+      return `${base} border-l-4 border-l-destructive`;
     }
     if (task.status === "Blocked") {
-      return `${base} border-l-4 border-l-[#ff9500]`;
+      return `${base} border-l-4 border-l-warning`;
     }
     if (isDueToday(task.due_at)) {
-      return `${base} border-l-4 border-l-[#007aff]`;
+      return `${base} border-l-4 border-l-primary`;
     }
     return base;
-  };
-
-  const statusColors: Record<string, string> = {
-    Pending: "bg-[#007aff]/10 text-[#007aff] border-[#007aff]/20",
-    Ongoing: "bg-[#34c759]/10 text-[#34c759] border-[#34c759]/20",
-    Completed: "bg-[#8e8e93]/10 text-[#8e8e93] border-[#8e8e93]/20",
-    Failed: "bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/20",
-    Blocked: "bg-[#ff9500]/10 text-[#ff9500] border-[#ff9500]/20",
-    Backlog: "bg-[#8e8e93]/10 text-[#8e8e93] border-[#8e8e93]/20",
-  };
-
-  const priorityColors: Record<string, string> = {
-    High: "bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/20",
-    Medium: "bg-[#ff9500]/10 text-[#ff9500] border-[#ff9500]/20",
-    Low: "bg-[#34c759]/10 text-[#34c759] border-[#34c759]/20",
   };
 
   const handleRowClick = (taskId: string) => {
@@ -179,10 +146,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <Table className="table-auto w-full">
+      <div className="w-full overflow-hidden">
+        <Table className="w-full table-fixed">
           <TableHeader>
-            <TableRow className="bg-[#f9f9f9] border-b border-[#e6e6e6]">
+            <TableRow className="bg-muted border-b border-border">
               <TableHead className="w-[40px] py-3">
                 <Checkbox
                   checked={selectedIds?.length === tasks.length && tasks.length > 0}
@@ -191,13 +158,13 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   }}
                 />
               </TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-auto py-3">Task</TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-auto hidden xl:table-cell py-3">Description</TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[100px] py-3">Status</TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[90px] hidden md:table-cell py-3">Priority</TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[120px] hidden lg:table-cell py-3">Assignee</TableHead>
-              <TableHead className="font-semibold text-xs text-[#6e6e73] w-[100px] py-3">Due Date</TableHead>
-              <TableHead className="w-[50px] py-3"></TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3" style={{ width: '30%' }}>Task</TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3 hidden xl:table-cell" style={{ width: '25%' }}>Description</TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3" style={{ width: '100px' }}>Status</TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3 hidden md:table-cell" style={{ width: '90px' }}>Priority</TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3 hidden lg:table-cell" style={{ width: '100px' }}>Assignee</TableHead>
+              <TableHead className="font-semibold text-xs text-muted-foreground py-3" style={{ width: '90px' }}>Due Date</TableHead>
+              <TableHead className="py-3" style={{ width: '50px' }}></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -205,9 +172,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
               <TableRow
                 key={task.id}
                 className={cn(
-                  "cursor-pointer h-14 border-t border-[#e6e6e6]",
+                  "cursor-pointer h-14 border-t border-border",
                   getRowClasses(task),
-                  task.pending_approval && 'border-l-4 border-l-[#007aff]'
+                  task.pending_approval && 'border-l-4 border-l-primary'
                 )}
                 onClick={() => handleRowClick(task.id)}
               >
@@ -250,21 +217,21 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       }}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
-                      className="border-[#e5e5ea]"
+                      className="border-border"
                     />
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       {isOverdue(task.due_at, task.status) && (
-                        <AlertTriangle className="h-4 w-4 text-[#ff3b30] flex-shrink-0" />
+                        <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
                       )}
-                      <span className="text-sm font-medium text-[#1c1c1e] truncate">{task.title}</span>
+                      <span className="text-sm font-medium text-foreground truncate">{task.title}</span>
                       {task.pending_approval && (
-                        <Badge variant="default" className="text-xs px-2.5 py-0.5 bg-[#007aff] text-white">
+                        <Badge variant="default" className="text-xs px-2.5 py-0.5 flex-shrink-0">
                           Pending
                         </Badge>
                       )}
                       {task.comments_count > 0 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1 border-[#e5e5ea] text-[#6e6e73]">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1 flex-shrink-0">
                           <span>💬</span>
                           <span>{task.comments_count}</span>
                         </Badge>
@@ -274,11 +241,11 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                 </TableCell>
                 <TableCell className="py-4 px-3 hidden xl:table-cell">
                   {task.description ? (
-                    <p className="text-[13px] text-[#6e6e73] line-clamp-1">
-                      {task.description.replace(/<[^>]*>/g, '').substring(0, 100)}
+                    <p className="text-[13px] text-muted-foreground line-clamp-1 truncate">
+                      {task.description.replace(/<[^>]*>/g, '').substring(0, 80)}
                     </p>
                   ) : (
-                    <span className="text-[13px] text-[#8e8e93]">-</span>
+                    <span className="text-[13px] text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell className="py-4 px-3" onClick={(e) => e.stopPropagation()}>
@@ -289,11 +256,12 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     }}
                     disabled={updateStatus.isPending}
                   >
-                    <SelectTrigger className="h-7 w-[100px] text-[11px] rounded-full border-[#e5e5ea] bg-white">
+                    <SelectTrigger className="h-7 w-[90px] text-[11px] rounded-full border-border bg-card">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-[#e5e5ea]">
+                    <SelectContent className="rounded-xl border-border bg-popover shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
                       <SelectItem value="Backlog" className="text-[13px]">Backlog</SelectItem>
+                      <SelectItem value="Pending" className="text-[13px]">Pending</SelectItem>
                       <SelectItem value="Ongoing" className="text-[13px]">Ongoing</SelectItem>
                       <SelectItem value="Completed" className="text-[13px]">Completed</SelectItem>
                       <SelectItem value="Failed" className="text-[13px]">Failed</SelectItem>
@@ -309,10 +277,10 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     }}
                     disabled={updatePriority.isPending}
                   >
-                    <SelectTrigger className="h-7 w-[90px] text-[11px] rounded-full border-[#e5e5ea] bg-white">
+                    <SelectTrigger className="h-7 w-[80px] text-[11px] rounded-full border-border bg-card">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-[#e5e5ea]">
+                    <SelectContent className="rounded-xl border-border bg-popover shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
                       <SelectItem value="Low" className="text-[13px]">Low</SelectItem>
                       <SelectItem value="Medium" className="text-[13px]">Medium</SelectItem>
                       <SelectItem value="High" className="text-[13px]">High</SelectItem>
@@ -323,24 +291,24 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   {task.assignees && task.assignees.length > 0 ? (
                     <div className="flex items-center gap-1">
                       {task.assignees.slice(0, 3).map((assignee: any) => (
-                        <Avatar key={assignee.id} className="h-6 w-6 border border-[#e5e5ea]">
+                        <Avatar key={assignee.id} className="h-6 w-6 border border-border">
                           <AvatarImage src={assignee.avatar_url} />
-                          <AvatarFallback className="text-[10px] bg-[#f2f2f7] text-[#6e6e73]">
+                          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
                             {assignee.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       ))}
                       {task.assignees.length > 3 && (
-                        <span className="text-[11px] text-[#6e6e73] ml-1">
+                        <span className="text-[11px] text-muted-foreground ml-1">
                           +{task.assignees.length - 3}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-[13px] text-[#8e8e93]">-</span>
+                    <span className="text-[13px] text-muted-foreground">-</span>
                   )}
                 </TableCell>
-                <TableCell className="text-[13px] text-[#1c1c1e] py-4 px-3">
+                <TableCell className="text-[13px] text-foreground py-4 px-3">
                   {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
                 </TableCell>
                 <TableCell className="py-4 px-2">
@@ -357,7 +325,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                         <MoreVertical className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="rounded-xl border-border bg-popover shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
                       <DropdownMenuItem 
                         onClick={(e) => {
                           e.preventDefault();
@@ -392,73 +360,76 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setProcessingTaskId(task.id);
-                              setProcessingAction('duplicate');
-                              
-                              const { data: originalTask, error: fetchError } = await supabase
-                                .from('tasks')
-                                .select('*')
-                                .eq('id', task.id)
-                                .single();
-                              
-                              if (fetchError) {
-                                toast({
-                                  title: "Error",
-                                  description: fetchError.message,
-                                  variant: "destructive",
-                                });
-                                setProcessingTaskId(null);
-                                setProcessingAction(null);
-                                setOpenDropdownId(null);
-                                return;
-                              }
-                              
-                              const { id, created_at, updated_at, ...taskData } = originalTask;
-                              const { error } = await supabase
-                                .from('tasks')
-                                .insert({
-                                  ...taskData,
-                                  title: `${taskData.title} (Copy)`,
-                                });
-                              
-                              if (error) {
-                                toast({
-                                  title: "Error",
-                                  description: error.message,
-                                  variant: "destructive",
-                                });
-                              } else {
-                                toast({ title: "Task duplicated successfully" });
-                              }
-                              
-                              setProcessingTaskId(null);
-                              setProcessingAction(null);
-                              setOpenDropdownId(null);
-                            }}
-                            disabled={processingTaskId !== null}
-                          >
-                            {processingTaskId === task.id && processingAction === 'duplicate' ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Duplicating...
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
-                              </>
-                          )}
-                        </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setProcessingTaskId(task.id);
+                          setProcessingAction('duplicate');
+                          
+                          const { data: originalTask, error: fetchError } = await supabase
+                            .from('tasks')
+                            .select('*')
+                            .eq('id', task.id)
+                            .single();
+                          
+                          if (fetchError) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to fetch task details for duplication",
+                              variant: "destructive"
+                            });
+                            setProcessingTaskId(null);
+                            setProcessingAction(null);
+                            return;
+                          }
+                          
+                          const { id, created_at, updated_at, ...taskData } = originalTask;
+                          
+                          const { error: insertError } = await supabase
+                            .from('tasks')
+                            .insert([{
+                              ...taskData,
+                              title: `${taskData.title} (Copy)`,
+                              status: 'Pending',
+                            }]);
+                          
+                          if (insertError) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to duplicate task",
+                              variant: "destructive"
+                            });
+                          } else {
+                            toast({ title: "Task duplicated successfully" });
+                            onTaskUpdate();
+                          }
+                          
+                          setProcessingTaskId(null);
+                          setProcessingAction(null);
+                          setOpenDropdownId(null);
+                        }}
+                        disabled={processingTaskId !== null}
+                      >
+                        {processingTaskId === task.id && processingAction === 'duplicate' ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Duplicating...
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicate Task
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setShowDeleteConfirm(task.id);
                         }}
-                        disabled={deleteMutation.isPending || processingTaskId !== null}
-                        className="text-destructive focus:text-destructive"
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                        disabled={processingTaskId !== null}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
@@ -470,14 +441,30 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
             ))}
           </TableBody>
         </Table>
-
-        {tasks.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No tasks found
-          </div>
-        )}
       </div>
 
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!showDeleteConfirm} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+        <AlertDialogContent className="rounded-xl border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Task Dialog */}
       {selectedTaskId && (
         <UnifiedTaskDialog
           open={dialogOpen}
@@ -486,33 +473,6 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
           taskId={selectedTaskId}
         />
       )}
-      
-      <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
-        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this task.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
