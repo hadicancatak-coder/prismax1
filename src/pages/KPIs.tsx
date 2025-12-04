@@ -5,13 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageContainer, PageHeader, FilterBar, EmptyState } from "@/components/layout";
 import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
 import { Target, TrendingUp } from "lucide-react";
+
+const QUARTERS = ["Q1", "Q2", "Q3", "Q4"];
 
 export default function KPIs() {
   const { user } = useAuth();
   const { kpis, isLoading } = useKPIs();
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
+  const [quarterFilter, setQuarterFilter] = useState<string>("all");
 
   // Get current user's profile ID
   useEffect(() => {
@@ -37,85 +42,106 @@ export default function KPIs() {
     kpi.assignments?.some(assignment => assignment.user_id === userProfileId)
   ) || [];
 
+  // Apply quarter filter
+  const filteredKPIs = quarterFilter === "all" 
+    ? myKPIs 
+    : myKPIs.filter(kpi => kpi.period === quarterFilter);
+
   if (isLoading) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 bg-background min-h-screen space-y-6">
-        <CardSkeleton />
-        <div className="grid gap-4 md:grid-cols-2">
+      <PageContainer>
+        <PageHeader
+          icon={Target}
+          title="My KPIs"
+          description="Track your key performance indicators and goals"
+        />
+        <div className="grid gap-md md:grid-cols-2 lg:grid-cols-3">
+          <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 bg-background min-h-screen space-y-6">
-      <div className="flex items-center gap-3">
-        <Target className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-page-title">My KPIs</h1>
-          <p className="text-muted-foreground mt-1">Track your key performance indicators and goals</p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        icon={Target}
+        title="My KPIs"
+        description="Track your key performance indicators and goals"
+      />
 
-      {myKPIs.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Target className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No KPIs Assigned</h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              You don't have any KPIs assigned yet. Your manager will assign KPIs that you'll be able to track here.
-            </p>
-          </CardContent>
-        </Card>
+      <FilterBar>
+        <Select value={quarterFilter} onValueChange={setQuarterFilter}>
+          <SelectTrigger className="w-[140px] h-9 bg-card rounded-lg">
+            <SelectValue placeholder="Quarter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Quarters</SelectItem>
+            {QUARTERS.map((q) => (
+              <SelectItem key={q} value={q}>{q}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      {filteredKPIs.length === 0 ? (
+        <EmptyState
+          icon={Target}
+          title="No KPIs Assigned"
+          description="You don't have any KPIs assigned yet. Your manager will assign KPIs that you'll be able to track here."
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {myKPIs.map((kpi) => {
-            const myAssignment = kpi.assignments?.find(a => a.user_id === user?.id);
+        <div className="grid gap-md md:grid-cols-2 lg:grid-cols-3">
+          {filteredKPIs.map((kpi) => {
+            const myAssignment = kpi.assignments?.find(a => a.user_id === userProfileId);
             const totalTarget = kpi.targets?.reduce((sum, t) => sum + t.target_value, 0) || 0;
             const totalCurrent = kpi.targets?.reduce((sum, t) => sum + t.current_value, 0) || 0;
             const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
 
             return (
-              <Card key={kpi.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+              <Card key={kpi.id} className="surface-elevated hover-lift transition-smooth">
+                <CardHeader className="pb-sm">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{kpi.name}</CardTitle>
+                      <CardTitle className="text-heading-sm">{kpi.name}</CardTitle>
                       {kpi.description && (
-                        <CardDescription className="mt-1">{kpi.description}</CardDescription>
+                        <CardDescription className="mt-xs text-body-sm">{kpi.description}</CardDescription>
                       )}
                     </div>
-                    <Badge variant={myAssignment?.status === 'approved' ? 'default' : 'secondary'}>
+                    <Badge 
+                      variant={myAssignment?.status === 'approved' ? 'default' : 'secondary'}
+                      className="shrink-0"
+                    >
                       {myAssignment?.status || 'pending'}
                     </Badge>
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline">{kpi.type}</Badge>
-                    <Badge variant="outline">{kpi.period}</Badge>
-                    <Badge variant="outline">Weight: {kpi.weight}%</Badge>
+                  <div className="flex gap-xs mt-sm flex-wrap">
+                    <Badge variant="outline" className="text-metadata">{kpi.type}</Badge>
+                    <Badge variant="outline" className="text-metadata">{kpi.period}</Badge>
+                    <Badge variant="outline" className="text-metadata">Weight: {kpi.weight}%</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-md">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-body-sm mb-xs">
                       <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{progress.toFixed(1)}%</span>
+                      <span className="font-medium text-foreground">{progress.toFixed(1)}%</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                   </div>
 
                   {kpi.targets && kpi.targets.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium flex items-center gap-1.5">
-                        <TrendingUp className="h-3.5 w-3.5" />
+                    <div className="space-y-xs">
+                      <h4 className="text-body-sm font-medium flex items-center gap-xs">
+                        <TrendingUp className="h-4 w-4 text-primary" />
                         Targets
                       </h4>
                       {kpi.targets.map((target) => (
-                        <div key={target.id} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
+                        <div key={target.id} className="flex items-center justify-between text-body-sm p-sm bg-muted/50 rounded-lg">
                           <span className="text-muted-foreground">{target.target_name}</span>
-                          <span className="font-medium">
+                          <span className="font-medium text-foreground">
                             {target.current_value} / {target.target_value} {target.unit}
                           </span>
                         </div>
@@ -124,7 +150,7 @@ export default function KPIs() {
                   )}
 
                   {myAssignment?.notes && (
-                    <div className="text-sm p-2 bg-accent/10 rounded border border-accent/20">
+                    <div className="text-body-sm p-sm bg-accent/10 rounded-lg border border-accent/20">
                       <p className="text-muted-foreground">{myAssignment.notes}</p>
                     </div>
                   )}
@@ -134,6 +160,6 @@ export default function KPIs() {
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

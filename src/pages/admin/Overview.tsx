@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Users, ListTodo, AlertCircle, CheckSquare } from "lucide-react";
 import { adminService } from "@/lib/adminService";
 import { errorLogger } from "@/lib/errorLogger";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TaskAnalyticsDashboard } from "@/components/admin/TaskAnalyticsDashboard";
 
 export default function Overview() {
   const [loading, setLoading] = useState(true);
@@ -14,12 +13,6 @@ export default function Overview() {
     unresolvedErrors: 0,
     pendingApprovals: 0,
   });
-  const [errorStats, setErrorStats] = useState({
-    critical: 0,
-    warning: 0,
-    info: 0,
-    unresolved: 0,
-  });
 
   useEffect(() => {
     loadData();
@@ -28,21 +21,10 @@ export default function Overview() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [systemHealth, errStats] = await Promise.all([
-        adminService.getSystemHealth(),
-        errorLogger.getErrorStats(),
-      ]);
+      const systemHealth = await adminService.getSystemHealth();
 
       if (systemHealth) {
         setStats(systemHealth);
-      }
-      if (errStats) {
-        setErrorStats({
-          critical: errStats.critical,
-          warning: errStats.warning,
-          info: errStats.info,
-          unresolved: errStats.unresolved,
-        });
       }
     } catch (error) {
       console.error('Error loading overview data:', error);
@@ -53,16 +35,12 @@ export default function Overview() {
 
   if (loading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-md md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-32" />
+          <Card key={i} className="surface-elevated">
+            <CardContent className="p-lg">
+              <Skeleton className="h-4 w-24 mb-md" />
+              <Skeleton className="h-10 w-16" />
             </CardContent>
           </Card>
         ))}
@@ -71,41 +49,87 @@ export default function Overview() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Task Analytics Dashboard - Primary Focus */}
-      <div>
-        <h2 className="text-heading-lg font-bold mb-sm">Task Analytics by User</h2>
-        <p className="text-body-sm text-muted-foreground mb-md">
-          Track individual team member performance and workload distribution
-        </p>
-        <TaskAnalyticsDashboard />
+    <div className="space-y-lg">
+      {/* System Stats Cards */}
+      <div className="grid gap-md md:grid-cols-2 lg:grid-cols-4">
+        <Card className="surface-elevated hover-lift transition-smooth">
+          <CardContent className="p-lg">
+            <div className="flex items-center justify-between mb-sm">
+              <span className="text-body-sm text-muted-foreground">Total Users</span>
+              <div className="p-sm bg-primary/10 rounded-lg">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <div className="text-page-title font-bold text-foreground">{stats.users}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="surface-elevated hover-lift transition-smooth">
+          <CardContent className="p-lg">
+            <div className="flex items-center justify-between mb-sm">
+              <span className="text-body-sm text-muted-foreground">Total Tasks</span>
+              <div className="p-sm bg-info/10 rounded-lg">
+                <ListTodo className="h-5 w-5 text-info" />
+              </div>
+            </div>
+            <div className="text-page-title font-bold text-foreground">{stats.tasks}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="surface-elevated hover-lift transition-smooth">
+          <CardContent className="p-lg">
+            <div className="flex items-center justify-between mb-sm">
+              <span className="text-body-sm text-muted-foreground">Unresolved Errors</span>
+              <div className="p-sm bg-destructive/10 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+              </div>
+            </div>
+            <div className="text-page-title font-bold text-destructive">{stats.unresolvedErrors}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="surface-elevated hover-lift transition-smooth">
+          <CardContent className="p-lg">
+            <div className="flex items-center justify-between mb-sm">
+              <span className="text-body-sm text-muted-foreground">Pending Approvals</span>
+              <div className="p-sm bg-warning/10 rounded-lg">
+                <CheckSquare className="h-5 w-5 text-warning" />
+              </div>
+            </div>
+            <div className="text-page-title font-bold text-foreground">{stats.pendingApprovals}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* System-wide Stats - Secondary */}
-      <div>
-        <h3 className="text-heading-md font-semibold mb-md">System Overview</h3>
-        <div className="flex items-center gap-8 p-card bg-card rounded-lg border border-border">
-          <div>
-            <div className="text-metadata text-muted-foreground">Total Users</div>
-            <div className="text-4xl font-semibold text-foreground mt-1">{stats.users}</div>
+      {/* Quick Actions */}
+      <Card className="surface-elevated">
+        <CardContent className="p-lg">
+          <h3 className="text-heading-sm font-semibold mb-md">Quick Actions</h3>
+          <div className="grid gap-sm md:grid-cols-3">
+            <a 
+              href="/admin/users" 
+              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
+            >
+              <Users className="h-5 w-5 text-primary" />
+              <span className="text-body-sm font-medium">Manage Users</span>
+            </a>
+            <a 
+              href="/admin/kpis" 
+              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
+            >
+              <ListTodo className="h-5 w-5 text-primary" />
+              <span className="text-body-sm font-medium">Manage KPIs</span>
+            </a>
+            <a 
+              href="/admin/logs" 
+              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
+            >
+              <AlertCircle className="h-5 w-5 text-primary" />
+              <span className="text-body-sm font-medium">View Logs</span>
+            </a>
           </div>
-          <div className="w-px h-12 bg-border" />
-          <div>
-            <div className="text-metadata text-muted-foreground">Total Tasks</div>
-            <div className="text-4xl font-semibold text-foreground mt-1">{stats.tasks}</div>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div>
-            <div className="text-metadata text-muted-foreground">Unresolved Errors</div>
-            <div className="text-4xl font-semibold text-destructive mt-1">{stats.unresolvedErrors}</div>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div>
-            <div className="text-metadata text-muted-foreground">Pending Approvals</div>
-            <div className="text-4xl font-semibold text-foreground mt-1">{stats.pendingApprovals}</div>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
