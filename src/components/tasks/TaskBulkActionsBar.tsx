@@ -90,11 +90,12 @@ export function TaskBulkActionsBar({
                   <SelectValue placeholder="Change status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="Backlog">Backlog</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Ongoing">Ongoing</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
                 </SelectContent>
               </Select>
             )}
