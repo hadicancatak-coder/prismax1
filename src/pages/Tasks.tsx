@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2, ChevronUp, ChevronDown, SlidersHorizontal, Calendar } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2, ChevronUp, ChevronDown, SlidersHorizontal, Calendar, RefreshCw } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
@@ -53,6 +53,7 @@ export default function Tasks() {
   const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
   const [filteredDialogType, setFilteredDialogType] = useState<'all' | 'overdue' | 'ongoing' | 'completed'>('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [hideRecurring, setHideRecurring] = useState(true);
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   useEffect(() => {
@@ -124,9 +125,11 @@ export default function Tasks() {
         task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
       
-      return assigneeMatch && dateMatch && statusMatch && tagsMatch && searchMatch;
+      const recurringMatch = !hideRecurring || task.task_type !== 'recurring';
+      
+      return assigneeMatch && dateMatch && statusMatch && tagsMatch && searchMatch && recurringMatch;
     });
-  }, [data, selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch]);
+  }, [data, selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch, hideRecurring]);
 
   const finalFilteredTasks = useMemo(() => {
     if (activeQuickFilter) {
@@ -297,6 +300,17 @@ export default function Tasks() {
               onStatusChange={() => {}}
               selectedStatus="all"
             />
+
+            <Button
+              variant={hideRecurring ? 'outline' : 'secondary'}
+              size="sm"
+              onClick={() => setHideRecurring(!hideRecurring)}
+              className="h-8 text-xs flex-shrink-0"
+              title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
+            >
+              <RefreshCw className="h-3 w-3 mr-1" />
+              {hideRecurring ? "Show Recurring" : "Hide Recurring"}
+            </Button>
 
             <div className="ml-auto flex gap-1 flex-shrink-0">
               <Button
