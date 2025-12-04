@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
 import { SavedCopiesTableView } from "@/components/copywriter/SavedCopiesTableView";
 import { LanguageColumnToggle } from "@/components/copywriter/LanguageColumnToggle";
+import { PageContainer, PageHeader, FilterBar, DataCard } from "@/components/layout";
 import {
   useCopywriterCopies,
-  CopywriterCopy,
 } from "@/hooks/useCopywriterCopies";
 import { useQueryClient } from "@tanstack/react-query";
 import { ENTITIES } from "@/lib/constants";
@@ -35,85 +34,78 @@ function CopyWriter() {
     search: debouncedSearch,
   });
 
-  const handleAddRow = () => {
-    setAddingNewRow(true);
-  };
-
   return (
-    <>
-      <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8 bg-background">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-page-title">Copy Writer</h1>
-            <p className="text-muted-foreground mt-1">Manage and organize your marketing copy</p>
-          </div>
+    <PageContainer>
+      <PageHeader
+        title="Copy Writer"
+        description="Manage and organize your marketing copy"
+        actions={
           <div className="flex gap-2">
             <LanguageColumnToggle
               activeLanguages={activeLanguages}
               onToggle={setActiveLanguages}
             />
-            <Button onClick={handleAddRow}>
+            <Button onClick={() => setAddingNewRow(true)} className="rounded-full">
               <Plus className="h-4 w-4 mr-2" />
               Add Row
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        <div className="flex flex-col lg:flex-row gap-3 items-center justify-center flex-wrap border-b border-border pb-4">
-          <div className="relative flex-1 w-full lg:max-w-sm min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Search copies..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 min-h-[44px] w-full"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap justify-center">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {ELEMENT_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={platformFilter || "all"} onValueChange={setPlatformFilter}>
-            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
-              <SelectValue placeholder="Platform" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Platforms</SelectItem>
-              {PLATFORMS.map((platform) => (
-                <SelectItem key={platform} value={platform}>
-                  {platform}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={entityFilter || "all"} onValueChange={setEntityFilter}>
-            <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
-              <SelectValue placeholder="Entity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Entities</SelectItem>
-              {ENTITIES.map((entity) => (
-                <SelectItem key={entity} value={entity}>
-                  {entity}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          </div>
-        </div>
+      <FilterBar
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Search copies..."
+        }}
+      >
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[130px] h-9 bg-card rounded-lg">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {ELEMENT_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={platformFilter || "all"} onValueChange={setPlatformFilter}>
+          <SelectTrigger className="w-[130px] h-9 bg-card rounded-lg">
+            <SelectValue placeholder="Platform" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Platforms</SelectItem>
+            {PLATFORMS.map((platform) => (
+              <SelectItem key={platform} value={platform}>
+                {platform}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={entityFilter || "all"} onValueChange={setEntityFilter}>
+          <SelectTrigger className="w-[130px] h-9 bg-card rounded-lg">
+            <SelectValue placeholder="Entity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Entities</SelectItem>
+            {ENTITIES.map((entity) => (
+              <SelectItem key={entity} value={entity}>
+                {entity}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
 
+      <DataCard noPadding>
         {isLoading ? (
-          <TableSkeleton columns={6} rows={10} />
+          <div className="p-4">
+            <TableSkeleton columns={6} rows={10} />
+          </div>
         ) : (
           <SavedCopiesTableView
             copies={copies || []} 
@@ -123,8 +115,8 @@ function CopyWriter() {
             onRefresh={() => queryClient.invalidateQueries({ queryKey: ["copywriter-copies"] })}
           />
         )}
-      </div>
-    </>
+      </DataCard>
+    </PageContainer>
   );
 }
 

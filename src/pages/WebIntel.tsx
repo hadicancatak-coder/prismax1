@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageContainer, PageHeader, DataCard, EmptyState } from "@/components/layout";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelDeals } from "@/hooks/useWebIntelDeals";
 import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
@@ -11,6 +11,7 @@ import { DealFormDialog } from "@/components/webintel/DealFormDialog";
 import { DealDetailDialog } from "@/components/webintel/DealDetailDialog";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { Briefcase } from "lucide-react";
 
 export default function WebIntel() {
   const {
@@ -95,29 +96,46 @@ export default function WebIntel() {
   };
 
   return (
-    <div className="container py-6 space-y-6">
+    <PageContainer>
       <PageHeader
+        icon={Briefcase}
         title="Deals Management"
         description="Track and manage partnership deals and campaigns"
         actions={
-          <Button onClick={() => { setEditingDeal(null); setDealFormDialogOpen(true); }}>
+          <Button onClick={() => { setEditingDeal(null); setDealFormDialogOpen(true); }} className="rounded-full">
             <Plus className="mr-2 h-4 w-4" />
             Add Deal
           </Button>
         }
       />
 
-      {isLoadingDeals ? <TableSkeleton /> : (
-        <DealsTableView
-          deals={deals}
-          getCampaignCount={(dealId) => getCampaignsByDeal(dealId).length}
-          getUtmLinkCount={(dealId) => getUtmLinksByDeal(dealId).length}
-          getWebsiteName={() => 'N/A'}
-          onView={handleViewDeal}
-          onEdit={handleEditDeal}
-          onDelete={handleDeleteDeal}
-        />
-      )}
+      <DataCard noPadding>
+        {isLoadingDeals ? (
+          <div className="p-4">
+            <TableSkeleton />
+          </div>
+        ) : deals.length === 0 ? (
+          <EmptyState
+            icon={Briefcase}
+            title="No deals yet"
+            description="Create your first deal to start tracking partnerships"
+            action={{
+              label: "Add Deal",
+              onClick: () => { setEditingDeal(null); setDealFormDialogOpen(true); }
+            }}
+          />
+        ) : (
+          <DealsTableView
+            deals={deals}
+            getCampaignCount={(dealId) => getCampaignsByDeal(dealId).length}
+            getUtmLinkCount={(dealId) => getUtmLinksByDeal(dealId).length}
+            getWebsiteName={() => 'N/A'}
+            onView={handleViewDeal}
+            onEdit={handleEditDeal}
+            onDelete={handleDeleteDeal}
+          />
+        )}
+      </DataCard>
 
       <DealFormDialog
         open={dealFormDialogOpen}
@@ -157,6 +175,6 @@ export default function WebIntel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }
