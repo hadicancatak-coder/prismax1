@@ -3,6 +3,7 @@ import { parseMarkdownLinks } from "@/lib/markdownParser";
 interface CommentTextProps {
   text: string;
   className?: string;
+  linkClassName?: string;
   enableMentions?: boolean;
   profiles?: any[];
 }
@@ -10,6 +11,7 @@ interface CommentTextProps {
 export function CommentText({ 
   text, 
   className = "", 
+  linkClassName = "text-primary underline hover:text-primary/80",
   enableMentions = false,
   profiles = []
 }: CommentTextProps) {
@@ -25,7 +27,7 @@ export function CommentText({
               href={segment.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary underline hover:text-primary/80 transition-colors"
+              className={`${linkClassName} transition-colors`}
               onClick={(e) => e.stopPropagation()}
             >
               {segment.content}
@@ -43,7 +45,7 @@ export function CommentText({
                      p.username?.toLowerCase() === username.toLowerCase()
               );
               return mentioned ? (
-                <span key={`${index}-${i}`} className="text-primary font-semibold cursor-pointer hover:underline">
+                <span key={`${index}-${i}`} className="font-semibold cursor-pointer hover:underline">
                   {part}
                 </span>
               ) : part;
