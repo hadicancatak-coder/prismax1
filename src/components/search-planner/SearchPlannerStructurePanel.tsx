@@ -246,18 +246,19 @@ export function SearchPlannerStructurePanel({
               const isExpanded = expandedCampaigns.has(campaign.id);
               const totalAds = getTotalAdsForCampaign(campaign.id);
 
-              return (
+                return (
                 <Collapsible key={campaign.id} open={isExpanded}>
                   {/* Campaign Row */}
                   <div 
                     className={cn(
-                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
+                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
                       "hover:bg-card-hover border border-transparent hover:border-border"
                     )}
                   >
+                    {/* Chevron - expand/collapse only */}
                     <CollapsibleTrigger asChild>
                       <button 
-                        className="flex items-center gap-xs flex-1 text-left"
+                        className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
                         onClick={() => toggleCampaign(campaign.id)}
                       >
                         {isExpanded ? (
@@ -265,18 +266,19 @@ export function SearchPlannerStructurePanel({
                         ) : (
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <Folder className="h-4 w-4 text-primary/70" />
-                        <span 
-                          className="flex-1 text-body-sm font-medium text-foreground truncate hover:text-primary transition-smooth"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCampaignClick?.(campaign, selectedEntity);
-                          }}
-                        >
-                          {campaign.name}
-                        </span>
                       </button>
                     </CollapsibleTrigger>
+
+                    {/* Campaign name - click to select */}
+                    <button
+                      className="flex items-center gap-xs flex-1 text-left cursor-pointer active:scale-[0.98] transition-smooth"
+                      onClick={() => onCampaignClick?.(campaign, selectedEntity)}
+                    >
+                      <Folder className="h-4 w-4 text-primary/70 flex-shrink-0" />
+                      <span className="flex-1 text-body-sm font-medium text-foreground truncate hover:text-primary transition-smooth">
+                        {campaign.name}
+                      </span>
+                    </button>
 
                     {/* Campaign Stats */}
                     <Badge variant="secondary" className="text-metadata bg-muted">
@@ -290,7 +292,6 @@ export function SearchPlannerStructurePanel({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-smooth"
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -347,13 +348,14 @@ export function SearchPlannerStructurePanel({
                               {/* Ad Group Row */}
                               <div 
                                 className={cn(
-                                  "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
+                                  "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
                                   "hover:bg-card-hover"
                                 )}
                               >
+                                {/* Chevron - expand/collapse only */}
                                 <CollapsibleTrigger asChild>
                                   <button 
-                                    className="flex items-center gap-xs flex-1 text-left"
+                                    className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
                                     onClick={() => toggleAdGroup(adGroup.id)}
                                   >
                                     {isAdGroupExpanded ? (
@@ -361,12 +363,16 @@ export function SearchPlannerStructurePanel({
                                     ) : (
                                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                                     )}
-                                    <Folder className="h-3.5 w-3.5 text-muted-foreground" />
-                                    <span className="flex-1 text-body-sm text-foreground truncate">
-                                      {adGroup.name}
-                                    </span>
                                   </button>
                                 </CollapsibleTrigger>
+
+                                {/* Ad Group name - static display */}
+                                <div className="flex items-center gap-xs flex-1">
+                                  <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                  <span className="flex-1 text-body-sm text-foreground truncate">
+                                    {adGroup.name}
+                                  </span>
+                                </div>
 
                                 <Badge variant="outline" className="text-metadata">
                                   {adGroupAds.length} ads
@@ -379,7 +385,6 @@ export function SearchPlannerStructurePanel({
                                       variant="ghost"
                                       size="icon"
                                       className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-smooth"
-                                      onClick={(e) => e.stopPropagation()}
                                     >
                                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                                     </Button>
@@ -423,11 +428,11 @@ export function SearchPlannerStructurePanel({
                                     const strength = typeof strengthResult === 'number' ? strengthResult : strengthResult.score;
 
                                     return (
-                                      <div
+                                      <button
                                         key={ad.id}
                                         className={cn(
-                                          "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
-                                          "hover:bg-card-hover"
+                                          "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer w-full text-left",
+                                          "hover:bg-card-hover active:scale-[0.99]"
                                         )}
                                         onClick={() => onEditAd(ad, adGroup, campaign, selectedEntity)}
                                       >
@@ -447,21 +452,27 @@ export function SearchPlannerStructurePanel({
                                           <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6"
-                                            onClick={() => setDuplicateAdDialog({ ad })}
+                                            className="h-6 w-6 active:scale-95"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDuplicateAdDialog({ ad });
+                                            }}
                                           >
                                             <Copy className="h-3 w-3 text-muted-foreground" />
                                           </Button>
                                           <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 hover:bg-destructive/10"
-                                            onClick={() => setDeleteAdDialog({ ad })}
+                                            className="h-6 w-6 hover:bg-destructive/10 active:scale-95"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDeleteAdDialog({ ad });
+                                            }}
                                           >
                                             <Trash2 className="h-3 w-3 text-destructive" />
                                           </Button>
                                         </div>
-                                      </div>
+                                      </button>
                                     );
                                   })}
 
