@@ -38,10 +38,9 @@ export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<any>(null);
   const [statusFilters, setStatusFilters] = useState<string[]>(['Pending', 'Ongoing', 'Blocked', 'Failed']);
-  const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'generic' | 'campaign' | 'recurring'>('all');
   const [showCompleted, setShowCompleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
@@ -106,11 +105,6 @@ export default function Tasks() {
       const assigneeMatch = selectedAssignees.length === 0 || 
         task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
       
-      const teamMatch = selectedTeams.length === 0 || 
-        task.assignees?.some((assignee: any) => 
-          assignee.teams?.some((team: string) => selectedTeams.includes(team))
-        );
-      
       let dateMatch = true;
       if (dateFilter) {
         if (!task.due_at) {
@@ -123,15 +117,16 @@ export default function Tasks() {
       
       const statusMatch = statusFilters.length === 0 || statusFilters.includes(task.status);
       
-      const taskTypeMatch = taskTypeFilter === "all" || task.task_type === taskTypeFilter;
+      const tagsMatch = selectedTags.length === 0 || 
+        selectedTags.some(tag => task.labels?.includes(tag));
       
       const searchMatch = debouncedSearch === "" || 
         task.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
       
-      return assigneeMatch && teamMatch && dateMatch && statusMatch && taskTypeMatch && searchMatch;
+      return assigneeMatch && dateMatch && statusMatch && tagsMatch && searchMatch;
     });
-  }, [data, selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch]);
+  }, [data, selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch]);
 
   const finalFilteredTasks = useMemo(() => {
     if (activeQuickFilter) {
@@ -145,10 +140,10 @@ export default function Tasks() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedAssignees, selectedTeams, dateFilter, statusFilters, taskTypeFilter, debouncedSearch, activeQuickFilter]);
+  }, [selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch, activeQuickFilter]);
 
   const tasks = data || [];
-  const hasActiveFilters = selectedAssignees.length > 0 || selectedTeams.length > 0 || dateFilter || statusFilters.length !== 4 || taskTypeFilter !== "all" || activeQuickFilter || searchQuery;
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTags.length > 0 || dateFilter || statusFilters.length !== 4 || activeQuickFilter || searchQuery;
 
   if (isLoading) {
     return (
@@ -160,10 +155,9 @@ export default function Tasks() {
 
   const clearAllFilters = () => {
     setSelectedAssignees([]);
-    setSelectedTeams([]);
+    setSelectedTags([]);
     setDateFilter(null);
     setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
-    setTaskTypeFilter("all");
     setActiveQuickFilter(null);
     setSearchQuery("");
     setSelectedTaskIds([]);
@@ -256,25 +250,45 @@ export default function Tasks() {
               onChange={setStatusFilters}
             />
             
-            <Select value={taskTypeFilter} onValueChange={(value: any) => setTaskTypeFilter(value)}>
+            <Select
+              value={selectedTags.length > 0 ? "selected" : "all"}
+              onValueChange={(value) => {
+                if (value === "all") setSelectedTags([]);
+              }}
+            >
               <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
                 <SelectValue>
-                  {taskTypeFilter === 'all' ? 'Type' : taskTypeFilter.charAt(0).toUpperCase() + taskTypeFilter.slice(1)}
+                  {selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="generic">Generic</SelectItem>
-                <SelectItem value="campaign">Campaign</SelectItem>
-                <SelectItem value="recurring">Recurring</SelectItem>
+                <SelectItem value="all">All Tags</SelectItem>
+                {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
+                  <div
+                    key={tag}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedTags(prev => 
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                    className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag)}
+                      onChange={() => {}}
+                      className="cursor-pointer"
+                    />
+                    <span className="capitalize">{tag}</span>
+                  </div>
+                ))}
               </SelectContent>
             </Select>
 
             <AssigneeFilterBar
               selectedAssignees={selectedAssignees}
               onAssigneesChange={setSelectedAssignees}
-              selectedTeams={selectedTeams}
-              onTeamsChange={setSelectedTeams}
             />
             
             <TaskDateFilterBar

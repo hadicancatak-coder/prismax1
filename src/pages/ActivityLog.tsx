@@ -58,7 +58,6 @@ export default function ActivityLog() {
   const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"member" | "admin">("member");
@@ -234,9 +233,7 @@ export default function ActivityLog() {
         <CardContent className="space-y-4">
           <AssigneeFilterBar
             selectedAssignees={selectedAssignees}
-            selectedTeams={selectedTeams}
             onAssigneesChange={setSelectedAssignees}
-            onTeamsChange={setSelectedTeams}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

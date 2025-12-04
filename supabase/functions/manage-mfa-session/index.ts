@@ -61,8 +61,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Extend expiry by 6 hours
-      const newExpiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+      // Extend expiry by 24 hours
+      const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       
       const { error: updateError } = await supabase
         .from('mfa_sessions')
