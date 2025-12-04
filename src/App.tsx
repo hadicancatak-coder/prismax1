@@ -20,7 +20,6 @@ import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
-import ReportsLog from "./pages/ReportsLog";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -81,7 +80,6 @@ const App = () => (
                 <Route path="/utm-planner" element={<UtmPlanner />} />
                 <Route path="/operations" element={<Operations />} />
                 <Route path="/operations/status-log" element={<StatusLog />} />
-                <Route path="/operations/custom-reports" element={<ReportsLog />} />
                 <Route path="/operations/:id" element={<AuditLogDetail />} />
                 <Route path="/copywriter" element={<CopyWriter />} />
                 <Route path="/security" element={<Security />} />

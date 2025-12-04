@@ -56,7 +56,6 @@ const mediaItems = [
 const operationsItems = [
   { title: "Audit Logs", url: "/operations", icon: FileText },
   { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
-  { title: "Reports Log", url: "/operations/custom-reports", icon: FileText },
   { title: "Campaigns Log", url: "/campaigns-log", icon: Target },
 ];
 

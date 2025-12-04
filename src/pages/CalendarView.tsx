@@ -13,7 +13,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, Trash2, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { CompletedTasksSection } from "@/components/tasks/CompletedTasksSection";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -21,9 +20,9 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
-import { expandRecurringTask, getRecurrenceLabel } from "@/lib/recurrenceExpander";
+import { getRecurrenceLabel } from "@/lib/recurrenceExpander";
 import { useToast } from "@/hooks/use-toast";
-import { isTaskOverdue, getDaysOverdue } from "@/lib/overdueHelpers";
+import { isTaskOverdue } from "@/lib/overdueHelpers";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Sortable Task Item Component
@@ -51,7 +50,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 py-3 px-2 hover:bg-muted/50 transition-smooth cursor-pointer group",
+        "flex items-center gap-3 py-3 px-3 hover:bg-muted/50 transition-smooth cursor-pointer group",
         isDragging && "z-50 bg-background shadow-lg rounded-lg border-2 border-dashed border-primary",
         isSelected && "bg-primary/5"
       )}
@@ -130,18 +129,27 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
   );
 }
 
-// Compact task item for sidebar
-function CompactTaskItem({ task, onTaskClick, onAdd }: any) {
+// Task Pool Item - combined for overdue and available
+function TaskPoolItem({ task, onTaskClick, onAdd, isOverdue = false }: any) {
   return (
     <div
-      className="flex items-center gap-2 py-2 px-2 hover:bg-muted/50 transition-smooth cursor-pointer group"
+      className={cn(
+        "flex items-center gap-2 py-2 px-3 hover:bg-muted/50 transition-smooth cursor-pointer group",
+        isOverdue && "bg-destructive/5"
+      )}
       onClick={() => onTaskClick(task.id)}
     >
+      {isOverdue && (
+        <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+      )}
       <div className="flex-1 min-w-0">
         <span className="text-body-sm truncate block">{task.title}</span>
         {task.due_at && (
-          <span className="text-metadata text-muted-foreground">
-            Due: {format(new Date(task.due_at), 'MMM dd')}
+          <span className={cn(
+            "text-metadata",
+            isOverdue ? "text-destructive" : "text-muted-foreground"
+          )}>
+            {isOverdue ? "Overdue: " : "Due: "}{format(new Date(task.due_at), 'MMM dd')}
           </span>
         )}
       </div>
@@ -203,7 +211,6 @@ export default function CalendarView() {
     agendaItems,
     addToAgenda, 
     removeFromAgenda,
-    isAdding,
     isLoading: agendaLoading 
   } = useUserAgenda({
     userId: user?.id,
@@ -460,6 +467,9 @@ export default function CalendarView() {
     }
   };
 
+  // Combined task pool (overdue + available)
+  const taskPoolCount = overdueTasks.length + availableTasks.length;
+
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6">
       <div className="max-w-7xl mx-auto">
@@ -513,10 +523,10 @@ export default function CalendarView() {
           </div>
         </header>
 
-        {/* Main Content - 70/30 Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-          {/* My Agenda - 70% */}
-          <div className="lg:col-span-7">
+        {/* Main Content - Clean 75/25 Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* My Agenda - 75% */}
+          <div className="lg:col-span-3">
             <Card>
               {/* Toolbar */}
               <div className="flex items-center justify-between p-3 border-b border-border">
@@ -578,7 +588,7 @@ export default function CalendarView() {
                       {activeTasks.length === 0 ? (
                         <div className="p-8 text-center">
                           <p className="text-muted-foreground mb-2">No tasks in your agenda</p>
-                          <p className="text-metadata text-muted-foreground">Add tasks from the sidebar →</p>
+                          <p className="text-metadata text-muted-foreground">Add tasks from the Task Pool →</p>
                         </div>
                       ) : (
                         activeTasks.map((task) => (
@@ -619,63 +629,76 @@ export default function CalendarView() {
             </Card>
           </div>
 
-          {/* Right Sidebar - 30% */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Overdue Tasks */}
-            {overdueTasks.length > 0 && (
-              <Card className="border-l-4 border-l-destructive">
-                <div className="p-3 border-b border-border flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <h3 className="text-body-sm font-semibold text-destructive">
-                    Overdue ({overdueTasks.length})
-                  </h3>
-                </div>
-                <ScrollArea className="max-h-[200px]">
-                  <div className="divide-y divide-border">
-                    {overdueTasks.slice(0, 5).map(task => (
-                      <CompactTaskItem 
-                        key={task.id}
-                        task={task}
-                        onTaskClick={(id: string) => {
-                          setSelectedTaskId(id);
-                          setTaskDialogOpen(true);
-                        }}
-                        onAdd={addToAgenda}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </Card>
-            )}
-
-            {/* Available Tasks */}
+          {/* Task Pool - 25% - Combined Overdue + Available */}
+          <div className="lg:col-span-1">
             <Card>
-              <div className="p-3 border-b border-border flex items-center justify-between">
-                <h3 className="text-body-sm font-semibold">
-                  Available Tasks ({availableTasks.length})
+              <div className="p-3 border-b border-border">
+                <h3 className="text-body-sm font-semibold flex items-center gap-2">
+                  Task Pool
+                  <Badge variant="secondary" className="text-xs">
+                    {taskPoolCount}
+                  </Badge>
                 </h3>
               </div>
-              {availableTasks.length === 0 ? (
-                <div className="p-4 text-center">
-                  <p className="text-metadata text-muted-foreground">All tasks added to agenda</p>
-                </div>
-              ) : (
-                <ScrollArea className="max-h-[400px]">
-                  <div className="divide-y divide-border">
-                    {availableTasks.map(task => (
-                      <CompactTaskItem 
-                        key={task.id}
-                        task={task}
-                        onTaskClick={(id: string) => {
-                          setSelectedTaskId(id);
-                          setTaskDialogOpen(true);
-                        }}
-                        onAdd={addToAgenda}
-                      />
-                    ))}
+              
+              <ScrollArea className="max-h-[calc(100vh-300px)]">
+                {/* Overdue Section */}
+                {overdueTasks.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 bg-destructive/10 border-b border-destructive/20 flex items-center gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                      <span className="text-metadata font-medium text-destructive">
+                        Overdue ({overdueTasks.length})
+                      </span>
+                    </div>
+                    <div className="divide-y divide-border">
+                      {overdueTasks.map(task => (
+                        <TaskPoolItem 
+                          key={task.id}
+                          task={task}
+                          isOverdue
+                          onTaskClick={(id: string) => {
+                            setSelectedTaskId(id);
+                            setTaskDialogOpen(true);
+                          }}
+                          onAdd={addToAgenda}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </ScrollArea>
-              )}
+                )}
+
+                {/* Available Section */}
+                {availableTasks.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 bg-muted/50 border-b border-border flex items-center gap-2">
+                      <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-metadata font-medium text-muted-foreground">
+                        Available ({availableTasks.length})
+                      </span>
+                    </div>
+                    <div className="divide-y divide-border">
+                      {availableTasks.map(task => (
+                        <TaskPoolItem 
+                          key={task.id}
+                          task={task}
+                          onTaskClick={(id: string) => {
+                            setSelectedTaskId(id);
+                            setTaskDialogOpen(true);
+                          }}
+                          onAdd={addToAgenda}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {taskPoolCount === 0 && (
+                  <div className="p-4 text-center">
+                    <p className="text-metadata text-muted-foreground">All caught up!</p>
+                  </div>
+                )}
+              </ScrollArea>
             </Card>
           </div>
         </div>
