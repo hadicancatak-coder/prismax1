@@ -1,0 +1,63 @@
+import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
+interface FilterBarProps {
+  children?: ReactNode;
+  className?: string;
+  search?: {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+  };
+}
+
+/**
+ * Standardized filter toolbar for list/table pages
+ * Provides consistent styling for search + filter pills
+ */
+export function FilterBar({ children, className, search }: FilterBarProps) {
+  return (
+    <div 
+      className={cn(
+        "flex flex-wrap items-center gap-3 p-3 rounded-xl",
+        "bg-muted/50 border border-border",
+        className
+      )}
+    >
+      {search && (
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder={search.placeholder || "Search..."}
+            value={search.value}
+            onChange={(e) => search.onChange(e.target.value)}
+            className="pl-9 h-9 bg-card border-border rounded-lg"
+          />
+        </div>
+      )}
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FilterPillProps {
+  children: ReactNode;
+  className?: string;
+}
+
+/**
+ * Individual filter pill for use inside FilterBar
+ */
+export function FilterPill({ children, className }: FilterPillProps) {
+  return (
+    <div className={cn("flex items-center", className)}>
+      {children}
+    </div>
+  );
+}

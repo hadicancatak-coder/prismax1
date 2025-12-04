@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, ShieldCheck, Activity, Database, Link2 } from "lucide-react";
+import { PageContainer, PageHeader } from "@/components/layout";
+import { LayoutDashboard, Users, ShieldCheck, Activity, Database, Link2, Settings } from "lucide-react";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -14,14 +14,15 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 bg-background min-h-screen space-y-6 lg:space-y-8">
-      <div>
-        <h1 className="text-page-title">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Manage system settings and monitor activity</p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        icon={Settings}
+        title="Admin Dashboard"
+        description="Manage system settings and monitor activity"
+      />
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6 lg:space-y-8">
-        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto">
+      <Tabs value={currentTab} onValueChange={handleTabChange}>
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-auto bg-muted/50">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -48,8 +49,10 @@ export default function AdminLayout() {
           </TabsTrigger>
         </TabsList>
 
-        <Outlet />
+        <div className="mt-6">
+          <Outlet />
+        </div>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }
