@@ -406,10 +406,21 @@ export default function CalendarView() {
   const activeTasks = sortedAgendaTasks.filter(t => t.status !== 'Completed');
   const completedTasks = sortedAgendaTasks.filter(t => t.status === 'Completed');
 
-  // Compute overdue tasks
+  // Compute overdue tasks - filter by assignment for non-admin users
   const overdueTasks = useMemo(() => {
-    return (allTasks || []).filter(task => isTaskOverdue(task));
-  }, [allTasks]);
+    const allOverdue = (allTasks || []).filter(task => isTaskOverdue(task));
+    
+    // Admins see all overdue tasks
+    if (userRole === 'admin') {
+      return allOverdue;
+    }
+    
+    // Regular users only see overdue tasks they're assigned to
+    return allOverdue.filter(task => {
+      if (!task.assignees || task.assignees.length === 0) return false;
+      return task.assignees.some((a: any) => a.user_id === user?.id);
+    });
+  }, [allTasks, userRole, user?.id]);
 
   // Weekly kanban columns by day
   const weeklyKanbanColumns = useMemo(() => {
