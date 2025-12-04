@@ -1,7 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
-import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -21,10 +20,8 @@ export function TopHeader() {
         <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted-hover rounded transition-all min-h-[44px] min-w-[44px]" />
       </div>
 
-      {/* Centered Search Bar */}
-      <div className="flex-1 flex justify-center">
-        <GlobalSearch />
-      </div>
+      {/* Spacer */}
+      <div className="flex-1" />
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-2">
@@ -42,9 +39,6 @@ export function TopHeader() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/operations/status-log")}>
               📝 Status Log
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/operations/custom-reports")}>
-              📊 Google Sheets
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/ads/search")}>
               📢 Search Campaign

@@ -850,58 +850,6 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="paths">
-                  <AccordionTrigger className="text-body-sm font-medium">
-                    Paths & Extensions
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="landing-page">Final URL</Label>
-                        <Input
-                          id="landing-page"
-                          type="url"
-                          placeholder="https://example.com"
-                          value={landingPage}
-                          onChange={(e) => setLandingPage(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="path1">Path 1 (Max 15 chars)</Label>
-                          <Input
-                            id="path1"
-                            placeholder="path1"
-                            value={path1}
-                            onChange={(e) => setPath1(e.target.value)}
-                            maxLength={15}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="path2">Path 2 (Max 15 chars)</Label>
-                          <Input
-                            id="path2"
-                            placeholder="path2"
-                            value={path2}
-                            onChange={(e) => setPath2(e.target.value)}
-                            maxLength={15}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="business-name">Business Name (optional)</Label>
-                        <Input
-                          id="business-name"
-                          placeholder="Your Business Name"
-                          value={businessName}
-                          onChange={(e) => setBusinessName(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
               </Accordion>
             )}
 

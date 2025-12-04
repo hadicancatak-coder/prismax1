@@ -7,12 +7,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Search, Filter } from "lucide-react";
+import { Trash2, Search, Target, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { adminService } from "@/lib/adminService";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { TeamsMultiSelect } from "@/components/admin/TeamsMultiSelect";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface User {
   id: string;
@@ -24,6 +26,11 @@ interface User {
   working_days: string | null;
   teams: string[] | null;
   role?: string;
+  kpisAssigned?: number;
+  lastActivity?: {
+    action: string;
+    time: string;
+  } | null;
 }
 
 export default function UsersManagement() {
@@ -41,6 +48,7 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -48,20 +56,40 @@ export default function UsersManagement() {
 
       if (profilesError) throw profilesError;
 
+      // Fetch roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) throw rolesError;
 
+      // Fetch recent activity for each user from admin_audit_log
+      const { data: activities } = await supabase
+        .from('admin_audit_log')
+        .select('target_user_id, action, created_at')
+        .order('created_at', { ascending: false });
+
       const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
 
-      const usersWithRoles = profiles?.map(profile => ({
+      // Get most recent activity per user
+      const activityMap = new Map<string, { action: string; time: string }>();
+      activities?.forEach(a => {
+        if (a.target_user_id && !activityMap.has(a.target_user_id)) {
+          activityMap.set(a.target_user_id, {
+            action: a.action,
+            time: a.created_at || '',
+          });
+        }
+      });
+
+      const usersWithData = profiles?.map(profile => ({
         ...profile,
         role: roleMap.get(profile.user_id) || 'member',
+        kpisAssigned: 0, // KPIs feature simplified
+        lastActivity: activityMap.get(profile.user_id) || null,
       })) || [];
 
-      setUsers(usersWithRoles);
+      setUsers(usersWithData);
     } catch (error: any) {
       toast.error('Failed to fetch users: ' + error.message);
     } finally {
@@ -221,153 +249,194 @@ export default function UsersManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4 pb-4 border-b border-border">
-        <div className="flex-1 relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 pb-4 border-b border-border">
+          <div className="flex-1 relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {selectedUsers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Select value={bulkAction} onValueChange={setBulkAction}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Bulk actions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="role_admin">Make Admin</SelectItem>
+                  <SelectItem value="role_member">Make Member</SelectItem>
+                  <SelectItem value="delete">Delete Users</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleBulkAction} variant="secondary">
+                Apply to {selectedUsers.length} user(s)
+              </Button>
+            </div>
+          )}
         </div>
 
-        {selectedUsers.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Select value={bulkAction} onValueChange={setBulkAction}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Bulk actions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="role_admin">Make Admin</SelectItem>
-                <SelectItem value="role_member">Make Member</SelectItem>
-                <SelectItem value="delete">Delete Users</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleBulkAction} variant="secondary">
-              Apply to {selectedUsers.length} user(s)
-            </Button>
+        {loading ? (
+          <TableSkeleton columns={10} rows={10} />
+        ) : (
+          <div className="bg-card border border-border rounded">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                      onCheckedChange={toggleAllUsers}
+                    />
+                  </TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Teams</TableHead>
+                  <TableHead>Working Days</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center gap-1 justify-center">
+                      <Target className="h-3.5 w-3.5" />
+                      KPIs
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5" />
+                      Last Activity
+                    </div>
+                  </TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center">No users found</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedUsers.includes(user.user_id)}
+                          onCheckedChange={() => toggleUserSelection(user.user_id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{user.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                      <TableCell>{user.title || '-'}</TableCell>
+                      <TableCell>
+                        <TeamsMultiSelect
+                          selectedTeams={user.teams || []}
+                          onChange={(teams) => handleTeamsChange(user.user_id, teams)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={user.working_days || 'mon-fri'}
+                          onValueChange={(value) => handleWorkingDaysChange(user.user_id, value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mon-fri">Mon-Fri</SelectItem>
+                            <SelectItem value="mon-sat">Mon-Sat</SelectItem>
+                            <SelectItem value="sun-thu">Sun-Thu</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={user.role}
+                          onValueChange={(value) => handleRoleChange(user.user_id, value)}
+                        >
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="member">Member</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={user.kpisAssigned > 0 ? "default" : "secondary"} className="min-w-[32px]">
+                          {user.kpisAssigned}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.lastActivity ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex flex-col">
+                                <span className="text-body-sm truncate max-w-[120px]">
+                                  {user.lastActivity.action}
+                                </span>
+                                <span className="text-metadata text-muted-foreground">
+                                  {format(new Date(user.lastActivity.time), 'MMM d, h:mm a')}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{user.lastActivity.action}</p>
+                              <p className="text-muted-foreground">{format(new Date(user.lastActivity.time), 'PPpp')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-muted-foreground text-metadata">No activity</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteUser(user.user_id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
-      </div>
 
-      {loading ? (
-        <TableSkeleton columns={8} rows={10} />
-      ) : (
-      <div className="bg-card border border-border rounded">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                  onCheckedChange={toggleAllUsers}
-                />
-              </TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Teams</TableHead>
-              <TableHead>Working Days</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">No users found</TableCell>
-              </TableRow>
-            ) : (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedUsers.includes(user.user_id)}
-                      onCheckedChange={() => toggleUserSelection(user.user_id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar_url || undefined} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{user.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.title || '-'}</TableCell>
-                  <TableCell>
-                    <TeamsMultiSelect
-                      selectedTeams={user.teams || []}
-                      onChange={(teams) => handleTeamsChange(user.user_id, teams)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.working_days || 'mon-fri'}
-                      onValueChange={(value) => handleWorkingDaysChange(user.user_id, value)}
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mon-fri">Mon-Fri</SelectItem>
-                        <SelectItem value="mon-sat">Mon-Sat</SelectItem>
-                        <SelectItem value="sun-thu">Sun-Thu</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.role}
-                      onValueChange={(value) => handleRoleChange(user.user_id, value)}
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteUser(user.user_id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedUsers.length} user(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the selected users and all their data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-      )}
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedUsers.length} user(s)?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the selected users and all their data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </TooltipProvider>
   );
 }
