@@ -99,14 +99,19 @@ export function RichTextEditor({
 
     const handleFocus = () => setGlobalActiveEditor(editor);
     const handleBlur = () => {
-      // Small delay to allow bubble menu interaction
+      // Increased delay to allow bubble menu interaction
       setTimeout(() => {
         const activeElement = document.activeElement;
+        // Check for bubble menu, popovers, dialogs
         const isBubbleMenu = activeElement?.closest('[class*="bubble"]');
-        if (!isBubbleMenu) {
+        const isPopover = activeElement?.closest('[data-radix-popper-content-wrapper]');
+        const isDialog = activeElement?.closest('[role="dialog"]');
+        const isEditorElement = activeElement?.closest('.ProseMirror');
+        
+        if (!isBubbleMenu && !isPopover && !isDialog && !isEditorElement) {
           clearGlobalActiveEditor(editor);
         }
-      }, 100);
+      }, 300);
     };
 
     editor.on('focus', handleFocus);
