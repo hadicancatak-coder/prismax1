@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ChevronLeft, ChevronRight, Lightbulb, AlertTriangle, Sparkles, X } from 'lucide-react';
 import { SearchAdPreview } from '@/components/ads/SearchAdPreview';
-import { DisplayAdPreview } from '@/components/ads/DisplayAdPreview';
 import { calculateAdStrength } from '@/lib/adQualityScore';
 
 interface AdPreviewPanelProps {
@@ -143,31 +142,19 @@ export function AdPreviewPanel(props: AdPreviewPanelProps) {
         {/* Preview */}
         <Card className="bg-gradient-to-br from-background to-muted/20">
           <CardContent className="p-md">
-            {props.adType === "search" ? (
-              combinations.length > 0 ? (
-                <SearchAdPreview
-                  headlines={combinations[combinationIndex]?.headlines || []}
-                  descriptions={combinations[combinationIndex]?.descriptions || []}
-                  landingPage={props.landingPage || 'https://example.com'}
-                  businessName={props.businessName}
-                  sitelinks={props.sitelinks.filter(s => s.description)}
-                  callouts={props.callouts.filter(c => c.trim())}
-                />
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-body-sm">Add headlines and descriptions to see preview</p>
-                </div>
-              )
-            ) : (
-              <DisplayAdPreview
-                businessName={props.businessName}
-                longHeadline={props.longHeadline || ''}
-                shortHeadlines={props.shortHeadlines}
-                descriptions={props.descriptions}
-                ctaText={props.ctaText || ''}
+            {combinations.length > 0 ? (
+              <SearchAdPreview
+                headlines={combinations[combinationIndex]?.headlines || []}
+                descriptions={combinations[combinationIndex]?.descriptions || []}
                 landingPage={props.landingPage || 'https://example.com'}
-                language={props.language}
+                businessName={props.businessName}
+                sitelinks={props.sitelinks.filter(s => s.description)}
+                callouts={props.callouts.filter(c => c.trim())}
               />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-body-sm">Add headlines and descriptions to see preview</p>
+              </div>
             )}
           </CardContent>
         </Card>
