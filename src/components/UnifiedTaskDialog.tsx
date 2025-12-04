@@ -189,16 +189,38 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const fetchComments = async () => {
     if (!taskId) return;
     
-    const { data } = await supabase
+    // Fetch comments first
+    const { data: commentsData, error: commentsError } = await supabase
       .from("comments")
-      .select(`
-        *,
-        author:profiles!comments_author_id_fkey(id, name, avatar_url, user_id)
-      `)
+      .select("id, task_id, author_id, body, created_at")
       .eq("task_id", taskId)
       .order("created_at", { ascending: true });
 
-    setComments(data || []);
+    if (commentsError || !commentsData) {
+      console.error("Error fetching comments:", commentsError);
+      setComments([]);
+      return;
+    }
+
+    // Get unique author IDs and fetch their profiles
+    const authorIds = [...new Set(commentsData.map(c => c.author_id))];
+    
+    if (authorIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url, user_id")
+        .in("user_id", authorIds);
+
+      // Map profiles to comments
+      const commentsWithAuthors = commentsData.map(comment => ({
+        ...comment,
+        author: profilesData?.find(p => p.user_id === comment.author_id) || null
+      }));
+
+      setComments(commentsWithAuthors);
+    } else {
+      setComments(commentsData);
+    }
   };
 
   const fetchUsers = async () => {
@@ -374,7 +396,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       <DialogContent 
         hideCloseButton
         className={cn(
-          "h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
+          "max-h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
         )}
       >
@@ -939,8 +961,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       className={cn(
                         "gap-2 transition-all duration-200",
                         newComment.trim() 
-                          ? "bg-primary hover:bg-primary-hover shadow-md" 
-                          : "opacity-50"
+                          ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" 
+                          : "bg-muted text-muted-foreground opacity-50"
                       )}
                     >
                       <Send className="h-3.5 w-3.5" />
