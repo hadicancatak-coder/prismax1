@@ -75,9 +75,9 @@ export function UtmBulkActionsBar({
                   <SelectValue placeholder="Change status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Paused">Paused</SelectItem>
+                  <SelectItem value="Archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
             )}
