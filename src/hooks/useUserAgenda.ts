@@ -74,8 +74,8 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
       // Skip if already in agenda
       if (existingTaskIds.has(task.id)) return;
       
-      // Skip completed tasks
-      if (task.status === 'Completed' || task.status === 'Failed') return;
+      // Skip completed, failed, or backlog tasks
+      if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') return;
       
       // Check if user is assigned to this task
       const isAssigned = task.assignees?.some((a: any) => 
@@ -84,7 +84,18 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
       
       if (!isAssigned) return;
 
-      // Rule 1: Due on this date - auto add
+      // Rule 1: Due tasks (including overdue) - add to today's agenda only
+      if (task.due_at && isToday) {
+        const taskDueDate = new Date(task.due_at);
+        const todayDate = startOfDay(new Date());
+        // If task is due today OR overdue, add to today's agenda
+        if (taskDueDate <= todayDate) {
+          tasksToAdd.push({ task_id: task.id, is_auto_added: true });
+          return;
+        }
+      }
+
+      // Rule 2: Task due on specific future date
       if (task.due_at) {
         const taskDueDate = format(new Date(task.due_at), 'yyyy-MM-dd');
         if (taskDueDate === agendaDate) {
@@ -93,7 +104,7 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         }
       }
 
-      // Rule 2: High priority tasks - auto add to today only
+      // Rule 3: High priority tasks - auto add to today only
       if (isToday && task.priority === 'High') {
         tasksToAdd.push({ task_id: task.id, is_auto_added: true });
         return;
@@ -206,8 +217,8 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
       // Not already in agenda
       if (agendaTaskIds.has(task.id)) return false;
       
-      // Not completed/failed
-      if (task.status === 'Completed' || task.status === 'Failed') return false;
+      // Not completed/failed/backlog
+      if (task.status === 'Completed' || task.status === 'Failed' || task.status === 'Backlog') return false;
       
       // Must be assigned to user or global/unassigned
       const profile = task.assignees?.find((a: any) => a.user_id === effectiveUserId);

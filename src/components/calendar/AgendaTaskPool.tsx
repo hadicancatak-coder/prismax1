@@ -80,7 +80,7 @@ export function AgendaTaskPool({ tasks, onAddToAgenda, onTaskClick, isAdding }: 
       </div>
 
       {/* Task List */}
-      <ScrollArea className="max-h-[400px]">
+      <ScrollArea className="h-[400px]">
         <div className="divide-y divide-border">
           {tasks.map(task => (
             <div
