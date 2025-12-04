@@ -93,9 +93,23 @@ export default function ErrorLogs() {
     return <Badge variant={variants[severity]}>{severity}</Badge>;
   };
 
+  const [timeRange, setTimeRange] = useState<string>("all");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-border">
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Time Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Time</SelectItem>
+            <SelectItem value="24h">Last 24 Hours</SelectItem>
+            <SelectItem value="7d">Last 7 Days</SelectItem>
+            <SelectItem value="30d">Last 30 Days</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={severityFilter || "all"} onValueChange={setSeverityFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Severity" />

@@ -27,7 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Sortable Task Item Component - Clean single row with design system tokens
-function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false, isSelected, onSelect }: any) {
+// REMOVED selection checkbox - only completion checkbox remains
+function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false }: any) {
   const {
     attributes,
     listeners,
@@ -47,6 +48,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
   };
 
   const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed';
+  const isCompleted = task.status === 'Completed';
 
   return (
     <div
@@ -56,20 +58,11 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
         "hover:bg-card-hover",
         isDragging && "z-50 bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
-        isSelected && "bg-primary/5",
-        isOverdue && "border-l-4 border-l-destructive"
+        isOverdue && !isCompleted && "border-l-4 border-l-destructive",
+        isCompleted && "opacity-60"
       )}
       onClick={() => onTaskClick(task.id)}
     >
-      {onSelect && (
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={() => onSelect(task.id)}
-          onClick={(e) => e.stopPropagation()}
-          className="border-border"
-        />
-      )}
-      
       {isManualMode && (
         <div
           {...attributes}
@@ -81,17 +74,21 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         </div>
       )}
       
+      {/* Single completion checkbox */}
       <Checkbox
-        checked={task.status === 'Completed'}
+        checked={isCompleted}
         onCheckedChange={(checked) => onTaskComplete(task.id, checked as boolean)}
         onClick={(e) => e.stopPropagation()}
-        className="border-border"
+        className={cn(
+          "border-border",
+          isCompleted && "bg-success border-success"
+        )}
       />
       
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className={cn(
           "text-[14px] font-medium text-foreground truncate",
-          task.status === 'Completed' && "line-through text-muted-foreground"
+          isCompleted && "line-through text-muted-foreground"
         )}>
           {task.title}
         </span>
@@ -124,7 +121,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         )}
       </div>
       
-      {onRemoveFromAgenda && (
+      {onRemoveFromAgenda && !isCompleted && (
         <Button
           variant="ghost"
           size="icon-xs"
@@ -141,329 +138,6 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
     </div>
   );
 }
-
-// Task Pool Item - combined for overdue and available with design system tokens
-function TaskPoolItem({ task, onTaskClick, onAdd, isOverdue = false }: any) {
-  const isRecurring = task.task_type === 'recurring' || task.recurrence_rrule;
-  
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
-        "hover:bg-card-hover",
-        isOverdue && "bg-destructive/5 border-l-4 border-l-destructive"
-      )}
-      onClick={() => onTaskClick(task.id)}
-    >
-      {isOverdue && (
-        <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-[14px] text-foreground font-medium truncate">{task.title}</span>
-          {isRecurring && (
-            <RotateCcw className="h-3 w-3 text-primary flex-shrink-0" />
-          )}
-        </div>
-        {task.due_at && (
-          <span className={cn(
-            "text-[12px]",
-            isOverdue ? "text-destructive" : "text-muted-foreground"
-          )}>
-            {isOverdue ? "Overdue: " : "Due: "}{format(new Date(task.due_at), 'MMM d')}
-          </span>
-        )}
-      </div>
-      <Badge variant="outline" className={cn(
-        "text-[10px] px-1.5 py-0 flex-shrink-0 rounded-full",
-        task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
-        task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
-        task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
-      )}>
-        {task.priority}
-      </Badge>
-      {onAdd && (
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdd([task.id]);
-          }}
-          className="opacity-0 group-hover:opacity-100 flex-shrink-0 h-7 w-7"
-          title="Add to agenda"
-        >
-          <Plus className="h-4 w-4 text-primary" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
-// Kanban Card Component
-function KanbanCard({ task, onTaskClick }: any) {
-  return (
-    <Card
-      className="p-3 cursor-pointer hover:bg-card-hover hover:shadow-md transition-smooth"
-      onClick={() => onTaskClick(task.id)}
-    >
-      <h4 className="text-body-sm font-medium line-clamp-2 mb-2">{task.title}</h4>
-      <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="outline" className={cn(
-          "text-[10px] px-1.5 py-0",
-          task.priority === 'High' && 'border-destructive text-destructive',
-          task.priority === 'Medium' && 'border-primary text-primary',
-          task.priority === 'Low' && 'border-border text-muted-foreground'
-        )}>
-          {task.priority}
-        </Badge>
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-          {task.status}
-        </Badge>
-      </div>
-    </Card>
-  );
-}
-
-export default function CalendarView() {
-  document.title = "Agenda - Prisma";
-  const { user, userRole } = useAuth();
-  const queryClient = useQueryClient();
-  const { data: allTasks, isLoading } = useTasks();
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [createTaskOpen, setCreateTaskOpen] = useState(false);
-  const [dateView, setDateView] = useState<"today" | "tomorrow" | "week" | "custom">("today");
-  const [viewMode, setViewMode] = useState<"table" | "kanban" | "gantt">("table");
-  const [dateRange, setDateRange] = useState<DateRange | null>(null);
-  const [sortOption, setSortOption] = useState<string>(() => {
-    return localStorage.getItem("agenda-sort") || "priority";
-  });
-  const [userTaskOrder, setUserTaskOrder] = useState<Record<string, number>>({});
-  const [completions, setCompletions] = useState<any[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [completedExpanded, setCompletedExpanded] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
-  const currentDate = new Date();
-  const { toast } = useToast();
-
-  // Fetch all users for admin filter
-  useEffect(() => {
-    if (userRole === 'admin') {
-      const fetchUsers = async () => {
-        const { data } = await supabase.from('profiles').select('user_id, name, email').order('name');
-        setAllUsers(data || []);
-      };
-      fetchUsers();
-    }
-  }, [userRole]);
-
-  // Calculate the selected date for agenda
-  const selectedDate = useMemo(() => {
-    switch (dateView) {
-      case "tomorrow": return addDays(new Date(), 1);
-      default: return dateRange?.from || new Date();
-    }
-  }, [dateView, dateRange]);
-
-  // Determine which user's agenda to show
-  const targetUserId = selectedUserId || user?.id;
-
-  // Use the agenda hook
-  const { 
-    agendaTasks, 
-    availableTasks, 
-    agendaItems,
-    addToAgenda, 
-    removeFromAgenda,
-    isLoading: agendaLoading 
-  } = useUserAgenda({
-    userId: targetUserId,
-    date: selectedDate,
-    allTasks: allTasks || [],
-    completions,
-  });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
-  useEffect(() => {
-    localStorage.setItem("agenda-sort", sortOption);
-  }, [sortOption]);
-
-  // Fetch user's custom task order when in manual mode
-  useEffect(() => {
-    if (sortOption === 'manual' && targetUserId) {
-      fetchUserTaskOrder();
-    }
-  }, [sortOption, dateView, dateRange, targetUserId]);
-
-  const fetchUserTaskOrder = async () => {
-    if (!targetUserId) return;
-
-    let dateScope: string = dateView;
-    if (dateView === 'custom' && dateRange?.from) {
-      dateScope = `custom-${format(dateRange.from, 'yyyy-MM-dd')}`;
-    }
-
-    const { data, error } = await supabase
-      .from('user_task_order')
-      .select('task_id, order_index')
-      .eq('user_id', targetUserId)
-      .eq('date_scope', dateScope);
-
-    if (error) {
-      console.error('Error fetching user task order:', error);
-      return;
-    }
-
-    const orderMap: Record<string, number> = {};
-    data?.forEach(item => {
-      orderMap[item.task_id] = item.order_index;
-    });
-    setUserTaskOrder(orderMap);
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchCompletions = async () => {
-      const { data } = await supabase
-        .from('recurring_task_completions')
-        .select('*')
-        .order('completed_date', { ascending: false });
-      
-      setCompletions(data || []);
-    };
-    
-    fetchCompletions();
-    
-    const channel = supabase
-      .channel('recurring_completions')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'recurring_task_completions'
-      }, () => {
-        fetchCompletions();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  // Enrich agenda tasks with auto-added flag
-  const enrichedAgendaTasks = useMemo(() => {
-    return agendaTasks.map(task => {
-      const agendaItem = agendaItems.find(item => item.task_id === task.id);
-      return {
-        ...task,
-        isAutoAdded: agendaItem?.is_auto_added || false,
-      };
-    });
-  }, [agendaTasks, agendaItems]);
-
-  // Sort tasks based on selected option
-  const sortedAgendaTasks = useMemo(() => {
-    const tasks = [...enrichedAgendaTasks];
-    
-    switch (sortOption) {
-      case "priority":
-        const priorityOrder = { High: 0, Medium: 1, Low: 2 };
-        return tasks.sort((a, b) => (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 2));
-      
-      case "due_time":
-        return tasks.sort((a, b) => new Date(a.due_at || 0).getTime() - new Date(b.due_at || 0).getTime());
-      
-      case "status":
-        const statusOrder = { Pending: 0, Ongoing: 1, Blocked: 2, Completed: 3, Failed: 4 };
-        return tasks.sort((a, b) => (statusOrder[a.status as keyof typeof statusOrder] || 0) - (statusOrder[b.status as keyof typeof statusOrder] || 0));
-      
-      case "alphabetical":
-        return tasks.sort((a, b) => a.title.localeCompare(b.title));
-      
-      case "manual":
-        return tasks.sort((a, b) => {
-          const orderA = userTaskOrder[a.id] ?? 999999;
-          const orderB = userTaskOrder[b.id] ?? 999999;
-          return orderA - orderB;
-        });
-      
-      default:
-        return tasks;
-    }
-  }, [enrichedAgendaTasks, sortOption, userTaskOrder]);
-
-  // Split tasks into active and completed
-  const activeTasks = sortedAgendaTasks.filter(t => t.status !== 'Completed');
-  const completedTasks = sortedAgendaTasks.filter(t => t.status === 'Completed');
-
-  // Compute overdue tasks - filter by assignment for the selected user
-  const overdueTasks = useMemo(() => {
-    const allOverdue = (allTasks || []).filter(task => isTaskOverdue(task));
-    
-    // Filter to only show overdue tasks assigned to the target user (the user whose agenda we're viewing)
-    return allOverdue.filter(task => {
-      if (!task.assignees || task.assignees.length === 0) return false;
-      return task.assignees.some((a: any) => a.user_id === targetUserId);
-    });
-  }, [allTasks, targetUserId]);
-
-  // Weekly kanban columns by day
-  const weeklyKanbanColumns = useMemo(() => {
-    if (dateView !== 'week') return [];
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-    
-    return days.map((day, index) => {
-      const dayDate = addDays(weekStart, index);
-      const dayTasks = (allTasks || []).filter(t => {
-        if (!t.due_at) return false;
-        return isSameDay(new Date(t.due_at), dayDate);
-      });
-      return { day, date: dayDate, tasks: dayTasks };
-    });
-  }, [dateView, allTasks, currentDate]);
-
-  // Daily kanban columns by priority
-  const dailyKanbanColumns = useMemo(() => {
-    if (dateView === 'week') return [];
-    const priorities = ['High', 'Medium', 'Low'];
-    return priorities.map(priority => ({
-      priority,
-      tasks: activeTasks.filter(t => t.priority === priority)
-    }));
-  }, [dateView, activeTasks]);
-
-  const handleTaskComplete = async (taskId: string, completed: boolean) => {
-    if (taskId.includes('::')) {
-      const [originalTaskId, timestamp] = taskId.split('::');
-      const occurrenceDate = new Date(parseInt(timestamp));
-      
-      if (completed) {
-        const { error } = await supabase
-          .from('recurring_task_completions')
-          .insert({
-            task_id: originalTaskId,
-            completed_by: user?.id,
-            completed_date: format(occurrenceDate, 'yyyy-MM-dd'),
-            completed_at: new Date().toISOString(),
-          });
-        
-        if (error) {
-          toast({ title: "Error", description: error.message, variant: "destructive" });
-        } else {
-          toast({ title: "Marked complete", description: `Completed for ${format(occurrenceDate, 'MMM dd')}` });
-        }
-      }
     } else {
       const { error } = await supabase
         .from('tasks')

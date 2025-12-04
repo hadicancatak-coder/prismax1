@@ -1,132 +1,143 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Users, ListTodo, AlertCircle, CheckSquare } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, CheckSquare, AlertTriangle, Clock, ArrowRight, Target, FileText } from "lucide-react";
 import { adminService } from "@/lib/adminService";
-import { errorLogger } from "@/lib/errorLogger";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+
+interface SystemHealth {
+  users: number;
+  tasks: number;
+  unresolvedErrors: number;
+  pendingApprovals: number;
+}
 
 export default function Overview() {
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    users: 0,
-    tasks: 0,
-    unresolvedErrors: 0,
-    pendingApprovals: 0,
-  });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    loadData();
+    const fetchHealth = async () => {
+      try {
+        const data = await adminService.getSystemHealth();
+        setHealth(data);
+      } catch (error) {
+        console.error('Error fetching system health:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHealth();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const systemHealth = await adminService.getSystemHealth();
+  const statCards = [
+    {
+      title: "Total Users",
+      subtitle: "Active team members",
+      value: health?.users || 0,
+      icon: Users,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+      onClick: () => navigate('/admin/users'),
+    },
+    {
+      title: "Total Tasks",
+      subtitle: "All tasks in system",
+      value: health?.tasks || 0,
+      icon: CheckSquare,
+      color: "text-success",
+      bgColor: "bg-success/10",
+      onClick: () => navigate('/tasks'),
+    },
+    {
+      title: "Unresolved Errors",
+      subtitle: "Requires attention",
+      value: health?.unresolvedErrors || 0,
+      icon: AlertTriangle,
+      color: "text-destructive",
+      bgColor: "bg-destructive/10",
+      onClick: () => navigate('/admin/logs'),
+    },
+    {
+      title: "Pending Approvals",
+      subtitle: "Awaiting review",
+      value: health?.pendingApprovals || 0,
+      icon: Clock,
+      color: "text-warning",
+      bgColor: "bg-warning/10",
+      onClick: () => navigate('/admin/approvals'),
+    },
+  ];
 
-      if (systemHealth) {
-        setStats(systemHealth);
-      }
-    } catch (error) {
-      console.error('Error loading overview data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="grid gap-md md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="surface-elevated">
-            <CardContent className="p-lg">
-              <Skeleton className="h-4 w-24 mb-md" />
-              <Skeleton className="h-10 w-16" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+  const quickActions = [
+    { label: "Manage Users", icon: Users, path: "/admin/users" },
+    { label: "Manage KPIs", icon: Target, path: "/admin/kpis" },
+    { label: "View Logs", icon: FileText, path: "/admin/logs" },
+  ];
 
   return (
-    <div className="space-y-lg">
-      {/* System Stats Cards */}
-      <div className="grid gap-md md:grid-cols-2 lg:grid-cols-4">
-        <Card className="surface-elevated hover-lift transition-smooth">
-          <CardContent className="p-lg">
-            <div className="flex items-center justify-between mb-sm">
-              <span className="text-body-sm text-muted-foreground">Total Users</span>
-              <div className="p-sm bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <div className="text-page-title font-bold text-foreground">{stats.users}</div>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-heading-md font-semibold">System Overview</h2>
+        <p className="text-body-sm text-muted-foreground mt-1">
+          Monitor system health and key metrics
+        </p>
+      </div>
 
-        <Card className="surface-elevated hover-lift transition-smooth">
-          <CardContent className="p-lg">
-            <div className="flex items-center justify-between mb-sm">
-              <span className="text-body-sm text-muted-foreground">Total Tasks</span>
-              <div className="p-sm bg-info/10 rounded-lg">
-                <ListTodo className="h-5 w-5 text-info" />
-              </div>
-            </div>
-            <div className="text-page-title font-bold text-foreground">{stats.tasks}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="surface-elevated hover-lift transition-smooth">
-          <CardContent className="p-lg">
-            <div className="flex items-center justify-between mb-sm">
-              <span className="text-body-sm text-muted-foreground">Unresolved Errors</span>
-              <div className="p-sm bg-destructive/10 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              </div>
-            </div>
-            <div className="text-page-title font-bold text-destructive">{stats.unresolvedErrors}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="surface-elevated hover-lift transition-smooth">
-          <CardContent className="p-lg">
-            <div className="flex items-center justify-between mb-sm">
-              <span className="text-body-sm text-muted-foreground">Pending Approvals</span>
-              <div className="p-sm bg-warning/10 rounded-lg">
-                <CheckSquare className="h-5 w-5 text-warning" />
-              </div>
-            </div>
-            <div className="text-page-title font-bold text-foreground">{stats.pendingApprovals}</div>
-          </CardContent>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))
+        ) : (
+          statCards.map((card) => (
+            <Card
+              key={card.title}
+              className="cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30 group"
+              onClick={card.onClick}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-body-sm text-muted-foreground">{card.title}</p>
+                    <p className="text-3xl font-bold text-foreground">{card.value}</p>
+                    <p className="text-metadata text-muted-foreground">{card.subtitle}</p>
+                  </div>
+                  <div className={`p-3 rounded-xl ${card.bgColor}`}>
+                    <card.icon className={`h-5 w-5 ${card.color}`} />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-metadata text-primary opacity-0 group-hover:opacity-100 transition-smooth">
+                  <span>View details</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Quick Actions */}
-      <Card className="surface-elevated">
-        <CardContent className="p-lg">
-          <h3 className="text-heading-sm font-semibold mb-md">Quick Actions</h3>
-          <div className="grid gap-sm md:grid-cols-3">
-            <a 
-              href="/admin/users" 
-              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
-            >
-              <Users className="h-5 w-5 text-primary" />
-              <span className="text-body-sm font-medium">Manage Users</span>
-            </a>
-            <a 
-              href="/admin/kpis" 
-              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
-            >
-              <ListTodo className="h-5 w-5 text-primary" />
-              <span className="text-body-sm font-medium">Manage KPIs</span>
-            </a>
-            <a 
-              href="/admin/logs" 
-              className="flex items-center gap-sm p-md rounded-lg bg-card hover:bg-card-hover border border-border transition-smooth"
-            >
-              <AlertCircle className="h-5 w-5 text-primary" />
-              <span className="text-body-sm font-medium">View Logs</span>
-            </a>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-heading-sm">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {quickActions.map((action) => (
+              <Button
+                key={action.label}
+                variant="outline"
+                className="gap-2"
+                onClick={() => navigate(action.path)}
+              >
+                <action.icon className="h-4 w-4" />
+                {action.label}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
