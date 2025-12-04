@@ -2,6 +2,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
@@ -46,54 +47,56 @@ import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 const App = () => (
   <ErrorBoundary>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Sonner position="bottom-right" expand={false} richColors closeButton />
-          <GlobalBubbleMenu />
-          <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
-              <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
-          <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
-          <Route path="/campaigns-log/external/:token" element={<CampaignsLogExternal />} />
-              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/calendar" element={<CalendarView />} />
-                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-                  <Route path="overview" element={<Overview />} />
-                  <Route path="users" element={<UsersManagement />} />
-                  <Route path="config" element={<Config />} />
-                  <Route path="external-links" element={<ExternalLinksManagement />} />
-                  <Route path="security" element={<SecurityPage />} />
-                  <Route path="logs" element={<Logs />} />
-                  <Route path="ad-rules" element={<AdRulesManagement />} />
+    <ThemeProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Sonner position="bottom-right" expand={false} richColors closeButton />
+            <GlobalBubbleMenu />
+            <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
+                <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
+            <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
+            <Route path="/campaigns-log/external/:token" element={<CampaignsLogExternal />} />
+                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/calendar" element={<CalendarView />} />
+                  <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                    <Route path="overview" element={<Overview />} />
+                    <Route path="users" element={<UsersManagement />} />
+                    <Route path="config" element={<Config />} />
+                    <Route path="external-links" element={<ExternalLinksManagement />} />
+                    <Route path="security" element={<SecurityPage />} />
+                    <Route path="logs" element={<Logs />} />
+                    <Route path="ad-rules" element={<AdRulesManagement />} />
+                  </Route>
+                  <Route path="/team-base" element={<TeamBase />} />
+                  <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
+                  <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
+                  <Route path="/ads/library" element={<SavedElementsPage />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/profile/:userId?" element={<Profile />} />
+                  <Route path="/activity-log" element={<ActivityLog />} />
+                  <Route path="/utm-planner" element={<UtmPlanner />} />
+                  <Route path="/operations" element={<Operations />} />
+                  <Route path="/operations/status-log" element={<StatusLog />} />
+                  <Route path="/operations/:id" element={<AuditLogDetail />} />
+                  <Route path="/copywriter" element={<CopyWriter />} />
+                  <Route path="/security" element={<Security />} />
+                  <Route path="/kpis" element={<KPIs />} />
+                  <Route path="/campaigns-log" element={<CampaignsLog />} />
+                  <Route path="/location-intelligence" element={<LocationIntelligence />} />
+                  <Route path="/web-intel" element={<WebIntel />} />
+                  <Route path="/about" element={<About />} />
                 </Route>
-                <Route path="/team-base" element={<TeamBase />} />
-                <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
-                <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
-                <Route path="/ads/library" element={<SavedElementsPage />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/profile/:userId?" element={<Profile />} />
-                <Route path="/activity-log" element={<ActivityLog />} />
-                <Route path="/utm-planner" element={<UtmPlanner />} />
-                <Route path="/operations" element={<Operations />} />
-                <Route path="/operations/status-log" element={<StatusLog />} />
-                <Route path="/operations/:id" element={<AuditLogDetail />} />
-                <Route path="/copywriter" element={<CopyWriter />} />
-                <Route path="/security" element={<Security />} />
-                <Route path="/kpis" element={<KPIs />} />
-                <Route path="/campaigns-log" element={<CampaignsLog />} />
-                <Route path="/location-intelligence" element={<LocationIntelligence />} />
-                <Route path="/web-intel" element={<WebIntel />} />
-                <Route path="/about" element={<About />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </ErrorBoundary>
 );
 

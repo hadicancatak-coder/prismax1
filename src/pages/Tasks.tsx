@@ -19,7 +19,6 @@ import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-// Removed - using UnifiedTaskDialog
 import { useTasks } from "@/hooks/useTasks";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -172,7 +171,6 @@ export default function Tasks() {
     if (activeQuickFilter === filterLabel) {
       setActiveQuickFilter(null);
     } else {
-      // If this filter needs to clear others (e.g., Overdue), clear all filters first
       if (filter?.clearOtherFilters) {
         clearAllFilters();
       }
@@ -214,7 +212,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="theme-apple min-h-screen bg-[#f5f5f7] relative">
+    <div className="min-h-screen bg-background relative">
       <TaskBulkActionsBar
         selectedCount={selectedTaskIds.length}
         onClearSelection={() => setSelectedTaskIds([])}
@@ -225,29 +223,29 @@ export default function Tasks() {
         onExport={handleBulkExport}
       />
       
-      <div className="max-w-6xl mx-auto px-12 py-8">
-        {/* Apple-style Header */}
-        <div className="flex items-center justify-between mt-10 mb-6">
+      <div className="max-w-[1200px] mx-auto px-6 lg:px-12 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mt-6 mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-[#1c1c1e] tracking-tight">Tasks</h1>
-            <p className="text-[13px] text-[#6e6e73] mt-1">Manage and track your team's tasks</p>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Tasks</h1>
+            <p className="text-[13px] text-muted-foreground mt-1">Manage and track your team's tasks</p>
           </div>
-          <button 
+          <Button 
             onClick={() => setDialogOpen(true)} 
-            className="bg-[#007aff] hover:bg-[#006be6] text-white rounded-full px-5 py-2.5 text-sm font-medium shadow-sm transition-all flex items-center gap-2"
+            className="rounded-full px-5 h-10 gap-2 shadow-sm"
           >
             <Plus className="h-4 w-4" />
             New Task
-          </button>
+          </Button>
         </div>
 
-        {/* Apple-style Toolbar */}
-        <div className="flex items-center gap-3 bg-[#f2f2f7] rounded-2xl px-4 py-2 border border-[#e5e5ea] shadow-inner mb-6">
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 bg-muted rounded-2xl px-4 py-2.5 border border-border mb-6">
           <Input
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-48 md:w-64 h-9 rounded-full bg-white border border-[#e5e5ea] px-4 text-[13px] text-[#1c1c1e] placeholder:text-[#6e6e73] focus-visible:ring-1 focus-visible:ring-[#007aff]/30"
+            className="w-48 md:w-64 h-9 rounded-full bg-card border border-border px-4 text-[13px] placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
           />
           
           <StatusMultiSelect
@@ -261,12 +259,12 @@ export default function Tasks() {
               if (value === "all") setSelectedTags([]);
             }}
           >
-            <SelectTrigger className="w-[100px] h-9 rounded-full bg-white border border-[#e5e5ea] px-3 text-[13px] text-[#1c1c1e]">
+            <SelectTrigger className="w-[100px] h-9 rounded-full bg-card border border-border px-3 text-[13px]">
               <SelectValue>
                 {selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white border border-[#e5e5ea]">
+            <SelectContent className="rounded-xl bg-popover border border-border shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
               <SelectItem value="all" className="text-[13px]">All Tags</SelectItem>
               {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
                 <div
@@ -277,7 +275,7 @@ export default function Tasks() {
                       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
                     );
                   }}
-                  className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[#f2f2f7] rounded-lg text-[13px] text-[#1c1c1e]"
+                  className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted rounded-lg text-[13px]"
                 >
                   <input
                     type="checkbox"
@@ -306,8 +304,8 @@ export default function Tasks() {
           <button
             onClick={() => setHideRecurring(!hideRecurring)}
             className={cn(
-              "h-9 text-[12px] rounded-full px-3 py-1.5 border border-[#e5e5ea] bg-white text-[#1c1c1e] transition-all flex items-center gap-1.5",
-              !hideRecurring && "bg-[#007aff] text-white border-[#007aff]"
+              "h-9 text-[12px] rounded-full px-3 py-1.5 border border-border bg-card transition-all flex items-center gap-1.5",
+              !hideRecurring && "bg-primary text-primary-foreground border-primary"
             )}
             title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
           >
@@ -315,12 +313,12 @@ export default function Tasks() {
             {hideRecurring ? "Show Recurring" : "Hide Recurring"}
           </button>
 
-          <div className="ml-auto flex gap-1.5 flex-shrink-0 bg-white p-1 rounded-full border border-[#e5e5ea]">
+          <div className="ml-auto flex gap-1.5 flex-shrink-0 bg-card p-1 rounded-full border border-border">
             <button
               onClick={() => setViewMode('table')}
               className={cn(
                 "h-8 w-8 rounded-full flex items-center justify-center transition-all",
-                viewMode === 'table' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+                viewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
               title="Table"
             >
@@ -330,7 +328,7 @@ export default function Tasks() {
               onClick={() => setViewMode('grid')}
               className={cn(
                 "h-8 w-8 rounded-full flex items-center justify-center transition-all",
-                viewMode === 'grid' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+                viewMode === 'grid' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
               title="Grid"
             >
@@ -343,7 +341,7 @@ export default function Tasks() {
               }}
               className={cn(
                 "h-8 w-8 rounded-full flex items-center justify-center transition-all",
-                viewMode === 'kanban-status' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+                viewMode === 'kanban-status' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
               title="Kanban Status"
             >
@@ -356,7 +354,7 @@ export default function Tasks() {
               }}
               className={cn(
                 "h-8 w-8 rounded-full flex items-center justify-center transition-all",
-                viewMode === 'kanban-date' ? "bg-[#007aff] text-white shadow-sm" : "text-[#6e6e73] hover:bg-[#f2f2f7]"
+                viewMode === 'kanban-date' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
               title="Kanban Date"
             >
@@ -370,50 +368,50 @@ export default function Tasks() {
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={clearAllFilters}
-              className="h-8 text-[12px] text-[#6e6e73] hover:text-[#1c1c1e] rounded-full px-4 transition-colors flex items-center gap-1.5"
+              className="h-8 text-[12px] text-muted-foreground hover:text-foreground rounded-full px-4 transition-colors flex items-center gap-1.5"
             >
               <X className="h-3.5 w-3.5" />
               Clear All Filters
             </button>
-            <span className="text-[12px] text-[#6e6e73]">
+            <span className="text-[12px] text-muted-foreground">
               Showing {finalFilteredTasks.length} of {data?.length || 0} tasks
             </span>
           </div>
         )}
 
-        {/* Overdue Tasks Alert - Apple soft style */}
+        {/* Overdue Tasks Alert */}
         {finalFilteredTasks.filter(task => isTaskOverdue(task)).length > 0 && (
-          <div className="bg-[#fff5f5] border border-[#ffdada] rounded-xl py-3 px-4 mb-6">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl py-3 px-4 mb-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-[#b40000]" />
-              <span className="text-sm text-[#b40000]">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-destructive">
                 You have {finalFilteredTasks.filter(task => isTaskOverdue(task)).length} overdue tasks that need attention
               </span>
             </div>
           </div>
         )}
 
-        {/* Task Views - Wrapped in floating card */}
+        {/* Task Views */}
         {finalFilteredTasks.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-12 text-center">
+          <div className="surface-elevated p-12 text-center">
             <div className="flex flex-col items-center">
-              <div className="bg-[#007aff]/10 p-8 rounded-full mb-6">
-                <CheckCircle2 className="h-12 w-12 text-[#007aff]" />
+              <div className="bg-primary/10 p-8 rounded-full mb-6">
+                <CheckCircle2 className="h-12 w-12 text-primary" />
               </div>
-              <h2 className="text-[22px] font-semibold text-[#1c1c1e] mb-2">All Clear!</h2>
-              <p className="text-[15px] text-[#6e6e73] mb-8 max-w-sm leading-relaxed">
+              <h2 className="text-[22px] font-semibold text-foreground mb-2">All Clear!</h2>
+              <p className="text-[15px] text-muted-foreground mb-8 max-w-sm leading-relaxed">
                 {tasks.length === 0 
                   ? "You don't have any tasks yet. Create your first task to get started."
                   : "No tasks found matching your filters. Try adjusting your search."}
               </p>
               {tasks.length === 0 && (
-                <button 
+                <Button 
                   onClick={() => setDialogOpen(true)}
-                  className="bg-[#007aff] hover:bg-[#006be6] text-white rounded-full px-8 py-3 text-sm font-medium shadow-sm transition-all"
+                  className="rounded-full px-8 h-11 shadow-sm"
                 >
-                  <Plus className="mr-2 h-5 w-5 inline" />
+                  <Plus className="mr-2 h-5 w-5" />
                   Create Your First Task
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -421,16 +419,16 @@ export default function Tasks() {
           <>
             {/* Pagination Controls */}
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[13px] text-[#6e6e73]">
+              <span className="text-[13px] text-muted-foreground">
                 Showing {Math.min((currentPage - 1) * itemsPerPage + 1, finalFilteredTasks.length)}-{Math.min(currentPage * itemsPerPage, finalFilteredTasks.length)} of {finalFilteredTasks.length} tasks
               </span>
               <div className="flex items-center gap-3">
-                <span className="text-[13px] text-[#6e6e73]">Items per page:</span>
+                <span className="text-[13px] text-muted-foreground">Items per page:</span>
                 <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-[80px] h-9 rounded-full bg-white border border-[#e5e5ea] text-[13px] text-[#1c1c1e]">
+                  <SelectTrigger className="w-[80px] h-9 rounded-full bg-card border border-border text-[13px]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl bg-white border border-[#e5e5ea]">
+                  <SelectContent className="rounded-xl bg-popover border border-border shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
                     <SelectItem value="10" className="text-[13px]">10</SelectItem>
                     <SelectItem value="20" className="text-[13px]">20</SelectItem>
                     <SelectItem value="50" className="text-[13px]">50</SelectItem>
@@ -441,7 +439,7 @@ export default function Tasks() {
             </div>
 
             {/* Floating Card for Task List */}
-            <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-4">
+            <div className="surface-elevated p-4">
               {/* Paginated Task Views */}
               {(() => {
                 const startIndex = (currentPage - 1) * itemsPerPage;

@@ -9,33 +9,126 @@ All colors MUST be HSL.
 */
 
 @layer base {
-  :root {
-    /* Confluence-style dark theme */
-    --background: 215 16% 12%; /* #1B1F23 */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 215 12% 17%; /* #282E33 */
-    --card-foreground: 0 0% 100%;
-    --card-hover: 215 10% 19%; /* #2C3237 */
-    --popover: 215 12% 17%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 207 100% 40%; /* #0052CC - Atlassian blue */
+  /* ========================================
+     LIGHT THEME (Apple-inspired)
+     ======================================== */
+  :root,
+  .light {
+    /* Canvas & Surfaces */
+    --background: 240 5% 96%;        /* #f2f2f7 - soft canvas */
+    --foreground: 0 0% 9%;           /* #171717 - near black */
+    --card: 0 0% 100%;               /* #ffffff - pure white cards */
+    --card-foreground: 0 0% 9%;
+    --card-hover: 240 5% 98%;        /* #f7f7fa - subtle hover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    
+    /* Primary - iOS Blue */
+    --primary: 211 100% 50%;         /* #007aff */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 207 100% 35%; /* Darker blue for hover */
-    --secondary: 215 12% 17%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 215 10% 22%; /* Lighter for hover */
-    --muted: 215 10% 25%;
-    --muted-foreground: 220 9% 75%; /* Lighter for better readability */
-    --muted-hover: 215 10% 28%; /* Slightly lighter muted for hover */
-    --accent: 207 100% 40%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 207 100% 35%;
-    --destructive: 0 84% 60%;
+    --primary-hover: 211 100% 46%;   /* #006be6 */
+    
+    /* Secondary & Muted */
+    --secondary: 240 5% 96%;         /* #f2f2f7 */
+    --secondary-foreground: 0 0% 9%;
+    --secondary-hover: 240 4% 93%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 220 9% 46%;  /* #6e6e73 */
+    --muted-hover: 240 4% 93%;
+    
+    /* Accent */
+    --accent: 211 100% 96%;          /* Light blue tint */
+    --accent-foreground: 211 100% 50%;
+    --accent-hover: 211 100% 93%;
+    
+    /* Destructive - iOS Red */
+    --destructive: 0 100% 59%;       /* #ff3b30 */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
-    --input: 0 0% 100% / 0.08;
-    --ring: 207 100% 40%;
+    
+    /* Borders */
+    --border: 240 6% 90%;            /* #e3e3ea - subtle */
+    --border-subtle: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 211 100% 50%;
     --radius: 0.5rem;
+    
+    /* Status colors */
+    --success: 142 71% 45%;          /* iOS green */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 100% 50%;          /* iOS orange */
+    --warning-foreground: 0 0% 100%;
+    --info: 211 100% 50%;
+    --info-foreground: 0 0% 100%;
+    --pending: 211 100% 50%;
+    --pending-foreground: 0 0% 100%;
+    
+    /* Danger soft for alerts */
+    --danger-soft: 0 100% 97%;       /* #ffe9ea */
+    --danger-text: 0 100% 35%;       /* #b40000 */
+    
+    /* Sidebar - Light */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 211 100% 50%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 211 100% 50%;
+
+    /* Grayscale palette */
+    --gray-50: 240 5% 98%;
+    --gray-100: 240 5% 96%;
+    --gray-200: 240 6% 90%;
+    --gray-300: 240 5% 84%;
+    --gray-400: 220 9% 46%;
+    --gray-500: 220 9% 35%;
+    --gray-600: 220 9% 25%;
+    --gray-700: 220 14% 20%;
+    --gray-800: 220 15% 16%;
+    --gray-900: 220 26% 14%;
+  }
+
+  /* ========================================
+     DARK THEME (Refined)
+     ======================================== */
+  .dark {
+    /* Canvas & Surfaces */
+    --background: 225 16% 6%;        /* #0b0c10 */
+    --foreground: 210 40% 98%;       /* #f9fafb */
+    --card: 230 12% 10%;             /* #171822 */
+    --card-foreground: 210 40% 98%;
+    --card-hover: 230 10% 13%;       /* #1f202a */
+    --popover: 230 12% 10%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary - iOS Blue (dark) */
+    --primary: 211 100% 50%;         /* #0a84ff */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 211 100% 55%;
+    
+    /* Secondary & Muted */
+    --secondary: 230 12% 10%;
+    --secondary-foreground: 210 40% 98%;
+    --secondary-hover: 230 10% 15%;
+    --muted: 230 10% 15%;
+    --muted-foreground: 220 9% 55%;  /* #6b7280 */
+    --muted-hover: 230 10% 18%;
+    
+    /* Accent */
+    --accent: 211 100% 50% / 0.1;
+    --accent-foreground: 211 100% 50%;
+    --accent-hover: 211 100% 50% / 0.15;
+    
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders */
+    --border: 230 10% 18%;           /* #2b2d3a */
+    --border-subtle: 230 10% 18%;
+    --input: 230 10% 18%;
+    --ring: 211 100% 50%;
     
     /* Status colors */
     --success: 142 76% 36%;
@@ -47,46 +140,52 @@ All colors MUST be HSL.
     --pending: 207 90% 54%;
     --pending-foreground: 0 0% 100%;
     
-    /* Sidebar - darker than background */
-    --sidebar-background: 220 16% 6%; /* #0D1116 */
+    /* Danger soft for alerts (dark) */
+    --danger-soft: 0 72% 51% / 0.1;
+    --danger-text: 0 72% 65%;
+    
+    /* Sidebar - darker */
+    --sidebar-background: 225 16% 4%;
     --sidebar-foreground: 220 9% 63%;
-    --sidebar-primary: 207 100% 40%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 10% 19%;
-    --sidebar-accent-foreground: 207 100% 40%;
-    --sidebar-border: 0 0% 100% / 0.05;
-    --sidebar-ring: 207 100% 40%;
+    --sidebar-accent: 230 10% 13%;
+    --sidebar-accent-foreground: 211 100% 50%;
+    --sidebar-border: 230 10% 12%;
+    --sidebar-ring: 211 100% 50%;
 
-    /* Grayscale palette - improved for readability */
-    --gray-50: 220 14% 96%;
-    --gray-100: 220 13% 91%;
-    --gray-200: 220 13% 82%;
-    --gray-300: 220 9% 75%; /* Improved from 63% */
-    --gray-400: 220 9% 65%; /* Improved from 46% */
-    --gray-500: 220 9% 39%;
+    /* Grayscale palette - dark mode */
+    --gray-50: 210 40% 98%;
+    --gray-100: 220 14% 96%;
+    --gray-200: 220 13% 91%;
+    --gray-300: 220 13% 82%;
+    --gray-400: 220 9% 55%;
+    --gray-500: 220 9% 46%;
     --gray-600: 220 13% 28%;
     --gray-700: 220 14% 20%;
     --gray-800: 220 15% 16%;
     --gray-900: 220 26% 14%;
+  }
+
+  /* Typography Scale - Semantic sizing */
+  :root {
+    --text-metadata: 0.75rem;      /* 12px */
+    --text-body-sm: 0.875rem;      /* 14px */
+    --text-body: 1rem;             /* 16px */
+    --text-heading-sm: 1.125rem;   /* 18px */
+    --text-heading-md: 1.25rem;    /* 20px */
+    --text-heading-lg: 1.5rem;     /* 24px */
+    --text-page-title: 1.875rem;   /* 30px */
     
-    /* Typography Scale - Semantic sizing */
-    --text-metadata: 0.75rem;      /* 12px - timestamps, micro labels, badges */
-    --text-body-sm: 0.875rem;      /* 14px - secondary text, descriptions */
-    --text-body: 1rem;             /* 16px - primary body text */
-    --text-heading-sm: 1.125rem;   /* 18px - card titles, small headers */
-    --text-heading-md: 1.25rem;    /* 20px - section headers, dialog titles */
-    --text-heading-lg: 1.5rem;     /* 24px - page subtitles */
-    --text-page-title: 1.875rem;   /* 30px - main page headers */
+    /* Spacing Scale */
+    --space-xs: 0.5rem;            /* 8px */
+    --space-sm: 0.75rem;           /* 12px */
+    --space-md: 1rem;              /* 16px */
+    --space-lg: 1.5rem;            /* 24px */
+    --space-xl: 2rem;              /* 32px */
+    --space-2xl: 3rem;             /* 48px */
     
-    /* Spacing Scale - Semantic naming */
-    --space-xs: 0.5rem;            /* 8px - tight spacing (gap between icons) */
-    --space-sm: 0.75rem;           /* 12px - compact spacing (button gaps) */
-    --space-md: 1rem;              /* 16px - standard spacing (form fields) */
-    --space-lg: 1.5rem;            /* 24px - section spacing */
-    --space-xl: 2rem;              /* 32px - major section spacing */
-    --space-2xl: 3rem;             /* 48px - page section dividers */
-    
-    /* Legacy spacing vars (keeping for compatibility) */
+    /* Legacy spacing vars */
     --spacing-1: 0.25rem;
     --spacing-2: 0.5rem;
     --spacing-3: 0.75rem;
@@ -98,110 +197,14 @@ All colors MUST be HSL.
     --spacing-24: 6rem;
     
     /* Border Radius Scale */
-    --radius-sm: 0.375rem;         /* 6px - small elements */
-    --radius-md: 0.5rem;           /* 8px - standard (default) */
-    --radius-lg: 0.75rem;          /* 12px - cards, dialogs */
-    --radius-xl: 1rem;             /* 16px - large surfaces */
+    --radius-sm: 0.375rem;         /* 6px */
+    --radius-md: 0.5rem;           /* 8px */
+    --radius-lg: 0.75rem;          /* 12px */
+    --radius-xl: 1rem;             /* 16px */
 
     /* Transitions */
     --transition: 150ms ease-in-out;
     --transition-smooth: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .dark {
-    /* Dark mode already default */
-    --background: 215 16% 12%;
-    --foreground: 0 0% 100%;
-    --card: 215 12% 17%;
-    --card-foreground: 0 0% 100%;
-    --card-hover: 215 10% 19%;
-    --popover: 215 12% 17%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 207 100% 40%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 207 100% 35%;
-    --secondary: 215 12% 17%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 215 10% 22%;
-    --muted: 215 10% 25%;
-    --muted-foreground: 220 9% 75%;
-    --muted-hover: 215 10% 28%;
-    --accent: 207 100% 40%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 207 100% 35%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
-    --ring: 207 100% 40%;
-    
-    /* Status colors */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
-    --pending: 207 90% 54%;
-    --pending-foreground: 0 0% 100%;
-  }
-
-  /* Apple-like Light Theme - Apply with class="theme-apple" */
-  .theme-apple {
-    /* Canvas & Surfaces */
-    --background: 0 0% 98%;           /* #FAFAFA - light canvas */
-    --foreground: 0 0% 7%;            /* #121212 - near black text */
-    --card: 0 0% 100%;                /* Pure white cards */
-    --card-foreground: 0 0% 7%;
-    --card-hover: 0 0% 97%;           /* Very subtle hover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    
-    /* Primary - iOS Blue */
-    --primary: 211 100% 50%;          /* #007AFF - iOS blue */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 211 100% 45%;
-    
-    /* Secondary & Muted */
-    --secondary: 0 0% 96%;            /* Very light gray */
-    --secondary-foreground: 0 0% 7%;
-    --secondary-hover: 0 0% 93%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --muted-hover: 0 0% 92%;
-    
-    /* Accent */
-    --accent: 211 100% 96%;           /* Very light blue */
-    --accent-foreground: 211 100% 50%;
-    --accent-hover: 211 100% 93%;
-    
-    /* Destructive - iOS Red */
-    --destructive: 0 100% 59%;        /* #FF3B30 */
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Borders - Very subtle */
-    --border: 0 0% 90%;               /* Light gray border */
-    --input: 0 0% 90%;
-    --ring: 211 100% 50%;
-    
-    /* Status colors - iOS style */
-    --success: 142 71% 45%;           /* iOS green */
-    --success-foreground: 0 0% 100%;
-    --warning: 38 100% 50%;           /* iOS orange */
-    --warning-foreground: 0 0% 100%;
-    --info: 211 100% 50%;
-    --info-foreground: 0 0% 100%;
-    --pending: 211 100% 50%;
-    --pending-foreground: 0 0% 100%;
-    
-    /* Sidebar - Light */
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 0 0% 35%;
-    --sidebar-primary: 211 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 94%;
-    --sidebar-accent-foreground: 211 100% 50%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 211 100% 50%;
   }
 }
 
@@ -214,15 +217,9 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.011em;
-  }
-
-  /* SF Pro system font for Apple theme */
-  .theme-apple {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     letter-spacing: -0.022em;
   }
 
@@ -260,7 +257,7 @@ All colors MUST be HSL.
     background: hsl(var(--sidebar-primary) / 0.3);
   }
 
-  /* Hide scrollbar utility - for dropdowns, dialogs, etc */
+  /* Hide scrollbar utility */
   .hide-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -270,7 +267,6 @@ All colors MUST be HSL.
     display: none;
   }
 
-  /* Smooth scroll with hidden indicator */
   .scroll-smooth-hidden {
     scroll-behavior: smooth;
     scrollbar-width: none;
@@ -282,7 +278,7 @@ All colors MUST be HSL.
   }
 }
 
-/* Confluence-style Typography */
+/* Typography utilities */
 @layer utilities {
   .text-page-title { 
     font-size: 32px; 
@@ -302,13 +298,13 @@ All colors MUST be HSL.
     font-size: 14px; 
     line-height: 1.5; 
     font-weight: 400;
-    color: hsl(220 9% 75%); /* Lighter for better readability */
+    color: hsl(var(--muted-foreground));
   }
   .text-metadata { 
     font-size: 12px; 
     line-height: 1.4; 
     font-weight: 400; 
-    color: hsl(220 9% 65%); /* Lighter for better readability */
+    color: hsl(var(--muted-foreground));
   }
 
   .hover-text {
@@ -316,7 +312,7 @@ All colors MUST be HSL.
   }
 
   .hover-bg-subtle {
-    @apply hover:bg-[#2C3237] transition-colors;
+    @apply hover:bg-card-hover transition-colors;
   }
 
   /* Animation Utility Classes */
@@ -341,22 +337,44 @@ All colors MUST be HSL.
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 20px rgba(0, 82, 204, 0.3);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
 
   .transition-smooth {
     @apply transition-all duration-150 ease-in-out;
   }
 
-  /* React Data Grid Dark Theme Overrides */
+  /* Glass effect utilities */
+  .glass-light {
+    @apply bg-white/70 backdrop-blur-md border border-white/40;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/70 backdrop-blur-md border border-white/10;
+  }
+
+  /* Surface utilities */
+  .surface-base {
+    @apply bg-card border border-border rounded-2xl;
+  }
+
+  .surface-elevated {
+    @apply bg-card border border-border rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)];
+  }
+
+  .dark .surface-elevated {
+    @apply shadow-[0_8px_30px_rgba(0,0,0,0.3)];
+  }
+
+  /* React Data Grid Theme Overrides */
   .rdg {
-    --rdg-background-color: #1a1f25;
-    --rdg-header-background-color: #282e33;
-    --rdg-row-hover-background-color: #2c3237;
-    --rdg-row-selected-background-color: #0052cc1a;
-    --rdg-border-color: rgba(255, 255, 255, 0.1);
-    --rdg-color: #ffffff;
-    --rdg-selection-color: #0052cc;
+    --rdg-background-color: hsl(var(--card));
+    --rdg-header-background-color: hsl(var(--muted));
+    --rdg-row-hover-background-color: hsl(var(--card-hover));
+    --rdg-row-selected-background-color: hsl(var(--primary) / 0.1);
+    --rdg-border-color: hsl(var(--border));
+    --rdg-color: hsl(var(--foreground));
+    --rdg-selection-color: hsl(var(--primary));
     
     border: 1px solid var(--rdg-border-color);
     border-radius: 8px;
@@ -415,7 +433,7 @@ All colors MUST be HSL.
   }
 
   .formula-operator {
-    color: #D4D4D4;
+    color: hsl(var(--foreground));
   }
 
   .formula-delimiter {
@@ -434,7 +452,7 @@ All colors MUST be HSL.
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     margin-top: 2px;
   }
 
@@ -469,7 +487,7 @@ All colors MUST be HSL.
     font-size: 11px;
   }
   
-  /* Legacy aliases for compatibility */
+  /* Legacy typography aliases */
   .text-heading-lg { font-size: 1.5rem; line-height: 1.3; font-weight: 600; color: hsl(var(--foreground)); }
   .text-heading-md { font-size: 1.25rem; line-height: 1.35; font-weight: 600; color: hsl(var(--foreground)); }
   .text-body-lg { font-size: 1rem; line-height: 1.5; font-weight: 400; }
@@ -478,7 +496,7 @@ All colors MUST be HSL.
 
 /* Mapbox cluster markers */
 .cluster-marker {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-foreground)) 100%);
   border: 3px solid white;
   border-radius: 50%;
   display: flex;
@@ -499,79 +517,51 @@ All colors MUST be HSL.
   font-size: 14px;
 }
 
-/* Highlight marker animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.1);
-  }
+/* Cluster pulsing animation */
+@keyframes cluster-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
 }
 
-/* Card Gradient Glow Effect */
-@layer utilities {
-  .card-glow {
-    position: relative;
-    transition: all 0.3s ease;
-  }
-  
-  .card-glow::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: 10px;
-    padding: 2px;
-    background: linear-gradient(135deg, 
-      hsl(var(--primary)) 0%, 
-      hsl(var(--primary)) 50%, 
-      hsl(var(--primary)) 100%
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, 
-                   linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, 
-          linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: -1;
-  }
-  
-  .card-glow:hover::before {
-    opacity: 0.6;
-  }
-
-  /* Hover utilities */
-  .hover-text {
-    @apply hover:text-primary transition-colors;
-  }
-
-  .hover-bg-subtle {
-    @apply hover:bg-[#2C3237] transition-colors;
-  }
-
-  /* Text wrapping utilities */
-  .overflow-wrap-anywhere {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
+.cluster-marker.pulsing {
+  animation: cluster-pulse 2s ease-in-out infinite;
 }
 
-/* Page Transition Animations */
-@keyframes pageEnter {
+/* Card glow effect */
+.card-glow {
+  position: relative;
+}
+
+.card-glow::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.2), transparent, hsl(var(--accent-foreground) / 0.2));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-glow:hover::before {
+  opacity: 1;
+}
+
+/* Page transition */
+.page-transition {
+  animation: page-fade-in 0.2s ease-out;
+}
+
+@keyframes page-fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.page-transition {
-  animation: pageEnter 0.2s ease-out;
 }
