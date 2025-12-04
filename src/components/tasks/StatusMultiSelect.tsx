@@ -1,12 +1,11 @@
-import { Check, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 const statuses = [
   { value: "Backlog", label: "Backlog" },
@@ -23,8 +22,6 @@ interface StatusMultiSelectProps {
 }
 
 export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
-  const [open, setOpen] = useState(false);
-
   const handleToggle = (status: string) => {
     if (value.includes(status)) {
       onChange(value.filter(s => s !== status));
@@ -41,69 +38,63 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
     onChange([]);
   };
 
-  const hasActiveFilter = value.length > 0 && value.length < statuses.length;
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant={hasActiveFilter ? "default" : "outline"}
-          size="sm"
-          className="h-8 gap-1.5 px-3 flex-shrink-0"
-        >
-          <Filter className="h-3.5 w-3.5" />
-          <span className="text-sm">
-            {value.length === 0 ? "None" : 
-             value.length === statuses.length ? "Status" : 
-             `${value.length} Status`}
-          </span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[180px] p-2 bg-popover border-border z-[100]" align="start">
-        <div className="space-y-1">
-          <div className="flex gap-1 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSelectAll}
-              className="flex-1 h-7 text-metadata"
-            >
-              All
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDeselectAll}
-              className="flex-1 h-7 text-metadata"
-            >
-              None
-            </Button>
-          </div>
-          <div className="h-px bg-border" />
-          {statuses.map((status) => (
-            <button
-              key={status.value}
-              onClick={() => handleToggle(status.value)}
-              className={cn(
-                "flex items-center w-full px-2 py-1.5 rounded text-body-sm transition-smooth cursor-pointer",
-                value.includes(status.value) 
-                  ? "bg-primary/10 text-primary" 
-                  : "hover:bg-muted text-foreground"
-              )}
-            >
-              <div className={cn(
-                "flex items-center justify-center h-4 w-4 rounded border mr-2 transition-smooth",
-                value.includes(status.value) 
-                  ? "bg-primary border-primary text-primary-foreground" 
-                  : "border-input"
-              )}>
-                {value.includes(status.value) && <Check className="h-3 w-3" />}
-              </div>
-              {status.label}
-            </button>
-          ))}
+    <Select
+      value={value.length > 0 ? "selected" : "all"}
+      onValueChange={(val) => {
+        if (val === "all") handleDeselectAll();
+      }}
+    >
+      <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+        <SelectValue>
+          {value.length === 0 ? "Status" : 
+           value.length === statuses.length ? "Status" : 
+           `${value.length} Status`}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="bg-background z-50 p-2">
+        <div className="flex gap-1 mb-2">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleSelectAll();
+            }}
+            className="flex-1 h-7 text-xs px-2 rounded hover:bg-accent transition-smooth"
+          >
+            All
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleDeselectAll();
+            }}
+            className="flex-1 h-7 text-xs px-2 rounded hover:bg-accent transition-smooth"
+          >
+            None
+          </button>
         </div>
-      </PopoverContent>
-    </Popover>
+        <div className="h-px bg-border mb-1" />
+        {statuses.map((status) => (
+          <div
+            key={status.value}
+            onClick={(e) => {
+              e.preventDefault();
+              handleToggle(status.value);
+            }}
+            className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded text-sm"
+          >
+            <div className={cn(
+              "flex items-center justify-center h-4 w-4 rounded border transition-smooth",
+              value.includes(status.value) 
+                ? "bg-primary border-primary text-primary-foreground" 
+                : "border-input"
+            )}>
+              {value.includes(status.value) && <Check className="h-3 w-3" />}
+            </div>
+            <span>{status.label}</span>
+          </div>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
