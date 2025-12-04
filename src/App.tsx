@@ -36,6 +36,7 @@ import Security from "./pages/Security";
 import About from "./pages/About";
 import UtmPlanner from "./pages/UtmPlanner";
 import CopyWriter from "./pages/CopyWriter";
+import CaptionLibrary from "./pages/CaptionLibrary";
 import LocationIntelligence from "./pages/LocationIntelligence";
 import WebIntel from "./pages/WebIntel";
 import KPIs from "./pages/KPIs";
@@ -77,6 +78,7 @@ const App = () => (
                   <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
                   <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
                   <Route path="/ads/library" element={<SavedElementsPage />} />
+                  <Route path="/ads/captions" element={<CaptionLibrary />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/profile/:userId?" element={<Profile />} />
                   <Route path="/activity-log" element={<ActivityLog />} />

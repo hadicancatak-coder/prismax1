@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import SearchAdEditor from "@/components/search/SearchAdEditor";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -14,6 +14,15 @@ interface EditorContext {
   entity: string;
 }
 
+interface LiveFields {
+  headlines: string[];
+  descriptions: string[];
+  sitelinks: { description: string; link: string }[];
+  callouts: string[];
+  landingPage: string;
+  businessName: string;
+}
+
 interface SearchPlannerProps {
   adType?: "search" | "display";
 }
@@ -21,9 +30,26 @@ interface SearchPlannerProps {
 export default function SearchPlanner({ adType = "search" }: SearchPlannerProps) {
   const [editorContext, setEditorContext] = useState<EditorContext | null>(null);
   const [rightPanelTab, setRightPanelTab] = useState<"preview" | "quality">("preview");
+  const [liveFields, setLiveFields] = useState<LiveFields>({
+    headlines: [],
+    descriptions: [],
+    sitelinks: [],
+    callouts: [],
+    landingPage: "",
+    businessName: "",
+  });
 
   const handleEditAd = (ad: any, adGroup: any, campaign: any, entity: string) => {
     setEditorContext({ ad, adGroup, campaign, entity });
+    // Initialize live fields from ad data
+    setLiveFields({
+      headlines: Array.isArray(ad?.headlines) ? ad.headlines : [],
+      descriptions: Array.isArray(ad?.descriptions) ? ad.descriptions : [],
+      sitelinks: Array.isArray(ad?.sitelinks) ? ad.sitelinks : [],
+      callouts: Array.isArray(ad?.callouts) ? ad.callouts : [],
+      landingPage: ad?.landing_page || "",
+      businessName: ad?.business_name || "",
+    });
   };
 
   const handleCreateAd = (adGroup: any, campaign: any, entity: string) => {
@@ -44,6 +70,14 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
       approval_status: 'draft'
     };
     setEditorContext({ ad: newAd, adGroup, campaign, entity });
+    setLiveFields({
+      headlines: [],
+      descriptions: [],
+      sitelinks: [],
+      callouts: [],
+      landingPage: "",
+      businessName: "",
+    });
   };
 
   const handleCampaignClick = (campaign: any, entity: string) => {
@@ -58,12 +92,16 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
     setEditorContext(null);
   };
 
-  // Extract current ad data for preview/quality panels
-  const currentAd = editorContext?.ad;
-  const headlines = Array.isArray(currentAd?.headlines) ? currentAd.headlines : [];
-  const descriptions = Array.isArray(currentAd?.descriptions) ? currentAd.descriptions : [];
-  const sitelinks = Array.isArray(currentAd?.sitelinks) ? currentAd.sitelinks : [];
-  const callouts = Array.isArray(currentAd?.callouts) ? currentAd.callouts : [];
+  // Handle live field updates from editor
+  const handleFieldChange = useCallback((fields: Partial<LiveFields>) => {
+    setLiveFields((prev) => ({ ...prev, ...fields }));
+  }, []);
+
+  // Use live fields for preview
+  const headlines = liveFields.headlines.filter(Boolean);
+  const descriptions = liveFields.descriptions.filter(Boolean);
+  const sitelinks = liveFields.sitelinks.filter((s) => s.description || s.link);
+  const callouts = liveFields.callouts.filter(Boolean);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
@@ -104,6 +142,7 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
                 onCancel={handleCancel}
                 showHeader={false}
                 hidePreview={true}
+                onFieldChange={handleFieldChange}
               />
             ) : (
               <div className="h-full flex items-center justify-center p-lg">
@@ -149,8 +188,8 @@ export default function SearchPlanner({ adType = "search" }: SearchPlannerProps)
                       descriptions={descriptions}
                       sitelinks={sitelinks}
                       callouts={callouts}
-                      landingPage={currentAd?.landing_page || ""}
-                      businessName={currentAd?.business_name || ""}
+                      landingPage={liveFields.landingPage}
+                      businessName={liveFields.businessName}
                     />
                   ) : (
                     <SearchPlannerQualityPanel

@@ -153,6 +153,20 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
     }
   }, [ad, campaign]);
 
+  // Sync field changes to parent for live preview
+  useEffect(() => {
+    if (onFieldChange) {
+      onFieldChange({
+        headlines: headlines.filter(h => h.trim()),
+        descriptions: descriptions.filter(d => d.trim()),
+        sitelinks: sitelinks.filter(s => s.description.trim() || s.link.trim()),
+        callouts: callouts.filter(c => c.trim()),
+        landingPage,
+        businessName,
+      });
+    }
+  }, [headlines, descriptions, sitelinks, callouts, landingPage, businessName, onFieldChange]);
+
   const updateHeadline = (index: number, value: string) => {
     const newHeadlines = [...headlines];
     newHeadlines[index] = value;
