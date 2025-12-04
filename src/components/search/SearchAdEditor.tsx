@@ -38,9 +38,10 @@ interface SearchAdEditorProps {
   adType?: "search" | "display";
   showHeader?: boolean;
   onFieldChange?: (fields: any) => void;
+  hidePreview?: boolean;
 }
 
-export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType, showHeader = true, onFieldChange }: SearchAdEditorProps) {
+export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, onCancel, adType: propAdType, showHeader = true, onFieldChange, hidePreview = false }: SearchAdEditorProps) {
   const queryClient = useQueryClient();
   const adType = ad?.ad_type || propAdType || "search";
   const { user } = useAuth();
@@ -522,6 +523,340 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
   };
 
   // Only search ads are supported now
+
+  // If hidePreview is true, render only the form without the resizable panels
+  if (hidePreview) {
+    return (
+      <ScrollArea className="h-full">
+        <div className="p-4 lg:p-6 space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">
+                {ad?.id ? "Edit Search Ad" : "Create Search Ad"}
+              </h2>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={onCancel}>
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                {!isEditMode ? (
+                  <Button variant="default" size="sm" onClick={() => setIsEditMode(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setIsEditMode(false)}>
+                    Cancel Edit
+                  </Button>
+                )}
+                {ad?.id && (
+                  <Button variant="outline" size="sm" onClick={handleCopyAd}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Ad
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Button 
+                variant="link" 
+                className="p-0 h-auto font-normal text-muted-foreground hover:text-primary"
+                onClick={onCancel}
+              >
+                {entity}
+              </Button>
+              <span className="text-muted-foreground">›</span>
+              <Button 
+                variant="link" 
+                className="p-0 h-auto font-normal text-muted-foreground hover:text-primary"
+                onClick={onCancel}
+              >
+                {campaign.name}
+              </Button>
+              <span className="text-muted-foreground">›</span>
+              <Button 
+                variant="link" 
+                className="p-0 h-auto font-normal text-muted-foreground hover:text-primary"
+                onClick={onCancel}
+              >
+                {adGroup.name}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="ad-name">Ad Name *</Label>
+              {isEditMode ? (
+                <Input
+                  id="ad-name"
+                  placeholder="e.g., Summer Sale - Main Ad"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              ) : (
+                <div className="text-xl font-semibold">{name || "Untitled Ad"}</div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="language">Language *</Label>
+              {isEditMode ? (
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EN">English</SelectItem>
+                    <SelectItem value="AR">Arabic</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm">{language === "EN" ? "English" : "Arabic"}</div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Headlines (15 max, 30 chars each) - Drag to reorder</Label>
+              {isEditMode ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={headlines.slice(0, visibleHeadlineCount).map((_, i) => `headline-${i}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-3">
+                      {headlines.slice(0, visibleHeadlineCount).map((headline, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`headline-${index}`}>
+                              Headline {index + 1}
+                              <span className={
+                                headline.length < 24 ? "ml-2 text-success" :
+                                headline.length < 29 ? "ml-2 text-warning" :
+                                "ml-2 text-destructive"
+                              }>
+                                {headline.length}/30
+                              </span>
+                            </Label>
+                          </div>
+                          <SortableHeadlineInput
+                            id={`headline-${index}`}
+                            index={index}
+                            headline={headline}
+                            isDkiEnabled={dkiEnabled[index]}
+                            onUpdate={(value) => updateHeadline(index, value)}
+                            onToggleDki={() => toggleDKI(index)}
+                            renderActions={() => (
+                              <FieldActions
+                                value={headline}
+                                elementType="headline"
+                                onSelect={(content) => updateHeadline(index, content)}
+                                onSave={() => handleSaveElement('headline', headline)}
+                                isEmpty={!headline.trim()}
+                              />
+                            )}
+                          />
+                        </div>
+                      ))}
+                      {visibleHeadlineCount < 15 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setVisibleHeadlineCount(Math.min(visibleHeadlineCount + 3, 15))}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add More Headlines ({15 - visibleHeadlineCount} remaining)
+                        </Button>
+                      )}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="space-y-1">
+                  {headlines.filter(h => h.trim()).map((headline, index) => {
+                    const pattern = detectHeadlinePattern(headline);
+                    const hasPattern = pattern.type !== 'none';
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className={`text-sm p-2 rounded flex items-center gap-2 ${
+                          hasPattern ? 'bg-yellow-50/50 border border-yellow-200' : 'bg-muted/30'
+                        }`}
+                      >
+                        <span className="flex-1">• {headline}</span>
+                        {hasPattern && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs cursor-help bg-yellow-100 border-yellow-400 text-yellow-900 shrink-0"
+                                >
+                                  {pattern.indicator} +{pattern.boost}%
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-sm">{pattern.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {headlines.filter(h => h.trim()).length === 0 && (
+                    <div className="text-sm text-muted-foreground">No headlines</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descriptions (4 max, 90 chars each)</Label>
+              {isEditMode ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {descriptions.map((description, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`description-${index}`}>
+                          Description {index + 1}
+                          <span className={
+                            description.length < 72 ? "ml-2 text-success" :
+                            description.length < 86 ? "ml-2 text-warning" :
+                            "ml-2 text-destructive"
+                          }>
+                            {description.length}/90
+                          </span>
+                        </Label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          id={`description-${index}`}
+                          placeholder={`Description ${index + 1}${index < 2 ? ' *' : ''}`}
+                          value={description}
+                          onChange={(e) => updateDescription(index, e.target.value)}
+                          maxLength={90}
+                          className="flex-1"
+                        />
+                        <FieldActions
+                          value={description}
+                          elementType="description"
+                          onSelect={(content) => updateDescription(index, content)}
+                          onSave={() => handleSaveElement('description', description)}
+                          isEmpty={!description.trim()}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {descriptions.filter(d => d.trim()).map((description, index) => (
+                    <div key={index} className="text-sm bg-muted/30 p-2 rounded">
+                      • {description}
+                    </div>
+                  ))}
+                  {descriptions.filter(d => d.trim()).length === 0 && (
+                    <div className="text-sm text-muted-foreground">No descriptions</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Collapsible Sitelinks & Callouts */}
+            {isEditMode && (
+              <Accordion type="single" collapsible className="border rounded-lg">
+                <AccordionItem value="sitelinks" className="border-none">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Sitelinks & Callouts</span>
+                      <Badge variant="outline" className="text-xs">
+                        {sitelinks.filter(s => s.description.trim()).length} sitelinks, {callouts.filter(c => c.trim()).length} callouts
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 space-y-6">
+                    {/* Sitelinks */}
+                    <div className="space-y-3">
+                      <Label>Sitelinks (5 max)</Label>
+                      {sitelinks.map((sitelink, index) => (
+                        <div key={index} className="space-y-2 p-3 border rounded-lg bg-muted/20">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-sm">Sitelink {index + 1}</Label>
+                          </div>
+                          <div className="grid gap-2">
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Text (e.g., Contact Us)"
+                                value={sitelink.description}
+                                onChange={(e) => updateSitelink(index, 'description', e.target.value)}
+                                maxLength={25}
+                                className="flex-1"
+                              />
+                              <FieldActions
+                                value={sitelink.description}
+                                elementType="sitelink"
+                                onSelect={(content) => updateSitelink(index, 'description', content)}
+                                onSave={() => handleSaveElement('sitelink', sitelink.description)}
+                                isEmpty={!sitelink.description.trim()}
+                              />
+                            </div>
+                            <Input
+                              placeholder="URL (e.g., https://example.com/contact)"
+                              value={sitelink.link}
+                              onChange={(e) => updateSitelink(index, 'link', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Callouts */}
+                    <div className="space-y-3">
+                      <Label>Callouts (4 max, 25 chars each)</Label>
+                      {callouts.map((callout, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            placeholder={`Callout ${index + 1} (e.g., Free Shipping)`}
+                            value={callout}
+                            onChange={(e) => updateCallout(index, e.target.value)}
+                            maxLength={25}
+                            className="flex-1"
+                          />
+                          <FieldActions
+                            value={callout}
+                            elementType="callout"
+                            onSelect={(content) => updateCallout(index, content)}
+                            onSave={() => handleSaveElement('callout', callout)}
+                            isEmpty={!callout.trim()}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+
+            {isEditMode && (
+              <Button onClick={() => handleSave(false)} disabled={isSaving} className="w-full">
+                {isSaving && <span className="mr-2">⏳</span>}
+                <Save className="mr-2 h-4 w-4" />
+                {ad?.id ? "Update Ad" : "Create Ad"}
+              </Button>
+            )}
+          </div>
+        </div>
+      </ScrollArea>
+    );
+  }
 
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full flex-col lg:flex-row">
