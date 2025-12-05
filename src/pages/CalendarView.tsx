@@ -20,7 +20,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
-import { getRecurrenceLabel } from "@/lib/recurrenceExpander";
+import { getRecurrenceLabel, expandRecurringTask } from "@/lib/recurrenceExpander";
 import { useToast } from "@/hooks/use-toast";
 import { isTaskOverdue } from "@/lib/overdueHelpers";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -362,17 +362,44 @@ export default function CalendarView() {
       // Always check working day based on target user (current user or selected user by admin)
       const isWorkingDay = isDateWorkingDay(date, selectedUserWorkingDays);
       
-      // Filter tasks for this day
-      const dayTasks = tasks?.filter(t => {
-        if (!t.due_at) return false;
-        if (!isSameDay(new Date(t.due_at), date)) return false;
-        if (t.status === 'Completed' || t.status === 'Failed') return false;
-        return true;
-      }) || [];
+      // Filter tasks for this day - include both due_at tasks AND recurring occurrences
+      const dayTasks: any[] = [];
+      const addedTaskIds = new Set<string>();
+      
+      tasks?.forEach(t => {
+        if (t.status === 'Completed' || t.status === 'Failed') return;
+        
+        // Check if task is assigned to target user
+        const isAssigned = t.assignees?.some((a: any) => a.user_id === targetUserId);
+        if (!isAssigned) return;
+        
+        // Check for recurring task occurrences on this day
+        if (t.recurrence_rrule) {
+          const dateStart = new Date(date);
+          dateStart.setHours(0, 0, 0, 0);
+          const dateEnd = new Date(date);
+          dateEnd.setHours(23, 59, 59, 999);
+          
+          const occurrences = expandRecurringTask(t, dateStart, dateEnd, [], []);
+          if (occurrences.length > 0 && !addedTaskIds.has(t.id)) {
+            dayTasks.push({
+              ...t,
+              isRecurringOccurrence: true,
+              occurrenceDate: date
+            });
+            addedTaskIds.add(t.id);
+          }
+        }
+        // Check for regular due_at tasks
+        else if (t.due_at && isSameDay(new Date(t.due_at), date) && !addedTaskIds.has(t.id)) {
+          dayTasks.push(t);
+          addedTaskIds.add(t.id);
+        }
+      });
       
       return { day, date, tasks: dayTasks, isWorkingDay };
     });
-  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays]);
+  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, targetUserId]);
 
   // Kanban columns for daily view (by priority)
   const dailyKanbanColumns = useMemo(() => {
