@@ -248,31 +248,30 @@ export function SearchPlannerStructurePanel({
 
                 return (
                 <Collapsible key={campaign.id} open={isExpanded}>
-                  {/* Campaign Row */}
+                  {/* Campaign Row - entire row is clickable for expand/collapse */}
                   <div 
                     className={cn(
-                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
-                      "hover:bg-card-hover border border-transparent hover:border-border"
+                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
+                      "hover:bg-card-hover border border-transparent hover:border-border active:scale-[0.99]"
                     )}
+                    onClick={() => toggleCampaign(campaign.id)}
                   >
-                    {/* Chevron - expand/collapse only */}
-                    <CollapsibleTrigger asChild>
-                      <button 
-                        className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
-                        onClick={() => toggleCampaign(campaign.id)}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    </CollapsibleTrigger>
+                    {/* Chevron indicator */}
+                    <div className="p-xs">
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
 
-                    {/* Campaign name - click to select */}
+                    {/* Campaign name - click to select (stops propagation) */}
                     <button
                       className="flex items-center gap-xs flex-1 text-left cursor-pointer active:scale-[0.98] transition-smooth"
-                      onClick={() => onCampaignClick?.(campaign, selectedEntity)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCampaignClick?.(campaign, selectedEntity);
+                      }}
                     >
                       <Folder className="h-4 w-4 text-primary/70 flex-shrink-0" />
                       <span className="flex-1 text-body-sm font-medium text-foreground truncate hover:text-primary transition-smooth">
@@ -292,6 +291,7 @@ export function SearchPlannerStructurePanel({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-smooth"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -345,28 +345,24 @@ export function SearchPlannerStructurePanel({
 
                           return (
                             <Collapsible key={adGroup.id} open={isAdGroupExpanded}>
-                              {/* Ad Group Row */}
+                              {/* Ad Group Row - entire row is clickable for expand/collapse */}
                               <div 
                                 className={cn(
-                                  "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
-                                  "hover:bg-card-hover"
+                                  "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
+                                  "hover:bg-card-hover active:scale-[0.99]"
                                 )}
+                                onClick={() => toggleAdGroup(adGroup.id)}
                               >
-                                {/* Chevron - expand/collapse only */}
-                                <CollapsibleTrigger asChild>
-                                  <button 
-                                    className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
-                                    onClick={() => toggleAdGroup(adGroup.id)}
-                                  >
-                                    {isAdGroupExpanded ? (
-                                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                                    )}
-                                  </button>
-                                </CollapsibleTrigger>
+                                {/* Chevron indicator */}
+                                <div className="p-xs">
+                                  {isAdGroupExpanded ? (
+                                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                  )}
+                                </div>
 
-                                {/* Ad Group name - static display */}
+                                {/* Ad Group name */}
                                 <div className="flex items-center gap-xs flex-1">
                                   <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                   <span className="flex-1 text-body-sm text-foreground truncate">
@@ -385,6 +381,7 @@ export function SearchPlannerStructurePanel({
                                       variant="ghost"
                                       size="icon"
                                       className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-smooth"
+                                      onClick={(e) => e.stopPropagation()}
                                     >
                                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                                     </Button>
