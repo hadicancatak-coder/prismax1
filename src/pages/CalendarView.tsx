@@ -138,21 +138,236 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
     </div>
   );
 }
-    } else {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: completed ? 'Completed' : 'Pending',
-          completed_at: completed ? new Date().toISOString() : null
-        })
-        .eq('id', taskId);
 
-      if (error) {
-        toast({ title: "Error", description: "Failed to update task", variant: "destructive" });
-      } else {
-        toast({ title: completed ? "Task completed" : "Task reopened" });
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      }
+// Task Pool Item Component
+function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 py-2.5 px-4 cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
+        isOverdue && "border-l-4 border-l-destructive"
+      )}
+      onClick={() => onTaskClick(task.id)}
+    >
+      <div className="flex-1 min-w-0">
+        <span className="text-[13px] font-medium text-foreground truncate block">{task.title}</span>
+        {task.due_at && (
+          <span className={cn(
+            "text-[11px]",
+            isOverdue ? "text-destructive" : "text-muted-foreground"
+          )}>
+            Due: {format(new Date(task.due_at), 'MMM d')}
+          </span>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAdd([task.id]);
+        }}
+        title="Add to Agenda"
+        className="opacity-0 group-hover:opacity-100"
+      >
+        <Plus className="h-3.5 w-3.5 text-primary" />
+      </Button>
+    </div>
+  );
+}
+
+// Kanban Card Component
+function KanbanCard({ task, onTaskClick }: any) {
+  const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed';
+  
+  return (
+    <Card 
+      className={cn(
+        "p-3 cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30",
+        isOverdue && "border-l-4 border-l-destructive"
+      )}
+      onClick={() => onTaskClick(task.id)}
+    >
+      <p className="text-[13px] font-medium text-foreground line-clamp-2">{task.title}</p>
+      <div className="flex items-center gap-2 mt-2">
+        <Badge variant="outline" className={cn(
+          "text-[10px] px-1.5 py-0 rounded-full",
+          task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
+          task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
+          task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
+        )}>
+          {task.priority}
+        </Badge>
+        {task.due_at && (
+          <span className={cn(
+            "text-[10px]",
+            isOverdue ? "text-destructive" : "text-muted-foreground"
+          )}>
+            {format(new Date(task.due_at), 'MMM d')}
+          </span>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+// Main CalendarView Component
+export default function CalendarView() {
+  const { user, userRole } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  
+  // State
+  const [dateView, setDateView] = useState<"today" | "tomorrow" | "week" | "custom">("today");
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'gantt'>('table');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [sortOption, setSortOption] = useState<string>('priority');
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  
+  const currentDate = useMemo(() => new Date(), []);
+  const targetUserId = selectedUserId || user?.id;
+  
+  // Fetch all users for admin filter
+  useEffect(() => {
+    if (userRole === 'admin') {
+      supabase.from('profiles').select('user_id, name, email').then(({ data }) => {
+        if (data) setAllUsers(data);
+      });
+    }
+  }, [userRole]);
+  
+  // Compute agenda date
+  const agendaDate = useMemo(() => {
+    if (dateView === 'tomorrow') return addDays(currentDate, 1);
+    if (dateView === 'custom' && dateRange?.from) return dateRange.from;
+    return currentDate;
+  }, [dateView, currentDate, dateRange]);
+  
+  // User Agenda Hook
+  const {
+    agendaItems,
+    agendaTasks,
+    availableTasks: hookAvailableTasks,
+    isLoading: agendaLoading,
+    addToAgenda,
+    removeFromAgenda,
+  } = useUserAgenda({
+    userId: targetUserId,
+    date: agendaDate,
+    allTasks: tasks,
+    completions: []
+  });
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  // User task order state
+  const [userTaskOrder, setUserTaskOrder] = useState<any[]>([]);
+  
+  const fetchUserTaskOrder = async () => {
+    if (!targetUserId) return;
+    const { data } = await supabase
+      .from('user_task_order')
+      .select('*')
+      .eq('user_id', targetUserId);
+    if (data) setUserTaskOrder(data);
+  };
+  
+  useEffect(() => {
+    fetchUserTaskOrder();
+  }, [targetUserId]);
+
+  // Computed: Filter tasks for current view
+  const { activeTasks, completedTasks, overdueTasks, availableTasks } = useMemo(() => {
+    if (!tasks || !targetUserId) return { activeTasks: [], completedTasks: [], overdueTasks: [], availableTasks: [] };
+
+    const agendaTaskIds = new Set(agendaItems.map(e => e.task_id));
+    
+    // Active (not completed) tasks on agenda
+    const active = agendaTasks
+      .filter(t => t.status !== 'Completed' && t.status !== 'Failed')
+      .sort((a, b) => {
+        const orderA = userTaskOrder.find((o: any) => o.task_id === a.id)?.order_index ?? 999;
+        const orderB = userTaskOrder.find((o: any) => o.task_id === b.id)?.order_index ?? 999;
+        return orderA - orderB;
+      });
+    
+    // Completed tasks on agenda
+    const completed = agendaTasks.filter(t => t.status === 'Completed');
+    
+    // Overdue tasks not on agenda (for task pool)
+    const overdue = tasks.filter(t => 
+      !agendaTaskIds.has(t.id) &&
+      isTaskOverdue(t) &&
+      t.status !== 'Completed' &&
+      t.status !== 'Failed' &&
+      t.status !== 'Backlog' &&
+      (userRole === 'admin' || t.assignees?.some((a: any) => a.user_id === targetUserId))
+    );
+
+    return { activeTasks: active, completedTasks: completed, overdueTasks: overdue, availableTasks: hookAvailableTasks };
+  }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole]);
+
+  // Kanban columns for weekly view
+  const weeklyKanbanColumns = useMemo(() => {
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    
+    return days.map((day, i) => {
+      const date = addDays(weekStart, i);
+      const dayTasks = tasks?.filter(t => 
+        t.due_at && isSameDay(new Date(t.due_at), date) &&
+        t.status !== 'Completed' && t.status !== 'Failed'
+      ) || [];
+      
+      return { day, date, tasks: dayTasks };
+    });
+  }, [tasks, currentDate]);
+
+  // Kanban columns for daily view (by priority)
+  const dailyKanbanColumns = useMemo(() => {
+    return [
+      { priority: 'High', tasks: activeTasks.filter(t => t.priority === 'High') },
+      { priority: 'Medium', tasks: activeTasks.filter(t => t.priority === 'Medium') },
+      { priority: 'Low', tasks: activeTasks.filter(t => t.priority === 'Low' || !t.priority) }
+    ];
+  }, [activeTasks]);
+
+  // Check if manual reorder mode
+  const isManualMode = userTaskOrder.length > 0;
+
+  // Handle task completion toggle
+  const handleTaskComplete = async (taskId: string, completed: boolean) => {
+    // Handle recurring task occurrence
+    if (taskId.includes('::')) {
+      const [originalId, dateStr] = taskId.split('::');
+      // For recurring occurrences, we don't update the main task
+      toast({ title: "Recurring task", description: "Individual occurrences cannot be marked complete" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ 
+        status: completed ? 'Completed' : 'Pending',
+        completed_at: completed ? new Date().toISOString() : null
+      })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to update task", variant: "destructive" });
+    } else {
+      toast({ title: completed ? "Task completed" : "Task reopened" });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   };
 
@@ -514,7 +729,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
                 </div>
 
                 {/* Task List */}
-                {isLoading || agendaLoading ? (
+                {tasksLoading || agendaLoading ? (
                   <div className="p-4">
                     <ListSkeleton items={5} />
                   </div>
