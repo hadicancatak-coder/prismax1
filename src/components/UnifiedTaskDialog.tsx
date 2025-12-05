@@ -139,7 +139,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
   // Update selected assignees from realtime data
   useEffect(() => {
-    if (!isCreate && realtimeAssignees.length > 0) {
+    if (!isCreate) {
+      // Sync even if empty - user may have removed all assignees
       setSelectedAssignees(realtimeAssignees.map(a => a.id));
     }
   }, [realtimeAssignees, isCreate]);
@@ -563,14 +564,16 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       <Label>Due Date</Label>
                       <Popover modal={true}>
                         <PopoverTrigger asChild>
-                          <Button
+                        <Button
                             type="button"
                             variant="outline"
                             disabled={isReadOnly || recurrence !== "none"}
-                            className="w-full justify-start"
+                            className="w-full justify-start overflow-hidden"
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {recurrence !== "none" ? "N/A" : dueDate ? format(dueDate, "PPP") : "Pick date"}
+                            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                              {recurrence !== "none" ? "N/A" : dueDate ? format(dueDate, "PP") : "Pick date"}
+                            </span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 bg-popover z-[100]" align="start">
@@ -863,7 +866,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                             variant="outline"
                             className="w-full justify-start"
                             onClick={() => setBlockerDialogOpen(true)}
-                            disabled={isReadOnly}
                           >
                             No blocker - Click to add
                           </Button>
