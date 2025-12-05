@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
@@ -313,6 +313,17 @@ export default function CalendarView() {
     fetchUserTaskOrder();
   }, [targetUserId]);
 
+  // Helper function to check if a user is assigned to a task
+  const isTaskAssignedToUser = useCallback((task: any, userId: string | undefined) => {
+    if (!userId || !task.assignees || task.assignees.length === 0) return false;
+    
+    return task.assignees.some((a: any) => {
+      // Check both user_id directly and nested profiles.user_id
+      const assigneeUserId = a.user_id || a.profiles?.user_id;
+      return assigneeUserId === userId;
+    });
+  }, []);
+
   // Computed: Filter tasks for current view
   const { activeTasks, completedTasks, overdueTasks, availableTasks } = useMemo(() => {
     if (!tasks || !targetUserId) return { activeTasks: [], completedTasks: [], overdueTasks: [], availableTasks: [] };
@@ -331,18 +342,18 @@ export default function CalendarView() {
     // Completed tasks on agenda
     const completed = agendaTasks.filter(t => t.status === 'Completed');
     
-    // Overdue tasks not on agenda (for task pool)
+    // Overdue tasks not on agenda (for task pool) - use consistent assignee check
     const overdue = tasks.filter(t => 
       !agendaTaskIds.has(t.id) &&
       isTaskOverdue(t) &&
       t.status !== 'Completed' &&
       t.status !== 'Failed' &&
       t.status !== 'Backlog' &&
-      (userRole === 'admin' || t.assignees?.some((a: any) => a.user_id === targetUserId))
+      (userRole === 'admin' || isTaskAssignedToUser(t, targetUserId))
     );
 
     return { activeTasks: active, completedTasks: completed, overdueTasks: overdue, availableTasks: hookAvailableTasks };
-  }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole]);
+  }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole, isTaskAssignedToUser]);
 
   // Get selected user's working days - always show for current user's agenda
   const selectedUserWorkingDays = useMemo(() => {
@@ -370,7 +381,7 @@ export default function CalendarView() {
         if (t.status === 'Completed' || t.status === 'Failed') return;
         
         // Check if task is assigned to target user
-        const isAssigned = t.assignees?.some((a: any) => a.user_id === targetUserId);
+        const isAssigned = isTaskAssignedToUser(t, targetUserId);
         if (!isAssigned) return;
         
         // Check for recurring task occurrences on this day
@@ -399,7 +410,7 @@ export default function CalendarView() {
       
       return { day, date, tasks: dayTasks, isWorkingDay };
     });
-  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, targetUserId]);
+  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, targetUserId, isTaskAssignedToUser]);
 
   // Kanban columns for daily view (by priority)
   const dailyKanbanColumns = useMemo(() => {
