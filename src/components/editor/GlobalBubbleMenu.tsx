@@ -393,7 +393,7 @@ export function GlobalBubbleMenu() {
       onMouseDown={handleBubbleMouseDown}
       onPointerDown={handleBubbleMouseDown}
       onTouchStart={handleBubbleMouseDown}
-      className="fixed flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg pointer-events-auto"
+      className="bubble-menu-container fixed flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg pointer-events-auto"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,

@@ -102,8 +102,10 @@ export function RichTextEditor({
       // Increased delay to allow bubble menu interaction
       setTimeout(() => {
         const activeElement = document.activeElement;
-        // Check for bubble menu, popovers, dialogs
-        const isBubbleMenu = activeElement?.closest('[class*="bubble"]');
+        // Check for bubble menu, popovers, dialogs, portal containers
+        const isBubbleMenu = activeElement?.closest('.bubble-menu-container') || 
+                            activeElement?.closest('#bubble-menu-portal') ||
+                            activeElement?.closest('[class*="bubble"]');
         const isPopover = activeElement?.closest('[data-radix-popper-content-wrapper]');
         const isDialog = activeElement?.closest('[role="dialog"]');
         const isEditorElement = activeElement?.closest('.ProseMirror');
