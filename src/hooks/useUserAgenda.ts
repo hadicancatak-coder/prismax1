@@ -83,6 +83,7 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
   }, [effectiveUserId]);
 
   // Check if a recurring task occurs on the selected date
+  // Pass empty assignees to skip working day filtering - let the task appear on all recurrence dates
   const recurringTaskOccursOnDate = useCallback((task: any, targetDate: Date) => {
     if (!task.recurrence_rrule) return false;
     
@@ -91,12 +92,14 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
     dateEnd.setHours(23, 59, 59, 999);
     
     try {
+      // Pass empty assignees array to skip working day filtering in expansion
+      // Working day filtering should happen at the UI level based on user viewing
       const occurrences = expandRecurringTask(
         task,
         dateStart,
         dateEnd,
         completions.filter(c => c.task_id === task.id),
-        task.assignees || []
+        [] // Empty array = no working day filtering during expansion
       );
       
       return occurrences.length > 0;
@@ -248,15 +251,19 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
       
       if (error) {
         console.error('Error adding to agenda:', error.message, error.details);
-        throw error;
+        throw new Error(error.message);
       }
       
       // Log activity
       await logAgendaActivity(taskIds, 'add', effectiveUserId);
+      return taskIds.length;
     },
-    onSuccess: () => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['user-agenda', effectiveUserId, agendaDate] });
       queryClient.invalidateQueries({ queryKey: ['comments'] });
+    },
+    onError: (error) => {
+      console.error('Failed to add to agenda:', error);
     },
   });
 
