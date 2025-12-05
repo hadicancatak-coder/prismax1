@@ -145,7 +145,7 @@ function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 py-2.5 px-4 cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
+        "group flex items-center gap-3 py-2.5 px-4 cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
         isOverdue && "border-l-4 border-l-destructive"
       )}
       onClick={() => onTaskClick(task.id)}
@@ -162,16 +162,16 @@ function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
         )}
       </div>
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon-xs"
         onClick={(e) => {
           e.stopPropagation();
           onAdd([task.id]);
         }}
         title="Add to Agenda"
-        className="opacity-0 group-hover:opacity-100"
+        className="opacity-60 group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
       >
-        <Plus className="h-3.5 w-3.5 text-primary" />
+        <Plus className="h-3.5 w-3.5" />
       </Button>
     </div>
   );
@@ -259,14 +259,38 @@ export default function CalendarView() {
     agendaTasks,
     availableTasks: hookAvailableTasks,
     isLoading: agendaLoading,
-    addToAgenda,
-    removeFromAgenda,
+    addToAgenda: addToAgendaMutation,
+    removeFromAgenda: removeFromAgendaMutation,
+    isAdding: isAddingToAgenda,
   } = useUserAgenda({
     userId: targetUserId,
     date: agendaDate,
     allTasks: tasks,
     completions: []
   });
+
+  // Wrap agenda operations with toast feedback
+  const addToAgenda = (taskIds: string[]) => {
+    addToAgendaMutation(taskIds, {
+      onSuccess: () => {
+        toast({ title: `Added ${taskIds.length} task${taskIds.length > 1 ? 's' : ''} to agenda` });
+      },
+      onError: (error) => {
+        toast({ title: "Failed to add to agenda", description: String(error), variant: "destructive" });
+      }
+    });
+  };
+
+  const removeFromAgenda = (taskIds: string[]) => {
+    removeFromAgendaMutation(taskIds, {
+      onSuccess: () => {
+        toast({ title: `Moved ${taskIds.length} task${taskIds.length > 1 ? 's' : ''} to pool` });
+      },
+      onError: (error) => {
+        toast({ title: "Failed to remove from agenda", description: String(error), variant: "destructive" });
+      }
+    });
+  };
 
   // DnD sensors
   const sensors = useSensors(
@@ -320,7 +344,7 @@ export default function CalendarView() {
     return { activeTasks: active, completedTasks: completed, overdueTasks: overdue, availableTasks: hookAvailableTasks };
   }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole]);
 
-  // Get selected user's working days
+  // Get selected user's working days - always show for current user's agenda
   const selectedUserWorkingDays = useMemo(() => {
     if (!targetUserId) return null;
     const userProfile = allUsers.find(u => u.user_id === targetUserId);
@@ -335,21 +359,20 @@ export default function CalendarView() {
     
     return days.map((day, i) => {
       const date = addDays(weekStart, i);
+      // Always check working day based on target user (current user or selected user by admin)
       const isWorkingDay = isDateWorkingDay(date, selectedUserWorkingDays);
       
-      // Filter tasks for this day - only show if it's a working day for the user
+      // Filter tasks for this day
       const dayTasks = tasks?.filter(t => {
         if (!t.due_at) return false;
         if (!isSameDay(new Date(t.due_at), date)) return false;
         if (t.status === 'Completed' || t.status === 'Failed') return false;
-        // Only filter by working days if we're viewing a specific user
-        if (selectedUserId && !isWorkingDay) return false;
         return true;
       }) || [];
       
       return { day, date, tasks: dayTasks, isWorkingDay };
     });
-  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, selectedUserId]);
+  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays]);
 
   // Kanban columns for daily view (by priority)
   const dailyKanbanColumns = useMemo(() => {
@@ -637,17 +660,17 @@ export default function CalendarView() {
                       key={col.day} 
                       className={cn(
                         "min-h-[500px]",
-                        !col.isWorkingDay && selectedUserId && "opacity-50 bg-muted/30"
+                        !col.isWorkingDay && "opacity-50 bg-muted/30"
                       )}
                     >
                       <div className={cn(
                         "p-3 border-b border-border",
                         isSameDay(col.date, currentDate) && "bg-primary/10",
-                        !col.isWorkingDay && selectedUserId && "bg-muted/50"
+                        !col.isWorkingDay && "bg-muted/50"
                       )}>
                         <h3 className="font-semibold text-body-sm">{col.day}</h3>
                         <p className="text-metadata text-muted-foreground">{format(col.date, 'MMM d')}</p>
-                        {!col.isWorkingDay && selectedUserId && (
+                        {!col.isWorkingDay && (
                           <Badge variant="outline" className="text-[10px] mt-1 text-warning">Off</Badge>
                         )}
                       </div>
@@ -655,7 +678,7 @@ export default function CalendarView() {
                         <div className="space-y-2">
                           {col.tasks.length === 0 ? (
                             <p className="text-metadata text-muted-foreground text-center py-4">
-                              {!col.isWorkingDay && selectedUserId ? "Not working" : "No tasks"}
+                              {!col.isWorkingDay ? "Not working" : "No tasks"}
                             </p>
                           ) : (
                             col.tasks.map(task => (
