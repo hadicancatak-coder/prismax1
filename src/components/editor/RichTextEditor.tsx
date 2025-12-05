@@ -8,7 +8,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { setGlobalActiveEditor, clearGlobalActiveEditor } from './GlobalBubbleMenu';
+import { setGlobalActiveEditor, clearGlobalActiveEditor, registerEditor, unregisterEditor } from './GlobalBubbleMenu';
 
 interface RichTextEditorProps {
   value: string;
@@ -93,7 +93,19 @@ export function RichTextEditor({
     }
   }, [editor, autoFocus]);
 
-  // Register with global bubble menu
+  // Register editor in registry on mount (always, not just when focused)
+  useEffect(() => {
+    if (!editor) return;
+    
+    // Always register editor so it can be found by DOM lookup
+    registerEditor(editor);
+    
+    return () => {
+      unregisterEditor(editor);
+    };
+  }, [editor]);
+
+  // Register with global bubble menu for focus tracking
   useEffect(() => {
     if (!editor || disabled) return;
 
