@@ -116,7 +116,11 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={() => onOpenChange(false)}
+      >
         <DialogHeader>
           <DialogTitle>Create Blocker</DialogTitle>
           <DialogDescription>Report what's blocking this task</DialogDescription>
