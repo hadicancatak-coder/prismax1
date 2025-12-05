@@ -396,13 +396,13 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       <DialogContent 
         hideCloseButton
         className={cn(
-          "h-[90vh] max-h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
+          "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-y-auto",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
         )}
       >
-        <div className="flex h-full min-h-0">
+        <div className={cn("flex", sidePanelOpen && "min-h-[600px]")}>
           {/* Main Content */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col">
             {/* HEADER */}
             <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between gap-4">
@@ -469,7 +469,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             </div>
 
             {/* MAIN FORM */}
-            <div className="flex-1 overflow-y-auto hide-scrollbar px-6">
+            <div className="flex-1 px-6">
               <form onSubmit={handleSubmit} className="space-y-6 py-6">
                 
                 {/* === BASIC INFO === */}
