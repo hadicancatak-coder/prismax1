@@ -83,7 +83,7 @@ export const useWebIntelDeals = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('web_intel_deals')
-        .insert({ ...deal, created_by: user?.id })
+        .insert({ ...deal, created_by: user?.id, status: deal.status || 'Active' })
         .select()
         .single();
       
