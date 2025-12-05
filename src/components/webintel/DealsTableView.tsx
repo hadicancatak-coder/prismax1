@@ -1,123 +1,94 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash2, ExternalLink } from "lucide-react";
-import { WebIntelDeal } from "@/hooks/useWebIntelDeals";
 
-interface DealsTableViewProps {
-  deals: WebIntelDeal[];
-  onView: (deal: WebIntelDeal) => void;
-  onEdit: (deal: WebIntelDeal) => void;
-  onDelete: (dealId: string) => void;
-  getCampaignCount: (dealId: string) => number;
-  getUtmLinkCount: (dealId: string) => number;
-  getWebsiteName: (websiteId: string | null) => string;
+interface Deal {
+  id: string;
+  name: string;
+  website?: string | null;
+  app_name?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  created_at: string;
 }
 
-const statusColors = {
-  Active: 'bg-green-500/10 text-green-500 border-green-500/20',
-  Pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  Expired: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  Cancelled: 'bg-red-500/10 text-red-500 border-red-500/20',
-};
+interface DealsTableViewProps {
+  deals: Deal[];
+  onView: (deal: Deal) => void;
+  onEdit: (deal: Deal) => void;
+  onDelete: (dealId: string) => void;
+}
 
-export function DealsTableView({
-  deals,
-  onView,
-  onEdit,
-  onDelete,
-  getCampaignCount,
-  getUtmLinkCount,
-  getWebsiteName,
-}: DealsTableViewProps) {
+export function DealsTableView({ deals, onView, onEdit, onDelete }: DealsTableViewProps) {
   return (
-    <div className="rounded-lg border border-white/10 bg-[#1A1F2C]/50 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-white/10 hover:bg-transparent">
-            <TableHead className="text-gray-400">Status</TableHead>
-            <TableHead className="text-gray-400">Name</TableHead>
-            <TableHead className="text-gray-400">Website</TableHead>
-            <TableHead className="text-gray-400">Contact</TableHead>
-            <TableHead className="text-gray-400">Email</TableHead>
-            <TableHead className="text-gray-400">Contract</TableHead>
-            <TableHead className="text-gray-400 text-center">Campaigns</TableHead>
-            <TableHead className="text-gray-400 text-center">UTMs</TableHead>
-            <TableHead className="text-gray-400 text-right">Actions</TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Brand Name</TableHead>
+          <TableHead>Website</TableHead>
+          <TableHead>App</TableHead>
+          <TableHead>Description</TableHead>
+          <TableHead className="w-[120px]">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {deals.map((deal) => (
+          <TableRow key={deal.id} className="group">
+            <TableCell className="font-medium">{deal.name}</TableCell>
+            <TableCell>
+              {deal.website ? (
+                <a 
+                  href={deal.website.startsWith('http') ? deal.website : `https://${deal.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {deal.website.replace(/^https?:\/\//, '').slice(0, 30)}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </TableCell>
+            <TableCell>
+              {deal.app_name || <span className="text-muted-foreground">—</span>}
+            </TableCell>
+            <TableCell className="max-w-[300px] truncate">
+              {deal.description || <span className="text-muted-foreground">—</span>}
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onView(deal)}
+                  title="View details"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onEdit(deal)}
+                  title="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onDelete(deal.id)}
+                  title="Delete"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {deals.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={9} className="text-center text-gray-500 py-8">
-                No deals found
-              </TableCell>
-            </TableRow>
-          ) : (
-            deals.map((deal) => (
-              <TableRow
-                key={deal.id}
-                className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
-                onClick={() => onView(deal)}
-              >
-                <TableCell>
-                  <Badge className={statusColors[deal.status]}>
-                    {deal.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-medium text-white">{deal.name}</TableCell>
-                <TableCell className="text-gray-300">
-                  {deal.website_id ? getWebsiteName(deal.website_id) : '-'}
-                </TableCell>
-                <TableCell className="text-gray-300">{deal.contact_name || '-'}</TableCell>
-                <TableCell className="text-gray-300">
-                  {deal.contact_email || '-'}
-                </TableCell>
-                <TableCell>
-                  {deal.contract_link ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(deal.contract_link!, '_blank');
-                      }}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <span className="text-gray-500">-</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="outline">{getCampaignCount(deal.id)}</Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="outline">{getUtmLinkCount(deal.id)}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" onClick={() => onView(deal)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(deal)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDelete(deal.id)}
-                      className="text-red-500 hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

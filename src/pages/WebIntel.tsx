@@ -4,32 +4,21 @@ import { Plus } from "lucide-react";
 import { PageContainer, PageHeader, DataCard, EmptyState } from "@/components/layout";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useWebIntelDeals } from "@/hooks/useWebIntelDeals";
-import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
-import { useUtmLinks } from "@/hooks/useUtmLinks";
 import { DealsTableView } from "@/components/webintel/DealsTableView";
 import { DealFormDialog } from "@/components/webintel/DealFormDialog";
 import { DealDetailDialog } from "@/components/webintel/DealDetailDialog";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
-import { Briefcase } from "lucide-react";
+import { Handshake } from "lucide-react";
 
 export default function WebIntel() {
   const {
     deals,
     isLoading: isLoadingDeals,
-    dealCampaigns,
-    dealUtmLinks,
     createDeal,
     updateDeal,
     deleteDeal,
-    addCampaignToDeal,
-    addUtmLinkToDeal,
-    getCampaignsByDeal,
-    getUtmLinksByDeal,
   } = useWebIntelDeals();
-
-  const { data: campaigns = [] } = useUtmCampaigns();
-  const { data: utmLinks = [] } = useUtmLinks();
 
   const [dealFormDialogOpen, setDealFormDialogOpen] = useState(false);
   const [dealDetailDialogOpen, setDealDetailDialogOpen] = useState(false);
@@ -47,31 +36,15 @@ export default function WebIntel() {
     setDealDetailDialogOpen(true);
   };
 
-  const handleSaveDeal = async (dealData: any, campaignIds: string[], utmLinkIds: string[]) => {
+  const handleSaveDeal = async (dealData: any) => {
     try {
-      let dealId: string;
       if (editingDeal) {
         await updateDeal.mutateAsync({ id: editingDeal.id, ...dealData });
-        dealId = editingDeal.id;
         toast.success("Deal updated successfully");
       } else {
-        const newDeal = await createDeal.mutateAsync(dealData);
-        dealId = newDeal.id;
+        await createDeal.mutateAsync(dealData);
         toast.success("Deal created successfully");
       }
-
-      const existingCampaignIds = getCampaignsByDeal(dealId).map(dc => dc.campaign_id);
-      const campaignsToAdd = campaignIds.filter(id => !existingCampaignIds.includes(id));
-      for (const campaignId of campaignsToAdd) {
-        await addCampaignToDeal.mutateAsync({ dealId, campaignId });
-      }
-
-      const existingUtmLinkIds = getUtmLinksByDeal(dealId).map(du => du.utm_link_id);
-      const utmLinksToAdd = utmLinkIds.filter(id => !existingUtmLinkIds.includes(id));
-      for (const utmLinkId of utmLinksToAdd) {
-        await addUtmLinkToDeal.mutateAsync({ dealId, utmLinkId });
-      }
-
       setEditingDeal(null);
     } catch (error) {
       console.error("Error saving deal:", error);
@@ -98,9 +71,9 @@ export default function WebIntel() {
   return (
     <PageContainer>
       <PageHeader
-        icon={Briefcase}
-        title="Deals Management"
-        description="Track and manage partnership deals and campaigns"
+        icon={Handshake}
+        title="Brand Deals"
+        description="Track and manage potential brand collaborations and partnerships"
         actions={
           <Button onClick={() => { setEditingDeal(null); setDealFormDialogOpen(true); }} className="rounded-full">
             <Plus className="mr-2 h-4 w-4" />
@@ -116,9 +89,9 @@ export default function WebIntel() {
           </div>
         ) : deals.length === 0 ? (
           <EmptyState
-            icon={Briefcase}
-            title="No deals yet"
-            description="Create your first deal to start tracking partnerships"
+            icon={Handshake}
+            title="No brand deals yet"
+            description="Add your first potential collaboration to start tracking partnerships"
             action={{
               label: "Add Deal",
               onClick: () => { setEditingDeal(null); setDealFormDialogOpen(true); }
@@ -127,9 +100,6 @@ export default function WebIntel() {
         ) : (
           <DealsTableView
             deals={deals}
-            getCampaignCount={(dealId) => getCampaignsByDeal(dealId).length}
-            getUtmLinkCount={(dealId) => getUtmLinksByDeal(dealId).length}
-            getWebsiteName={() => 'N/A'}
             onView={handleViewDeal}
             onEdit={handleEditDeal}
             onDelete={handleDeleteDeal}
@@ -141,8 +111,6 @@ export default function WebIntel() {
         open={dealFormDialogOpen}
         onOpenChange={(open) => { setDealFormDialogOpen(open); if (!open) setEditingDeal(null); }}
         deal={editingDeal}
-        initialCampaignIds={editingDeal ? getCampaignsByDeal(editingDeal.id).map(dc => dc.campaign_id) : []}
-        initialUtmLinkIds={editingDeal ? getUtmLinksByDeal(editingDeal.id).map(du => du.utm_link_id) : []}
         onSave={handleSaveDeal}
       />
 
@@ -152,15 +120,6 @@ export default function WebIntel() {
         deal={viewingDeal}
         onEdit={() => { setDealDetailDialogOpen(false); handleEditDeal(viewingDeal); }}
         onDelete={() => { setDealDetailDialogOpen(false); handleDeleteDeal(viewingDeal?.id); }}
-        campaigns={viewingDeal ? getCampaignsByDeal(viewingDeal.id).map(dc => {
-          const campaign = campaigns.find(c => c.id === dc.campaign_id);
-          return { id: dc.campaign_id, name: campaign?.name || 'Unknown Campaign' };
-        }) : []}
-        utmLinks={viewingDeal ? getUtmLinksByDeal(viewingDeal.id).map(du => {
-          const link = utmLinks.find(l => l.id === du.utm_link_id);
-          return { id: du.utm_link_id, utm_campaign: link?.campaign_name || '', final_url: link?.base_url || '' };
-        }) : []}
-        websiteName={'N/A'}
       />
 
       <AlertDialog open={deleteDealConfirmId !== null} onOpenChange={(open) => !open && setDeleteDealConfirmId(null)}>

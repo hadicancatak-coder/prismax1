@@ -4663,12 +4663,14 @@ export type Database = {
       }
       web_intel_deals: {
         Row: {
+          app_name: string | null
           contact_email: string | null
           contact_name: string | null
           contract_link: string | null
           created_at: string | null
           created_by: string | null
           deal_value: number | null
+          description: string | null
           end_date: string | null
           entity: string | null
           id: string
@@ -4677,15 +4679,18 @@ export type Database = {
           start_date: string | null
           status: string
           updated_at: string | null
+          website: string | null
           website_id: string | null
         }
         Insert: {
+          app_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contract_link?: string | null
           created_at?: string | null
           created_by?: string | null
           deal_value?: number | null
+          description?: string | null
           end_date?: string | null
           entity?: string | null
           id?: string
@@ -4694,15 +4699,18 @@ export type Database = {
           start_date?: string | null
           status: string
           updated_at?: string | null
+          website?: string | null
           website_id?: string | null
         }
         Update: {
+          app_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contract_link?: string | null
           created_at?: string | null
           created_by?: string | null
           deal_value?: number | null
+          description?: string | null
           end_date?: string | null
           entity?: string | null
           id?: string
@@ -4711,6 +4719,7 @@ export type Database = {
           start_date?: string | null
           status?: string
           updated_at?: string | null
+          website?: string | null
           website_id?: string | null
         }
         Relationships: [

@@ -1,198 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { WebIntelDeal } from "@/hooks/useWebIntelDeals";
-import { useWebIntelSites } from "@/hooks/useWebIntelSites";
-import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
-import { useUtmLinks } from "@/hooks/useUtmLinks";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+
+interface DealFormData {
+  name: string;
+  website: string;
+  app_name: string;
+  description: string;
+  notes: string;
+}
 
 interface DealFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  deal?: WebIntelDeal;
-  onSave: (dealData: Omit<WebIntelDeal, 'id' | 'created_at' | 'updated_at' | 'created_by'>, campaignIds: string[], utmLinkIds: string[]) => void;
-  initialCampaignIds?: string[];
-  initialUtmLinkIds?: string[];
+  deal?: any;
+  onSave: (dealData: DealFormData) => void;
 }
 
-const STATUSES: ('Active' | 'Pending' | 'Expired' | 'Cancelled')[] = ['Active', 'Pending', 'Expired', 'Cancelled'];
-
-export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampaignIds = [], initialUtmLinkIds = [] }: DealFormDialogProps) {
-  const { sites } = useWebIntelSites();
-  const { data: campaigns = [] } = useUtmCampaigns();
-  const { data: utmLinks = [] } = useUtmLinks();
-
-  const [formData, setFormData] = useState({
-    name: deal?.name || '',
-    status: deal?.status || 'Active' as 'Active' | 'Pending' | 'Expired' | 'Cancelled',
-    contract_link: deal?.contract_link || '',
-    contact_email: deal?.contact_email || '',
-    contact_name: deal?.contact_name || '',
-    website_id: deal?.website_id || null,
-    entity: deal?.entity || '',
-    notes: deal?.notes || '',
-    start_date: deal?.start_date || '',
-    end_date: deal?.end_date || '',
-    deal_value: deal?.deal_value || null,
+export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDialogProps) {
+  const [formData, setFormData] = useState<DealFormData>({
+    name: '',
+    website: '',
+    app_name: '',
+    description: '',
+    notes: '',
   });
 
-  const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>(initialCampaignIds);
-  const [selectedUtmLinkIds, setSelectedUtmLinkIds] = useState<string[]>(initialUtmLinkIds);
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: deal?.name || '',
+        website: deal?.website || '',
+        app_name: deal?.app_name || '',
+        description: deal?.description || '',
+        notes: deal?.notes || '',
+      });
+    }
+  }, [open, deal]);
 
   const handleSubmit = () => {
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       return;
     }
-
-    onSave(formData, selectedCampaignIds, selectedUtmLinkIds);
+    onSave(formData);
     onOpenChange(false);
-  };
-
-  const toggleCampaign = (campaignId: string) => {
-    setSelectedCampaignIds(prev =>
-      prev.includes(campaignId)
-        ? prev.filter(id => id !== campaignId)
-        : [...prev, campaignId]
-    );
-  };
-
-  const toggleUtmLink = (utmLinkId: string) => {
-    setSelectedUtmLinkIds(prev =>
-      prev.includes(utmLinkId)
-        ? prev.filter(id => id !== utmLinkId)
-        : [...prev, utmLinkId]
-    );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{deal ? 'Edit Deal' : 'Create Deal'}</DialogTitle>
+          <DialogTitle>{deal ? 'Edit Brand Deal' : 'Add Brand Deal'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Deal Name *</Label>
+            <Label htmlFor="name">Brand Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter deal name"
+              placeholder="Enter brand or company name"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Select
-                value={formData.website_id || undefined}
-                onValueChange={(value) => setFormData({ ...formData, website_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select website" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sites.map((site) => (
-                    <SelectItem key={site.id} value={site.id}>
-                      {site.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deal_value">Cost</Label>
-              <Input
-                id="deal_value"
-                type="number"
-                value={formData.deal_value || ''}
-                onChange={(e) => setFormData({ ...formData, deal_value: e.target.value ? Number(e.target.value) : null })}
-                placeholder="Deal value"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="entity">Entity</Label>
+            <Label htmlFor="website">Website</Label>
             <Input
-              id="entity"
-              value={formData.entity}
-              onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
-              placeholder="Entity name"
+              id="website"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://example.com"
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Campaigns</Label>
-            <Command className="border rounded-lg">
-              <CommandInput placeholder="Search campaigns..." />
-              <CommandList className="max-h-[200px]">
-                <CommandEmpty>No campaigns found</CommandEmpty>
-                <CommandGroup>
-                  {campaigns.map((campaign) => (
-                    <CommandItem
-                      key={campaign.id}
-                      onSelect={() => toggleCampaign(campaign.id)}
-                      className="flex items-center gap-2"
-                    >
-                      <Checkbox
-                        checked={selectedCampaignIds.includes(campaign.id)}
-                        onCheckedChange={() => toggleCampaign(campaign.id)}
-                      />
-                      <span className="flex-1">{campaign.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-            {selectedCampaignIds.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {selectedCampaignIds.map((id) => {
-                  const campaign = campaigns.find((c) => c.id === id);
-                  return campaign ? (
-                    <Badge key={id} variant="secondary" className="gap-1">
-                      {campaign.name}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => toggleCampaign(id)}
-                      />
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            )}
+            <Label htmlFor="app_name">App</Label>
+            <Input
+              id="app_name"
+              value={formData.app_name}
+              onChange={(e) => setFormData({ ...formData, app_name: e.target.value })}
+              placeholder="App name (if applicable)"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief description of the brand and potential collaboration"
+              rows={3}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Additional notes, contact info, etc."
+              rows={3}
+            />
           </div>
         </div>
 
@@ -200,8 +114,8 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave, initialCampai
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            {deal ? 'Update Deal' : 'Create Deal'}
+          <Button onClick={handleSubmit} disabled={!formData.name.trim()}>
+            {deal ? 'Update' : 'Add Deal'}
           </Button>
         </DialogFooter>
       </DialogContent>
