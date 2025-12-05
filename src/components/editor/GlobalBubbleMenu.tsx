@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Bold,
@@ -49,23 +50,23 @@ export function clearGlobalActiveEditor(editor: any) {
   }
 }
 
-// Find nearest scroll container
-function findScrollParent(element: HTMLElement | null): HTMLElement {
-  if (!element) return document.documentElement;
-  
-  let parent = element.parentElement;
-  while (parent) {
-    const overflowY = window.getComputedStyle(parent).overflowY;
-    const overflowX = window.getComputedStyle(parent).overflowX;
-    if (
-      (overflowY === 'auto' || overflowY === 'scroll' || overflowX === 'auto' || overflowX === 'scroll') &&
-      parent.scrollHeight > parent.clientHeight
-    ) {
-      return parent;
-    }
-    parent = parent.parentElement;
+// Create or get portal container
+function getPortalContainer(): HTMLElement {
+  let container = document.getElementById('bubble-menu-portal');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'bubble-menu-portal';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '0';
+    container.style.height = '0';
+    container.style.overflow = 'visible';
+    container.style.zIndex = '99999';
+    container.style.pointerEvents = 'none';
+    document.body.appendChild(container);
   }
-  return document.documentElement;
+  return container;
 }
 
 export function GlobalBubbleMenu() {
@@ -75,10 +76,19 @@ export function GlobalBubbleMenu() {
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
   const [activeEditor, setActiveEditor] = useState<any>(null);
   const [savedRange, setSavedRange] = useState<Range | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   
   const bubbleRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout>();
   const scrollTimerRef = useRef<NodeJS.Timeout>();
+
+  // Initialize portal container
+  useEffect(() => {
+    setPortalContainer(getPortalContainer());
+    return () => {
+      // Don't remove the container as other instances might use it
+    };
+  }, []);
 
   // Register update callback
   useEffect(() => {
@@ -369,7 +379,7 @@ export function GlobalBubbleMenu() {
 
   const currentActiveEditor = activeEditor || globalActiveEditor;
   
-  if (!show || !currentActiveEditor) return null;
+  if (!show || !currentActiveEditor || !portalContainer) return null;
 
   // Prevent bubble menu clicks from closing it
   const handleBubbleMouseDown = (e: React.MouseEvent | React.PointerEvent | React.TouchEvent) => {
@@ -377,93 +387,98 @@ export function GlobalBubbleMenu() {
     e.stopPropagation();
   };
 
+  const bubbleMenu = (
+    <div
+      ref={bubbleRef}
+      onMouseDown={handleBubbleMouseDown}
+      onPointerDown={handleBubbleMouseDown}
+      onTouchStart={handleBubbleMouseDown}
+      className="fixed flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg pointer-events-auto"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        zIndex: 99999,
+      }}
+    >
+      <BubbleButton
+        onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleBold().run())}
+        isActive={currentActiveEditor.isActive('bold')}
+        title="Bold (Ctrl+B)"
+      >
+        <Bold className="h-4 w-4" />
+      </BubbleButton>
+
+      <BubbleButton
+        onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleItalic().run())}
+        isActive={currentActiveEditor.isActive('italic')}
+        title="Italic (Ctrl+I)"
+      >
+        <Italic className="h-4 w-4" />
+      </BubbleButton>
+
+      <BubbleButton
+        onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleUnderline().run())}
+        isActive={currentActiveEditor.isActive('underline')}
+        title="Underline (Ctrl+U)"
+      >
+        <UnderlineIcon className="h-4 w-4" />
+      </BubbleButton>
+
+      <BubbleButton
+        onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleStrike().run())}
+        isActive={currentActiveEditor.isActive('strike')}
+        title="Strikethrough"
+      >
+        <Strikethrough className="h-4 w-4" />
+      </BubbleButton>
+
+      <div className="w-px h-6 bg-border mx-1" />
+
+      <BubbleButton
+        onClick={handleLinkClick}
+        isActive={currentActiveEditor.isActive('link')}
+        title={currentActiveEditor.isActive('link') ? 'Remove Link' : 'Add Link (Ctrl+K)'}
+      >
+        <LinkIcon className="h-4 w-4" />
+      </BubbleButton>
+
+      <Popover open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            title="Text Color"
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2" align="center" style={{ zIndex: 100000 }}>
+          <div className="grid grid-cols-4 gap-1">
+            {COLORS.map((color) => (
+              <button
+                key={color.name}
+                type="button"
+                onClick={() => handleColorChange(color.value)}
+                className={cn(
+                  'h-8 w-8 rounded border border-border hover:scale-110 transition-transform',
+                  !color.value && 'bg-background'
+                )}
+                style={{ backgroundColor: color.value || 'transparent' }}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
   return (
     <>
-      <div
-        ref={bubbleRef}
-        onMouseDown={handleBubbleMouseDown}
-        onPointerDown={handleBubbleMouseDown}
-        onTouchStart={handleBubbleMouseDown}
-        className="fixed z-[10000] flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg pointer-events-auto"
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-        }}
-      >
-        <BubbleButton
-          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleBold().run())}
-          isActive={currentActiveEditor.isActive('bold')}
-          title="Bold (Ctrl+B)"
-        >
-          <Bold className="h-4 w-4" />
-        </BubbleButton>
-
-        <BubbleButton
-          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleItalic().run())}
-          isActive={currentActiveEditor.isActive('italic')}
-          title="Italic (Ctrl+I)"
-        >
-          <Italic className="h-4 w-4" />
-        </BubbleButton>
-
-        <BubbleButton
-          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleUnderline().run())}
-          isActive={currentActiveEditor.isActive('underline')}
-          title="Underline (Ctrl+U)"
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </BubbleButton>
-
-        <BubbleButton
-          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleStrike().run())}
-          isActive={currentActiveEditor.isActive('strike')}
-          title="Strikethrough"
-        >
-          <Strikethrough className="h-4 w-4" />
-        </BubbleButton>
-
-        <div className="w-px h-6 bg-border mx-1" />
-
-        <BubbleButton
-          onClick={handleLinkClick}
-          isActive={currentActiveEditor.isActive('link')}
-          title={currentActiveEditor.isActive('link') ? 'Remove Link' : 'Add Link (Ctrl+K)'}
-        >
-          <LinkIcon className="h-4 w-4" />
-        </BubbleButton>
-
-        <Popover open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Text Color"
-            >
-              <Palette className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-2" align="center">
-            <div className="grid grid-cols-4 gap-1">
-              {COLORS.map((color) => (
-                <button
-                  key={color.name}
-                  type="button"
-                  onClick={() => handleColorChange(color.value)}
-                  className={cn(
-                    'h-8 w-8 rounded border border-border hover:scale-110 transition-transform',
-                    !color.value && 'bg-background'
-                  )}
-                  style={{ backgroundColor: color.value || 'transparent' }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-
+      {createPortal(bubbleMenu, portalContainer)}
+      
       <EditorLinkDialog
         open={linkDialogOpen}
         onOpenChange={setLinkDialogOpen}
