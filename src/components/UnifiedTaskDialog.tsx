@@ -489,8 +489,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
             </div>
 
             {/* MAIN FORM */}
-            <div className="flex-1 px-6">
-              <form onSubmit={handleSubmit} className="space-y-6 py-6">
+            <div className="flex-1 overflow-y-auto hide-scrollbar px-6">
+              <form onSubmit={handleSubmit} className="space-y-6 py-6 pb-2">
                 
                 {/* === BASIC INFO === */}
                 <div className="space-y-4">
