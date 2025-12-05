@@ -248,11 +248,11 @@ export default function SavedElementsPage() {
               <TabsTrigger value="search" asChild>
                 <Link to="/ads/search">Search</Link>
               </TabsTrigger>
-              <TabsTrigger value="display" asChild>
-                <Link to="/ads/display">Display</Link>
-              </TabsTrigger>
               <TabsTrigger value="library" asChild>
                 <Link to="/ads/library">Library</Link>
+              </TabsTrigger>
+              <TabsTrigger value="captions" asChild>
+                <Link to="/ads/captions">Captions</Link>
               </TabsTrigger>
             </TabsList>
           </Tabs>

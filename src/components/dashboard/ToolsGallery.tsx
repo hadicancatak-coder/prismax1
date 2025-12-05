@@ -19,14 +19,6 @@ const MOST_USED_TOOLS = [
     color: "#8B5CF6",
   },
   {
-    id: "google-sheets",
-    name: "Google Sheets",
-    description: "Connect and manage Google Sheets reports",
-    route: "/operations/custom-reports",
-    icon: "BarChart3",
-    color: "#10B981",
-  },
-  {
     id: "status-log",
     name: "Status Log",
     description: "Team status updates and activity tracking",
@@ -35,20 +27,28 @@ const MOST_USED_TOOLS = [
     color: "#F59E0B",
   },
   {
-    id: "display-planner",
-    name: "Display Planner",
-    description: "Create and organize display advertisements",
-    route: "/ads/display",
-    icon: "Monitor",
-    color: "#EF4444",
-  },
-  {
     id: "location-intel",
     name: "Location Intel",
     description: "Geographic location intelligence and mapping",
     route: "/location-intelligence",
     icon: "MapPin",
     color: "#06B6D4",
+  },
+  {
+    id: "captions",
+    name: "Caption Library",
+    description: "Manage and reuse ad copy across campaigns",
+    route: "/ads/captions",
+    icon: "FileText",
+    color: "#10B981",
+  },
+  {
+    id: "tasks",
+    name: "Tasks",
+    description: "Track and manage team tasks and deadlines",
+    route: "/tasks",
+    icon: "CheckSquare",
+    color: "#EF4444",
   },
 ];
 
