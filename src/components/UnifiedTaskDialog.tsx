@@ -77,6 +77,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
+  const [blocker, setBlocker] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { assignees: realtimeAssignees, refetch: refetchAssignees } = useRealtimeAssignees(
@@ -104,6 +105,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     if (open && !isCreate && taskId) {
       fetchTask();
       fetchComments();
+      fetchBlocker();
     }
   }, [open, taskId, isCreate]);
 
@@ -230,6 +232,24 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setUsers(data || []);
   };
 
+  const fetchBlocker = async () => {
+    if (!taskId) return;
+    
+    const { data, error } = await supabase
+      .from("blockers")
+      .select("*")
+      .eq("task_id", taskId)
+      .eq("resolved", false)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching blocker:", error);
+      return;
+    }
+    
+    setBlocker(data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -354,7 +374,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setRecurrenceDaysOfWeek([]);
     setRecurrenceDayOfMonth(null);
     setSelectedAssignees([]);
-    // attachedAds removed
+    setBlocker(null);
     setWorkingDaysWarning(null);
     setSidePanelOpen(false);
     setAdvancedOpen(false);
@@ -395,23 +415,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         hideCloseButton
-        onPointerDownOutside={(e) => {
-          // Allow closing only when clicking the overlay (outside)
-          const target = e.target as HTMLElement;
-          if (target.closest('[role="dialog"]')) {
-            e.preventDefault();
-          }
-        }}
-        onInteractOutside={(e) => {
-          // Prevent closing on interactions inside dialog (like popovers, selects)
-          const target = e.target as HTMLElement;
-          if (target.closest('[role="listbox"]') || 
-              target.closest('[role="menu"]') || 
-              target.closest('[data-radix-popper-content-wrapper]') ||
-              target.closest('.mention-dropdown')) {
-            e.preventDefault();
-          }
-        }}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={() => onOpenChange(false)}
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-y-auto",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
@@ -821,15 +826,42 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {!isCreate && taskId && (
                       <div className="space-y-2">
                         <Label>Blocker</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => setBlockerDialogOpen(true)}
-                          disabled={isReadOnly}
-                        >
-                          {status === "Blocked" ? "View/Update Blocker" : "No blocker"}
-                        </Button>
+                        {blocker ? (
+                          <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-body-sm font-medium text-destructive">
+                                {blocker.title || "Blocked"}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setBlockerDialogOpen(true)}
+                                className="h-7 text-metadata"
+                              >
+                                {isReadOnly ? "View" : "Edit"}
+                              </Button>
+                            </div>
+                            {blocker.description && (
+                              <p className="text-body-sm text-muted-foreground">{blocker.description}</p>
+                            )}
+                            {blocker.stuck_reason && (
+                              <p className="text-metadata text-muted-foreground">
+                                <strong>Reason:</strong> {blocker.stuck_reason}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => setBlockerDialogOpen(true)}
+                            disabled={isReadOnly}
+                          >
+                            No blocker - Click to add
+                          </Button>
+                        )}
                       </div>
                     )}
                   </CollapsibleContent>
@@ -1002,7 +1034,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
           )}
         </div>
 
-        {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} />}
+        {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} onSuccess={fetchBlocker} />}
       </DialogContent>
     </Dialog>
   );
