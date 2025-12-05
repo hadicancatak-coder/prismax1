@@ -288,28 +288,40 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                   </Select>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-4 px-3">
-                  {task.assignees && task.assignees.length > 0 ? (
-                    <div className="flex items-center gap-1">
-                      {task.assignees.slice(0, 3).map((assignee: any) => (
-                        <Avatar key={assignee.id} className="h-6 w-6 border border-border">
-                          <AvatarImage src={assignee.avatar_url} />
-                          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                            {assignee.name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {task.assignees.length > 3 && (
-                        <span className="text-[11px] text-muted-foreground ml-1">
-                          +{task.assignees.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-[13px] text-muted-foreground">-</span>
-                  )}
+                  <div 
+                    className="cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                    onClick={() => handleRowClick(task.id)}
+                    title="Click to edit assignees"
+                  >
+                    {task.assignees && task.assignees.length > 0 ? (
+                      <div className="flex items-center gap-1">
+                        {task.assignees.slice(0, 3).map((assignee: any) => (
+                          <Avatar key={assignee.id} className="h-6 w-6 border border-border">
+                            <AvatarImage src={assignee.avatar_url} />
+                            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                              {assignee.name?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {task.assignees.length > 3 && (
+                          <span className="text-[11px] text-muted-foreground ml-1">
+                            +{task.assignees.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[13px] text-muted-foreground hover:text-foreground">+ Add</span>
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell className="text-[13px] text-foreground py-4 px-3">
-                  {task.due_at ? format(new Date(task.due_at), "MMM dd") : "-"}
+                <TableCell className="py-4 px-3" onClick={(e) => e.stopPropagation()}>
+                  <div 
+                    className="text-[13px] text-foreground cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                    onClick={() => handleRowClick(task.id)}
+                    title="Click to edit due date"
+                  >
+                    {task.due_at ? format(new Date(task.due_at), "MMM dd") : <span className="text-muted-foreground hover:text-foreground">+ Add</span>}
+                  </div>
                 </TableCell>
                 <TableCell className="py-4 px-2">
                   <DropdownMenu 

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ENTITIES } from "@/lib/constants";
-import { AttachedAdsSection } from "@/components/tasks/AttachedAdsSection";
+// AttachedAdsSection removed
 import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRealtimeAssignees } from "@/hooks/useRealtimeAssignees";
@@ -67,7 +67,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const [recurrence, setRecurrence] = useState<string>("none");
   const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | null>(null);
-  const [attachedAds, setAttachedAds] = useState<any[]>([]);
+  // attachedAds removed
   const [workingDaysWarning, setWorkingDaysWarning] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -354,7 +354,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setRecurrenceDaysOfWeek([]);
     setRecurrenceDayOfMonth(null);
     setSelectedAssignees([]);
-    setAttachedAds([]);
+    // attachedAds removed
     setWorkingDaysWarning(null);
     setSidePanelOpen(false);
     setAdvancedOpen(false);
@@ -604,8 +604,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                   </div>
                 </div>
 
-                {/* === ADVANCED SETTINGS (Collapsed) - Only show in Edit/Create mode === */}
-                {!isReadOnly && (
+                {/* === ADVANCED SETTINGS (Collapsed) - Show in all modes === */}
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                   <CollapsibleTrigger asChild>
                     <Button 
@@ -628,81 +627,99 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {/* Countries/Entity */}
                     <div className="space-y-2">
                       <Label>Countries (Entity)</Label>
-                      <Popover modal={true}>
-                        <PopoverTrigger asChild disabled={isReadOnly}>
-                          <Button variant="outline" className="w-full justify-start">
-                            {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 bg-popover z-[100]" align="start">
-                          <ScrollArea className="h-[280px] hide-scrollbar">
-                            <div className="space-y-2 p-2 pr-4">
-                              {ENTITIES.map((ent) => (
-                                <div key={ent} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`entity-${ent}`}
-                                    checked={entities.includes(ent)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setEntities([...entities, ent]);
-                                      } else {
-                                        setEntities(entities.filter(c => c !== ent));
-                                      }
-                                    }}
-                                    disabled={isReadOnly}
-                                  />
-                                  <Label htmlFor={`entity-${ent}`} className="text-body-sm cursor-pointer">
-                                    {ent}
-                                  </Label>
+                      {isReadOnly ? (
+                        entities.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {entities.map((ent) => (
+                              <Badge key={ent} variant="secondary" className="text-metadata">
+                                {ent}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-body-sm text-muted-foreground">No countries selected</p>
+                        )
+                      ) : (
+                        <>
+                          <Popover modal={true}>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-start">
+                                {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80 bg-popover z-[9999]" align="start" sideOffset={4}>
+                              <ScrollArea className="h-[280px] hide-scrollbar">
+                                <div className="space-y-2 p-2 pr-4">
+                                  {ENTITIES.map((ent) => (
+                                    <div key={ent} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`entity-${ent}`}
+                                        checked={entities.includes(ent)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            setEntities([...entities, ent]);
+                                          } else {
+                                            setEntities(entities.filter(c => c !== ent));
+                                          }
+                                        }}
+                                      />
+                                      <Label htmlFor={`entity-${ent}`} className="text-body-sm cursor-pointer">
+                                        {ent}
+                                      </Label>
+                                    </div>
+                                  ))}
                                 </div>
+                              </ScrollArea>
+                            </PopoverContent>
+                          </Popover>
+                          {entities.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {entities.map((ent) => (
+                                <Badge key={ent} variant="secondary" className="text-metadata">
+                                  {ent}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEntities(entities.filter(c => c !== ent))}
+                                    className="ml-1 hover:text-destructive"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
                               ))}
                             </div>
-                          </ScrollArea>
-                        </PopoverContent>
-                      </Popover>
-                      {entities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {entities.map((ent) => (
-                            <Badge key={ent} variant="secondary" className="text-metadata">
-                              {ent}
-                              {!isReadOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() => setEntities(entities.filter(c => c !== ent))}
-                                  className="ml-1 hover:text-destructive"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              )}
-                            </Badge>
-                          ))}
-                        </div>
+                          )}
+                        </>
                       )}
                     </div>
 
                     {/* Recurrence */}
                     <div className="space-y-2">
                       <Label>Recurring Task</Label>
-                      <Select 
-                        value={recurrence} 
-                        onValueChange={(value) => {
-                          setRecurrence(value);
-                          if (value !== "none") setDueDate(undefined);
-                          if (value !== "weekly") setRecurrenceDaysOfWeek([]);
-                          if (value !== "monthly") setRecurrenceDayOfMonth(null);
-                        }}
-                        disabled={isReadOnly}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Recurrence</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isReadOnly ? (
+                        <p className="text-body-sm text-muted-foreground">
+                          {recurrence === 'none' ? 'No Recurrence' : recurrence === 'daily' ? 'Daily' : recurrence === 'weekly' ? 'Weekly' : 'Monthly'}
+                        </p>
+                      ) : (
+                        <Select 
+                          value={recurrence} 
+                          onValueChange={(value) => {
+                            setRecurrence(value);
+                            if (value !== "none") setDueDate(undefined);
+                            if (value !== "weekly") setRecurrenceDaysOfWeek([]);
+                            if (value !== "monthly") setRecurrenceDayOfMonth(null);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Recurrence</SelectItem>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
 
                     {/* Weekly Recurrence Days */}
@@ -752,15 +769,18 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {recurrence === "monthly" && (
                       <div className="space-y-2">
                         <Label>Day of Month</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={recurrenceDayOfMonth || ""}
-                          onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || null)}
-                          placeholder="Day of month (1-31)"
-                          disabled={isReadOnly}
-                        />
+                        {isReadOnly ? (
+                          <p className="text-body-sm text-muted-foreground">{recurrenceDayOfMonth || 'Not set'}</p>
+                        ) : (
+                          <Input
+                            type="number"
+                            min="1"
+                            max="31"
+                            value={recurrenceDayOfMonth || ""}
+                            onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || null)}
+                            placeholder="Day of month (1-31)"
+                          />
+                        )}
                       </div>
                     )}
 
@@ -776,19 +796,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {!isCreate && taskId && (
                       <div className="space-y-2">
                         <Label>Checklist</Label>
-                        <TaskChecklistSection taskId={taskId} />
-                      </div>
-                    )}
-
-                    {/* Attached Ads (View/Edit only) */}
-                    {!isCreate && taskId && (
-                      <div className="space-y-2">
-                        <Label>Attached Ads</Label>
-                        <AttachedAdsSection 
-                          attachedAds={attachedAds} 
-                          onAdsChange={setAttachedAds}
-                          editable={!isReadOnly}
-                        />
+                        <TaskChecklistSection taskId={taskId} readOnly={isReadOnly} />
                       </div>
                     )}
 
@@ -809,7 +817,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     )}
                   </CollapsibleContent>
                 </Collapsible>
-                )}
               </form>
             </div>
 

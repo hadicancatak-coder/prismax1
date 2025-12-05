@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,10 @@ interface ChecklistItem {
 interface TaskChecklistSectionProps {
   taskId: string;
   onUpdate?: () => void;
+  readOnly?: boolean;
 }
 
-export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionProps) {
+export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: TaskChecklistSectionProps) {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +71,7 @@ export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionP
   };
 
   const addItem = async () => {
-    if (!newItemText.trim()) return;
+    if (!newItemText.trim() || readOnly) return;
 
     const newItem: ChecklistItem = {
       id: crypto.randomUUID(),
@@ -83,6 +84,7 @@ export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionP
   };
 
   const toggleItem = async (itemId: string) => {
+    // Allow toggling even in readOnly mode for completing items
     const updated = checklist.map((item) =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
     );
@@ -90,12 +92,17 @@ export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionP
   };
 
   const removeItem = async (itemId: string) => {
+    if (readOnly) return;
     const updated = checklist.filter((item) => item.id !== itemId);
     await saveChecklist(updated);
   };
 
   const completedCount = checklist.filter((item) => item.completed).length;
   const progress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
+
+  if (isLoading) {
+    return <div className="text-sm text-muted-foreground">Loading checklist...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -132,34 +139,42 @@ export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionP
             >
               {item.text}
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => removeItem(item.id)}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            {!readOnly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => removeItem(item.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <Input
-          placeholder="Add checklist item..."
-          value={newItemText}
-          onChange={(e) => setNewItemText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addItem();
-            }
-          }}
-        />
-        <Button onClick={addItem} size="sm">
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add checklist item..."
+            value={newItemText}
+            onChange={(e) => setNewItemText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem();
+              }
+            }}
+          />
+          <Button onClick={addItem} size="sm">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {readOnly && checklist.length === 0 && (
+        <p className="text-sm text-muted-foreground">No checklist items</p>
+      )}
     </div>
   );
 }
