@@ -31,6 +31,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { calculateAdStrength } from "@/lib/adQualityScore";
 import { ENTITIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Import dialogs
 import { CreateCampaignDialog } from "@/components/ads/CreateCampaignDialog";
@@ -246,38 +247,44 @@ export function SearchPlannerStructurePanel({
               const isExpanded = expandedCampaigns.has(campaign.id);
               const totalAds = getTotalAdsForCampaign(campaign.id);
 
+                const handleCopyCampaignName = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(campaign.name);
+                  toast.success(`Copied: ${campaign.name}`);
+                };
+
                 return (
                 <Collapsible key={campaign.id} open={isExpanded}>
-                  {/* Campaign Row - entire row is clickable for expand/collapse */}
+                  {/* Campaign Row - click to copy name */}
                   <div 
                     className={cn(
                       "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
                       "hover:bg-card-hover border border-transparent hover:border-border active:scale-[0.99]"
                     )}
-                    onClick={() => toggleCampaign(campaign.id)}
+                    onClick={handleCopyCampaignName}
                   >
-                    {/* Chevron indicator */}
-                    <div className="p-xs">
+                    {/* Chevron - expand/collapse only */}
+                    <button
+                      className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCampaign(campaign.id);
+                      }}
+                    >
                       {isExpanded ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
-                    </div>
+                    </button>
 
-                    {/* Campaign name - click to select (stops propagation) */}
-                    <button
-                      className="flex items-center gap-xs flex-1 text-left cursor-pointer active:scale-[0.98] transition-smooth"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCampaignClick?.(campaign, selectedEntity);
-                      }}
-                    >
+                    {/* Campaign name */}
+                    <div className="flex items-center gap-xs flex-1">
                       <Folder className="h-4 w-4 text-primary/70 flex-shrink-0" />
-                      <span className="flex-1 text-body-sm font-medium text-foreground truncate hover:text-primary transition-smooth">
+                      <span className="flex-1 text-body-sm font-medium text-foreground truncate">
                         {campaign.name}
                       </span>
-                    </button>
+                    </div>
 
                     {/* Campaign Stats */}
                     <Badge variant="secondary" className="text-metadata bg-muted">
