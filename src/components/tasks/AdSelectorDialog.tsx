@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,9 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
             <Megaphone className="h-5 w-5" />
             Select Ads to Attach
           </DialogTitle>
+          <DialogDescription>
+            Search and select ads to attach to this task
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

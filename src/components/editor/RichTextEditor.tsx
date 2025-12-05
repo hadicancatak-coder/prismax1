@@ -6,7 +6,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { setGlobalActiveEditor, clearGlobalActiveEditor, registerEditor, unregisterEditor } from './GlobalBubbleMenu';
 
@@ -105,6 +105,13 @@ export function RichTextEditor({
     };
   }, [editor]);
 
+  // Handle mouseup to explicitly set active editor (backup for focus issues in dialogs)
+  const handleMouseUp = useCallback(() => {
+    if (editor && !disabled) {
+      setGlobalActiveEditor(editor);
+    }
+  }, [editor, disabled]);
+
   // Register with global bubble menu for focus tracking
   useEffect(() => {
     if (!editor || disabled) return;
@@ -143,7 +150,10 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={cn('border border-input rounded-md bg-background', className)}>
+    <div 
+      className={cn('border border-input rounded-md bg-background', className)}
+      onMouseUp={handleMouseUp}
+    >
       <div
         className="px-3 py-2"
         style={{ minHeight }}
