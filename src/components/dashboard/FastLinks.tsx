@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { CheckSquare, Search, Eye, Link2, FileText, MapPin } from "lucide-react";
+import { CheckSquare, Search, Link2, FileText, MapPin } from "lucide-react";
 
 const links = [
   {
@@ -18,10 +18,10 @@ const links = [
     color: "text-green-600",
   },
   {
-    title: "Display Ads",
-    description: "Create display ads",
-    icon: Eye,
-    url: "/ads/display",
+    title: "Captions",
+    description: "Ad copy library",
+    icon: FileText,
+    url: "/ads/captions",
     color: "text-purple-600",
   },
   {
@@ -30,13 +30,6 @@ const links = [
     icon: Link2,
     url: "/utm-planner",
     color: "text-orange-600",
-  },
-  {
-    title: "Copy Writer",
-    description: "Manage ad copy",
-    icon: FileText,
-    url: "/copywriter",
-    color: "text-pink-600",
   },
   {
     title: "Location Intel",
