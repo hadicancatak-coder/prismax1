@@ -93,6 +93,13 @@ export function RichTextEditor({
     }
   }, [editor, autoFocus]);
 
+  // Update editable state when disabled prop changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!disabled);
+    }
+  }, [editor, disabled]);
+
   // Register editor in registry on mount (always, not just when focused)
   useEffect(() => {
     if (!editor) return;
