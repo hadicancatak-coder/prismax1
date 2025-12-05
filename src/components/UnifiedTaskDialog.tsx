@@ -416,13 +416,13 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       <DialogContent 
         hideCloseButton
         className={cn(
-          "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-y-auto",
+          "max-h-[90vh] h-[85vh] flex flex-col p-0 transition-smooth",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
         )}
       >
-        <div className={cn("flex", sidePanelOpen && "min-h-[600px]")}>
+        <div className={cn("flex h-full overflow-hidden", sidePanelOpen && "min-h-[600px]")}>
           {/* Main Content */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* HEADER */}
             <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between gap-4">
@@ -667,11 +667,18 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 bg-popover z-[9999]" align="start" sideOffset={4}>
-                              <ScrollArea className="h-[280px] hide-scrollbar">
-                                <div className="space-y-2 p-2 pr-4">
+                            <PopoverContent 
+                              className="w-80 bg-popover border border-border shadow-lg z-[9999]" 
+                              align="start" 
+                              side="bottom"
+                              sideOffset={4}
+                              collisionPadding={16}
+                              avoidCollisions={true}
+                            >
+                              <ScrollArea className="h-[200px] hide-scrollbar">
+                                <div className="space-y-2 p-1">
                                   {ENTITIES.map((ent) => (
-                                    <div key={ent} className="flex items-center space-x-2">
+                                    <div key={ent} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/50 transition-smooth">
                                       <Checkbox
                                         id={`entity-${ent}`}
                                         checked={entities.includes(ent)}
@@ -683,7 +690,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                           }
                                         }}
                                       />
-                                      <Label htmlFor={`entity-${ent}`} className="text-body-sm cursor-pointer">
+                                      <Label htmlFor={`entity-${ent}`} className="text-body-sm cursor-pointer flex-1">
                                         {ent}
                                       </Label>
                                     </div>
