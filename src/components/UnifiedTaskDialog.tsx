@@ -395,6 +395,23 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         hideCloseButton
+        onPointerDownOutside={(e) => {
+          // Allow closing only when clicking the overlay (outside)
+          const target = e.target as HTMLElement;
+          if (target.closest('[role="dialog"]')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          // Prevent closing on interactions inside dialog (like popovers, selects)
+          const target = e.target as HTMLElement;
+          if (target.closest('[role="listbox"]') || 
+              target.closest('[role="menu"]') || 
+              target.closest('[data-radix-popper-content-wrapper]') ||
+              target.closest('.mention-dropdown')) {
+            e.preventDefault();
+          }
+        }}
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-y-auto",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
