@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -200,6 +201,9 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           <DialogTitle>
             {isEditing ? "Edit Caption" : "Create Caption"}
           </DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Modify caption content, entities, and status" : "Add a new caption to the library"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

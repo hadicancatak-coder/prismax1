@@ -264,9 +264,21 @@ export function GlobalBubbleMenu() {
       }, 100);
     };
 
+    // Handle mouseup as backup trigger for bubble menu in dialogs
+    const handleMouseUp = (e: MouseEvent) => {
+      const target = e.target as Element;
+      // Only trigger if inside a ProseMirror editor
+      if (target?.closest('.ProseMirror')) {
+        setTimeout(updatePosition, 50);
+      }
+    };
+
     document.addEventListener('selectionchange', handleSelectionChange);
+    document.addEventListener('mouseup', handleMouseUp);
+    
     return () => {
       document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener('mouseup', handleMouseUp);
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
