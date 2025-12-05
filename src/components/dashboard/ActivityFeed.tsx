@@ -40,7 +40,7 @@ export function ActivityFeed() {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="card-glow hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] transition-all duration-300 p-6">
       <div className="flex items-center gap-2 mb-6">
         <Activity className="h-5 w-5 text-muted-foreground" />
         <h2 className="text-section-title">Recent Activity</h2>
