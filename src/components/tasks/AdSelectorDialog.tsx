@@ -72,7 +72,6 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-3xl max-h-[80vh]"
-        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
