@@ -220,7 +220,6 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
           "max-h-[90vh] p-0 gap-0 transition-all duration-300",
           showComments ? "max-w-[1400px]" : "max-w-4xl"
         )}
-        onPointerDownOutside={(e) => e.preventDefault()}
       >
         <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}

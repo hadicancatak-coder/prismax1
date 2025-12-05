@@ -415,8 +415,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         hideCloseButton
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={() => onOpenChange(false)}
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-y-auto",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
