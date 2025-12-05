@@ -247,21 +247,14 @@ export function SearchPlannerStructurePanel({
               const isExpanded = expandedCampaigns.has(campaign.id);
               const totalAds = getTotalAdsForCampaign(campaign.id);
 
-                const handleCopyCampaignName = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(campaign.name);
-                  toast.success(`Copied: ${campaign.name}`);
-                };
-
                 return (
                 <Collapsible key={campaign.id} open={isExpanded}>
-                  {/* Campaign Row - click to copy name */}
+                  {/* Campaign Row */}
                   <div 
                     className={cn(
-                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
-                      "hover:bg-card-hover border border-transparent hover:border-border active:scale-[0.99]"
+                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
+                      "hover:bg-card-hover border border-transparent hover:border-border"
                     )}
-                    onClick={handleCopyCampaignName}
                   >
                     {/* Chevron - expand/collapse only */}
                     <button
