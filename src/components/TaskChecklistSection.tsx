@@ -131,6 +131,7 @@ export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: Tas
             <Checkbox
               checked={item.completed}
               onCheckedChange={() => toggleItem(item.id)}
+              onClick={(e) => e.stopPropagation()}
             />
             <span
               className={`flex-1 text-sm ${
@@ -141,10 +142,15 @@ export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: Tas
             </span>
             {!readOnly && (
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6"
-                onClick={() => removeItem(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  removeItem(item.id);
+                }}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -154,7 +160,7 @@ export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: Tas
       </div>
 
       {!readOnly && (
-        <div className="flex gap-2">
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
           <Input
             placeholder="Add checklist item..."
             value={newItemText}
@@ -162,11 +168,20 @@ export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: Tas
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
+                e.stopPropagation();
                 addItem();
               }
             }}
           />
-          <Button onClick={addItem} size="sm">
+          <Button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              addItem();
+            }} 
+            size="sm"
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
