@@ -375,6 +375,9 @@ export function GlobalBubbleMenu() {
     const currentEditor = activeEditor || globalActiveEditor;
     if (!currentEditor) return;
     
+    // Save selection before opening dialog
+    saveSelection();
+    
     const previousUrl = currentEditor.getAttributes('link').href;
     if (previousUrl) {
       applyFormatting(() => currentEditor.chain().focus().unsetLink().run());
@@ -442,7 +445,20 @@ export function GlobalBubbleMenu() {
 
   const currentActiveEditor = activeEditor || globalActiveEditor;
   
-  if (!show || !currentActiveEditor || !portalContainer) return null;
+  // Always render dialog even if bubble menu is hidden
+  // Only return null if no editor AND dialog is closed
+  if (!currentActiveEditor || !portalContainer) {
+    return linkDialogOpen ? (
+      <EditorLinkDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        onSave={handleSetLink}
+        initialUrl=""
+      />
+    ) : null;
+  }
+  
+  if (!show && !linkDialogOpen) return null;
 
   // Prevent bubble menu clicks from closing it
   const handleBubbleMouseDown = (e: React.MouseEvent | React.PointerEvent | React.TouchEvent) => {
@@ -540,13 +556,13 @@ export function GlobalBubbleMenu() {
 
   return (
     <>
-      {createPortal(bubbleMenu, portalContainer)}
+      {show && createPortal(bubbleMenu, portalContainer)}
       
       <EditorLinkDialog
         open={linkDialogOpen}
         onOpenChange={setLinkDialogOpen}
         onSave={handleSetLink}
-        initialUrl={currentActiveEditor.getAttributes('link').href || ''}
+        initialUrl={currentActiveEditor?.getAttributes('link').href || ''}
       />
     </>
   );
