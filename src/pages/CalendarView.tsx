@@ -6,12 +6,13 @@ import { useUserAgenda } from "@/hooks/useUserAgenda";
 import { useQueryClient } from "@tanstack/react-query";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, addWeeks, subWeeks, startOfWeek, isSameDay } from "date-fns";
+import { isDateWorkingDay } from "@/lib/workingDaysHelper";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, ArrowRightFromLine, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, Users } from "lucide-react";
+import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, ArrowRightFromLine, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, ChevronLeft, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -230,18 +231,20 @@ export default function CalendarView() {
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [sortOption, setSortOption] = useState<string>('priority');
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [weekOffset, setWeekOffset] = useState(0); // For week navigation
   
   const currentDate = useMemo(() => new Date(), []);
   const targetUserId = selectedUserId || user?.id;
   
-  // Fetch all users for admin filter
+  // Fetch all users for admin filter (includes working_days for filtering)
   useEffect(() => {
-    if (userRole === 'admin') {
-      supabase.from('profiles').select('user_id, name, email').then(({ data }) => {
-        if (data) setAllUsers(data);
-      });
-    }
-  }, [userRole]);
+    const fetchUsers = async () => {
+      const { data } = await supabase.from('profiles').select('user_id, name, email, working_days');
+      if (data) setAllUsers(data);
+    };
+    // Fetch for all users (needed for working days filtering)
+    fetchUsers();
+  }, []);
   
   // Compute agenda date
   const agendaDate = useMemo(() => {
@@ -317,21 +320,36 @@ export default function CalendarView() {
     return { activeTasks: active, completedTasks: completed, overdueTasks: overdue, availableTasks: hookAvailableTasks };
   }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole]);
 
-  // Kanban columns for weekly view
+  // Get selected user's working days
+  const selectedUserWorkingDays = useMemo(() => {
+    if (!targetUserId) return null;
+    const userProfile = allUsers.find(u => u.user_id === targetUserId);
+    return userProfile?.working_days || null;
+  }, [targetUserId, allUsers]);
+
+  // Kanban columns for weekly view with week navigation
   const weeklyKanbanColumns = useMemo(() => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    const baseDate = addWeeks(currentDate, weekOffset);
+    const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     
     return days.map((day, i) => {
       const date = addDays(weekStart, i);
-      const dayTasks = tasks?.filter(t => 
-        t.due_at && isSameDay(new Date(t.due_at), date) &&
-        t.status !== 'Completed' && t.status !== 'Failed'
-      ) || [];
+      const isWorkingDay = isDateWorkingDay(date, selectedUserWorkingDays);
       
-      return { day, date, tasks: dayTasks };
+      // Filter tasks for this day - only show if it's a working day for the user
+      const dayTasks = tasks?.filter(t => {
+        if (!t.due_at) return false;
+        if (!isSameDay(new Date(t.due_at), date)) return false;
+        if (t.status === 'Completed' || t.status === 'Failed') return false;
+        // Only filter by working days if we're viewing a specific user
+        if (selectedUserId && !isWorkingDay) return false;
+        return true;
+      }) || [];
+      
+      return { day, date, tasks: dayTasks, isWorkingDay };
     });
-  }, [tasks, currentDate]);
+  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, selectedUserId]);
 
   // Kanban columns for daily view (by priority)
   const dailyKanbanColumns = useMemo(() => {
@@ -574,28 +592,81 @@ export default function CalendarView() {
         {viewMode === 'kanban' ? (
           // Kanban View
           <div className="space-y-4">
-            {dateView === 'week' ? (
-              // Weekly Kanban - Group by Days
-              <div className="grid grid-cols-5 gap-4">
-                {weeklyKanbanColumns.map(col => (
-                  <Card key={col.day} className="min-h-[500px]">
-                    <div className="p-3 border-b border-border bg-muted/50">
-                      <h3 className="font-semibold text-body-sm">{col.day}</h3>
-                      <p className="text-metadata text-muted-foreground">{format(col.date, 'MMM d')}</p>
-                    </div>
-                    <ScrollArea className="h-[450px] p-3">
-                      <div className="space-y-2">
-                        {col.tasks.length === 0 ? (
-                          <p className="text-metadata text-muted-foreground text-center py-4">No tasks</p>
-                        ) : (
-                          col.tasks.map(task => (
-                            <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />
-                          ))
+          {dateView === 'week' ? (
+              // Weekly Kanban - Group by Days with Week Navigation
+              <div className="space-y-4">
+                {/* Week Navigation Header */}
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setWeekOffset(w => w - 1)}
+                    className="h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="text-center">
+                    <span className="text-body-sm font-medium">
+                      {format(startOfWeek(addWeeks(currentDate, weekOffset), { weekStartsOn: 1 }), 'MMM d')} - {format(addDays(startOfWeek(addWeeks(currentDate, weekOffset), { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}
+                    </span>
+                    {weekOffset !== 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setWeekOffset(0)}
+                        className="ml-2 text-xs text-primary"
+                      >
+                        Today
+                      </Button>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setWeekOffset(w => w + 1)}
+                    className="h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Week Grid */}
+                <div className="grid grid-cols-7 gap-3">
+                  {weeklyKanbanColumns.map(col => (
+                    <Card 
+                      key={col.day} 
+                      className={cn(
+                        "min-h-[500px]",
+                        !col.isWorkingDay && selectedUserId && "opacity-50 bg-muted/30"
+                      )}
+                    >
+                      <div className={cn(
+                        "p-3 border-b border-border",
+                        isSameDay(col.date, currentDate) && "bg-primary/10",
+                        !col.isWorkingDay && selectedUserId && "bg-muted/50"
+                      )}>
+                        <h3 className="font-semibold text-body-sm">{col.day}</h3>
+                        <p className="text-metadata text-muted-foreground">{format(col.date, 'MMM d')}</p>
+                        {!col.isWorkingDay && selectedUserId && (
+                          <Badge variant="outline" className="text-[10px] mt-1 text-warning">Off</Badge>
                         )}
                       </div>
-                    </ScrollArea>
-                  </Card>
-                ))}
+                      <ScrollArea className="h-[420px] p-3">
+                        <div className="space-y-2">
+                          {col.tasks.length === 0 ? (
+                            <p className="text-metadata text-muted-foreground text-center py-4">
+                              {!col.isWorkingDay && selectedUserId ? "Not working" : "No tasks"}
+                            </p>
+                          ) : (
+                            col.tasks.map(task => (
+                              <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </Card>
+                  ))}
+                </div>
               </div>
             ) : (
               // Daily Kanban - Group by Priority
