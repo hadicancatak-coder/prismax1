@@ -38,8 +38,53 @@ interface Position {
 let globalActiveEditor: any = null;
 let globalUpdateCallback: (() => void) | null = null;
 
+// Editor registry - maps DOM elements to editor instances
+const editorRegistry = new Map<Element, any>();
+
+export function registerEditor(editor: any) {
+  const view = editor?.view;
+  if (view?.dom) {
+    editorRegistry.set(view.dom, editor);
+  }
+}
+
+export function unregisterEditor(editor: any) {
+  const view = editor?.view;
+  if (view?.dom) {
+    editorRegistry.delete(view.dom);
+  }
+}
+
+export function findEditorByElement(element: Element | null): any {
+  if (!element) return null;
+  
+  // Walk up the DOM to find a registered editor
+  let current: Element | null = element;
+  while (current) {
+    if (editorRegistry.has(current)) {
+      return editorRegistry.get(current);
+    }
+    // Check for ProseMirror class
+    if (current.classList?.contains('ProseMirror')) {
+      const found = editorRegistry.get(current);
+      if (found) return found;
+    }
+    current = current.parentElement;
+  }
+  
+  // Fallback: check all registered editors to find one containing this element
+  for (const [dom, editor] of editorRegistry.entries()) {
+    if (dom.contains(element)) {
+      return editor;
+    }
+  }
+  
+  return null;
+}
+
 export function setGlobalActiveEditor(editor: any) {
   globalActiveEditor = editor;
+  registerEditor(editor);
   globalUpdateCallback?.();
 }
 
@@ -147,8 +192,14 @@ export function GlobalBubbleMenu() {
       return;
     }
 
-    // If no active editor but we're inside an editor element, try to use the global one
-    const currentEditor = activeEditor || globalActiveEditor;
+    // Try to find editor: first from active state, then from registry
+    let currentEditor = activeEditor || globalActiveEditor;
+    
+    // If no active editor, try to find from registry using the DOM element
+    if (!currentEditor && editorElement) {
+      currentEditor = findEditorByElement(editorElement);
+    }
+    
     if (!currentEditor) {
       setShow(false);
       return;
