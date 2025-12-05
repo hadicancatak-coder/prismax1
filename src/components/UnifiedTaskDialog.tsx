@@ -396,13 +396,13 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       <DialogContent 
         hideCloseButton
         className={cn(
-          "max-h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
+          "h-[90vh] max-h-[90vh] flex flex-col overflow-hidden p-0 transition-smooth",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-3xl"
         )}
       >
-        <div className="flex h-full">
+        <div className="flex h-full min-h-0">
           {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* HEADER */}
             <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between gap-4">
