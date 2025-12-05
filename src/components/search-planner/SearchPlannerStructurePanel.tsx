@@ -249,27 +249,22 @@ export function SearchPlannerStructurePanel({
 
                 return (
                 <Collapsible key={campaign.id} open={isExpanded}>
-                  {/* Campaign Row */}
+                  {/* Campaign Row - entire row clickable for expand/collapse */}
                   <div 
                     className={cn(
-                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth",
-                      "hover:bg-card-hover border border-transparent hover:border-border"
+                      "group flex items-center gap-xs p-sm rounded-lg transition-smooth cursor-pointer",
+                      "hover:bg-card-hover border border-transparent hover:border-border active:scale-[0.99]"
                     )}
+                    onClick={() => toggleCampaign(campaign.id)}
                   >
-                    {/* Chevron - expand/collapse only */}
-                    <button
-                      className="p-xs rounded hover:bg-muted/50 transition-smooth active:scale-95"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleCampaign(campaign.id);
-                      }}
-                    >
+                    {/* Chevron indicator */}
+                    <div className="p-xs">
                       {isExpanded ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
-                    </button>
+                    </div>
 
                     {/* Campaign name */}
                     <div className="flex items-center gap-xs flex-1">
