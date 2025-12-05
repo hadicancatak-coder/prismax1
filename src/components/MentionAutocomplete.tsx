@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -35,6 +36,7 @@ export function MentionAutocomplete({
   const [filteredUsers, setFilteredUsers] = React.useState<User[]>([]);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const [cursorPosition, setCursorPosition] = React.useState(0);
+  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -50,6 +52,17 @@ export function MentionAutocomplete({
     }
   }, [value, minRows, maxRows]);
 
+  // Calculate dropdown position
+  const updateDropdownPosition = React.useCallback(() => {
+    if (textareaRef.current) {
+      const rect = textareaRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, []);
+
   // Detect @ and filter users
   React.useEffect(() => {
     const textBeforeCursor = value.substring(0, cursorPosition);
@@ -64,10 +77,11 @@ export function MentionAutocomplete({
       setFilteredUsers(filtered);
       setShowDropdown(filtered.length > 0);
       setSelectedIndex(0);
+      updateDropdownPosition();
     } else {
       setShowDropdown(false);
     }
-  }, [value, cursorPosition, users]);
+  }, [value, cursorPosition, users, updateDropdownPosition]);
 
   // Track cursor position
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -146,6 +160,49 @@ export function MentionAutocomplete({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const dropdown = showDropdown && filteredUsers.length > 0 && createPortal(
+    <div 
+      ref={dropdownRef}
+      style={{
+        position: 'fixed',
+        top: dropdownPosition.top,
+        left: dropdownPosition.left,
+        zIndex: 99999,
+      }}
+      className="w-64 bg-popover border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto hide-scrollbar"
+    >
+      <div className="p-1">
+        <div className="px-2 py-1.5 text-metadata text-muted-foreground">
+          Mention someone
+        </div>
+        {filteredUsers.map((user, index) => (
+          <div
+            key={user.user_id}
+            className={cn(
+              "flex items-center gap-3 px-2 py-2 cursor-pointer rounded-md transition-smooth",
+              index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+            )}
+            onClick={() => insertMention(user)}
+            onMouseEnter={() => setSelectedIndex(index)}
+          >
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="text-metadata bg-primary/10 text-primary">
+                {getInitials(user.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-body-sm truncate">{user.name}</div>
+              {user.username && (
+                <div className="text-metadata text-muted-foreground truncate">@{user.username}</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+
   return (
     <div className="relative">
       <textarea
@@ -164,42 +221,7 @@ export function MentionAutocomplete({
         )}
         rows={minRows}
       />
-      
-      {showDropdown && filteredUsers.length > 0 && (
-        <div 
-          ref={dropdownRef}
-          className="absolute z-[200] mt-1 w-64 bg-popover border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto hide-scrollbar"
-        >
-          <div className="p-1">
-            <div className="px-2 py-1.5 text-metadata text-muted-foreground">
-              Mention someone
-            </div>
-            {filteredUsers.map((user, index) => (
-              <div
-                key={user.user_id}
-                className={cn(
-                  "flex items-center gap-3 px-2 py-2 cursor-pointer rounded-md transition-smooth",
-                  index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-                )}
-                onClick={() => insertMention(user)}
-                onMouseEnter={() => setSelectedIndex(index)}
-              >
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="text-metadata bg-primary/10 text-primary">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-body-sm truncate">{user.name}</div>
-                  {user.username && (
-                    <div className="text-metadata text-muted-foreground truncate">@{user.username}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }

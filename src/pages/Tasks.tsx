@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, LayoutGrid, Columns3, X, CheckCircle2, RefreshCw } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
 import { StatusMultiSelect } from "@/components/tasks/StatusMultiSelect";
-import { TaskGridView } from "@/components/tasks/TaskGridView";
+// TaskGridView removed
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
 import { PageContainer, PageHeader, AlertBanner, DataCard, EmptyState } from "@/components/layout";
@@ -33,7 +33,7 @@ export default function Tasks() {
   const [statusFilters, setStatusFilters] = useState<string[]>(['Pending', 'Ongoing', 'Blocked', 'Failed']);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'kanban-status' | 'kanban-date'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban-status' | 'kanban-date'>('table');
   const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date'>('status');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -187,7 +187,6 @@ export default function Tasks() {
           <div className="ml-auto flex gap-1 flex-shrink-0 bg-card p-1 rounded-lg border border-border">
             {[
               { mode: 'table' as const, icon: List, title: 'Table' },
-              { mode: 'grid' as const, icon: LayoutGrid, title: 'Grid' },
               { mode: 'kanban-status' as const, icon: Columns3, title: 'Kanban Status' },
               { mode: 'kanban-date' as const, icon: Clock, title: 'Kanban Date' },
             ].map(({ mode, icon: Icon, title }) => (
@@ -261,7 +260,7 @@ export default function Tasks() {
                         <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} selectedIds={selectedTaskIds} onSelectionChange={setSelectedTaskIds} />
                       )
                     )}
-                    {viewMode === 'grid' && <div className="p-4"><TaskGridView tasks={paginatedTasks} onTaskClick={handleTaskClick} /></div>}
+                    {/* Grid view removed */}
                     {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && <div className="p-4"><TaskBoardView tasks={finalFilteredTasks} onTaskClick={handleTaskClick} groupBy={boardGroupBy} /></div>}
 
                     {totalPages > 1 && (

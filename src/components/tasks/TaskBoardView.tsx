@@ -1,20 +1,17 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, addDays } from "date-fns";
+import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { MoreVertical, CheckCircle, Copy, Trash2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableTaskCard } from './SortableTaskCard';
 
 interface TaskBoardViewProps {
   tasks: any[];
@@ -39,11 +36,6 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   const dateGroups = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'Later'];
   
   const groups = groupBy === 'status' ? statusGroups : dateGroups;
-
-  const isOverdue = (dueDate: string | null, status: string) => {
-    if (!dueDate || status === 'Completed') return false;
-    return new Date(dueDate) < new Date();
-  };
 
   const getDateGroup = (task: any): string => {
     if (!task.due_at) return 'Later';
@@ -227,7 +219,6 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
 
     try {
       if (groupBy === 'status') {
-        // Update task status
         await supabase
           .from('tasks')
           .update({ status: targetGroup as 'Pending' | 'Ongoing' | 'Blocked' | 'Completed' | 'Failed' })
@@ -238,7 +229,6 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
           description: `Task moved to ${targetGroup}`,
         });
       } else {
-        // Update task date based on date group
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let newDate: Date;
@@ -284,135 +274,46 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-      {groups.map(group => {
-        const groupTasks = filterTasksByGroup(group);
-        const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
-        const taskIds = groupTasks.map(t => t.id);
-        
-        return (
-          <SortableContext key={group} id={group} items={taskIds} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col min-h-[600px]">
-              <div className={cn("rounded-t-lg p-3 border-b", color)}>
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">{group}</h3>
-                  <Badge variant="secondary">
-                    {groupTasks.length}
-                  </Badge>
+        {groups.map(group => {
+          const groupTasks = filterTasksByGroup(group);
+          const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
+          const taskIds = groupTasks.map(t => t.id);
+          
+          return (
+            <SortableContext key={group} id={group} items={taskIds} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col min-h-[600px]">
+                <div className={cn("rounded-t-lg p-3 border-b", color)}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">{group}</h3>
+                    <Badge variant="secondary">
+                      {groupTasks.length}
+                    </Badge>
+                  </div>
                 </div>
+                
+                <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
+                  <div className="space-y-2">
+                    {groupTasks.map(task => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        onTaskClick={onTaskClick}
+                        onComplete={handleComplete}
+                        onDuplicate={handleDuplicate}
+                        onDelete={(taskId) => setShowDeleteConfirm(taskId)}
+                        processingAction={processingAction}
+                        openDropdown={openDropdown}
+                        setOpenDropdown={setOpenDropdown}
+                        userRole={userRole}
+                        priorityColors={priorityColors}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
-              
-              <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
-                <div className="space-y-2">
-                  {groupTasks.map(task => {
-                    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
-                    const style = {
-                      transform: CSS.Transform.toString(transform),
-                      transition,
-                      opacity: isDragging ? 0.5 : 1,
-                    };
-                    
-                    return (
-                    <Card 
-                      key={task.id} 
-                      ref={setNodeRef} 
-                      style={style} 
-                      className="p-3 group cursor-grab active:cursor-grabbing hover-lift transition-smooth" 
-                      onClick={() => onTaskClick(task.id)}
-                      {...attributes} 
-                      {...listeners}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge 
-                          variant="outline"
-                          className={cn(priorityColors[task.priority as keyof typeof priorityColors])}
-                        >
-                          {task.priority}
-                        </Badge>
-
-                        <DropdownMenu open={openDropdown === task.id} onOpenChange={(open) => setOpenDropdown(open ? task.id : null)}>
-                          <DropdownMenuTrigger 
-                            onClick={(e) => e.stopPropagation()}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <MoreVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
-                              onClick={(e) => handleComplete(task, e)} 
-                              disabled={processingAction !== null}
-                            >
-                              {processingAction?.taskId === task.id && processingAction?.action === 'complete' ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                              )}
-                              Mark Completed
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => handleDuplicate(task, e)} 
-                              disabled={processingAction !== null}
-                            >
-                              {processingAction?.taskId === task.id && processingAction?.action === 'duplicate' ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : (
-                                <Copy className="mr-2 h-4 w-4" />
-                              )}
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowDeleteConfirm(task.id);
-                              }} 
-                              disabled={processingAction !== null} 
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              {userRole === 'admin' ? 'Delete' : 'Request Delete'}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <p className="font-medium mt-2 text-body-sm line-clamp-2">
-                        {task.title}
-                      </p>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex -space-x-2">
-                          {task.assignees?.slice(0, 3).map((assignee: any) => (
-                            <Avatar key={assignee.user_id} className="h-5 w-5 border-2 border-background">
-                              <AvatarImage src={assignee.avatar_url} />
-                              <AvatarFallback className="text-[10px]">
-                                {assignee.name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                          ))}
-                          {task.assignees?.length > 3 && (
-                            <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                              <span className="text-[8px] font-medium">+{task.assignees.length - 3}</span>
-                            </div>
-                          )}
-                        </div>
-                        {task.due_at && (
-                          <span className={cn(
-                            "text-metadata",
-                            isOverdue(task.due_at, task.status) && "text-destructive font-medium"
-                          )}>
-                            {format(new Date(task.due_at), 'MMM d')}
-                          </span>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-          </SortableContext>
-        );
-      })}
+            </SortableContext>
+          );
+        })}
       </div>
 
       <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
