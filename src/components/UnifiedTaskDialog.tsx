@@ -808,30 +808,34 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                       </div>
                     )}
 
-                    {/* Dependencies (View/Edit only) */}
-                    {!isCreate && taskId && (
-                      <div className="space-y-2">
-                        <Label>Dependencies</Label>
+                    {/* Dependencies */}
+                    <div className="space-y-2">
+                      <Label>Dependencies</Label>
+                      {taskId ? (
                         <TaskDependenciesSection taskId={taskId} currentStatus={status} />
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Save task first to add dependencies</p>
+                      )}
+                    </div>
 
-                    {/* Checklist (View/Edit only) */}
-                    {!isCreate && taskId && (
-                      <div className="space-y-2">
-                        <Label>Checklist</Label>
+                    {/* Checklist */}
+                    <div className="space-y-2">
+                      <Label>Checklist</Label>
+                      {taskId ? (
                         <TaskChecklistSection taskId={taskId} readOnly={isReadOnly} />
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Save task first to add checklist items</p>
+                      )}
+                    </div>
 
-                    {/* Blocker (View/Edit only) */}
-                    {!isCreate && taskId && (
-                      <div className="space-y-2">
-                        <Label>Blocker</Label>
-                        {blocker ? (
+                    {/* Blocker */}
+                    <div className="space-y-2">
+                      <Label>Blocker</Label>
+                      {taskId ? (
+                        blocker ? (
                           <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-body-sm font-medium text-destructive">
+                              <span className="text-sm font-medium text-destructive">
                                 {blocker.title || "Blocked"}
                               </span>
                               <Button
@@ -839,16 +843,16 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setBlockerDialogOpen(true)}
-                                className="h-7 text-metadata"
+                                className="h-7 text-xs"
                               >
                                 {isReadOnly ? "View" : "Edit"}
                               </Button>
                             </div>
                             {blocker.description && (
-                              <p className="text-body-sm text-muted-foreground">{blocker.description}</p>
+                              <p className="text-sm text-muted-foreground">{blocker.description}</p>
                             )}
                             {blocker.stuck_reason && (
-                              <p className="text-metadata text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                                 <strong>Reason:</strong> {blocker.stuck_reason}
                               </p>
                             )}
@@ -863,9 +867,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                           >
                             No blocker - Click to add
                           </Button>
-                        )}
-                      </div>
-                    )}
+                        )
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Save task first to add blocker</p>
+                      )}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </form>
