@@ -106,11 +106,6 @@ export function GlobalBubbleMenu() {
   }, [savedRange, activeEditor]);
 
   const updatePosition = useCallback(() => {
-    if (!activeEditor) {
-      setShow(false);
-      return;
-    }
-
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
       setShow(false);
@@ -138,6 +133,13 @@ export function GlobalBubbleMenu() {
     }
     
     if (!editorElement) {
+      setShow(false);
+      return;
+    }
+
+    // If no active editor but we're inside an editor element, try to use the global one
+    const currentEditor = activeEditor || globalActiveEditor;
+    if (!currentEditor) {
       setShow(false);
       return;
     }
@@ -182,6 +184,7 @@ export function GlobalBubbleMenu() {
       }
 
       setPosition({ top, left, isBelow });
+      setActiveEditor(currentEditor);
       setShow(true);
     } catch (error) {
       console.error('Error positioning bubble menu:', error);
@@ -279,13 +282,14 @@ export function GlobalBubbleMenu() {
   }, [activeEditor, updatePosition, show]);
 
   const applyFormatting = useCallback((command: () => any) => {
-    if (!activeEditor) return;
+    const currentEditor = activeEditor || globalActiveEditor;
+    if (!currentEditor) return;
 
     // Restore selection before applying formatting
     restoreSelection();
     
     // Focus editor
-    activeEditor.view.focus();
+    currentEditor.view.focus();
     
     // Apply the command
     command();
@@ -295,21 +299,23 @@ export function GlobalBubbleMenu() {
   }, [activeEditor, restoreSelection, saveSelection]);
 
   const handleLinkClick = () => {
-    if (!activeEditor) return;
+    const currentEditor = activeEditor || globalActiveEditor;
+    if (!currentEditor) return;
     
-    const previousUrl = activeEditor.getAttributes('link').href;
+    const previousUrl = currentEditor.getAttributes('link').href;
     if (previousUrl) {
-      applyFormatting(() => activeEditor.chain().focus().unsetLink().run());
+      applyFormatting(() => currentEditor.chain().focus().unsetLink().run());
     } else {
       setLinkDialogOpen(true);
     }
   };
 
   const handleSetLink = (url: string) => {
-    if (!activeEditor || !url) return;
+    const currentEditor = activeEditor || globalActiveEditor;
+    if (!currentEditor || !url) return;
     
     applyFormatting(() => {
-      activeEditor
+      currentEditor
         .chain()
         .focus()
         .extendMarkRange('link')
@@ -321,13 +327,14 @@ export function GlobalBubbleMenu() {
   };
 
   const handleColorChange = (color: string) => {
-    if (!activeEditor) return;
+    const currentEditor = activeEditor || globalActiveEditor;
+    if (!currentEditor) return;
     
     applyFormatting(() => {
       if (color) {
-        activeEditor.chain().focus().setColor(color).run();
+        currentEditor.chain().focus().setColor(color).run();
       } else {
-        activeEditor.chain().focus().unsetColor().run();
+        currentEditor.chain().focus().unsetColor().run();
       }
     });
     
@@ -360,7 +367,9 @@ export function GlobalBubbleMenu() {
     </Button>
   );
 
-  if (!show || !activeEditor) return null;
+  const currentActiveEditor = activeEditor || globalActiveEditor;
+  
+  if (!show || !currentActiveEditor) return null;
 
   // Prevent bubble menu clicks from closing it
   const handleBubbleMouseDown = (e: React.MouseEvent | React.PointerEvent | React.TouchEvent) => {
@@ -382,32 +391,32 @@ export function GlobalBubbleMenu() {
         }}
       >
         <BubbleButton
-          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleBold().run())}
-          isActive={activeEditor.isActive('bold')}
+          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleBold().run())}
+          isActive={currentActiveEditor.isActive('bold')}
           title="Bold (Ctrl+B)"
         >
           <Bold className="h-4 w-4" />
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleItalic().run())}
-          isActive={activeEditor.isActive('italic')}
+          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleItalic().run())}
+          isActive={currentActiveEditor.isActive('italic')}
           title="Italic (Ctrl+I)"
         >
           <Italic className="h-4 w-4" />
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleUnderline().run())}
-          isActive={activeEditor.isActive('underline')}
+          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleUnderline().run())}
+          isActive={currentActiveEditor.isActive('underline')}
           title="Underline (Ctrl+U)"
         >
           <UnderlineIcon className="h-4 w-4" />
         </BubbleButton>
 
         <BubbleButton
-          onClick={() => applyFormatting(() => activeEditor.chain().focus().toggleStrike().run())}
-          isActive={activeEditor.isActive('strike')}
+          onClick={() => applyFormatting(() => currentActiveEditor.chain().focus().toggleStrike().run())}
+          isActive={currentActiveEditor.isActive('strike')}
           title="Strikethrough"
         >
           <Strikethrough className="h-4 w-4" />
@@ -417,8 +426,8 @@ export function GlobalBubbleMenu() {
 
         <BubbleButton
           onClick={handleLinkClick}
-          isActive={activeEditor.isActive('link')}
-          title={activeEditor.isActive('link') ? 'Remove Link' : 'Add Link (Ctrl+K)'}
+          isActive={currentActiveEditor.isActive('link')}
+          title={currentActiveEditor.isActive('link') ? 'Remove Link' : 'Add Link (Ctrl+K)'}
         >
           <LinkIcon className="h-4 w-4" />
         </BubbleButton>
@@ -459,7 +468,7 @@ export function GlobalBubbleMenu() {
         open={linkDialogOpen}
         onOpenChange={setLinkDialogOpen}
         onSave={handleSetLink}
-        initialUrl={activeEditor.getAttributes('link').href || ''}
+        initialUrl={currentActiveEditor.getAttributes('link').href || ''}
       />
     </>
   );

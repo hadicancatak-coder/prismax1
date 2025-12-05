@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
@@ -24,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ENTITIES } from "@/lib/constants";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import type { Caption } from "@/pages/CaptionLibrary";
 
 const CAPTION_TYPES = [
@@ -250,15 +250,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               </TabsList>
               <TabsContent value="en" className="mt-2">
                 <div className="space-y-2">
-                  <Textarea
+                  <RichTextEditor
                     value={content.en}
-                    onChange={(e) => setContent({ ...content, en: e.target.value })}
+                    onChange={(value) => setContent({ ...content, en: value })}
                     placeholder="Enter English content..."
-                    className="min-h-[100px]"
+                    minHeight="100px"
                   />
                   <div className="flex justify-between text-metadata text-muted-foreground">
-                    <span>Characters: {content.en.length}</span>
-                    <span className={content.en.length > maxLength ? "text-destructive" : ""}>
+                    <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
+                    <span className={content.en.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
                       Max: {maxLength}
                     </span>
                   </div>
@@ -266,16 +266,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               </TabsContent>
               <TabsContent value="ar" className="mt-2">
                 <div className="space-y-2">
-                  <Textarea
+                  <RichTextEditor
                     value={content.ar}
-                    onChange={(e) => setContent({ ...content, ar: e.target.value })}
+                    onChange={(value) => setContent({ ...content, ar: value })}
                     placeholder="أدخل المحتوى بالعربية..."
-                    className="min-h-[100px]"
-                    dir="rtl"
+                    minHeight="100px"
                   />
                   <div className="flex justify-between text-metadata text-muted-foreground">
-                    <span>Characters: {content.ar.length}</span>
-                    <span className={content.ar.length > maxLength ? "text-destructive" : ""}>
+                    <span>Characters: {content.ar.replace(/<[^>]*>/g, '').length}</span>
+                    <span className={content.ar.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
                       Max: {maxLength}
                     </span>
                   </div>
