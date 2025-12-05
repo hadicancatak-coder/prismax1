@@ -180,7 +180,11 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         );
       
       if (error) {
-        console.error('Error auto-populating agenda:', error);
+        console.error('Error auto-populating agenda:', error.message, error.details);
+        // RLS error - admin trying to add to another user's agenda
+        if (error.code === '42501' || error.message?.includes('row-level security')) {
+          console.warn('RLS policy blocked agenda auto-populate for user:', effectiveUserId);
+        }
       } else {
         refetch();
       }
@@ -242,7 +246,10 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         .from('user_agenda')
         .upsert(items, { onConflict: 'user_id,task_id,agenda_date' });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding to agenda:', error.message, error.details);
+        throw error;
+      }
       
       // Log activity
       await logAgendaActivity(taskIds, 'add', effectiveUserId);
@@ -265,7 +272,10 @@ export function useUserAgenda({ userId, date, allTasks, completions }: UseUserAg
         .eq('agenda_date', agendaDate)
         .in('task_id', taskIds);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing from agenda:', error.message, error.details);
+        throw error;
+      }
       
       // Log activity
       await logAgendaActivity(taskIds, 'remove', effectiveUserId);

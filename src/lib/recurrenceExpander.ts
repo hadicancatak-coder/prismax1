@@ -19,7 +19,8 @@ export function expandRecurringTask(
   completions: any[] = [],
   assignees: Array<{ working_days: string | null }> = []
 ): RecurringOccurrence[] {
-  if (!task.recurrence_rrule || task.task_type !== 'recurring') return [];
+  // Accept tasks with recurrence_rrule regardless of task_type (handles legacy data)
+  if (!task.recurrence_rrule) return [];
 
   const occurrences: RecurringOccurrence[] = [];
   const rrule = task.recurrence_rrule;

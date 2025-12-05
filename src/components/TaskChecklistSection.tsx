@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +15,41 @@ interface ChecklistItem {
 
 interface TaskChecklistSectionProps {
   taskId: string;
-  initialChecklist?: ChecklistItem[];
   onUpdate?: () => void;
 }
 
-export function TaskChecklistSection({ taskId, initialChecklist = [], onUpdate }: TaskChecklistSectionProps) {
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(initialChecklist);
+export function TaskChecklistSection({ taskId, onUpdate }: TaskChecklistSectionProps) {
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const hasFetched = useRef(false);
 
+  // Fetch checklist from database on mount - only once
   useEffect(() => {
-    setChecklist(initialChecklist);
-  }, [initialChecklist]);
+    if (hasFetched.current || !taskId) return;
+    hasFetched.current = true;
+    
+    const fetchChecklist = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("checklist")
+        .eq("id", taskId)
+        .single();
+
+      if (error) {
+        console.error("Failed to fetch checklist:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      const items = Array.isArray(data?.checklist) ? (data.checklist as unknown as ChecklistItem[]) : [];
+      setChecklist(items);
+      setIsLoading(false);
+    };
+
+    fetchChecklist();
+  }, [taskId]);
 
   const saveChecklist = async (updatedChecklist: ChecklistItem[]) => {
     const { error } = await supabase
