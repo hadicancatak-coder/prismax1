@@ -66,7 +66,7 @@ export function BoardCard({
             />
           </Button>
         </div>
-        <CardTitle className="text-base font-semibold text-white mb-2">
+        <CardTitle className="text-base font-semibold text-foreground mb-2">
           {name}
         </CardTitle>
       </CardHeader>
