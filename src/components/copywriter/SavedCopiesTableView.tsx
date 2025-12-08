@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, Fragment, MouseEvent } from "react";
+import DOMPurify from "dompurify";
 import { CopywriterCopy } from "@/hooks/useCopywriterCopies";
 import {
   useUpdateCopywriterCopy,
@@ -271,7 +272,7 @@ export function SavedCopiesTableView({
                 lang === "ar" && "text-right"
               )}
               onClick={() => !isGuest && setEditingCell(cellId)}
-              dangerouslySetInnerHTML={{ __html: content || "Click to edit..." }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content || "Click to edit...") }}
               title={content ? (new DOMParser().parseFromString(content, 'text/html')).body.textContent || '' : ''}
             />
           )}
