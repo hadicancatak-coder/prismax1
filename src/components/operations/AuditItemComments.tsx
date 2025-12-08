@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -77,7 +78,7 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
                 </div>
                 <div 
                   className="text-sm prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: comment.body }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body) }}
                 />
               </div>
               {user?.id === comment.author_id && (
