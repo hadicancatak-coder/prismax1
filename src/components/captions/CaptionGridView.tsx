@@ -67,11 +67,11 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "bg-success/15 text-success border-success/30";
+        return "status-success";
       case "rejected":
-        return "bg-destructive/15 text-destructive border-destructive/30";
+        return "status-destructive";
       default:
-        return "bg-warning/15 text-warning border-warning/30";
+        return "status-warning";
     }
   };
 
@@ -80,13 +80,13 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
       case "headline":
         return "bg-primary/10 text-primary";
       case "description":
-        return "bg-blue-500/10 text-blue-500";
+        return "status-info";
       case "primary_text":
-        return "bg-purple-500/10 text-purple-500";
+        return "status-purple";
       case "sitelink":
-        return "bg-orange-500/10 text-orange-500";
+        return "status-orange";
       case "callout":
-        return "bg-green-500/10 text-green-500";
+        return "status-success";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -117,7 +117,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                       onClick={() => handleToggleFavorite(caption)}
                     >
                       <Star 
-                        className={`h-4 w-4 ${caption.is_favorite ? "fill-yellow-400 text-yellow-400" : ""}`} 
+                        className={`h-4 w-4 ${caption.is_favorite ? "fill-amber text-amber" : ""}`} 
                       />
                     </Button>
                   </div>

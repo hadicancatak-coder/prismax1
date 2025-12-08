@@ -63,17 +63,17 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   };
 
   const priorityColors = {
-    High: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
-    Medium: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
-    Low: "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
+    High: "priority-high",
+    Medium: "priority-medium",
+    Low: "priority-low",
   };
 
   const statusColors: Record<string, string> = {
-    Pending: "bg-blue-500/20",
-    Ongoing: "bg-purple-500/20",
-    Blocked: "bg-orange-500/20",
-    Completed: "bg-green-500/20",
-    Failed: "bg-red-500/20",
+    Pending: "bg-info-soft",
+    Ongoing: "bg-purple-soft",
+    Blocked: "bg-orange-soft",
+    Completed: "bg-success-soft",
+    Failed: "bg-destructive-soft",
   };
 
   const handleComplete = async (task: any, e: React.MouseEvent) => {
@@ -317,7 +317,7 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
       </div>
 
       <AlertDialog open={showDeleteConfirm !== null} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
-        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+        <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>

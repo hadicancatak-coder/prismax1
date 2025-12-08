@@ -99,13 +99,13 @@ export function AdVariationGeneratorDialog({
   const getStrengthColor = (strength: string) => {
     switch (strength) {
       case 'excellent':
-        return 'bg-purple-500';
+        return 'bg-purple text-purple-foreground';
       case 'good':
-        return 'bg-green-500';
+        return 'bg-success text-success-foreground';
       case 'average':
-        return 'bg-yellow-500';
+        return 'bg-warning text-warning-foreground';
       default:
-        return 'bg-red-500';
+        return 'bg-destructive text-destructive-foreground';
     }
   };
 
@@ -116,7 +116,7 @@ export function AdVariationGeneratorDialog({
       <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-500" />
+            <Sparkles className="h-5 w-5 text-purple" />
             Ad Variation Generator
           </DialogTitle>
           <DialogDescription>
@@ -187,7 +187,7 @@ export function AdVariationGeneratorDialog({
           </div>
 
           {!canGenerate && (
-            <div className="p-3 border border-yellow-500/20 bg-yellow-500/10 rounded-lg text-sm">
+            <div className="p-3 border border-warning/30 bg-warning-soft rounded-lg text-sm">
               You need at least 3 headlines and 2 descriptions in your library to generate variations.
             </div>
           )}

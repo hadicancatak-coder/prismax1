@@ -96,9 +96,9 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'rejected': return 'bg-destructive/10 text-destructive border-destructive/20';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+      case 'approved': return 'status-success';
+      case 'rejected': return 'status-destructive';
+      case 'pending': return 'status-warning';
       default: return 'bg-secondary';
     }
   };
@@ -115,7 +115,7 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                 Delete
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+            <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete {selectedIds.length} elements?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -182,7 +182,7 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                     className="h-6 w-6 p-0"
                     onClick={() => handleToggleFavorite(element)}
                   >
-                    <Star className={`h-4 w-4 ${element.is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                    <Star className={`h-4 w-4 ${element.is_favorite ? 'fill-amber text-amber' : ''}`} />
                   </Button>
                 </TableCell>
                 <TableCell className="max-w-md">
@@ -240,7 +240,7 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                           <Trash className="h-3 w-3" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete this element?</AlertDialogTitle>
                           <AlertDialogDescription>
