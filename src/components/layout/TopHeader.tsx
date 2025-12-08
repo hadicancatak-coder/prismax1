@@ -33,12 +33,12 @@ export function TopHeader() {
   return (
     <header 
       className={cn(
-        "sticky top-0 z-50 mx-4 mt-4 rounded-2xl",
+        "sticky top-0 z-sticky mx-4 mt-4 rounded-2xl",
         "backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.10)]",
         "transition-all duration-200",
         theme === "light" 
-          ? "bg-white/70 border border-white/40" 
-          : "bg-card/70 border border-white/10"
+          ? "bg-card/70 border border-border/40" 
+          : "bg-card/70 border border-border/20"
       )}
     >
       <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3">

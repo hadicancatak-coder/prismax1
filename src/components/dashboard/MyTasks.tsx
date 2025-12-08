@@ -100,29 +100,21 @@ export function MyTasks() {
       label: "Today",
       count: taskCounts.today,
       icon: CheckSquare,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
     },
     {
       label: "Overdue",
       count: taskCounts.overdue,
       icon: AlertCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-50",
     },
     {
       label: "This Week",
       count: taskCounts.thisWeek,
       icon: Calendar,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
     },
     {
       label: "In Progress",
       count: taskCounts.inProgress,
       icon: Activity,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
     },
   ];
 

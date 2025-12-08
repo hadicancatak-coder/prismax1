@@ -27,9 +27,9 @@ export const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicato
   };
 
   const getStrengthColor = () => {
-    if (metCount === 4) return "bg-green-500";
-    if (metCount >= 2) return "bg-yellow-500";
-    return "bg-red-500";
+    if (metCount === 4) return "bg-success";
+    if (metCount >= 2) return "bg-warning";
+    return "bg-destructive";
   };
 
   return (
@@ -38,11 +38,11 @@ export const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicato
         {requirements.map((req, index) => (
           <div key={index} className="flex items-center gap-2 text-sm">
             {req.met ? (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+              <Check className="h-4 w-4 text-success flex-shrink-0" />
             ) : (
-              <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+              <X className="h-4 w-4 text-destructive flex-shrink-0" />
             )}
-            <span className={req.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+            <span className={req.met ? "text-success-text" : "text-muted-foreground"}>
               {req.label}
             </span>
           </div>
@@ -52,7 +52,7 @@ export const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicato
       <div className="space-y-1">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Password Strength:</span>
-          <span className={`font-medium ${metCount === 4 ? 'text-green-600 dark:text-green-400' : metCount >= 2 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+          <span className={`font-medium ${metCount === 4 ? 'text-success-text' : metCount >= 2 ? 'text-warning-text' : 'text-destructive-text'}`}>
             {getStrengthLabel()}
           </span>
         </div>

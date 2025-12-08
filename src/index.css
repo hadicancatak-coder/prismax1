@@ -55,14 +55,26 @@ All colors MUST be HSL.
     /* Status colors */
     --success: 142 71% 45%;          /* iOS green */
     --success-foreground: 0 0% 100%;
+    --success-soft: 142 71% 95%;     /* Light green background */
+    --success-text: 142 71% 30%;     /* Dark green text */
     --warning: 38 100% 50%;          /* iOS orange */
     --warning-foreground: 0 0% 100%;
+    --warning-soft: 38 100% 95%;     /* Light orange background */
+    --warning-text: 38 100% 30%;     /* Dark orange text */
     --info: 211 100% 50%;
     --info-foreground: 0 0% 100%;
+    --info-soft: 211 100% 95%;       /* Light blue background */
+    --info-text: 211 100% 35%;       /* Dark blue text */
     --pending: 211 100% 50%;
     --pending-foreground: 0 0% 100%;
+    --pending-soft: 211 100% 95%;    /* Light blue background */
+    --pending-text: 211 100% 35%;    /* Dark blue text */
+    --destructive-soft: 0 100% 97%;  /* Light red background */
+    --destructive-text: 0 100% 35%;  /* Dark red text */
+    --neutral-soft: 240 5% 96%;      /* Light gray background */
+    --neutral-text: 220 9% 35%;      /* Dark gray text */
     
-    /* Danger soft for alerts */
+    /* Danger soft for alerts (alias) */
     --danger-soft: 0 100% 97%;       /* #ffe9ea */
     --danger-text: 0 100% 35%;       /* #b40000 */
     
@@ -87,6 +99,16 @@ All colors MUST be HSL.
     --gray-700: 220 14% 20%;
     --gray-800: 220 15% 16%;
     --gray-900: 220 26% 14%;
+
+    /* Z-Index Scale */
+    --z-base: 0;
+    --z-dropdown: 50;
+    --z-sticky: 100;
+    --z-modal: 200;
+    --z-popover: 300;
+    --z-tooltip: 400;
+    --z-toast: 500;
+    --z-overlay: 9999;
   }
 
   /* ========================================
@@ -133,14 +155,26 @@ All colors MUST be HSL.
     /* Status colors - Adjusted for dark mode */
     --success: 142 76% 42%;
     --success-foreground: 0 0% 100%;
+    --success-soft: 142 50% 15%;     /* Dark green background */
+    --success-text: 142 76% 60%;     /* Light green text */
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
+    --warning-soft: 38 50% 15%;      /* Dark orange background */
+    --warning-text: 38 92% 65%;      /* Light orange text */
     --info: 199 89% 55%;
     --info-foreground: 0 0% 100%;
+    --info-soft: 211 50% 15%;        /* Dark blue background */
+    --info-text: 211 90% 65%;        /* Light blue text */
     --pending: 207 90% 58%;
     --pending-foreground: 0 0% 100%;
+    --pending-soft: 211 50% 15%;     /* Dark blue background */
+    --pending-text: 211 90% 65%;     /* Light blue text */
+    --destructive-soft: 0 50% 15%;   /* Dark red background */
+    --destructive-text: 0 72% 70%;   /* Light red text */
+    --neutral-soft: 220 14% 18%;     /* Dark gray background */
+    --neutral-text: 220 13% 70%;     /* Light gray text */
     
-    /* Danger soft for alerts (dark) */
+    /* Danger soft for alerts (dark) - alias */
     --danger-soft: 0 72% 51% / 0.12;
     --danger-text: 0 72% 70%;
     
@@ -165,6 +199,16 @@ All colors MUST be HSL.
     --gray-700: 220 15% 22%;
     --gray-800: 220 15% 16%;
     --gray-900: 220 15% 11%;
+
+    /* Z-Index Scale (same for dark mode) */
+    --z-base: 0;
+    --z-dropdown: 50;
+    --z-sticky: 100;
+    --z-modal: 200;
+    --z-popover: 300;
+    --z-tooltip: 400;
+    --z-toast: 500;
+    --z-overlay: 9999;
   }
 
   /* Typography Scale - Semantic sizing */
@@ -492,6 +536,29 @@ All colors MUST be HSL.
   .text-heading-md { font-size: 1.25rem; line-height: 1.35; font-weight: 600; color: hsl(var(--foreground)); }
   .text-body-lg { font-size: 1rem; line-height: 1.5; font-weight: 400; }
   .text-body-md { font-size: 0.875rem; line-height: 1.5; font-weight: 400; }
+
+  /* ========================================
+     STATUS BADGE UTILITY CLASSES
+     Use these for consistent status styling
+     ======================================== */
+  .status-success {
+    @apply bg-success-soft text-success-text border border-success/30;
+  }
+  .status-warning {
+    @apply bg-warning-soft text-warning-text border border-warning/30;
+  }
+  .status-destructive {
+    @apply bg-destructive-soft text-destructive-text border border-destructive/30;
+  }
+  .status-info {
+    @apply bg-info-soft text-info-text border border-info/30;
+  }
+  .status-pending {
+    @apply bg-pending-soft text-pending-text border border-pending/30;
+  }
+  .status-neutral {
+    @apply bg-neutral-soft text-neutral-text border border-border;
+  }
 }
 
 /* Mapbox cluster markers */

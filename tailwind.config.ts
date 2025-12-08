@@ -65,18 +65,36 @@ export default {
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          soft: "hsl(var(--success-soft))",
+          text: "hsl(var(--success-text))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          soft: "hsl(var(--warning-soft))",
+          text: "hsl(var(--warning-text))",
         },
         info: {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
+          soft: "hsl(var(--info-soft))",
+          text: "hsl(var(--info-text))",
         },
         pending: {
           DEFAULT: "hsl(var(--pending))",
           foreground: "hsl(var(--pending-foreground))",
+          soft: "hsl(var(--pending-soft))",
+          text: "hsl(var(--pending-text))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+          soft: "hsl(var(--destructive-soft))",
+          text: "hsl(var(--destructive-text))",
+        },
+        neutral: {
+          soft: "hsl(var(--neutral-soft))",
+          text: "hsl(var(--neutral-text))",
         },
         gray: {
           50: "hsl(var(--gray-50))",
@@ -90,6 +108,15 @@ export default {
           800: "hsl(var(--gray-800))",
           900: "hsl(var(--gray-900))",
         },
+      },
+      zIndex: {
+        'dropdown': 'var(--z-dropdown)',
+        'sticky': 'var(--z-sticky)',
+        'modal': 'var(--z-modal)',
+        'popover': 'var(--z-popover)',
+        'tooltip': 'var(--z-tooltip)',
+        'toast': 'var(--z-toast)',
+        'overlay': 'var(--z-overlay)',
       },
       transitionProperty: {
         'smooth': 'all',
