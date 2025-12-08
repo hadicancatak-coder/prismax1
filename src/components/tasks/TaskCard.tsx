@@ -367,7 +367,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+        <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>

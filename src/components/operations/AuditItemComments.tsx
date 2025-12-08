@@ -92,7 +92,7 @@ export function AuditItemComments({ itemId }: AuditItemCommentsProps) {
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
                       <AlertDialogDescription>

@@ -576,7 +576,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                             </span>
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 bg-popover z-[100]" align="start">
+                        <PopoverContent className="w-auto p-0 bg-popover z-popover" align="start">
                           <Calendar
                             mode="single"
                             selected={dueDate}

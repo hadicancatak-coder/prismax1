@@ -60,7 +60,7 @@ export function AssigneeMultiSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0 bg-card z-[100]" align="start" side="bottom" sideOffset={5}>
+        <PopoverContent className="w-[400px] p-0 bg-card z-popover" align="start" side="bottom" sideOffset={5}>
           <Command>
             <CommandInput placeholder="Search users..." />
             <CommandEmpty>No users found.</CommandEmpty>

@@ -522,7 +522,7 @@ export function SavedAdDialog({ open, onOpenChange, ad, onUpdate }: SavedAdDialo
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this ad?</AlertDialogTitle>
                     <AlertDialogDescription>

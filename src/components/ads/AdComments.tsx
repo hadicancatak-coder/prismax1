@@ -87,7 +87,7 @@ export function AdComments({ adId }: AdCommentsProps) {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete comment?</AlertDialogTitle>
                         <AlertDialogDescription>

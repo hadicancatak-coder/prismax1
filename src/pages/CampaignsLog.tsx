@@ -28,7 +28,7 @@ function TrashZone({ isActive }: { isActive: boolean }) {
     <div 
       ref={setNodeRef} 
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 h-28 flex items-center justify-center transition-all duration-300 border-t-4",
+        "fixed bottom-0 left-0 right-0 z-overlay h-28 flex items-center justify-center transition-all duration-300 border-t-4",
         isOver ? "bg-destructive border-destructive-foreground" : "bg-destructive/80 border-destructive/50",
         "animate-in slide-in-from-bottom-10"
       )}

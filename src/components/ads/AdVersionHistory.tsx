@@ -69,7 +69,7 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
                         Restore
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Restore this version?</AlertDialogTitle>
                         <AlertDialogDescription>

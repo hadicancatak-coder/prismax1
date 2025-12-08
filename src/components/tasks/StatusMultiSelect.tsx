@@ -52,7 +52,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
            `${value.length} Status`}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="bg-background z-50 p-2">
+      <SelectContent className="bg-background z-dropdown p-2">
         <div className="flex gap-1 mb-2">
           <button
             onClick={(e) => {

@@ -518,7 +518,7 @@ export function SavedCopiesTableView({
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete this copy?</AlertDialogTitle>
                             <AlertDialogDescription>

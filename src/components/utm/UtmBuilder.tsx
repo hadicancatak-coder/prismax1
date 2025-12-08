@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Sparkles } from "lucide-react";
-import { AlertBanner } from "@/components/ui/AlertBanner";
+import { AlertBanner } from "@/components/layout/AlertBanner";
 import { EnhancedMultiSelect } from "./EnhancedMultiSelect";
 import { GeneratedLinksPreview } from "./GeneratedLinksPreview";
 import { AddCampaignDialog } from "./AddCampaignDialog";
@@ -162,7 +162,7 @@ export function UtmBuilder() {
         <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" />UTM Builder</CardTitle>
           <CardDescription>Generate UTM tracking links with AI-powered detection</CardDescription></CardHeader>
         <CardContent className="space-y-4">
-          <AlertBanner variant="info" message="You are responsible for ensuring the accuracy of the generated links. AI detection may not be 100% accurate." />
+          <AlertBanner variant="info">You are responsible for ensuring the accuracy of the generated links. AI detection may not be 100% accurate.</AlertBanner>
           <div className="space-y-2"><Label htmlFor="lp-url">Landing Page URL *</Label>
             <Input id="lp-url" type="url" placeholder="https://cfi.trade/ar/seminar/amman" value={lpUrl} onChange={(e) => handleLpChange(e.target.value)} /></div>
           {detection && <LPDetectionCard detection={detection} />}

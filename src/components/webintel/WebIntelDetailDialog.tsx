@@ -33,17 +33,17 @@ export function WebIntelDetailDialog({
   };
 
   const typeColors: Record<string, string> = {
-    'Website': 'bg-blue-100 text-blue-800',
-    'App': 'bg-green-100 text-green-800',
-    'Portal': 'bg-purple-100 text-purple-800',
-    'Forum': 'bg-orange-100 text-orange-800',
+    'Website': 'bg-info-soft text-info-text',
+    'App': 'bg-success-soft text-success-text',
+    'Portal': 'bg-purple-soft text-purple-text',
+    'Forum': 'bg-orange-soft text-orange-text',
   };
 
   const tagColors: Record<string, string> = {
-    'GDN': 'bg-blue-100 text-blue-800',
-    'DV360': 'bg-purple-100 text-purple-800',
-    'Direct': 'bg-green-100 text-green-800',
-    'Mobile-only': 'bg-orange-100 text-orange-800',
+    'GDN': 'bg-info-soft text-info-text',
+    'DV360': 'bg-purple-soft text-purple-text',
+    'Direct': 'bg-success-soft text-success-text',
+    'Mobile-only': 'bg-orange-soft text-orange-text',
   };
 
   return (
@@ -114,7 +114,7 @@ export function WebIntelDetailDialog({
                   <Badge 
                     key={tag} 
                     variant="secondary"
-                    className={tagColors[tag] || 'bg-gray-100 text-gray-800'}
+                    className={tagColors[tag] || 'bg-muted text-muted-foreground'}
                   >
                     {tag}
                   </Badge>
