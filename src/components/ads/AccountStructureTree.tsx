@@ -259,11 +259,11 @@ export function AccountStructureTree({
         case 'entity':
           return <Layers className="h-4 w-4 text-primary" />;
         case 'campaign':
-          return hasChildren && isExpanded ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-500" />;
+          return hasChildren && isExpanded ? <FolderOpen className="h-4 w-4 text-info" /> : <Folder className="h-4 w-4 text-info" />;
         case 'adgroup':
-          return hasChildren && isExpanded ? <FolderOpen className="h-4 w-4 text-purple-500" /> : <Folder className="h-4 w-4 text-purple-500" />;
+          return hasChildren && isExpanded ? <FolderOpen className="h-4 w-4 text-purple" /> : <Folder className="h-4 w-4 text-purple" />;
         case 'ad':
-          return <FileText className="h-4 w-4 text-green-500" />;
+          return <FileText className="h-4 w-4 text-success" />;
         default:
           return null;
       }
@@ -273,12 +273,12 @@ export function AccountStructureTree({
       if (!node.status) return null;
       
       const statusColors: Record<string, string> = {
-        active: 'bg-green-500/10 text-green-700 border-green-500/20',
-        draft: 'bg-gray-500/10 text-gray-700 border-gray-500/20',
-        paused: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20',
-        pending: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
-        approved: 'bg-green-500/10 text-green-700 border-green-500/20',
-        rejected: 'bg-red-500/10 text-red-700 border-red-500/20'
+        active: 'bg-success-soft text-success-text border-success/30',
+        draft: 'bg-neutral-soft text-neutral-text border-border',
+        paused: 'bg-warning-soft text-warning-text border-warning/30',
+        pending: 'bg-info-soft text-info-text border-info/30',
+        approved: 'bg-success-soft text-success-text border-success/30',
+        rejected: 'bg-destructive-soft text-destructive-text border-destructive/30'
       };
 
       return (

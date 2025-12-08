@@ -97,9 +97,9 @@ export function ElementCard({ element }: ElementCardProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'limited': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'rejected': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'approved': return 'bg-success-soft text-success-text border-success/30';
+      case 'limited': return 'bg-warning-soft text-warning-text border-warning/30';
+      case 'rejected': return 'bg-destructive-soft text-destructive-text border-destructive/30';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -218,7 +218,7 @@ export function ElementCard({ element }: ElementCardProps) {
               onClick={handleToggleFavorite}
               className="ml-2 shrink-0"
             >
-              <Star className={`w-4 h-4 ${element.is_favorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <Star className={`w-4 h-4 ${element.is_favorite ? 'fill-amber text-amber' : ''}`} />
             </Button>
           )}
         </div>

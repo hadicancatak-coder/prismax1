@@ -139,17 +139,17 @@ export function TeamKPIsManager() {
               <p className="text-sm text-muted-foreground">Team Members</p>
               <p className="text-2xl font-bold">{stats.totalMembers}</p>
             </div>
-            <div className="p-4 bg-blue-500/10 rounded-lg">
+            <div className="p-4 bg-info-soft rounded-lg">
               <p className="text-sm text-muted-foreground">With Annual KPIs</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.membersWithAnnualKPIs}</p>
+              <p className="text-2xl font-bold text-info-text">{stats.membersWithAnnualKPIs}</p>
             </div>
-            <div className="p-4 bg-purple-500/10 rounded-lg">
+            <div className="p-4 bg-purple-soft rounded-lg">
               <p className="text-sm text-muted-foreground">With Quarterly KPIs</p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.membersWithQuarterlyKPIs}</p>
+              <p className="text-2xl font-bold text-purple-text">{stats.membersWithQuarterlyKPIs}</p>
             </div>
-            <div className="p-4 bg-green-500/10 rounded-lg">
+            <div className="p-4 bg-success-soft rounded-lg">
               <p className="text-sm text-muted-foreground">Avg KPIs/Person</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.avgKPIsPerPerson.toFixed(1)}</p>
+              <p className="text-2xl font-bold text-success-text">{stats.avgKPIsPerPerson.toFixed(1)}</p>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ export function TeamKPIsManager() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          <Badge variant="outline" className="bg-info-soft text-info-text border-info/30">
                             📊 Annual: {annualKPIs.length} ({annualWeight}%)
                           </Badge>
                           <Button
@@ -201,7 +201,7 @@ export function TeamKPIsManager() {
                           </Button>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                          <Badge variant="outline" className="bg-purple-soft text-purple-text border-purple/30">
                             📈 Quarterly: {quarterlyKPIs.length} ({quarterlyWeight}%)
                           </Badge>
                           <Button

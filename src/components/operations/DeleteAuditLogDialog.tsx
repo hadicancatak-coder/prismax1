@@ -67,7 +67,7 @@ export function DeleteAuditLogDialog({
               {itemCount > 0 && ` and all ${itemCount} action items`}.
             </p>
             {hasLinkedTask && (
-              <p className="text-red-600 dark:text-red-500 font-semibold">
+              <p className="text-destructive font-semibold">
                 ⚠️ The linked task will also be permanently deleted.
               </p>
             )}

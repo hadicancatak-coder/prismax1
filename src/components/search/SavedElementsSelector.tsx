@@ -100,7 +100,7 @@ export function SavedElementsSelector({
                               variant="outline" 
                               className={`text-xs h-4 ${
                                 element.google_status === 'approved' 
-                                  ? 'border-green-500/20 bg-green-500/10 text-green-700' 
+                                  ? 'status-success' 
                                   : ''
                               }`}
                             >

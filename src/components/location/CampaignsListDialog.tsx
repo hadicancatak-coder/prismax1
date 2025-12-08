@@ -37,9 +37,9 @@ export function CampaignsListDialog({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "draft": return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
-      case "active": return "bg-green-500/10 text-green-700 dark:text-green-400";
-      case "completed": return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+      case "draft": return "bg-pending-soft text-pending-text";
+      case "active": return "bg-success-soft text-success-text";
+      case "completed": return "bg-info-soft text-info-text";
       default: return "";
     }
   };

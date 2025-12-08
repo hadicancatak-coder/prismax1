@@ -69,7 +69,7 @@ export function SortableHeadlineInput({
             value={headline}
             onChange={(e) => onUpdate(e.target.value)}
             maxLength={30}
-            className={`${hasPattern ? 'ring-1 ring-yellow-400/50' : ''} ${recommendation?.isOptimal ? 'ring-1 ring-green-400/50' : ''}`}
+            className={`${hasPattern ? 'ring-1 ring-warning/50' : ''} ${recommendation?.isOptimal ? 'ring-1 ring-success/50' : ''}`}
           />
           
           {index < 3 && (
@@ -87,7 +87,7 @@ export function SortableHeadlineInput({
           )}
           
           {recommendation && (
-            <div className={`text-xs p-2 rounded ${recommendation.isOptimal ? 'bg-green-50 text-green-900 border border-green-200' : 'bg-blue-50 text-blue-900 border border-blue-200'}`}>
+            <div className={`text-xs p-2 rounded ${recommendation.isOptimal ? 'bg-success-soft text-success-text border border-success/30' : 'bg-info-soft text-info-text border border-info/30'}`}>
               {recommendation.isOptimal ? '✨ ' : '💡 '}{recommendation.message}
             </div>
           )}
@@ -115,7 +115,7 @@ export function SortableHeadlineInput({
                 <TooltipTrigger asChild>
                   <Badge 
                     variant="outline" 
-                    className="text-xs cursor-help bg-yellow-50 border-yellow-300 text-yellow-900"
+                    className="text-xs cursor-help bg-warning-soft border-warning/30 text-warning-text"
                   >
                     {pattern.indicator} +{pattern.boost}%
                   </Badge>

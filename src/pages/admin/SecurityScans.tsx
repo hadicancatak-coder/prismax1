@@ -151,9 +151,9 @@ export default function SecurityScans() {
     if (severity === 'critical' || severity === 'high') {
       return <XCircle className="h-5 w-5 text-destructive" />;
     } else if (severity === 'medium') {
-      return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      return <AlertTriangle className="h-5 w-5 text-warning" />;
     }
-    return <CheckCircle className="h-5 w-5 text-green-500" />;
+    return <CheckCircle className="h-5 w-5 text-success" />;
   };
 
   if (loading) {
@@ -290,7 +290,7 @@ export default function SecurityScans() {
                 </ScrollArea>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success" />
                   <p>No security findings in the latest scan</p>
                 </div>
               )}
@@ -348,7 +348,7 @@ export default function SecurityScans() {
                 </Table>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success" />
                   <p>No unresolved suspicious activities</p>
                 </div>
               )}

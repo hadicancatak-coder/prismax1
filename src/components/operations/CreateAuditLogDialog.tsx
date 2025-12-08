@@ -107,7 +107,7 @@ export function CreateAuditLogDialog() {
                   {ppcPlatforms.map((p) => (
                     <SelectItem key={p} value={p}>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+                        <Badge variant="outline" className="bg-info-soft text-info-text border-info/30">
                           PPC
                         </Badge>
                         {p}
@@ -120,7 +120,7 @@ export function CreateAuditLogDialog() {
                   {socialPlatforms.map((p) => (
                     <SelectItem key={p} value={p}>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-200">
+                        <Badge variant="outline" className="bg-purple-soft text-purple-text border-purple/30">
                           Social
                         </Badge>
                         {p}

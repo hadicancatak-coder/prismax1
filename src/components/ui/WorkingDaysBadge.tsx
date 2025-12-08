@@ -11,7 +11,7 @@ export function WorkingDaysBadge({ isWorking, className }: WorkingDaysBadgeProps
     <div 
       className={cn(
         "h-2 w-2 rounded-full border-2 border-background",
-        isWorking ? "bg-green-500" : "bg-red-500",
+        isWorking ? "bg-success" : "bg-destructive",
         className
       )}
       title={isWorking ? "Working Day" : "Non-Working Day"}

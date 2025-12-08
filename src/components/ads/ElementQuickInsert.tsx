@@ -69,7 +69,7 @@ export function ElementQuickInsert({ elementType, onInsert }: ElementQuickInsert
                           </Badge>
                         )}
                         {element.google_status === 'approved' && (
-                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/20">
+                          <Badge variant="outline" className="text-xs status-success">
                             Approved
                           </Badge>
                         )}

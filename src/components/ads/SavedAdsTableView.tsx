@@ -21,9 +21,9 @@ interface SavedAdsTableViewProps {
 export function SavedAdsTableView({ ads }: SavedAdsTableViewProps) {
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'search': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'display': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+      case 'search': return 'bg-info-soft text-info-text border-info/30';
+      case 'display': return 'bg-purple-soft text-purple-text border-purple/30';
+      default: return 'bg-neutral-soft text-neutral-text border-border';
     }
   };
 

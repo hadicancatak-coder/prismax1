@@ -75,9 +75,9 @@ export function GoogleAPIConfig({ onConfigured }: GoogleAPIConfigProps) {
         </div>
 
         {isConfigured && (
-          <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-green-700 dark:text-green-400">
+          <div className="flex items-center gap-2 p-3 bg-success-soft border border-success/30 rounded-lg">
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            <span className="text-sm text-success-text">
               API credentials configured successfully
             </span>
           </div>

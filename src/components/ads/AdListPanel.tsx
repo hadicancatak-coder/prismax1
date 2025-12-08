@@ -52,11 +52,11 @@ export default function AdListPanel({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "bg-green-500/10 text-green-700 dark:text-green-400";
+        return "bg-success-soft text-success-text";
       case "pending":
-        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
+        return "bg-pending-soft text-pending-text";
       case "rejected":
-        return "bg-red-500/10 text-red-700 dark:text-red-400";
+        return "bg-destructive-soft text-destructive-text";
       default:
         return "bg-muted text-muted-foreground";
     }
