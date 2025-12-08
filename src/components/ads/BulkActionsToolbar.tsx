@@ -30,7 +30,7 @@ export default function BulkActionsToolbar({
   return (
     <Card
       className={cn(
-        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 shadow-lg",
+        "fixed bottom-6 left-1/2 -translate-x-1/2 z-overlay shadow-lg",
         "animate-in slide-in-from-bottom-4 duration-300",
         className
       )}
@@ -66,14 +66,14 @@ export default function BulkActionsToolbar({
           )}
 
           {onApprove && (
-            <Button size="sm" variant="outline" onClick={onApprove} className="text-green-600">
+            <Button size="sm" variant="outline" onClick={onApprove} className="text-success">
               <CheckCircle className="h-4 w-4 mr-2" />
               Approve
             </Button>
           )}
 
           {onReject && (
-            <Button size="sm" variant="outline" onClick={onReject} className="text-red-600">
+            <Button size="sm" variant="outline" onClick={onReject} className="text-destructive">
               <XCircle className="h-4 w-4 mr-2" />
               Reject
             </Button>

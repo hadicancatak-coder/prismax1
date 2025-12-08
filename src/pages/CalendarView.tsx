@@ -58,7 +58,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
       className={cn(
         "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
         "hover:bg-card-hover",
-        isDragging && "z-50 bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
+        isDragging && "z-overlay bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
         isOverdue && !isCompleted && "border-l-4 border-l-destructive",
         isCompleted && "opacity-60"
       )}

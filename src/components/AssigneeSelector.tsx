@@ -63,7 +63,7 @@ export function AssigneeSelector({
           <UserCircle className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0 z-[100] border-2 border-border bg-background shadow-xl" align="start" sideOffset={4}>
+      <PopoverContent className="w-[280px] p-0 z-popover border-2 border-border bg-background shadow-xl" align="start" sideOffset={4}>
         <ScrollArea className="max-h-[300px]">
           <div className="p-1">
             <div

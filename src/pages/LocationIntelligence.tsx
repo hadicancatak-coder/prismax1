@@ -225,7 +225,7 @@ export default function LocationIntelligence() {
       {contextMenuPos && createPortal(
         <div
           className={cn(
-            "fixed z-50 min-w-[200px] overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl",
+            "fixed z-dropdown min-w-[200px] overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl",
             "animate-in fade-in-0 zoom-in-95"
           )}
           style={{

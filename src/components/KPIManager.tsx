@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AlertBanner } from "@/components/ui/AlertBanner";
+import { AlertBanner } from "@/components/layout/AlertBanner";
 
 export interface KPI {
   id: string;
@@ -98,11 +98,9 @@ export function KPIManager({ open, onOpenChange, kpis, onSave, title }: KPIManag
         </DialogHeader>
 
         {validationError && (
-          <AlertBanner
-            variant="error"
-            message={validationError}
-            onDismiss={() => setValidationError(null)}
-          />
+          <AlertBanner variant="error">
+            {validationError}
+          </AlertBanner>
         )}
 
         <div className="space-y-4 py-4">

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertBanner } from "@/components/ui/AlertBanner";
+import { AlertBanner } from "@/components/layout/AlertBanner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Plus, Copy, Trash2, ExternalLink, Monitor, Smartphone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -296,11 +296,9 @@ export function ReadyLinksBuilder() {
 
   return (
     <>
-      <AlertBanner
-        variant="warning"
-        message="⚠️ Link Accuracy Responsibility: You are responsible for ensuring all UTM links are correct before use. Always verify the final URL matches your campaign requirements."
-        autoDismiss={false}
-      />
+      <AlertBanner variant="warning">
+        ⚠️ Link Accuracy Responsibility: You are responsible for ensuring all UTM links are correct before use. Always verify the final URL matches your campaign requirements.
+      </AlertBanner>
 
       <Card>
         <CardHeader>

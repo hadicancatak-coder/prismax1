@@ -158,7 +158,7 @@ export function GlobalSearch() {
           />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 bg-card z-50" align="start" side="bottom" sideOffset={8} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent className="w-[400px] p-0 bg-card z-dropdown" align="start" side="bottom" sideOffset={8} onOpenAutoFocus={(e) => e.preventDefault()}>
         <Command>
           <CommandList>
             {!query && recentSearches.length > 0 && (

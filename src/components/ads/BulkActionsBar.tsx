@@ -43,7 +43,7 @@ export function BulkActionsBar({
   if (selectedIds.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-overlay">
       <div className="bg-primary text-primary-foreground rounded-lg shadow-lg p-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="font-semibold">{selectedIds.length} selected</span>
@@ -108,7 +108,7 @@ export function BulkActionsBar({
                   Delete
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+              <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete {selectedIds.length} items?</AlertDialogTitle>
                   <AlertDialogDescription>

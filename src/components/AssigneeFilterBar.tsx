@@ -62,7 +62,7 @@ export function AssigneeFilterBar({
             : "Assignee"}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="bg-background z-50">
+      <SelectContent className="bg-background z-dropdown">
         <SelectItem value="all">All Assignees</SelectItem>
         {users.map((user) => (
           <div

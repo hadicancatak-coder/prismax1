@@ -31,7 +31,7 @@ export function MapContextMenu({
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-60 bg-card border-border shadow-lg z-[99999]">
+      <ContextMenuContent className="w-60 bg-card border-border shadow-lg z-overlay">
         {isAdmin && (
           <>
             <ContextMenuItem onClick={onAddLocation} className="cursor-pointer">

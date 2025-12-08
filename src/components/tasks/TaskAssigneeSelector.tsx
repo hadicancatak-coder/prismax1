@@ -150,7 +150,7 @@ export function TaskAssigneeSelector({
           <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 bg-popover z-[100]" align="start">
+      <PopoverContent className="w-[320px] p-0 bg-popover z-popover" align="start">
         <Command>
           <CommandInput placeholder="Search users..." className="h-10" />
           <CommandList className="max-h-[250px] hide-scrollbar">

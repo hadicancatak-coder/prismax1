@@ -103,7 +103,7 @@ export function TagsMultiSelect({ value, onChange, disabled = false }: TagsMulti
         </div>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[300px] p-0 bg-popover border-border z-[100]" 
+        className="w-[300px] p-0 bg-popover border-border z-popover" 
         align="start" 
         side="bottom" 
         sideOffset={5}

@@ -112,7 +112,7 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                   >
                     <div>
                       <p className="font-medium text-foreground">{campaign.name}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {format(new Date(campaign.start_date), "PP")} - {format(new Date(campaign.end_date), "PP")}
                       </p>
                     </div>

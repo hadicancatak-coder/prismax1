@@ -74,7 +74,7 @@ export function TemplateSelector({ open, onOpenChange, onSelect }: TemplateSelec
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="z-[9999]" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete this template?</AlertDialogTitle>
                         <AlertDialogDescription>
