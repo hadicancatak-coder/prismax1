@@ -41,7 +41,7 @@ export function WorkspaceCard({
             {boardCount} {boardCount === 1 ? 'board' : 'boards'}
           </div>
         </div>
-        <CardTitle className="text-base font-semibold text-white mb-2">
+        <CardTitle className="text-base font-semibold text-foreground mb-2">
           {name}
         </CardTitle>
       </CardHeader>

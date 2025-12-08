@@ -44,14 +44,14 @@ export default function KPIsManagement() {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors = {
-      draft: "bg-muted text-muted-foreground",
-      pending_approval: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      archived: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+    const colors: Record<string, string> = {
+      draft: "status-neutral",
+      pending_approval: "status-warning",
+      active: "status-success",
+      completed: "status-info",
+      archived: "status-neutral",
     };
-    return <Badge className={colors[status as keyof typeof colors]}>{status.replace('_', ' ')}</Badge>;
+    return <Badge className={colors[status] || "status-neutral"}>{status.replace('_', ' ')}</Badge>;
   };
 
   if (isLoading) {
