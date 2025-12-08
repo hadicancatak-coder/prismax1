@@ -47,36 +47,36 @@ export function WebIntelStats({ sites }: WebIntelStatsProps) {
       title: "Total Sites",
       value: totalSites.toString(),
       icon: Globe,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      colorClass: "text-info",
+      bgClass: "bg-info-soft",
     },
     {
       title: "Combined Monthly Traffic",
       value: combinedTraffic > 0 ? formatTraffic(combinedTraffic) : 'N/A',
       icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      colorClass: "text-success",
+      bgClass: "bg-success-soft",
     },
     {
       title: "Direct Deals",
       value: directDeals.toString(),
       icon: Handshake,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
+      colorClass: "text-purple",
+      bgClass: "bg-purple-soft",
     },
     {
       title: "GDN-Targeted",
       value: gdnTargeted.toString(),
       icon: Target,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      colorClass: "text-orange",
+      bgClass: "bg-orange-soft",
     },
     {
       title: "Top Category",
       value: topCategoryText,
       icon: BarChart,
-      color: "text-pink-600",
-      bgColor: "bg-pink-50",
+      colorClass: "text-pink",
+      bgClass: "bg-pink-soft",
     },
   ];
 
@@ -92,8 +92,8 @@ export function WebIntelStats({ sites }: WebIntelStatsProps) {
                   <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
                   <p className="text-2xl font-bold">{stat.value}</p>
                 </div>
-                <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                <div className={`${stat.bgClass} p-3 rounded-lg`}>
+                  <Icon className={`h-5 w-5 ${stat.colorClass}`} />
                 </div>
               </div>
             </CardContent>

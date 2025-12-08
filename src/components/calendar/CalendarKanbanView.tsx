@@ -24,17 +24,17 @@ export const CalendarKanbanView = ({
 }: CalendarKanbanViewProps) => {
   
   const priorityColors = {
-    High: "bg-red-500/10 text-red-600 border-red-500/20",
-    Medium: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    Low: "bg-green-500/10 text-green-600 border-green-500/20",
+    High: "priority-high",
+    Medium: "priority-medium",
+    Low: "priority-low",
   };
 
   const statusColors: Record<string, string> = {
-    Pending: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    Ongoing: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    Blocked: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-    Completed: "bg-green-500/20 text-green-400 border-green-500/30",
-    Failed: "bg-red-500/20 text-red-400 border-red-500/30",
+    Pending: "status-info",
+    Ongoing: "status-purple",
+    Blocked: "status-orange",
+    Completed: "status-success",
+    Failed: "status-destructive",
   };
 
   // Determine columns based on view type
@@ -102,16 +102,16 @@ export const CalendarKanbanView = ({
           <div className="p-4 border-b border-border bg-card-hover">
             <h3 className="font-semibold text-foreground mb-1">{column.label}</h3>
             {column.dateRange && (
-              <p className="text-xs text-gray-400">{column.dateRange}</p>
+              <p className="text-xs text-muted-foreground">{column.dateRange}</p>
             )}
-            <span className="text-xs text-gray-400 mt-1 block">{column.tasks.length} tasks</span>
+            <span className="text-xs text-muted-foreground mt-1 block">{column.tasks.length} tasks</span>
           </div>
           
           {/* Task Cards */}
           <ScrollArea className="h-[600px]">
             <div className="p-3 space-y-3">
               {column.tasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No tasks
                 </div>
               ) : (
@@ -143,19 +143,19 @@ export const CalendarKanbanView = ({
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge 
                         variant="outline" 
-                        className={cn("text-xs", priorityColors[task.priority])}
+                        className={cn("text-xs", priorityColors[task.priority as keyof typeof priorityColors])}
                       >
                         {task.priority}
                       </Badge>
                       
                       {task.due_at && (view === 'today' || view === 'day') && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {format(new Date(task.due_at), 'h:mm a')}
                         </span>
                       )}
                       
                       {task.due_at && (view === 'week' || view === 'month') && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {format(new Date(task.due_at), 'MMM d, h:mm a')}
                         </span>
                       )}
@@ -165,7 +165,7 @@ export const CalendarKanbanView = ({
 
                     {/* Task Description Preview */}
                     {task.description && (
-                      <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
                         {task.description}
                       </p>
                     )}
@@ -183,7 +183,7 @@ export const CalendarKanbanView = ({
                           </div>
                         ))}
                         {task.assignees.length > 3 && (
-                          <span className="text-xs text-gray-400 ml-1">
+                          <span className="text-xs text-muted-foreground ml-1">
                             +{task.assignees.length - 3}
                           </span>
                         )}

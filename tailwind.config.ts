@@ -96,6 +96,51 @@ export default {
           soft: "hsl(var(--neutral-soft))",
           text: "hsl(var(--neutral-text))",
         },
+        purple: {
+          DEFAULT: "hsl(var(--purple))",
+          foreground: "hsl(var(--purple-foreground))",
+          soft: "hsl(var(--purple-soft))",
+          text: "hsl(var(--purple-text))",
+        },
+        orange: {
+          DEFAULT: "hsl(var(--orange))",
+          foreground: "hsl(var(--orange-foreground))",
+          soft: "hsl(var(--orange-soft))",
+          text: "hsl(var(--orange-text))",
+        },
+        cyan: {
+          DEFAULT: "hsl(var(--cyan))",
+          foreground: "hsl(var(--cyan-foreground))",
+          soft: "hsl(var(--cyan-soft))",
+          text: "hsl(var(--cyan-text))",
+        },
+        pink: {
+          DEFAULT: "hsl(var(--pink))",
+          foreground: "hsl(var(--pink-foreground))",
+          soft: "hsl(var(--pink-soft))",
+          text: "hsl(var(--pink-text))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--amber))",
+          foreground: "hsl(var(--amber-foreground))",
+          soft: "hsl(var(--amber-soft))",
+          text: "hsl(var(--amber-text))",
+        },
+        "priority-high": {
+          DEFAULT: "hsl(var(--priority-high))",
+          soft: "hsl(var(--priority-high-soft))",
+          text: "hsl(var(--priority-high-text))",
+        },
+        "priority-medium": {
+          DEFAULT: "hsl(var(--priority-medium))",
+          soft: "hsl(var(--priority-medium-soft))",
+          text: "hsl(var(--priority-medium-text))",
+        },
+        "priority-low": {
+          DEFAULT: "hsl(var(--priority-low))",
+          soft: "hsl(var(--priority-low-soft))",
+          text: "hsl(var(--priority-low-text))",
+        },
         gray: {
           50: "hsl(var(--gray-50))",
           100: "hsl(var(--gray-100))",

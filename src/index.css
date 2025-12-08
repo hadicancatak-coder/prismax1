@@ -74,6 +74,39 @@ All colors MUST be HSL.
     --neutral-soft: 240 5% 96%;      /* Light gray background */
     --neutral-text: 220 9% 35%;      /* Dark gray text */
     
+    /* Extended status colors */
+    --purple: 271 81% 56%;           /* Purple */
+    --purple-foreground: 0 0% 100%;
+    --purple-soft: 271 81% 95%;
+    --purple-text: 271 81% 35%;
+    --orange: 25 95% 53%;            /* Orange */
+    --orange-foreground: 0 0% 100%;
+    --orange-soft: 25 95% 95%;
+    --orange-text: 25 95% 30%;
+    --cyan: 189 94% 43%;             /* Cyan */
+    --cyan-foreground: 0 0% 100%;
+    --cyan-soft: 189 94% 95%;
+    --cyan-text: 189 94% 30%;
+    --pink: 330 81% 60%;             /* Pink */
+    --pink-foreground: 0 0% 100%;
+    --pink-soft: 330 81% 95%;
+    --pink-text: 330 81% 35%;
+    --amber: 45 93% 47%;             /* Amber */
+    --amber-foreground: 0 0% 100%;
+    --amber-soft: 45 93% 95%;
+    --amber-text: 45 93% 30%;
+    
+    /* Priority colors */
+    --priority-high: 0 72% 51%;
+    --priority-high-soft: 0 72% 95%;
+    --priority-high-text: 0 72% 35%;
+    --priority-medium: 38 100% 50%;
+    --priority-medium-soft: 38 100% 95%;
+    --priority-medium-text: 38 100% 30%;
+    --priority-low: 142 71% 45%;
+    --priority-low-soft: 142 71% 95%;
+    --priority-low-text: 142 71% 30%;
+    
     /* Danger soft for alerts (alias) */
     --danger-soft: 0 100% 97%;       /* #ffe9ea */
     --danger-text: 0 100% 35%;       /* #b40000 */
@@ -173,6 +206,39 @@ All colors MUST be HSL.
     --destructive-text: 0 72% 70%;   /* Light red text */
     --neutral-soft: 220 14% 18%;     /* Dark gray background */
     --neutral-text: 220 13% 70%;     /* Light gray text */
+    
+    /* Extended status colors - dark mode */
+    --purple: 271 81% 60%;
+    --purple-foreground: 0 0% 100%;
+    --purple-soft: 271 50% 15%;
+    --purple-text: 271 81% 70%;
+    --orange: 25 95% 58%;
+    --orange-foreground: 0 0% 100%;
+    --orange-soft: 25 50% 15%;
+    --orange-text: 25 95% 65%;
+    --cyan: 189 94% 50%;
+    --cyan-foreground: 0 0% 100%;
+    --cyan-soft: 189 50% 15%;
+    --cyan-text: 189 94% 65%;
+    --pink: 330 81% 65%;
+    --pink-foreground: 0 0% 100%;
+    --pink-soft: 330 50% 15%;
+    --pink-text: 330 81% 70%;
+    --amber: 45 93% 55%;
+    --amber-foreground: 0 0% 100%;
+    --amber-soft: 45 50% 15%;
+    --amber-text: 45 93% 65%;
+    
+    /* Priority colors - dark mode */
+    --priority-high: 0 72% 55%;
+    --priority-high-soft: 0 50% 15%;
+    --priority-high-text: 0 72% 70%;
+    --priority-medium: 38 92% 55%;
+    --priority-medium-soft: 38 50% 15%;
+    --priority-medium-text: 38 92% 65%;
+    --priority-low: 142 76% 42%;
+    --priority-low-soft: 142 50% 15%;
+    --priority-low-text: 142 76% 60%;
     
     /* Danger soft for alerts (dark) - alias */
     --danger-soft: 0 72% 51% / 0.12;
@@ -558,6 +624,34 @@ All colors MUST be HSL.
   }
   .status-neutral {
     @apply bg-neutral-soft text-neutral-text border border-border;
+  }
+  
+  /* Extended status utilities */
+  .status-purple {
+    @apply bg-purple-soft text-purple-text border border-purple/30;
+  }
+  .status-orange {
+    @apply bg-orange-soft text-orange-text border border-orange/30;
+  }
+  .status-cyan {
+    @apply bg-cyan-soft text-cyan-text border border-cyan/30;
+  }
+  .status-pink {
+    @apply bg-pink-soft text-pink-text border border-pink/30;
+  }
+  .status-amber {
+    @apply bg-amber-soft text-amber-text border border-amber/30;
+  }
+  
+  /* Priority utilities */
+  .priority-high {
+    @apply bg-priority-high-soft text-priority-high-text border border-priority-high/30;
+  }
+  .priority-medium {
+    @apply bg-priority-medium-soft text-priority-medium-text border border-priority-medium/30;
+  }
+  .priority-low {
+    @apply bg-priority-low-soft text-priority-low-text border border-priority-low/30;
   }
 }
 

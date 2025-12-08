@@ -27,26 +27,26 @@ export const AdStrengthIndicator = ({
   const getStrengthColor = (strength: string) => {
     switch (strength) {
       case 'excellent':
-        return 'bg-purple-500';
+        return 'bg-purple';
       case 'good':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'average':
-        return 'bg-yellow-500';
+        return 'bg-warning';
       default:
-        return 'bg-red-500';
+        return 'bg-destructive';
     }
   };
 
   const getStrengthBadge = (strength: string) => {
     switch (strength) {
       case 'excellent':
-        return <Badge className="bg-purple-500">🟣 Excellent</Badge>;
+        return <Badge className="bg-purple text-purple-foreground">🟣 Excellent</Badge>;
       case 'good':
-        return <Badge className="bg-green-500">🟢 Good</Badge>;
+        return <Badge className="bg-success text-success-foreground">🟢 Good</Badge>;
       case 'average':
-        return <Badge className="bg-yellow-500">🟡 Average</Badge>;
+        return <Badge className="bg-warning text-warning-foreground">🟡 Average</Badge>;
       default:
-        return <Badge className="bg-red-500">🔴 Poor</Badge>;
+        return <Badge className="bg-destructive text-destructive-foreground">🔴 Poor</Badge>;
     }
   };
 
@@ -104,13 +104,13 @@ export const AdStrengthIndicator = ({
         {result.suggestions.length > 0 && (
           <div className="space-y-2 pt-2 border-t">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Info className="h-4 w-4 text-blue-500" />
+              <Info className="h-4 w-4 text-info" />
               <span>Suggestions to Improve</span>
             </div>
             <ul className="space-y-1 text-sm text-muted-foreground">
               {result.suggestions.map((suggestion, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-3 w-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="h-3 w-3 mt-0.5 text-success flex-shrink-0" />
                   <span>{suggestion}</span>
                 </li>
               ))}

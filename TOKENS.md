@@ -36,11 +36,25 @@ These tokens provide consistent status indication across light and dark themes:
 | Info | `bg-info-soft` | `text-info-text` | `border-info/30` | `.status-info` |
 | Pending | `bg-pending-soft` | `text-pending-text` | `border-pending/30` | `.status-pending` |
 | Neutral | `bg-neutral-soft` | `text-neutral-text` | `border-border` | `.status-neutral` |
+| Purple | `bg-purple-soft` | `text-purple-text` | `border-purple/30` | `.status-purple` |
+| Orange | `bg-orange-soft` | `text-orange-text` | `border-orange/30` | `.status-orange` |
+| Cyan | `bg-cyan-soft` | `text-cyan-text` | `border-cyan/30` | `.status-cyan` |
+| Pink | `bg-pink-soft` | `text-pink-text` | `border-pink/30` | `.status-pink` |
+| Amber | `bg-amber-soft` | `text-amber-text` | `border-amber/30` | `.status-amber` |
+
+### Priority Colors
+
+| Priority | Background | Text | Border | Utility Class |
+|----------|------------|------|--------|---------------|
+| High | `bg-priority-high-soft` | `text-priority-high-text` | `border-priority-high/30` | `.priority-high` |
+| Medium | `bg-priority-medium-soft` | `text-priority-medium-text` | `border-priority-medium/30` | `.priority-medium` |
+| Low | `bg-priority-low-soft` | `text-priority-low-text` | `border-priority-low/30` | `.priority-low` |
 
 **Example usage:**
 ```tsx
 // ✅ CORRECT - Using utility class
 <Badge className="status-success">Active</Badge>
+<Badge className="priority-high">High Priority</Badge>
 
 // ✅ CORRECT - Using individual tokens
 <div className="bg-success-soft text-success-text border border-success/30">

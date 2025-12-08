@@ -95,17 +95,17 @@ export function WebIntelTableView({
   );
 
   const typeColors: Record<string, string> = {
-    'Website': 'bg-blue-100 text-blue-800',
-    'App': 'bg-green-100 text-green-800',
-    'Portal': 'bg-purple-100 text-purple-800',
-    'Forum': 'bg-orange-100 text-orange-800',
+    'Website': 'status-info',
+    'App': 'status-success',
+    'Portal': 'status-purple',
+    'Forum': 'status-orange',
   };
 
   const tagColors: Record<string, string> = {
-    'GDN': 'bg-blue-100 text-blue-800',
-    'DV360': 'bg-purple-100 text-purple-800',
-    'Direct': 'bg-green-100 text-green-800',
-    'Mobile-only': 'bg-orange-100 text-orange-800',
+    'GDN': 'status-info',
+    'DV360': 'status-purple',
+    'Direct': 'status-success',
+    'Mobile-only': 'status-orange',
   };
 
   if (sites.length === 0) {
@@ -172,7 +172,7 @@ export function WebIntelTableView({
                       <Badge 
                         key={tag} 
                         variant="secondary"
-                        className={tagColors[tag] || 'bg-gray-100 text-gray-800'}
+                        className={tagColors[tag] || 'status-neutral'}
                       >
                         {tag}
                       </Badge>
