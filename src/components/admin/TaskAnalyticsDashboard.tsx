@@ -202,9 +202,9 @@ export const TaskAnalyticsDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-metadata">Completed</p>
-                <p className="text-3xl font-bold text-green-600">{statusDistribution.completed}</p>
+                <p className="text-3xl font-bold text-success">{statusDistribution.completed}</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <CheckCircle2 className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -226,9 +226,9 @@ export const TaskAnalyticsDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-metadata">Overdue</p>
-                <p className="text-3xl font-bold text-orange-600">{statusDistribution.overdue}</p>
+                <p className="text-3xl font-bold text-orange">{statusDistribution.overdue}</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-orange-600" />
+              <TrendingDown className="h-8 w-8 text-orange" />
             </div>
           </CardContent>
         </Card>
@@ -290,10 +290,10 @@ export const TaskAnalyticsDashboard = () => {
                   </div>
 
                   <div className="flex gap-2 ml-6">
-                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">
+                    <Badge variant="outline" className="status-pending">
                       {stat.pendingCount} Pending
                     </Badge>
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+                    <Badge variant="outline" className="status-info">
                       {stat.ongoingCount} Ongoing
                     </Badge>
                     {stat.blockedCount > 0 && (

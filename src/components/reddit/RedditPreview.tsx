@@ -13,9 +13,9 @@ export function RedditPreview({ adData }: RedditPreviewProps) {
       <div className="flex gap-2 p-2">
         {/* Voting Section */}
         <div className="flex flex-col items-center gap-1 px-2">
-          <ArrowUp className="h-6 w-6 text-muted-foreground hover:text-orange-500 cursor-pointer" />
+          <ArrowUp className="h-6 w-6 text-muted-foreground hover:text-orange cursor-pointer" />
           <span className="text-xs font-bold">123</span>
-          <ArrowDown className="h-6 w-6 text-muted-foreground hover:text-blue-500 cursor-pointer" />
+          <ArrowDown className="h-6 w-6 text-muted-foreground hover:text-info cursor-pointer" />
         </div>
 
         {/* Content Section */}
@@ -26,7 +26,7 @@ export function RedditPreview({ adData }: RedditPreviewProps) {
             <span>•</span>
             <span>Posted by u/CFI_Group</span>
             <span>•</span>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">Ad</span>
+            <span className="px-2 py-0.5 bg-info-soft text-info-text rounded font-medium">Ad</span>
           </div>
 
           {/* Title */}

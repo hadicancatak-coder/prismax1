@@ -40,28 +40,28 @@ export const UtmTable = ({ links }: UtmTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-500/10 text-green-700 dark:text-green-400";
+        return "bg-success-soft text-success-text";
       case "paused":
-        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
+        return "bg-warning-soft text-warning-text";
       case "archived":
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+        return "bg-neutral-soft text-neutral-text";
       default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+        return "bg-neutral-soft text-neutral-text";
     }
   };
 
   const getPurposeColor = (purpose: string) => {
     switch (purpose) {
       case "AO":
-        return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+        return "bg-info-soft text-info-text";
       case "Seminar":
-        return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
+        return "bg-purple-soft text-purple-text";
       case "Webinar":
-        return "bg-pink-500/10 text-pink-700 dark:text-pink-400";
+        return "bg-pink-soft text-pink-text";
       case "Education":
-        return "bg-orange-500/10 text-orange-700 dark:text-orange-400";
+        return "bg-orange-soft text-orange-text";
       default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+        return "bg-neutral-soft text-neutral-text";
     }
   };
 

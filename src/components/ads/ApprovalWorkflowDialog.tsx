@@ -99,8 +99,8 @@ export function ApprovalWorkflowDialog({ open, onOpenChange, ad }: ApprovalWorkf
                 <TabsTrigger key={stage.key} value={stage.key} className="flex items-center gap-2">
                   <Icon className="h-4 w-4" />
                   {stage.label}
-                  {status === 'approved' && <CheckCircle className="h-3 w-3 text-green-500" />}
-                  {status === 'rejected' && <XCircle className="h-3 w-3 text-red-500" />}
+                  {status === 'approved' && <CheckCircle className="h-3 w-3 text-success" />}
+                  {status === 'rejected' && <XCircle className="h-3 w-3 text-destructive" />}
                 </TabsTrigger>
               );
             })}

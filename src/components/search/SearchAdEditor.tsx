@@ -701,7 +701,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                       <div 
                         key={index} 
                         className={`text-sm p-2 rounded flex items-center gap-2 ${
-                          hasPattern ? 'bg-yellow-50/50 border border-yellow-200' : 'bg-muted/30'
+                          hasPattern ? 'bg-warning-soft border border-warning/30' : 'bg-muted/30'
                         }`}
                       >
                         <span className="flex-1">• {headline}</span>
@@ -711,7 +711,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                               <TooltipTrigger asChild>
                                 <Badge 
                                   variant="outline" 
-                                  className="text-xs cursor-help bg-yellow-100 border-yellow-400 text-yellow-900 shrink-0"
+                                  className="text-xs cursor-help bg-warning-soft border-warning/30 text-warning-text shrink-0"
                                 >
                                   {pattern.indicator} +{pattern.boost}%
                                 </Badge>
@@ -1036,7 +1036,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                       <div 
                         key={index} 
                         className={`text-sm p-2 rounded flex items-center gap-2 ${
-                          hasPattern ? 'bg-yellow-50/50 border border-yellow-200' : 'bg-muted/30'
+                          hasPattern ? 'bg-warning-soft border border-warning/30' : 'bg-muted/30'
                         }`}
                       >
                         <span className="flex-1">• {headline}</span>
@@ -1046,7 +1046,7 @@ export default function SearchAdEditor({ ad, adGroup, campaign, entity, onSave, 
                               <TooltipTrigger asChild>
                                 <Badge 
                                   variant="outline" 
-                                  className="text-xs cursor-help bg-yellow-100 border-yellow-400 text-yellow-900 shrink-0"
+                                  className="text-xs cursor-help bg-warning-soft border-warning/30 text-warning-text shrink-0"
                                 >
                                   {pattern.indicator} +{pattern.boost}%
                                 </Badge>

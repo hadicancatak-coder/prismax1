@@ -117,7 +117,7 @@ export function QualityMetricsPanel({
                   {hasIssues ? (
                     <AlertCircle className="h-4 w-4 text-destructive" />
                   ) : (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <CheckCircle className="h-4 w-4 text-success" />
                   )}
                 </div>
                 <div className="flex items-center gap-2">

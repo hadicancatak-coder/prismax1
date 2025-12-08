@@ -47,9 +47,9 @@ const ACTION_COLORS = {
   created: "bg-success/10 text-success",
   updated: "bg-primary/10 text-primary",
   deleted: "bg-destructive/10 text-destructive",
-  assigned: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  assigned: "bg-purple-soft text-purple-text",
   unassigned: "bg-warning/10 text-warning",
-  commented: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+  commented: "bg-cyan-soft text-cyan-text",
 };
 
 export default function ActivityLog() {
