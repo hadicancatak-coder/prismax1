@@ -5092,6 +5092,10 @@ export type Database = {
       }
       send_notification:
         | {
+            Args: { p_payload_json: Json; p_type: string; p_user_id: string }
+            Returns: undefined
+          }
+        | {
             Args: {
               p_link?: string
               p_message: string
@@ -5101,10 +5105,6 @@ export type Database = {
               p_user_id: string
             }
             Returns: string
-          }
-        | {
-            Args: { p_payload_json: Json; p_type: string; p_user_id: string }
-            Returns: undefined
           }
       validate_mfa_session: {
         Args: { session_token: string }
