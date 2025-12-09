@@ -18,18 +18,11 @@ export interface TaskFilters {
 }
 
 export function useTasks(filters?: TaskFilters) {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const fetchTasks = async () => {
     if (!user) return [];
-
-    // Get current user's profile with teams
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('id, user_id, teams')
-      .eq('user_id', user.id)
-      .single();
 
     const { data, error } = await supabase
       .from("tasks")
@@ -46,33 +39,12 @@ export function useTasks(filters?: TaskFilters) {
     if (error) throw error;
 
     // Map tasks and include comments count, transform DB status → UI status
-    const allTasks = (data || []).map((task: any) => {
-      return {
-        ...task,
-        status: mapStatusToUi(task.status), // Transform Pending → Backlog
-        assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
-        comments_count: task.task_comment_counts?.[0]?.comment_count || 0
-      };
-    });
-
-    // Filter tasks based on visibility settings
-    return allTasks.filter((task: any) => {
-      // Admins always see everything
-      if (userRole === 'admin') return true;
-      
-      // Global visibility tasks are visible to everyone
-      if (task.visibility === 'global') return true;
-      
-      // For private tasks, check if user is assigned or part of team
-      const isDirectAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
-      const userTeams = currentProfile?.teams || [];
-      const taskTeams = Array.isArray(task.teams) 
-        ? task.teams 
-        : (typeof task.teams === 'string' ? JSON.parse(task.teams) : []);
-      const isTeamMember = userTeams.some((team: string) => taskTeams.includes(team));
-      
-      return isDirectAssignee || isTeamMember;
-    });
+    return (data || []).map((task: any) => ({
+      ...task,
+      status: mapStatusToUi(task.status),
+      assignees: task.task_assignees?.map((ta: any) => ta.profiles).filter(Boolean) || [],
+      comments_count: task.task_comment_counts?.[0]?.comment_count || 0
+    }));
   };
 
   const query = useQuery({
