@@ -764,10 +764,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                             { value: 6, label: 'Sat' },
                             { value: 0, label: 'Sun' },
                           ].map(day => (
-                            <div
+                            <button
                               key={day.value}
+                              type="button"
+                              disabled={isReadOnly}
                               onClick={() => {
-                                if (isReadOnly) return;
                                 if (recurrenceDaysOfWeek.includes(day.value)) {
                                   setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
                                 } else {
@@ -775,19 +776,18 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 }
                               }}
                               className={cn(
-                                "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-smooth",
-                                isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50',
+                                "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border-2 transition-smooth",
+                                isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50 active:scale-95',
                                 recurrenceDaysOfWeek.includes(day.value) 
-                                  ? 'border-primary bg-primary/10' 
+                                  ? 'border-primary bg-primary/10 text-primary' 
                                   : 'border-border'
                               )}
                             >
-                              <Checkbox
-                                checked={recurrenceDaysOfWeek.includes(day.value)}
-                                disabled={isReadOnly}
-                              />
-                              <span className="text-metadata">{day.label}</span>
-                            </div>
+                              <span className="text-body-sm font-medium">{day.label}</span>
+                              {recurrenceDaysOfWeek.includes(day.value) && (
+                                <span className="text-xs">✓</span>
+                              )}
+                            </button>
                           ))}
                         </div>
                       </div>
