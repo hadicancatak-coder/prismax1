@@ -6,9 +6,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Target, Edit, Search, TrendingUp } from "lucide-react";
-import { KPIManager } from "@/components/KPIManager";
+import { Target, Edit, Search, TrendingUp, Plus, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface KPI {
+  id: string;
+  description: string;
+  weight: number;
+  timeline?: string;
+}
 
 interface ProfileWithKPIs {
   user_id: string;
@@ -26,10 +40,18 @@ export function TeamKPIsManager() {
   const [selectedProfile, setSelectedProfile] = useState<ProfileWithKPIs | null>(null);
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
   const [kpiType, setKpiType] = useState<'annual' | 'quarterly'>('annual');
+  const [localKPIs, setLocalKPIs] = useState<KPI[]>([]);
 
   useEffect(() => {
     fetchTeamKPIs();
   }, []);
+
+  useEffect(() => {
+    if (selectedProfile && kpiDialogOpen) {
+      const kpis = kpiType === 'annual' ? selectedProfile.kpis : selectedProfile.quarterly_kpis;
+      setLocalKPIs(Array.isArray(kpis) ? kpis : []);
+    }
+  }, [selectedProfile, kpiDialogOpen, kpiType]);
 
   const fetchTeamKPIs = async () => {
     setLoading(true);
@@ -58,7 +80,7 @@ export function TeamKPIsManager() {
     setKpiDialogOpen(true);
   };
 
-  const handleSaveKPIs = async (kpis: any[]) => {
+  const handleSaveKPIs = async () => {
     if (!selectedProfile) return;
 
     const field = kpiType === 'annual' ? 'kpis' : 'quarterly_kpis';
@@ -66,7 +88,7 @@ export function TeamKPIsManager() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ [field]: kpis })
+        .update({ [field]: localKPIs })
         .eq("user_id", selectedProfile.user_id);
 
       if (error) throw error;
@@ -86,6 +108,20 @@ export function TeamKPIsManager() {
       });
     }
   };
+
+  const addKPI = () => {
+    setLocalKPIs([...localKPIs, { id: crypto.randomUUID(), description: '', weight: 0, timeline: 'Q1' }]);
+  };
+
+  const updateKPI = (id: string, field: keyof KPI, value: any) => {
+    setLocalKPIs(localKPIs.map(kpi => kpi.id === id ? { ...kpi, [field]: value } : kpi));
+  };
+
+  const removeKPI = (id: string) => {
+    setLocalKPIs(localKPIs.filter(kpi => kpi.id !== id));
+  };
+
+  const totalWeight = localKPIs.reduce((sum, kpi) => sum + (kpi.weight || 0), 0);
 
   const getKPIStats = () => {
     const totalMembers = profiles.length;
@@ -173,7 +209,7 @@ export function TeamKPIsManager() {
               const quarterlyWeight = quarterlyKPIs.reduce((sum: number, kpi: any) => sum + (kpi.weight || 0), 0);
 
               return (
-                <div key={profile.user_id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div key={profile.user_id} className="p-4 border rounded-lg hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       <Avatar>
@@ -223,7 +259,7 @@ export function TeamKPIsManager() {
                       <div className="space-y-1">
                         {annualKPIs.map((kpi: any, idx: number) => (
                           <div key={idx} className="text-sm flex items-center gap-2">
-                            <TrendingUp className="h-3 w-3 text-blue-500" />
+                            <TrendingUp className="h-3 w-3 text-info" />
                             <span className="flex-1">{kpi.description}</span>
                             <Badge variant="secondary" className="text-xs">{kpi.weight}%</Badge>
                           </div>
@@ -245,15 +281,94 @@ export function TeamKPIsManager() {
         </CardContent>
       </Card>
 
-      {selectedProfile && (
-        <KPIManager
-          open={kpiDialogOpen}
-          onOpenChange={setKpiDialogOpen}
-          kpis={kpiType === 'annual' ? (selectedProfile.kpis || []) : (selectedProfile.quarterly_kpis || [])}
-          onSave={handleSaveKPIs}
-          title={`${kpiType === 'annual' ? 'Annual' : 'Quarterly'} KPIs - ${selectedProfile.name}`}
-        />
-      )}
+      {/* Inline KPI Editor Dialog */}
+      <Dialog open={kpiDialogOpen} onOpenChange={setKpiDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {kpiType === 'annual' ? 'Annual' : 'Quarterly'} KPIs - {selectedProfile?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Total Weight: <span className={totalWeight > 100 ? 'text-destructive font-bold' : 'font-medium'}>{totalWeight}%</span>
+                {totalWeight > 100 && <span className="text-destructive ml-2">(exceeds 100%)</span>}
+              </p>
+              <Button size="sm" variant="outline" onClick={addKPI}>
+                <Plus className="h-4 w-4 mr-1" /> Add KPI
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {localKPIs.map((kpi) => (
+                <div key={kpi.id} className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      placeholder="KPI Description"
+                      value={kpi.description}
+                      onChange={(e) => updateKPI(kpi.id, 'description', e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <div className="w-24">
+                        <Input
+                          type="number"
+                          placeholder="Weight %"
+                          value={kpi.weight || ''}
+                          onChange={(e) => updateKPI(kpi.id, 'weight', parseInt(e.target.value) || 0)}
+                          min={0}
+                          max={100}
+                        />
+                      </div>
+                      {kpiType === 'quarterly' && (
+                        <Select
+                          value={kpi.timeline || 'Q1'}
+                          onValueChange={(value) => updateKPI(kpi.id, 'timeline', value)}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Q1">Q1</SelectItem>
+                            <SelectItem value="Q2">Q2</SelectItem>
+                            <SelectItem value="Q3">Q3</SelectItem>
+                            <SelectItem value="Q4">Q4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => removeKPI(kpi.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              {localKPIs.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No KPIs defined. Click "Add KPI" to create one.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKpiDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveKPIs} disabled={totalWeight > 100}>
+              Save KPIs
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
