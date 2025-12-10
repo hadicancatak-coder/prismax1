@@ -245,13 +245,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Periodic MFA validation (every 5 minutes) - Phase 1: Pass user to prevent closure
+  // Periodic MFA validation (every 30 minutes) - reduced frequency for once-per-day MFA
   useEffect(() => {
     if (!user || !mfaVerified) return;
 
     const interval = setInterval(() => {
       validateMfaSession(user);
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 30 * 60 * 1000); // 30 minutes
 
     return () => clearInterval(interval);
   }, [user, mfaVerified]);
