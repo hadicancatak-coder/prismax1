@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw } from "lucide-react";
@@ -13,7 +12,7 @@ import { StatusMultiSelect } from "@/components/tasks/StatusMultiSelect";
 // TaskGridView removed
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
-import { PageContainer, PageHeader, AlertBanner, DataCard, EmptyState } from "@/components/layout";
+import { PageContainer, PageHeader, AlertBanner, DataCard, EmptyState, FilterBar } from "@/components/layout";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -152,24 +151,17 @@ export default function Tasks() {
         />
 
         {/* Toolbar - Unified filter bar */}
-        <div className="flex flex-wrap items-center gap-3 bg-muted/40 rounded-xl px-4 py-3 border border-border">
-          <Input
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-48 md:w-64 h-10 rounded-lg bg-card border-border text-[14px]"
-          />
-          
+        <FilterBar search={{ value: searchQuery, onChange: setSearchQuery, placeholder: "Search tasks..." }}>
           <StatusMultiSelect value={statusFilters} onChange={setStatusFilters} />
           
           <Select value={selectedTags.length > 0 ? "selected" : "all"} onValueChange={(value) => { if (value === "all") setSelectedTags([]); }}>
-            <SelectTrigger className="w-[110px] h-10 rounded-lg bg-card border-border text-[14px]">
+            <SelectTrigger className="w-[110px]">
               <SelectValue>{selectedTags.length > 0 ? `${selectedTags.length} tags` : "Tags"}</SelectValue>
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-popover border-border shadow-lg">
+            <SelectContent>
               <SelectItem value="all">All Tags</SelectItem>
               {TASK_TAGS.map((tag) => (
-                <div key={tag.value} onClick={(e) => { e.preventDefault(); setSelectedTags(prev => prev.includes(tag.value) ? prev.filter(t => t !== tag.value) : [...prev, tag.value]); }} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted rounded-lg text-[14px]">
+                <div key={tag.value} onClick={(e) => { e.preventDefault(); setSelectedTags(prev => prev.includes(tag.value) ? prev.filter(t => t !== tag.value) : [...prev, tag.value]); }} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted rounded-lg text-body-sm">
                   <input type="checkbox" checked={selectedTags.includes(tag.value)} onChange={() => {}} className="cursor-pointer rounded" />
                   <span>{tag.label}</span>
                 </div>
@@ -180,10 +172,14 @@ export default function Tasks() {
           <AssigneeFilterBar selectedAssignees={selectedAssignees} onAssigneesChange={setSelectedAssignees} />
           <TaskDateFilterBar value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null} onFilterChange={setDateFilter} onStatusChange={() => {}} selectedStatus="all" />
 
-          <button onClick={() => setHideRecurring(!hideRecurring)} className={cn("h-10 text-[13px] rounded-lg px-4 border border-border bg-card transition-all flex items-center gap-2", !hideRecurring && "bg-primary text-primary-foreground border-primary")} title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}>
-            <RefreshCw className="h-3.5 w-3.5" />
+          <Button 
+            variant={!hideRecurring ? "default" : "outline"} 
+            onClick={() => setHideRecurring(!hideRecurring)} 
+            title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
             {hideRecurring ? "Show Recurring" : "Hide Recurring"}
-          </button>
+          </Button>
 
           <div className="ml-auto flex gap-1 flex-shrink-0 bg-card p-1 rounded-lg border border-border">
             {[
@@ -191,21 +187,27 @@ export default function Tasks() {
               { mode: 'kanban-status' as const, icon: Columns3, title: 'Kanban Status' },
               { mode: 'kanban-date' as const, icon: Clock, title: 'Kanban Date' },
             ].map(({ mode, icon: Icon, title }) => (
-              <button key={mode} onClick={() => { setViewMode(mode); if (mode === 'kanban-status') setBoardGroupBy('status'); if (mode === 'kanban-date') setBoardGroupBy('date'); }} className={cn("h-9 w-9 rounded-md flex items-center justify-center transition-all", viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title={title}>
+              <Button 
+                key={mode} 
+                variant={viewMode === mode ? "default" : "ghost"}
+                size="icon-sm"
+                onClick={() => { setViewMode(mode); if (mode === 'kanban-status') setBoardGroupBy('status'); if (mode === 'kanban-date') setBoardGroupBy('date'); }} 
+                title={title}
+              >
                 <Icon className="h-4 w-4" />
-              </button>
+              </Button>
             ))}
           </div>
-        </div>
+        </FilterBar>
 
         {/* Clear Filters */}
         {hasActiveFilters && (
           <div className="flex items-center gap-3">
-            <button onClick={clearAllFilters} className="h-9 text-[13px] text-muted-foreground hover:text-foreground rounded-lg px-4 transition-colors flex items-center gap-2">
-              <X className="h-3.5 w-3.5" />
+            <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+              <X className="h-4 w-4 mr-2" />
               Clear All Filters
-            </button>
-            <span className="text-[13px] text-muted-foreground">Showing {finalFilteredTasks.length} of {data?.length || 0} tasks</span>
+            </Button>
+            <span className="text-body-sm text-muted-foreground">Showing {finalFilteredTasks.length} of {data?.length || 0} tasks</span>
           </div>
         )}
 
