@@ -53,6 +53,19 @@ export type LocationCategory =
   | 'Retail & Indoor Media'
   | 'Glass & Wall Treatments';
 
+// Location category colors using HSL format for design system consistency
+// These are used for map markers and visualizations
+export const LOCATION_CATEGORY_COLORS = {
+  amber: 'hsl(38, 92%, 50%)',      // Iconic / Landmark
+  red: 'hsl(0, 84%, 60%)',         // Premium Roadside
+  purple: 'hsl(258, 90%, 66%)',    // Bridges & Gateways
+  blue: 'hsl(217, 91%, 60%)',      // Urban Digital
+  green: 'hsl(160, 84%, 39%)',     // Street Furniture
+  indigo: 'hsl(239, 84%, 67%)',    // Transit / Metro
+  orange: 'hsl(25, 95%, 53%)',     // Retail & Indoor
+  slate: 'hsl(215, 16%, 47%)',     // Glass & Wall
+} as const;
+
 export const LOCATION_CATEGORIES: Record<LocationCategory, {
   emoji: string;
   types: LocationType[];
@@ -62,44 +75,44 @@ export const LOCATION_CATEGORIES: Record<LocationCategory, {
     emoji: '🏙',
     types: ['Airport Media', 'LED Tower', '3D Digital Vessel', 'Building Wrap', 
             'Iconic Art (Station Wrap)', 'Station Wrap (Generic)'],
-    color: '#f59e0b',
+    color: LOCATION_CATEGORY_COLORS.amber,
   },
   'Premium Large-Format Roadside': {
     emoji: '🚗',
     types: ['Digital Unipole', 'LED Unipole', 'Megacom', 'Megacom Board', 
             'Hoarding', 'TPS / Hoarding'],
-    color: '#ef4444',
+    color: LOCATION_CATEGORY_COLORS.red,
   },
   'Bridges & Gateways': {
     emoji: '🌉',
     types: ['Bridge', 'Bridge Banner', 'Static Bridge Banner'],
-    color: '#8b5cf6',
+    color: LOCATION_CATEGORY_COLORS.purple,
   },
   'Urban Digital Screens': {
     emoji: '💡',
     types: ['LED Screen', 'Digital Screen', 'Destination Display', 
             'Light Box', 'Vertical Light Box', 'Piers (Backlit Lightbox)'],
-    color: '#3b82f6',
+    color: LOCATION_CATEGORY_COLORS.blue,
   },
   'Street Furniture': {
     emoji: '🪧',
     types: ['Lamppost', 'Mupi', 'Mupi Board', 'Mupi Digital', 'Bus Shelter'],
-    color: '#10b981',
+    color: LOCATION_CATEGORY_COLORS.green,
   },
   'Transit / Metro': {
     emoji: '🚆',
     types: ['Metro Pillars (Backlit Lightbox)'],
-    color: '#6366f1',
+    color: LOCATION_CATEGORY_COLORS.indigo,
   },
   'Retail & Indoor Media': {
     emoji: '🛍',
     types: ['In-Mall Screen', 'Elevator Screen'],
-    color: '#f97316',
+    color: LOCATION_CATEGORY_COLORS.orange,
   },
   'Glass & Wall Treatments': {
     emoji: '🧱',
     types: ['Wall Banner', 'Glass Wrap'],
-    color: '#64748b',
+    color: LOCATION_CATEGORY_COLORS.slate,
   },
 };
 
