@@ -135,6 +135,23 @@ export const STATUS_BADGE_VARIANTS = {
 } as const;
 
 /**
+ * Tool/Feature Colors - Centralized color palette for cards, icons
+ * Uses CSS-compatible hex values for inline styles
+ */
+export const TOOL_COLORS = {
+  blue: '#3B82F6',    // Primary blue
+  purple: '#8B5CF6',  // Purple/violet
+  amber: '#F59E0B',   // Amber/orange
+  cyan: '#06B6D4',    // Cyan/teal
+  green: '#10B981',   // Green/emerald
+  red: '#EF4444',     // Red
+  pink: '#EC4899',    // Pink
+  indigo: '#6366F1',  // Indigo
+} as const;
+
+export type ToolColorKey = keyof typeof TOOL_COLORS;
+
+/**
  * Get status color classes for a given status
  */
 export function getStatusColor(status: string): string {

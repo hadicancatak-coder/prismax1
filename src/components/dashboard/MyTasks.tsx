@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckSquare, AlertCircle, Calendar, Activity, ChevronRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { DataCard } from "@/components/layout/DataCard";
 import { Badge } from "@/components/ui/badge";
 
 export function MyTasks() {
@@ -119,8 +119,8 @@ export function MyTasks() {
   ];
 
   return (
-    <Card className="card-glow hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] transition-all duration-300 p-6">
-      <h2 className="text-section-title mb-6">My Tasks</h2>
+    <DataCard className="hover:shadow-[0_0_20px_rgba(0,82,204,0.2)] transition-all duration-300">
+      <h2 className="text-heading-sm font-semibold mb-6">My Tasks</h2>
       <div className="space-y-2">
         {taskCategories.map((category) => (
           <div
@@ -143,6 +143,6 @@ export function MyTasks() {
           </div>
         ))}
       </div>
-    </Card>
+    </DataCard>
   );
 }

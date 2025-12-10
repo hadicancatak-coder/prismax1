@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { BoardCard } from "@/components/workspace/BoardCard";
+import { TOOL_COLORS } from "@/lib/constants";
 
 const MOST_USED_TOOLS = [
   {
@@ -8,7 +9,7 @@ const MOST_USED_TOOLS = [
     description: "Plan and manage search campaigns with advanced targeting",
     route: "/ads/search",
     icon: "Search",
-    color: "#3B82F6",
+    colorKey: "blue" as const,
   },
   {
     id: "utm-planner",
@@ -16,7 +17,7 @@ const MOST_USED_TOOLS = [
     description: "Build and track UTM campaign links efficiently",
     route: "/utm-planner",
     icon: "Link",
-    color: "#8B5CF6",
+    colorKey: "purple" as const,
   },
   {
     id: "status-log",
@@ -24,7 +25,7 @@ const MOST_USED_TOOLS = [
     description: "Team status updates and activity tracking",
     route: "/operations/status-log",
     icon: "Activity",
-    color: "#F59E0B",
+    colorKey: "amber" as const,
   },
   {
     id: "location-intel",
@@ -32,7 +33,7 @@ const MOST_USED_TOOLS = [
     description: "Geographic location intelligence and mapping",
     route: "/location-intelligence",
     icon: "MapPin",
-    color: "#06B6D4",
+    colorKey: "cyan" as const,
   },
   {
     id: "captions",
@@ -40,7 +41,7 @@ const MOST_USED_TOOLS = [
     description: "Manage and reuse ad copy across campaigns",
     route: "/ads/captions",
     icon: "FileText",
-    color: "#10B981",
+    colorKey: "green" as const,
   },
   {
     id: "tasks",
@@ -48,7 +49,7 @@ const MOST_USED_TOOLS = [
     description: "Track and manage team tasks and deadlines",
     route: "/tasks",
     icon: "CheckSquare",
-    color: "#EF4444",
+    colorKey: "red" as const,
   },
 ];
 
@@ -69,7 +70,7 @@ export function ToolsGallery() {
             description={tool.description}
             route={tool.route}
             icon={tool.icon}
-            color={tool.color}
+            color={TOOL_COLORS[tool.colorKey]}
           />
         ))}
       </div>
