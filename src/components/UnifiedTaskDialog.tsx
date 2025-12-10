@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +18,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ENTITIES } from "@/lib/constants";
+import { ENTITIES, TASK_STATUSES } from "@/lib/constants";
+import { mapStatusToDb, mapStatusToUi } from "@/lib/taskStatusMapper";
 // AttachedAdsSection removed
 import { validateDateForUsers, getDayName, formatWorkingDays } from "@/lib/workingDaysHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -60,7 +62,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
-  const [status, setStatus] = useState<"Pending" | "Ongoing" | "Blocked" | "Completed" | "Failed" | "Backlog">("Pending");
+  const [status, setStatus] = useState<string>("Backlog");
   const [dueDate, setDueDate] = useState<Date>();
   const [entities, setEntities] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -71,6 +73,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const [workingDaysWarning, setWorkingDaysWarning] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  
+  // Blocked reason prompt state
+  const [showBlockedReasonDialog, setShowBlockedReasonDialog] = useState(false);
+  const [blockedReason, setBlockedReason] = useState("");
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   
   // View/Edit mode specific
   const [task, setTask] = useState<any>(null);
@@ -167,7 +174,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       setTitle(data.title);
       setDescription(data.description || "");
       setPriority(data.priority);
-      setStatus(data.status);
+      setStatus(mapStatusToUi(data.status));
       setDueDate(data.due_at ? new Date(data.due_at) : undefined);
       setEntities(Array.isArray(data.entity) ? data.entity.map(String) : []);
       setTags(Array.isArray(data.labels) ? data.labels : []);
@@ -284,7 +291,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         title: title.trim(),
         description: description || null,
         priority,
-        status,
+        status: mapStatusToDb(status),
         due_at: dueDate?.toISOString() || null,
         created_by: user!.id,
         entity: entities.length > 0 ? entities : [],
@@ -323,6 +330,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
             await supabase.from("task_assignees").insert(assigneeInserts);
           }
+        }
+        
+        // If status was Blocked, add the blocked reason as a comment
+        if (status === "Blocked" && blockedReason.trim()) {
+          await supabase.from("comments").insert({
+            task_id: createdTask.id,
+            author_id: user!.id,
+            body: `🚫 **Blocked:** ${blockedReason.trim()}`,
+          });
         }
 
         toast({
@@ -367,7 +383,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setTitle("");
     setDescription("");
     setPriority("Medium");
-    setStatus("Pending");
+    setStatus("Backlog");
     setDueDate(undefined);
     setEntities([]);
     setTags([]);
@@ -379,6 +395,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setWorkingDaysWarning(null);
     setSidePanelOpen(false);
     setAdvancedOpen(false);
+    setBlockedReason("");
+    setPendingStatus(null);
   };
 
   const handleAddComment = async () => {
@@ -529,17 +547,25 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                     {/* Status */}
                     <div className="space-y-2">
                       <Label>Status</Label>
-                      <Select value={status} onValueChange={(v: any) => setStatus(v)} disabled={isReadOnly}>
+                      <Select 
+                        value={status} 
+                        onValueChange={(v: string) => {
+                          if (v === "Blocked") {
+                            setPendingStatus(v);
+                            setShowBlockedReasonDialog(true);
+                          } else {
+                            setStatus(v);
+                          }
+                        }} 
+                        disabled={isReadOnly}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Ongoing">Ongoing</SelectItem>
-                          <SelectItem value="Backlog">Backlog</SelectItem>
-                          <SelectItem value="Blocked">Blocked</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Failed">Failed</SelectItem>
+                          {TASK_STATUSES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1046,6 +1072,76 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         </div>
 
         {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} onSuccess={fetchBlocker} />}
+        
+        {/* Blocked Reason Dialog */}
+        <Dialog open={showBlockedReasonDialog} onOpenChange={setShowBlockedReasonDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Blocked Reason</DialogTitle>
+              <DialogDescription>
+                Please provide a reason why this task is blocked. This will be added as a comment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="blocked-reason-input">Reason</Label>
+                <Textarea
+                  id="blocked-reason-input"
+                  value={blockedReason}
+                  onChange={(e) => setBlockedReason(e.target.value)}
+                  placeholder="Explain why the task is blocked..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowBlockedReasonDialog(false);
+                  setPendingStatus(null);
+                  setBlockedReason("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={async () => {
+                  if (!blockedReason.trim()) {
+                    toast({
+                      title: "Required",
+                      description: "Please provide a reason for blocking this task",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  // Set the status
+                  setStatus(pendingStatus || "Blocked");
+                  
+                  // If we have a taskId (editing existing task), add the comment immediately
+                  if (taskId && !isCreate) {
+                    await supabase.from("comments").insert({
+                      task_id: taskId,
+                      author_id: user!.id,
+                      body: `🚫 **Blocked:** ${blockedReason.trim()}`,
+                    });
+                    fetchComments();
+                    setBlockedReason(""); // Clear only for edit mode
+                  }
+                  // For create mode, keep blockedReason so it can be added after task creation
+                  
+                  // Close dialog
+                  setShowBlockedReasonDialog(false);
+                  setPendingStatus(null);
+                }}
+                disabled={!blockedReason.trim()}
+              >
+                Set as Blocked
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

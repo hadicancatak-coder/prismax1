@@ -25,13 +25,12 @@ export const userRoleSchema = z.object({
 });
 
 // ============= TASK SCHEMAS =============
+// Note: Database uses 'Pending' but UI uses 'Backlog' - mapped via taskStatusMapper
 export const taskStatusSchema = z.enum([
-  'Pending',
+  'Backlog',
   'Ongoing',
-  'Completed',
-  'Failed',
   'Blocked',
-  'Backlog'
+  'Completed',
 ]);
 
 export const taskPrioritySchema = z.enum(['Low', 'Medium', 'High', 'Critical']);
