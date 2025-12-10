@@ -18,6 +18,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
+import { TASK_TAGS } from "@/lib/constants";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
 import { exportTasksToCSV } from "@/lib/taskExport";
@@ -167,10 +168,10 @@ export default function Tasks() {
             </SelectTrigger>
             <SelectContent className="rounded-xl bg-popover border-border shadow-lg">
               <SelectItem value="all">All Tags</SelectItem>
-              {['urgent', 'review', 'bug', 'feature', 'docs'].map((tag) => (
-                <div key={tag} onClick={(e) => { e.preventDefault(); setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]); }} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted rounded-lg text-[14px]">
-                  <input type="checkbox" checked={selectedTags.includes(tag)} onChange={() => {}} className="cursor-pointer rounded" />
-                  <span className="capitalize">{tag}</span>
+              {TASK_TAGS.map((tag) => (
+                <div key={tag.value} onClick={(e) => { e.preventDefault(); setSelectedTags(prev => prev.includes(tag.value) ? prev.filter(t => t !== tag.value) : [...prev, tag.value]); }} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted rounded-lg text-[14px]">
+                  <input type="checkbox" checked={selectedTags.includes(tag.value)} onChange={() => {}} className="cursor-pointer rounded" />
+                  <span>{tag.label}</span>
                 </div>
               ))}
             </SelectContent>
