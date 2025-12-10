@@ -6,15 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-const PREDEFINED_TAGS = [
-  { value: "bug", label: "Bug", color: "bg-destructive/15 text-destructive border-destructive/30" },
-  { value: "feature", label: "Feature", color: "bg-primary/15 text-primary border-primary/30" },
-  { value: "urgent", label: "Urgent", color: "bg-warning/15 text-warning border-warning/30" },
-  { value: "campaign", label: "Campaign", color: "bg-success/15 text-success border-success/30" },
-  { value: "review", label: "Review", color: "bg-secondary text-secondary-foreground border-border" },
-  { value: "client", label: "Client", color: "bg-accent text-accent-foreground border-border" },
-];
+import { TASK_TAGS } from "@/lib/constants";
 
 interface TagsMultiSelectProps {
   value: string[];
@@ -27,12 +19,12 @@ export function TagsMultiSelect({ value, onChange, disabled = false }: TagsMulti
   const [customTagInput, setCustomTagInput] = useState("");
 
   const getTagStyle = (tag: string) => {
-    const predefined = PREDEFINED_TAGS.find(t => t.value === tag.toLowerCase());
+    const predefined = TASK_TAGS.find(t => t.value === tag.toLowerCase());
     return predefined?.color || "bg-muted text-muted-foreground border-border";
   };
 
   const getTagLabel = (tag: string) => {
-    const predefined = PREDEFINED_TAGS.find(t => t.value === tag.toLowerCase());
+    const predefined = TASK_TAGS.find(t => t.value === tag.toLowerCase());
     return predefined?.label || tag;
   };
 
@@ -113,7 +105,7 @@ export function TagsMultiSelect({ value, onChange, disabled = false }: TagsMulti
           <CommandEmpty>No tags found.</CommandEmpty>
           <CommandList className="max-h-[200px] hide-scrollbar">
             <CommandGroup heading="Tags">
-              {PREDEFINED_TAGS.map((tag) => (
+              {TASK_TAGS.map((tag) => (
                 <CommandItem
                   key={tag.value}
                   value={tag.label}

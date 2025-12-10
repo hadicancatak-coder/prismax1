@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { X, Download, Trash2, CheckCircle2, UserPlus, Flag } from "lucide-react";
+import { X, Download, Trash2, CheckCircle2, Flag } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,15 +17,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { TASK_STATUSES } from "@/lib/constants";
 
 interface TaskBulkActionsBarProps {
   selectedCount: number;
   onClearSelection: () => void;
   onComplete?: () => void;
   onDelete?: () => void;
-  onStatusChange?: (status: string) => void;
+  onStatusChange?: (status: string, blockedReason?: string) => void;
   onPriorityChange?: (priority: string) => void;
   onExport?: () => void;
   className?: string;
@@ -42,12 +53,29 @@ export function TaskBulkActionsBar({
   className = "",
 }: TaskBulkActionsBarProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showBlockedReasonDialog, setShowBlockedReasonDialog] = useState(false);
+  const [blockedReason, setBlockedReason] = useState("");
 
   if (selectedCount === 0) return null;
 
   const handleDelete = () => {
     onDelete?.();
     setShowDeleteDialog(false);
+  };
+
+  const handleStatusChange = (status: string) => {
+    if (status === "Blocked") {
+      setShowBlockedReasonDialog(true);
+    } else {
+      onStatusChange?.(status);
+    }
+  };
+
+  const handleBlockedReasonSubmit = () => {
+    if (!blockedReason.trim()) return;
+    onStatusChange?.("Blocked", blockedReason.trim());
+    setBlockedReason("");
+    setShowBlockedReasonDialog(false);
   };
 
   return (
@@ -85,17 +113,16 @@ export function TaskBulkActionsBar({
             )}
 
             {onStatusChange && (
-              <Select onValueChange={onStatusChange}>
+              <Select onValueChange={handleStatusChange}>
                 <SelectTrigger className="h-8 w-[140px]">
                   <SelectValue placeholder="Change status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Backlog">Backlog</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Ongoing">Ongoing</SelectItem>
-                  <SelectItem value="Blocked">Blocked</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Failed">Failed</SelectItem>
+                  {TASK_STATUSES.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -107,10 +134,9 @@ export function TaskBulkActionsBar({
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -142,6 +168,7 @@ export function TaskBulkActionsBar({
         </div>
       </Card>
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -158,6 +185,38 @@ export function TaskBulkActionsBar({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Blocked Reason Dialog */}
+      <Dialog open={showBlockedReasonDialog} onOpenChange={setShowBlockedReasonDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Blocked Reason</DialogTitle>
+            <DialogDescription>
+              Please provide a reason why these tasks are blocked. This will be added as a comment to each task.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="blocked-reason">Reason</Label>
+              <Textarea
+                id="blocked-reason"
+                value={blockedReason}
+                onChange={(e) => setBlockedReason(e.target.value)}
+                placeholder="Explain why the tasks are blocked..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBlockedReasonDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBlockedReasonSubmit} disabled={!blockedReason.trim()}>
+              Set as Blocked
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

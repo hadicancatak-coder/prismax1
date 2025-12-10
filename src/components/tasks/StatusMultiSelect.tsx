@@ -6,15 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-const statuses = [
-  { value: "Backlog", label: "Backlog" },
-  { value: "Pending", label: "Pending" },
-  { value: "Ongoing", label: "Ongoing" },
-  { value: "Blocked", label: "Blocked" },
-  { value: "Completed", label: "Completed" },
-  { value: "Failed", label: "Failed" },
-];
+import { TASK_STATUSES } from "@/lib/constants";
 
 interface StatusMultiSelectProps {
   value: string[];
@@ -31,7 +23,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
   };
 
   const handleSelectAll = () => {
-    onChange(statuses.map(s => s.value));
+    onChange(TASK_STATUSES.map(s => s.value));
   };
 
   const handleDeselectAll = () => {
@@ -48,7 +40,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
       <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
         <SelectValue>
           {value.length === 0 ? "Status" : 
-           value.length === statuses.length ? "Status" : 
+           value.length === TASK_STATUSES.length ? "Status" : 
            `${value.length} Status`}
         </SelectValue>
       </SelectTrigger>
@@ -74,7 +66,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
           </button>
         </div>
         <div className="h-px bg-border mb-1" />
-        {statuses.map((status) => (
+        {TASK_STATUSES.map((status) => (
           <div
             key={status.value}
             onClick={(e) => {

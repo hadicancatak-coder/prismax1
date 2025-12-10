@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ENTITIES } from "./constants";
+import { ENTITIES, TASK_STATUSES } from "./constants";
+
+// Extract status values from centralized constants
+const statusValues = TASK_STATUSES.map(s => s.value) as [string, ...string[]];
 
 // Task validation schema
 export const taskSchema = z.object({
@@ -29,7 +32,7 @@ export const taskSchema = z.object({
   
   priority: z.enum(["Low", "Medium", "High"]),
   
-  status: z.enum(["Backlog", "Ongoing", "Blocked", "Completed", "Failed"]),
+  status: z.enum(statusValues),
   
   recurrence_rrule: z.string()
     .regex(/^(FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY).*)?$/, "Invalid recurrence rule format")
