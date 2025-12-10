@@ -55,7 +55,7 @@ export function AssigneeFilterBar({
         if (value === "all") clearAssigneeFilters();
       }}
     >
-      <SelectTrigger className="w-[100px] h-8 text-sm flex-shrink-0">
+      <SelectTrigger className="w-[120px] h-10 rounded-lg bg-card border-border text-[14px] flex-shrink-0">
         <SelectValue>
           {selectedAssignees.length > 0
             ? `${selectedAssignees.length} selected`

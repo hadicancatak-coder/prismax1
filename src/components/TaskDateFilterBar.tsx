@@ -77,8 +77,7 @@ export function TaskDateFilterBar({
       <PopoverTrigger asChild>
         <Button 
           variant={customRange ? "default" : "outline"} 
-          size="sm"
-          className="w-[140px] h-8 text-sm flex-shrink-0"
+          className="w-[100px] h-10 rounded-lg bg-card border-border text-[14px] flex-shrink-0"
         >
           <CalendarIcon className="h-4 w-4 mr-1.5" />
           <span className="truncate">
