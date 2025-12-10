@@ -55,7 +55,7 @@ export function PromptDialog({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="prompt-input">Value</Label>
           <Input
             id="prompt-input"

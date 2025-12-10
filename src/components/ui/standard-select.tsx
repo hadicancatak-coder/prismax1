@@ -103,7 +103,7 @@ export function StandardSelect(props: StandardSelectProps) {
     if (isMulti) {
       if (props.value.length === 0) return placeholder;
       return (
-        <div className="flex flex-wrap gap-1 max-w-full">
+        <div className="flex flex-wrap gap-xs max-w-full">
           {props.value.slice(0, 3).map((val) => {
             const option = options.find((o) => o.value === val);
             return (
@@ -160,9 +160,9 @@ export function StandardSelect(props: StandardSelectProps) {
           <CommandList className="hide-scrollbar max-h-[200px]">
             <CommandEmpty>
               {allowCustom && customValue ? (
-                <div className="p-2 space-y-2">
+                <div className="p-sm space-y-sm">
                   <p className="text-metadata text-muted-foreground">{emptyText}</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-sm">
                     <Input
                       value={customValue}
                       onChange={(e) => setCustomValue(e.target.value)}
@@ -205,8 +205,8 @@ export function StandardSelect(props: StandardSelectProps) {
               ))}
             </CommandGroup>
             {allowCustom && (
-              <div className="border-t p-2">
-                <div className="flex gap-2">
+              <div className="border-t p-sm">
+                <div className="flex gap-sm">
                   <Input
                     value={customValue}
                     onChange={(e) => setCustomValue(e.target.value)}
