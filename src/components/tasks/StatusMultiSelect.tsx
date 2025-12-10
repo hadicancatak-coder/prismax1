@@ -37,7 +37,7 @@ export function StatusMultiSelect({ value, onChange }: StatusMultiSelectProps) {
         if (val === "all") handleDeselectAll();
       }}
     >
-      <SelectTrigger className="w-[110px] h-10 rounded-lg bg-card border-border text-[14px] flex-shrink-0">
+      <SelectTrigger className="w-[110px] flex-shrink-0">
         <SelectValue>
           {value.length === 0 ? "Status" : 
            value.length === TASK_STATUSES.length ? "Status" : 
