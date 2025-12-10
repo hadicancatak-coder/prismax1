@@ -87,6 +87,9 @@ Deno.serve(async (req) => {
       const sessionTokenValue = randomBytes(32).toString('hex');
       const ipAddress = getClientIp(req);
       const userAgent = req.headers.get('user-agent') || 'unknown';
+      
+      // Explicit 24-hour expiry for once-per-day MFA
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
       const { error: insertError } = await supabase
         .from('mfa_sessions')
@@ -94,7 +97,9 @@ Deno.serve(async (req) => {
           user_id: user.id,
           session_token: sessionTokenValue,
           ip_address: ipAddress,
-          user_agent: userAgent
+          user_agent: userAgent,
+          expires_at: expiresAt,
+          skip_validation_for_ip: true  // Disable strict IP check for better UX
         });
 
       if (insertError) {
@@ -103,7 +108,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ sessionToken: sessionTokenValue }),
+        JSON.stringify({ sessionToken: sessionTokenValue, expiresAt }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
