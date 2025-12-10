@@ -20,6 +20,10 @@ import Logs from "./pages/admin/Logs";
 import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
 import KPIsManagement from "./pages/admin/KPIsManagement";
+import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
+import ErrorLogs from "./pages/admin/ErrorLogs";
+import AuditLog from "./pages/admin/AuditLog";
+import SecurityScans from "./pages/admin/SecurityScans";
 import Operations from "./pages/Operations";
 import StatusLog from "./pages/StatusLog";
 import Profile from "./pages/Profile";
@@ -74,6 +78,10 @@ const App = () => (
                     <Route path="security" element={<SecurityPage />} />
                     <Route path="logs" element={<Logs />} />
                     <Route path="ad-rules" element={<AdRulesManagement />} />
+                    <Route path="approvals" element={<ApprovalsCenter />} />
+                    <Route path="errors" element={<ErrorLogs />} />
+                    <Route path="audit" element={<AuditLog />} />
+                    <Route path="security-scans" element={<SecurityScans />} />
                   </Route>
                   <Route path="/team-base" element={<TeamBase />} />
                   <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
