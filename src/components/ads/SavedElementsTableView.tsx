@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Copy, Trash, Edit2, Star, ArrowUpDown } from "lucide-react";
 import { useUpdateAdElement, useDeleteAdElement } from "@/hooks/useAdElements";
 import { toast } from "@/hooks/use-toast";
+import { getStatusColor } from "@/lib/constants";
 import { UpdateGoogleStatusDialog } from "./UpdateGoogleStatusDialog";
 import {
   AlertDialog,
@@ -94,14 +95,7 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
     setShowBulkDeleteConfirm(false);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'status-success';
-      case 'rejected': return 'status-destructive';
-      case 'pending': return 'status-warning';
-      default: return 'bg-secondary';
-    }
-  };
+  // Status color now centralized in constants.ts
 
   return (
     <div className="space-y-4">

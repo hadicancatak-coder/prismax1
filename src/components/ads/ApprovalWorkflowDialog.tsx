@@ -7,6 +7,7 @@ import { CheckCircle, XCircle, MessageSquare, Clock } from 'lucide-react';
 import { useApprovalHistory, useAddApprovalEntry } from '@/hooks/useApprovalHistory';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getStatusBadgeVariant } from '@/lib/constants';
 
 interface ApprovalWorkflowDialogProps {
   open: boolean;
@@ -72,14 +73,7 @@ export function ApprovalWorkflowDialog({ open, onOpenChange, ad }: ApprovalWorkf
     return stageHistory[0].status;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'default';
-      case 'rejected': return 'destructive';
-      case 'changes_requested': return 'secondary';
-      default: return 'outline';
-    }
-  };
+  // Status color now centralized in constants.ts - using getStatusBadgeVariant
 
   if (!ad) return null;
 
@@ -112,7 +106,7 @@ export function ApprovalWorkflowDialog({ open, onOpenChange, ad }: ApprovalWorkf
                 <div>
                   <h3 className="font-semibold">{stage.label} Review</h3>
                   <p className="text-sm text-muted-foreground">
-                    Current Status: <Badge variant={getStatusColor(getStageStatus(stage.key))}>
+                    Current Status: <Badge variant={getStatusBadgeVariant(getStageStatus(stage.key))}>
                       {getStageStatus(stage.key)}
                     </Badge>
                   </p>
@@ -166,7 +160,7 @@ export function ApprovalWorkflowDialog({ open, onOpenChange, ad }: ApprovalWorkf
                     .map((entry) => (
                       <div key={entry.id} className="border rounded-lg p-3 space-y-1">
                         <div className="flex items-center justify-between">
-                          <Badge variant={getStatusColor(entry.status)}>
+                          <Badge variant={getStatusBadgeVariant(entry.status)}>
                             {entry.status.replace('_', ' ')}
                           </Badge>
                           <span className="text-xs text-muted-foreground">

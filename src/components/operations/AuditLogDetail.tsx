@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { EditAuditLogDialog } from "./EditAuditLogDialog";
+import { getStatusBadgeVariant } from "@/lib/constants";
 import { DeleteAuditLogDialog } from "./DeleteAuditLogDialog";
 import { ConvertAllToTaskButton } from "./ConvertAllToTaskButton";
 
@@ -40,18 +41,7 @@ export function AuditLogDetail() {
     setNewItemText("");
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'default';
-      case 'in_progress':
-        return 'secondary';
-      case 'archived':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
+  // Status color now centralized in constants.ts
 
   if (logLoading) {
     return (
@@ -107,7 +97,7 @@ export function AuditLogDetail() {
                 <CardDescription className="mt-2">{log.description}</CardDescription>
               )}
             </div>
-            <Badge variant={getStatusColor(log.status)}>
+            <Badge variant={getStatusBadgeVariant(log.status)}>
               {log.status.replace('_', ' ')}
             </Badge>
           </div>

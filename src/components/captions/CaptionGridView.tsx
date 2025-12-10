@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getStatusColor } from "@/lib/constants";
 
 interface CaptionGridViewProps {
   captions: Caption[];
@@ -64,16 +65,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
     queryClient.invalidateQueries({ queryKey: ["captions"] });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "status-success";
-      case "rejected":
-        return "status-destructive";
-      default:
-        return "status-warning";
-    }
-  };
+  // Status color now centralized in constants.ts
 
   const getTypeColor = (type: string) => {
     switch (type) {

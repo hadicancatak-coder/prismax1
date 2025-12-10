@@ -6,6 +6,7 @@ import { CreateAuditLogDialog } from "@/components/operations/CreateAuditLogDial
 import { DeleteAuditLogDialog } from "@/components/operations/DeleteAuditLogDialog";
 import { OperationFilters } from "@/components/operations/OperationFilters";
 import { PageContainer, PageHeader, EmptyState, DataCard } from "@/components/layout";
+import { getStatusBadgeVariant } from "@/lib/constants";
 import { useOperationLogs, useOperationStats } from "@/hooks/useOperationLogs";
 import { useAuth } from "@/hooks/useAuth";
 import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
@@ -36,14 +37,7 @@ export default function Operations() {
         return true;
       });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'default';
-      case 'in_progress': return 'secondary';
-      case 'archived': return 'outline';
-      default: return 'secondary';
-    }
-  };
+  // Status color now centralized in constants.ts
 
   return (
     <PageContainer>
@@ -88,10 +82,6 @@ export default function Operations() {
             icon={FileText}
             title="No audit logs yet"
             description="Create your first audit log to start tracking optimizations"
-            action={{
-              label: "Create Audit Log",
-              onClick: () => {}
-            }}
           >
             <CreateAuditLogDialog />
           </EmptyState>
@@ -124,7 +114,7 @@ export default function Operations() {
                     )}
                   </div>
                   <div className="flex items-start gap-2 flex-shrink-0 ml-2">
-                    <Badge variant={getStatusColor(log.status)} className="text-xs">
+                    <Badge variant={getStatusBadgeVariant(log.status)} className="text-xs">
                       {log.status.replace('_', ' ')}
                     </Badge>
                     {isAdmin && (

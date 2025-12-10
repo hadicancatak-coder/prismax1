@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import type { Caption } from "@/pages/CaptionLibrary";
 import { cn } from "@/lib/utils";
+import { getStatusColor } from "@/lib/constants";
 import {
   Tooltip,
   TooltipContent,
@@ -112,16 +113,7 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
     queryClient.invalidateQueries({ queryKey: ["captions"] });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-success/15 text-success border-success/30";
-      case "rejected":
-        return "bg-destructive/15 text-destructive border-destructive/30";
-      default:
-        return "bg-warning/15 text-warning border-warning/30";
-    }
-  };
+  // Status color now centralized in constants.ts
 
   return (
     <TooltipProvider>

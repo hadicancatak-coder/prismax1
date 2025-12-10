@@ -78,6 +78,79 @@ export const MONTHS = [
   "December"
 ];
 
+/**
+ * Editor Colors - Single Source of Truth for rich text editors
+ */
+export const EDITOR_COLORS = [
+  { name: 'Default', value: '' },
+  { name: 'Red', value: 'hsl(var(--destructive))' },
+  { name: 'Orange', value: 'hsl(var(--warning))' },
+  { name: 'Yellow', value: 'hsl(45 93% 47%)' },
+  { name: 'Green', value: 'hsl(var(--success))' },
+  { name: 'Blue', value: 'hsl(var(--info))' },
+  { name: 'Purple', value: 'hsl(270 60% 60%)' },
+  { name: 'Pink', value: 'hsl(330 80% 60%)' },
+] as const;
+
+/**
+ * Status Colors - Single Source of Truth for status badges
+ * Maps status values to semantic color classes
+ */
+export const STATUS_COLORS = {
+  // Approval statuses
+  approved: 'bg-success-soft text-success-text border-success/30',
+  pending: 'bg-pending-soft text-pending-text border-pending/30',
+  draft: 'bg-muted text-muted-foreground border-border',
+  rejected: 'bg-destructive-soft text-destructive-text border-destructive/30',
+  
+  // Activity statuses
+  active: 'bg-success-soft text-success-text border-success/30',
+  inactive: 'bg-muted text-muted-foreground border-border',
+  
+  // Task/item statuses  
+  completed: 'bg-success-soft text-success-text border-success/30',
+  in_progress: 'bg-info-soft text-info-text border-info/30',
+  archived: 'bg-muted text-muted-foreground border-border',
+  failed: 'bg-destructive-soft text-destructive-text border-destructive/30',
+  
+  // Default fallback
+  default: 'bg-muted text-muted-foreground border-border',
+} as const;
+
+/**
+ * Badge variant mapping for status - maps to shadcn badge variants
+ */
+export const STATUS_BADGE_VARIANTS = {
+  approved: 'default' as const,
+  pending: 'secondary' as const,
+  draft: 'outline' as const,
+  rejected: 'destructive' as const,
+  active: 'default' as const,
+  inactive: 'outline' as const,
+  completed: 'default' as const,
+  in_progress: 'secondary' as const,
+  archived: 'outline' as const,
+  failed: 'destructive' as const,
+  default: 'secondary' as const,
+} as const;
+
+/**
+ * Get status color classes for a given status
+ */
+export function getStatusColor(status: string): string {
+  const normalizedStatus = status?.toLowerCase().replace(/\s+/g, '_') || 'default';
+  return STATUS_COLORS[normalizedStatus as keyof typeof STATUS_COLORS] || STATUS_COLORS.default;
+}
+
+/**
+ * Get badge variant for a given status
+ */
+export function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
+  const normalizedStatus = status?.toLowerCase().replace(/\s+/g, '_') || 'default';
+  return STATUS_BADGE_VARIANTS[normalizedStatus as keyof typeof STATUS_BADGE_VARIANTS] || STATUS_BADGE_VARIANTS.default;
+}
+
 export type Entity = typeof ENTITIES[number];
 export type Team = typeof TEAMS[number];
 export type Month = typeof MONTHS[number];
+export type StatusColor = keyof typeof STATUS_COLORS;
