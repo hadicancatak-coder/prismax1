@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { usePlannedCampaigns, PlannedCampaign, calculateDuration } from "@/hooks/usePlannedCampaigns";
 import { MapPin, Building2, Calendar, Search, Plus, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
+import { getStatusColor, getStatusBadgeVariant } from "@/lib/constants";
 
 interface CampaignsListDialogProps {
   open: boolean;
@@ -26,23 +27,7 @@ export function CampaignsListDialog({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "draft": return "secondary";
-      case "active": return "default";
-      case "completed": return "outline";
-      default: return "secondary";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "draft": return "bg-pending-soft text-pending-text";
-      case "active": return "bg-success-soft text-success-text";
-      case "completed": return "bg-info-soft text-info-text";
-      default: return "";
-    }
-  };
+  // Status functions now centralized in constants.ts
 
   const filteredCampaigns = useMemo(() => {
     return campaigns
@@ -122,7 +107,7 @@ export function CampaignsListDialog({
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg mb-2 truncate">{campaign.name}</h3>
                       <div className="flex gap-2 mb-3 flex-wrap">
-                        <Badge variant={getStatusVariant(campaign.status)} className={getStatusColor(campaign.status)}>
+                        <Badge variant={getStatusBadgeVariant(campaign.status)} className={getStatusColor(campaign.status)}>
                           {campaign.status}
                         </Badge>
                         <Badge variant="outline" className="gap-1">

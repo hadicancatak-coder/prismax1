@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getStatusColor } from "@/lib/constants";
 
 interface AdListPanelProps {
   ads: any[];
@@ -49,18 +50,7 @@ export default function AdListPanel({
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-success-soft text-success-text";
-      case "pending":
-        return "bg-pending-soft text-pending-text";
-      case "rejected":
-        return "bg-destructive-soft text-destructive-text";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
+  // Status color now centralized in constants.ts
 
   const allSelected = filteredAds.length > 0 && filteredAds.every((ad) => selectedIds.includes(ad.id));
   const someSelected = selectedIds.length > 0 && !allSelected;

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getStatusBadgeVariant } from "@/lib/constants";
 
 interface SearchAdGroupAdsViewProps {
   adGroup: any;
@@ -54,18 +55,7 @@ export function SearchAdGroupAdsView({
     onAdSelected(newAd);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "default";
-      case "pending":
-        return "secondary";
-      case "rejected":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
+  // Status badge variant now centralized in constants.ts
 
   return (
     <ScrollArea className="h-full">
@@ -118,7 +108,7 @@ export function SearchAdGroupAdsView({
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div className="font-medium">{ad.name}</div>
                       </div>
-                      <Badge variant={getStatusColor(ad.approval_status || "draft")}>
+                      <Badge variant={getStatusBadgeVariant(ad.approval_status || "draft")}>
                         {ad.approval_status || "draft"}
                       </Badge>
                     </div>

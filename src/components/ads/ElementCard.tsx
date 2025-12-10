@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UpdateGoogleStatusDialog } from './UpdateGoogleStatusDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ENTITIES } from '@/lib/constants';
+import { ENTITIES, getStatusColor } from '@/lib/constants';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,14 +95,7 @@ export function ElementCard({ element }: ElementCardProps) {
     );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-success-soft text-success-text border-success/30';
-      case 'limited': return 'bg-warning-soft text-warning-text border-warning/30';
-      case 'rejected': return 'bg-destructive-soft text-destructive-text border-destructive/30';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
+  // Status color now centralized in constants.ts
 
   const content = typeof element.content === 'string' ? element.content : element.content?.text || JSON.stringify(element.content);
 

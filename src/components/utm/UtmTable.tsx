@@ -10,6 +10,7 @@ import { useDeleteUtmLink, useUpdateUtmLink, type UtmLink } from "@/hooks/useUtm
 import { format } from "date-fns";
 import { UtmBulkActionsBar } from "./UtmBulkActionsBar";
 import { exportUtmLinksToCSV } from "@/lib/utmExport";
+import { getStatusColor } from "@/lib/constants";
 
 interface UtmTableProps {
   links: UtmLink[];
@@ -37,18 +38,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-success-soft text-success-text";
-      case "paused":
-        return "bg-warning-soft text-warning-text";
-      case "archived":
-        return "bg-neutral-soft text-neutral-text";
-      default:
-        return "bg-neutral-soft text-neutral-text";
-    }
-  };
+  // Status color now centralized in constants.ts
 
   const getPurposeColor = (purpose: string) => {
     switch (purpose) {

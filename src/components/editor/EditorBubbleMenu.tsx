@@ -16,21 +16,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { EDITOR_COLORS } from '@/lib/constants';
 
 interface EditorBubbleMenuProps {
   editor: Editor;
 }
-
-const COLORS = [
-  { name: 'Default', value: '' },
-  { name: 'Red', value: '#ef4444' },
-  { name: 'Orange', value: '#f97316' },
-  { name: 'Yellow', value: '#eab308' },
-  { name: 'Green', value: '#22c55e' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Purple', value: '#a855f7' },
-  { name: 'Pink', value: '#ec4899' },
-];
 
 export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -191,7 +181,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2" align="center">
             <div className="grid grid-cols-4 gap-1">
-              {COLORS.map((color) => (
+              {EDITOR_COLORS.map((color) => (
                 <button
                   key={color.name}
                   type="button"

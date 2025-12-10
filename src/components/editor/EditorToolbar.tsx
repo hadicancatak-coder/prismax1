@@ -31,21 +31,11 @@ import {
 import { useState } from 'react';
 import { EditorLinkDialog } from './EditorLinkDialog';
 import { cn } from '@/lib/utils';
+import { EDITOR_COLORS } from '@/lib/constants';
 
 interface EditorToolbarProps {
   editor: Editor;
 }
-
-const COLORS = [
-  { name: 'Default', value: '' },
-  { name: 'Red', value: '#ef4444' },
-  { name: 'Orange', value: '#f97316' },
-  { name: 'Yellow', value: '#eab308' },
-  { name: 'Green', value: '#22c55e' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Purple', value: '#a855f7' },
-  { name: 'Pink', value: '#ec4899' },
-];
 
 export function EditorToolbar({ editor }: EditorToolbarProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -210,7 +200,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2">
             <div className="grid grid-cols-4 gap-1">
-              {COLORS.map((color) => (
+              {EDITOR_COLORS.map((color) => (
                 <button
                   key={color.name}
                   type="button"
