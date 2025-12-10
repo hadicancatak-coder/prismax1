@@ -77,13 +77,16 @@ export function NotificationBell() {
       case "task_assigned": return "📋";
       case "campaign_assigned": return "🚀";
       case "mention":
-      case "comment_mention": return "💬";
+      case "comment_mention": 
+      case "task_new_comment": return "💬";
       case "deadline_reminder_3days": return "⏰";
       case "deadline_reminder_1day": return "🔔";
       case "deadline_reminder_overdue": return "❗";
       case "blocker_resolved": return "✅";
       case "task_status_changed": return "🔄";
       case "campaign_status_changed": return "🔄";
+      case "task_deadline_changed": return "📅";
+      case "task_priority_changed": return "⚡";
       case "ad_status_changed": return "📢";
       case "ad_pending_review": return "👀";
       default: return "🔔";
@@ -149,6 +152,38 @@ export function NotificationBell() {
         return `Ad "${payload.ad_name}" status changed to ${payload.new_status}`;
       case "ad_pending_review":
         return `New ad "${payload.ad_name}" pending review`;
+      case "task_new_comment":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">{payload.commenter_name || "Someone"} commented on:</div>
+            <div className="text-muted-foreground">{payload.task_title}</div>
+            {payload.comment_preview && (
+              <div className="text-muted-foreground text-metadata italic">
+                "{payload.comment_preview}{payload.comment_preview.length >= 100 ? '...' : ''}"
+              </div>
+            )}
+          </div>
+        );
+      case "task_deadline_changed":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">Due date changed:</div>
+            <div className="text-muted-foreground">{payload.task_title}</div>
+            <div className="text-metadata text-muted-foreground">
+              {payload.old_due_date ? new Date(payload.old_due_date).toLocaleDateString() : 'None'} → {payload.new_due_date ? new Date(payload.new_due_date).toLocaleDateString() : 'Removed'}
+            </div>
+          </div>
+        );
+      case "task_priority_changed":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">Priority changed:</div>
+            <div className="text-muted-foreground">{payload.task_title}</div>
+            <div className="text-metadata text-muted-foreground">
+              {payload.old_priority} → {payload.new_priority}
+            </div>
+          </div>
+        );
       default:
         return "New notification";
     }

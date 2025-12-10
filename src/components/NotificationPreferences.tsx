@@ -10,6 +10,9 @@ import { Loader2 } from "lucide-react";
 const NOTIFICATION_TYPES = [
   { id: "task_assigned", label: "Task assignments", description: "When you're assigned to a task" },
   { id: "mention", label: "Mentions", description: "When someone mentions you" },
+  { id: "task_new_comment", label: "Task comments", description: "When someone comments on your tasks" },
+  { id: "task_deadline_changed", label: "Deadline changes", description: "When task due dates change" },
+  { id: "task_priority_changed", label: "Priority changes", description: "When task priority changes" },
   { id: "deadline_reminder_3days", label: "3-day deadline reminders", description: "Task due in 3 days" },
   { id: "deadline_reminder_1day", label: "1-day deadline reminders", description: "Task due tomorrow" },
   { id: "deadline_reminder_overdue", label: "Overdue reminders", description: "When tasks are overdue" },
