@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Info, CheckCircle, XCircle } from "lucide-react";
+import { AlertTriangle, Info, CheckCircle, XCircle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AlertBannerProps {
   variant?: 'info' | 'warning' | 'success' | 'error';
@@ -8,6 +9,7 @@ interface AlertBannerProps {
   children: ReactNode;
   className?: string;
   action?: ReactNode;
+  onDismiss?: () => void;
 }
 
 const variants = {
@@ -41,7 +43,8 @@ export function AlertBanner({
   title, 
   children, 
   className,
-  action 
+  action,
+  onDismiss
 }: AlertBannerProps) {
   const config = variants[variant];
   const Icon = config.icon;
@@ -65,6 +68,16 @@ export function AlertBanner({
         <div className="flex-shrink-0">
           {action}
         </div>
+      )}
+      {onDismiss && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={onDismiss}
+          className="flex-shrink-0 -mt-1 -mr-1 opacity-70 hover:opacity-100"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );

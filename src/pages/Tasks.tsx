@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw, Tag } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
@@ -33,8 +33,11 @@ export default function Tasks() {
   const [statusFilters, setStatusFilters] = useState<string[]>(['Pending', 'Ongoing', 'Blocked', 'Failed']);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'kanban-status' | 'kanban-date'>('table');
-  const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date'>('status');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban-status' | 'kanban-date' | 'kanban-tags'>('table');
+  const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date' | 'tags'>('status');
+  const [overdueAlertDismissed, setOverdueAlertDismissed] = useState(() => {
+    return sessionStorage.getItem('overdueAlertDismissed') === 'true';
+  });
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,12 +189,18 @@ export default function Tasks() {
               { mode: 'table' as const, icon: List, title: 'Table' },
               { mode: 'kanban-status' as const, icon: Columns3, title: 'Kanban Status' },
               { mode: 'kanban-date' as const, icon: Clock, title: 'Kanban Date' },
+              { mode: 'kanban-tags' as const, icon: Tag, title: 'Kanban Tags' },
             ].map(({ mode, icon: Icon, title }) => (
               <Button 
                 key={mode} 
                 variant={viewMode === mode ? "default" : "ghost"}
                 size="icon-sm"
-                onClick={() => { setViewMode(mode); if (mode === 'kanban-status') setBoardGroupBy('status'); if (mode === 'kanban-date') setBoardGroupBy('date'); }} 
+                onClick={() => { 
+                  setViewMode(mode); 
+                  if (mode === 'kanban-status') setBoardGroupBy('status'); 
+                  if (mode === 'kanban-date') setBoardGroupBy('date'); 
+                  if (mode === 'kanban-tags') setBoardGroupBy('tags');
+                }} 
                 title={title}
               >
                 <Icon className="h-4 w-4" />
@@ -212,8 +221,15 @@ export default function Tasks() {
         )}
 
         {/* Overdue Alert */}
-        {overdueCount > 0 && (
-          <AlertBanner variant="error" title="Overdue Tasks">
+        {overdueCount > 0 && !overdueAlertDismissed && (
+          <AlertBanner 
+            variant="error" 
+            title="Overdue Tasks"
+            onDismiss={() => {
+              setOverdueAlertDismissed(true);
+              sessionStorage.setItem('overdueAlertDismissed', 'true');
+            }}
+          >
             You have {overdueCount} overdue task{overdueCount !== 1 ? 's' : ''} that need attention
           </AlertBanner>
         )}
@@ -264,7 +280,7 @@ export default function Tasks() {
                       )
                     )}
                     {/* Grid view removed */}
-                    {(viewMode === 'kanban-status' || viewMode === 'kanban-date') && <div className="p-4"><TaskBoardView tasks={finalFilteredTasks} onTaskClick={handleTaskClick} groupBy={boardGroupBy} /></div>}
+                    {(viewMode === 'kanban-status' || viewMode === 'kanban-date' || viewMode === 'kanban-tags') && <div className="p-4"><TaskBoardView tasks={finalFilteredTasks} onTaskClick={handleTaskClick} groupBy={boardGroupBy} /></div>}
 
                     {totalPages > 1 && (
                       <div className="border-t border-border p-4">
