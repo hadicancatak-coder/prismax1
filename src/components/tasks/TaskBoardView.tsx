@@ -12,11 +12,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableTaskCard } from './SortableTaskCard';
+import { TASK_TAGS } from "@/lib/constants";
 
 interface TaskBoardViewProps {
   tasks: any[];
   onTaskClick: (taskId: string) => void;
-  groupBy?: 'status' | 'date';
+  groupBy?: 'status' | 'date' | 'tags';
 }
 
 export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBoardViewProps) => {
@@ -34,8 +35,9 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   
   const statusGroups = ['Pending', 'Ongoing', 'Blocked', 'Completed', 'Failed'];
   const dateGroups = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'Later'];
+  const tagGroups = [...TASK_TAGS.map(t => t.label), 'Untagged'];
   
-  const groups = groupBy === 'status' ? statusGroups : dateGroups;
+  const groups = groupBy === 'status' ? statusGroups : groupBy === 'date' ? dateGroups : tagGroups;
 
   const getDateGroup = (task: any): string => {
     if (!task.due_at) return 'Later';
@@ -54,11 +56,21 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
     return 'Later';
   };
 
+  const getTagGroup = (task: any): string => {
+    if (!task.labels || task.labels.length === 0) return 'Untagged';
+    // Find matching tag label for the first label
+    const firstLabel = task.labels[0];
+    const tagDef = TASK_TAGS.find(t => t.value === firstLabel);
+    return tagDef ? tagDef.label : 'Untagged';
+  };
+
   const filterTasksByGroup = (group: string) => {
     if (groupBy === 'status') {
       return tasks.filter(t => t.status === group);
-    } else {
+    } else if (groupBy === 'date') {
       return tasks.filter(t => getDateGroup(t) === group);
+    } else {
+      return tasks.filter(t => getTagGroup(t) === group);
     }
   };
 
@@ -74,6 +86,16 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
     Blocked: "bg-orange-soft",
     Completed: "bg-success-soft",
     Failed: "bg-destructive-soft",
+  };
+
+  const tagColors: Record<string, string> = {
+    Reporting: "bg-primary/15",
+    Campaigns: "bg-success/15",
+    Tech: "bg-info/15",
+    Problems: "bg-destructive/15",
+    "L&D": "bg-warning/15",
+    Research: "bg-accent",
+    Untagged: "bg-muted/30",
   };
 
   const handleComplete = async (task: any, e: React.MouseEvent) => {
@@ -228,7 +250,7 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
           title: "Task moved",
           description: `Task moved to ${targetGroup}`,
         });
-      } else {
+      } else if (groupBy === 'date') {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let newDate: Date;
@@ -259,6 +281,20 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
           title: "Due date updated",
           description: `Task moved to ${targetGroup}`,
         });
+      } else if (groupBy === 'tags') {
+        // Find the tag value from the label
+        const tagDef = TASK_TAGS.find(t => t.label === targetGroup);
+        const newLabels = tagDef ? [tagDef.value] : [];
+        
+        await supabase
+          .from('tasks')
+          .update({ labels: newLabels })
+          .eq('id', taskId);
+        
+        toast({
+          title: "Tag updated",
+          description: `Task moved to ${targetGroup}`,
+        });
       }
       
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -271,12 +307,21 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
     }
   };
 
+  const getGroupColor = (group: string) => {
+    if (groupBy === 'status') return statusColors[group] || 'bg-muted/30';
+    if (groupBy === 'tags') return tagColors[group] || 'bg-muted/30';
+    return 'bg-muted/30';
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className={cn(
+        "grid gap-4",
+        groupBy === 'tags' ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7" : "grid-cols-1 md:grid-cols-5"
+      )}>
         {groups.map(group => {
           const groupTasks = filterTasksByGroup(group);
-          const color = groupBy === 'status' ? statusColors[group] : 'bg-muted/30';
+          const color = getGroupColor(group);
           const taskIds = groupTasks.map(t => t.id);
           
           return (
@@ -284,8 +329,8 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
               <div className="flex flex-col min-h-[600px]">
                 <div className={cn("rounded-t-lg p-3 border-b", color)}>
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{group}</h3>
-                    <Badge variant="secondary">
+                    <h3 className="font-semibold text-sm">{group}</h3>
+                    <Badge variant="secondary" className="text-xs">
                       {groupTasks.length}
                     </Badge>
                   </div>
