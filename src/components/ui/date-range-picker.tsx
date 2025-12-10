@@ -53,14 +53,14 @@ export function DateRangePicker({
   };
 
   return (
-    <div className="flex gap-3 p-3">
+    <div className="flex gap-sm p-sm">
       {/* Left: Preset Buttons */}
-      <div className="flex flex-col gap-1 min-w-[110px]">
-        <span className="text-xs font-medium text-muted-foreground mb-1">Quick Select</span>
+      <div className="flex flex-col gap-xs min-w-[110px]">
+        <span className="text-metadata font-medium text-muted-foreground mb-xs">Quick Select</span>
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs" 
+          className="justify-start h-7 px-sm text-metadata" 
           onClick={() => {
             const preset = dateRangePresets.today();
             handlePreset(preset.from, preset.to);
@@ -71,7 +71,7 @@ export function DateRangePicker({
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs"
+          className="justify-start h-7 px-sm text-metadata"
           onClick={() => {
             const preset = dateRangePresets.yesterday();
             handlePreset(preset.from, preset.to);
@@ -82,7 +82,7 @@ export function DateRangePicker({
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs"
+          className="justify-start h-7 px-sm text-metadata"
           onClick={() => {
             const preset = dateRangePresets.thisWeek();
             handlePreset(preset.from, preset.to);
@@ -93,7 +93,7 @@ export function DateRangePicker({
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs"
+          className="justify-start h-7 px-sm text-metadata"
           onClick={() => {
             const preset = dateRangePresets.lastWeek();
             handlePreset(preset.from, preset.to);
@@ -104,7 +104,7 @@ export function DateRangePicker({
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs"
+          className="justify-start h-7 px-sm text-metadata"
           onClick={() => {
             const preset = dateRangePresets.nextWeek();
             handlePreset(preset.from, preset.to);
@@ -115,7 +115,7 @@ export function DateRangePicker({
         <Button 
           size="sm" 
           variant="ghost" 
-          className="justify-start h-7 px-2 text-xs"
+          className="justify-start h-7 px-sm text-metadata"
           onClick={() => {
             const preset = dateRangePresets.thisMonth();
             handlePreset(preset.from, preset.to);
@@ -128,7 +128,7 @@ export function DateRangePicker({
             <Button 
               size="sm" 
               variant="ghost" 
-              className="justify-start h-7 px-2 text-xs"
+              className="justify-start h-7 px-sm text-metadata"
               onClick={() => {
                 const preset = dateRangePresets.lastMonth();
                 handlePreset(preset.from, preset.to);
@@ -139,7 +139,7 @@ export function DateRangePicker({
             <Button 
               size="sm" 
               variant="ghost" 
-              className="justify-start h-7 px-2 text-xs"
+              className="justify-start h-7 px-sm text-metadata"
               onClick={() => {
                 const preset = dateRangePresets.thisQuarter();
                 handlePreset(preset.from, preset.to);
@@ -150,7 +150,7 @@ export function DateRangePicker({
             <Button 
               size="sm" 
               variant="ghost" 
-              className="justify-start h-7 px-2 text-xs"
+              className="justify-start h-7 px-sm text-metadata"
               onClick={() => {
                 const preset = dateRangePresets.lastQuarter();
                 handlePreset(preset.from, preset.to);
@@ -166,14 +166,14 @@ export function DateRangePicker({
       <div className="w-px bg-border" />
 
       {/* Right: Custom Range Selector */}
-      <div className="flex flex-col gap-3">
-        <span className="text-xs font-medium text-muted-foreground">Custom Range</span>
+      <div className="flex flex-col gap-sm">
+        <span className="text-metadata font-medium text-muted-foreground">Custom Range</span>
 
         {/* Two Separate Date Pickers */}
-        <div className="flex gap-3">
+        <div className="flex gap-sm">
           {/* From Date Picker */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted-foreground">From</span>
+          <div className="flex flex-col gap-sm">
+            <span className="text-metadata text-muted-foreground">From</span>
             <Calendar
               mode="single"
               selected={fromDate}
@@ -181,15 +181,15 @@ export function DateRangePicker({
               className="pointer-events-auto p-0 border rounded-md"
             />
             {fromDate && (
-              <Badge variant="secondary" className="font-mono text-xs w-fit">
+              <Badge variant="secondary" className="font-mono text-metadata w-fit">
                 {format(fromDate, "MMM d, yyyy")}
               </Badge>
             )}
           </div>
 
           {/* To Date Picker */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted-foreground">To</span>
+          <div className="flex flex-col gap-sm">
+            <span className="text-metadata text-muted-foreground">To</span>
             <Calendar
               mode="single"
               selected={toDate}
@@ -198,7 +198,7 @@ export function DateRangePicker({
               className="pointer-events-auto p-0 border rounded-md"
             />
             {toDate && (
-              <Badge variant="secondary" className="font-mono text-xs w-fit">
+              <Badge variant="secondary" className="font-mono text-metadata w-fit">
                 {format(toDate, "MMM d, yyyy")}
               </Badge>
             )}
@@ -206,15 +206,15 @@ export function DateRangePicker({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-1 border-t">
-          <Button variant="ghost" size="sm" onClick={handleClear} className="h-7 text-xs">
+        <div className="flex justify-between pt-xs border-t">
+          <Button variant="ghost" size="sm" onClick={handleClear} className="h-7 text-metadata">
             Clear
           </Button>
           <Button 
             size="sm" 
             onClick={handleApply}
             disabled={!fromDate || !toDate}
-            className="h-7 text-xs"
+            className="h-7 text-metadata"
           >
             Apply Range
           </Button>
