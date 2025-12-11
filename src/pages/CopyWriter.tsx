@@ -40,7 +40,7 @@ function CopyWriter() {
         title="Copy Writer"
         description="Manage and organize your marketing copy"
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <LanguageColumnToggle
               activeLanguages={activeLanguages}
               onToggle={setActiveLanguages}
@@ -103,7 +103,7 @@ function CopyWriter() {
 
       <DataCard noPadding>
         {isLoading ? (
-          <div className="p-4">
+          <div className="p-md">
             <TableSkeleton columns={6} rows={10} />
           </div>
         ) : (

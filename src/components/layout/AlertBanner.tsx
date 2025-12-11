@@ -52,7 +52,7 @@ export function AlertBanner({
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border",
+        "flex items-start gap-sm p-md rounded-xl border",
         config.className,
         className
       )}
@@ -60,9 +60,9 @@ export function AlertBanner({
       <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", config.iconClass)} />
       <div className="flex-1 min-w-0">
         {title && (
-          <h4 className="text-sm font-medium mb-1">{title}</h4>
+          <h4 className="text-body-sm font-medium mb-1">{title}</h4>
         )}
-        <div className="text-sm opacity-90">{children}</div>
+        <div className="text-body-sm opacity-90">{children}</div>
       </div>
       {action && (
         <div className="flex-shrink-0">

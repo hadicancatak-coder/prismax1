@@ -68,7 +68,7 @@ export function NewsTicker() {
                 className="flex-[0_0_100%] min-w-0 p-3 cursor-pointer hover:bg-muted/80 transition-smooth"
                 onClick={() => setSelectedAnnouncement(announcement)}
               >
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-sm">
                   <Megaphone className="h-4 w-4 text-primary flex-shrink-0" />
                   <Badge className={getPriorityColor(announcement.priority)}>
                     {announcement.priority}
@@ -91,8 +91,8 @@ export function NewsTicker() {
               {selectedAnnouncement?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
+          <div className="space-y-md">
+            <div className="flex items-center gap-sm">
               <Badge className={getPriorityColor(selectedAnnouncement?.priority)}>
                 {selectedAnnouncement?.priority}
               </Badge>

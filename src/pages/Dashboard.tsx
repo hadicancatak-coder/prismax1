@@ -28,7 +28,7 @@ export default function Dashboard() {
 
       <ToolsGallery />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
         <MyTasks />
         <ActivityFeed />
       </div>

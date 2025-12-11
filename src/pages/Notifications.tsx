@@ -319,10 +319,10 @@ export default function Notifications() {
 
   const getPriorityBadge = (type: string) => {
     if (type.includes("overdue") || type.includes("blocker")) {
-      return <Badge variant="destructive" className="text-xs">Urgent</Badge>;
+      return <Badge variant="destructive" className="text-metadata">Urgent</Badge>;
     }
     if (type.includes("1day") || type.includes("approval")) {
-      return <Badge variant="default" className="text-xs bg-orange-500">High</Badge>;
+      return <Badge variant="default" className="text-metadata bg-orange-500">High</Badge>;
     }
     return null;
   };
@@ -363,15 +363,15 @@ export default function Notifications() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="px-md sm:px-lg lg:px-12 py-lg lg:py-8 space-y-lg lg:space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md">
         <div>
           <h1 className="text-page-title">Notifications</h1>
           <p className="text-body text-muted-foreground">
             Stay updated with your tasks, mentions, and important updates
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className="text-metadata">
           {notifications.filter(n => !n.read_at).length} Unread
         </Badge>
       </div>
@@ -379,8 +379,8 @@ export default function Notifications() {
       <AnnouncementsSection />
 
       {/* Filters and Actions */}
-      <div className="border border-border rounded p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="border border-border rounded p-md">
+        <div className="flex flex-col md:flex-row gap-md">
           <Tabs value={readFilter} onValueChange={(v: any) => setReadFilter(v)} className="w-full md:w-auto">
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
@@ -420,7 +420,7 @@ export default function Notifications() {
         </div>
 
         {selectedIds.length > 0 && (
-          <div className="mt-4 flex items-center gap-2 p-3 bg-muted rounded">
+          <div className="mt-md flex items-center gap-sm p-sm bg-muted rounded">
             <span className="text-body">{selectedIds.length} selected</span>
             <Button onClick={deleteSelected} variant="destructive" size="sm">
               <Trash2 className="h-4 w-4 mr-2" />
@@ -434,12 +434,12 @@ export default function Notifications() {
       </div>
 
       {/* Grouped Notifications */}
-      <div className="space-y-8">
+      <div className="space-y-lg">
         {Object.entries(groupedNotifications).map(([group, notifs]) => (
           notifs.length > 0 && (
             <div key={group}>
-              <h2 className="text-metadata uppercase tracking-wide mb-3">{group}</h2>
-              <div className="space-y-2">
+              <h2 className="text-metadata uppercase tracking-wide mb-sm">{group}</h2>
+              <div className="space-y-sm">
                 {notifs.map((notification) => {
                   const taskTitle = getTaskOrCampaignTitle(notification);
                   const contentPreview = getContentPreview(notification);
@@ -447,22 +447,22 @@ export default function Notifications() {
                   return (
                     <div
                       key={notification.id}
-                      className={`p-4 border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
+                      className={`p-md border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
                         notification.read_at ? "bg-background" : "bg-muted/30 border-l-4 border-l-primary"
                       } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
                       onClick={() => handleNotificationClick(notification)}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-md">
+                        <div className="flex items-start gap-sm flex-1 min-w-0">
                           <Checkbox
                             checked={selectedIds.includes(notification.id)}
                             onCheckedChange={() => toggleSelect(notification.id)}
                             onClick={(e) => e.stopPropagation()}
                             className="mt-1 flex-shrink-0"
                           />
-                          <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex-1 min-w-0 space-y-sm">
                             {/* Title and type */}
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-sm flex-wrap">
                               <span className="text-heading-sm font-semibold text-foreground">
                                 {getNotificationTitle(notification)}
                               </span>
@@ -488,7 +488,7 @@ export default function Notifications() {
 
                             {/* Content preview (e.g., comment text) */}
                             {contentPreview && (
-                              <div className="text-body-sm text-muted-foreground italic bg-muted/50 p-2 rounded border-l-2 border-border">
+                              <div className="text-body-sm text-muted-foreground italic bg-muted/50 p-sm rounded border-l-2 border-border">
                                 "{contentPreview}"
                               </div>
                             )}

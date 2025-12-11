@@ -63,15 +63,15 @@ const UtmPlanner = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="builder" forceMount hidden={activeTab !== "builder"} className="mt-6">
+        <TabsContent value="builder" forceMount hidden={activeTab !== "builder"} className="mt-lg">
           <UtmBuilder />
         </TabsContent>
 
-        <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="mt-6 space-y-4">
+        <TabsContent value="links" forceMount hidden={activeTab !== "links"} className="mt-lg space-y-md">
           <UtmInlineFilters filters={filters} onFiltersChange={setFilters} />
           <DataCard noPadding>
             {isLoading ? (
-              <div className="p-4">
+              <div className="p-md">
                 <TableSkeleton columns={5} rows={8} />
               </div>
             ) : (
@@ -80,15 +80,15 @@ const UtmPlanner = () => {
           </DataCard>
         </TabsContent>
 
-        <TabsContent value="ready" forceMount hidden={activeTab !== "ready"} className="mt-6">
+        <TabsContent value="ready" forceMount hidden={activeTab !== "ready"} className="mt-lg">
           <ReadyLinksBuilder />
         </TabsContent>
 
-        <TabsContent value="config" forceMount hidden={activeTab !== "config"} className="mt-6">
+        <TabsContent value="config" forceMount hidden={activeTab !== "config"} className="mt-lg">
           <UtmConfigurationTab />
         </TabsContent>
 
-        <TabsContent value="automation" forceMount hidden={activeTab !== "automation"} className="mt-6">
+        <TabsContent value="automation" forceMount hidden={activeTab !== "automation"} className="mt-lg">
           <UtmAutomationTab />
         </TabsContent>
       </Tabs>

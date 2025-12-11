@@ -89,9 +89,9 @@ const StatusLog = () => {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-6 lg:py-8 space-y-6 lg:space-y-8 bg-background min-h-screen">
+    <div className="px-md sm:px-lg lg:px-12 py-lg lg:py-8 space-y-lg lg:space-y-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-sm">
           <FileText className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-page-title">Status Log</h1>
@@ -116,7 +116,7 @@ const StatusLog = () => {
         onEntityClick={handleEntityClick}
       />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-sm">
         <StatusLogFilters filters={filters} onFiltersChange={setFilters} />
         <Button
           variant={hideResolved ? "default" : "outline"}
@@ -163,7 +163,7 @@ const StatusLog = () => {
                       <div className="truncate">{log.title}</div>
                       {log.description && (
                         <div 
-                          className="text-xs text-muted-foreground prose prose-sm dark:prose-invert max-w-none line-clamp-2"
+                          className="text-metadata text-muted-foreground prose prose-sm dark:prose-invert max-w-none line-clamp-2"
                           dangerouslySetInnerHTML={{ 
                             __html: DOMPurify.sanitize(log.description) 
                           }}
@@ -173,19 +173,19 @@ const StatusLog = () => {
                     <TableCell>{getLogTypeBadge(log.log_type)}</TableCell>
                     <TableCell>{getStatusBadge(log.status)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1 flex-wrap">
+                      <div className="flex gap-xs flex-wrap">
                         {log.entity?.map((e) => (
-                          <Badge key={e} variant="outline" className="text-xs">{e}</Badge>
+                          <Badge key={e} variant="outline" className="text-metadata">{e}</Badge>
                         ))}
                       </div>
                     </TableCell>
                     <TableCell>{log.platform || "-"}</TableCell>
                     <TableCell>{log.campaign_name || "-"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-metadata text-muted-foreground">
                       {format(new Date(log.created_at), "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-xs" onClick={(e) => e.stopPropagation()}>
                         {!log.task_id && (
                           <Button
                             variant="ghost"
