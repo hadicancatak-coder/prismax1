@@ -33,14 +33,14 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
   return (
     <div className="bg-card rounded-lg border">
       {/* Compact Row */}
-      <div className="flex items-center gap-2 p-2">
+      <div className="flex items-center gap-sm p-sm">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search logs..."
             value={filters.search || ""}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            className="h-8 pl-8 text-sm"
+            className="h-8 pl-8 text-body-sm"
           />
         </div>
 
@@ -48,7 +48,7 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
           value={filters.platform || "all"}
           onValueChange={(platform) => onFiltersChange({ ...filters, platform: platform === "all" ? undefined : platform })}
         >
-          <SelectTrigger className="h-8 w-32 text-sm">
+          <SelectTrigger className="h-8 w-32 text-body-sm">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
@@ -63,7 +63,7 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
           value={filters.campaign_name || "all"}
           onValueChange={(campaign_name) => onFiltersChange({ ...filters, campaign_name: campaign_name === "all" ? undefined : campaign_name })}
         >
-          <SelectTrigger className="h-8 w-32 text-sm">
+          <SelectTrigger className="h-8 w-32 text-body-sm">
             <SelectValue placeholder="Campaign" />
           </SelectTrigger>
           <SelectContent>
@@ -78,7 +78,7 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
           value={filters.status || "all"}
           onValueChange={(status) => onFiltersChange({ ...filters, status: status === "all" ? undefined : status })}
         >
-          <SelectTrigger className="h-8 w-28 text-sm">
+          <SelectTrigger className="h-8 w-28 text-body-sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -93,12 +93,12 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="h-8 gap-1.5 text-sm"
+          className="h-8 gap-sm text-body-sm"
         >
           {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           Filters
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-xs">
+            <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-metadata">
               {activeFiltersCount}
             </Badge>
           )}
@@ -107,9 +107,9 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
 
       {/* Expanded Section */}
       {isExpanded && (
-        <div className="border-t p-3 space-y-3">
+        <div className="border-t p-sm space-y-sm">
           <div>
-            <Label className="text-xs">Entities</Label>
+            <Label className="text-metadata">Entities</Label>
             <EnhancedMultiSelect
               options={entities.map(e => ({ value: e.name, label: e.name }))}
               selected={filters.entity || []}
@@ -119,13 +119,13 @@ export function StatusLogFilters({ filters, onFiltersChange }: StatusLogFiltersP
           </div>
 
           <div>
-            <Label className="text-xs">Log Type</Label>
-            <div className="flex gap-1.5 flex-wrap mt-1.5">
+            <Label className="text-metadata">Log Type</Label>
+            <div className="flex gap-sm flex-wrap mt-sm">
               {['issue', 'blocker', 'plan', 'update', 'note'].map((type) => (
                 <Badge
                   key={type}
                   variant={filters.log_type?.includes(type) ? "default" : "outline"}
-                  className="cursor-pointer hover:bg-accent text-xs h-7"
+                  className="cursor-pointer hover:bg-accent text-metadata h-7"
                   onClick={() => {
                     const current = Array.isArray(filters.log_type) ? filters.log_type : [];
                     const updated = current.includes(type)

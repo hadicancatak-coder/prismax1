@@ -90,17 +90,17 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
   };
 
   return (
-    <Card className="p-4 hover:shadow-md transition-smooth">
-      <div className="flex items-start gap-3">
+    <Card className="p-md hover:shadow-md transition-smooth">
+      <div className="flex items-start gap-sm">
         <div className="flex-shrink-0 mt-1">
           {getStatusIcon()}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-sm mb-sm">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+              <div className="flex items-center gap-sm mb-xs">
+                <span className="text-body-sm font-medium text-muted-foreground">#{index + 1}</span>
                 {getStatusBadge()}
               </div>
               <RichTextEditor
@@ -136,8 +136,8 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-md text-body-sm">
+            <div className="flex items-center gap-sm">
               <Select
                 value={item.status}
                 onValueChange={handleStatusChange}
@@ -154,7 +154,7 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
             </div>
 
             {item.profiles && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={item.profiles.avatar_url} />
                   <AvatarFallback>{item.profiles.name?.[0]}</AvatarFallback>
@@ -165,7 +165,7 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
           </div>
 
           {item.completed_at && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-metadata text-muted-foreground mt-sm">
               Completed {new Date(item.completed_at).toLocaleDateString()}
             </p>
           )}
