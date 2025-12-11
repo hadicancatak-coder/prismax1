@@ -48,17 +48,17 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
     (filters.status ? 1 : 0);
 
   return (
-    <Card className="p-2">
-      <div className="flex items-center gap-4">
+    <Card className="p-sm">
+      <div className="flex items-center gap-md">
         {/* Compact row - always visible */}
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-sm flex-1">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={filters.search || ""}
               onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
               placeholder="Search by name, URL, campaign..."
-              className="h-8 pl-8 text-sm"
+              className="h-8 pl-8 text-body-sm"
             />
           </div>
 
@@ -102,7 +102,7 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2"
+            className="gap-sm"
           >
             <Filter className="h-4 w-4" />
             More Filters
@@ -121,7 +121,7 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-            <X className="h-4 w-4 mr-1" />
+            <X className="h-4 w-4 mr-xs" />
             Clear All
           </Button>
         )}
@@ -129,10 +129,10 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
 
       {/* Expanded section */}
       {isExpanded && (
-        <div className="pt-3 mt-3 border-t space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Platform</label>
+        <div className="pt-sm mt-sm border-t space-y-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">Platform</label>
               <SimpleMultiSelect
                 options={platforms.map(p => ({ value: p.name, label: p.name }))}
                 selected={filters.platform || []}
@@ -141,8 +141,8 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">LP Type</label>
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">LP Type</label>
               <Select
                 value={filters.lp_type || "all"}
                 onValueChange={(value) => onFiltersChange({ ...filters, lp_type: value === "all" ? undefined : value })}
@@ -161,8 +161,8 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Link Purpose</label>
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">Link Purpose</label>
               <SimpleMultiSelect
                 options={LINK_PURPOSES.map(p => ({ value: p, label: p }))}
                 selected={filters.link_purpose || []}
@@ -171,8 +171,8 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Entity</label>
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">Entity</label>
               <SimpleMultiSelect
                 options={ENTITIES.map(e => ({ value: e, label: e }))}
                 selected={filters.entity || []}
@@ -181,8 +181,8 @@ export const UtmFilters = ({ filters, onFiltersChange }: UtmFiltersProps) => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Team</label>
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">Team</label>
               <SimpleMultiSelect
                 options={TEAMS.map(t => ({ value: t, label: t }))}
                 selected={filters.teams || []}

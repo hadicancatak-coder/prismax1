@@ -65,21 +65,21 @@ export function AuditLogDetail() {
   const failedCount = items.filter(i => i.status === 'failed').length;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="container mx-auto p-lg space-y-lg">
+      <div className="flex items-center gap-md">
         <Button variant="ghost" onClick={() => navigate('/operations')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft className="mr-sm h-4 w-4" />
           Back to Logs
         </Button>
       </div>
 
       <DataCard>
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-md">
           <div className="flex-1">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-sm">
               <h2 className="text-heading-lg font-semibold text-foreground">{log.title}</h2>
               {isAdmin && (
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <EditAuditLogDialog log={log} />
                   <DeleteAuditLogDialog
                     logId={log.id}
@@ -93,7 +93,7 @@ export function AuditLogDetail() {
               )}
             </div>
             {log.description && (
-              <p className="text-muted-foreground mt-2">{log.description}</p>
+              <p className="text-muted-foreground mt-sm">{log.description}</p>
             )}
           </div>
           <Badge variant={getStatusBadgeVariant(log.status)}>
@@ -101,13 +101,13 @@ export function AuditLogDetail() {
           </Badge>
         </div>
         
-        <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap gap-md mt-md text-body-sm text-muted-foreground">
+          <div className="flex items-center gap-sm">
             <User className="h-4 w-4" />
             <span>Platform: {log.platform}</span>
           </div>
           {log.entity && log.entity.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-sm">
               <span>Entities:</span>
               {log.entity.map(e => (
                 <Badge key={e} variant="outline">{e}</Badge>
@@ -115,7 +115,7 @@ export function AuditLogDetail() {
             </div>
           )}
           {log.deadline && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-sm">
               <Calendar className="h-4 w-4" />
               <span>Deadline: {new Date(log.deadline).toLocaleDateString()}</span>
             </div>
@@ -123,11 +123,11 @@ export function AuditLogDetail() {
         </div>
 
         {log.task_id && (
-          <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+          <div className="mt-md p-md bg-primary/5 rounded-lg border border-primary/20">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-sm">
                 <Badge className="bg-primary">Linked Task</Badge>
-                <span className="text-sm font-medium">
+                <span className="text-body-sm font-medium">
                   Task automatically created for this audit log
                 </span>
               </div>
@@ -136,14 +136,14 @@ export function AuditLogDetail() {
                 size="sm"
                 onClick={() => navigate(`/tasks?id=${log.task_id}`)}
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className="h-4 w-4 mr-sm" />
                 View Task
               </Button>
             </div>
             
             {(log as any).tasks?.assignees && (log as any).tasks.assignees.length > 0 && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Assigned to:</span>
+              <div className="mt-sm flex items-center gap-sm">
+                <span className="text-body-sm text-muted-foreground">Assigned to:</span>
                 <div className="flex -space-x-2">
                   {(log as any).tasks.assignees.slice(0, 5).map((assignee: any) => (
                     <Avatar key={assignee.id} className="h-7 w-7 border-2 border-background">
@@ -154,7 +154,7 @@ export function AuditLogDetail() {
                     </Avatar>
                   ))}
                   {(log as any).tasks.assignees.length > 5 && (
-                    <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
+                    <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-metadata">
                       +{(log as any).tasks.assignees.length - 5}
                     </div>
                   )}
@@ -170,7 +170,7 @@ export function AuditLogDetail() {
           title={`Action Items (${items.length})`}
           description={`${pendingCount} pending • ${completedCount} completed • ${failedCount} failed`}
           action={
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               {!log.task_id && items.length > 0 && (
                 <ConvertAllToTaskButton
                   auditLogId={id!}
@@ -187,8 +187,8 @@ export function AuditLogDetail() {
           }
         />
         
-        <form onSubmit={handleAddItem} className="mb-6">
-          <div className="flex gap-2">
+        <form onSubmit={handleAddItem} className="mb-lg">
+          <div className="flex gap-sm">
             <Input
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
@@ -202,7 +202,7 @@ export function AuditLogDetail() {
         </form>
 
         {itemsLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-sm">
             {[1, 2, 3].map(i => (
               <Skeleton key={i} className="h-24 w-full" />
             ))}
@@ -212,7 +212,7 @@ export function AuditLogDetail() {
             No items yet. Add your first action item above or use bulk add.
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-sm">
             {items.map((item, index) => (
               <AuditItemCard
                 key={item.id}

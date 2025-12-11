@@ -60,7 +60,7 @@ export function CampaignLibrary() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
+        <CardContent className="py-lg text-center text-muted-foreground">
           Loading campaigns...
         </CardContent>
       </Card>
@@ -70,7 +70,7 @@ export function CampaignLibrary() {
   if (campaigns.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
+        <CardContent className="py-lg text-center text-muted-foreground">
           No campaigns yet. Add a campaign from the Builder tab.
         </CardContent>
       </Card>
@@ -78,7 +78,7 @@ export function CampaignLibrary() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
@@ -90,9 +90,9 @@ export function CampaignLibrary() {
       </Alert>
 
       <Card>
-        <CardContent className="p-4 space-y-4">
+        <CardContent className="p-md space-y-md">
           {/* Search & Sort Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-sm">
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -105,7 +105,7 @@ export function CampaignLibrary() {
             </div>
             
             {/* Sort Options */}
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Sort by" />
@@ -129,7 +129,7 @@ export function CampaignLibrary() {
           </div>
           
           {/* Results Count */}
-          <div className="text-sm text-muted-foreground">
+          <div className="text-body-sm text-muted-foreground">
             Showing {sortedCampaigns.length} of {campaigns.length} campaigns
           </div>
         </CardContent>
@@ -155,22 +155,22 @@ export function CampaignLibrary() {
                         href={campaign.landing_page}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                        className="text-body-sm text-primary hover:underline flex items-center gap-xs"
                       >
                         <span className="max-w-xs truncate">{campaign.landing_page}</span>
                         <ExternalLink className="h-3 w-3 flex-shrink-0" />
                       </a>
                     ) : (
-                      <span className="text-muted-foreground text-sm">Not set</span>
+                      <span className="text-muted-foreground text-body-sm">Not set</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant="secondary">{campaign.usage_count || 0}</Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-body-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(campaign.created_at), { addSuffix: true })}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-body-sm text-muted-foreground">
                     {campaign.last_used_at
                       ? formatDistanceToNow(new Date(campaign.last_used_at), { addSuffix: true })
                       : 'Never'}
