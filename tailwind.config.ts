@@ -209,6 +209,7 @@ export default {
         'lg': 'var(--space-lg)',      /* 24px */
         'xl': 'var(--space-xl)',      /* 32px */
         '2xl': 'var(--space-2xl)',    /* 48px */
+        'card': 'var(--space-card)',  /* 20px */
       },
       gap: {
         'xs': 'var(--space-xs)',      /* 8px */

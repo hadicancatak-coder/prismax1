@@ -63,13 +63,13 @@ export function StatsCards({ stats, onStatClick }: StatsCardsProps) {
   };
 
   return (
-    <div className="flex items-center gap-8 py-6 border-b border-border">
+    <div className="flex items-center gap-lg py-lg border-b border-border">
       {statsDisplay.map((stat) => {
         const statType = getStatType(stat.title);
         return (
           <div 
             key={stat.title}
-            className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-3 rounded-lg"
+            className="flex-1 cursor-pointer transition-smooth hover:scale-[1.02] hover:bg-muted/30 p-sm rounded-lg"
             onClick={() => statType && onStatClick(statType)}
           >
             <div className="text-metadata mb-1">{stat.title}</div>
