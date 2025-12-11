@@ -62,9 +62,9 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="flex flex-wrap gap-1 items-center border rounded-md p-1 min-h-8 w-full cursor-text">
+        <div className="flex flex-wrap gap-xs items-center border rounded-md p-xs min-h-8 w-full cursor-text">
           {value.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs gap-1">
+            <Badge key={tag} variant="secondary" className="text-metadata gap-xs">
               {tag}
               {!disabled && (
                 <span
@@ -92,7 +92,7 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
               onKeyDown={handleKeyDown}
               onFocus={() => inputValue && filteredCampaigns.length > 0 && setOpen(true)}
               placeholder={value.length === 0 ? "Add campaign..." : ""}
-              className="border-0 h-6 flex-1 min-w-[80px] p-0 focus-visible:ring-0 text-sm"
+              className="border-0 h-6 flex-1 min-w-[80px] p-0 focus-visible:ring-0 text-body-sm"
             />
           )}
         </div>
@@ -112,7 +112,7 @@ export function CampaignsTagsInput({ value, onChange, disabled }: CampaignsTagsI
                 </CommandItem>
               ))}
             </CommandGroup>
-            <CommandEmpty className="py-2 px-3 text-xs text-muted-foreground">
+            <CommandEmpty className="py-sm px-sm text-metadata text-muted-foreground">
               Press Enter to add "{inputValue}" as custom campaign
             </CommandEmpty>
           </CommandList>

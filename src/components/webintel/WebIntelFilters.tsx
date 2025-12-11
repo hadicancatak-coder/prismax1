@@ -52,8 +52,8 @@ export function WebIntelFilters({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 flex-wrap">
+    <div className="space-y-md">
+      <div className="flex items-center gap-md flex-wrap">
         <Input
           placeholder="Search sites, URLs, or publishers..."
           value={filters.search}
@@ -74,7 +74,7 @@ export function WebIntelFilters({
         )}
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-sm flex-wrap">
         {/* Country Filter */}
         <Select
           value=""
@@ -182,7 +182,7 @@ export function WebIntelFilters({
       </div>
       
       {hasActiveFilters && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-sm flex-wrap">
           {filters.countries.map(c => (
             <Badge key={c} variant="secondary">
               {c}

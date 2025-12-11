@@ -115,7 +115,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
   return (
     <>
-      <div className="border-b border-border p-2 flex flex-wrap gap-1 items-center">
+      <div className="border-b border-border p-sm flex flex-wrap gap-xs items-center">
         {/* Undo/Redo */}
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
@@ -198,8 +198,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
               <Palette className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-2">
-            <div className="grid grid-cols-4 gap-1">
+          <PopoverContent className="w-auto p-sm">
+            <div className="grid grid-cols-4 gap-xs">
               {EDITOR_COLORS.map((color) => (
                 <button
                   key={color.name}

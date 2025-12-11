@@ -74,8 +74,8 @@ export function LocationSearch({ locations, onLocationSelect }: LocationSearchPr
         <Button variant="outline" className="w-full max-w-sm justify-start text-muted-foreground bg-background/90 backdrop-blur-md shadow-xl border border-white/10">
           <Search className="mr-2 h-4 w-4" />
           Search locations...
-          <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
+          <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-xs rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-metadata">⌘</span>K
           </kbd>
         </Button>
       </PopoverTrigger>
@@ -103,15 +103,15 @@ export function LocationSearch({ locations, onLocationSelect }: LocationSearchPr
                       onSelect={() => handleSelect(location)}
                       className="cursor-pointer"
                     >
-                      <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="mr-sm h-4 w-4 text-muted-foreground" />
                       <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-sm">
                           {categoryConfig && (
-                            <span className="text-sm">{categoryConfig.emoji}</span>
+                            <span className="text-body-sm">{categoryConfig.emoji}</span>
                           )}
                           <span className="font-medium truncate">{location.name}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground truncate">
+                        <span className="text-metadata text-muted-foreground truncate">
                           {location.type} • {location.city}
                           {location.agency && ` • ${location.agency}`}
                         </span>

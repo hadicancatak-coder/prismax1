@@ -110,8 +110,8 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
           <DialogTitle>{editingKPI ? "Edit KPI" : "Create New KPI"}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="name">KPI Name *</Label>
             <Input
               id="name"
@@ -121,7 +121,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -132,8 +132,8 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-md">
+            <div className="space-y-sm">
               <Label htmlFor="type">Type *</Label>
               <Select value={type} onValueChange={(v) => setType(v as "annual" | "quarterly")}>
                 <SelectTrigger>
@@ -146,7 +146,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="period">Period *</Label>
               <Input
                 id="period"
@@ -157,11 +157,11 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-md">
+            <div className="space-y-sm">
               <div className="flex items-center justify-between">
                 <Label htmlFor="weight">Weight (%) *</Label>
-                <Badge variant={weight > 100 ? "destructive" : remainingWeight < 0 ? "destructive" : "secondary"} className="text-xs">
+                <Badge variant={weight > 100 ? "destructive" : remainingWeight < 0 ? "destructive" : "secondary"} className="text-metadata">
                   {weight > 100 ? "Exceeds 100%" : `${remainingWeight}% remaining`}
                 </Badge>
               </div>
@@ -175,11 +175,11 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                 className={weight > 100 ? "border-destructive" : ""}
               />
               {weight > 100 && (
-                <p className="text-xs text-destructive">Weight cannot exceed 100%</p>
+                <p className="text-metadata text-destructive">Weight cannot exceed 100%</p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="status">Status *</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as "draft" | "active")}>
                 <SelectTrigger>
@@ -193,19 +193,19 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
             </div>
           </div>
 
-          <div className="space-y-3 pt-4 border-t">
+          <div className="space-y-sm pt-md border-t">
             <div className="flex items-center justify-between">
               <Label>Targets</Label>
               <Button variant="outline" size="sm" onClick={handleAddTarget}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-sm" />
                 Add Target
               </Button>
             </div>
 
             {targets.map((target, index) => (
-              <div key={index} className="p-3 border rounded-lg space-y-3">
+              <div key={index} className="p-sm border rounded-lg space-y-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Target {index + 1}</span>
+                  <span className="text-body-sm font-medium">Target {index + 1}</span>
                   {targets.length > 1 && (
                     <Button
                       variant="ghost"
@@ -217,8 +217,8 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-sm">
+                  <div className="space-y-sm">
                     <Label>Type</Label>
                     <Select
                       value={target.target_type}
@@ -236,7 +236,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-sm">
                     <Label>Name</Label>
                     <Input
                       className="h-8"
@@ -246,7 +246,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-sm">
                     <Label>Target Value</Label>
                     <Input
                       className="h-8"
@@ -256,7 +256,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-sm">
                     <Label>Current Value</Label>
                     <Input
                       className="h-8"
@@ -266,7 +266,7 @@ export function CreateKPIDialog({ open, onOpenChange, editingKPI }: CreateKPIDia
                     />
                   </div>
 
-                  <div className="space-y-2 col-span-2">
+                  <div className="space-y-sm col-span-2">
                     <Label>Unit</Label>
                     <Input
                       className="h-8"
