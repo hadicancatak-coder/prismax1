@@ -36,25 +36,25 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
   };
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading history...</div>;
+    return <div className="text-body-sm text-muted-foreground">Loading history...</div>;
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 mb-4">
+    <Card className="p-md">
+      <div className="flex items-center gap-sm mb-md">
         <History className="w-4 h-4" />
         <h3 className="font-semibold">Version History</h3>
       </div>
 
       <ScrollArea className="h-96">
         {versions && versions.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-sm">
             {versions.map((version) => (
-              <div key={version.id} className="border rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
+              <div key={version.id} className="border rounded-lg p-sm">
+                <div className="flex items-start justify-between mb-sm">
                   <div>
-                    <p className="font-medium text-sm">Version {version.version_number}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-medium text-body-sm">Version {version.version_number}</p>
+                    <p className="text-metadata text-muted-foreground">
                       {format(new Date(version.created_at), 'MMM dd, yyyy HH:mm')}
                     </p>
                   </div>
@@ -65,7 +65,7 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
                         variant="outline"
                         onClick={(e) => { e.stopPropagation(); setShowRestoreConfirm(version); }}
                       >
-                        <RotateCcw className="w-3 h-3 mr-1" />
+                        <RotateCcw className="w-3 h-3 mr-xs" />
                         Restore
                       </Button>
                     </AlertDialogTrigger>
@@ -91,9 +91,9 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
                 </div>
 
                 {version.changed_fields && version.changed_fields.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div className="flex flex-wrap gap-xs mt-sm">
                     {version.changed_fields.map((field) => (
-                      <Badge key={field} variant="secondary" className="text-xs">
+                      <Badge key={field} variant="secondary" className="text-metadata">
                         {field}
                       </Badge>
                     ))}
@@ -103,7 +103,7 @@ export function AdVersionHistory({ adId }: AdVersionHistoryProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-8">
+          <p className="text-body-sm text-muted-foreground text-center py-lg">
             No version history yet
           </p>
         )}

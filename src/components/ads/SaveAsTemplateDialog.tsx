@@ -51,7 +51,7 @@ export function SaveAsTemplateDialog({ open, onOpenChange, adData }: SaveAsTempl
           <DialogTitle>Save as Template</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           <div>
             <Label htmlFor="template-name">Template Name *</Label>
             <Input
