@@ -61,17 +61,17 @@ export function BulkCSVExportDialog({ open, onOpenChange, ads }: BulkCSVExportDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-sm">
             <FileText className="h-5 w-5" />
             Export to Google Ads Editor CSV
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           <div>
             <Label>Export Options</Label>
-            <div className="mt-2 space-y-3">
-              <div className="flex items-center space-x-2">
+            <div className="mt-sm space-y-sm">
+              <div className="flex items-center space-x-sm">
                 <Checkbox 
                   id="only-approved" 
                   checked={onlyApproved}
@@ -79,7 +79,7 @@ export function BulkCSVExportDialog({ open, onOpenChange, ads }: BulkCSVExportDi
                 />
                 <label
                   htmlFor="only-approved"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-body-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Only export approved ads
                 </label>
@@ -87,9 +87,9 @@ export function BulkCSVExportDialog({ open, onOpenChange, ads }: BulkCSVExportDi
             </div>
           </div>
 
-          <div className="bg-muted p-4 rounded-lg space-y-2">
-            <div className="text-sm font-medium">Export Summary</div>
-            <div className="text-sm text-muted-foreground">
+          <div className="bg-muted p-md rounded-lg space-y-sm">
+            <div className="text-body-sm font-medium">Export Summary</div>
+            <div className="text-body-sm text-muted-foreground">
               {onlyApproved 
                 ? `${ads.filter(ad => ad.approval_status === 'approved').length} approved ads will be exported`
                 : `${ads.length} ads will be exported`
@@ -97,7 +97,7 @@ export function BulkCSVExportDialog({ open, onOpenChange, ads }: BulkCSVExportDi
             </div>
           </div>
 
-          <Button onClick={handleExport} className="w-full flex items-center gap-2">
+          <Button onClick={handleExport} className="w-full flex items-center gap-sm">
             <Download className="h-4 w-4" />
             Export CSV
           </Button>

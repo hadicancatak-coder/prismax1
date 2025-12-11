@@ -86,8 +86,8 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaul
             Create a new ad campaign
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="space-y-md py-md">
+          <div className="space-y-sm">
             <Label htmlFor="entity">Entity *</Label>
             <Select value={entity || undefined} onValueChange={setEntity}>
               <SelectTrigger id="entity">
@@ -101,7 +101,7 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaul
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="campaign-name">Campaign Name *</Label>
             <Input
               id="campaign-name"
@@ -111,38 +111,38 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaul
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Languages *</Label>
-            <div className="flex gap-4">
-              <div className="flex items-center space-x-2">
+            <div className="flex gap-md">
+              <div className="flex items-center space-x-sm">
                 <Checkbox
                   id="lang-en"
                   checked={languages.includes("EN")}
                   onCheckedChange={() => toggleLanguage("EN")}
                 />
-                <label htmlFor="lang-en" className="text-sm font-medium cursor-pointer">
+                <label htmlFor="lang-en" className="text-body-sm font-medium cursor-pointer">
                   English
                 </label>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-sm">
                 <Checkbox
                   id="lang-ar"
                   checked={languages.includes("AR")}
                   onCheckedChange={() => toggleLanguage("AR")}
                 />
-                <label htmlFor="lang-ar" className="text-sm font-medium cursor-pointer">
+                <label htmlFor="lang-ar" className="text-body-sm font-medium cursor-pointer">
                   Arabic
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="flex-1">
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={isLoading} className="flex-1">
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Loader2 className="mr-sm h-4 w-4 animate-spin" />}
               Create Campaign
             </Button>
           </div>

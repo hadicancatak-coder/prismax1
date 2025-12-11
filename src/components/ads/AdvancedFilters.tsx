@@ -35,9 +35,9 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-sm">
       {activeFilters.length > 0 && (
-        <div className="flex gap-1">
+        <div className="flex gap-xs">
           {activeFilters.map((filter: any) => (
             <Badge key={filter.key} variant="secondary">
               {filter.label}
@@ -52,12 +52,12 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline">
-            <Filter className="w-4 h-4 mr-2" />
+            <Filter className="w-4 h-4 mr-sm" />
             Filters
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
-          <div className="space-y-4">
+          <div className="space-y-md">
             <h4 className="font-medium">Advanced Filters</h4>
 
             <div>
@@ -92,7 +92,7 @@ export function AdvancedFilters({ onFiltersChange }: AdvancedFiltersProps) {
               </Select>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               <Button variant="outline" onClick={clearFilters} className="flex-1">
                 Clear
               </Button>
