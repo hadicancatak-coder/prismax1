@@ -95,23 +95,23 @@ export const CalendarKanbanView = ({
   }, [view, tasks, selectedDate]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-md mt-lg">
       {columns.map(column => (
         <div key={column.id} className="bg-card border border-border rounded-lg overflow-hidden">
           {/* Column Header */}
-          <div className="p-4 border-b border-border bg-card-hover">
-            <h3 className="font-semibold text-foreground mb-1">{column.label}</h3>
+          <div className="p-md border-b border-border bg-card-hover">
+            <h3 className="font-semibold text-foreground mb-xs">{column.label}</h3>
             {column.dateRange && (
-              <p className="text-xs text-muted-foreground">{column.dateRange}</p>
+              <p className="text-metadata text-muted-foreground">{column.dateRange}</p>
             )}
-            <span className="text-xs text-muted-foreground mt-1 block">{column.tasks.length} tasks</span>
+            <span className="text-metadata text-muted-foreground mt-xs block">{column.tasks.length} tasks</span>
           </div>
           
           {/* Task Cards */}
           <ScrollArea className="h-[600px]">
-            <div className="p-3 space-y-3">
+            <div className="p-sm space-y-sm">
               {column.tasks.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="text-center py-xl text-muted-foreground text-body-sm">
                   No tasks
                 </div>
               ) : (
@@ -119,20 +119,20 @@ export const CalendarKanbanView = ({
                   <Card
                     key={task.id}
                     className={cn(
-                      "p-3 cursor-pointer transition-all",
+                      "p-sm cursor-pointer transition-all",
                       "hover:bg-card-hover hover:shadow-md hover:border-primary/20"
                     )}
                     onClick={() => onTaskClick(task.id)}
                   >
                     {/* Task Header */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="text-sm font-medium text-card-foreground flex-1 line-clamp-2">
+                    <div className="flex items-start justify-between gap-sm mb-sm">
+                      <h4 className="text-body-sm font-medium text-card-foreground flex-1 line-clamp-2">
                         {task.title}
                       </h4>
                       {view !== 'today' && view !== 'day' && (
                         <Badge 
                           variant="outline" 
-                          className={cn("text-xs", statusColors[task.status])}
+                          className={cn("text-metadata", statusColors[task.status])}
                         >
                           {task.status}
                         </Badge>
@@ -140,22 +140,22 @@ export const CalendarKanbanView = ({
                     </div>
 
                     {/* Task Metadata */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-sm flex-wrap">
                       <Badge 
                         variant="outline" 
-                        className={cn("text-xs", priorityColors[task.priority as keyof typeof priorityColors])}
+                        className={cn("text-metadata", priorityColors[task.priority as keyof typeof priorityColors])}
                       >
                         {task.priority}
                       </Badge>
                       
                       {task.due_at && (view === 'today' || view === 'day') && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-metadata text-muted-foreground">
                           {format(new Date(task.due_at), 'h:mm a')}
                         </span>
                       )}
                       
                       {task.due_at && (view === 'week' || view === 'month') && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-metadata text-muted-foreground">
                           {format(new Date(task.due_at), 'MMM d, h:mm a')}
                         </span>
                       )}
@@ -165,14 +165,14 @@ export const CalendarKanbanView = ({
 
                     {/* Task Description Preview */}
                     {task.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                      <p className="text-metadata text-muted-foreground mt-sm line-clamp-2">
                         {task.description}
                       </p>
                     )}
 
                     {/* Assignees */}
                     {task.assignees && task.assignees.length > 0 && (
-                      <div className="flex items-center gap-1 mt-2">
+                      <div className="flex items-center gap-xs mt-sm">
                         {task.assignees.slice(0, 3).map((assignee: any) => (
                           <div 
                             key={assignee.id}

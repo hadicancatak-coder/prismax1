@@ -36,8 +36,8 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-            <DialogTitle className="text-2xl">{location.name}</DialogTitle>
-            <div className="flex gap-2 mt-2 flex-wrap">
+            <DialogTitle className="text-heading-lg">{location.name}</DialogTitle>
+            <div className="flex gap-sm mt-sm flex-wrap">
               <Badge variant="secondary">{location.city}</Badge>
               <Badge variant="outline">{location.type}</Badge>
               {location.agency && (
@@ -72,8 +72,8 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
           )}
 
           <div>
-            <h4 className="font-semibold mb-2">Location Details</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <h4 className="font-semibold mb-sm">Location Details</h4>
+            <div className="grid grid-cols-2 gap-sm text-body-sm">
               {location.agency && (
                 <div>
                   <span className="text-muted-foreground">Agency:</span>{' '}
@@ -94,17 +94,17 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
               </div>
             </div>
             {location.notes && (
-              <div className="mt-2">
-                <span className="text-muted-foreground text-sm">Notes:</span>
-                <p className="text-sm mt-1">{location.notes}</p>
+              <div className="mt-sm">
+                <span className="text-muted-foreground text-body-sm">Notes:</span>
+                <p className="text-body-sm mt-xs">{location.notes}</p>
               </div>
             )}
           </div>
 
           {campaignDetails.length > 0 && (
             <div>
-              <h4 className="font-semibold mb-2">Associated Campaigns ({campaignDetails.length})</h4>
-              <div className="space-y-2">
+              <h4 className="font-semibold mb-sm">Associated Campaigns ({campaignDetails.length})</h4>
+              <div className="space-y-sm">
                 {campaignDetails.map((campaign) => campaign && (
                   <div
                     key={campaign.id}
@@ -112,7 +112,7 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                   >
                     <div>
                       <p className="font-medium text-foreground">{campaign.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-body-sm text-muted-foreground">
                         {format(new Date(campaign.start_date), "PP")} - {format(new Date(campaign.end_date), "PP")}
                       </p>
                     </div>

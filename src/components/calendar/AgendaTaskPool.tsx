@@ -45,9 +45,9 @@ export function AgendaTaskPool({ tasks, onAddToAgenda, onTaskClick, isAdding }: 
 
   if (tasks.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="p-lg">
         <div className="text-center text-muted-foreground">
-          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <Calendar className="h-8 w-8 mx-auto mb-sm opacity-50" />
           <p className="text-body-sm">No available tasks to add</p>
           <p className="text-metadata">All your assigned tasks are already in the agenda</p>
         </div>
@@ -58,8 +58,8 @@ export function AgendaTaskPool({ tasks, onAddToAgenda, onTaskClick, isAdding }: 
   return (
     <Card className="overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="p-sm border-b border-border bg-muted/30 flex items-center justify-between">
+        <div className="flex items-center gap-sm">
           <Checkbox 
             checked={selectedIds.size === tasks.length && tasks.length > 0}
             onCheckedChange={selectAll}
@@ -86,7 +86,7 @@ export function AgendaTaskPool({ tasks, onAddToAgenda, onTaskClick, isAdding }: 
             <div
               key={task.id}
               className={cn(
-                "flex items-start gap-3 p-3 hover:bg-muted/50 transition-smooth cursor-pointer",
+                "flex items-start gap-sm p-sm hover:bg-muted/50 transition-smooth cursor-pointer",
                 selectedIds.has(task.id) && "bg-primary/5"
               )}
             >
@@ -100,7 +100,7 @@ export function AgendaTaskPool({ tasks, onAddToAgenda, onTaskClick, isAdding }: 
                 className="flex-1 min-w-0"
                 onClick={() => onTaskClick(task.id)}
               >
-                <div className="flex items-center gap-2 flex-wrap mb-1">
+                <div className="flex items-center gap-sm flex-wrap mb-xs">
                   <span className="text-body-sm font-medium text-foreground truncate">
                     {task.title}
                   </span>

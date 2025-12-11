@@ -45,7 +45,7 @@ export function CopywriterBulkActionsBar({
   return (
     <>
       <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-overlay ${className}`}>
-        <div className="bg-card border border-border rounded-lg shadow-lg px-4 py-3 flex items-center gap-3">
+        <div className="bg-card border border-border rounded-lg shadow-lg px-md py-sm flex items-center gap-sm">
           <Badge variant="secondary" className="px-3 py-1">
             {selectedCount} selected
           </Badge>

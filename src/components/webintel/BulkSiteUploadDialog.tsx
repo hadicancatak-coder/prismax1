@@ -145,10 +145,10 @@ export function BulkSiteUploadDialog({
           <DialogTitle>Bulk Upload Sites</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-lg">
           <div>
-            <h3 className="font-semibold mb-2">Instructions</h3>
-            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+            <h3 className="font-semibold mb-sm">Instructions</h3>
+            <ol className="text-body-sm text-muted-foreground space-y-xs list-decimal list-inside">
               <li>Download the CSV template</li>
               <li>Fill in your site data (up to 10,000 sites)</li>
               <li>Upload the completed CSV file</li>
@@ -156,7 +156,7 @@ export function BulkSiteUploadDialog({
             </ol>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-md">
             <Button variant="outline" onClick={downloadTemplate}>
               <Download className="h-4 w-4 mr-2" />
               Download Template
@@ -174,8 +174,8 @@ export function BulkSiteUploadDialog({
           </div>
 
           {uploading && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+            <div className="space-y-sm">
+              <div className="flex items-center justify-between text-body-sm">
                 <span>Processing...</span>
                 <span>{progress}%</span>
               </div>
@@ -185,24 +185,24 @@ export function BulkSiteUploadDialog({
 
           {previewData.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-2">Preview (First 10 sites)</h3>
+              <h3 className="font-semibold mb-sm">Preview (First 10 sites)</h3>
               <div className="border rounded-lg overflow-auto max-h-60">
-                <table className="w-full text-sm">
+                <table className="w-full text-body-sm">
                   <thead className="bg-muted">
                     <tr>
-                      <th className="text-left p-2">Name</th>
-                      <th className="text-left p-2">URL</th>
-                      <th className="text-left p-2">Country</th>
-                      <th className="text-left p-2">Type</th>
+                      <th className="text-left p-sm">Name</th>
+                      <th className="text-left p-sm">URL</th>
+                      <th className="text-left p-sm">Country</th>
+                      <th className="text-left p-sm">Type</th>
                     </tr>
                   </thead>
                   <tbody>
                     {previewData.map((site, i) => (
                       <tr key={i} className="border-t">
-                        <td className="p-2">{site.name}</td>
-                        <td className="p-2 max-w-xs truncate">{site.url}</td>
-                        <td className="p-2">{site.country}</td>
-                        <td className="p-2">{site.type}</td>
+                        <td className="p-sm">{site.name}</td>
+                        <td className="p-sm max-w-xs truncate">{site.url}</td>
+                        <td className="p-sm">{site.country}</td>
+                        <td className="p-sm">{site.type}</td>
                       </tr>
                     ))}
                   </tbody>

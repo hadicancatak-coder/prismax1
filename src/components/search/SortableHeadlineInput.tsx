@@ -47,12 +47,12 @@ export function SortableHeadlineInput({
   const recommendation = getHeadlinePositionRecommendation(pattern.type, index);
 
   return (
-    <div ref={setNodeRef} style={style} className="space-y-2">
-      <div className="flex gap-2 items-start">
-        <div className="flex items-center gap-2 mt-2">
+    <div ref={setNodeRef} style={style} className="space-y-sm">
+      <div className="flex gap-sm items-start">
+        <div className="flex items-center gap-sm mt-sm">
           <button
             type="button"
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+            className="cursor-grab active:cursor-grabbing p-xs hover:bg-muted rounded"
             {...attributes}
             {...listeners}
           >
@@ -63,7 +63,7 @@ export function SortableHeadlineInput({
           </Badge>
         </div>
         
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-sm">
           <Input
             placeholder={`Headline ${index + 1}${index < 3 ? ' *' : ''}`}
             value={headline}
@@ -73,13 +73,13 @@ export function SortableHeadlineInput({
           />
           
           {index < 3 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-sm">
               <Checkbox 
                 id={`dki-${index}`}
                 checked={isDkiEnabled}
                 onCheckedChange={onToggleDki}
               />
-              <Label htmlFor={`dki-${index}`} className="text-xs flex items-center gap-1 cursor-pointer">
+              <Label htmlFor={`dki-${index}`} className="text-metadata flex items-center gap-xs cursor-pointer">
                 <Key className="h-3 w-3" />
                 Use Dynamic Keyword Insertion
               </Label>
@@ -87,13 +87,13 @@ export function SortableHeadlineInput({
           )}
           
           {recommendation && (
-            <div className={`text-xs p-2 rounded ${recommendation.isOptimal ? 'bg-success-soft text-success-text border border-success/30' : 'bg-info-soft text-info-text border border-info/30'}`}>
+            <div className={`text-metadata p-sm rounded ${recommendation.isOptimal ? 'bg-success-soft text-success-text border border-success/30' : 'bg-info-soft text-info-text border border-info/30'}`}>
               {recommendation.isOptimal ? '✨ ' : '💡 '}{recommendation.message}
             </div>
           )}
         </div>
         
-        <div className="flex items-start gap-2 mt-2">
+        <div className="flex items-start gap-sm mt-sm">
           {isDkiEnabled && (
             <TooltipProvider>
               <Tooltip>
@@ -103,7 +103,7 @@ export function SortableHeadlineInput({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="text-sm max-w-xs">Google will insert the user's search query here. Fallback: "{headline}"</p>
+                  <p className="text-body-sm max-w-xs">Google will insert the user's search query here. Fallback: "{headline}"</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -115,13 +115,13 @@ export function SortableHeadlineInput({
                 <TooltipTrigger asChild>
                   <Badge 
                     variant="outline" 
-                    className="text-xs cursor-help bg-warning-soft border-warning/30 text-warning-text"
+                    className="text-metadata cursor-help bg-warning-soft border-warning/30 text-warning-text"
                   >
                     {pattern.indicator} +{pattern.boost}%
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="text-sm">{pattern.description}</p>
+                  <p className="text-body-sm">{pattern.description}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

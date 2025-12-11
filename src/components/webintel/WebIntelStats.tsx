@@ -81,18 +81,18 @@ export function WebIntelStats({ sites }: WebIntelStatsProps) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-md md:grid-cols-2 lg:grid-cols-5">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <Card key={stat.title} className="hover:shadow-md hover:-translate-y-0.5 transition-smooth">
-            <CardContent className="p-6">
+            <CardContent className="p-lg">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-body-sm text-muted-foreground mb-xs">{stat.title}</p>
+                  <p className="text-heading-lg font-bold">{stat.value}</p>
                 </div>
-                <div className={`${stat.bgClass} p-3 rounded-lg`}>
+                <div className={`${stat.bgClass} p-sm rounded-lg`}>
                   <Icon className={`h-5 w-5 ${stat.colorClass}`} />
                 </div>
               </div>

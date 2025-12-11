@@ -179,19 +179,19 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
         <table className="w-full">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="w-10 p-3">
+              <th className="w-10 p-sm">
                 <Checkbox
                   checked={selectedIds.size === links.length && links.length > 0}
                   onCheckedChange={handleSelectAll}
                 />
               </th>
-              <th className="text-left p-3 font-medium">Campaign</th>
-              <th className="text-left p-3 font-medium">Platform</th>
-              <th className="text-left p-3 font-medium">Purpose</th>
-              <th className="text-left p-3 font-medium">Entity</th>
-              <th className="text-left p-3 font-medium">Device</th>
-              <th className="text-left p-3 font-medium">Date</th>
-              <th className="text-right p-3 font-medium">Actions</th>
+              <th className="text-left p-sm font-medium">Campaign</th>
+              <th className="text-left p-sm font-medium">Platform</th>
+              <th className="text-left p-sm font-medium">Purpose</th>
+              <th className="text-left p-sm font-medium">Entity</th>
+              <th className="text-left p-sm font-medium">Device</th>
+              <th className="text-left p-sm font-medium">Date</th>
+              <th className="text-right p-sm font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -209,11 +209,10 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                     className="border-b bg-muted/30 hover:bg-muted/50 cursor-pointer"
                     onClick={() => toggleGroup(group.groupKey)}
                   >
-                    <td className="p-3">
+                    <td className="p-sm">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
+                        size="icon-xs"
                       >
                         {isGroupExpanded ? (
                           <ChevronDown className="h-4 w-4" />
@@ -222,17 +221,17 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                         )}
                       </Button>
                     </td>
-                    <td className="p-3">
-                      <Badge className="font-mono text-xs">{group.campaign}</Badge>
+                    <td className="p-sm">
+                      <Badge className="font-mono text-metadata">{group.campaign}</Badge>
                     </td>
-                    <td className="p-3">
+                    <td className="p-sm">
                       <Badge variant="outline">{group.platform}</Badge>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground" colSpan={3}>
+                    <td className="p-sm text-body-sm text-muted-foreground" colSpan={3}>
                       {entitySummary}
                     </td>
-                    <td className="p-3 text-sm">{group.monthYear}</td>
-                    <td className="p-3 text-right text-sm text-muted-foreground">
+                    <td className="p-sm text-body-sm">{group.monthYear}</td>
+                    <td className="p-sm text-right text-body-sm text-muted-foreground">
                       {group.links.length} {group.links.length === 1 ? "link" : "links"}
                     </td>
                   </tr>
