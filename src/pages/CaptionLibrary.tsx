@@ -241,12 +241,12 @@ export default function CaptionLibrary() {
       </FilterBar>
 
       {/* Type Stats */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-sm flex-wrap">
         {CAPTION_TYPES.map((type) => (
           <button
             key={type.value}
             onClick={() => setTypeFilter(type.value === typeFilter ? "all" : type.value)}
-            className={`px-3 py-1.5 rounded-full text-body-sm transition-smooth ${
+            className={`px-sm py-1.5 rounded-full text-body-sm transition-smooth ${
               type.value === typeFilter
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -259,14 +259,14 @@ export default function CaptionLibrary() {
 
       <DataCard noPadding>
         {isLoading ? (
-          <div className="p-4">
+          <div className="p-md">
             <TableSkeleton columns={6} rows={10} />
           </div>
         ) : !captions || captions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Grid className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-heading-sm font-semibold mb-2">No captions found</h3>
-            <p className="text-body-sm text-muted-foreground mb-4">
+            <Grid className="h-12 w-12 text-muted-foreground mb-md" />
+            <h3 className="text-heading-sm font-semibold mb-sm">No captions found</h3>
+            <p className="text-body-sm text-muted-foreground mb-md">
               Create your first caption or adjust filters
             </p>
             <Button onClick={handleCreate}>

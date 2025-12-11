@@ -186,7 +186,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
               key={label}
               variant="outline"
               className={cn(
-                "text-[10px] px-1.5 py-0 h-5 font-medium border",
+                "text-metadata px-1.5 py-0 h-5 font-medium border",
                 tagDef?.color || "bg-muted/50 text-muted-foreground border-border"
               )}
             >
@@ -195,7 +195,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
           );
         })}
         {remaining > 0 && (
-          <span className="text-[10px] text-muted-foreground">+{remaining}</span>
+          <span className="text-metadata text-muted-foreground">+{remaining}</span>
         )}
       </div>
     );

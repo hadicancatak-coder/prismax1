@@ -212,8 +212,8 @@ export default function ActivityLog() {
 
       {/* Filters */}
       <DataCard>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[18px] font-medium text-foreground">Filters</h3>
+        <div className="flex items-center justify-between mb-md">
+          <h3 className="text-heading-sm font-medium text-foreground">Filters</h3>
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as "member" | "admin")}>
             <SelectTrigger className="w-[180px] bg-background">
               <SelectValue />
@@ -225,15 +225,15 @@ export default function ActivityLog() {
           </Select>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-md">
           <AssigneeFilterBar
             selectedAssignees={selectedAssignees}
             onAssigneesChange={setSelectedAssignees}
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
             <div>
-              <Label className="mb-2 block text-[13px] text-muted-foreground">Entity Type</Label>
+              <Label className="mb-sm block text-body-sm text-muted-foreground">Entity Type</Label>
               <Select value={entityFilter} onValueChange={setEntityFilter}>
                 <SelectTrigger className="bg-background">
                   <SelectValue />
@@ -251,7 +251,7 @@ export default function ActivityLog() {
             </div>
 
             <div>
-              <Label className="mb-2 block text-[13px] text-muted-foreground">Action</Label>
+              <Label className="mb-sm block text-body-sm text-muted-foreground">Action</Label>
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className="bg-background">
                   <SelectValue />
@@ -284,7 +284,7 @@ export default function ActivityLog() {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-sm">
             {filteredLogs.map((log) => {
               const EntityIcon = ENTITY_ICONS[log.entity_type as keyof typeof ENTITY_ICONS] || FileText;
               const actionColor = ACTION_COLORS[log.action as keyof typeof ACTION_COLORS] || "bg-muted text-muted-foreground";
@@ -292,34 +292,34 @@ export default function ActivityLog() {
               return (
                 <div
                   key={log.id}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors"
+                  className="flex items-start gap-md p-md rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors"
                 >
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback className="text-xs bg-muted">
+                    <AvatarFallback className="text-metadata bg-muted">
                       {log.user_name ? getInitials(log.user_name) : <User className="h-4 w-4" />}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-[14px] font-medium text-foreground">
+                    <div className="flex items-center gap-sm flex-wrap mb-1">
+                      <span className="text-body-sm font-medium text-foreground">
                         {log.user_username || log.user_name || "Unknown User"}
                       </span>
-                      <Badge variant="outline" className={`text-xs ${actionColor}`}>
+                      <Badge variant="outline" className={`text-metadata ${actionColor}`}>
                         {log.action}
                       </Badge>
                       <EntityIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-metadata text-muted-foreground">
                         {log.entity_type}
                       </span>
                     </div>
                     
-                    <p className="text-[13px] text-muted-foreground">
+                    <p className="text-body-sm text-muted-foreground">
                       {formatLogMessage(log)}
                     </p>
                   </div>
 
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  <div className="text-metadata text-muted-foreground whitespace-nowrap">
                     {format(new Date(log.created_at), "MMM dd, HH:mm")}
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function ActivityLog() {
             })}
             
             {hasMore && !loading && (
-              <div className="flex justify-center pt-4">
+              <div className="flex justify-center pt-md">
                 <Button
                   onClick={() => {
                     const nextPage = page + 1;
