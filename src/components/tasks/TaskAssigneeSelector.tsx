@@ -111,9 +111,9 @@ export function TaskAssigneeSelector({
             selectedUsers.length === 0 && "text-muted-foreground"
           )}
         >
-          <div className="flex items-center gap-2 flex-wrap flex-1">
+          <div className="flex items-center gap-sm flex-wrap flex-1">
             {selectedUsers.length === 0 ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-sm">
                 <UserPlus className="h-4 w-4" />
                 Select assignees
               </span>

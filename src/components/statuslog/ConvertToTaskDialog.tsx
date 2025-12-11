@@ -104,8 +104,8 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             Convert this status log entry into a task with assignees and due dates.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="task-title">Task Title *</Label>
             <Input
               id="task-title"
@@ -116,7 +116,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="task-description">Description</Label>
             <Textarea
               id="task-description"
@@ -127,8 +127,8 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-md">
+            <div className="space-y-sm">
               <Label htmlFor="priority">Priority</Label>
               <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                 <SelectTrigger id="priority">
@@ -143,7 +143,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={(value: any) => setStatus(value)}>
                 <SelectTrigger id="status">
@@ -158,7 +158,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -184,7 +184,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Assignees</Label>
             <AssigneeMultiSelect
               users={users}
@@ -193,7 +193,7 @@ export function ConvertToTaskDialog({ open, onOpenChange, statusLog }: ConvertTo
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Entity</Label>
             <EnhancedMultiSelect
               options={entities.map(e => ({ value: e.name, label: e.name }))}

@@ -105,7 +105,7 @@ export function ElementCard({ element }: ElementCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             {isEditing ? (
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <RichTextEditor
                   value={editedContent}
                   onChange={(value) => {
@@ -113,10 +113,10 @@ export function ElementCard({ element }: ElementCardProps) {
                     const maxLength = element.element_type === 'headline' ? 30 : element.element_type === 'description' ? 90 : 1000;
                     setEditedContent(plainText.slice(0, maxLength));
                   }}
-                  className="text-sm"
+                  className="text-body-sm"
                   minHeight="80px"
                 />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between text-metadata text-muted-foreground">
                   <span>
                     {editedContent.length} / {element.element_type === 'headline' ? '30' : element.element_type === 'description' ? '90' : '1000'} characters
                   </span>
@@ -124,26 +124,26 @@ export function ElementCard({ element }: ElementCardProps) {
                     <span className="text-destructive">Character limit exceeded!</span>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveEdit(); }}>Save</Button>
                   <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}>Cancel</Button>
                 </div>
               </div>
             ) : (
               <>
-                <p className="text-sm font-medium line-clamp-2">{content}</p>
-                <div className="flex flex-wrap gap-1 mt-2 items-center">
+                <p className="text-body-sm font-medium line-clamp-2">{content}</p>
+                <div className="flex flex-wrap gap-xs mt-sm items-center">
                   {(element as any).language && (
                     <Badge 
                       variant={(element as any).language === 'AR' ? 'secondary' : 'default'} 
-                      className="text-xs"
+                      className="text-metadata"
                       title="Auto-detected language"
                     >
                       {(element as any).language === 'AR' ? '🇸🇦 Arabic' : '🇬🇧 English'}
                     </Badge>
                   )}
                   {(element as any).platform && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-metadata">
                       {(element as any).platform.toUpperCase()}
                     </Badge>
                   )}
@@ -155,11 +155,11 @@ export function ElementCard({ element }: ElementCardProps) {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-64" onClick={(e) => e.stopPropagation()}>
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm mb-2">Select Entities</h4>
-                          <div className="max-h-48 overflow-y-auto space-y-2">
+                        <div className="space-y-sm">
+                          <h4 className="font-semibold text-body-sm mb-sm">Select Entities</h4>
+                          <div className="max-h-48 overflow-y-auto space-y-sm">
                             {ENTITIES.map((ent) => (
-                              <div key={ent} className="flex items-center space-x-2">
+                              <div key={ent} className="flex items-center space-x-sm">
                                 <Checkbox
                                   checked={selectedEntities.includes(ent)}
                                   onCheckedChange={(checked) => {
@@ -168,11 +168,11 @@ export function ElementCard({ element }: ElementCardProps) {
                                     );
                                   }}
                                 />
-                                <label className="text-sm">{ent}</label>
+                                <label className="text-body-sm">{ent}</label>
                               </div>
                             ))}
                           </div>
-                          <div className="flex gap-2 pt-2">
+                          <div className="flex gap-sm pt-sm">
                             <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveEntity(); }}>
                               Save
                             </Button>
@@ -186,7 +186,7 @@ export function ElementCard({ element }: ElementCardProps) {
                   ) : (
                     <>
                       {element.entity && element.entity.length > 0 && element.entity.map((ent) => (
-                        <Badge key={ent} variant="outline" className="text-xs">
+                        <Badge key={ent} variant="outline" className="text-metadata">
                           {ent}
                         </Badge>
                       ))}
@@ -194,7 +194,7 @@ export function ElementCard({ element }: ElementCardProps) {
                         variant="ghost"
                         size="sm"
                         onClick={(e) => { e.stopPropagation(); setEditingEntity(true); }}
-                        className="h-6 px-2 text-xs"
+                        className="h-6 px-sm text-metadata"
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
@@ -226,12 +226,12 @@ export function ElementCard({ element }: ElementCardProps) {
               >
                 {element.google_status}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-metadata text-muted-foreground">
                 Used {element.use_count} times
               </span>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               <Button size="sm" variant="outline" onClick={handleCopy} className="flex-1">
                 <Copy className="w-3 h-3 mr-1" />
                 Copy

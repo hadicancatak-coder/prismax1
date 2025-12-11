@@ -53,7 +53,7 @@ export function FastLinks() {
             onClick={() => navigate(link.url)}
             className="p-4 cursor-pointer hover:shadow-md hover:border-primary/50 transition-smooth group"
           >
-            <div className="flex flex-col items-center text-center gap-2">
+            <div className="flex flex-col items-center text-center gap-sm">
               <link.icon className={`h-8 w-8 ${link.color} group-hover:scale-110 transition-smooth`} />
               <div>
                 <p className="text-body font-medium text-foreground">{link.title}</p>

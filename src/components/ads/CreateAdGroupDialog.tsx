@@ -60,8 +60,8 @@ export function CreateAdGroupDialog({ open, onOpenChange, campaignId, campaignNa
           <DialogTitle>Create Ad Group{campaignName && ` for ${campaignName}`}</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="space-y-md py-md">
+          <div className="space-y-sm">
             <Label htmlFor="adgroup-name">Ad Group Name *</Label>
             <Input
               id="adgroup-name"
@@ -71,7 +71,7 @@ export function CreateAdGroupDialog({ open, onOpenChange, campaignId, campaignNa
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="max-cpc">Max CPC (Optional)</Label>
             <Input
               id="max-cpc"

@@ -63,8 +63,8 @@ export function CreateEntityDialog({ open, onOpenChange, onSuccess }: CreateEnti
           <DialogTitle>Create Entity Preset</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="space-y-md py-md">
+          <div className="space-y-sm">
             <Label htmlFor="preset-name">Preset Name</Label>
             <Input
               id="preset-name"
@@ -74,7 +74,7 @@ export function CreateEntityDialog({ open, onOpenChange, onSuccess }: CreateEnti
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <div className="flex items-center justify-between">
               <Label>Entities</Label>
               <Button
@@ -88,9 +88,9 @@ export function CreateEntityDialog({ open, onOpenChange, onSuccess }: CreateEnti
               </Button>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-sm">
               {entities.map((entity, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex gap-sm">
                   <Input
                     value={entity}
                     onChange={(e) => handleEntityChange(index, e.target.value)}

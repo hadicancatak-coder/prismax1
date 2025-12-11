@@ -74,7 +74,7 @@ export function OverdueTasks() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-3">
+      <div className="animate-pulse space-y-sm">
         <div className="h-6 bg-muted rounded w-40"></div>
         <div className="h-4 bg-muted rounded w-32"></div>
       </div>
@@ -84,7 +84,7 @@ export function OverdueTasks() {
   if (overdueTasks.length === 0) {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-sm mb-md">
           <Clock className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-section-title text-foreground">Overdue Tasks</h2>
         </div>
@@ -96,18 +96,18 @@ export function OverdueTasks() {
   }
 
   return (
-    <div className="border-l-2 border-destructive pl-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="border-l-2 border-destructive pl-lg">
+      <div className="flex items-center gap-sm mb-md">
         <AlertTriangle className="h-5 w-5 text-destructive" />
         <h2 className="text-section-title text-foreground">Overdue Tasks</h2>
         <Badge variant="destructive">{overdueTasks.length}</Badge>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-sm">
         {overdueTasks.map((task) => {
           const daysOverdue = getDaysOverdue(task.due_at);
           return (
-            <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
+            <div key={task.id} className="flex items-start gap-sm py-sm border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-body text-foreground">{task.title}</p>

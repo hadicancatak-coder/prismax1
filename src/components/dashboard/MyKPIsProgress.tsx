@@ -47,11 +47,11 @@ export function MyKPIsProgress() {
   if (loading) {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-sm mb-md">
           <Target className="h-5 w-5" />
           <h2 className="text-section-title">My KPIs Progress</h2>
         </div>
-        <div className="animate-pulse space-y-3">
+        <div className="animate-pulse space-y-sm">
           <div className="h-4 bg-muted rounded"></div>
           <div className="h-4 bg-muted rounded w-3/4"></div>
         </div>
@@ -62,11 +62,11 @@ export function MyKPIsProgress() {
   if (kpis.length === 0 && quarterlyKpis.length === 0) {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-sm mb-md">
           <Target className="h-5 w-5" />
           <h2 className="text-section-title">My KPIs Progress</h2>
         </div>
-        <div className="text-center py-8">
+        <div className="text-center py-xl">
           <Target className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground mb-4">No KPIs set yet</p>
           <Button onClick={() => navigate('/profile')} variant="outline">
@@ -79,8 +79,8 @@ export function MyKPIsProgress() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-md">
+        <div className="flex items-center gap-sm">
           <Target className="h-5 w-5" />
           <h2 className="text-section-title">My KPIs Progress</h2>
         </div>
@@ -93,8 +93,8 @@ export function MyKPIsProgress() {
         {/* Annual KPIs */}
         {kpis.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium flex items-center gap-2">
+            <div className="flex items-center justify-between mb-sm">
+              <h4 className="font-medium flex items-center gap-sm">
                 <TrendingUp className="h-4 w-4 text-primary" />
                 Annual KPIs
               </h4>
@@ -102,9 +102,9 @@ export function MyKPIsProgress() {
                 {totalWeight}% / 100%
               </Badge>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-sm">
               {kpis.slice(0, 3).map((kpi, idx) => (
-                <div key={idx} className="space-y-2 p-3 rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
+                <div key={idx} className="space-y-sm p-sm rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
                   <div className="flex items-center justify-between text-body">
                     <span className="line-clamp-1">{kpi.description}</span>
                     <span className="text-muted-foreground ml-2">{kpi.weight}%</span>
@@ -130,8 +130,8 @@ export function MyKPIsProgress() {
         {/* Quarterly KPIs */}
         {quarterlyKpis.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium flex items-center gap-2">
+            <div className="flex items-center justify-between mb-sm">
+              <h4 className="font-medium flex items-center gap-sm">
                 <Calendar className="h-4 w-4 text-primary" />
                 Quarterly KPIs
               </h4>
@@ -139,9 +139,9 @@ export function MyKPIsProgress() {
                 {quarterlyTotalWeight}% / 100%
               </Badge>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-sm">
               {quarterlyKpis.slice(0, 2).map((kpi, idx) => (
-                <div key={idx} className="space-y-2 p-3 rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
+                <div key={idx} className="space-y-sm p-sm rounded-lg hover:bg-muted/30 transition-smooth cursor-pointer">
                   <div className="flex items-center justify-between text-body">
                     <span className="line-clamp-1">{kpi.description}</span>
                     <span className="text-muted-foreground ml-2">{kpi.weight}%</span>
