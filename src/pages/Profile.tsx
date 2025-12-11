@@ -281,7 +281,7 @@ export default function Profile() {
               </Avatar>
               {isOwnProfile && (
                 <label>
-                  <Button variant="outline" size="sm" disabled={uploading} asChild className="rounded-full h-9 px-4 text-[13px]">
+                  <Button variant="outline" size="sm" disabled={uploading} asChild className="rounded-full h-9 px-4 text-body-sm">
                     <span className="cursor-pointer">
                       <Upload className="h-4 w-4 mr-2" />
                       {uploading ? "Uploading..." : "Upload Photo"}
@@ -296,55 +296,55 @@ export default function Profile() {
               {editing && isOwnProfile ? (
                 <>
                   <div>
-                    <Label className="text-[13px] text-muted-foreground">Name</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} className="h-10 rounded-lg mt-1.5" />
+                    <Label className="text-body-sm text-muted-foreground">Name</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} className="h-10 rounded-lg mt-sm" />
                   </div>
                   <div>
-                    <Label className="text-[13px] text-muted-foreground">Title</Label>
-                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior Developer" className="h-10 rounded-lg mt-1.5" />
+                    <Label className="text-body-sm text-muted-foreground">Title</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior Developer" className="h-10 rounded-lg mt-sm" />
                   </div>
                   <div>
-                    <Label className="text-[13px] text-muted-foreground">Phone Number</Label>
-                    <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-10 rounded-lg mt-1.5" />
+                    <Label className="text-body-sm text-muted-foreground">Phone Number</Label>
+                    <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-10 rounded-lg mt-sm" />
                   </div>
                   <div>
-                    <Label className="text-[13px] text-muted-foreground">Tagline</Label>
-                    <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." className="rounded-lg mt-1.5" />
+                    <Label className="text-body-sm text-muted-foreground">Tagline</Label>
+                    <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="A short bio..." className="rounded-lg mt-sm" />
                   </div>
                   <div>
-                    <Label className="text-[13px] text-muted-foreground mb-3 block">Teams</Label>
-                    <div className="space-y-2">
+                    <Label className="text-body-sm text-muted-foreground mb-sm block">Teams</Label>
+                    <div className="space-y-sm">
                       {TEAMS.map((team) => (
-                        <div key={team} className="flex items-center gap-2">
+                        <div key={team} className="flex items-center gap-sm">
                           <Checkbox
                             id={team}
                             checked={selectedTeams.includes(team)}
                             onCheckedChange={() => toggleTeam(team)}
                           />
-                          <Label htmlFor={team} className="cursor-pointer text-[14px]">
+                          <Label htmlFor={team} className="cursor-pointer text-body-sm">
                             {team}
                           </Label>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="flex gap-3 pt-2">
-                    <Button onClick={handleSave} className="rounded-full h-10 px-6 text-[14px]">Save Changes</Button>
-                    <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full h-10 px-6 text-[14px]">Cancel</Button>
+                  <div className="flex gap-sm pt-sm">
+                    <Button onClick={handleSave} className="rounded-full h-10 px-6 text-body-sm">Save Changes</Button>
+                    <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full h-10 px-6 text-body-sm">Cancel</Button>
                   </div>
                 </>
               ) : (
                 <>
-                  <h1 className="text-[24px] font-semibold text-foreground">{profile.name}</h1>
-                  {profile.title && <p className="text-[16px] text-muted-foreground">{profile.title}</p>}
-                  {profile.tagline && <p className="text-[14px] text-foreground/80">{profile.tagline}</p>}
-                  {profile.phone_number && <p className="text-[14px] text-muted-foreground">{profile.phone_number}</p>}
-                  <p className="text-[14px] text-muted-foreground">{profile.email}</p>
+                  <h1 className="text-heading-lg font-semibold text-foreground">{profile.name}</h1>
+                  {profile.title && <p className="text-body text-muted-foreground">{profile.title}</p>}
+                  {profile.tagline && <p className="text-body-sm text-foreground/80">{profile.tagline}</p>}
+                  {profile.phone_number && <p className="text-body-sm text-muted-foreground">{profile.phone_number}</p>}
+                  <p className="text-body-sm text-muted-foreground">{profile.email}</p>
                   
                   {profile.teams && profile.teams.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
+                    <div className="flex flex-wrap gap-sm pt-sm">
                       {profile.teams.map((team: string) => (
-                        <Badge key={team} variant="secondary" className="rounded-full px-3 py-1 text-[13px]">
+                        <Badge key={team} variant="secondary" className="rounded-full px-sm py-xs text-body-sm">
                           {team}
                         </Badge>
                       ))}
@@ -352,7 +352,7 @@ export default function Profile() {
                   )}
                   
                   {isOwnProfile && (
-                    <Button onClick={() => setEditing(true)} variant="outline" className="rounded-full h-10 px-6 text-[14px] mt-2">
+                    <Button onClick={() => setEditing(true)} variant="outline" className="rounded-full h-10 px-6 text-body-sm mt-sm">
                       Edit Profile
                     </Button>
                   )}
@@ -370,8 +370,8 @@ export default function Profile() {
                 <div className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-2xl px-6 py-5">
                   <div className="flex items-center justify-between">
                     <div className="text-left">
-                      <h3 className="text-[18px] font-medium text-foreground">Notification Preferences</h3>
-                      <p className="text-[13px] text-muted-foreground mt-1">Manage your notification settings</p>
+                      <h3 className="text-heading-sm font-medium text-foreground">Notification Preferences</h3>
+                      <p className="text-body-sm text-muted-foreground mt-1">Manage your notification settings</p>
                     </div>
                     <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
                   </div>
@@ -389,51 +389,51 @@ export default function Profile() {
         {/* KPIs Section */}
         {profileKPIs.length > 0 && (
           <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
-            <h2 className="text-[20px] font-medium flex items-center gap-2 mb-5 text-foreground">
+            <h2 className="text-heading-md font-medium flex items-center gap-sm mb-5 text-foreground">
               <Target className="h-5 w-5 text-primary" />
               Key Performance Indicators ({profileKPIs.length})
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-md">
               {profileKPIs.map((kpi) => {
                 const assignment = kpi.assignments?.find(a => a.user_id === (userId || user?.id));
                 return (
                   <div key={kpi.id} className="bg-muted/30 rounded-xl p-5 border border-border">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-medium text-[16px] text-foreground">{kpi.name}</h3>
-                        {kpi.description && <p className="text-[13px] text-muted-foreground mt-1">{kpi.description}</p>}
-                        <div className="flex items-center gap-2 mt-3 flex-wrap">
-                          <Badge variant="outline" className="rounded-full text-[12px]">Weight: {kpi.weight}%</Badge>
-                          <Badge variant="outline" className="rounded-full text-[12px]">{kpi.type}</Badge>
-                          <Badge variant="outline" className="rounded-full text-[12px]">{kpi.period}</Badge>
-                          <Badge variant={assignment?.status === 'approved' ? 'default' : assignment?.status === 'pending' ? 'secondary' : 'destructive'} className="rounded-full text-[12px]">
+                        <h3 className="font-medium text-body text-foreground">{kpi.name}</h3>
+                        {kpi.description && <p className="text-body-sm text-muted-foreground mt-1">{kpi.description}</p>}
+                        <div className="flex items-center gap-sm mt-sm flex-wrap">
+                          <Badge variant="outline" className="rounded-full text-metadata">Weight: {kpi.weight}%</Badge>
+                          <Badge variant="outline" className="rounded-full text-metadata">{kpi.type}</Badge>
+                          <Badge variant="outline" className="rounded-full text-metadata">{kpi.period}</Badge>
+                          <Badge variant={assignment?.status === 'approved' ? 'default' : assignment?.status === 'pending' ? 'secondary' : 'destructive'} className="rounded-full text-metadata">
                             {assignment?.status || 'pending'}
                           </Badge>
                         </div>
                       </div>
                     </div>
                     {kpi.targets && kpi.targets.length > 0 && (
-                      <div className="space-y-3 mt-5">
-                        <h4 className="font-medium text-[13px] text-muted-foreground">Targets</h4>
+                      <div className="space-y-sm mt-5">
+                        <h4 className="font-medium text-body-sm text-muted-foreground">Targets</h4>
                         {kpi.targets.map((target) => {
                           const progress = target.target_value > 0 ? (target.current_value / target.target_value) * 100 : 0;
                           return (
-                            <div key={target.id} className="space-y-2">
-                              <div className="flex items-center justify-between text-[14px]">
+                            <div key={target.id} className="space-y-sm">
+                              <div className="flex items-center justify-between text-body-sm">
                                 <span className="font-medium text-foreground">{target.target_name}</span>
                                 <span className="text-muted-foreground">{target.current_value} / {target.target_value} {target.unit}</span>
                               </div>
                               <Progress value={progress} className="h-2" />
-                              <Badge variant="outline" className="text-[11px] rounded-full">{target.target_type}</Badge>
+                              <Badge variant="outline" className="text-metadata rounded-full">{target.target_type}</Badge>
                             </div>
                           );
                         })}
                       </div>
                     )}
                     {assignment?.notes && (
-                      <div className="mt-4">
-                        <h4 className="font-medium text-[13px] text-muted-foreground mb-1">Assignment Notes</h4>
-                        <p className="text-[14px] text-foreground/80">{assignment.notes}</p>
+                      <div className="mt-md">
+                        <h4 className="font-medium text-body-sm text-muted-foreground mb-1">Assignment Notes</h4>
+                        <p className="text-body-sm text-foreground/80">{assignment.notes}</p>
                       </div>
                     )}
                   </div>
@@ -446,31 +446,31 @@ export default function Profile() {
         {/* Team Members */}
         {teamMembers.length > 0 && (
           <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
-            <h2 className="text-[20px] font-medium flex items-center gap-2 mb-5 text-foreground">
+            <h2 className="text-heading-md font-medium flex items-center gap-sm mb-5 text-foreground">
               <Users className="h-5 w-5 text-primary" />
               Team Members ({teamMembers.length})
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
               {teamMembers.map((member) => (
                 <div
                   key={member.user_id}
-                  className="p-4 bg-muted/30 rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                  className="p-md bg-muted/30 rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate(`/profile/${member.user_id}`)}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-sm">
                     <Avatar className="h-12 w-12 border border-border">
                       <AvatarImage src={member.avatar_url} />
-                      <AvatarFallback className="bg-muted text-[14px]">{getInitials(member.name)}</AvatarFallback>
+                      <AvatarFallback className="bg-muted text-body-sm">{getInitials(member.name)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-[14px] text-foreground truncate">{member.name}</h3>
+                      <h3 className="font-medium text-body-sm text-foreground truncate">{member.name}</h3>
                       {member.username && (
-                        <p className="text-[13px] text-muted-foreground truncate">
+                        <p className="text-body-sm text-muted-foreground truncate">
                           @{member.username}
                         </p>
                       )}
                       {member.title && (
-                        <p className="text-[12px] text-muted-foreground truncate">
+                        <p className="text-metadata text-muted-foreground truncate">
                           {member.title}
                         </p>
                       )}
@@ -486,16 +486,16 @@ export default function Profile() {
         <div className="bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.15)] p-6">
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full max-w-3xl grid-cols-6 h-10 rounded-lg bg-muted/50 p-1">
-              <TabsTrigger value="all" className="rounded-md text-[13px]">All ({tasks.all.length})</TabsTrigger>
-              <TabsTrigger value="ongoing" className="rounded-md text-[13px]">Ongoing ({tasks.ongoing.length})</TabsTrigger>
-              <TabsTrigger value="completed" className="rounded-md text-[13px]">Completed ({tasks.completed.length})</TabsTrigger>
-              <TabsTrigger value="pending" className="rounded-md text-[13px]">Pending ({tasks.pending.length})</TabsTrigger>
-              <TabsTrigger value="blocked" className="rounded-md text-[13px]">Blocked ({tasks.blocked.length})</TabsTrigger>
-              <TabsTrigger value="failed" className="rounded-md text-[13px]">Failed ({tasks.failed.length})</TabsTrigger>
+              <TabsTrigger value="all" className="rounded-md text-body-sm">All ({tasks.all.length})</TabsTrigger>
+              <TabsTrigger value="ongoing" className="rounded-md text-body-sm">Ongoing ({tasks.ongoing.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="rounded-md text-body-sm">Completed ({tasks.completed.length})</TabsTrigger>
+              <TabsTrigger value="pending" className="rounded-md text-body-sm">Pending ({tasks.pending.length})</TabsTrigger>
+              <TabsTrigger value="blocked" className="rounded-md text-body-sm">Blocked ({tasks.blocked.length})</TabsTrigger>
+              <TabsTrigger value="failed" className="rounded-md text-body-sm">Failed ({tasks.failed.length})</TabsTrigger>
             </TabsList>
 
             {["all", "ongoing", "completed", "pending", "blocked", "failed"].map((status) => (
-              <TabsContent key={status} value={status} className="mt-5 space-y-3">
+              <TabsContent key={status} value={status} className="mt-5 space-y-sm">
                 {tasks[status].length > 0 ? (
                   tasks[status].map((task: any) => (
                     <TaskCard
@@ -519,8 +519,8 @@ export default function Profile() {
                     />
                   ))
                 ) : (
-                  <div className="p-8 text-center bg-muted/30 rounded-xl border border-border">
-                    <p className="text-[14px] text-muted-foreground">No {status} tasks</p>
+                  <div className="p-lg text-center bg-muted/30 rounded-xl border border-border">
+                    <p className="text-body-sm text-muted-foreground">No {status} tasks</p>
                   </div>
                 )}
               </TabsContent>

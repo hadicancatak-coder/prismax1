@@ -170,9 +170,9 @@ export const TaskAnalyticsDashboard = () => {
   const totalTasks = Object.values(statusDistribution).reduce((a, b) => a + b, 0) - statusDistribution.overdue;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* Status Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-md">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -253,43 +253,43 @@ export const TaskAnalyticsDashboard = () => {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
-            <div className="space-y-4">
+            <div className="space-y-md">
               {userStats.map((stat) => (
                 <div
                   key={stat.userId}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  className="flex items-center justify-between p-md border border-border rounded-lg hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center gap-md flex-1">
                     <Avatar>
                       <AvatarImage src={stat.avatarUrl} />
                       <AvatarFallback>{stat.userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium text-foreground">{stat.userName}</p>
-                      <p className="text-sm text-muted-foreground">{stat.userEmail}</p>
+                      <p className="text-body-sm text-muted-foreground">{stat.userEmail}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-lg">
                     <div className="text-center">
-                      <p className="text-xs text-metadata">Today</p>
-                      <p className="text-lg font-semibold text-foreground">{stat.completedToday}</p>
+                      <p className="text-metadata">Today</p>
+                      <p className="text-heading-sm font-semibold text-foreground">{stat.completedToday}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-metadata">This Week</p>
-                      <p className="text-lg font-semibold text-foreground">{stat.completedThisWeek}</p>
+                      <p className="text-metadata">This Week</p>
+                      <p className="text-heading-sm font-semibold text-foreground">{stat.completedThisWeek}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-metadata">This Month</p>
-                      <p className="text-lg font-semibold text-foreground">{stat.completedThisMonth}</p>
+                      <p className="text-metadata">This Month</p>
+                      <p className="text-heading-sm font-semibold text-foreground">{stat.completedThisMonth}</p>
                     </div>
                     <div className="text-center min-w-[100px]">
-                      <p className="text-xs text-metadata">Completion Rate</p>
-                      <p className="text-lg font-semibold text-foreground">{stat.completionRate.toFixed(1)}%</p>
+                      <p className="text-metadata">Completion Rate</p>
+                      <p className="text-heading-sm font-semibold text-foreground">{stat.completionRate.toFixed(1)}%</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 ml-6">
+                  <div className="flex gap-sm ml-lg">
                     <Badge variant="outline" className="status-pending">
                       {stat.pendingCount} Pending
                     </Badge>

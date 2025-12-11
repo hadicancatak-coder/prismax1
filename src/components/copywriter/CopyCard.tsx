@@ -29,38 +29,38 @@ export function CopyCard({
 
   return (
     <Card className="group hover:shadow-md transition-shadow">
-      <CardContent className="p-4 space-y-3">
-        <div className={`text-sm ${language === "ar" ? "text-right" : ""}`} dir={language === "ar" ? "rtl" : "ltr"}>
+      <CardContent className="p-md space-y-sm">
+        <div className={`text-body-sm ${language === "ar" ? "text-right" : ""}`} dir={language === "ar" ? "rtl" : "ltr"}>
           {content}
         </div>
 
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-xs">
           {copy.platform.map((p) => (
-            <Badge key={p} variant="outline" className="text-xs">
+            <Badge key={p} variant="outline" className="text-metadata">
               {p}
             </Badge>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-xs">
           {copy.entity.map((e) => (
-            <Badge key={e} variant="secondary" className="text-xs">
+            <Badge key={e} variant="secondary" className="text-metadata">
               {e}
             </Badge>
           ))}
         </div>
 
         {copy.campaigns && copy.campaigns.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-xs">
             {copy.campaigns.map((c) => (
-              <Badge key={c} variant="default" className="text-xs">
+              <Badge key={c} variant="default" className="text-metadata">
                 {c}
               </Badge>
             ))}
           </div>
         )}
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-sm pt-sm">
           {(isOwner || isAdmin) && (
             <Button
               variant="ghost"
