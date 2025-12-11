@@ -50,19 +50,19 @@ export function AdComments({ adId }: AdCommentsProps) {
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 mb-4">
+    <Card className="p-md">
+      <div className="flex items-center gap-sm mb-md">
         <MessageSquare className="w-4 h-4" />
         <h3 className="font-semibold">Comments</h3>
-        {comments && <span className="text-sm text-muted-foreground">({comments.length})</span>}
+        {comments && <span className="text-body-sm text-muted-foreground">({comments.length})</span>}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-md">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading comments...</p>
+          <p className="text-body-sm text-muted-foreground">Loading comments...</p>
         ) : comments && comments.length > 0 ? (
           comments.map((comment: any) => (
-            <div key={comment.id} className="flex gap-3">
+            <div key={comment.id} className="flex gap-sm">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={comment.profiles?.avatar_url} />
                 <AvatarFallback>
@@ -72,8 +72,8 @@ export function AdComments({ adId }: AdCommentsProps) {
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium">{comment.profiles?.name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-body-sm font-medium">{comment.profiles?.name || 'User'}</p>
+                    <p className="text-metadata text-muted-foreground">
                       {format(new Date(comment.created_at), 'MMM dd, yyyy HH:mm')}
                     </p>
                   </div>
@@ -108,15 +108,15 @@ export function AdComments({ adId }: AdCommentsProps) {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
-                <CommentText text={comment.body} className="text-sm mt-1" />
+                <CommentText text={comment.body} className="text-body-sm mt-xs" />
               </div>
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">No comments yet</p>
+          <p className="text-body-sm text-muted-foreground">No comments yet</p>
         )}
 
-        <div className="flex gap-2 pt-4 border-t">
+        <div className="flex gap-sm pt-md border-t">
           <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}

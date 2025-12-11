@@ -43,7 +43,7 @@ export function UpdateGoogleStatusDialog({ open, onOpenChange, element }: Update
           <DialogTitle>Update Google Status</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           <div>
             <Label>Google Status</Label>
             <Select value={status} onValueChange={(v: any) => setStatus(v)}>
@@ -70,7 +70,7 @@ export function UpdateGoogleStatusDialog({ open, onOpenChange, element }: Update
           </div>
 
           {element.google_status_date && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               Last updated: {new Date(element.google_status_date).toLocaleDateString()}
             </p>
           )}

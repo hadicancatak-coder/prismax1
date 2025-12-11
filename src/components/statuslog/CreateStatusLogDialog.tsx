@@ -107,8 +107,8 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto flex-1 pr-2">
-          <form onSubmit={handleSubmit} className="space-y-4" id="status-log-form">
-          <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-md" id="status-log-form">
+          <div className="space-y-sm">
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
@@ -119,7 +119,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="description">Description</Label>
             <RichTextEditor
               value={description}
@@ -129,8 +129,8 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-md">
+            <div className="space-y-sm">
               <Label htmlFor="log-type">Log Type *</Label>
               <Select value={logType} onValueChange={(value) => setLogType(value as any)}>
                 <SelectTrigger id="log-type">
@@ -147,7 +147,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="platform">Platform</Label>
               <Select value={platform} onValueChange={setPlatform}>
                 <SelectTrigger id="platform">
@@ -164,7 +164,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Entity</Label>
             <EnhancedMultiSelect
               options={entities.map(e => ({ value: e.name, label: e.name }))}
@@ -174,7 +174,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="campaign">Campaign</Label>
             <Select value={campaignName} onValueChange={setCampaignName}>
               <SelectTrigger id="campaign">
@@ -192,7 +192,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
 
           {logType === 'brief' && (
             <>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label>Social UA Update</Label>
                 <RichTextEditor
                   value={socialuaUpdate}
@@ -202,7 +202,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label>PPC Update</Label>
                 <RichTextEditor
                   value={ppcUpdate}
@@ -215,7 +215,7 @@ export function CreateStatusLogDialog({ open, onOpenChange, editingLog }: Create
           )}
           </form>
         </div>
-        <DialogFooter className="pt-4 border-t">
+        <DialogFooter className="pt-md border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

@@ -74,18 +74,18 @@ export function QualityMetricsPanel({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-sm">
       {/* Ad Strength Card */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-sm">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Ad Strength</CardTitle>
-            <Badge variant={getScoreVariant(adStrength)} className="text-xs">
+            <CardTitle className="text-body-sm font-semibold">Ad Strength</CardTitle>
+            <Badge variant={getScoreVariant(adStrength)} className="text-metadata">
               {getScoreLabel(adStrength)} ({adStrength}/10)
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-sm">
           <AdStrengthIndicator
             headlines={headlines.map(h => h.text)}
             descriptions={descriptions.map(h => h.text)}
@@ -94,10 +94,10 @@ export function QualityMetricsPanel({
           />
           
           {suggestions.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Suggestions:</p>
+            <div className="space-y-xs">
+              <p className="text-metadata font-medium text-muted-foreground">Suggestions:</p>
               {suggestions.map((suggestion, idx) => (
-                <p key={idx} className="text-xs text-muted-foreground">
+                <p key={idx} className="text-metadata text-muted-foreground">
                   • {suggestion}
                 </p>
               ))}
@@ -110,19 +110,19 @@ export function QualityMetricsPanel({
       <Collapsible open={complianceOpen} onOpenChange={setComplianceOpen}>
         <CollapsibleTrigger asChild>
           <Card className="cursor-pointer hover:bg-muted/30 hover:shadow-sm transition-smooth">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-sm font-semibold">Compliance Check</CardTitle>
+                <div className="flex items-center gap-sm">
+                  <CardTitle className="text-body-sm font-semibold">Compliance Check</CardTitle>
                   {hasIssues ? (
                     <AlertCircle className="h-4 w-4 text-destructive" />
                   ) : (
                     <CheckCircle className="h-4 w-4 text-success" />
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-sm">
                   {hasIssues && (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="destructive" className="text-metadata">
                       {complianceIssues.length} {complianceIssues.length === 1 ? 'issue' : 'issues'}
                     </Badge>
                   )}
@@ -133,8 +133,8 @@ export function QualityMetricsPanel({
           </Card>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <Card className="mt-2 border-t-0 rounded-t-none">
-            <CardContent className="pt-3">
+          <Card className="mt-sm border-t-0 rounded-t-none">
+            <CardContent className="pt-sm">
               <AdComplianceChecker
                 headlines={headlines.map(h => h.text)}
                 descriptions={descriptions.map(d => d.text)}
