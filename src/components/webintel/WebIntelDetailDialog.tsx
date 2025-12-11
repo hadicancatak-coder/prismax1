@@ -52,54 +52,54 @@ export function WebIntelDetailDialog({
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <DialogTitle className="text-2xl">{site.name}</DialogTitle>
+              <DialogTitle className="text-heading-lg">{site.name}</DialogTitle>
               <a 
                 href={site.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                className="text-body-sm text-primary hover:underline flex items-center gap-xs mt-xs"
               >
                 {site.url}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-1" />
+                <Pencil className="h-4 w-4 mr-xs" />
                 Edit
               </Button>
               <Button variant="destructive" size="sm" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 className="h-4 w-4 mr-xs" />
                 Delete
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-lg">
           {/* Basic Details */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-md">
             <div>
-              <p className="text-sm text-muted-foreground">Country</p>
+              <p className="text-body-sm text-muted-foreground">Country</p>
               <p className="font-medium">{site.country}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Type</p>
+              <p className="text-body-sm text-muted-foreground">Type</p>
               <Badge variant="secondary" className={typeColors[site.type]}>
                 {site.type}
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Category</p>
+              <p className="text-body-sm text-muted-foreground">Category</p>
               <p className="font-medium">{site.category || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Monthly Traffic</p>
+              <p className="text-body-sm text-muted-foreground">Monthly Traffic</p>
               <p className="font-medium">{formatTraffic(site.estimated_monthly_traffic)}</p>
             </div>
             {site.entity && (
               <div className="col-span-2">
-                <p className="text-sm text-muted-foreground">Publisher/Entity</p>
+                <p className="text-body-sm text-muted-foreground">Publisher/Entity</p>
                 <p className="font-medium">{site.entity}</p>
               </div>
             )}
@@ -108,8 +108,8 @@ export function WebIntelDetailDialog({
           {/* Tags */}
           {site.tags.length > 0 && (
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Tags</p>
-              <div className="flex gap-2 flex-wrap">
+              <p className="text-body-sm text-muted-foreground mb-sm">Tags</p>
+              <div className="flex gap-sm flex-wrap">
                 {site.tags.map(tag => (
                   <Badge 
                     key={tag} 
@@ -126,8 +126,8 @@ export function WebIntelDetailDialog({
           {/* Notes */}
           {site.notes && (
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Notes</p>
-              <p className="text-sm whitespace-pre-wrap">{site.notes}</p>
+              <p className="text-body-sm text-muted-foreground mb-sm">Notes</p>
+              <p className="text-body-sm whitespace-pre-wrap">{site.notes}</p>
             </div>
           )}
 
@@ -135,7 +135,7 @@ export function WebIntelDetailDialog({
 
           {/* Historic Prices */}
           <div>
-            <h3 className="font-semibold mb-3">Historic Prices</h3>
+            <h3 className="font-semibold mb-sm">Historic Prices</h3>
             {site.historic_prices.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -156,7 +156,7 @@ export function WebIntelDetailDialog({
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-sm text-muted-foreground">No historic pricing data</p>
+              <p className="text-body-sm text-muted-foreground">No historic pricing data</p>
             )}
           </div>
 
@@ -164,7 +164,7 @@ export function WebIntelDetailDialog({
 
           {/* Past Campaigns */}
           <div>
-            <h3 className="font-semibold mb-3">Past Campaigns</h3>
+            <h3 className="font-semibold mb-sm">Past Campaigns</h3>
             {site.past_campaigns.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -189,7 +189,7 @@ export function WebIntelDetailDialog({
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-sm text-muted-foreground">No past campaigns</p>
+              <p className="text-body-sm text-muted-foreground">No past campaigns</p>
             )}
           </div>
         </div>

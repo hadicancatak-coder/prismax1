@@ -51,8 +51,8 @@ export function StatusLogDetailDialog({
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-xl">{log.title}</DialogTitle>
-              <div className="flex gap-2 mt-2">
+              <DialogTitle className="text-heading-md">{log.title}</DialogTitle>
+              <div className="flex gap-sm mt-sm">
                 {getLogTypeBadge(log.log_type)}
                 {getStatusBadge(log.status)}
               </div>
@@ -63,21 +63,21 @@ export function StatusLogDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="space-y-md mt-md">
           {log.description && (
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Description</h4>
+              <h4 className="text-body-sm font-semibold text-foreground mb-xs">Description</h4>
               <div 
-                className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                className="text-body-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.description) }}
               />
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-md">
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Entity</h4>
-              <div className="flex gap-1 flex-wrap">
+              <h4 className="text-body-sm font-semibold text-foreground mb-xs">Entity</h4>
+              <div className="flex gap-xs flex-wrap">
                 {log.entity?.map((e) => (
                   <Badge key={e} variant="outline">{e}</Badge>
                 ))}
@@ -85,25 +85,25 @@ export function StatusLogDetailDialog({
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Platform</h4>
-              <p className="text-sm text-muted-foreground">{log.platform || "-"}</p>
+              <h4 className="text-body-sm font-semibold text-foreground mb-xs">Platform</h4>
+              <p className="text-body-sm text-muted-foreground">{log.platform || "-"}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Campaign</h4>
-              <p className="text-sm text-muted-foreground">{log.campaign_name || "-"}</p>
+              <h4 className="text-body-sm font-semibold text-foreground mb-xs">Campaign</h4>
+              <p className="text-body-sm text-muted-foreground">{log.campaign_name || "-"}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Created</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="text-body-sm font-semibold text-foreground mb-xs">Created</h4>
+              <p className="text-body-sm text-muted-foreground">
                 {format(new Date(log.created_at), "MMM dd, yyyy 'at' HH:mm")}
               </p>
             </div>
 
             {log.task_id && (
               <div>
-                <h4 className="text-sm font-semibold text-foreground mb-1">Linked Task</h4>
+                <h4 className="text-body-sm font-semibold text-foreground mb-xs">Linked Task</h4>
                 <Badge variant="secondary">Task #{log.task_id}</Badge>
               </div>
             )}
@@ -111,14 +111,14 @@ export function StatusLogDetailDialog({
 
           {/* Brief Log Specific Fields */}
           {log.log_type === 'brief' && (
-            <div className="space-y-4 mt-4 pt-4 border-t border-border">
-              <h3 className="text-base font-semibold text-foreground">Brief Details</h3>
+            <div className="space-y-md mt-md pt-md border-t border-border">
+              <h3 className="text-body font-semibold text-foreground">Brief Details</h3>
               
               {log.socialua_update && (
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-1">Social UA Update</h4>
+                  <h4 className="text-body-sm font-semibold text-foreground mb-xs">Social UA Update</h4>
                   <div 
-                    className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                    className="text-body-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.socialua_update) }}
                   />
                 </div>
@@ -126,9 +126,9 @@ export function StatusLogDetailDialog({
 
               {log.ppc_update && (
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-1">PPC Update</h4>
+                  <h4 className="text-body-sm font-semibold text-foreground mb-xs">PPC Update</h4>
                   <div 
-                    className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                    className="text-body-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(log.ppc_update) }}
                   />
                 </div>
@@ -137,9 +137,9 @@ export function StatusLogDetailDialog({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+        <div className="flex justify-end gap-sm pt-md border-t mt-md">
           <Button variant="outline" onClick={onClose}>
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-4 w-4 mr-sm" />
             Close
           </Button>
           
@@ -151,7 +151,7 @@ export function StatusLogDetailDialog({
                 onClose();
               }}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle className="h-4 w-4 mr-sm" />
               Mark Resolved
             </Button>
           )}
@@ -164,7 +164,7 @@ export function StatusLogDetailDialog({
                 onClose();
               }}
             >
-              <ArrowRight className="h-4 w-4 mr-2" />
+              <ArrowRight className="h-4 w-4 mr-sm" />
               Convert to Task
             </Button>
           )}
@@ -173,7 +173,7 @@ export function StatusLogDetailDialog({
             onEdit(log);
             onClose();
           }}>
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="h-4 w-4 mr-sm" />
             Edit
           </Button>
         </div>
