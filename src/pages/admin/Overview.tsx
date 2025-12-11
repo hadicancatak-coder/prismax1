@@ -78,7 +78,7 @@ export default function Overview() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-lg">
       <div>
         <h2 className="text-heading-md font-semibold">System Overview</h2>
         <p className="text-body-sm text-muted-foreground mt-1">
@@ -87,7 +87,7 @@ export default function Overview() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
@@ -99,9 +99,9 @@ export default function Overview() {
               className="cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30 group"
               onClick={card.onClick}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-lg">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
+                  <div className="space-y-sm">
                     <p className="text-body-sm text-muted-foreground">{card.title}</p>
                     <p className="text-3xl font-bold text-foreground">{card.value}</p>
                     <p className="text-metadata text-muted-foreground">{card.subtitle}</p>
@@ -110,7 +110,7 @@ export default function Overview() {
                     <card.icon className={`h-5 w-5 ${card.color}`} />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-metadata text-primary opacity-0 group-hover:opacity-100 transition-smooth">
+                <div className="mt-md flex items-center text-metadata text-primary opacity-0 group-hover:opacity-100 transition-smooth">
                   <span>View details</span>
                   <ArrowRight className="h-3 w-3 ml-1" />
                 </div>
@@ -126,7 +126,7 @@ export default function Overview() {
           <CardTitle className="text-heading-sm">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-sm">
             {quickActions.map((action) => (
               <Button
                 key={action.label}

@@ -40,21 +40,21 @@ export function ActivityFeed() {
   };
 
   return (
-    <Card className="card-glow hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] transition-all duration-300 p-6">
-      <div className="flex items-center gap-2 mb-6">
+    <Card className="card-glow hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] transition-all duration-300 p-lg">
+      <div className="flex items-center gap-sm mb-lg">
         <Activity className="h-5 w-5 text-muted-foreground" />
         <h2 className="text-section-title">Recent Activity</h2>
       </div>
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      <div className="space-y-sm max-h-[400px] overflow-y-auto">
         {activities.length > 0 ? (
           activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
+            <div key={activity.id} className="flex items-start gap-sm py-sm border-b border-border/50 last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={activity.user?.avatar_url} />
                 <AvatarFallback className="bg-muted text-muted-foreground">{activity.user?.name?.[0] || "?"}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground">
+                <p className="text-body-sm text-foreground">
                   <span className="font-medium">{activity.user?.name || "Unknown"}</span>
                   {" "}{getActionText(activity)}
                 </p>
@@ -65,7 +65,7 @@ export function ActivityFeed() {
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground py-4">No recent activity</p>
+          <p className="text-body-sm text-muted-foreground py-md">No recent activity</p>
         )}
       </div>
     </Card>

@@ -84,7 +84,7 @@ export default function WebIntel() {
 
       <DataCard noPadding>
         {isLoadingDeals ? (
-          <div className="p-4">
+          <div className="p-md">
             <TableSkeleton />
           </div>
         ) : deals.length === 0 ? (

@@ -132,24 +132,24 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Prisma</h1>
+    <div className="min-h-screen flex items-center justify-center bg-background p-md">
+      <Card className="w-full max-w-md p-lg">
+        <div className="text-center mb-lg">
+          <h1 className="text-3xl font-bold text-foreground mb-sm">Prisma</h1>
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
           </p>
         </div>
 
-        <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+        <Alert className="mb-lg border-amber-500/50 bg-amber-500/10">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <AlertDescription className="text-sm text-muted-foreground ml-2">
+          <AlertDescription className="text-body-sm text-muted-foreground ml-sm">
             <strong>Security Notice:</strong> Do not use similar passwords across different platforms. 
             Avoid adding any sensitive or personal information.
           </AlertDescription>
         </Alert>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-md">
           {!isLogin && (
             <div>
               <Input
@@ -181,7 +181,7 @@ export default function Auth() {
               required
             />
             {!isLogin && password && (
-              <div className="mt-3">
+              <div className="mt-sm">
                 <PasswordStrengthIndicator password={password} />
               </div>
             )}
@@ -192,11 +192,11 @@ export default function Auth() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-lg text-center">
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-primary hover:underline"
+            className="text-body-sm text-primary hover:underline"
           >
             {isLogin
               ? "Don't have an account? Sign up"

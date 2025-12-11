@@ -120,21 +120,21 @@ export function MyTasks() {
 
   return (
     <DataCard className="hover:shadow-[0_0_20px_rgba(0,82,204,0.2)] transition-all duration-300">
-      <h2 className="text-heading-sm font-semibold mb-6">My Tasks</h2>
-      <div className="space-y-2">
+      <h2 className="text-heading-sm font-semibold mb-lg">My Tasks</h2>
+      <div className="space-y-sm">
         {taskCategories.map((category) => (
           <div
             key={category.label}
             onClick={() => navigate("/tasks")}
-            className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-card-hover border border-border/50 cursor-pointer transition-smooth hover:shadow-md hover:-translate-y-0.5 group"
+            className="flex items-center justify-between p-md rounded-lg bg-card hover:bg-card-hover border border-border/50 cursor-pointer transition-smooth hover:shadow-md hover:-translate-y-0.5 group"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-sm">
               <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center">
                 <category.icon className="h-5 w-5 text-primary" />
               </div>
               <span className="font-medium text-foreground">{category.label}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-sm">
               <Badge variant="secondary" className="font-semibold">
                 {category.count}
               </Badge>

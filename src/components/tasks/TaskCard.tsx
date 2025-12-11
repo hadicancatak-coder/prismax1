@@ -216,19 +216,19 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   return (
     <Card 
       className={cn(
-        "p-5 hover:shadow-lg hover:-translate-y-0.5 transition-smooth border-l-4 relative group",
+        "p-card hover:shadow-lg hover:-translate-y-0.5 transition-smooth border-l-4 relative group",
         isOverdue(task.due_at, task.status) && "bg-destructive/5"
       )}
       style={{ borderLeftColor: getPriorityColor(task.priority) }}
     >
       {/* Priority and Status badges */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start justify-between mb-sm">
+        <div className="flex items-center gap-sm flex-wrap">
           {/* Priority Dropdown */}
           <DropdownMenu open={priorityOpen} onOpenChange={setPriorityOpen}>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Badge variant="outline" className={cn(
-                "text-sm px-3.5 py-1.5 font-semibold cursor-pointer hover:opacity-80 transition-opacity",
+                "text-body-sm px-sm py-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity",
                 priorityColors[task.priority as keyof typeof priorityColors]
               )}>
                 {task.priority}
@@ -246,7 +246,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
           <DropdownMenu open={statusOpen} onOpenChange={setStatusOpen}>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Badge variant="outline" className={cn(
-                "text-sm px-3.5 py-1.5 font-semibold cursor-pointer hover:opacity-80 transition-opacity",
+                "text-body-sm px-sm py-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity",
                 statusColors[task.status as keyof typeof statusColors]
               )}>
                 {task.status}
@@ -263,13 +263,13 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
           </DropdownMenu>
 
           {task.visibility && (
-            <Badge variant={task.visibility === 'global' ? 'default' : 'secondary'} className="text-xs">
+            <Badge variant={task.visibility === 'global' ? 'default' : 'secondary'} className="text-metadata">
               {task.visibility === 'global' ? 'Global' : 'Private'}
             </Badge>
           )}
 
           {isOverdue(task.due_at, task.status) && (
-            <Badge variant="destructive" className="text-xs">
+            <Badge variant="destructive" className="text-metadata">
               <AlertTriangle className="h-3 w-3 mr-1" />
               {getDaysOverdue(task.due_at)} day{getDaysOverdue(task.due_at) !== 1 ? 's' : ''} overdue
             </Badge>
@@ -318,26 +318,26 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
       </div>
       
       {/* Task title */}
-      <h3 className="font-semibold text-lg mb-2 line-clamp-2 cursor-pointer" onClick={onClick}>
+      <h3 className="font-semibold text-heading-sm mb-sm line-clamp-2 cursor-pointer" onClick={onClick}>
         {task.title}
       </h3>
       
       {/* Task description - PHASE 1 FIX: Truncated to 150 chars with HTML rendering */}
       {task.description && (
         <div 
-          className="text-sm text-muted-foreground mb-4 line-clamp-3 cursor-pointer prose prose-invert prose-sm max-w-none"
+          className="text-body-sm text-muted-foreground mb-md line-clamp-3 cursor-pointer prose prose-invert prose-sm max-w-none"
           onClick={onClick}
           dangerouslySetInnerHTML={{ __html: sanitizeAndTruncateHtml(task.description) }}
         />
       )}
       
       {/* Footer with metadata */}
-      <div className="flex items-center justify-between mt-4 pt-4 border-t cursor-pointer" onClick={onClick}>
+      <div className="flex items-center justify-between mt-md pt-md border-t cursor-pointer" onClick={onClick}>
         <div className="flex items-center -space-x-2">
           {task.assignees?.slice(0, 3).map((assignee: any) => (
             <Avatar key={assignee.user_id} className="h-6 w-6 border-2 border-background">
               <AvatarImage src={assignee.avatar_url} />
-              <AvatarFallback className="text-xs">{assignee.name?.[0]}</AvatarFallback>
+              <AvatarFallback className="text-metadata">{assignee.name?.[0]}</AvatarFallback>
             </Avatar>
           ))}
           {task.assignees?.length > 3 && (
@@ -347,7 +347,7 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
           )}
         </div>
         
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-sm text-metadata text-muted-foreground">
           {task.comments_count > 0 && (
             <div className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />

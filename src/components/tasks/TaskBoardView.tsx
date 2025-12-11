@@ -316,7 +316,7 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className={cn(
-        "grid gap-4",
+        "grid gap-md",
         groupBy === 'tags' ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7" : "grid-cols-1 md:grid-cols-5"
       )}>
         {groups.map(group => {
@@ -327,17 +327,17 @@ export const TaskBoardView = ({ tasks, onTaskClick, groupBy = 'status' }: TaskBo
           return (
             <SortableContext key={group} id={group} items={taskIds} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col min-h-[600px]">
-                <div className={cn("rounded-t-lg p-3 border-b", color)}>
+                <div className={cn("rounded-t-lg p-sm border-b", color)}>
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">{group}</h3>
-                    <Badge variant="secondary" className="text-xs">
+                    <h3 className="font-semibold text-body-sm">{group}</h3>
+                    <Badge variant="secondary" className="text-metadata">
                       {groupTasks.length}
                     </Badge>
                   </div>
                 </div>
                 
-                <ScrollArea className="flex-1 p-2 bg-muted/20 rounded-b-lg">
-                  <div className="space-y-2">
+                <ScrollArea className="flex-1 p-sm bg-muted/20 rounded-b-lg">
+                  <div className="space-y-sm">
                     {groupTasks.map(task => (
                       <SortableTaskCard
                         key={task.id}

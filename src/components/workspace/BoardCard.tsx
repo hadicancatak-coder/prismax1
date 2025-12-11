@@ -47,8 +47,8 @@ export function BoardCard({
       className="card-glow cursor-pointer hover:bg-card-hover transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,82,204,0.3)] relative"
       onClick={() => navigate(route)}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between mb-4">
+      <CardHeader className="pb-sm">
+        <div className="flex items-center justify-between mb-md">
           <div 
             className="w-12 h-12 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: color ? `${color}15` : 'hsl(var(--muted) / 0.3)' }}
@@ -66,22 +66,22 @@ export function BoardCard({
             />
           </Button>
         </div>
-        <CardTitle className="text-base font-semibold text-foreground mb-2">
+        <CardTitle className="text-body font-semibold text-foreground mb-sm">
           {name}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0">
-        <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
+      <CardContent className="space-y-sm pt-0">
+        <CardDescription className="text-body-sm text-muted-foreground line-clamp-2 min-h-[40px]">
           {description}
         </CardDescription>
-        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+        <div className="flex items-center justify-between pt-sm border-t border-border/50">
           {stats && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-metadata">
               {stats}
             </Badge>
           )}
           {lastUpdated && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-metadata text-muted-foreground">
               {lastUpdated}
             </span>
           )}
