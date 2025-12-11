@@ -101,8 +101,8 @@ export function DuplicateAdDialog({ open, onOpenChange, ad, onSuccess }: Duplica
           <DialogTitle>Duplicate Ad</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="space-y-md py-md">
+          <div className="space-y-sm">
             <Label htmlFor="ad-name">New Ad Name *</Label>
             <Input
               id="ad-name"
@@ -112,7 +112,7 @@ export function DuplicateAdDialog({ open, onOpenChange, ad, onSuccess }: Duplica
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="campaign">Target Campaign *</Label>
             <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
               <SelectTrigger id="campaign">
@@ -128,7 +128,7 @@ export function DuplicateAdDialog({ open, onOpenChange, ad, onSuccess }: Duplica
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="adgroup">Target Ad Group *</Label>
             <Select 
               value={selectedAdGroupId} 

@@ -67,15 +67,15 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-6 space-y-6">
+      <div className="p-lg space-y-lg">
         <div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <div className="flex items-center gap-sm text-body-sm text-muted-foreground mb-sm">
             <span>{entity}</span>
             <span>›</span>
             <span className="font-medium text-foreground">{campaign.name}</span>
           </div>
-          <h2 className="text-2xl font-semibold">Ad Groups</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-heading-lg font-semibold">Ad Groups</h2>
+          <p className="text-body-sm text-muted-foreground mt-xs">
             Create ad groups to organize your search ads
           </p>
         </div>
@@ -87,8 +87,8 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
               Add an ad group to {campaign.name}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+          <CardContent className="space-y-md">
+            <div className="space-y-sm">
               <Label htmlFor="adgroup-name">Ad Group Name *</Label>
               <Input
                 id="adgroup-name"
@@ -116,13 +116,13 @@ export function SearchAdGroupForm({ campaign, entity, onAdGroupCreated }: Search
               <CardDescription>Click an ad group in the tree to create ads</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 {existingAdGroups.map(adGroup => {
                   const adCount = adGroup.ads?.[0]?.count || 0;
                   return (
                     <div
                       key={adGroup.id}
-                      className="p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                      className="p-sm border rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="font-medium">{adGroup.name}</div>

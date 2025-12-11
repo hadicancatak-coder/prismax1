@@ -237,21 +237,21 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
               </DialogDescription>
             </DialogHeader>
             
-            <div className="px-6 pb-3 border-b flex items-center justify-end gap-2 shrink-0">
+            <div className="px-lg pb-sm border-b flex items-center justify-end gap-sm shrink-0">
               <Button
                 variant={showComments ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowComments(!showComments)}
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
+                <MessageCircle className="h-4 w-4 mr-sm" />
                 Comments
               </Button>
             </div>
 
-            <ScrollArea className="flex-1 px-6 py-4">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 px-lg py-md">
+              <div className="space-y-md">
                 {/* Campaign Info */}
-                <Card className="p-4 space-y-3">
+                <Card className="p-md space-y-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Campaign Information</h3>
                     {isEditing ? (
@@ -277,9 +277,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                         className="mt-1"
                       />
                     ) : (
-                      <p className="mt-1 text-sm break-all">
+                      <p className="mt-xs text-body-sm break-all">
                         {campaign.landing_page ? (
-                          <a href={campaign.landing_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                          <a href={campaign.landing_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-xs">
                             {campaign.landing_page}
                             <ExternalLink className="h-3 w-3" />
                           </a>
@@ -292,9 +292,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
 
                   <div>
                     <Label>Active Entities</Label>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-xs mt-sm">
                       {entities.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Not live on any entity yet</p>
+                        <p className="text-body-sm text-muted-foreground">Not live on any entity yet</p>
                       ) : (
                         entities.map((entityTracking) => (
                           <Badge key={entityTracking.id} variant="secondary">
@@ -567,7 +567,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                     {/* Version Comments */}
                     <div className="border-t border-border pt-md space-y-md">
                       <div>
-                        <h4 className="font-semibold text-sm mb-2">Internal Comments</h4>
+                        <h4 className="font-semibold text-body-sm mb-sm">Internal Comments</h4>
                         <VersionComments
                           versionId={version.id}
                           campaignId={campaign.id}
@@ -575,7 +575,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                       </div>
                       
                       <div>
-                        <h4 className="font-semibold text-sm mb-2">External Feedback</h4>
+                        <h4 className="font-semibold text-body-sm mb-sm">External Feedback</h4>
                         <ExternalReviewComments versionId={version.id} />
                       </div>
                     </div>
