@@ -66,25 +66,25 @@ export function GoogleAPIConfig({ onConfigured }: GoogleAPIConfigProps) {
 
   return (
     <Card className="p-6">
-      <div className="space-y-6">
+      <div className="space-y-lg">
         <div>
-          <h3 className="text-lg font-semibold mb-2">API Configuration</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-heading-sm font-semibold mb-sm">API Configuration</h3>
+          <p className="text-body-sm text-muted-foreground">
             Enter your Google Cloud credentials from the setup steps above
           </p>
         </div>
 
         {isConfigured && (
-          <div className="flex items-center gap-2 p-3 bg-success-soft border border-success/30 rounded-lg">
+          <div className="flex items-center gap-sm p-sm bg-success-soft border border-success/30 rounded-lg">
             <CheckCircle2 className="h-5 w-5 text-success" />
-            <span className="text-sm text-success-text">
+            <span className="text-body-sm text-success-text">
               API credentials configured successfully
             </span>
           </div>
         )}
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="client-id">OAuth 2.0 Client ID</Label>
             <Input
               id="client-id"
@@ -92,14 +92,14 @@ export function GoogleAPIConfig({ onConfigured }: GoogleAPIConfigProps) {
               placeholder="123456789-abcdefghijklmnop.apps.googleusercontent.com"
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              className="font-mono text-sm"
+              className="font-mono text-body-sm"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-metadata text-muted-foreground">
               From Google Cloud Console → Credentials → OAuth 2.0 Client IDs
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="api-key">API Key</Label>
             <Input
               id="api-key"
@@ -107,30 +107,30 @@ export function GoogleAPIConfig({ onConfigured }: GoogleAPIConfigProps) {
               placeholder="AIzaSy..."
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="font-mono text-sm"
+              className="font-mono text-body-sm"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-metadata text-muted-foreground">
               From Google Cloud Console → Credentials → API Keys
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-sm">
           <Button onClick={handleSave} disabled={saving || !clientId || !apiKey}>
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="h-4 w-4 mr-sm" />
             {saving ? "Saving..." : "Save Configuration"}
           </Button>
           {isConfigured && (
             <Button variant="outline" onClick={handleClear}>
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className="h-4 w-4 mr-sm" />
               Clear
             </Button>
           )}
         </div>
 
-        <div className="p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-2 text-sm">Security Notice:</h4>
-          <p className="text-xs text-muted-foreground">
+        <div className="p-md bg-muted rounded-lg">
+          <h4 className="font-medium mb-sm text-body-sm">Security Notice:</h4>
+          <p className="text-metadata text-muted-foreground">
             Your credentials are stored locally in your browser and never sent to our servers. 
             They're only used to communicate directly with Google's APIs.
           </p>

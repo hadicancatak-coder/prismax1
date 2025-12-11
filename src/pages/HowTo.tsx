@@ -163,7 +163,7 @@ export default function HowTo() {
         description="Learn how to get the most out of the platform"
         actions={
           userRole === 'admin' ? (
-            <Button variant="outline" onClick={handleEdit} className="gap-2">
+            <Button variant="outline" onClick={handleEdit} className="gap-sm">
               <Edit className="h-4 w-4" />
               Edit Page
             </Button>
@@ -173,13 +173,13 @@ export default function HowTo() {
 
       {/* Content */}
       <Card className="p-6 bg-card border-border">
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-sm mb-lg">
           <BookOpen className="h-5 w-5 text-primary" />
           <h2 className="text-heading-md font-semibold">User Guide</h2>
         </div>
 
         {loading ? (
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-md">
             <div className="h-4 bg-muted rounded w-3/4"></div>
             <div className="h-4 bg-muted rounded w-1/2"></div>
             <div className="h-4 bg-muted rounded w-2/3"></div>
@@ -199,8 +199,8 @@ export default function HowTo() {
           <DialogHeader>
             <DialogTitle>Edit How To Page</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex-1 overflow-y-auto space-y-md py-md">
+            <div className="space-y-sm">
               <Label>Content (Markdown)</Label>
               <Textarea
                 value={editContent}
