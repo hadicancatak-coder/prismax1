@@ -250,8 +250,8 @@ export default function UsersManagement() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4 pb-4 border-b border-border">
+      <div className="space-y-lg">
+        <div className="flex items-center gap-md pb-md border-b border-border">
           <div className="flex-1 relative max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -263,7 +263,7 @@ export default function UsersManagement() {
           </div>
 
           {selectedUsers.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-sm">
               <Select value={bulkAction} onValueChange={setBulkAction}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Bulk actions" />

@@ -183,12 +183,12 @@ export function WebIntelFormDialog({
           <DialogTitle>{site ? 'Edit Site' : 'Add New Site'}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+        <div className="flex-1 overflow-y-auto pr-sm space-y-lg">
           {/* Basic Info */}
-          <div className="space-y-4">
+          <div className="space-y-md">
             <h3 className="font-semibold">Basic Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-md">
+              <div className="space-y-sm">
                 <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
@@ -198,9 +198,9 @@ export function WebIntelFormDialog({
                   autoFocus
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label htmlFor="url">URL *</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <Input
                     id="url"
                     value={formData.url}
@@ -217,7 +217,7 @@ export function WebIntelFormDialog({
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label htmlFor="country">Country</Label>
                 <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
                   <SelectTrigger>
@@ -230,7 +230,7 @@ export function WebIntelFormDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label htmlFor="type">Type</Label>
                 <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
                   <SelectTrigger>
@@ -243,7 +243,7 @@ export function WebIntelFormDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label htmlFor="category">Category</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
@@ -256,7 +256,7 @@ export function WebIntelFormDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <Label htmlFor="traffic">Est. Monthly Traffic</Label>
                 <Input
                   id="traffic"
@@ -266,7 +266,7 @@ export function WebIntelFormDialog({
                   placeholder="2500000"
                 />
               </div>
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-sm col-span-2">
                 <Label htmlFor="entity">Publisher/Entity Name</Label>
                 <Input
                   id="entity"
@@ -281,7 +281,7 @@ export function WebIntelFormDialog({
           <Separator />
 
           {/* Historic Prices */}
-          <div className="space-y-4">
+          <div className="space-y-md">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Historic Prices</h3>
               <Button type="button" variant="outline" size="sm" onClick={addPrice}>
@@ -290,7 +290,7 @@ export function WebIntelFormDialog({
               </Button>
             </div>
             {prices.map((price, index) => (
-              <div key={index} className="flex gap-2 items-start">
+              <div key={index} className="flex gap-sm items-start">
                 <Input
                   type="number"
                   placeholder="Year"
@@ -321,7 +321,7 @@ export function WebIntelFormDialog({
           <Separator />
 
           {/* Past Campaigns */}
-          <div className="space-y-4">
+          <div className="space-y-md">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Past Campaigns</h3>
               <Button type="button" variant="outline" size="sm" onClick={addCampaign}>
@@ -330,8 +330,8 @@ export function WebIntelFormDialog({
               </Button>
             </div>
             {campaigns.map((campaign, index) => (
-              <div key={index} className="space-y-2 p-3 border rounded">
-                <div className="flex gap-2">
+              <div key={index} className="space-y-sm p-sm border rounded">
+                <div className="flex gap-sm">
                   <Input
                     placeholder="Campaign Name"
                     value={campaign.campaign_name}
@@ -342,7 +342,7 @@ export function WebIntelFormDialog({
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <Input
                     type="date"
                     value={campaign.campaign_date}
@@ -377,11 +377,11 @@ export function WebIntelFormDialog({
           <Separator />
 
           {/* Tags */}
-          <div className="space-y-4">
+          <div className="space-y-md">
             <h3 className="font-semibold">Tags</h3>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-md">
               {AVAILABLE_TAGS.map(tag => (
-                <div key={tag} className="flex items-center space-x-2">
+                <div key={tag} className="flex items-center space-x-sm">
                   <Checkbox
                     id={`tag-${tag}`}
                     checked={formData.tags.includes(tag)}
@@ -394,7 +394,7 @@ export function WebIntelFormDialog({
           </div>
 
           {/* Notes */}
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
@@ -406,7 +406,7 @@ export function WebIntelFormDialog({
           </div>
         </div>
 
-        <DialogFooter className="pt-4 border-t mt-4">
+        <DialogFooter className="pt-md border-t mt-md">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

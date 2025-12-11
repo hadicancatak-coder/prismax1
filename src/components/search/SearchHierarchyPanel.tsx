@@ -280,9 +280,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b bg-background space-y-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">Entity</Label>
+      <div className="p-md border-b bg-background space-y-md">
+        <div className="space-y-sm">
+          <Label className="text-metadata font-medium text-muted-foreground">Entity</Label>
           <Select value={selectedEntity || undefined} onValueChange={setSelectedEntity}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select entity" />
@@ -301,9 +301,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+        <div className="p-md space-y-sm">
           {filteredCampaigns.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-muted-foreground text-body-sm">
               {searchQuery ? 'No matching results found.' : 'No campaigns yet. Create one to get started.'}
             </div>
           ) : (
@@ -334,7 +334,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         >
                           {campaign.name}
                         </span>
-                        <Badge variant="secondary" className="text-xs font-normal">
+                        <Badge variant="secondary" className="text-metadata font-normal">
                           {campaignAdGroups.length}
                         </Badge>
                       </div>
@@ -391,7 +391,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                   <CollapsibleContent>
                     <div className="space-y-0.5 mt-1">
                         {campaignAdGroups.length === 0 ? (
-                          <div className="text-xs text-muted-foreground py-2 px-2">
+                          <div className="text-metadata text-muted-foreground py-sm px-sm">
                             No ad groups yet
                           </div>
                         ) : (
@@ -401,15 +401,15 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
 
                             return (
                               <Collapsible key={adGroup.id} open={isAdGroupExpanded}>
-                                <div className="group flex items-center gap-2 p-2 pl-3 ml-6 hover:bg-accent/30 rounded-lg transition-all">
+                                <div className="group flex items-center gap-sm p-sm pl-sm ml-lg hover:bg-accent/30 rounded-lg transition-all">
                                   <div 
-                                    className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
+                                    className="flex items-center gap-sm flex-1 cursor-pointer min-w-0"
                                     onClick={() => toggleAdGroup(adGroup.id)}
                                   >
                                     {isAdGroupExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                                     <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                    <span className="flex-1 text-sm truncate">{adGroup.name}</span>
-                                    <Badge variant="outline" className="text-xs font-normal flex-shrink-0">
+                                    <span className="flex-1 text-body-sm truncate">{adGroup.name}</span>
+                                    <Badge variant="outline" className="text-metadata font-normal flex-shrink-0">
                                       {adGroupAds.length}
                                     </Badge>
                                   </div>

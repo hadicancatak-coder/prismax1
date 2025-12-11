@@ -231,9 +231,9 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
       />
       
       {/* Header */}
-      <div className="border-b p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold">
+      <div className="border-b p-md flex items-center justify-between">
+        <div className="flex items-center gap-sm">
+          <h2 className="text-heading-md font-semibold">
             {isCreating ? "Create New Ad" : `Edit: ${adName || "Untitled Ad"}`}
           </h2>
           {hasChanges && (
@@ -243,7 +243,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           <Button
             variant="outline"
             onClick={() => setShowVariationGenerator(true)}
@@ -277,10 +277,10 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
         {/* Left Panel - Form */}
         <ResizablePanel defaultSize={55} minSize={40}>
           <ScrollArea className="h-full">
-            <div className="p-6 space-y-6">
+            <div className="p-lg space-y-lg">
               {/* Basic Info */}
               <Card className="mt-4">
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-lg space-y-md">
                   <div>
                     <Label htmlFor="adName">Ad Name *</Label>
                     <Input
@@ -291,7 +291,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-md">
                     <div>
                       <Label htmlFor="campaign">Campaign</Label>
                       <Select value={campaign} onValueChange={handleFieldChange(setCampaign)}>
@@ -342,7 +342,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
 
               {/* Headlines */}
               <Card>
-                <CardContent className="pt-6 space-y-3">
+                <CardContent className="pt-lg space-y-sm">
                   <div className="flex items-center justify-between">
                     <Label>Headlines (3-15)</Label>
                     <Button size="sm" variant="outline" onClick={addHeadline} disabled={headlines.length >= 15}>
@@ -350,7 +350,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                     </Button>
                   </div>
                   {headlines.map((headline, index) => (
-                    <div key={index} className="flex gap-2 items-start">
+                    <div key={index} className="flex gap-sm items-start">
                       <div className="flex-1">
                         <Input
                           value={headline}
@@ -358,7 +358,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                           placeholder={`Headline ${index + 1}`}
                           maxLength={30}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-metadata text-muted-foreground mt-1">
                           {headline.length}/30 characters
                         </p>
                       </div>
@@ -382,7 +382,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
 
               {/* Descriptions */}
               <Card>
-                <CardContent className="pt-6 space-y-3">
+                <CardContent className="pt-lg space-y-sm">
                   <div className="flex items-center justify-between">
                     <Label>Descriptions (2-4)</Label>
                     <Button size="sm" variant="outline" onClick={addDescription} disabled={descriptions.length >= 4}>
@@ -390,7 +390,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                     </Button>
                   </div>
                   {descriptions.map((description, index) => (
-                    <div key={index} className="flex gap-2 items-start">
+                    <div key={index} className="flex gap-sm items-start">
                       <div className="flex-1">
                         <Input
                           value={description}
@@ -398,7 +398,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
                           placeholder={`Description ${index + 1}`}
                           maxLength={90}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-metadata text-muted-foreground mt-1">
                           {description.length}/90 characters
                         </p>
                       </div>
@@ -422,7 +422,7 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
 
               {/* URL Fields */}
               <Card>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-lg space-y-md">
                   <div>
                     <Label htmlFor="finalUrl">Final URL</Label>
                     <Input
@@ -454,10 +454,10 @@ export default function AdEditorPanel({ ad, onSave, onCancel, isCreating }: AdEd
         {/* Right Panel - Preview + Quality Metrics */}
         <ResizablePanel defaultSize={45} minSize={30}>
           <ScrollArea className="h-full">
-            <div className="p-6 space-y-4">
+            <div className="p-lg space-y-md">
               {/* Live Preview */}
-              <Card className="p-4">
-                <h3 className="text-sm font-semibold mb-3">Live Preview</h3>
+              <Card className="p-md">
+                <h3 className="text-body-sm font-semibold mb-sm">Live Preview</h3>
                 <div className="scale-95 origin-top">
                   <SearchAdPreview
                     headlines={headlines.filter(h => h.trim())}

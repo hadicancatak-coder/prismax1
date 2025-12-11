@@ -76,7 +76,7 @@ export default function AdListPanel({
   return (
     <div className="h-full flex flex-col border-r">
       {/* Header */}
-      <div className="p-4 border-b space-y-3">
+      <div className="p-md border-b space-y-sm">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -89,7 +89,7 @@ export default function AdListPanel({
         </div>
 
         {/* Status Filters */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-sm flex-wrap">
           {STATUS_FILTERS.map((filter) => (
             <Button
               key={filter.value}
@@ -104,13 +104,13 @@ export default function AdListPanel({
 
         {/* Select All Checkbox */}
         {filteredAds.length > 0 && (
-          <div className="flex items-center gap-2 pt-2 border-t">
+          <div className="flex items-center gap-sm pt-sm border-t">
             <Checkbox
               checked={allSelected}
               onCheckedChange={toggleSelectAll}
               className={cn(someSelected && "data-[state=checked]:bg-primary/50")}
             />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-body-sm text-muted-foreground">
               {selectedIds.length > 0
                 ? `${selectedIds.length} selected`
                 : "Select all"}
@@ -121,18 +121,18 @@ export default function AdListPanel({
 
       {/* Ad List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
+        <div className="p-sm space-y-1">
           {filteredAds.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">No ads found</p>
-              <p className="text-xs mt-1">Try adjusting your filters</p>
+              <p className="text-body-sm">No ads found</p>
+              <p className="text-metadata mt-1">Try adjusting your filters</p>
             </div>
           ) : (
             filteredAds.map((ad) => (
               <div
                 key={ad.id}
                 className={cn(
-                  "group relative p-3 rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
+                  "group relative p-sm rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
                   selectedAdId === ad.id && "bg-primary/10 border-primary",
                   selectedIds.includes(ad.id) && "ring-2 ring-primary/20"
                 )}
@@ -151,17 +151,17 @@ export default function AdListPanel({
 
                 {/* Content */}
                 <div className="ml-8">
-                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-sm">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">{ad.name}</h4>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <h4 className="font-medium text-body-sm truncate">{ad.name}</h4>
+                      <div className="flex items-center gap-sm mt-1 flex-wrap">
                         {ad.entity && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-metadata">
                             {ad.entity}
                           </Badge>
                         )}
                         {ad.ad_type && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-metadata">
                             {ad.ad_type}
                           </Badge>
                         )}
@@ -176,7 +176,7 @@ export default function AdListPanel({
                   </div>
 
                   {/* Campaign & Ad Group */}
-                  <div className="text-xs text-muted-foreground mt-2 space-y-0.5">
+                  <div className="text-metadata text-muted-foreground mt-sm space-y-0.5">
                     {ad.campaign && (
                       <p className="truncate">
                         <span className="font-medium">Campaign:</span> {ad.campaign}
@@ -190,8 +190,8 @@ export default function AdListPanel({
                   </div>
 
                   {/* Status */}
-                  <div className="mt-2">
-                    <Badge className={cn("text-xs", getStatusColor(ad.approval_status || "draft"))}>
+                  <div className="mt-sm">
+                    <Badge className={cn("text-metadata", getStatusColor(ad.approval_status || "draft"))}>
                       {ad.approval_status || "draft"}
                     </Badge>
                   </div>
@@ -203,8 +203,8 @@ export default function AdListPanel({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t">
-        <p className="text-xs text-muted-foreground text-center">
+      <div className="p-md border-t">
+        <p className="text-metadata text-muted-foreground text-center">
           {filteredAds.length} of {ads.length} ads
         </p>
       </div>

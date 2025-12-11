@@ -131,7 +131,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 <TableCell className="font-medium">
                   <div className="max-w-[200px]">
                     <div className="truncate">{link.name}</div>
-                    <div className="text-xs text-muted-foreground truncate font-mono">
+                    <div className="text-metadata text-muted-foreground truncate font-mono">
                       {link.utm_campaign}
                     </div>
                   </div>
@@ -161,7 +161,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {link.entity?.map((e) => (
-                      <Badge key={e} variant="outline" className="text-xs">
+                      <Badge key={e} variant="outline" className="text-metadata">
                         {e}
                       </Badge>
                     )) || "-"}
@@ -170,7 +170,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {link.teams?.map((t) => (
-                      <Badge key={t} variant="outline" className="text-xs">
+                      <Badge key={t} variant="outline" className="text-metadata">
                         {t}
                       </Badge>
                     )) || "-"}
@@ -183,24 +183,24 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 </TableCell>
                 <TableCell>
                   {link.is_validated ? (
-                    <div className="flex items-center gap-1 text-green-600">
+                    <div className="flex items-center gap-1 text-success">
                       <CheckCircle className="h-4 w-4" />
-                      <span className="text-xs">Yes</span>
+                      <span className="text-metadata">Yes</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 text-yellow-600">
+                    <div className="flex items-center gap-1 text-warning">
                       <AlertCircle className="h-4 w-4" />
-                      <span className="text-xs">Pending</span>
+                      <span className="text-metadata">Pending</span>
                     </div>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
+                  <div className="text-body-sm">
                     {format(new Date(link.created_at), "MMM d, yyyy")}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-sm">
                     <Button
                       variant="ghost"
                       size="sm"
