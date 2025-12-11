@@ -51,8 +51,8 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <DialogTitle>Edit Campaign</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="campaign-name">Campaign Name *</Label>
             <Input
               id="campaign-name"
@@ -62,7 +62,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="landing-page">Default Landing Page</Label>
             <Input
               id="landing-page"
@@ -72,7 +72,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
               placeholder="https://cfi.trade/jo/open-account"
             />
             {landingPage && !isValidUrl(landingPage) && (
-              <p className="text-sm text-destructive">Please enter a valid URL</p>
+              <p className="text-body-sm text-destructive">Please enter a valid URL</p>
             )}
           </div>
         </div>

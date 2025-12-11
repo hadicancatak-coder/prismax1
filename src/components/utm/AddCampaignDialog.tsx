@@ -39,8 +39,8 @@ export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps
             Create a new campaign to use in your UTM links
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="campaign-name">Campaign Name</Label>
             <Input
               id="campaign-name"
@@ -50,7 +50,7 @@ export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="landing-page">Default Landing Page (optional)</Label>
             <Input
               id="landing-page"
@@ -60,12 +60,12 @@ export const AddCampaignDialog = ({ open, onOpenChange }: AddCampaignDialogProps
               placeholder="https://cfi.trade/jo/open-account"
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-sm">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={!campaignName.trim() || createCampaign.isPending}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-sm" />
               Create Campaign
             </Button>
           </div>

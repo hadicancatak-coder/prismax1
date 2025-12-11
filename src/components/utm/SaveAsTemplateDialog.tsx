@@ -52,8 +52,8 @@ export function SaveAsTemplateDialog({ open, onOpenChange, templateData }: SaveA
           <DialogTitle>Save as Template</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="template-name">Template Name *</Label>
             <Input
               id="template-name"
@@ -63,9 +63,9 @@ export function SaveAsTemplateDialog({ open, onOpenChange, templateData }: SaveA
             />
           </div>
           
-          <div className="text-sm text-muted-foreground">
+          <div className="text-body-sm text-muted-foreground">
             <p>Template will save:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
+            <ul className="list-disc list-inside mt-sm space-y-xs">
               <li>UTM Source: {templateData.utm_source}</li>
               <li>UTM Medium: {templateData.utm_medium}</li>
               <li>UTM Campaign: {templateData.utm_campaign}</li>

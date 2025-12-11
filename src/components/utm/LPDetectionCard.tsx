@@ -27,10 +27,10 @@ export function LPDetectionCard({ detection }: LPDetectionCardProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Card className="border-l-4 border-l-primary">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <CardContent className="p-md">
+          <div className="flex flex-wrap items-center gap-sm">
             {detection.lpType && (
               <div className="flex items-center gap-2">
                 <Badge 
@@ -43,27 +43,27 @@ export function LPDetectionCard({ detection }: LPDetectionCardProps) {
             )}
 
             {detection.country && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 <Globe className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="outline" className="text-base font-medium">
+                <Badge variant="outline" className="text-body font-medium">
                   {detection.country}
                 </Badge>
               </div>
             )}
             
             {detection.language && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 <Languages className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="outline" className="text-base font-medium">
+                <Badge variant="outline" className="text-body font-medium">
                   {detection.language === 'ar' ? '🇦🇪 AR' : '🇬🇧 EN'}
                 </Badge>
               </div>
             )}
             
             {detection.purpose && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 <Target className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="outline" className="text-base font-medium">
+                <Badge variant="outline" className="text-body font-medium">
                   {getPurposeIcon()} {detection.purpose}
                 </Badge>
               </div>
@@ -82,16 +82,16 @@ export function LPDetectionCard({ detection }: LPDetectionCardProps) {
           </div>
           
           {detection.extractedCity && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-sm text-muted-foreground">
+            <div className="mt-sm pt-sm border-t">
+              <p className="text-body-sm text-muted-foreground">
                 Detected City: <span className="font-semibold text-foreground">{detection.extractedCity}</span>
               </p>
             </div>
           )}
           
           {detection.extractedWebinarName && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-sm text-muted-foreground">
+            <div className="mt-sm pt-sm border-t">
+              <p className="text-body-sm text-muted-foreground">
                 Detected Webinar: <span className="font-semibold text-foreground">{detection.extractedWebinarName}</span>
               </p>
             </div>

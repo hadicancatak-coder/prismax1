@@ -37,39 +37,39 @@ export function CampaignComments({ campaignId }: CampaignCommentsProps) {
           Comments ({comments.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ScrollArea className="h-[300px] pr-4">
+      <CardContent className="space-y-md">
+        <ScrollArea className="h-[300px] pr-md">
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">Loading comments...</div>
+            <div className="text-body-sm text-muted-foreground">Loading comments...</div>
           ) : comments.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">
+            <div className="text-body-sm text-muted-foreground text-center py-lg">
               No comments yet. Be the first to comment!
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-md">
               {comments.map((comment: any) => (
-                <div key={comment.id} className="border-b pb-3 last:border-0">
-                  <div className="flex items-start justify-between mb-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium text-sm">{comment.author_name}</span>
+                <div key={comment.id} className="border-b pb-sm last:border-0">
+                  <div className="flex items-start justify-between mb-xs">
+                    <div className="flex flex-col gap-xs">
+                      <span className="font-medium text-body-sm">{comment.author_name}</span>
                       {comment.is_external && comment.author_email && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-metadata text-muted-foreground">
                           {comment.author_email}
                         </span>
                       )}
                       {comment.request_type && (
-                        <Badge variant="secondary" className="w-fit text-xs">
+                        <Badge variant="secondary" className="w-fit text-metadata">
                           {comment.request_type}
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-metadata text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>
                   </div>
                   <CommentText 
                     text={comment.comment_text}
-                    className="text-sm text-muted-foreground"
+                    className="text-body-sm text-muted-foreground"
                   />
                 </div>
               ))}
@@ -77,7 +77,7 @@ export function CampaignComments({ campaignId }: CampaignCommentsProps) {
           )}
         </ScrollArea>
 
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Textarea
             placeholder="Add a comment..."
             value={newComment}
@@ -89,7 +89,7 @@ export function CampaignComments({ campaignId }: CampaignCommentsProps) {
             disabled={!newComment.trim() || addUtmCampaignComment.isPending}
             className="w-full"
           >
-            <Send className="h-4 w-4 mr-2" />
+            <Send className="h-4 w-4 mr-sm" />
             Post Comment
           </Button>
         </div>
