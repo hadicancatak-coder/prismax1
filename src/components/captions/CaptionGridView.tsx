@@ -86,7 +86,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
 
   return (
     <TooltipProvider>
-      <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-md p-md md:grid-cols-2 lg:grid-cols-3">
         {captions.map((caption) => {
           const enContent = getContentForLanguage(caption.content, "en");
           const arContent = getContentForLanguage(caption.content, "ar");
@@ -96,8 +96,8 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
               key={caption.id} 
               className="bg-card border-border hover:border-primary/30 transition-smooth group"
             >
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
+              <CardContent className="p-md space-y-sm">
+                <div className="flex items-start justify-between gap-sm">
                   <Badge className={getTypeColor(caption.element_type)}>
                     {caption.element_type}
                   </Badge>
@@ -122,7 +122,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => handleCopyContent(enContent, "en")}
-                        className="w-full text-left p-2 rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
+                        className="w-full text-left p-sm rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
                       >
                         <p className="text-body-sm line-clamp-2">
                           {enContent || <span className="text-muted-foreground italic">No EN content</span>}
@@ -142,7 +142,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => handleCopyContent(arContent, "ar")}
-                        className="w-full text-right p-2 rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
+                        className="w-full text-right p-sm rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
                         dir="rtl"
                       >
                         <p className="text-body-sm line-clamp-2">

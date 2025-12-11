@@ -34,7 +34,7 @@ function TrashZone({ isActive }: { isActive: boolean }) {
       )}
     >
       <div className={cn(
-        "flex items-center gap-4 transition-transform duration-200",
+        "flex items-center gap-md transition-transform duration-200",
         isOver && "scale-110"
       )}>
         <Trash2 className="h-10 w-10 text-destructive-foreground" />
@@ -197,7 +197,7 @@ export default function CampaignsLog() {
           title="Campaign Log"
           description="Track and manage campaign assignments across entities"
           actions={
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-sm">
               <Select value={selectedEntity} onValueChange={setSelectedEntity}>
                 <SelectTrigger className="w-[200px] bg-card">
                   <SelectValue placeholder="Select entity" />
@@ -246,32 +246,32 @@ export default function CampaignsLog() {
               setExpandedCampaigns(n); 
             }}
           >
-            <div className="w-full flex items-center justify-between p-4">
-              <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-3 py-2 flex-1">
+            <div className="w-full flex items-center justify-between p-md">
+              <CollapsibleTrigger className="flex items-center gap-sm cursor-pointer hover:bg-accent/50 transition-all duration-200 rounded-lg px-sm py-sm flex-1">
                 <GripVertical className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-[18px] font-medium text-foreground">Campaign Library</h3>
-                <Badge variant="secondary" className="ml-2">{filteredCampaigns.length}</Badge>
+                <Badge variant="secondary" className="ml-sm">{filteredCampaigns.length}</Badge>
                 <ChevronDown className={cn(
                   "h-5 w-5 text-muted-foreground transition-transform duration-300 ml-auto",
                   expandedCampaigns.has('library') && "rotate-180"
                 )} />
               </CollapsibleTrigger>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 {selectedCampaigns.length > 0 && (
                   <Button onClick={() => setBulkAssignDialogOpen(true)} size="sm" variant="secondary">
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4 mr-sm" />
                     Assign {selectedCampaigns.length}
                   </Button>
                 )}
                 <Button onClick={() => setCreateCampaignDialogOpen(true)} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-sm" />
                   Add Campaign
                 </Button>
               </div>
             </div>
             
-            <CollapsibleContent className="px-4 pb-4 space-y-4">
-              <div className="flex items-center gap-3">
+            <CollapsibleContent className="px-md pb-md space-y-md">
+              <div className="flex items-center gap-sm">
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input 
@@ -295,13 +295,13 @@ export default function CampaignsLog() {
               </div>
               
               <ScrollArea className="h-[400px]">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-sm">
                   {filteredCampaigns.map((c) => (
                     <div key={c.id} className="relative">
                       <Checkbox 
                         checked={selectedCampaigns.includes(c.id)} 
                         onCheckedChange={() => setSelectedCampaigns(p => p.includes(c.id) ? p.filter(i => i !== c.id) : [...p, c.id])} 
-                        className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm" 
+                        className="absolute top-sm right-sm z-10 bg-background/80 backdrop-blur-sm" 
                       />
                       <DraggableCampaignCard 
                         campaign={c} 
@@ -340,7 +340,7 @@ export default function CampaignsLog() {
             <DialogTitle>Assign Campaigns to Entity</DialogTitle>
             <DialogDescription>Select an entity to assign {selectedCampaigns.length} campaign(s)</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-md py-md">
             <Select value={bulkTargetEntity} onValueChange={setBulkTargetEntity}>
               <SelectTrigger><SelectValue placeholder="Select entity" /></SelectTrigger>
               <SelectContent>

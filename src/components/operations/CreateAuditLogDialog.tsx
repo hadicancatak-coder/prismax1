@@ -71,7 +71,7 @@ export function CreateAuditLogDialog() {
         <DialogHeader>
           <DialogTitle>Create Operations Audit Log</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-md">
           <div>
             <Label htmlFor="title">Title *</Label>
             <Input
@@ -93,7 +93,7 @@ export function CreateAuditLogDialog() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-md">
             <div>
               <Label htmlFor="platform">Platform *</Label>
               <Select value={platform} onValueChange={setPlatform} required>
@@ -101,12 +101,12 @@ export function CreateAuditLogDialog() {
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                  <div className="px-sm py-1.5 text-body-sm font-semibold text-muted-foreground">
                     PPC Team
                   </div>
                   {ppcPlatforms.map((p) => (
                     <SelectItem key={p} value={p}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-sm">
                         <Badge variant="outline" className="bg-info-soft text-info-text border-info/30">
                           PPC
                         </Badge>
@@ -114,12 +114,12 @@ export function CreateAuditLogDialog() {
                       </div>
                     </SelectItem>
                   ))}
-                  <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground mt-2">
+                  <div className="px-sm py-1.5 text-body-sm font-semibold text-muted-foreground mt-sm">
                     SocialUA Team
                   </div>
                   {socialPlatforms.map((p) => (
                     <SelectItem key={p} value={p}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-sm">
                         <Badge variant="outline" className="bg-purple-soft text-purple-text border-purple/30">
                           Social
                         </Badge>
@@ -131,21 +131,21 @@ export function CreateAuditLogDialog() {
               </Select>
               
               {assigneeData && assigneeData.assignees.length > 0 && (
-                <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                <div className="mt-sm p-sm bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-sm text-body-sm font-medium mb-sm">
                     <Users className="h-4 w-4" />
                     Auto-assigned to {assigneeData.teamName} Team:
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-sm">
                     {assigneeData.assignees.map((assignee: any) => (
-                      <div key={assignee.id} className="flex items-center gap-1.5 bg-background px-2 py-1 rounded-md border">
+                      <div key={assignee.id} className="flex items-center gap-1.5 bg-background px-sm py-xs rounded-md border">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={assignee.avatar_url} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-metadata">
                             {assignee.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-xs">{assignee.name}</span>
+                        <span className="text-metadata">{assignee.name}</span>
                       </div>
                     ))}
                   </div>
@@ -166,13 +166,13 @@ export function CreateAuditLogDialog() {
 
           <div>
             <Label>Entities/Countries</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-3 gap-sm mt-sm">
               {ENTITIES.map((ent) => (
                 <button
                   key={ent}
                   type="button"
                   onClick={() => handleEntityChange(ent)}
-                  className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`px-sm py-sm rounded-md text-body-sm transition-colors ${
                     entity.includes(ent)
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted hover:bg-muted/80'
@@ -184,7 +184,7 @@ export function CreateAuditLogDialog() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-sm pt-md">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>

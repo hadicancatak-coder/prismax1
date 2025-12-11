@@ -73,8 +73,8 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
           <DialogTitle>Edit Audit Log</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
@@ -85,7 +85,7 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="description">Description</Label>
             <RichTextEditor
               value={description}
@@ -95,19 +95,19 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Platform</Label>
             <Select value={platform} onValueChange={setPlatform}>
               <SelectTrigger>
                 <SelectValue placeholder="Select platform" />
               </SelectTrigger>
               <SelectContent>
-                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                <div className="px-sm py-1.5 text-body-sm font-semibold text-muted-foreground">
                   PPC Team
                 </div>
                 {ppcPlatforms.map((p) => (
                   <SelectItem key={p} value={p}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-sm">
                       <Badge variant="outline" className="bg-info-soft text-info-text border-info/30">
                         PPC
                       </Badge>
@@ -115,12 +115,12 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
                     </div>
                   </SelectItem>
                 ))}
-                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground mt-2">
+                <div className="px-sm py-1.5 text-body-sm font-semibold text-muted-foreground mt-sm">
                   SocialUA Team
                 </div>
                 {socialPlatforms.map((p) => (
                   <SelectItem key={p} value={p}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-sm">
                       <Badge variant="outline" className="bg-purple-soft text-purple-text border-purple/30">
                         Social
                       </Badge>
@@ -132,9 +132,9 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Entity/Country</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-sm">
               {entities.map((e) => (
                 <Button
                   key={e}
@@ -149,7 +149,7 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Deadline (Optional)</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -157,7 +157,7 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-sm h-4 w-4" />
                   {deadline ? format(deadline, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
@@ -172,7 +172,7 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
             </Popover>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-sm pt-md">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>

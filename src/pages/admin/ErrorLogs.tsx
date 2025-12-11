@@ -96,8 +96,8 @@ export default function ErrorLogs() {
   const [timeRange, setTimeRange] = useState<string>("all");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-border">
+    <div className="space-y-lg">
+      <div className="flex items-center gap-md flex-wrap pb-md border-b border-border">
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Time Range" />
@@ -153,7 +153,7 @@ export default function ErrorLogs() {
       </div>
 
       <div>
-        <h2 className="text-section-title mb-6">Error Logs ({errors.length})</h2>
+        <h2 className="text-section-title mb-lg">Error Logs ({errors.length})</h2>
         <div className="bg-card border border-border rounded">
           <Table>
             <TableHeader>
@@ -180,7 +180,7 @@ export default function ErrorLogs() {
                 errors.map((error) => (
                   <TableRow key={error.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-sm">
                         {getSeverityIcon(error.severity)}
                         {getSeverityBadge(error.severity)}
                       </div>
@@ -199,12 +199,12 @@ export default function ErrorLogs() {
                     <TableCell>
                       {error.profiles ? error.profiles.name : 'System'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-body-sm text-muted-foreground">
                       {format(new Date(error.created_at), 'MMM dd, HH:mm')}
                     </TableCell>
                     <TableCell>
                       {error.resolved ? (
-                        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                        <Badge variant="secondary" className="flex items-center gap-xs w-fit">
                           <CheckCircle2 className="h-3 w-3" />
                           Resolved
                         </Badge>
@@ -237,33 +237,33 @@ export default function ErrorLogs() {
             <DialogTitle>Error Details</DialogTitle>
           </DialogHeader>
           {selectedError && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-md">
+              <div className="grid grid-cols-2 gap-md">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Severity</p>
-                  <div className="mt-1">{getSeverityBadge(selectedError.severity)}</div>
+                  <p className="text-body-sm font-medium text-muted-foreground">Severity</p>
+                  <div className="mt-xs">{getSeverityBadge(selectedError.severity)}</div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Type</p>
-                  <Badge variant="outline" className="mt-1">{selectedError.error_type}</Badge>
+                  <p className="text-body-sm font-medium text-muted-foreground">Type</p>
+                  <Badge variant="outline" className="mt-xs">{selectedError.error_type}</Badge>
                 </div>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Error Message</p>
-                <p className="text-sm bg-muted p-3 rounded-md">{selectedError.error_message}</p>
+                <p className="text-body-sm font-medium text-muted-foreground mb-sm">Error Message</p>
+                <p className="text-body-sm bg-muted p-sm rounded-md">{selectedError.error_message}</p>
               </div>
 
               {selectedError.stack_trace && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Stack Trace</p>
+                  <p className="text-body-sm font-medium text-muted-foreground mb-sm">Stack Trace</p>
                   <ScrollArea className="h-[300px] w-full rounded-md border">
-                    <pre className="text-xs p-4 bg-muted">{selectedError.stack_trace}</pre>
+                    <pre className="text-metadata p-md bg-muted">{selectedError.stack_trace}</pre>
                   </ScrollArea>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-sm">
                 <Button variant="outline" onClick={() => setSelectedError(null)}>
                   Close
                 </Button>
