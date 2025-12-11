@@ -41,7 +41,7 @@ export function DealsTableView({ deals, onView, onEdit, onDelete }: DealsTableVi
                   href={deal.website.startsWith('http') ? deal.website : `https://${deal.website}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline flex items-center gap-1"
+                  className="text-primary hover:underline flex items-center gap-xs"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {deal.website.replace(/^https?:\/\//, '').slice(0, 30)}
@@ -58,7 +58,7 @@ export function DealsTableView({ deals, onView, onEdit, onDelete }: DealsTableVi
               {deal.description || <span className="text-muted-foreground">—</span>}
             </TableCell>
             <TableCell>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-xs">
                 <Button
                   variant="ghost"
                   size="icon-sm"

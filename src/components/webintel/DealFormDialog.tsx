@@ -56,8 +56,8 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDia
           <DialogTitle>{deal ? 'Edit Brand Deal' : 'Add Brand Deal'}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label htmlFor="name">Brand Name *</Label>
             <Input
               id="name"
@@ -67,7 +67,7 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDia
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="website">Website</Label>
             <Input
               id="website"
@@ -77,7 +77,7 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDia
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="app_name">App</Label>
             <Input
               id="app_name"
@@ -87,7 +87,7 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDia
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -98,7 +98,7 @@ export function DealFormDialog({ open, onOpenChange, deal, onSave }: DealFormDia
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"

@@ -18,32 +18,32 @@ export function DealDetailDialog({ open, onOpenChange, deal, onEdit, onDelete }:
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <div className="flex items-start justify-between">
-            <DialogTitle className="text-xl">{deal.name}</DialogTitle>
-            <div className="flex items-center gap-2">
+            <DialogTitle className="text-heading-md">{deal.name}</DialogTitle>
+            <div className="flex items-center gap-sm">
               <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-1" />
+                <Pencil className="h-4 w-4 mr-xs" />
                 Edit
               </Button>
               <Button variant="destructive" size="sm" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 className="h-4 w-4 mr-xs" />
                 Delete
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-lg mt-md">
           {/* Website */}
           {deal.website && (
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-sm">
               <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Website</p>
+                <p className="text-body-sm text-muted-foreground mb-xs">Website</p>
                 <a
                   href={deal.website.startsWith('http') ? deal.website : `https://${deal.website}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline flex items-center gap-1"
+                  className="text-primary hover:underline flex items-center gap-xs"
                 >
                   {deal.website}
                   <ExternalLink className="h-3 w-3" />
@@ -54,10 +54,10 @@ export function DealDetailDialog({ open, onOpenChange, deal, onEdit, onDelete }:
 
           {/* App */}
           {deal.app_name && (
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-sm">
               <Smartphone className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-muted-foreground mb-1">App</p>
+                <p className="text-body-sm text-muted-foreground mb-xs">App</p>
                 <p>{deal.app_name}</p>
               </div>
             </div>
@@ -65,29 +65,29 @@ export function DealDetailDialog({ open, onOpenChange, deal, onEdit, onDelete }:
 
           {/* Description */}
           {deal.description && (
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-sm">
               <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Description</p>
-                <p className="text-sm whitespace-pre-wrap">{deal.description}</p>
+                <p className="text-body-sm text-muted-foreground mb-xs">Description</p>
+                <p className="text-body-sm whitespace-pre-wrap">{deal.description}</p>
               </div>
             </div>
           )}
 
           {/* Notes */}
           {deal.notes && (
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-sm">
               <StickyNote className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                <p className="text-sm whitespace-pre-wrap">{deal.notes}</p>
+                <p className="text-body-sm text-muted-foreground mb-xs">Notes</p>
+                <p className="text-body-sm whitespace-pre-wrap">{deal.notes}</p>
               </div>
             </div>
           )}
 
           {/* Empty state if no details */}
           {!deal.website && !deal.app_name && !deal.description && !deal.notes && (
-            <p className="text-muted-foreground text-center py-4">No additional details added yet.</p>
+            <p className="text-muted-foreground text-center py-md">No additional details added yet.</p>
           )}
         </div>
       </DialogContent>

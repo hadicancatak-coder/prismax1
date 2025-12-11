@@ -87,7 +87,7 @@ export function WebIntelTableView({
       variant="ghost"
       size="sm"
       onClick={() => handleSort(field)}
-      className="h-8 px-2 lg:px-3"
+      className="h-8 px-sm lg:px-sm"
     >
       {children}
       <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -110,7 +110,7 @@ export function WebIntelTableView({
 
   if (sites.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-lg text-muted-foreground">
         <p>No sites found. Add your first site to get started.</p>
       </div>
     );
@@ -167,7 +167,7 @@ export function WebIntelTableView({
                 <TableCell>{site.category || 'N/A'}</TableCell>
                 <TableCell>{formatTraffic(site.estimated_monthly_traffic)}</TableCell>
                 <TableCell>
-                  <div className="flex gap-1 flex-wrap max-w-[200px]">
+                  <div className="flex gap-xs flex-wrap max-w-[200px]">
                     {site.tags.map(tag => (
                       <Badge 
                         key={tag} 
@@ -181,7 +181,7 @@ export function WebIntelTableView({
                 </TableCell>
                 <TableCell>
                   {lastCampaign ? (
-                    <div className="text-sm">
+                    <div className="text-body-sm">
                       <div className="font-medium">{lastCampaign.campaign_name}</div>
                       <div className="text-muted-foreground">
                         {format(new Date(lastCampaign.campaign_date), 'MMM d, yyyy')}
@@ -200,18 +200,18 @@ export function WebIntelTableView({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onView(site)}>
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="h-4 w-4 mr-sm" />
                         View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEdit(site)}>
-                        <Pencil className="h-4 w-4 mr-2" />
+                        <Pencil className="h-4 w-4 mr-sm" />
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => onDelete(site.id)}
                         className="text-destructive"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <Trash2 className="h-4 w-4 mr-sm" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

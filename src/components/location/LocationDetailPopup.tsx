@@ -53,14 +53,14 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
             </div>
             {isAdmin && (
               <Button size="sm" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-2" />
+                <Pencil className="h-4 w-4 mr-sm" />
                 Edit
               </Button>
             )}
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-lg mt-md">
           {location.image_url && (
             <div>
               <img
@@ -108,7 +108,7 @@ export function LocationDetailPopup({ location, open, onOpenChange, onEdit, onDe
                 {campaignDetails.map((campaign) => campaign && (
                   <div
                     key={campaign.id}
-                    className="p-3 rounded-lg bg-muted border border-border flex items-center justify-between transition-smooth hover:bg-muted-hover hover:shadow-md"
+                    className="p-sm rounded-lg bg-muted border border-border flex items-center justify-between transition-smooth hover:bg-muted-hover hover:shadow-md"
                   >
                     <div>
                       <p className="font-medium text-foreground">{campaign.name}</p>

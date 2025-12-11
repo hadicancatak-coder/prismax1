@@ -85,7 +85,7 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
 
         <div className="ml-auto">
           <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 mr-sm" />
             Export CSV
           </Button>
         </div>
@@ -97,17 +97,17 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
             <TableRow>
               <TableHead>
                 <Button variant="ghost" size="sm" onClick={() => toggleSort("name")}>
-                  Name <ArrowUpDown className="ml-2 h-4 w-4" />
+                  Name <ArrowUpDown className="ml-sm h-4 w-4" />
                 </Button>
               </TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" onClick={() => toggleSort("city")}>
-                  City <ArrowUpDown className="ml-2 h-4 w-4" />
+                  City <ArrowUpDown className="ml-sm h-4 w-4" />
                 </Button>
               </TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" onClick={() => toggleSort("type")}>
-                  Type <ArrowUpDown className="ml-2 h-4 w-4" />
+                  Type <ArrowUpDown className="ml-sm h-4 w-4" />
                 </Button>
               </TableHead>
               <TableHead>Category</TableHead>
@@ -118,7 +118,7 @@ export function LocationListView({ locations, onView, onEdit, onDelete, isAdmin 
           <TableBody>
             {filteredLocations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-lg">
                   No locations found
                 </TableCell>
               </TableRow>
