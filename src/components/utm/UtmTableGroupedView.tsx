@@ -160,7 +160,7 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
 
   if (links.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-lg text-muted-foreground">
         No UTM links found. Create your first link in the Builder tab.
       </div>
     );
@@ -246,8 +246,8 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                           <tr
                             className="border-b hover:bg-muted/20"
                           >
-                            <td className="p-3 pl-8">
-                              <div className="flex items-center gap-2">
+                          <td className="p-sm pl-lg">
+                              <div className="flex items-center gap-sm">
                                 <Checkbox
                                   checked={selectedIds.has(link.id)}
                                   onCheckedChange={() => handleSelectOne(link.id)}
@@ -270,46 +270,46 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                 </Button>
                               </div>
                             </td>
-                            <td className="p-3">
-                              <Badge variant="outline" className="font-mono text-xs">
+                            <td className="p-sm">
+                              <Badge variant="outline" className="font-mono text-metadata">
                                 {link.utm_campaign}
                               </Badge>
                             </td>
-                            <td className="p-3">
-                              <Badge variant="secondary" className="text-xs">
+                            <td className="p-sm">
+                              <Badge variant="secondary" className="text-metadata">
                                 {link.utm_source}
                               </Badge>
                             </td>
-                            <td className="p-3">
+                            <td className="p-sm">
                               {link.link_purpose && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="text-metadata">
                                   {link.link_purpose}
                                 </Badge>
                               )}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-sm text-body-sm">
                               {link.entity && link.entity.length > 0 ? link.entity.join(", ") : "-"}
                             </td>
-                            <td className="p-3">
+                            <td className="p-sm">
                               {link.utm_content?.includes('mobile') ? (
-                                <Badge variant="outline" className="text-xs">
-                                  <Smartphone className="h-3 w-3 mr-1" />
+                                <Badge variant="outline" className="text-metadata">
+                                  <Smartphone className="h-3 w-3 mr-xs" />
                                   Mobile
                                 </Badge>
                               ) : link.utm_content?.includes('web') ? (
-                                <Badge variant="outline" className="text-xs">
-                                  <Monitor className="h-3 w-3 mr-1" />
+                                <Badge variant="outline" className="text-metadata">
+                                  <Monitor className="h-3 w-3 mr-xs" />
                                   Web
                                 </Badge>
                               ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
+                                <span className="text-muted-foreground text-metadata">-</span>
                               )}
                             </td>
-                            <td className="p-3 text-sm text-muted-foreground">
+                            <td className="p-sm text-body-sm text-muted-foreground">
                               {format(new Date(link.created_at), "MMM d, yyyy")}
                             </td>
-                            <td className="p-3">
-                              <div className="flex items-center justify-end gap-1">
+                            <td className="p-sm">
+                              <div className="flex items-center justify-end gap-xs">
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -350,12 +350,12 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                           {/* Expanded URL Sub-Row */}
                           {isLinkExpanded && (
                             <tr className="border-b bg-muted/10">
-                              <td colSpan={8} className="p-3 pl-16">
-                                <div className="flex items-center gap-2 text-sm">
+                              <td colSpan={8} className="p-sm pl-lg">
+                                <div className="flex items-center gap-sm text-body-sm">
                                   <span className="font-medium text-muted-foreground">
                                     URL:
                                   </span>
-                                  <code className="flex-1 bg-muted px-2 py-1 rounded text-xs break-all">
+                                  <code className="flex-1 bg-muted px-sm py-xs rounded text-metadata break-all">
                                     {link.full_url}
                                   </code>
                                   <Button
@@ -363,7 +363,7 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                     size="sm"
                                     onClick={() => handleCopy(link.full_url)}
                                   >
-                                    <Copy className="h-3 w-3 mr-1" />
+                                    <Copy className="h-3 w-3 mr-xs" />
                                     Copy
                                   </Button>
                                   <Button
@@ -371,12 +371,12 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                     size="sm"
                                     onClick={() => window.open(link.full_url, "_blank")}
                                   >
-                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    <ExternalLink className="h-3 w-3 mr-xs" />
                                     Open
                                   </Button>
                                 </div>
                                 {link.notes && (
-                                  <div className="mt-2 text-xs text-muted-foreground">
+                                  <div className="mt-sm text-metadata text-muted-foreground">
                                     <span className="font-medium">Notes:</span> {link.notes}
                                   </div>
                                 )}

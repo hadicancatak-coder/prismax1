@@ -31,17 +31,17 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[300px] pr-4">
+          <ScrollArea className="h-[300px] pr-md">
             {isLoading ? (
-              <div className="text-sm text-muted-foreground">Loading versions...</div>
+              <div className="text-body-sm text-muted-foreground">Loading versions...</div>
             ) : error ? (
-              <div className="text-sm text-destructive">Error loading versions</div>
+              <div className="text-body-sm text-destructive">Error loading versions</div>
             ) : versions.length === 0 ? (
-              <div className="text-sm text-muted-foreground text-center py-8">
+              <div className="text-body-sm text-muted-foreground text-center py-lg">
                 No versions yet. Save a version to track changes.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-sm">
                 {versions.map((version) => {
                   const createdDate = version.created_at ? new Date(version.created_at) : null;
                   const isValidDate = createdDate && !isNaN(createdDate.getTime());
@@ -49,22 +49,22 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
                   return (
                     <div
                       key={version.id}
-                      className="border rounded-lg p-3 hover:bg-accent/50 cursor-pointer transition-colors"
+                      className="border rounded-lg p-sm hover:bg-accent/50 cursor-pointer transition-colors"
                       onClick={() => setSelectedVersion(version)}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-start justify-between mb-sm">
+                        <div className="flex items-center gap-sm">
                           <Badge variant="outline">v{version.version_number}</Badge>
-                          <span className="font-medium text-sm">{version.name}</span>
+                          <span className="font-medium text-body-sm">{version.name}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-metadata text-muted-foreground">
                           {isValidDate 
                             ? formatDistanceToNow(createdDate, { addSuffix: true })
                             : 'Date unavailable'}
                         </span>
                       </div>
                       {version.version_notes && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">
+                        <p className="text-metadata text-muted-foreground line-clamp-2">
                           {version.version_notes}
                         </p>
                       )}
@@ -80,20 +80,20 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
       <Dialog open={!!selectedVersion} onOpenChange={() => setSelectedVersion(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-sm">
               <Badge variant="outline">v{selectedVersion?.version_number}</Badge>
               {selectedVersion?.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-md">
             {selectedVersion?.landing_page && (
               <div>
-                <label className="text-sm font-medium">Landing Page</label>
+                <label className="text-body-sm font-medium">Landing Page</label>
                 <a
                   href={selectedVersion.landing_page}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                  className="text-body-sm text-primary hover:underline flex items-center gap-xs mt-xs"
                 >
                   {selectedVersion.landing_page}
                   <ExternalLink className="h-3 w-3" />
@@ -103,18 +103,18 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
             
             {selectedVersion?.description && (
               <div>
-                <label className="text-sm font-medium">Description</label>
-                <p className="text-sm text-muted-foreground mt-1">{selectedVersion.description}</p>
+                <label className="text-body-sm font-medium">Description</label>
+                <p className="text-body-sm text-muted-foreground mt-xs">{selectedVersion.description}</p>
               </div>
             )}
 
             {selectedVersion?.image_url && (
               <div>
-                <label className="text-sm font-medium flex items-center gap-1">
+                <label className="text-body-sm font-medium flex items-center gap-xs">
                   <FileImage className="h-4 w-4" />
                   Asset Image
                   {selectedVersion.image_file_size && (
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <span className="text-metadata text-muted-foreground ml-sm">
                       ({(selectedVersion.image_file_size / 1024).toFixed(0)} KB)
                     </span>
                   )}
@@ -122,14 +122,14 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
                 <img
                   src={selectedVersion.image_url}
                   alt="Campaign asset"
-                  className="mt-2 rounded-lg border max-h-64 object-contain"
+                  className="mt-sm rounded-lg border max-h-64 object-contain"
                 />
               </div>
             )}
 
             {selectedVersion?.asset_link && (
               <div>
-                <label className="text-sm font-medium flex items-center gap-1">
+                <label className="text-body-sm font-medium flex items-center gap-xs">
                   <LinkIcon className="h-4 w-4" />
                   Asset Link
                 </label>
@@ -137,7 +137,7 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
                   href={selectedVersion.asset_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                  className="text-body-sm text-primary hover:underline flex items-center gap-xs mt-xs"
                 >
                   {selectedVersion.asset_link}
                   <ExternalLink className="h-3 w-3" />
@@ -147,14 +147,14 @@ export function CampaignVersionHistory({ campaignId }: CampaignVersionHistoryPro
 
             {selectedVersion?.version_notes && (
               <div>
-                <label className="text-sm font-medium">Version Notes</label>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                <label className="text-body-sm font-medium">Version Notes</label>
+                <p className="text-body-sm text-muted-foreground mt-xs whitespace-pre-wrap">
                   {selectedVersion.version_notes}
                 </p>
               </div>
             )}
 
-            <div className="text-xs text-muted-foreground border-t pt-3">
+            <div className="text-metadata text-muted-foreground border-t pt-sm">
               {(() => {
                 try {
                   const date = selectedVersion?.created_at ? new Date(selectedVersion.created_at) : null;

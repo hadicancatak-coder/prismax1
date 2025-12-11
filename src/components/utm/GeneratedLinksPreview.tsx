@@ -40,21 +40,21 @@ export function GeneratedLinksPreview({ links, onCopy, onSave, onClear }: Genera
         <div className="flex items-center justify-between">
           <CardTitle>Generated Links ({links.length})</CardTitle>
           <Button variant="outline" size="sm" onClick={onClear}>
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-4 w-4 mr-sm" />
             Clear All
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-sm">
           {links.map((link) => (
-            <div key={link.id} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm font-mono break-all bg-muted px-3 py-2 rounded">
+            <div key={link.id} className="border rounded-lg p-md space-y-sm">
+              <div className="flex items-start justify-between gap-md">
+                <div className="flex-1 space-y-sm">
+                  <p className="text-body-sm font-mono break-all bg-muted px-sm py-sm rounded">
                     {link.full_url}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-sm">
                     <Badge variant="outline">{link.platform}</Badge>
                     {link.lp_type_id && (
                       <Badge variant="secondary">
@@ -68,13 +68,13 @@ export function GeneratedLinksPreview({ links, onCopy, onSave, onClear }: Genera
                       <Badge variant="outline">{link.entity.join(", ")}</Badge>
                     )}
                     {link.deviceType && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-metadata">
                         {link.deviceType}
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <Button 
                     size="sm" 
                     variant="outline" 

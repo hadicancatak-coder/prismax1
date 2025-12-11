@@ -161,17 +161,17 @@ export function UtmBuilder() {
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" />UTM Builder</CardTitle>
           <CardDescription>Generate UTM tracking links with AI-powered detection</CardDescription></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-md">
           <AlertBanner variant="info">You are responsible for ensuring the accuracy of the generated links. AI detection may not be 100% accurate.</AlertBanner>
-          <div className="space-y-2"><Label htmlFor="lp-url">Landing Page URL *</Label>
+          <div className="space-y-sm"><Label htmlFor="lp-url">Landing Page URL *</Label>
             <Input id="lp-url" type="url" placeholder="https://cfi.trade/ar/seminar/amman" value={lpUrl} onChange={(e) => handleLpChange(e.target.value)} /></div>
           {detection && <LPDetectionCard detection={detection} />}
           {detection && detection.purpose && (<>
-            <div className="space-y-2"><Label>Platforms *</Label>
+            <div className="space-y-sm"><Label>Platforms *</Label>
               <EnhancedMultiSelect options={platformOptions} selected={selectedPlatforms} onChange={setSelectedPlatforms} placeholder="Select platforms..." allowCustom={true}
                 customPlaceholder="Add new platform" onAddCustom={async (name) => { await createPlatform.mutateAsync({ name, utm_medium: 'referral', is_active: true }); }} /></div>
             
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <div className="flex items-center justify-between">
                 <Label>Campaign {detection.purpose === 'AO' ? '*' : '(Optional)'}</Label>
                 <Button 
@@ -179,7 +179,7 @@ export function UtmBuilder() {
                   size="sm" 
                   onClick={() => setShowAddCampaign(true)}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-4 w-4 mr-xs" />
                   Add Campaign
                 </Button>
               </div>
@@ -197,26 +197,26 @@ export function UtmBuilder() {
               </Select>
             </div>
 
-            {detection.purpose === 'AO' && (<div className="space-y-2"><Label>Entities (Countries) *</Label>
+            {detection.purpose === 'AO' && (<div className="space-y-sm"><Label>Entities (Countries) *</Label>
               <EnhancedMultiSelect options={entityOptions} selected={selectedEntities} onChange={setSelectedEntities} placeholder="Select entities..." allowCustom={true}
                 customPlaceholder="Add new entity" onAddCustom={async (name) => { const code = name.toLowerCase().replace(/\s+/g, '_'); await createEntity.mutateAsync({ name, code, is_active: true, display_order: entities.length, emoji: null }); }} /></div>)}
-            {detection.purpose === 'Webinar' && (<div className="space-y-2"><Label htmlFor="webinar-name">Webinar Name *</Label>
+            {detection.purpose === 'Webinar' && (<div className="space-y-sm"><Label htmlFor="webinar-name">Webinar Name *</Label>
               <Input id="webinar-name" value={webinarName} onChange={(e) => setWebinarName(e.target.value)} placeholder="e.g., Introduction to Trading" /></div>)}
-            {detection.purpose === 'Seminar' && (<div className="space-y-2"><Label htmlFor="city">City *</Label>
+            {detection.purpose === 'Seminar' && (<div className="space-y-sm"><Label htmlFor="city">City *</Label>
               <Select value={city} onValueChange={setCity}><SelectTrigger id="city"><SelectValue placeholder="Select a city" /></SelectTrigger>
                 <SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>))}</SelectContent></Select></div>)}
-            <div className="space-y-2"><Label>Device Type</Label>
+            <div className="space-y-sm"><Label>Device Type</Label>
               <ToggleGroup type="single" value={deviceType} onValueChange={(value: "desktop" | "mobile") => value && setDeviceType(value)}>
                 <ToggleGroupItem value="desktop">Desktop</ToggleGroupItem><ToggleGroupItem value="mobile">Mobile</ToggleGroupItem></ToggleGroup></div>
-            {detection.purpose === 'AO' && (<div className="flex items-center space-x-2">
+            {detection.purpose === 'AO' && (<div className="flex items-center space-x-sm">
               <Checkbox id="extensions" checked={withExtensions} onCheckedChange={(checked) => setWithExtensions(checked === true)} />
-              <Label htmlFor="extensions" className="text-sm cursor-pointer">Include extensions parameter (for AO campaigns)</Label></div>)}
-            <div className="space-y-2"><Label htmlFor="lp-type">Landing Page Type</Label>
+              <Label htmlFor="extensions" className="text-body-sm cursor-pointer">Include extensions parameter (for AO campaigns)</Label></div>)}
+            <div className="space-y-sm"><Label htmlFor="lp-type">Landing Page Type</Label>
               <Select value={selectedLpType || ''} onValueChange={setSelectedLpType}><SelectTrigger id="lp-type"><SelectValue placeholder="Auto-detected from URL" /></SelectTrigger>
                 <SelectContent>{lpTypes.map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select>
-              {detection?.purpose && (<p className="text-xs text-muted-foreground">{mapPurposeToLpType(detection.purpose) ? '✓ Auto-detected' : '⚠️ Please select manually'}</p>)}</div>
+              {detection?.purpose && (<p className="text-metadata text-muted-foreground">{mapPurposeToLpType(detection.purpose) ? '✓ Auto-detected' : '⚠️ Please select manually'}</p>)}</div>
             <Button onClick={handleGenerate} className="w-full">Generate UTM Links</Button>
-            {detection.purpose === 'AO' && (<Button variant="outline" className="w-full" onClick={() => setShowAddCampaign(true)}><Plus className="h-4 w-4 mr-2" />Add New Campaign</Button>)}
+            {detection.purpose === 'AO' && (<Button variant="outline" className="w-full" onClick={() => setShowAddCampaign(true)}><Plus className="h-4 w-4 mr-sm" />Add New Campaign</Button>)}
           </>)}</CardContent></Card>
       <GeneratedLinksPreview links={generatedLinks} onCopy={(url) => { navigator.clipboard.writeText(url); toast.success("Link copied to clipboard"); }}
         onSave={(link) => createUtmLink.mutate(link)} onClear={() => setGeneratedLinks([])} />

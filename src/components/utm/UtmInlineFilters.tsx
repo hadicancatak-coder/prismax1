@@ -27,8 +27,8 @@ export const UtmInlineFilters = ({ filters, onFiltersChange }: UtmInlineFiltersP
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/30 rounded-lg border">
-      <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+    <div className="flex flex-wrap items-center gap-sm p-sm bg-muted/30 rounded-lg border">
+      <span className="text-body-sm font-medium text-muted-foreground">Filters:</span>
       
       {/* Campaign */}
       <Select
