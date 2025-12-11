@@ -56,22 +56,22 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
   const activeCallouts = (props.callouts || []).filter(c => c.trim()).slice(0, 4);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-md">
       {/* Desktop Preview */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline" className="text-xs">Desktop</Badge>
-          <span className="text-xs text-muted-foreground">Google Search Results</span>
+        <div className="flex items-center gap-sm mb-sm">
+          <Badge variant="outline" className="text-metadata">Desktop</Badge>
+          <span className="text-metadata text-muted-foreground">Google Search Results</span>
         </div>
-        <Card className="p-4 bg-background border">
-          <div className="space-y-1">
+        <Card className="p-md bg-background border">
+          <div className="space-y-xs">
             {/* Ad badge */}
-            <div className="flex items-center gap-1">
-              <Badge variant="outline" className="text-xs font-normal">Ad</Badge>
+            <div className="flex items-center gap-xs">
+              <Badge variant="outline" className="text-metadata font-normal">Ad</Badge>
             </div>
             
             {/* URL */}
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-sm text-body-sm">
               <Globe className="h-3 w-3 text-muted-foreground" />
               <span className="text-emerald-700 dark:text-emerald-400 font-medium">{displayUrl}</span>
               <span className="text-muted-foreground">{pathUrl}</span>
@@ -85,7 +85,7 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
             </h3>
             
             {/* Descriptions */}
-            <div className="text-sm text-foreground space-y-1">
+            <div className="text-body-sm text-foreground space-y-xs">
               {activeDescriptions.map((desc, idx) => (
                 <p key={idx}>{desc}</p>
               ))}
@@ -99,9 +99,9 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
 
             {/* Sitelinks */}
             {activeSitelinks.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t mt-3">
+              <div className="grid grid-cols-2 gap-sm pt-sm border-t mt-sm">
                 {activeSitelinks.map((link, idx) => (
-                  <div key={idx} className="text-sm">
+                  <div key={idx} className="text-body-sm">
                     <p className="text-primary hover:underline cursor-pointer truncate">
                       {typeof link === 'string' 
                         ? link 
@@ -116,9 +116,9 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
 
             {/* Callouts */}
             {activeCallouts.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-sm pt-sm">
                 {activeCallouts.map((callout, idx) => (
-                  <span key={idx} className="text-xs text-muted-foreground">
+                  <span key={idx} className="text-metadata text-muted-foreground">
                     {callout}
                   </span>
                 ))}
@@ -130,17 +130,17 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
 
       {/* Mobile Preview */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline" className="text-xs">Mobile</Badge>
-          <span className="text-xs text-muted-foreground">Google Mobile Search</span>
+        <div className="flex items-center gap-sm mb-sm">
+          <Badge variant="outline" className="text-metadata">Mobile</Badge>
+          <span className="text-metadata text-muted-foreground">Google Mobile Search</span>
         </div>
-        <Card className="p-3 bg-background border max-w-[380px]">
-          <div className="space-y-1">
+        <Card className="p-sm bg-background border max-w-[380px]">
+          <div className="space-y-xs">
             {/* Ad badge */}
-            <Badge variant="outline" className="text-xs font-normal mb-1">Ad</Badge>
+            <Badge variant="outline" className="text-metadata font-normal mb-xs">Ad</Badge>
             
             {/* URL */}
-            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+            <div className="text-metadata text-emerald-700 dark:text-emerald-400 font-medium">
               {displayUrl}
             </div>
             
@@ -152,15 +152,15 @@ export function SearchAdPreview(props: SearchAdPreviewProps) {
             </h3>
             
             {/* Description - only first one on mobile */}
-            <p className="text-sm text-foreground line-clamp-2">
+            <p className="text-body-sm text-foreground line-clamp-2">
               {activeDescriptions[0] || 'Your description will appear here'}
             </p>
 
             {/* Sitelinks - 2 on mobile */}
             {activeSitelinks.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t mt-2">
+              <div className="grid grid-cols-2 gap-sm pt-sm border-t mt-sm">
                 {activeSitelinks.slice(0, 2).map((link, idx) => (
-                  <p key={idx} className="text-xs text-primary hover:underline cursor-pointer truncate">
+                  <p key={idx} className="text-metadata text-primary hover:underline cursor-pointer truncate">
                     {typeof link === 'string' 
                       ? link 
                       : 'description' in link 

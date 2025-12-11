@@ -206,16 +206,16 @@ export const UnifiedBestPracticeChecker = ({
                   <Eye className="h-4 w-4" />
                   DKI Preview (based on your keywords)
                 </Label>
-                <div className="grid gap-2">
+                <div className="grid gap-sm">
                   {dkiPreviews.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-sm p-2 bg-muted/30 rounded-md border">
-                      <Badge variant="outline" className="text-xs shrink-0">
+                    <div key={idx} className="flex items-center gap-sm p-sm bg-muted/30 rounded-md border">
+                      <Badge variant="outline" className="text-metadata shrink-0">
                         {item.keyword}
                       </Badge>
                       <span className="text-body-sm text-foreground truncate">
                         {item.preview}
                       </span>
-                      <span className={`text-xs ml-auto shrink-0 ${
+                      <span className={`text-metadata ml-auto shrink-0 ${
                         item.preview.length <= 30 ? 'text-success' : 'text-destructive'
                       }`}>
                         {item.preview.length}/30
@@ -227,7 +227,7 @@ export const UnifiedBestPracticeChecker = ({
             )}
 
             {dkiEnabledH1 && dkiPreviews.length === 0 && (
-              <div className="text-center py-4 text-muted-foreground text-sm">
+              <div className="text-center py-md text-muted-foreground text-body-sm">
                 Add keywords in the Keywords tab to see DKI previews
               </div>
             )}
@@ -264,7 +264,7 @@ export const UnifiedBestPracticeChecker = ({
               <Label className="text-body-sm font-medium">
                 Target Keywords (up to 10)
               </Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-sm">
                 {keywords.map((keyword, idx) => (
                   <Input
                     key={idx}
@@ -275,7 +275,7 @@ export const UnifiedBestPracticeChecker = ({
                       setKeywords(newKeywords);
                     }}
                     placeholder={`Keyword ${idx + 1}`}
-                    className="h-8 text-sm"
+                    className="h-8 text-body-sm"
                   />
                 ))}
               </div>
@@ -285,24 +285,24 @@ export const UnifiedBestPracticeChecker = ({
             {keywordAnalysis.length > 0 && (
               <div className="space-y-sm">
                 <Label className="text-body-sm font-medium">Keyword Analysis</Label>
-                <div className="grid gap-2 max-h-[200px] overflow-y-auto">
+                <div className="grid gap-sm max-h-[200px] overflow-y-auto">
                   {keywordAnalysis.map((analysis, idx) => (
                     <div
                       key={idx}
-                      className={`p-2 rounded-md border ${getScoreBg(analysis.score)}`}
+                      className={`p-sm rounded-md border ${getScoreBg(analysis.score)}`}
                     >
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center justify-between mb-xs">
                         <div className="font-medium text-body-sm text-foreground">
                           {analysis.keyword}
                         </div>
                         <Badge
                           variant={analysis.score >= 60 ? "default" : "destructive"}
-                          className="text-xs"
+                          className="text-metadata"
                         >
                           {analysis.score}/100
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 gap-sm text-xs">
+                      <div className="grid grid-cols-2 gap-sm text-metadata">
                         <div className="flex items-center gap-xs">
                           {analysis.inHeadlines > 0 ? (
                             <CheckCircle2 className="h-3 w-3 text-success" />

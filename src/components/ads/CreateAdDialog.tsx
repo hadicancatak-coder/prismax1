@@ -141,13 +141,13 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
           <ResizablePanel defaultSize={50} minSize={40}>
             <ScrollArea className="h-[calc(95vh-180px)] px-6">
               <Tabs value="search" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 mb-4">
+                <TabsList className="grid w-full grid-cols-1 mb-md">
                   <TabsTrigger value="search">Search Ad</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="search" className="space-y-4 mt-0">
+                <TabsContent value="search" className="space-y-md mt-0">
                   {/* Common Fields */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-md">
                     <div>
                       <Label>Entity</Label>
                       <Select value={entity || undefined} onValueChange={setEntity}>
@@ -167,7 +167,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-md">
                     <div>
                       <Label>Campaign Name</Label>
                       <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
@@ -190,12 +190,12 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
                   {/* Headlines */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-sm">
                       <Label>Headlines</Label>
-                      <Badge variant="outline" className="text-xs">Max 30 chars each</Badge>
+                      <Badge variant="outline" className="text-metadata">Max 30 chars each</Badge>
                     </div>
                     {headlines.slice(0, 5).map((headline, index) => (
-                      <div key={index} className="flex gap-1 mt-2">
+                      <div key={index} className="flex gap-xs mt-sm">
                         <ElementQuickInsert 
                           elementType="headline"
                           onInsert={(content) => {
@@ -216,7 +216,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                             maxLength={30}
                             className={headline.length > 30 ? 'border-destructive' : headline.length > 25 ? 'border-amber-500' : ''}
                           />
-                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs ${headline.length > 30 ? 'text-destructive' : headline.length > 25 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-metadata ${headline.length > 30 ? 'text-destructive' : headline.length > 25 ? 'text-amber-500' : 'text-muted-foreground'}`}>
                             {headline.length}/30
                           </span>
                         </div>
@@ -244,12 +244,12 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
                   {/* Descriptions */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-sm">
                       <Label>Descriptions</Label>
-                      <Badge variant="outline" className="text-xs">Max 90 chars each</Badge>
+                      <Badge variant="outline" className="text-metadata">Max 90 chars each</Badge>
                     </div>
                     {descriptions.map((description, index) => (
-                      <div key={index} className="flex gap-1 mt-2">
+                      <div key={index} className="flex gap-xs mt-sm">
                         <ElementQuickInsert 
                           elementType="description"
                           onInsert={(content) => {
@@ -270,7 +270,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                             maxLength={90}
                             className={description.length > 90 ? 'border-destructive' : description.length > 80 ? 'border-amber-500' : ''}
                           />
-                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs ${description.length > 90 ? 'text-destructive' : description.length > 80 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                          <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-metadata ${description.length > 90 ? 'text-destructive' : description.length > 80 ? 'text-amber-500' : 'text-muted-foreground'}`}>
                             {description.length}/90
                           </span>
                         </div>
@@ -298,12 +298,12 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
                   {/* Sitelinks */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-sm">
                       <Label>Sitelinks (optional)</Label>
-                      <Badge variant="outline" className="text-xs">Max 25 chars each</Badge>
+                      <Badge variant="outline" className="text-metadata">Max 25 chars each</Badge>
                     </div>
                     {sitelinks.map((sitelink, index) => (
-                      <div key={index} className="flex gap-1 mt-2">
+                      <div key={index} className="flex gap-xs mt-sm">
                         <ElementQuickInsert 
                           elementType="sitelink"
                           onInsert={(content) => {
@@ -323,7 +323,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                             placeholder={`Sitelink ${index + 1}`}
                             maxLength={25}
                           />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-metadata text-muted-foreground">
                             {sitelink.length}/25
                           </span>
                         </div>
@@ -351,12 +351,12 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
 
                   {/* Callouts */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-sm">
                       <Label>Callouts (optional)</Label>
-                      <Badge variant="outline" className="text-xs">Max 25 chars each</Badge>
+                      <Badge variant="outline" className="text-metadata">Max 25 chars each</Badge>
                     </div>
                     {callouts.slice(0, 4).map((callout, index) => (
-                      <div key={index} className="flex gap-1 mt-2">
+                      <div key={index} className="flex gap-xs mt-sm">
                         <ElementQuickInsert 
                           elementType="callout"
                           onInsert={(content) => {
@@ -376,7 +376,7 @@ export function CreateAdDialog({ open, onOpenChange, onComplete }: CreateAdDialo
                             placeholder={`Callout ${index + 1}`}
                             maxLength={25}
                           />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-metadata text-muted-foreground">
                             {callout.length}/25
                           </span>
                         </div>

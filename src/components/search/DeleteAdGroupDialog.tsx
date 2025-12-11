@@ -59,14 +59,14 @@ export function DeleteAdGroupDialog({ open, onOpenChange, adGroup, adsCount, onS
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-sm">
             <AlertCircle className="h-5 w-5 text-destructive" />
             Delete Ad Group
           </DialogTitle>
           <DialogDescription>
             Are you sure you want to delete "{adGroup?.name}"?
             {adsCount > 0 && (
-              <span className="block mt-2 font-semibold text-destructive">
+              <span className="block mt-sm font-semibold text-destructive">
                 Warning: This will also delete {adsCount} ad(s) in this group.
               </span>
             )}
@@ -74,9 +74,9 @@ export function DeleteAdGroupDialog({ open, onOpenChange, adGroup, adsCount, onS
         </DialogHeader>
         
         {adsCount > 0 && (
-          <div className="flex items-center space-x-2 py-2">
+          <div className="flex items-center space-x-sm py-sm">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(checked) => setConfirmed(checked === true)} />
-            <Label htmlFor="confirm-delete" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <Label htmlFor="confirm-delete" className="text-body-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               I understand this will delete {adsCount} ad(s)
             </Label>
           </div>

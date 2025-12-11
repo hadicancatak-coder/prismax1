@@ -39,20 +39,20 @@ export function DraggableCampaignCard({ campaign, isDragging, onClick }: Draggab
         isDragging && "opacity-50 shadow-xl scale-105"
       )}
     >
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="p-sm space-y-sm">
         {/* Header with Drag Handle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           {/* Drag Handle - Only this part is draggable */}
           <div
             {...listeners}
             {...attributes}
-            className="cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1"
+            className="cursor-grab active:cursor-grabbing hover:bg-muted rounded p-xs"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </div>
           {/* Title - Clickable */}
           <h3 
-            className="font-semibold text-sm line-clamp-2 flex-1 cursor-pointer hover:text-primary transition-colors"
+            className="font-semibold text-body-sm line-clamp-2 flex-1 cursor-pointer hover:text-primary transition-colors"
             onClick={onClick}
           >
             {campaign.name}
@@ -60,22 +60,22 @@ export function DraggableCampaignCard({ campaign, isDragging, onClick }: Draggab
         </div>
 
         {/* Content - Clickable */}
-        <div className="cursor-pointer space-y-2" onClick={onClick}>
+        <div className="cursor-pointer space-y-sm" onClick={onClick}>
           {/* Campaign Type */}
-          <Badge variant="outline" className="text-xs w-fit">
+          <Badge variant="outline" className="text-metadata w-fit">
             {campaign.campaign_type}
           </Badge>
 
           {/* Description */}
           {campaign.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="text-metadata text-muted-foreground line-clamp-2">
               {campaign.description}
             </p>
           )}
 
           {/* Landing Page */}
           {campaign.landing_page && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-xs text-metadata text-muted-foreground">
               <ExternalLink className="h-3 w-3" />
               <span className="truncate">{new URL(campaign.landing_page).hostname}</span>
             </div>
@@ -83,7 +83,7 @@ export function DraggableCampaignCard({ campaign, isDragging, onClick }: Draggab
 
           {/* Status */}
           {!campaign.is_active && (
-            <Badge variant="secondary" className="text-xs w-fit">
+            <Badge variant="secondary" className="text-metadata w-fit">
               Inactive
             </Badge>
           )}

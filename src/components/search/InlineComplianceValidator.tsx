@@ -50,17 +50,17 @@ export function InlineComplianceValidator({ value, entity, fieldType }: InlineCo
         <TooltipTrigger asChild>
           <Badge 
             variant="destructive" 
-            className="ml-2 gap-1 cursor-help animate-pulse"
+            className="ml-sm gap-xs cursor-help animate-pulse"
           >
             <AlertCircle className="h-3 w-3" />
             {violations.length} {violations.length === 1 ? 'issue' : 'issues'}
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="right" className="max-w-xs">
-          <div className="space-y-1">
-            <p className="font-semibold text-xs">Compliance Issues:</p>
+          <div className="space-y-xs">
+            <p className="font-semibold text-metadata">Compliance Issues:</p>
             {violations.map((issue, idx) => (
-              <p key={idx} className="text-xs">• {issue}</p>
+              <p key={idx} className="text-metadata">• {issue}</p>
             ))}
           </div>
         </TooltipContent>

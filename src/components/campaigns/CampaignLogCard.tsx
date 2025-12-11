@@ -71,21 +71,21 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
         )}
 
         {campaign.lp_link && (
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground">Landing Page</label>
-            <div className="flex items-center gap-2">
+          <div className="space-y-sm">
+            <label className="text-metadata font-semibold text-foreground">Landing Page</label>
+            <div className="flex items-center gap-sm">
               <a
                 href={campaign.lp_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 text-xs text-primary hover:underline truncate"
+                className="flex-1 text-metadata text-primary hover:underline truncate"
               >
                 {campaign.lp_link}
               </a>
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-6 w-6"
+                className="size-icon-xs"
                 onClick={() => copyToClipboard(campaign.lp_link!)}
               >
                 <Copy className="h-3 w-3" />
@@ -93,7 +93,7 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-6 w-6"
+                className="size-icon-xs"
                 asChild
               >
                 <a href={campaign.lp_link} target="_blank" rel="noopener noreferrer">
@@ -111,7 +111,7 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-6 w-6"
+                className="size-icon-xs"
                 onClick={() => setEditingNotes(true)}
               >
                 <Edit className="h-3 w-3" />
