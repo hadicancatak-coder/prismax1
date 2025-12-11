@@ -62,7 +62,7 @@ const SortableEntityItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent transition-colors"
+      className="flex items-center gap-sm p-sm rounded-lg border bg-card hover:bg-accent transition-colors"
     >
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
         <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -70,7 +70,7 @@ const SortableEntityItem = ({
       <Checkbox id={entity.id} checked={isSelected} onCheckedChange={onToggle} />
       <Label
         htmlFor={entity.id}
-        className="flex items-center gap-2 flex-1 cursor-pointer"
+        className="flex items-center gap-sm flex-1 cursor-pointer"
       >
         <span className="text-xl">{entity.emoji || "📋"}</span>
         <span>{entity.name}</span>
@@ -161,7 +161,7 @@ export const CustomizeShortcutsDialog = ({
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={orderedEntities.map(e => e.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 {orderedEntities.map((entity) => (
                   <SortableEntityItem
                     key={entity.id}
@@ -175,7 +175,7 @@ export const CustomizeShortcutsDialog = ({
           </DndContext>
         </ScrollArea>
 
-        <div className="text-sm text-muted-foreground">
+        <div className="text-body-sm text-muted-foreground">
           {localSelected.length} / 8 shortcuts selected
         </div>
 

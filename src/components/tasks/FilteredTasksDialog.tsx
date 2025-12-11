@@ -157,9 +157,9 @@ export const FilteredTasksDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           {/* Filters & Actions Bar */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-sm">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -201,20 +201,20 @@ export const FilteredTasksDialog = ({
           </div>
 
           {/* Select All */}
-          <div className="flex items-center gap-2 border-b pb-3">
+          <div className="flex items-center gap-sm border-b pb-sm">
             <Checkbox 
               checked={selectedTasks.length === filteredAndSorted.length && filteredAndSorted.length > 0}
               onCheckedChange={toggleSelectAll}
             />
-            <span className="text-sm text-muted-foreground">Select All</span>
+            <span className="text-body-sm text-muted-foreground">Select All</span>
           </div>
 
           {/* Tasks List */}
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-sm max-h-[50vh] overflow-y-auto">
             {filteredAndSorted.map(task => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-sm p-md border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <Checkbox
                   checked={selectedTasks.includes(task.id)}
@@ -222,7 +222,7 @@ export const FilteredTasksDialog = ({
                 />
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 mb-1">
+                  <div className="flex items-start gap-sm mb-xs">
                     <h4 
                       className="font-medium line-clamp-1 cursor-pointer hover:text-primary hover:underline transition-colors"
                       onClick={(e) => {
@@ -243,12 +243,12 @@ export const FilteredTasksDialog = ({
                   </div>
                   
                   {task.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                    <p className="text-body-sm text-muted-foreground line-clamp-1 mb-sm">
                       {task.description}
                     </p>
                   )}
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-md text-metadata text-muted-foreground">
                     {task.due_at && (
                       <span>📅 {format(new Date(task.due_at), 'MMM d, yyyy')}</span>
                     )}

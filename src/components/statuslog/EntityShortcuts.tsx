@@ -62,8 +62,8 @@ export const EntityShortcuts = ({ logs, selectedEntity, onEntityClick }: EntityS
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Quick Filters</h3>
+      <div className="flex items-center justify-between mb-md">
+        <h3 className="text-body-sm font-medium text-muted-foreground">Quick Filters</h3>
         <Button
           variant="ghost"
           size="sm"
@@ -75,7 +75,7 @@ export const EntityShortcuts = ({ logs, selectedEntity, onEntityClick }: EntityS
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-sm mb-lg">
         {displayEntities.map((entity) => {
           const count = entityCounts[entity.name] || 0;
           const isActive = selectedEntity === entity.name;
@@ -83,16 +83,16 @@ export const EntityShortcuts = ({ logs, selectedEntity, onEntityClick }: EntityS
           return (
             <Card
               key={entity.id}
-              className={`p-3 cursor-pointer transition-all hover:shadow-md ${
+              className={`p-sm cursor-pointer transition-all hover:shadow-md ${
                 isActive ? "ring-2 ring-primary bg-accent" : "hover:bg-accent/50"
               }`}
               onClick={() => onEntityClick(isActive ? "" : entity.name)}
             >
-              <div className="flex flex-col items-center text-center gap-2">
+              <div className="flex flex-col items-center text-center gap-sm">
                 <div className="text-2xl">{entity.emoji || "📋"}</div>
-                <div className="space-y-1">
-                  <div className="text-sm font-medium line-clamp-1">{entity.name}</div>
-                  <Badge variant={isActive ? "default" : "secondary"} className="text-xs">
+                <div className="space-y-xs">
+                  <div className="text-body-sm font-medium line-clamp-1">{entity.name}</div>
+                  <Badge variant={isActive ? "default" : "secondary"} className="text-metadata">
                     {count}
                   </Badge>
                 </div>

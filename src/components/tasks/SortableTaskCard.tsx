@@ -50,12 +50,12 @@ export function SortableTaskCard({
     <Card 
       ref={setNodeRef} 
       style={style} 
-      className="p-3 group cursor-grab active:cursor-grabbing hover-lift transition-smooth" 
+      className="p-sm group cursor-grab active:cursor-grabbing hover-lift transition-smooth" 
       onClick={() => onTaskClick(task.id)}
       {...attributes} 
       {...listeners}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-sm">
         <Badge 
           variant="outline"
           className={cn(priorityColors[task.priority as keyof typeof priorityColors])}
@@ -110,10 +110,10 @@ export function SortableTaskCard({
         </DropdownMenu>
       </div>
 
-      <p className="font-medium mt-2 text-body-sm line-clamp-2">
+      <p className="font-medium mt-sm text-body-sm line-clamp-2">
         {task.title}
       </p>
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center justify-between mt-sm">
         <div className="flex -space-x-2">
           {task.assignees?.slice(0, 3).map((assignee: any) => (
             <Avatar key={assignee.user_id} className="h-5 w-5 border-2 border-background">

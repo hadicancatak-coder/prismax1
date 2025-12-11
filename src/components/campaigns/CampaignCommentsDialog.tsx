@@ -66,14 +66,14 @@ export function CampaignCommentsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px] p-6">
-        <DialogHeader className="space-y-2">
+        <DialogHeader className="space-y-sm">
           <DialogTitle>Campaign Comments</DialogTitle>
           <DialogDescription>
             {campaignName} in {entityName}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-80 border rounded-lg p-3">
+        <ScrollArea className="h-80 border rounded-lg p-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -110,7 +110,7 @@ export function CampaignCommentsDialog({
                             comment.request_type === 'Boost' ? 'secondary' :
                             'destructive'
                           }
-                          className="text-xs"
+                          className="text-metadata"
                         >
                           {comment.request_type === 'Optimize' && '🎯 '}
                           {comment.request_type === 'Boost' && '🚀 '}
@@ -119,7 +119,7 @@ export function CampaignCommentsDialog({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                    <p className="text-body-sm text-foreground whitespace-pre-wrap">
                       {comment.comment_text}
                     </p>
                   </div>
@@ -131,10 +131,10 @@ export function CampaignCommentsDialog({
           )}
         </ScrollArea>
 
-        <div className="space-y-3 mt-4 pt-4 border-t">
+        <div className="space-y-sm mt-md pt-md border-t">
           {isExternal && (
-            <div className="space-y-2">
-              <Label className="text-sm">Request Type</Label>
+            <div className="space-y-sm">
+              <Label className="text-body-sm">Request Type</Label>
               <Select value={requestType} onValueChange={(value: any) => setRequestType(value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -149,9 +149,9 @@ export function CampaignCommentsDialog({
             </div>
           )}
           
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="text-metadata">
                 {isExternal ? (externalReviewerName?.charAt(0) || "?") : "U"}
               </AvatarFallback>
             </Avatar>

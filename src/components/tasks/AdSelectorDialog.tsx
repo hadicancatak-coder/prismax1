@@ -74,7 +74,7 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
         className="max-w-3xl max-h-[80vh]"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-sm">
             <Megaphone className="h-5 w-5" />
             Select Ads to Attach
           </DialogTitle>
@@ -83,7 +83,7 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -95,31 +95,31 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading ads...</div>
+            <div className="text-center py-xl text-muted-foreground">Loading ads...</div>
           ) : filteredAds.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-xl text-muted-foreground">
               {search ? "No ads found matching your search" : "No ads available"}
             </div>
           ) : (
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-2">
+            <ScrollArea className="h-[400px] pr-md">
+              <div className="space-y-sm">
                 {filteredAds.map((ad) => (
                   <Card
                     key={ad.id}
-                    className={`p-3 cursor-pointer transition-colors ${
+                    className={`p-sm cursor-pointer transition-colors ${
                       selectedIds.includes(ad.id) ? "border-primary bg-primary/5" : ""
                     }`}
                     onClick={() => handleToggle(ad.id)}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-sm">
                       <Checkbox
                         checked={selectedIds.includes(ad.id)}
                         onCheckedChange={() => handleToggle(ad.id)}
                         className="mt-1"
                       />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
+                      <div className="flex-1 space-y-sm">
+                        <div className="flex items-center gap-sm">
+                          <Badge variant="outline" className="text-metadata">
                             {ad.ad_type || "PPC"}
                           </Badge>
                           <Badge
@@ -130,16 +130,16 @@ export function AdSelectorDialog({ open, onOpenChange, onSelectAds, excludeIds =
                                 ? "destructive"
                                 : "secondary"
                             }
-                            className="text-xs"
+                            className="text-metadata"
                           >
                             {ad.status}
                           </Badge>
                         </div>
-                        <h5 className="font-medium text-sm">{ad.headline || "Untitled Ad"}</h5>
+                        <h5 className="font-medium text-body-sm">{ad.headline || "Untitled Ad"}</h5>
                         {ad.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
+                          <p className="text-metadata text-muted-foreground line-clamp-2">{ad.description}</p>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-sm text-metadata text-muted-foreground">
                           <span>{ad.language || "EN"}</span>
                           {ad.entity && ad.entity.length > 0 && (
                             <>
