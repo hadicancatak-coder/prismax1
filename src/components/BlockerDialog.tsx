@@ -123,7 +123,7 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
           <DialogTitle>Create Blocker</DialogTitle>
           <DialogDescription>Report what's blocking this task</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-md">
           <div>
             <Label htmlFor="task">Task *</Label>
             <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={!!taskId}>
@@ -203,7 +203,7 @@ export const BlockerDialog = ({ open, onOpenChange, taskId, onSuccess }: Blocker
             />
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-sm justify-end">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

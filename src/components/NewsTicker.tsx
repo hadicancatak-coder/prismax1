@@ -65,7 +65,7 @@ export function NewsTicker() {
             {announcements.map((announcement) => (
               <div 
                 key={announcement.id} 
-                className="flex-[0_0_100%] min-w-0 p-3 cursor-pointer hover:bg-muted/80 transition-smooth"
+                className="flex-[0_0_100%] min-w-0 p-sm cursor-pointer hover:bg-muted/80 transition-smooth"
                 onClick={() => setSelectedAnnouncement(announcement)}
               >
                 <div className="flex items-center justify-center gap-sm">
@@ -86,7 +86,7 @@ export function NewsTicker() {
       <Dialog open={!!selectedAnnouncement} onOpenChange={(open) => !open && setSelectedAnnouncement(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-sm">
               <Megaphone className="h-5 w-5 text-primary" />
               {selectedAnnouncement?.title}
             </DialogTitle>

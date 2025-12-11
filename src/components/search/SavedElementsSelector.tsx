@@ -53,10 +53,10 @@ export function SavedElementsSelector({
         )}
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="start">
-        <div className="p-3 border-b space-y-2">
+        <div className="p-sm border-b space-y-sm">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Saved {elementType}s</h4>
-            <Badge variant="outline" className="text-xs">
+            <h4 className="font-semibold text-body-sm">Saved {elementType}s</h4>
+            <Badge variant="outline" className="text-metadata">
               {elements.length} available
             </Badge>
           </div>
@@ -68,9 +68,9 @@ export function SavedElementsSelector({
           />
         </div>
         <ScrollArea className="h-80">
-          <div className="p-2 space-y-1">
+          <div className="p-sm space-y-xs">
             {elements.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-xl text-muted-foreground text-body-sm">
                 No saved {elementType}s found
               </div>
             ) : (
@@ -83,22 +83,22 @@ export function SavedElementsSelector({
                   <button
                     key={element.id}
                     onClick={() => handleSelect(content)}
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors group"
+                    className="w-full text-left p-sm rounded hover:bg-muted/50 transition-smooth group"
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-sm">
                       <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-tight break-words">{content}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <p className="text-body-sm leading-tight break-words">{content}</p>
+                        <div className="flex items-center gap-sm mt-xs">
                           {element.use_count > 0 && (
-                            <Badge variant="secondary" className="text-xs h-4">
+                            <Badge variant="secondary" className="text-metadata h-4">
                               Used {element.use_count}x
                             </Badge>
                           )}
                           {element.google_status && (
                             <Badge 
                               variant="outline" 
-                              className={`text-xs h-4 ${
+                              className={`text-metadata h-4 ${
                                 element.google_status === 'approved' 
                                   ? 'status-success' 
                                   : ''
