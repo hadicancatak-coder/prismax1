@@ -91,7 +91,7 @@ export function OperationFilters({
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={handleClearAll}>
-            <X className="h-4 w-4 mr-1" />
+            <X className="h-4 w-4 mr-xs" />
             Clear All
           </Button>
         )}

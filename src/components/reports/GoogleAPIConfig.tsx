@@ -65,7 +65,7 @@ export function GoogleAPIConfig({ onConfigured }: GoogleAPIConfigProps) {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-lg">
       <div className="space-y-lg">
         <div>
           <h3 className="text-heading-sm font-semibold mb-sm">API Configuration</h3>

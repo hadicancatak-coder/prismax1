@@ -65,7 +65,7 @@ export function GoogleSheetPicker({ accessToken, onSheetSelected }: GoogleSheetP
 
   return (
     <Button onClick={openPicker} variant="outline">
-      <FileSpreadsheet className="mr-2 h-4 w-4" />
+      <FileSpreadsheet className="mr-sm h-4 w-4" />
       Browse Google Sheets
     </Button>
   );

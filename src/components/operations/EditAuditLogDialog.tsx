@@ -64,7 +64,7 @@ export function EditAuditLogDialog({ log }: EditAuditLogDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <Edit className="h-4 w-4 mr-2" />
+          <Edit className="h-4 w-4 mr-sm" />
           Edit
         </Button>
       </DialogTrigger>

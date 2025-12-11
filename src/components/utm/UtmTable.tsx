@@ -57,7 +57,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
 
   if (links.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-lg text-muted-foreground">
         No UTM links found. Create your first link to get started!
       </div>
     );
@@ -159,7 +159,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 </TableCell>
                 <TableCell>{link.month_year || "-"}</TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-xs">
                     {link.entity?.map((e) => (
                       <Badge key={e} variant="outline" className="text-metadata">
                         {e}
@@ -168,7 +168,7 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-xs">
                     {link.teams?.map((t) => (
                       <Badge key={t} variant="outline" className="text-metadata">
                         {t}
@@ -183,12 +183,12 @@ export const UtmTable = ({ links }: UtmTableProps) => {
                 </TableCell>
                 <TableCell>
                   {link.is_validated ? (
-                    <div className="flex items-center gap-1 text-success">
+                    <div className="flex items-center gap-xs text-success">
                       <CheckCircle className="h-4 w-4" />
                       <span className="text-metadata">Yes</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 text-warning">
+                    <div className="flex items-center gap-xs text-warning">
                       <AlertCircle className="h-4 w-4" />
                       <span className="text-metadata">Pending</span>
                     </div>

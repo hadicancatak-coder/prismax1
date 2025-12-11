@@ -172,11 +172,11 @@ export function AuditItemCard({ item, auditLogId, index }: AuditItemCardProps) {
 
           <Collapsible open={commentsOpen} onOpenChange={setCommentsOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-full justify-start mt-2">
-                <MessageSquare className="h-4 w-4 mr-2" />
+              <Button variant="ghost" size="sm" className="w-full justify-start mt-sm">
+                <MessageSquare className="h-4 w-4 mr-sm" />
                 Comments
                 {comments && comments.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-sm">
                     {comments.length}
                   </Badge>
                 )}

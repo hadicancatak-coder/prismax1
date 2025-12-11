@@ -54,9 +54,9 @@ export function CampaignsListDialog({
           <DialogTitle>Your Campaigns</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+        <div className="space-y-md flex-1 overflow-hidden flex flex-col">
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -80,18 +80,18 @@ export function CampaignsListDialog({
           </div>
 
           {/* Campaign List */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-sm pr-sm">
             {filteredCampaigns.length === 0 ? (
-              <div className="text-center py-12">
-                <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <div className="text-center py-lg">
+                <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-sm" />
                 <p className="text-muted-foreground">
                   {searchTerm || statusFilter !== "all" 
                     ? "No campaigns match your filters" 
                     : "No campaigns created yet"}
                 </p>
                 {!searchTerm && statusFilter === "all" && (
-                  <Button onClick={onCreateNew} className="mt-4">
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={onCreateNew} className="mt-md">
+                    <Plus className="h-4 w-4 mr-sm" />
                     Create Your First Campaign
                   </Button>
                 )}
@@ -100,13 +100,13 @@ export function CampaignsListDialog({
               filteredCampaigns.map((campaign) => (
                 <Card 
                   key={campaign.id} 
-                  className="p-4 hover:bg-muted/50 transition-all cursor-pointer"
+                  className="p-md hover:bg-muted/50 transition-smooth cursor-pointer"
                   onClick={() => onViewCampaign?.(campaign.id)}
                 >
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex justify-between items-start gap-md">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg mb-2 truncate">{campaign.name}</h3>
-                      <div className="flex gap-2 mb-3 flex-wrap">
+                      <h3 className="font-semibold text-heading-sm mb-sm truncate">{campaign.name}</h3>
+                      <div className="flex gap-sm mb-sm flex-wrap">
                         <Badge variant={getStatusBadgeVariant(campaign.status)} className={getStatusColor(campaign.status)}>
                           {campaign.status}
                         </Badge>
@@ -115,19 +115,19 @@ export function CampaignsListDialog({
                           {formatDateRange(campaign.start_date, campaign.end_date)}
                         </Badge>
                       </div>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-xs text-body-sm text-muted-foreground">
+                        <div className="flex items-center gap-sm">
                           <Calendar className="h-3.5 w-3.5" />
-                          <span className="text-xs">
+                          <span className="text-metadata">
                             {calculateDuration(campaign.start_date, campaign.end_date)} months
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-sm">
                           <MapPin className="h-3.5 w-3.5" />
                           <span className="truncate">{campaign.cities.join(", ")}</span>
                         </div>
                         {campaign.agency && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-sm">
                             <Building2 className="h-3.5 w-3.5" />
                             <span>{campaign.agency}</span>
                           </div>
@@ -146,7 +146,7 @@ export function CampaignsListDialog({
             Close
           </Button>
           <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-sm" />
             Create New Campaign
           </Button>
         </DialogFooter>
