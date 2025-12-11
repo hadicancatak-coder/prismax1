@@ -1,16 +1,15 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { useEffect, useState } from "react";
 import { getUpcomingTasks } from "@/lib/dashboardQueries";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 
 export function WhatsNext() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -32,39 +31,53 @@ export function WhatsNext() {
     return format(d, "MMM d");
   };
 
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setTaskDialogOpen(true);
+  };
+
   return (
-    <div>
-      <h2 className="text-section-title text-foreground mb-md">What's Next</h2>
-      <div className="space-y-sm max-h-[400px] overflow-y-auto">
-        {upcomingTasks.length > 0 ? (
-          upcomingTasks.map((task) => (
-            <div
-              key={task.id}
-              onClick={() => navigate('/tasks')}
-              className="flex items-center justify-between py-sm border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
-            >
-              <div className="flex-1">
-                <h3 className="font-medium text-body text-foreground mb-1">{task.title}</h3>
-                {task.description && (
-                  <p className="text-metadata text-muted-foreground line-clamp-1 mb-1">
-                    {task.description.replace(/<[^>]*>/g, '')}
+    <>
+      <div>
+        <h2 className="text-section-title text-foreground mb-md">What's Next</h2>
+        <div className="space-y-sm max-h-[400px] overflow-y-auto">
+          {upcomingTasks.length > 0 ? (
+            upcomingTasks.map((task) => (
+              <div
+                key={task.id}
+                onClick={() => handleTaskClick(task.id)}
+                className="flex items-center justify-between py-sm border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
+              >
+                <div className="flex-1">
+                  <h3 className="font-medium text-body text-foreground mb-1">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-metadata text-muted-foreground line-clamp-1 mb-1">
+                      {task.description.replace(/<[^>]*>/g, '')}
+                    </p>
+                  )}
+                  <p className="text-metadata">
+                    {task.assignees && task.assignees.length > 0 
+                      ? task.assignees.map((a: any) => a.name).join(", ")
+                      : "Unassigned"}
                   </p>
-                )}
-                <p className="text-metadata">
-                  {task.assignees && task.assignees.length > 0 
-                    ? task.assignees.map((a: any) => a.name).join(", ")
-                    : "Unassigned"}
-                </p>
+                </div>
+                <Badge variant="outline" className="ml-md">
+                  {task.due_at ? getDateLabel(task.due_at) : "No date"}
+                </Badge>
               </div>
-              <Badge variant="outline" className="ml-md">
-                {task.due_at ? getDateLabel(task.due_at) : "No date"}
-              </Badge>
-            </div>
-          ))
-        ) : (
-          <p className="text-body text-muted-foreground text-center py-lg">No upcoming tasks</p>
-        )}
+            ))
+          ) : (
+            <p className="text-body text-muted-foreground text-center py-lg">No upcoming tasks</p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <UnifiedTaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        taskId={selectedTaskId}
+        mode="view"
+      />
+    </>
   );
 }
