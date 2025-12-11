@@ -34,7 +34,6 @@ const ROUTES = {
     { path: '/admin/overview', name: 'Admin Overview' },
     { path: '/admin/users', name: 'Users Management' },
     { path: '/admin/config', name: 'Config (Entities/Cities)' },
-    { path: '/admin/approvals', name: 'Approvals Center' },
     { path: '/admin/errors', name: 'Error Logs' },
     { path: '/admin/audit', name: 'Audit Log' },
     { path: '/admin/security', name: 'Security Page' },

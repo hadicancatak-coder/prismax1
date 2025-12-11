@@ -20,7 +20,6 @@ import Logs from "./pages/admin/Logs";
 import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
 import KPIsManagement from "./pages/admin/KPIsManagement";
-import ApprovalsCenter from "./pages/admin/ApprovalsCenter";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import AuditLog from "./pages/admin/AuditLog";
 import SecurityScans from "./pages/admin/SecurityScans";
@@ -30,7 +29,6 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
 import SearchPlanner from "./pages/SearchPlanner";
-// SavedElementsPage removed - unified into CaptionLibrary
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ActivityLog from "./pages/ActivityLog";
@@ -78,7 +76,6 @@ const App = () => (
                     <Route path="security" element={<SecurityPage />} />
                     <Route path="logs" element={<Logs />} />
                     <Route path="ad-rules" element={<AdRulesManagement />} />
-                    <Route path="approvals" element={<ApprovalsCenter />} />
                     <Route path="errors" element={<ErrorLogs />} />
                     <Route path="audit" element={<AuditLog />} />
                     <Route path="security-scans" element={<SecurityScans />} />
