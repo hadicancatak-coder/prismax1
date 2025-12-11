@@ -65,35 +65,35 @@ export function UpcomingCampaigns() {
   if (campaigns.length === 0) return null;
 
   return (
-    <div className="border-l-2 border-primary pl-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="border-l-2 border-primary pl-lg">
+      <div className="flex items-center gap-sm mb-md">
         <Rocket className="h-5 w-5 text-primary" />
         <h2 className="text-section-title text-foreground">🚀 Your Mission Launches</h2>
         <Badge variant="outline">{campaigns.length}</Badge>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-sm">
         {campaigns.map((campaign: any) => (
           <div
             key={campaign.id}
-            className="py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer rounded-lg px-2"
+            className="py-sm border-b border-border last:border-0 hover:bg-muted/30 transition-smooth cursor-pointer rounded-lg px-sm"
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-sm">
               <div className="flex-1">
-                <h3 className="font-medium text-body mb-2">{campaign.title}</h3>
-                <div className="flex gap-2 flex-wrap">
+                <h3 className="font-medium text-body mb-sm">{campaign.title}</h3>
+                <div className="flex gap-sm flex-wrap">
                   {campaign.teams?.map((team: string) => (
-                    <Badge key={team} variant="secondary" className="text-xs">
+                    <Badge key={team} variant="secondary" className="text-metadata">
                       {team}
                     </Badge>
                   ))}
                   {campaign.entity?.slice(0, 2).map((country: string) => (
-                    <Badge key={country} variant="outline" className="text-xs">
+                    <Badge key={country} variant="outline" className="text-metadata">
                       🌍 {country}
                     </Badge>
                   ))}
                   {campaign.entity?.length > 2 && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-metadata">
                       +{campaign.entity.length - 2}
                     </Badge>
                   )}

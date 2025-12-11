@@ -296,14 +296,14 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                         {isOverdue(task.due_at, task.status) && (
                           <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
                         )}
-                        <span className="text-[15px] font-medium text-foreground truncate">{task.title}</span>
+                        <span className="text-body-sm font-medium text-foreground truncate">{task.title}</span>
                         {task.pending_approval && (
-                          <Badge variant="default" className="text-[10px] px-2 py-0 h-5 flex-shrink-0">
+                          <Badge variant="default" className="text-metadata px-2 py-0 h-5 flex-shrink-0">
                             Pending
                           </Badge>
                         )}
                         {task.comments_count > 0 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 flex items-center gap-1 flex-shrink-0 border-border">
+                          <Badge variant="outline" className="text-metadata px-1.5 py-0 h-5 flex items-center gap-1 flex-shrink-0 border-border">
                             <span>💬</span>
                             <span>{task.comments_count}</span>
                           </Badge>
@@ -323,18 +323,18 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       disabled={updateStatus.isPending}
                     >
                       <SelectTrigger className={cn(
-                        "h-7 w-[90px] text-[11px] font-medium rounded-full border-0",
+                        "h-7 w-[90px] text-metadata font-medium rounded-full border-0",
                         status.bg, status.text
                       )}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-                        <SelectItem value="Backlog" className="text-[13px]">Backlog</SelectItem>
-                        <SelectItem value="Pending" className="text-[13px]">Pending</SelectItem>
-                        <SelectItem value="Ongoing" className="text-[13px]">Ongoing</SelectItem>
-                        <SelectItem value="Completed" className="text-[13px]">Completed</SelectItem>
-                        <SelectItem value="Failed" className="text-[13px]">Failed</SelectItem>
-                        <SelectItem value="Blocked" className="text-[13px]">Blocked</SelectItem>
+                        <SelectItem value="Backlog" className="text-body-sm">Backlog</SelectItem>
+                        <SelectItem value="Pending" className="text-body-sm">Pending</SelectItem>
+                        <SelectItem value="Ongoing" className="text-body-sm">Ongoing</SelectItem>
+                        <SelectItem value="Completed" className="text-body-sm">Completed</SelectItem>
+                        <SelectItem value="Failed" className="text-body-sm">Failed</SelectItem>
+                        <SelectItem value="Blocked" className="text-body-sm">Blocked</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -346,16 +346,16 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                       }}
                       disabled={updatePriority.isPending}
                     >
-                      <SelectTrigger className="h-7 w-[80px] text-[11px] rounded-full border-border bg-card">
+                      <SelectTrigger className="h-7 w-[80px] text-metadata rounded-full border-border bg-card">
                         <div className="flex items-center gap-1.5">
                           <Circle className={cn("h-2 w-2 fill-current", priority.dot, priority.color)} />
                           <span>{task.priority}</span>
                         </div>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-                        <SelectItem value="Low" className="text-[13px]">Low</SelectItem>
-                        <SelectItem value="Medium" className="text-[13px]">Medium</SelectItem>
-                        <SelectItem value="High" className="text-[13px]">High</SelectItem>
+                        <SelectItem value="Low" className="text-body-sm">Low</SelectItem>
+                        <SelectItem value="Medium" className="text-body-sm">Medium</SelectItem>
+                        <SelectItem value="High" className="text-body-sm">High</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -370,19 +370,19 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                           {task.assignees.slice(0, 3).map((assignee: any) => (
                             <Avatar key={assignee.id} className="h-7 w-7 border-2 border-background">
                               <AvatarImage src={assignee.avatar_url} />
-                              <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                              <AvatarFallback className="text-metadata bg-muted text-muted-foreground">
                                 {assignee.name?.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                           ))}
                           {task.assignees.length > 3 && (
-                            <span className="text-[11px] text-muted-foreground ml-0.5">
+                            <span className="text-metadata text-muted-foreground ml-0.5">
                               +{task.assignees.length - 3}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-[13px] text-muted-foreground hover:text-foreground">+ Add</span>
+                        <span className="text-body-sm text-muted-foreground hover:text-foreground">+ Add</span>
                       )}
                     </div>
                   </TableCell>
@@ -394,13 +394,13 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
                     >
                       {dueDateInfo ? (
                         <div className={cn("flex flex-col", dueDateInfo.colorClass)}>
-                          <span className="text-[13px] font-medium">{dueDateInfo.label}</span>
+                          <span className="text-body-sm font-medium">{dueDateInfo.label}</span>
                           {dueDateInfo.subLabel && (
-                            <span className="text-[10px] opacity-80">{dueDateInfo.subLabel}</span>
+                            <span className="text-metadata opacity-80">{dueDateInfo.subLabel}</span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-[13px] text-muted-foreground hover:text-foreground">+ Add</span>
+                        <span className="text-body-sm text-muted-foreground hover:text-foreground">+ Add</span>
                       )}
                     </div>
                   </TableCell>

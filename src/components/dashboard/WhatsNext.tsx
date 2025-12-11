@@ -34,14 +34,14 @@ export function WhatsNext() {
 
   return (
     <div>
-      <h2 className="text-section-title text-foreground mb-4">What's Next</h2>
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      <h2 className="text-section-title text-foreground mb-md">What's Next</h2>
+      <div className="space-y-sm max-h-[400px] overflow-y-auto">
         {upcomingTasks.length > 0 ? (
           upcomingTasks.map((task) => (
             <div
               key={task.id}
               onClick={() => navigate('/tasks')}
-              className="flex items-center justify-between py-3 border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
+              className="flex items-center justify-between py-sm border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
             >
               <div className="flex-1">
                 <h3 className="font-medium text-body text-foreground mb-1">{task.title}</h3>
@@ -56,13 +56,13 @@ export function WhatsNext() {
                     : "Unassigned"}
                 </p>
               </div>
-              <Badge variant="outline" className="ml-4">
+              <Badge variant="outline" className="ml-md">
                 {task.due_at ? getDateLabel(task.due_at) : "No date"}
               </Badge>
             </div>
           ))
         ) : (
-          <p className="text-body text-muted-foreground text-center py-8">No upcoming tasks</p>
+          <p className="text-body text-muted-foreground text-center py-lg">No upcoming tasks</p>
         )}
       </div>
     </div>
