@@ -105,14 +105,14 @@ export function BulkCSVImportDialog({ open, onOpenChange, onImportComplete }: Bu
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-md">
           {preview.length === 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-md">
               <div>
                 <Label htmlFor="csv-file">Upload Google Ads Editor CSV</Label>
-                <div className="mt-2 flex items-center gap-4">
+                <div className="mt-sm flex items-center gap-md">
                   <Button asChild variant="outline">
-                    <label htmlFor="csv-file" className="cursor-pointer flex items-center gap-2">
+                    <label htmlFor="csv-file" className="cursor-pointer flex items-center gap-sm">
                       <Upload className="h-4 w-4" />
                       Choose File
                       <input
@@ -140,19 +140,19 @@ export function BulkCSVImportDialog({ open, onOpenChange, onImportComplete }: Bu
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    <div className="font-semibold mb-1">Import Errors:</div>
-                    <ul className="list-disc list-inside space-y-1">
+                    <div className="font-semibold mb-xs">Import Errors:</div>
+                    <ul className="list-disc list-inside space-y-xs">
                       {errors.slice(0, 5).map((err, i) => (
-                        <li key={i} className="text-sm">{err}</li>
+                        <li key={i} className="text-body-sm">{err}</li>
                       ))}
-                      {errors.length > 5 && <li className="text-sm">...and {errors.length - 5} more</li>}
+                      {errors.length > 5 && <li className="text-body-sm">...and {errors.length - 5} more</li>}
                     </ul>
                   </AlertDescription>
                 </Alert>
               )}
 
               <div>
-                <h3 className="font-medium mb-2">Preview ({preview.length} ads)</h3>
+                <h3 className="font-medium mb-sm">Preview ({preview.length} ads)</h3>
                 <div className="border rounded-lg max-h-96 overflow-auto">
                   <Table>
                     <TableHeader>
@@ -170,8 +170,8 @@ export function BulkCSVImportDialog({ open, onOpenChange, onImportComplete }: Bu
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell className="font-medium">{ad.campaign_name}</TableCell>
                           <TableCell>{ad.ad_group_name}</TableCell>
-                          <TableCell className="text-sm">{ad.headlines?.length || 0} headlines</TableCell>
-                          <TableCell className="text-sm">{ad.descriptions?.length || 0} descriptions</TableCell>
+                          <TableCell className="text-body-sm">{ad.headlines?.length || 0} headlines</TableCell>
+                          <TableCell className="text-body-sm">{ad.descriptions?.length || 0} descriptions</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -179,7 +179,7 @@ export function BulkCSVImportDialog({ open, onOpenChange, onImportComplete }: Bu
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-sm">
                 <Button variant="outline" onClick={() => setPreview([])}>
                   Cancel
                 </Button>

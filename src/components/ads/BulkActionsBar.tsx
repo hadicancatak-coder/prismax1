@@ -43,9 +43,9 @@ export function BulkActionsBar({
   if (selectedIds.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-overlay">
-      <div className="bg-primary text-primary-foreground rounded-lg shadow-lg p-4 flex items-center gap-4">
-        <div className="flex items-center gap-2">
+    <div className="fixed bottom-md left-1/2 -translate-x-1/2 z-overlay">
+      <div className="bg-primary text-primary-foreground rounded-lg shadow-lg p-md flex items-center gap-md">
+        <div className="flex items-center gap-sm">
           <span className="font-semibold">{selectedIds.length} selected</span>
           <Button
             size="sm"
@@ -59,7 +59,7 @@ export function BulkActionsBar({
 
         <div className="h-6 w-px bg-primary-foreground/20" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           {onChangeStatus && (
             <Select onValueChange={onChangeStatus}>
               <SelectTrigger className="w-40 h-8 bg-primary-foreground text-primary">
@@ -80,7 +80,7 @@ export function BulkActionsBar({
               variant="secondary"
               onClick={onExport}
             >
-              <Download className="w-4 h-4 mr-1" />
+              <Download className="w-4 h-4 mr-xs" />
               Export
             </Button>
           )}
@@ -91,7 +91,7 @@ export function BulkActionsBar({
               variant="secondary"
               onClick={onDuplicate}
             >
-              <Copy className="w-4 h-4 mr-1" />
+              <Copy className="w-4 h-4 mr-xs" />
               Duplicate
             </Button>
           )}
@@ -104,7 +104,7 @@ export function BulkActionsBar({
                   variant="destructive"
                   onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
                 >
-                  <Trash2 className="w-4 h-4 mr-1" />
+                  <Trash2 className="w-4 h-4 mr-xs" />
                   Delete
                 </Button>
               </AlertDialogTrigger>

@@ -101,8 +101,8 @@ export function ElementCard({ element }: ElementCardProps) {
 
   return (
     <>
-      <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-smooth cursor-pointer" onClick={handleEdit}>
-        <div className="flex items-start justify-between mb-3">
+      <Card className="p-md hover:shadow-md hover:-translate-y-0.5 transition-smooth cursor-pointer" onClick={handleEdit}>
+        <div className="flex items-start justify-between mb-sm">
           <div className="flex-1">
             {isEditing ? (
               <div className="space-y-sm">
@@ -209,7 +209,7 @@ export function ElementCard({ element }: ElementCardProps) {
               size="sm"
               variant="ghost"
               onClick={handleToggleFavorite}
-              className="ml-2 shrink-0"
+              className="ml-sm shrink-0"
             >
               <Star className={`w-4 h-4 ${element.is_favorite ? 'fill-amber text-amber' : ''}`} />
             </Button>
@@ -218,7 +218,7 @@ export function ElementCard({ element }: ElementCardProps) {
 
         {!isEditing && (
           <>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-sm">
               <Badge 
                 className={getStatusColor(element.google_status)}
                 onClick={(e) => { e.stopPropagation(); setShowStatusDialog(true); }}
@@ -233,7 +233,7 @@ export function ElementCard({ element }: ElementCardProps) {
 
             <div className="flex gap-sm">
               <Button size="sm" variant="outline" onClick={handleCopy} className="flex-1">
-                <Copy className="w-3 h-3 mr-1" />
+                <Copy className="w-3 h-3 mr-xs" />
                 Copy
               </Button>
               <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
