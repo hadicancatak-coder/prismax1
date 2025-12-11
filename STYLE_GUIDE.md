@@ -494,6 +494,46 @@ Before submitting new code, verify:
 
 ---
 
+## ESLint Enforcement
+
+**Token violations are now enforced via ESLint.** The following patterns will trigger warnings:
+
+### Banned Patterns
+
+| Pattern | Example | Fix |
+|---------|---------|-----|
+| Raw typography | `text-sm`, `text-lg`, `text-2xl` | Use `text-body-sm`, `text-heading-sm`, etc. |
+| Raw gap spacing | `gap-2`, `gap-4`, `gap-8` | Use `gap-sm`, `gap-md`, `gap-lg` |
+| Raw padding | `p-4`, `px-6`, `py-2` | Use `p-md`, `px-lg`, `py-sm` |
+| Raw margin | `mt-4`, `mb-8` | Use `mt-md`, `mb-section` |
+| Hardcoded colors | `text-white`, `bg-gray-500` | Use `text-foreground`, `bg-muted` |
+
+### How It Works
+
+1. **Current**: Rules are set to "warn" - violations show in IDE but don't block builds
+2. **Future**: Can be escalated to "error" to enforce strictly
+3. **Progressive**: Fix violations when editing files, not in bulk batches
+
+### Checking Violations
+
+```bash
+# Run ESLint to see all violations
+npm run lint
+
+# Or in your IDE, look for yellow underlines
+```
+
+### Suppressing False Positives
+
+For legitimate exceptions (documented above), use ESLint disable comments:
+
+```tsx
+// eslint-disable-next-line no-restricted-syntax
+<div className="text-white"> {/* Device simulation */}
+```
+
+---
+
 ## AI Instructions
 
 When generating code for this project:
@@ -504,8 +544,9 @@ When generating code for this project:
 4. **PREFER** existing UI components from `src/components/ui/`
 5. **FOLLOW** the component patterns exactly as shown
 6. **APPLY** proper spacing using semantic tokens only
+7. **ESLINT** will warn you if you use banned patterns - fix them!
 
 ---
 
 *Last Updated: December 2024*
-*Version: 1.0 - Consolidated from TOKENS.md, UI_RULES.md, DESIGN_SYSTEM.md*
+*Version: 1.1 - Added ESLint enforcement*
