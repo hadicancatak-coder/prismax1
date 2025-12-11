@@ -21,10 +21,7 @@ import AdRulesManagement from "./pages/admin/AdRulesManagement";
 import ExternalLinksManagement from "./pages/admin/ExternalLinksManagement";
 import KPIsManagement from "./pages/admin/KPIsManagement";
 import ErrorLogs from "./pages/admin/ErrorLogs";
-import AuditLog from "./pages/admin/AuditLog";
 import SecurityScans from "./pages/admin/SecurityScans";
-import Operations from "./pages/Operations";
-import StatusLog from "./pages/StatusLog";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import TeamBase from "./pages/TeamBase";
@@ -46,7 +43,6 @@ import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
 import CampaignReview from "./pages/CampaignReview";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
-import { AuditLogDetail } from "./components/operations/AuditLogDetail";
 
 
 const App = () => (
@@ -77,7 +73,6 @@ const App = () => (
                     <Route path="logs" element={<Logs />} />
                     <Route path="ad-rules" element={<AdRulesManagement />} />
                     <Route path="errors" element={<ErrorLogs />} />
-                    <Route path="audit" element={<AuditLog />} />
                     <Route path="security-scans" element={<SecurityScans />} />
                   </Route>
                   <Route path="/team-base" element={<TeamBase />} />
@@ -89,9 +84,6 @@ const App = () => (
                   <Route path="/profile/:userId?" element={<Profile />} />
                   <Route path="/activity-log" element={<ActivityLog />} />
                   <Route path="/utm-planner" element={<UtmPlanner />} />
-                  <Route path="/operations" element={<Operations />} />
-                  <Route path="/operations/status-log" element={<StatusLog />} />
-                  <Route path="/operations/:id" element={<AuditLogDetail />} />
                   <Route path="/copywriter" element={<CopyWriter />} />
                   <Route path="/security" element={<Security />} />
                   <Route path="/kpis" element={<KPIs />} />

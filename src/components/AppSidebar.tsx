@@ -3,21 +3,13 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   CheckSquare,
-  CheckCircle2,
   Calendar, 
   LayoutDashboard as DashboardIcon, 
   LogOut, 
   Megaphone, 
   Target, 
-  Bell, 
-  FolderKanban, 
   Link2, 
-  Share2, 
-  FileText, 
-  ClipboardList,
   PenTool, 
-  Monitor, 
-  Database, 
   MapPin,
   Tv
 } from "lucide-react";
@@ -53,8 +45,6 @@ const mediaItems = [
 ];
 
 const operationsItems = [
-  { title: "Audit Logs", url: "/operations", icon: FileText },
-  { title: "Status Log", url: "/operations/status-log", icon: ClipboardList },
   { title: "Campaigns Log", url: "/campaigns-log", icon: Target },
 ];
 
