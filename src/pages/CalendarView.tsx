@@ -56,7 +56,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 py-3 px-4 transition-smooth cursor-pointer group border-b border-border last:border-0",
+        "flex items-center gap-sm py-sm px-md transition-smooth cursor-pointer group border-b border-border last:border-0",
         "hover:bg-card-hover",
         isDragging && "z-overlay bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
         isOverdue && !isCompleted && "border-l-4 border-l-destructive",
@@ -86,15 +86,15 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         )}
       />
       
-      <div className="flex-1 min-w-0 flex items-center gap-2">
+      <div className="flex-1 min-w-0 flex items-center gap-sm">
         <span className={cn(
-          "text-[14px] font-medium text-foreground truncate",
+          "text-body-sm font-medium text-foreground truncate",
           isCompleted && "line-through text-muted-foreground"
         )}>
           {task.title}
         </span>
         <Badge variant="outline" className={cn(
-          "text-[10px] px-1.5 py-0 flex-shrink-0 rounded-full",
+          "text-metadata px-1.5 py-0 flex-shrink-0 rounded-full",
           task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
           task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
           task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
@@ -102,19 +102,19 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
           {task.priority}
         </Badge>
         {(task.isRecurringOccurrence || task.task_type === 'recurring' || task.recurrence_rrule) && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary flex-shrink-0 rounded-full">
+          <Badge variant="outline" className="text-metadata px-1.5 py-0 bg-primary/10 border-primary/30 text-primary flex-shrink-0 rounded-full">
             <RotateCcw className="h-2.5 w-2.5 mr-1" />
             {getRecurrenceLabel(task)}
           </Badge>
         )}
         {task.isAutoAdded && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted border-border text-muted-foreground flex-shrink-0 rounded-full">
+          <Badge variant="outline" className="text-metadata px-1.5 py-0 bg-muted border-border text-muted-foreground flex-shrink-0 rounded-full">
             Auto
           </Badge>
         )}
         {task.due_at && (
           <span className={cn(
-            "text-[12px] flex-shrink-0",
+            "text-metadata flex-shrink-0",
             isOverdue ? "text-destructive" : "text-muted-foreground"
           )}>
             {isOverdue ? "Overdue: " : ""}{format(new Date(task.due_at), 'MMM d')}
@@ -145,16 +145,16 @@ function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 py-2.5 px-4 cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
+        "group flex items-center gap-sm py-2.5 px-md cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
         isOverdue && "border-l-4 border-l-destructive"
       )}
       onClick={() => onTaskClick(task.id)}
     >
       <div className="flex-1 min-w-0">
-        <span className="text-[13px] font-medium text-foreground truncate block">{task.title}</span>
+        <span className="text-body-sm font-medium text-foreground truncate block">{task.title}</span>
         {task.due_at && (
           <span className={cn(
-            "text-[11px]",
+            "text-metadata",
             isOverdue ? "text-destructive" : "text-muted-foreground"
           )}>
             Due: {format(new Date(task.due_at), 'MMM d')}
@@ -184,15 +184,15 @@ function KanbanCard({ task, onTaskClick }: any) {
   return (
     <Card 
       className={cn(
-        "p-3 cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30",
+        "p-sm cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30",
         isOverdue && "border-l-4 border-l-destructive"
       )}
       onClick={() => onTaskClick(task.id)}
     >
-      <p className="text-[13px] font-medium text-foreground line-clamp-2">{task.title}</p>
-      <div className="flex items-center gap-2 mt-2">
+      <p className="text-body-sm font-medium text-foreground line-clamp-2">{task.title}</p>
+      <div className="flex items-center gap-sm mt-sm">
         <Badge variant="outline" className={cn(
-          "text-[10px] px-1.5 py-0 rounded-full",
+          "text-metadata px-1.5 py-0 rounded-full",
           task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
           task.priority === 'Medium' && 'border-primary/50 text-primary bg-primary/10',
           task.priority === 'Low' && 'border-border text-muted-foreground bg-muted'
@@ -201,7 +201,7 @@ function KanbanCard({ task, onTaskClick }: any) {
         </Badge>
         {task.due_at && (
           <span className={cn(
-            "text-[10px]",
+            "text-metadata",
             isOverdue ? "text-destructive" : "text-muted-foreground"
           )}>
             {format(new Date(task.due_at), 'MMM d')}
