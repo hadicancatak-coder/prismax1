@@ -41,10 +41,10 @@ export function OperationFilters({
   };
 
   return (
-    <Card className="p-2">
-      <div className="flex items-center gap-4">
+    <Card className="p-sm">
+      <div className="flex items-center gap-md">
         {/* Compact row - always visible */}
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-sm flex-1">
           <Select value={teamFilter} onValueChange={onTeamChange}>
             <SelectTrigger className="h-8 w-[140px]">
               <SelectValue placeholder="Team" />
@@ -72,7 +72,7 @@ export function OperationFilters({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2"
+            className="gap-sm"
           >
             <Filter className="h-4 w-4" />
             More Filters
@@ -99,10 +99,10 @@ export function OperationFilters({
 
       {/* Expanded section */}
       {isExpanded && (
-        <div className="pt-3 mt-3 border-t space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Platform</label>
+        <div className="pt-sm mt-sm border-t space-y-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <div className="space-y-sm">
+              <label className="text-body-sm font-medium">Platform</label>
               <Select value={platformFilter} onValueChange={onPlatformChange}>
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="All Platforms" />

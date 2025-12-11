@@ -192,8 +192,8 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
                       </TooltipTrigger>
                       {enContent && (
                         <TooltipContent side="top" className="max-w-sm">
-                          <p className="text-sm">{enContent}</p>
-                          <p className="text-xs text-muted-foreground mt-1">Click to copy</p>
+                          <p className="text-body-sm">{enContent}</p>
+                          <p className="text-metadata text-muted-foreground mt-xs">Click to copy</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
@@ -218,15 +218,15 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
                       </TooltipTrigger>
                       {arContent && (
                         <TooltipContent side="top" className="max-w-sm">
-                          <p className="text-sm" dir="rtl">{arContent}</p>
-                          <p className="text-xs text-muted-foreground mt-1">Click to copy</p>
+                          <p className="text-body-sm" dir="rtl">{arContent}</p>
+                          <p className="text-metadata text-muted-foreground mt-xs">Click to copy</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
                   </TableCell>
                   
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-xs">
                       {caption.entity?.slice(0, 2).map((e) => (
                         <Badge key={e} variant="secondary" className="text-metadata">
                           {e}
@@ -252,7 +252,7 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
                   
                   {/* Actions - Always visible */}
                   <TableCell>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-xs">
                       <Button
                         variant="ghost"
                         size="icon"

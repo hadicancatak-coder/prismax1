@@ -190,11 +190,11 @@ export function AnnouncementsSection() {
   };
 
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-md mb-lg">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           <Megaphone className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Announcements</h2>
+          <h2 className="text-heading-md font-semibold text-foreground">Announcements</h2>
         </div>
         {userRole === "admin" && (
           <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -211,7 +211,7 @@ export function AnnouncementsSection() {
                   Send an announcement to all team members
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-md">
                 <div>
                   <Label>Title</Label>
                   <Input
@@ -258,12 +258,12 @@ export function AnnouncementsSection() {
                         selected={expiresAt}
                         onSelect={setExpiresAt}
                         initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+                        className={cn("p-sm pointer-events-auto")}
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <Button onClick={handleCreateAnnouncement} className="flex-1">
                     Create & Send
                   </Button>
@@ -278,26 +278,26 @@ export function AnnouncementsSection() {
       </div>
 
       {announcements.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-sm">
           {announcements.map((announcement) => (
             <Card 
               key={announcement.id} 
-              className="p-4 border-l-4 border-l-primary cursor-pointer hover:shadow-md transition-all"
+              className="p-md border-l-4 border-l-primary cursor-pointer hover:shadow-md transition-smooth"
               onClick={() => {
                 setSelectedAnnouncement(announcement);
                 setDetailDialogOpen(true);
               }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-sm">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-sm mb-sm">
                     <Badge className={getPriorityColor(announcement.priority)}>
                       {announcement.priority}
                     </Badge>
                     <h3 className="font-semibold text-foreground">{announcement.title}</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">{announcement.message}</p>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
+                  <p className="text-body-sm text-muted-foreground mb-sm">{announcement.message}</p>
+                  <div className="flex gap-sm text-metadata text-muted-foreground">
                     <span>{new Date(announcement.created_at).toLocaleDateString()}</span>
                     {announcement.expires_at && (
                       <span>Expires: {new Date(announcement.expires_at).toLocaleDateString()}</span>
@@ -309,9 +309,9 @@ export function AnnouncementsSection() {
           ))}
         </div>
       ) : (
-        <Card className="p-6 text-center">
-          <Megaphone className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-muted-foreground text-sm">No active announcements</p>
+        <Card className="p-lg text-center">
+          <Megaphone className="h-8 w-8 mx-auto mb-sm text-muted-foreground" />
+          <p className="text-muted-foreground text-body-sm">No active announcements</p>
         </Card>
       )}
 
@@ -319,17 +319,17 @@ export function AnnouncementsSection() {
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-sm">
               <Megaphone className="h-5 w-5" />
               {selectedAnnouncement?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-md">
             <Badge className={getPriorityColor(selectedAnnouncement?.priority || "normal")}>
               {selectedAnnouncement?.priority}
             </Badge>
             <p className="text-foreground">{selectedAnnouncement?.message}</p>
-            <div className="flex gap-4 text-sm text-muted-foreground">
+            <div className="flex gap-md text-body-sm text-muted-foreground">
               <span>Created: {selectedAnnouncement && new Date(selectedAnnouncement.created_at).toLocaleDateString()}</span>
               {selectedAnnouncement?.expires_at && (
                 <span>Expires: {new Date(selectedAnnouncement.expires_at).toLocaleDateString()}</span>
@@ -337,16 +337,16 @@ export function AnnouncementsSection() {
             </div>
           </div>
           {userRole === "admin" && (
-            <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={() => openEditDialog(selectedAnnouncement)} className="gap-2">
+            <DialogFooter className="flex gap-sm">
+              <Button variant="outline" onClick={() => openEditDialog(selectedAnnouncement)} className="gap-sm">
                 <Edit className="h-4 w-4" />
                 Edit
               </Button>
-              <Button variant="outline" onClick={() => handleBroadcastAgain(selectedAnnouncement)} className="gap-2">
+              <Button variant="outline" onClick={() => handleBroadcastAgain(selectedAnnouncement)} className="gap-sm">
                 <Send className="h-4 w-4" />
                 Broadcast Again
               </Button>
-              <Button variant="destructive" onClick={() => handleDeleteAnnouncement(selectedAnnouncement.id)} className="gap-2">
+              <Button variant="destructive" onClick={() => handleDeleteAnnouncement(selectedAnnouncement.id)} className="gap-sm">
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>
@@ -361,7 +361,7 @@ export function AnnouncementsSection() {
           <DialogHeader>
             <DialogTitle>Edit Announcement</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-md">
             <div>
               <Label>Title</Label>
               <Input
@@ -408,7 +408,7 @@ export function AnnouncementsSection() {
                     selected={expiresAt}
                     onSelect={setExpiresAt}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-sm pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>

@@ -83,53 +83,53 @@ export function EntityCommentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] p-6">
-        <DialogHeader className="space-y-2">
+      <DialogContent className="max-w-[600px] p-lg">
+        <DialogHeader className="space-y-sm">
           <DialogTitle>Entity Comments</DialogTitle>
           <DialogDescription>
             Overall comments for {entityName}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
+        <ScrollArea className="h-[400px] pr-md">
+          <div className="space-y-md">
             {isLoading ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
+              <div className="text-center text-body-sm text-muted-foreground py-xl">
                 Loading comments...
               </div>
             ) : allComments.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
+              <div className="text-center text-body-sm text-muted-foreground py-xl">
                 No comments yet. Be the first to add one!
               </div>
             ) : (
               allComments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                <div key={comment.id} className="flex gap-sm p-sm rounded-lg bg-muted/50">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-metadata">
                       {comment.author_name?.charAt(0).toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">
+                  <div className="flex-1 space-y-xs">
+                    <div className="flex items-center gap-sm flex-wrap">
+                      <span className="font-medium text-body-sm">
                         {comment.author_name || "Anonymous"}
                       </span>
                       {comment.isExternal && (
-                        <Badge variant="outline" className="text-xs gap-1">
+                        <Badge variant="outline" className="text-metadata gap-xs">
                           <ExternalLink className="h-3 w-3" />
                           External
                         </Badge>
                       )}
                       {comment.isExternal && comment.author_email && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-metadata text-muted-foreground">
                           ({comment.author_email})
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-metadata text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <CommentText text={comment.comment_text} className="text-sm" />
+                    <CommentText text={comment.comment_text} className="text-body-sm" />
                   </div>
                 </div>
               ))
@@ -137,7 +137,7 @@ export function EntityCommentsDialog({
           </div>
         </ScrollArea>
 
-        <div className="space-y-2 pt-4 border-t">
+        <div className="space-y-sm pt-md border-t">
           <Textarea
             placeholder="Add a comment..."
             value={newComment}

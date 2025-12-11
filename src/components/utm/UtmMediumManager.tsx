@@ -95,9 +95,9 @@ export function UtmMediumManager() {
   return (
     <>
       <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">UTM Mediums</h3>
+        <CardContent className="p-lg">
+          <div className="flex justify-between items-center mb-md">
+            <h3 className="text-heading-sm font-semibold">UTM Mediums</h3>
             <Button onClick={() => handleOpenDialog()} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Add Medium
@@ -123,7 +123,7 @@ export function UtmMediumManager() {
                   <TableRow key={medium.id}>
                     <TableCell className="font-medium">{medium.name}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-sm">
                         <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(medium)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -149,8 +149,8 @@ export function UtmMediumManager() {
               {editingMedium ? "Update medium name" : "Add a new UTM medium"}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="space-y-md py-md">
+            <div className="space-y-sm">
               <Label htmlFor="medium-name">Medium Name</Label>
               <Input
                 id="medium-name"

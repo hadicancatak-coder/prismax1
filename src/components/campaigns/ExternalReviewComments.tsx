@@ -60,32 +60,32 @@ export function ExternalReviewComments({
   }
 
   return (
-    <ScrollArea className="h-[300px] pr-4">
-      <div className="space-y-3">
+    <ScrollArea className="h-[300px] pr-md">
+      <div className="space-y-sm">
         {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+          <div key={comment.id} className="flex gap-sm p-sm rounded-lg bg-muted/30 border border-border">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs bg-primary/10">
+              <AvatarFallback className="text-metadata bg-primary/10">
                 {comment.reviewer_name?.charAt(0).toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm">
+            <div className="flex-1 space-y-xs">
+              <div className="flex items-center gap-sm flex-wrap">
+                <span className="font-medium text-body-sm">
                   {comment.reviewer_name}
                 </span>
-                <Badge variant="outline" className="text-xs gap-1">
+                <Badge variant="outline" className="text-metadata gap-xs">
                   <ExternalLink className="h-3 w-3" />
                   External Reviewer
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-metadata text-muted-foreground">
                   ({comment.reviewer_email})
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-metadata text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                 </span>
               </div>
-              <CommentText text={comment.comment_text} className="text-sm" />
+              <CommentText text={comment.comment_text} className="text-body-sm" />
             </div>
           </div>
         ))}
