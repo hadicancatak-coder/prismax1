@@ -120,8 +120,8 @@ export function MyTasks() {
 
   return (
     <DataCard className="hover:shadow-[0_0_20px_rgba(0,82,204,0.2)] transition-all duration-300">
-      <h2 className="text-heading-sm font-semibold leading-tight mb-md">My Tasks</h2>
-      <div className="space-y-sm">
+      <h2 className="text-heading-sm font-semibold text-foreground mb-4">My Tasks</h2>
+      <div className="space-y-3">
         {taskCategories.map((category) => (
           <div
             key={category.label}

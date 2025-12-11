@@ -42,7 +42,7 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
 
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 border-border bg-card">
-      <CardHeader className="space-y-3">
+      <CardHeader className="space-y-sm">
         {campaign.image_url && (
           <div className="w-full h-32 rounded-md overflow-hidden bg-muted">
             <img
@@ -52,10 +52,10 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
             />
           </div>
         )}
-        <div className="space-y-2">
-          <CardTitle className="text-lg line-clamp-2">{campaign.title}</CardTitle>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="text-xs">
+        <div className="space-y-sm">
+          <CardTitle className="text-heading-sm line-clamp-2">{campaign.title}</CardTitle>
+          <div className="flex items-center gap-sm text-metadata text-muted-foreground">
+            <Badge variant="outline" className="text-metadata">
               {format(new Date(campaign.start_date), "MMM d, yyyy")} -{" "}
               {format(new Date(campaign.end_date), "MMM d, yyyy")}
             </Badge>
@@ -63,9 +63,9 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-4">
+      <CardContent className="flex-1 space-y-md">
         {campaign.description && (
-          <CardDescription className="line-clamp-3 text-sm">
+          <CardDescription className="line-clamp-3 text-body-sm">
             {campaign.description}
           </CardDescription>
         )}
@@ -104,9 +104,9 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-foreground">Notes</label>
+            <label className="text-metadata font-semibold text-foreground">Notes</label>
             {!editingNotes && (
               <Button
                 size="icon"
@@ -120,14 +120,14 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
           </div>
 
           {editingNotes ? (
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Textarea
                 value={notesValue}
                 onChange={(e) => setNotesValue(e.target.value)}
                 placeholder="Add notes about this campaign..."
-                className="min-h-[100px] text-sm"
+                className="min-h-[100px] text-body-sm"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-sm">
                 <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
                   <X className="h-3 w-3 mr-1" />
                   Cancel
@@ -139,7 +139,7 @@ export function CampaignLogCard({ campaign, onUpdateNotes }: CampaignLogCardProp
               </div>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground min-h-[60px] p-3 bg-muted/50 rounded-md">
+            <div className="text-body-sm text-muted-foreground min-h-[60px] p-sm bg-muted/50 rounded-md">
               {campaign.notes || "No notes yet. Click edit to add notes."}
             </div>
           )}

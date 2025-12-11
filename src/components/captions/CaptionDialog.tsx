@@ -206,9 +206,9 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-lg py-md">
           {/* Type */}
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Type</Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger>
@@ -225,9 +225,9 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           </div>
 
           {/* Entities */}
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Entities</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-sm">
               {ENTITIES.map((entity) => (
                 <Badge
                   key={entity}
@@ -245,15 +245,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           </div>
 
           {/* Content with Language Tabs */}
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Content</Label>
             <Tabs value={activeLanguage} onValueChange={setActiveLanguage}>
               <TabsList>
                 <TabsTrigger value="en">English</TabsTrigger>
                 <TabsTrigger value="ar">Arabic</TabsTrigger>
               </TabsList>
-              <TabsContent value="en" className="mt-2">
-                <div className="space-y-2">
+              <TabsContent value="en" className="mt-sm">
+                <div className="space-y-sm">
                   <RichTextEditor
                     value={content.en}
                     onChange={(value) => setContent({ ...content, en: value })}
@@ -268,8 +268,8 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
                   </div>
                 </div>
               </TabsContent>
-              <TabsContent value="ar" className="mt-2">
-                <div className="space-y-2">
+              <TabsContent value="ar" className="mt-sm">
+                <div className="space-y-sm">
                   <RichTextEditor
                     value={content.ar}
                     onChange={(value) => setContent({ ...content, ar: value })}
@@ -288,7 +288,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           </div>
 
           {/* Status */}
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
@@ -306,7 +306,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
         </div>
 
         <DialogFooter className="flex justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             {isEditing && (
               <>
                 <Button variant="outline" onClick={handleDuplicate}>
@@ -320,7 +320,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               </>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

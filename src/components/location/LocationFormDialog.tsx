@@ -165,9 +165,9 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
           <DialogTitle>{location ? "Edit Location" : "Add New Location"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-lg">
+          <div className="grid grid-cols-2 gap-md">
+            <div className="space-y-sm">
               <Label htmlFor="name">Name *</Label>
               <Input
                 id="name"
@@ -177,9 +177,9 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="city">City * {detectingCity && <span className="text-xs text-muted-foreground ml-2">(detecting...)</span>}</Label>
-              <div className="flex gap-2">
+            <div className="space-y-sm">
+              <Label htmlFor="city">City * {detectingCity && <span className="text-metadata text-muted-foreground ml-sm">(detecting...)</span>}</Label>
+              <div className="flex gap-sm">
                 <Input
                   id="city"
                   value={formData.city}
@@ -201,7 +201,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="type">Type *</Label>
               <Select value={formData.type} onValueChange={(value: LocationType) => setFormData({ ...formData, type: value })}>
                 <SelectTrigger>
@@ -210,7 +210,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
                 <SelectContent className="max-h-96">
                   {Object.entries(LOCATION_CATEGORIES).map(([category, config]) => (
                     <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                      <div className="px-sm py-1.5 text-metadata font-semibold text-muted-foreground bg-muted/50 sticky top-0">
                         {config.emoji} {category}
                       </div>
                       {config.types.map((type) => (
@@ -224,7 +224,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <Label htmlFor="agency">Agency</Label>
               <Input
                 id="agency"
@@ -234,8 +234,8 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude * {initialCoordinates && <span className="text-xs text-muted-foreground ml-2">(from map click)</span>}</Label>
+            <div className="space-y-sm">
+              <Label htmlFor="latitude">Latitude * {initialCoordinates && <span className="text-metadata text-muted-foreground ml-sm">(from map click)</span>}</Label>
               <Input
                 id="latitude"
                 type="number"
@@ -247,8 +247,8 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude * {initialCoordinates && <span className="text-xs text-muted-foreground ml-2">(from map click)</span>}</Label>
+            <div className="space-y-sm">
+              <Label htmlFor="longitude">Longitude * {initialCoordinates && <span className="text-metadata text-muted-foreground ml-sm">(from map click)</span>}</Label>
               <Input
                 id="longitude"
                 type="number"
@@ -261,7 +261,7 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
@@ -271,9 +271,9 @@ export function LocationFormDialog({ location, open, onClose, initialCoordinates
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="image">Location Image (Max 5MB)</Label>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-md">
               <Input
                 id="image"
                 type="file"
