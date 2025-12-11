@@ -26,8 +26,8 @@ export function PageHeader({
   className 
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6", className)}>
-      <div className="flex items-start gap-3 flex-1 min-w-0">
+    <div className={cn("flex flex-col sm:flex-row sm:items-start justify-between gap-md mb-lg", className)}>
+      <div className="flex items-start gap-sm flex-1 min-w-0">
         {Icon && (
           <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Icon className="h-5 w-5 text-primary" />
@@ -35,24 +35,24 @@ export function PageHeader({
         )}
         <div className="flex-1 min-w-0">
           {breadcrumb && breadcrumb.length > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <div className="flex items-center gap-xs text-metadata text-muted-foreground mb-xs">
               {breadcrumb.map((item, index) => (
-                <span key={index} className="flex items-center gap-1.5">
+                <span key={index} className="flex items-center gap-xs">
                   {index > 0 && <span className="text-border">/</span>}
                   <span>{item}</span>
                 </span>
               ))}
             </div>
           )}
-          {/* H1: 24px semibold - Apple typography */}
-          <h1 className="text-[24px] font-semibold text-foreground tracking-tight leading-tight">{title}</h1>
+          {/* H1: Page title */}
+          <h1 className="text-heading-lg font-semibold text-foreground tracking-tight leading-tight">{title}</h1>
           {description && (
-            <p className="text-[14px] text-muted-foreground mt-1.5">{description}</p>
+            <p className="text-body-sm text-muted-foreground mt-xs">{description}</p>
           )}
         </div>
       </div>
       {actions && (
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-sm flex-shrink-0">
           {actions}
         </div>
       )}

@@ -23,21 +23,21 @@ export function PageContainer({
     <div 
       className={cn(
         "min-h-screen bg-background",
-        // Consistent vertical spacing: 32px top
-        "pt-8 pb-8",
+        // Consistent vertical spacing
+        "pt-xl pb-xl",
         // Consistent horizontal padding
-        size === 'default' && "px-8 lg:px-12",
-        size === 'wide' && "px-6 lg:px-8",
-        size === 'full' && "px-4 lg:px-6",
-        size === 'narrow' && "px-8 lg:px-12",
+        size === 'default' && "px-xl lg:px-2xl",
+        size === 'wide' && "px-lg lg:px-xl",
+        size === 'full' && "px-md lg:px-lg",
+        size === 'narrow' && "px-xl lg:px-2xl",
         className
       )}
     >
       <div 
         className={cn(
           "mx-auto",
-          // 24px gap between sections
-          "space-y-6",
+          // Gap between sections
+          "space-y-lg",
           // Max widths: 1440px for wide, 1280px for default
           size === 'default' && "max-w-[1280px]",
           size === 'wide' && "max-w-[1440px]",
