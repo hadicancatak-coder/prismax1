@@ -39,8 +39,16 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, isToday, isTomorrow, isPast, differenceInDays, isThisWeek, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TASK_STATUSES, TASK_TAGS } from "@/lib/constants";
-import { mapStatusToDb, mapStatusToUi } from "@/lib/taskStatusMapper";
+import { 
+  TASK_STATUS_OPTIONS, 
+  TASK_TAG_OPTIONS, 
+  TASK_STATUS_CONFIG, 
+  TASK_PRIORITY_CONFIG,
+  getStatusConfig,
+  getTagConfig,
+  mapStatusToDb, 
+  mapStatusToUi 
+} from "@/domain";
 
 interface TasksTableProps {
   tasks: any[];
@@ -54,16 +62,6 @@ const priorityConfig = {
   High: { color: "text-destructive", dot: "bg-destructive" },
   Medium: { color: "text-warning", dot: "bg-warning" },
   Low: { color: "text-muted-foreground", dot: "bg-muted-foreground" },
-};
-
-const statusConfig: Record<string, { bg: string; text: string }> = {
-  Backlog: { bg: "bg-muted/50", text: "text-muted-foreground" },
-  Ongoing: { bg: "bg-purple-soft", text: "text-purple-600 dark:text-purple-400" },
-  Blocked: { bg: "bg-warning/15", text: "text-warning" },
-  Completed: { bg: "bg-success/15", text: "text-success" },
-  Failed: { bg: "bg-destructive/15", text: "text-destructive" },
-  // DB value mappings (for display when DB returns these)
-  Pending: { bg: "bg-muted/50", text: "text-muted-foreground" },
 };
 
 export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionChange, groupBy = 'none' }: TasksTableProps) => {
@@ -195,7 +193,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
             order = 99;
           } else {
             groupKey = task.labels[0];
-            const tagDef = TASK_TAGS.find(t => t.value === task.labels[0]);
+            const tagDef = TASK_TAG_OPTIONS.find(t => t.value === task.labels[0]);
             groupLabel = tagDef?.label || task.labels[0];
             order = 0;
           }
@@ -295,14 +293,14 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     return (
       <div className="flex items-center gap-1 flex-wrap">
         {displayTags.map((label) => {
-          const tagDef = TASK_TAGS.find(t => t.value === label);
+          const tagDef = TASK_TAG_OPTIONS.find(t => t.value === label);
           return (
             <Badge
               key={label}
               variant="outline"
               className={cn(
                 "text-metadata px-1.5 py-0 h-5 font-medium border",
-                tagDef?.color || "bg-muted/50 text-muted-foreground border-border"
+                getTagConfig(label).className
               )}
             >
               {tagDef?.label || label}
@@ -333,7 +331,7 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
   const renderTaskRow = (task: any) => {
     const dueDateInfo = getDueDateDisplay(task.due_at, task.status);
     const priority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig.Low;
-    const status = statusConfig[task.status] || statusConfig.Pending;
+    const status = getStatusConfig(task.status);
 
     return (
       <TableRow
@@ -425,14 +423,14 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
           >
             <SelectTrigger className={cn(
               "h-7 w-[90px] text-metadata font-medium rounded-full border-0",
-              status.bg, status.text
+              status.className
             )}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-              {TASK_STATUSES.map((status) => (
-                <SelectItem key={status.value} value={status.dbValue} className="text-body-sm">
-                  {status.label}
+              {TASK_STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.dbValue} className="text-body-sm">
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>
