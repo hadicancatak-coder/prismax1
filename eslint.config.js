@@ -7,46 +7,61 @@ import tseslint from "typescript-eslint";
 // =============================================================================
 // PRISMA DESIGN SYSTEM - ESLint Token Enforcement
 // =============================================================================
-// These rules prevent raw Tailwind classes and enforce semantic tokens.
+// HARD RULES = "error" (blocks build)
+// SOFT RULES = "warn" (review-level guidance)
 // See STYLE_GUIDE.md for the complete token reference.
 // =============================================================================
 
-// Banned patterns with their correct replacements
-const BANNED_PATTERNS = {
-  // Typography - Use semantic text tokens instead
+// HARD RULES - These MUST be enforced (error level)
+const HARD_RULES = {
+  // Typography - Use semantic text tokens
   typography: {
     pattern: "\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b",
-    message: "Use semantic typography tokens: text-metadata, text-body-sm, text-body, text-heading-sm, text-heading-md, text-heading-lg, text-page-title",
+    message: "[HARD] Use semantic typography: text-metadata, text-body-sm, text-body, text-heading-sm, text-heading-md, text-heading-lg, text-page-title",
   },
-  // Gap spacing - Use semantic gap tokens instead
+  // Gap spacing
   gap: {
     pattern: "\\bgap-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b",
-    message: "Use semantic gap tokens: gap-xs (4px), gap-sm (8px), gap-md (16px), gap-lg (24px), gap-xl (32px)",
+    message: "[HARD] Use semantic gap: gap-xs (4px), gap-sm (8px), gap-md (16px), gap-lg (24px), gap-xl (32px)",
   },
-  // Space-y/x - Use semantic spacing instead
-  spaceY: {
+  // Space-y/x utilities
+  spaceYX: {
     pattern: "\\bspace-[xy]-(0|1|2|3|4|5|6|8|10|12)\\b",
-    message: "Use semantic spacing: space-y-xs, space-y-sm, space-y-md, space-y-lg or gap tokens",
+    message: "[HARD] Use semantic spacing: space-y-xs, space-y-sm, space-y-md, space-y-lg or gap tokens",
   },
-  // Padding - Use semantic padding tokens
+  // Padding utilities
   padding: {
     pattern: "\\bp[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b",
-    message: "Use semantic padding: p-xs (4px), p-sm (8px), p-md (16px), p-lg (24px), p-card (16px)",
+    message: "[HARD] Use semantic padding: p-xs (4px), p-sm (8px), p-md (16px), p-lg (24px), p-card",
   },
-  // Margin - Use semantic margin tokens
+  // Margin utilities
   margin: {
     pattern: "\\bm[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b",
-    message: "Use semantic margin: mt-section, mb-section, mb-card or spacing tokens",
+    message: "[HARD] Use semantic margin: mt-section, mb-section, mb-card or spacing tokens",
   },
-  // Hardcoded colors - Use semantic color tokens
+  // Hardcoded grayscale colors
   hardcodedColors: {
     pattern: "\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+|neutral-\\d+|stone-\\d+)\\b",
-    message: "Use semantic color tokens: text-foreground, text-muted-foreground, bg-background, bg-card, bg-muted, border-border",
+    message: "[HARD] Use semantic colors: text-foreground, text-muted-foreground, bg-background, bg-card, bg-muted, border-border",
   },
-  // Raw color values - Use HSL semantic tokens
-  rawColors: {
-    pattern: "\\b(text|bg|border)-\\[(#[0-9a-fA-F]{3,8}|rgb|rgba|hsl)\\b",
-    message: "Use semantic color tokens from index.css. No arbitrary color values allowed.",
+  // Arbitrary hex/rgb colors
+  arbitraryColors: {
+    pattern: "\\b(text|bg|border)-\\[(#[0-9a-fA-F]{3,8}|rgb|rgba)\\b",
+    message: "[HARD] Use semantic color tokens from index.css. No arbitrary color values.",
+  },
+};
+
+// SOFT RULES - Review-level guidance (warn level)
+const SOFT_RULES = {
+  // Arbitrary dimension values (may have valid exceptions)
+  arbitraryDimensions: {
+    pattern: "\\b[wh]-\\[\\d+px\\]\\b",
+    message: "[SOFT] Avoid arbitrary dimensions like w-[123px]. Use semantic sizing or document exception.",
+  },
+  // Leading/tracking utilities
+  leadingTracking: {
+    pattern: "\\b(leading|tracking)-(none|tight|snug|normal|relaxed|loose|\\d+)\\b",
+    message: "[SOFT] Prefer semantic typography tokens which include proper line-height/letter-spacing.",
   },
 };
 
@@ -69,40 +84,91 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       
       // =======================================================================
-      // PRISMA TOKEN ENFORCEMENT RULES
+      // HARD RULES - ERROR LEVEL (blocks build)
       // =======================================================================
-      // These rules are set to "warn" to show violations without blocking builds.
-      // When ready to enforce strictly, change "warn" to "error".
-      // =======================================================================
-      
-      // Ban raw typography classes
       "no-restricted-syntax": [
-        "warn",
+        "error",
+        // Typography
         {
           selector: "Literal[value=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
-          message: BANNED_PATTERNS.typography.message,
+          message: HARD_RULES.typography.message,
         },
         {
           selector: "TemplateElement[value.raw=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
-          message: BANNED_PATTERNS.typography.message,
+          message: HARD_RULES.typography.message,
         },
+        // Gap
         {
           selector: "Literal[value=/\\bgap-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
-          message: BANNED_PATTERNS.gap.message,
+          message: HARD_RULES.gap.message,
         },
         {
           selector: "TemplateElement[value.raw=/\\bgap-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
-          message: BANNED_PATTERNS.gap.message,
+          message: HARD_RULES.gap.message,
+        },
+        // Space-y/x
+        {
+          selector: "Literal[value=/\\bspace-[xy]-(0|1|2|3|4|5|6|8|10|12)\\b/]",
+          message: HARD_RULES.spaceYX.message,
         },
         {
-          selector: "Literal[value=/\\b(text|bg|border)-(white|black|gray-\\d+)\\b/]",
-          message: BANNED_PATTERNS.hardcodedColors.message,
+          selector: "TemplateElement[value.raw=/\\bspace-[xy]-(0|1|2|3|4|5|6|8|10|12)\\b/]",
+          message: HARD_RULES.spaceYX.message,
+        },
+        // Padding
+        {
+          selector: "Literal[value=/\\bp[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
+          message: HARD_RULES.padding.message,
         },
         {
-          selector: "TemplateElement[value.raw=/\\b(text|bg|border)-(white|black|gray-\\d+)\\b/]",
-          message: BANNED_PATTERNS.hardcodedColors.message,
+          selector: "TemplateElement[value.raw=/\\bp[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
+          message: HARD_RULES.padding.message,
+        },
+        // Margin
+        {
+          selector: "Literal[value=/\\bm[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
+          message: HARD_RULES.margin.message,
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\bm[xytblr]?-(0|1|2|3|4|5|6|8|10|12|16|20|24)\\b/]",
+          message: HARD_RULES.margin.message,
+        },
+        // Hardcoded colors
+        {
+          selector: "Literal[value=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
+          message: HARD_RULES.hardcodedColors.message,
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
+          message: HARD_RULES.hardcodedColors.message,
+        },
+        // Arbitrary colors
+        {
+          selector: "Literal[value=/\\b(text|bg|border)-\\[(#[0-9a-fA-F]{3,8}|rgb|rgba)\\b/]",
+          message: HARD_RULES.arbitraryColors.message,
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\b(text|bg|border)-\\[(#[0-9a-fA-F]{3,8}|rgb|rgba)\\b/]",
+          message: HARD_RULES.arbitraryColors.message,
         },
       ],
+    },
+  },
+  // =======================================================================
+  // SOFT RULES - WARN LEVEL (separate config block)
+  // =======================================================================
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      // These are separate so they don't escalate to error
+      // Currently disabled to avoid noise - enable when ready
+      // "no-restricted-syntax": [
+      //   "warn",
+      //   {
+      //     selector: "Literal[value=/\\b[wh]-\\[\\d+px\\]\\b/]",
+      //     message: SOFT_RULES.arbitraryDimensions.message,
+      //   },
+      // ],
     },
   },
 );
