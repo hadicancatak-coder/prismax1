@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, Trash2, CheckCircle, Copy, Loader2, AlertTriangle, Circle } from "lucide-react";
+import { MoreVertical, Trash2, CheckCircle, Copy, Loader2, AlertTriangle, Circle, ChevronDown, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +36,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { format, isToday, isTomorrow, isPast, differenceInDays } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { format, isToday, isTomorrow, isPast, differenceInDays, isThisWeek, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TASK_TAGS } from "@/lib/constants";
 
@@ -45,6 +46,7 @@ interface TasksTableProps {
   onTaskUpdate: () => void;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  groupBy?: 'none' | 'dueDate' | 'priority' | 'assignee' | 'tags';
 }
 
 const priorityConfig = {
@@ -62,7 +64,7 @@ const statusConfig: Record<string, { bg: string; text: string }> = {
   Failed: { bg: "bg-destructive/15", text: "text-destructive" },
 };
 
-export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionChange }: TasksTableProps) => {
+export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionChange, groupBy = 'none' }: TasksTableProps) => {
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const queryClient = useQueryClient();
@@ -107,6 +109,9 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     },
   });
 
+  // Collapsed groups state
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     fetchProfiles();
   }, []);
@@ -114,6 +119,114 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
   const fetchProfiles = async () => {
     const { data } = await supabase.from("profiles").select("user_id, name, avatar_url");
     setProfiles(data || []);
+  };
+
+  // Group tasks based on groupBy prop
+  const groupedTasks = useMemo(() => {
+    if (groupBy === 'none') return null;
+
+    const groups: Record<string, { label: string; tasks: any[]; order: number }> = {};
+
+    tasks.forEach((task) => {
+      let groupKey: string;
+      let groupLabel: string;
+      let order: number = 0;
+
+      switch (groupBy) {
+        case 'dueDate':
+          if (!task.due_at) {
+            groupKey = 'no-date';
+            groupLabel = 'No Due Date';
+            order = 99;
+          } else {
+            const dueDate = new Date(task.due_at);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (isPast(dueDate) && !isToday(dueDate)) {
+              groupKey = 'overdue';
+              groupLabel = 'Overdue';
+              order = 0;
+            } else if (isToday(dueDate)) {
+              groupKey = 'today';
+              groupLabel = 'Today';
+              order = 1;
+            } else if (isTomorrow(dueDate)) {
+              groupKey = 'tomorrow';
+              groupLabel = 'Tomorrow';
+              order = 2;
+            } else if (isThisWeek(dueDate)) {
+              groupKey = 'this-week';
+              groupLabel = 'This Week';
+              order = 3;
+            } else {
+              groupKey = 'later';
+              groupLabel = 'Later';
+              order = 4;
+            }
+          }
+          break;
+
+        case 'priority':
+          groupKey = task.priority || 'Low';
+          groupLabel = task.priority || 'Low';
+          order = task.priority === 'High' ? 0 : task.priority === 'Medium' ? 1 : 2;
+          break;
+
+        case 'assignee':
+          if (!task.assignees || task.assignees.length === 0) {
+            groupKey = 'unassigned';
+            groupLabel = 'Unassigned';
+            order = 99;
+          } else {
+            const assigneeName = task.assignees[0]?.name || 'Unknown';
+            groupKey = assigneeName;
+            groupLabel = assigneeName;
+            order = 0;
+          }
+          break;
+
+        case 'tags':
+          if (!task.labels || task.labels.length === 0) {
+            groupKey = 'untagged';
+            groupLabel = 'Untagged';
+            order = 99;
+          } else {
+            groupKey = task.labels[0];
+            const tagDef = TASK_TAGS.find(t => t.value === task.labels[0]);
+            groupLabel = tagDef?.label || task.labels[0];
+            order = 0;
+          }
+          break;
+
+        default:
+          groupKey = 'default';
+          groupLabel = 'Tasks';
+          order = 0;
+      }
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = { label: groupLabel, tasks: [], order };
+      }
+      groups[groupKey].tasks.push(task);
+    });
+
+    // Sort groups by order
+    return Object.entries(groups)
+      .sort(([, a], [, b]) => a.order - b.order)
+      .map(([key, value]) => ({ key, ...value }));
+  }, [tasks, groupBy]);
+
+  const toggleGroup = (groupKey: string) => {
+    setCollapsedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupKey)) {
+        newSet.delete(groupKey);
+      } else {
+        newSet.add(groupKey);
+      }
+      return newSet;
+    });
   };
 
   const isOverdue = (dueDate: string | null, status: string) => {
@@ -214,6 +327,303 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
     }
   };
 
+  // Render a single task row
+  const renderTaskRow = (task: any) => {
+    const dueDateInfo = getDueDateDisplay(task.due_at, task.status);
+    const priority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig.Low;
+    const status = statusConfig[task.status] || statusConfig.Pending;
+
+    return (
+      <TableRow
+        key={task.id}
+        className={cn(
+          "cursor-pointer h-16",
+          getRowClasses(task),
+          task.pending_approval && 'border-l-4 border-l-primary'
+        )}
+        onClick={() => handleRowClick(task.id)}
+      >
+        <TableCell className="py-5 px-4" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selectedIds?.includes(task.id) || false}
+            onCheckedChange={(checked) => {
+              onSelectionChange?.(
+                checked 
+                  ? [...(selectedIds || []), task.id]
+                  : (selectedIds || []).filter(id => id !== task.id)
+              );
+            }}
+          />
+        </TableCell>
+        <TableCell
+          className="py-5 px-4"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            setEditingTaskId(task.id);
+            setEditValue(task.title);
+          }}
+        >
+          {editingTaskId === task.id ? (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={async () => {
+                await supabase.from('tasks').update({ title: editValue }).eq('id', task.id);
+                setEditingTaskId(null);
+                onTaskUpdate();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+                if (e.key === 'Escape') setEditingTaskId(null);
+              }}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              className="border-border"
+            />
+          ) : (
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Circle className={cn("h-2.5 w-2.5 flex-shrink-0 fill-current", priority.dot, priority.color)} />
+                {isOverdue(task.due_at, task.status) && (
+                  <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                )}
+                <span className="text-body-sm font-medium text-foreground truncate">{task.title}</span>
+                {task.pending_approval && (
+                  <Badge variant="default" className="text-metadata px-2 py-0 h-5 flex-shrink-0">
+                    Pending
+                  </Badge>
+                )}
+                {task.comments_count > 0 && (
+                  <Badge variant="outline" className="text-metadata px-1.5 py-0 h-5 flex items-center gap-1 flex-shrink-0 border-border">
+                    <span>💬</span>
+                    <span>{task.comments_count}</span>
+                  </Badge>
+                )}
+              </div>
+              {/* Description preview */}
+              {task.description && (
+                <span className="text-metadata text-muted-foreground truncate max-w-[280px]">
+                  {task.description.replace(/<[^>]*>/g, '').substring(0, 50)}
+                  {task.description.length > 50 ? '...' : ''}
+                </span>
+              )}
+            </div>
+          )}
+        </TableCell>
+        <TableCell className="py-5 px-3">
+          {getTagBadges(task.labels)}
+        </TableCell>
+        <TableCell className="py-5 px-3" onClick={(e) => e.stopPropagation()}>
+          <Select
+            value={task.status}
+            onValueChange={(newStatus: any) => {
+              updateStatus.mutate({ id: task.id, status: newStatus });
+            }}
+            disabled={updateStatus.isPending}
+          >
+            <SelectTrigger className={cn(
+              "h-7 w-[90px] text-metadata font-medium rounded-full border-0",
+              status.bg, status.text
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
+              <SelectItem value="Backlog" className="text-body-sm">Backlog</SelectItem>
+              <SelectItem value="Pending" className="text-body-sm">Pending</SelectItem>
+              <SelectItem value="Ongoing" className="text-body-sm">Ongoing</SelectItem>
+              <SelectItem value="Completed" className="text-body-sm">Completed</SelectItem>
+              <SelectItem value="Failed" className="text-body-sm">Failed</SelectItem>
+              <SelectItem value="Blocked" className="text-body-sm">Blocked</SelectItem>
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell className="hidden md:table-cell py-5 px-3" onClick={(e) => e.stopPropagation()}>
+          <Select
+            value={task.priority}
+            onValueChange={(newPriority: any) => {
+              updatePriority.mutate({ id: task.id, priority: newPriority });
+            }}
+            disabled={updatePriority.isPending}
+          >
+            <SelectTrigger className="h-7 w-[80px] text-metadata rounded-full border-border bg-card">
+              <div className="flex items-center gap-1.5">
+                <Circle className={cn("h-2 w-2 fill-current", priority.dot, priority.color)} />
+                <span>{task.priority}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
+              <SelectItem value="Low" className="text-body-sm">Low</SelectItem>
+              <SelectItem value="Medium" className="text-body-sm">Medium</SelectItem>
+              <SelectItem value="High" className="text-body-sm">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-5 px-3">
+          <div 
+            className="cursor-pointer hover:bg-muted/50 rounded-lg p-1.5 -m-1.5 transition-colors"
+            onClick={() => handleRowClick(task.id)}
+            title="Click to edit assignees"
+          >
+            {task.assignees && task.assignees.length > 0 ? (
+              <div className="flex items-center gap-1.5">
+                {task.assignees.slice(0, 3).map((assignee: any) => (
+                  <Avatar key={assignee.id} className="h-7 w-7 border-2 border-background">
+                    <AvatarImage src={assignee.avatar_url} />
+                    <AvatarFallback className="text-metadata bg-muted text-muted-foreground">
+                      {assignee.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {task.assignees.length > 3 && (
+                  <span className="text-metadata text-muted-foreground ml-0.5">
+                    +{task.assignees.length - 3}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-body-sm text-muted-foreground hover:text-foreground">+ Add</span>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="py-5 px-3" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="cursor-pointer hover:bg-muted/50 rounded-lg p-1.5 -m-1.5 transition-colors"
+            onClick={() => handleRowClick(task.id)}
+            title="Click to edit due date"
+          >
+            {dueDateInfo ? (
+              <div className={cn("flex flex-col", dueDateInfo.colorClass)}>
+                <span className="text-body-sm font-medium">{dueDateInfo.label}</span>
+                {dueDateInfo.subLabel && (
+                  <span className="text-metadata">{dueDateInfo.subLabel}</span>
+                )}
+              </div>
+            ) : (
+              <span className="text-body-sm text-muted-foreground">No date</span>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="py-5 px-2" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu open={openDropdownId === task.id} onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setProcessingTaskId(task.id);
+                  setProcessingAction('complete');
+                  completeTask.mutate(task.id, {
+                    onSettled: () => {
+                      setProcessingTaskId(null);
+                      setProcessingAction(null);
+                    }
+                  });
+                }}
+                disabled={processingTaskId !== null}
+              >
+                {processingTaskId === task.id && processingAction === 'complete' ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Completing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark Completed
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setProcessingTaskId(task.id);
+                  setProcessingAction('duplicate');
+                  try {
+                    const { data: newTask, error } = await supabase
+                      .from('tasks')
+                      .insert({
+                        title: `${task.title} (Copy)`,
+                        description: task.description,
+                        priority: task.priority,
+                        status: 'Pending',
+                        due_at: task.due_at,
+                        labels: task.labels,
+                        entity: task.entity,
+                        created_by: user?.id,
+                      })
+                      .select()
+                      .single();
+                    
+                    if (error) throw error;
+                    
+                    // Copy assignees
+                    if (task.assignees?.length > 0) {
+                      const { data: creatorProfile } = await supabase
+                        .from("profiles")
+                        .select("id")
+                        .eq("user_id", user!.id)
+                        .single();
+                        
+                      if (creatorProfile) {
+                        await supabase.from('task_assignees').insert(
+                          task.assignees.map((a: any) => ({
+                            task_id: newTask.id,
+                            user_id: a.id,
+                            assigned_by: creatorProfile.id,
+                          }))
+                        );
+                      }
+                    }
+                    
+                    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                    toast({ title: "Task duplicated successfully" });
+                  } catch (error: any) {
+                    toast({ title: "Error duplicating task", description: error.message, variant: "destructive" });
+                  } finally {
+                    setProcessingTaskId(null);
+                    setProcessingAction(null);
+                    setOpenDropdownId(null);
+                  }
+                }}
+                disabled={processingTaskId !== null}
+              >
+                {processingTaskId === task.id && processingAction === 'duplicate' ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Duplicating...
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(task.id);
+                }}
+                disabled={processingTaskId !== null}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
     <>
       <div className="w-full overflow-hidden">
@@ -238,315 +648,40 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
-            {tasks.map((task) => {
-              const dueDateInfo = getDueDateDisplay(task.due_at, task.status);
-              const priority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig.Low;
-              const status = statusConfig[task.status] || statusConfig.Pending;
-
-              return (
-                <TableRow
-                  key={task.id}
-                  className={cn(
-                    "cursor-pointer h-16",
-                    getRowClasses(task),
-                    task.pending_approval && 'border-l-4 border-l-primary'
-                  )}
-                  onClick={() => handleRowClick(task.id)}
-                >
-                  <TableCell className="py-5 px-4" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedIds?.includes(task.id) || false}
-                      onCheckedChange={(checked) => {
-                        onSelectionChange?.(
-                          checked 
-                            ? [...(selectedIds || []), task.id]
-                            : (selectedIds || []).filter(id => id !== task.id)
-                        );
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell
-                    className="py-5 px-4"
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      setEditingTaskId(task.id);
-                      setEditValue(task.title);
-                    }}
-                  >
-                    {editingTaskId === task.id ? (
-                      <Input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={async () => {
-                          await supabase.from('tasks').update({ title: editValue }).eq('id', task.id);
-                          setEditingTaskId(null);
-                          onTaskUpdate();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') e.currentTarget.blur();
-                          if (e.key === 'Escape') setEditingTaskId(null);
-                        }}
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                        className="border-border"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Circle className={cn("h-2.5 w-2.5 flex-shrink-0 fill-current", priority.dot, priority.color)} />
-                        {isOverdue(task.due_at, task.status) && (
-                          <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
-                        )}
-                        <span className="text-body-sm font-medium text-foreground truncate">{task.title}</span>
-                        {task.pending_approval && (
-                          <Badge variant="default" className="text-metadata px-2 py-0 h-5 flex-shrink-0">
-                            Pending
-                          </Badge>
-                        )}
-                        {task.comments_count > 0 && (
-                          <Badge variant="outline" className="text-metadata px-1.5 py-0 h-5 flex items-center gap-1 flex-shrink-0 border-border">
-                            <span>💬</span>
-                            <span>{task.comments_count}</span>
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-5 px-3">
-                    {getTagBadges(task.labels)}
-                  </TableCell>
-                  <TableCell className="py-5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <Select
-                      value={task.status}
-                      onValueChange={(newStatus: any) => {
-                        updateStatus.mutate({ id: task.id, status: newStatus });
-                      }}
-                      disabled={updateStatus.isPending}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-7 w-[90px] text-metadata font-medium rounded-full border-0",
-                        status.bg, status.text
-                      )}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-                        <SelectItem value="Backlog" className="text-body-sm">Backlog</SelectItem>
-                        <SelectItem value="Pending" className="text-body-sm">Pending</SelectItem>
-                        <SelectItem value="Ongoing" className="text-body-sm">Ongoing</SelectItem>
-                        <SelectItem value="Completed" className="text-body-sm">Completed</SelectItem>
-                        <SelectItem value="Failed" className="text-body-sm">Failed</SelectItem>
-                        <SelectItem value="Blocked" className="text-body-sm">Blocked</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell py-5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <Select
-                      value={task.priority}
-                      onValueChange={(newPriority: any) => {
-                        updatePriority.mutate({ id: task.id, priority: newPriority });
-                      }}
-                      disabled={updatePriority.isPending}
-                    >
-                      <SelectTrigger className="h-7 w-[80px] text-metadata rounded-full border-border bg-card">
-                        <div className="flex items-center gap-1.5">
-                          <Circle className={cn("h-2 w-2 fill-current", priority.dot, priority.color)} />
-                          <span>{task.priority}</span>
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-                        <SelectItem value="Low" className="text-body-sm">Low</SelectItem>
-                        <SelectItem value="Medium" className="text-body-sm">Medium</SelectItem>
-                        <SelectItem value="High" className="text-body-sm">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()} className="hidden lg:table-cell py-5 px-3">
-                    <div 
-                      className="cursor-pointer hover:bg-muted/50 rounded-lg p-1.5 -m-1.5 transition-colors"
-                      onClick={() => handleRowClick(task.id)}
-                      title="Click to edit assignees"
-                    >
-                      {task.assignees && task.assignees.length > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          {task.assignees.slice(0, 3).map((assignee: any) => (
-                            <Avatar key={assignee.id} className="h-7 w-7 border-2 border-background">
-                              <AvatarImage src={assignee.avatar_url} />
-                              <AvatarFallback className="text-metadata bg-muted text-muted-foreground">
-                                {assignee.name?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          ))}
-                          {task.assignees.length > 3 && (
-                            <span className="text-metadata text-muted-foreground ml-0.5">
-                              +{task.assignees.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-body-sm text-muted-foreground hover:text-foreground">+ Add</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <div 
-                      className="cursor-pointer hover:bg-muted/50 rounded-lg p-1.5 -m-1.5 transition-colors"
-                      onClick={() => handleRowClick(task.id)}
-                      title="Click to edit due date"
-                    >
-                      {dueDateInfo ? (
-                        <div className={cn("flex flex-col", dueDateInfo.colorClass)}>
-                          <span className="text-body-sm font-medium">{dueDateInfo.label}</span>
-                          {dueDateInfo.subLabel && (
-                            <span className="text-metadata opacity-80">{dueDateInfo.subLabel}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-body-sm text-muted-foreground hover:text-foreground">+ Add</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-5 px-2">
-                    <DropdownMenu 
-                      open={openDropdownId === task.id}
-                      onOpenChange={(open) => {
-                        if (!processingTaskId) {
-                          setOpenDropdownId(open ? task.id : null);
-                        }
-                      }}
-                    >
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon-sm" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-xl border-border bg-popover shadow-lg">
-                        <DropdownMenuItem 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setProcessingTaskId(task.id);
-                            setProcessingAction('complete');
-                            
-                            completeTask.mutate(task.id, {
-                              onSuccess: () => {
-                                setProcessingTaskId(null);
-                                setProcessingAction(null);
-                                setOpenDropdownId(null);
-                              },
-                              onError: () => {
-                                setProcessingTaskId(null);
-                                setProcessingAction(null);
-                              }
-                            });
-                          }}
-                          disabled={processingTaskId !== null}
-                        >
-                          {processingTaskId === task.id && processingAction === 'complete' ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Completing...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark Completed
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setProcessingTaskId(task.id);
-                            setProcessingAction('duplicate');
-                            
-                            const { data: originalTask, error: fetchError } = await supabase
-                              .from('tasks')
-                              .select('*')
-                              .eq('id', task.id)
-                              .single();
-                            
-                            if (fetchError) {
-                              toast({
-                                title: "Error",
-                                description: "Failed to fetch task details for duplication",
-                                variant: "destructive"
-                              });
-                              setProcessingTaskId(null);
-                              setProcessingAction(null);
-                              return;
-                            }
-                            
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (!user) {
-                              toast({
-                                title: "Error",
-                                description: "User not found",
-                                variant: "destructive"
-                              });
-                              setProcessingTaskId(null);
-                              setProcessingAction(null);
-                              return;
-                            }
-                            
-                            const { id, created_at, updated_at, ...taskData } = originalTask;
-                            const { error: insertError } = await supabase
-                              .from('tasks')
-                              .insert({
-                                ...taskData,
-                                title: `${task.title} (Copy)`,
-                                created_by: user.id,
-                              });
-                            
-                            if (insertError) {
-                              toast({
-                                title: "Error",
-                                description: "Failed to duplicate task",
-                                variant: "destructive"
-                              });
-                            } else {
-                              toast({
-                                title: "Success",
-                                description: "Task duplicated successfully"
-                              });
-                              onTaskUpdate();
-                            }
-                            
-                            setProcessingTaskId(null);
-                            setProcessingAction(null);
-                            setOpenDropdownId(null);
-                          }}
-                          disabled={processingTaskId !== null}
-                        >
-                          {processingTaskId === task.id && processingAction === 'duplicate' ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Duplicating...
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setShowDeleteConfirm(task.id);
-                          }}
-                          disabled={processingTaskId !== null}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {groupBy !== 'none' && groupedTasks ? (
+              // Grouped view
+              groupedTasks.map((group) => (
+                <Collapsible key={group.key} open={!collapsedGroups.has(group.key)} onOpenChange={() => toggleGroup(group.key)} asChild>
+                  <>
+                    <CollapsibleTrigger asChild>
+                      <TableRow className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-y border-border">
+                        <TableCell colSpan={8} className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            {collapsedGroups.has(group.key) ? (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span className="font-semibold text-body-sm">{group.label}</span>
+                            <Badge variant="secondary" className="text-metadata">
+                              {group.tasks.length}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent asChild>
+                      <>
+                        {group.tasks.map((task) => renderTaskRow(task))}
+                      </>
+                    </CollapsibleContent>
+                  </>
+                </Collapsible>
+              ))
+            ) : (
+              // Flat view
+              tasks.map((task) => renderTaskRow(task))
+            )}
           </TableBody>
         </Table>
       </div>

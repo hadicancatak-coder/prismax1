@@ -1,18 +1,18 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw, Tag } from "lucide-react";
+import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw, Tag, User, Layers } from "lucide-react";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { AssigneeFilterBar } from "@/components/AssigneeFilterBar";
 import { TaskDateFilterBar } from "@/components/TaskDateFilterBar";
 import { StatusMultiSelect } from "@/components/tasks/StatusMultiSelect";
-// TaskGridView removed
 import { TaskBoardView } from "@/components/tasks/TaskBoardView";
 import { FilteredTasksDialog } from "@/components/tasks/FilteredTasksDialog";
-import { PageContainer, PageHeader, AlertBanner, DataCard, EmptyState, FilterBar } from "@/components/layout";
+import { PageContainer, PageHeader, DataCard, EmptyState, FilterBar } from "@/components/layout";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -23,8 +23,10 @@ import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
 import { exportTasksToCSV } from "@/lib/taskExport";
 import { supabase } from "@/integrations/supabase/client";
 import { isTaskOverdue } from "@/lib/overdueHelpers";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Tasks() {
+  const { user } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -35,9 +37,6 @@ export default function Tasks() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban-status' | 'kanban-date' | 'kanban-tags'>('table');
   const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date' | 'tags'>('status');
-  const [overdueAlertDismissed, setOverdueAlertDismissed] = useState(() => {
-    return sessionStorage.getItem('overdueAlertDismissed') === 'true';
-  });
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,6 +44,8 @@ export default function Tasks() {
   const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
   const [filteredDialogType, setFilteredDialogType] = useState<'all' | 'overdue' | 'ongoing' | 'completed'>('all');
   const [hideRecurring, setHideRecurring] = useState(true);
+  const [showMyTasks, setShowMyTasks] = useState(false);
+  const [tableGroupBy, setTableGroupBy] = useState<'none' | 'dueDate' | 'priority' | 'assignee' | 'tags'>('none');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   useEffect(() => {
@@ -72,6 +73,12 @@ export default function Tasks() {
 
   const filteredTasks = useMemo(() => {
     return (data || []).filter((task: any) => {
+      // My Tasks filter
+      if (showMyTasks && user) {
+        const isMyTask = task.assignees?.some((assignee: any) => assignee.user_id === user.id);
+        if (!isMyTask) return false;
+      }
+      
       const assigneeMatch = selectedAssignees.length === 0 || task.assignees?.some((assignee: any) => selectedAssignees.includes(assignee.user_id));
       let dateMatch = true;
       if (dateFilter) {
@@ -84,7 +91,7 @@ export default function Tasks() {
       const recurringMatch = !hideRecurring || task.task_type !== 'recurring';
       return assigneeMatch && dateMatch && statusMatch && tagsMatch && searchMatch && recurringMatch;
     });
-  }, [data, selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch, hideRecurring]);
+  }, [data, selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch, hideRecurring, showMyTasks, user]);
 
   const finalFilteredTasks = useMemo(() => {
     if (activeQuickFilter) {
@@ -97,8 +104,16 @@ export default function Tasks() {
   useEffect(() => { setCurrentPage(1); }, [selectedAssignees, dateFilter, statusFilters, selectedTags, debouncedSearch, activeQuickFilter]);
 
   const tasks = data || [];
-  const hasActiveFilters = selectedAssignees.length > 0 || selectedTags.length > 0 || dateFilter || statusFilters.length !== 4 || activeQuickFilter || searchQuery;
-  const overdueCount = finalFilteredTasks.filter(task => isTaskOverdue(task)).length;
+  const hasActiveFilters = selectedAssignees.length > 0 || selectedTags.length > 0 || dateFilter || statusFilters.length !== 4 || activeQuickFilter || searchQuery || showMyTasks;
+  
+  // Count my tasks for the button badge
+  const myTasksCount = useMemo(() => {
+    if (!user || !data) return 0;
+    return data.filter((task: any) => 
+      task.assignees?.some((assignee: any) => assignee.user_id === user.id) &&
+      task.status !== 'Completed' && task.status !== 'Failed'
+    ).length;
+  }, [data, user]);
 
   if (isLoading) {
     return (
@@ -114,6 +129,7 @@ export default function Tasks() {
     setSelectedAssignees([]); setSelectedTags([]); setDateFilter(null);
     setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
     setActiveQuickFilter(null); setSearchQuery(""); setSelectedTaskIds([]);
+    setShowMyTasks(false); setTableGroupBy('none');
   };
 
   const handleQuickFilter = (filterLabel: string) => {
@@ -155,6 +171,21 @@ export default function Tasks() {
 
         {/* Toolbar - Unified filter bar */}
         <FilterBar search={{ value: searchQuery, onChange: setSearchQuery, placeholder: "Search tasks..." }}>
+          {/* My Tasks Quick Filter */}
+          <Button
+            variant={showMyTasks ? "default" : "outline"}
+            onClick={() => setShowMyTasks(!showMyTasks)}
+            className="gap-2"
+          >
+            <User className="h-4 w-4" />
+            My Tasks
+            {myTasksCount > 0 && (
+              <Badge variant={showMyTasks ? "secondary" : "default"} className="ml-1 h-5 px-1.5 text-metadata">
+                {myTasksCount}
+              </Badge>
+            )}
+          </Button>
+
           <StatusMultiSelect value={statusFilters} onChange={setStatusFilters} />
           
           <Select value={selectedTags.length > 0 ? "selected" : "all"} onValueChange={(value) => { if (value === "all") setSelectedTags([]); }}>
@@ -183,6 +214,23 @@ export default function Tasks() {
             <RefreshCw className="h-4 w-4 mr-2" />
             {hideRecurring ? "Show Recurring" : "Hide Recurring"}
           </Button>
+
+          {/* Table Grouping - only show in table view */}
+          {viewMode === 'table' && (
+            <Select value={tableGroupBy} onValueChange={(v: any) => setTableGroupBy(v)}>
+              <SelectTrigger className="w-[130px]">
+                <Layers className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Group by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Grouping</SelectItem>
+                <SelectItem value="dueDate">Due Date</SelectItem>
+                <SelectItem value="priority">Priority</SelectItem>
+                <SelectItem value="assignee">Assignee</SelectItem>
+                <SelectItem value="tags">Tags</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           <div className="ml-auto flex gap-1 flex-shrink-0 bg-card p-1 rounded-lg border border-border">
             {[
@@ -218,20 +266,6 @@ export default function Tasks() {
             </Button>
             <span className="text-body-sm text-muted-foreground">Showing {finalFilteredTasks.length} of {data?.length || 0} tasks</span>
           </div>
-        )}
-
-        {/* Overdue Alert */}
-        {overdueCount > 0 && !overdueAlertDismissed && (
-          <AlertBanner 
-            variant="error" 
-            title="Overdue Tasks"
-            onDismiss={() => {
-              setOverdueAlertDismissed(true);
-              sessionStorage.setItem('overdueAlertDismissed', 'true');
-            }}
-          >
-            You have {overdueCount} overdue task{overdueCount !== 1 ? 's' : ''} that need attention
-          </AlertBanner>
         )}
 
         {/* Task Views */}
@@ -276,7 +310,7 @@ export default function Tasks() {
                       finalFilteredTasks.length > 100 ? (
                         <TasksTableVirtualized tasks={finalFilteredTasks} onTaskUpdate={refetch} />
                       ) : (
-                        <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} selectedIds={selectedTaskIds} onSelectionChange={setSelectedTaskIds} />
+                        <TasksTable tasks={paginatedTasks} onTaskUpdate={refetch} selectedIds={selectedTaskIds} onSelectionChange={setSelectedTaskIds} groupBy={tableGroupBy} />
                       )
                     )}
                     {/* Grid view removed */}
