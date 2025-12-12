@@ -39,7 +39,8 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, isToday, isTomorrow, isPast, differenceInDays, isThisWeek, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TASK_TAGS } from "@/lib/constants";
+import { TASK_STATUSES, TASK_TAGS } from "@/lib/constants";
+import { mapStatusToDb, mapStatusToUi } from "@/lib/taskStatusMapper";
 
 interface TasksTableProps {
   tasks: any[];
@@ -57,11 +58,12 @@ const priorityConfig = {
 
 const statusConfig: Record<string, { bg: string; text: string }> = {
   Backlog: { bg: "bg-muted/50", text: "text-muted-foreground" },
-  Pending: { bg: "bg-info/15", text: "text-info" },
   Ongoing: { bg: "bg-purple-soft", text: "text-purple-600 dark:text-purple-400" },
   Blocked: { bg: "bg-warning/15", text: "text-warning" },
   Completed: { bg: "bg-success/15", text: "text-success" },
   Failed: { bg: "bg-destructive/15", text: "text-destructive" },
+  // DB value mappings (for display when DB returns these)
+  Pending: { bg: "bg-muted/50", text: "text-muted-foreground" },
 };
 
 export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionChange, groupBy = 'none' }: TasksTableProps) => {
@@ -428,12 +430,11 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-border bg-popover shadow-lg">
-              <SelectItem value="Backlog" className="text-body-sm">Backlog</SelectItem>
-              <SelectItem value="Pending" className="text-body-sm">Pending</SelectItem>
-              <SelectItem value="Ongoing" className="text-body-sm">Ongoing</SelectItem>
-              <SelectItem value="Completed" className="text-body-sm">Completed</SelectItem>
-              <SelectItem value="Failed" className="text-body-sm">Failed</SelectItem>
-              <SelectItem value="Blocked" className="text-body-sm">Blocked</SelectItem>
+              {TASK_STATUSES.map((status) => (
+                <SelectItem key={status.value} value={status.dbValue} className="text-body-sm">
+                  {status.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </TableCell>

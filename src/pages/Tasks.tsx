@@ -18,6 +18,7 @@ import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { TASK_TAGS } from "@/lib/constants";
+import { mapStatusToDb } from "@/lib/taskStatusMapper";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
 import { exportTasksToCSV } from "@/lib/taskExport";
@@ -140,8 +141,9 @@ export default function Tasks() {
 
   const handleBulkComplete = async () => {
     try {
+      const dbStatus = mapStatusToDb('Completed');
       await Promise.all(selectedTaskIds.map(id => 
-        supabase.from('tasks').update({ status: 'Completed' }).eq('id', id)
+        supabase.from('tasks').update({ status: dbStatus as any }).eq('id', id)
       ));
       setSelectedTaskIds([]);
       refetch();
@@ -152,8 +154,9 @@ export default function Tasks() {
 
   const handleBulkStatusChange = async (status: string, blockedReason?: string) => {
     try {
+      const dbStatus = mapStatusToDb(status);
       await Promise.all(selectedTaskIds.map(async (id) => {
-        await supabase.from('tasks').update({ status: status as any }).eq('id', id);
+        await supabase.from('tasks').update({ status: dbStatus as any }).eq('id', id);
         // If blocked and has a reason, add a comment
         if (status === 'Blocked' && blockedReason && user) {
           await supabase.from('comments').insert({
