@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { completeTask, setTaskStatus, completeTasksBulk } from "@/domain";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { useUserAgenda } from "@/hooks/useUserAgenda";
@@ -428,22 +429,17 @@ export default function CalendarView() {
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     // Handle recurring task occurrence
     if (taskId.includes('::')) {
-      const [originalId, dateStr] = taskId.split('::');
-      // For recurring occurrences, we don't update the main task
       toast({ title: "Recurring task", description: "Individual occurrences cannot be marked complete" });
       return;
     }
 
-    const { error } = await supabase
-      .from('tasks')
-      .update({ 
-        status: completed ? 'Completed' : 'Pending',
-        completed_at: completed ? new Date().toISOString() : null
-      })
-      .eq('id', taskId);
+    // Use shared action
+    const result = completed 
+      ? await completeTask(taskId)
+      : await setTaskStatus(taskId, 'Backlog');
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to update task", variant: "destructive" });
+    if (!result.success) {
+      toast({ title: "Error", description: result.error || "Failed to update task", variant: "destructive" });
     } else {
       toast({ title: completed ? "Task completed" : "Task reopened" });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -511,10 +507,20 @@ export default function CalendarView() {
   };
 
   const handleBulkComplete = async () => {
-    for (const taskId of selectedIds) {
-      await handleTaskComplete(taskId, true);
+    const taskIds = Array.from(selectedIds).filter(id => !id.includes('::'));
+    const result = await completeTasksBulk(taskIds);
+    
+    if (!result.success) {
+      toast({ 
+        title: "Some tasks failed", 
+        description: `${result.successCount} completed, ${result.failedCount} failed`,
+        variant: "destructive" 
+      });
+    } else {
+      toast({ title: `${result.successCount} task(s) completed` });
     }
     setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
   const handleBulkRemove = () => {

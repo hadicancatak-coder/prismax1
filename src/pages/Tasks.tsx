@@ -18,16 +18,25 @@ import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { TASK_TAGS } from "@/lib/constants";
-import { mapStatusToDb } from "@/lib/taskStatusMapper";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { TaskBulkActionsBar } from "@/components/tasks/TaskBulkActionsBar";
 import { exportTasksToCSV } from "@/lib/taskExport";
-import { supabase } from "@/integrations/supabase/client";
 import { isTaskOverdue } from "@/lib/overdueHelpers";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { 
+  completeTasksBulk, 
+  setTasksStatusBulk, 
+  deleteTasksBulk, 
+  setPriorityBulk,
+  addTaskComment 
+} from "@/domain";
 
 export default function Tasks() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -140,61 +149,71 @@ export default function Tasks() {
   };
 
   const handleBulkComplete = async () => {
-    try {
-      const dbStatus = mapStatusToDb('Completed');
-      await Promise.all(selectedTaskIds.map(id => 
-        supabase.from('tasks').update({ status: dbStatus as any }).eq('id', id)
-      ));
-      setSelectedTaskIds([]);
-      refetch();
-    } catch (error) {
-      console.error('Bulk complete failed:', error);
+    const result = await completeTasksBulk(selectedTaskIds);
+    if (result.success) {
+      toast({ title: `${result.successCount} task(s) completed`, duration: 2000 });
+    } else {
+      toast({ 
+        title: "Some tasks failed to complete", 
+        description: `${result.successCount} succeeded, ${result.failedCount} failed`,
+        variant: "destructive" 
+      });
     }
+    setSelectedTaskIds([]);
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
   const handleBulkStatusChange = async (status: string, blockedReason?: string) => {
-    try {
-      const dbStatus = mapStatusToDb(status);
-      await Promise.all(selectedTaskIds.map(async (id) => {
-        await supabase.from('tasks').update({ status: dbStatus as any }).eq('id', id);
-        // If blocked and has a reason, add a comment
-        if (status === 'Blocked' && blockedReason && user) {
-          await supabase.from('comments').insert({
-            task_id: id,
-            author_id: user.id,
-            body: `Blocked: ${blockedReason}`
-          });
-        }
-      }));
-      setSelectedTaskIds([]);
-      refetch();
-    } catch (error) {
-      console.error('Bulk status change failed:', error);
+    const result = await setTasksStatusBulk(selectedTaskIds, status, { blocked_reason: blockedReason });
+    
+    // Add comments for blocked tasks if reason provided
+    if (blockedReason && user) {
+      for (const id of selectedTaskIds) {
+        await addTaskComment(id, user.id, `Blocked: ${blockedReason}`);
+      }
     }
+    
+    if (result.success) {
+      toast({ title: `${result.successCount} task(s) updated`, duration: 2000 });
+    } else {
+      toast({ 
+        title: "Some tasks failed to update", 
+        description: `${result.successCount} succeeded, ${result.failedCount} failed`,
+        variant: "destructive" 
+      });
+    }
+    setSelectedTaskIds([]);
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
   const handleBulkPriorityChange = async (priority: string) => {
-    try {
-      await Promise.all(selectedTaskIds.map(id => 
-        supabase.from('tasks').update({ priority: priority as any }).eq('id', id)
-      ));
-      setSelectedTaskIds([]);
-      refetch();
-    } catch (error) {
-      console.error('Bulk priority change failed:', error);
+    const result = await setPriorityBulk(selectedTaskIds, priority as 'Low' | 'Medium' | 'High');
+    if (result.success) {
+      toast({ title: `${result.successCount} task(s) priority updated`, duration: 2000 });
+    } else {
+      toast({ 
+        title: "Some tasks failed to update", 
+        description: `${result.successCount} succeeded, ${result.failedCount} failed`,
+        variant: "destructive" 
+      });
     }
+    setSelectedTaskIds([]);
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
   const handleBulkDelete = async () => {
-    try {
-      await Promise.all(selectedTaskIds.map(id => 
-        supabase.from('tasks').delete().eq('id', id)
-      ));
-      setSelectedTaskIds([]);
-      refetch();
-    } catch (error) {
-      console.error('Bulk delete failed:', error);
+    const result = await deleteTasksBulk(selectedTaskIds);
+    if (result.success) {
+      toast({ title: `${result.successCount} task(s) deleted`, duration: 2000 });
+    } else {
+      toast({ 
+        title: "Some tasks failed to delete", 
+        description: `${result.successCount} succeeded, ${result.failedCount} failed`,
+        variant: "destructive" 
+      });
     }
+    setSelectedTaskIds([]);
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
   const handleBulkExport = () => { const selectedTasks = finalFilteredTasks.filter(t => selectedTaskIds.includes(t.id)); exportTasksToCSV(selectedTasks); };
 
