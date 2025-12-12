@@ -138,10 +138,61 @@ export default function Tasks() {
     else { if (filter?.clearOtherFilters) clearAllFilters(); setActiveQuickFilter(filterLabel); }
   };
 
-  const handleBulkComplete = async () => { await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status: 'Completed' }).eq('id', id))); setSelectedTaskIds([]); refetch(); };
-  const handleBulkStatusChange = async (status: string) => { await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ status: status as any }).eq('id', id))); setSelectedTaskIds([]); refetch(); };
-  const handleBulkPriorityChange = async (priority: string) => { await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').update({ priority: priority as any }).eq('id', id))); setSelectedTaskIds([]); refetch(); };
-  const handleBulkDelete = async () => { await Promise.all(selectedTaskIds.map(id => supabase.from('tasks').delete().eq('id', id))); setSelectedTaskIds([]); refetch(); };
+  const handleBulkComplete = async () => {
+    try {
+      await Promise.all(selectedTaskIds.map(id => 
+        supabase.from('tasks').update({ status: 'Completed' }).eq('id', id)
+      ));
+      setSelectedTaskIds([]);
+      refetch();
+    } catch (error) {
+      console.error('Bulk complete failed:', error);
+    }
+  };
+
+  const handleBulkStatusChange = async (status: string, blockedReason?: string) => {
+    try {
+      await Promise.all(selectedTaskIds.map(async (id) => {
+        await supabase.from('tasks').update({ status: status as any }).eq('id', id);
+        // If blocked and has a reason, add a comment
+        if (status === 'Blocked' && blockedReason && user) {
+          await supabase.from('comments').insert({
+            task_id: id,
+            author_id: user.id,
+            body: `Blocked: ${blockedReason}`
+          });
+        }
+      }));
+      setSelectedTaskIds([]);
+      refetch();
+    } catch (error) {
+      console.error('Bulk status change failed:', error);
+    }
+  };
+
+  const handleBulkPriorityChange = async (priority: string) => {
+    try {
+      await Promise.all(selectedTaskIds.map(id => 
+        supabase.from('tasks').update({ priority: priority as any }).eq('id', id)
+      ));
+      setSelectedTaskIds([]);
+      refetch();
+    } catch (error) {
+      console.error('Bulk priority change failed:', error);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedTaskIds.map(id => 
+        supabase.from('tasks').delete().eq('id', id)
+      ));
+      setSelectedTaskIds([]);
+      refetch();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+    }
+  };
   const handleBulkExport = () => { const selectedTasks = finalFilteredTasks.filter(t => selectedTaskIds.includes(t.id)); exportTasksToCSV(selectedTasks); };
 
   return (
