@@ -74,10 +74,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const [users, setUsers] = useState<any[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   
-  // Blocked reason prompt state
-  const [showBlockedReasonDialog, setShowBlockedReasonDialog] = useState(false);
-  const [blockedReason, setBlockedReason] = useState("");
+  // Blocked/Failed reason prompt state
+  const [showReasonDialog, setShowReasonDialog] = useState(false);
+  const [reasonText, setReasonText] = useState("");
+  const [reasonType, setReasonType] = useState<'blocked' | 'failed' | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  
+  // For backwards compat (used in submit)
+  const blockedReason = reasonType === 'blocked' ? reasonText : "";
+  const failureReason = reasonType === 'failed' ? reasonText : "";
   
   // View/Edit mode specific
   const [task, setTask] = useState<any>(null);
@@ -301,6 +306,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         recurrence_day_of_month: recurrenceDayOfMonth,
         task_type: recurrence !== "none" ? 'recurring' : 'generic',
         visibility: "global" as const,
+        // Include failure_reason if setting to Failed
+        failure_reason: status === "Failed" && failureReason.trim() ? failureReason.trim() : null,
       };
 
       if (isCreate) {
@@ -395,7 +402,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
     setWorkingDaysWarning(null);
     setSidePanelOpen(false);
     setAdvancedOpen(false);
-    setBlockedReason("");
+    setReasonText("");
+    setReasonType(null);
     setPendingStatus(null);
   };
 
@@ -552,7 +560,14 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                         onValueChange={(v: string) => {
                           if (v === "Blocked") {
                             setPendingStatus(v);
-                            setShowBlockedReasonDialog(true);
+                            setReasonType('blocked');
+                            setReasonText("");
+                            setShowReasonDialog(true);
+                          } else if (v === "Failed") {
+                            setPendingStatus(v);
+                            setReasonType('failed');
+                            setReasonText("");
+                            setShowReasonDialog(true);
                           } else {
                             setStatus(v);
                           }
@@ -1090,23 +1105,25 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
         {!isCreate && <BlockerDialog open={blockerDialogOpen} onOpenChange={setBlockerDialogOpen} taskId={taskId || ''} onSuccess={fetchBlocker} />}
         
-        {/* Blocked Reason Dialog */}
-        <Dialog open={showBlockedReasonDialog} onOpenChange={setShowBlockedReasonDialog}>
+        {/* Blocked/Failed Reason Dialog */}
+        <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Blocked Reason</DialogTitle>
+              <DialogTitle>{reasonType === 'failed' ? 'Failure Reason' : 'Blocked Reason'}</DialogTitle>
               <DialogDescription>
-                Please provide a reason why this task is blocked. This will be added as a comment.
+                {reasonType === 'failed' 
+                  ? 'Please provide a reason why this task failed. This will be stored with the task.'
+                  : 'Please provide a reason why this task is blocked. This will be added as a comment.'}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="blocked-reason-input">Reason</Label>
+                <Label htmlFor="reason-input">Reason</Label>
                 <Textarea
-                  id="blocked-reason-input"
-                  value={blockedReason}
-                  onChange={(e) => setBlockedReason(e.target.value)}
-                  placeholder="Explain why the task is blocked..."
+                  id="reason-input"
+                  value={reasonText}
+                  onChange={(e) => setReasonText(e.target.value)}
+                  placeholder={reasonType === 'failed' ? "Explain why the task failed..." : "Explain why the task is blocked..."}
                   rows={3}
                 />
               </div>
@@ -1115,46 +1132,58 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setShowBlockedReasonDialog(false);
+                  setShowReasonDialog(false);
                   setPendingStatus(null);
-                  setBlockedReason("");
+                  setReasonText("");
+                  setReasonType(null);
                 }}
               >
                 Cancel
               </Button>
               <Button 
                 onClick={async () => {
-                  if (!blockedReason.trim()) {
+                  if (!reasonText.trim()) {
                     toast({
                       title: "Required",
-                      description: "Please provide a reason for blocking this task",
+                      description: reasonType === 'failed' 
+                        ? "Please provide a reason for marking this task as failed"
+                        : "Please provide a reason for blocking this task",
                       variant: "destructive",
                     });
                     return;
                   }
                   
                   // Set the status
-                  setStatus(pendingStatus || "Blocked");
+                  setStatus(pendingStatus || (reasonType === 'failed' ? "Failed" : "Blocked"));
                   
-                  // If we have a taskId (editing existing task), add the comment immediately
+                  // If we have a taskId (editing existing task), handle appropriately
                   if (taskId && !isCreate) {
-                    await supabase.from("comments").insert({
-                      task_id: taskId,
-                      author_id: user!.id,
-                      body: `🚫 **Blocked:** ${blockedReason.trim()}`,
-                    });
-                    fetchComments();
-                    setBlockedReason(""); // Clear only for edit mode
+                    if (reasonType === 'blocked') {
+                      // Add blocked reason as comment
+                      await supabase.from("comments").insert({
+                        task_id: taskId,
+                        author_id: user!.id,
+                        body: `🚫 **Blocked:** ${reasonText.trim()}`,
+                      });
+                      fetchComments();
+                    } else if (reasonType === 'failed') {
+                      // Store failure_reason in the task
+                      await supabase.from("tasks").update({
+                        failure_reason: reasonText.trim(),
+                      }).eq("id", taskId);
+                    }
+                    setReasonText("");
+                    setReasonType(null);
                   }
-                  // For create mode, keep blockedReason so it can be added after task creation
+                  // For create mode, keep reasonText so it can be added after task creation
                   
                   // Close dialog
-                  setShowBlockedReasonDialog(false);
+                  setShowReasonDialog(false);
                   setPendingStatus(null);
                 }}
-                disabled={!blockedReason.trim()}
+                disabled={!reasonText.trim()}
               >
-                Set as Blocked
+                {reasonType === 'failed' ? 'Set as Failed' : 'Set as Blocked'}
               </Button>
             </DialogFooter>
           </DialogContent>
