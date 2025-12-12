@@ -52,6 +52,37 @@
 
 ---
 
+## Rule Classification (HARD vs SOFT)
+
+Rules are classified by enforcement level:
+
+### 🔴 HARD RULES (Build/Lint Enforcement)
+
+These rules MUST be enforced via ESLint warnings and will eventually become build errors:
+
+| Rule | Category | Enforcement |
+|------|----------|-------------|
+| No raw typography (`text-sm`, `text-lg`, etc.) | Typography | ESLint warn |
+| No raw spacing (`gap-4`, `p-6`, `space-y-4`) | Spacing | ESLint warn |
+| No hardcoded colors (`text-white`, `bg-gray-*`, hex) | Colors | ESLint warn |
+| No arbitrary values (`w-[123px]`) without exception | Sizing | ESLint warn |
+| All colors must use semantic tokens | Colors | ESLint warn |
+| Z-index must use semantic scale | Layering | ESLint warn |
+
+### 🟡 SOFT RULES (Review Guidance)
+
+These rules are enforced at code review and represent best practices:
+
+| Rule | Category | Enforcement |
+|------|----------|-------------|
+| Prefer existing UI components | Architecture | PR Review |
+| Follow component patterns as shown | Patterns | PR Review |
+| Use appropriate density for context | Density | PR Review |
+| Maintain consistent hover/focus states | Interactions | PR Review |
+| Document exceptions with comments | Documentation | PR Review |
+
+---
+
 ## Core Rules
 
 ### ❌ NEVER Do This
@@ -162,6 +193,56 @@
 
 ---
 
+## Status Semantics (Data-Driven)
+
+### Core Principle
+
+**Status is a DATA VALUE, not a style.** All status-related styling MUST be derived from a single source of truth.
+
+### Requirements
+
+1. **Single Status Mapping**: All status badges, pills, rows, and indicators MUST use the same mapping object
+2. **No Manual Styling**: Manual styling of status values is FORBIDDEN
+3. **Centralized Definition**: Status configurations belong in `src/lib/constants.ts`
+
+### Correct Pattern
+
+```tsx
+// ✅ CORRECT - Use centralized status config
+import { TASK_STATUSES } from "@/lib/constants";
+
+const statusConfig = TASK_STATUSES.reduce((acc, s) => ({
+  ...acc,
+  [s.value]: { bg: s.bgClass, text: s.textClass }
+}), {});
+
+// Then use the config:
+<Badge className={cn(statusConfig[status].bg, statusConfig[status].text)}>
+  {status}
+</Badge>
+```
+
+### Forbidden Pattern
+
+```tsx
+// ❌ FORBIDDEN - Inline status styling
+<Badge className={
+  status === 'Completed' ? 'bg-green-100 text-green-800' :
+  status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+  'bg-gray-100 text-gray-800'
+}>
+  {status}
+</Badge>
+```
+
+### Enforcement
+
+- Status styling violations are caught at PR review
+- Any component rendering status MUST import from the centralized mapping
+- Custom status colors require adding to the central config, not local overrides
+
+---
+
 ## Z-Index Scale
 
 | Token | Value | Usage |
@@ -173,6 +254,58 @@
 | `z-tooltip` | 300 | Tooltips |
 | `z-toast` | 400 | Toast notifications |
 | `z-overlay` | 500 | Full-screen overlays |
+
+---
+
+## Density Levels
+
+### Core Principle
+
+Every page and major surface MUST declare ONE density level. Child components MUST inherit this density. **Mixing density tokens on the same surface is FORBIDDEN.**
+
+### Density Definitions
+
+| Density | Typography | Spacing | Use Case |
+|---------|------------|---------|----------|
+| **Compact** | `text-metadata`, `text-body-sm` | `gap-xs`, `gap-sm`, `p-sm` | Data tables, dense lists, sidebars |
+| **Default** | `text-body-sm`, `text-body` | `gap-sm`, `gap-md`, `p-md` | Forms, cards, standard content |
+| **Comfortable** | `text-body`, `text-heading-*` | `gap-md`, `gap-lg`, `p-lg` | Marketing pages, dashboards, hero sections |
+
+### Requirements
+
+1. **Page Declaration**: Every page component MUST document its density level in a comment
+2. **Inheritance**: Child components MUST NOT use tokens from a different density level
+3. **Boundaries**: Density changes are only allowed at explicit surface boundaries (e.g., a card within a page)
+
+### Correct Pattern
+
+```tsx
+// ✅ CORRECT - Compact density throughout
+// @density: compact
+const DataTable = () => (
+  <Table>
+    <TableRow className="py-xs">
+      <TableCell className="text-metadata">...</TableCell>
+      <TableCell className="text-body-sm gap-xs">...</TableCell>
+    </TableRow>
+  </Table>
+);
+```
+
+### Forbidden Pattern
+
+```tsx
+// ❌ FORBIDDEN - Mixed density
+const DataTable = () => (
+  <Table>
+    <TableRow className="py-xs">           {/* Compact */}
+      <TableCell className="text-heading-lg p-lg">  {/* Comfortable - WRONG */}
+        ...
+      </TableCell>
+    </TableRow>
+  </Table>
+);
+```
 
 ---
 
@@ -330,6 +463,53 @@
 
 ---
 
+## Focus & Accessibility
+
+### Focus Ring Requirements
+
+1. **Minimum Contrast**: Focus rings MUST have a contrast ratio of at least 3:1 against adjacent colors
+2. **Visibility**: Focus rings MUST use `ring-ring` token which is designed for both light and dark modes
+3. **Consistency**: All focusable elements MUST have visible focus states
+
+### Correct Focus Pattern
+
+```tsx
+// ✅ CORRECT - Semantic focus ring
+<Button className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+
+// ✅ CORRECT - Input focus
+<Input className="focus-visible:ring-2 focus-visible:ring-ring" />
+```
+
+### Disabled vs Read-Only
+
+| State | Visual Treatment | Interaction | Use Case |
+|-------|------------------|-------------|----------|
+| **Disabled** | `opacity-50 cursor-not-allowed` | No interaction, not focusable | User cannot perform action |
+| **Read-Only** | Normal opacity, `cursor-default` | Focusable, selectable text | Display-only, copy-friendly |
+
+```tsx
+// Disabled
+<Button disabled className="opacity-50 cursor-not-allowed">Submit</Button>
+
+// Read-only
+<Input readOnly className="cursor-default bg-muted" value="Read only value" />
+```
+
+### Required Keyboard Support
+
+All interactive components MUST support:
+
+| Key | Expected Behavior |
+|-----|-------------------|
+| `Tab` | Move focus to next focusable element |
+| `Shift+Tab` | Move focus to previous focusable element |
+| `Enter` / `Space` | Activate buttons, toggle checkboxes |
+| `Escape` | Close modals, dropdowns, popovers |
+| `Arrow Keys` | Navigate within lists, menus, radio groups |
+
+---
+
 ## Layout Standards
 
 ### Page Structure
@@ -393,6 +573,61 @@
 
 ---
 
+## Banned Utility Matrix
+
+The following raw Tailwind utilities are **EXPLICITLY BANNED**. Use semantic tokens instead.
+
+### 🔴 Typography (HARD BAN)
+
+| Banned | Replacement |
+|--------|-------------|
+| `text-xs` | `text-metadata` |
+| `text-sm` | `text-body-sm` |
+| `text-base` | `text-body` |
+| `text-lg` | `text-heading-sm` |
+| `text-xl` | `text-heading-md` |
+| `text-2xl` | `text-heading-lg` |
+| `text-3xl` | `text-page-title` |
+| `leading-*` | Remove - semantic tokens include line-height |
+| `tracking-*` | Remove - semantic tokens include letter-spacing |
+
+### 🔴 Spacing (HARD BAN)
+
+| Banned | Replacement |
+|--------|-------------|
+| `px-*`, `py-*`, `pt-*`, `pb-*`, `pl-*`, `pr-*` | `p-xs`, `p-sm`, `p-md`, `p-lg`, `p-xl`, `p-card` |
+| `mx-*`, `my-*`, `mt-*`, `mb-*`, `ml-*`, `mr-*` | `mt-sm`, `mb-md`, `mt-section`, `mb-card` |
+| `gap-1` through `gap-12` | `gap-xs`, `gap-sm`, `gap-md`, `gap-lg`, `gap-xl` |
+| `space-x-*`, `space-y-*` | `space-y-sm`, `space-y-md`, `space-y-lg` |
+
+### 🔴 Colors (HARD BAN)
+
+| Banned | Replacement |
+|--------|-------------|
+| `text-white`, `text-black` | `text-foreground`, `text-primary-foreground` |
+| `text-gray-*` | `text-muted-foreground`, `text-subtle` |
+| `bg-white`, `bg-black` | `bg-background`, `bg-card` |
+| `bg-gray-*` | `bg-muted`, `bg-subtle`, `bg-elevated` |
+| `border-gray-*` | `border-border`, `border-subtle` |
+| Hex values (`#fff`, `#333`) | Use semantic tokens |
+| RGB values (`rgb(...)`) | Use semantic tokens |
+
+### 🔴 Arbitrary Values (CONDITIONAL BAN)
+
+| Pattern | Status |
+|---------|--------|
+| `w-[123px]`, `h-[456px]` | BANNED unless documented in Exceptions |
+| `text-[14px]` | BANNED - use semantic typography |
+| `bg-[#hexcode]` | BANNED - use semantic colors |
+| `p-[20px]` | BANNED - use semantic spacing |
+
+**Exception Process**: If an arbitrary value is required, you MUST:
+1. Document the reason in a code comment
+2. Reference the exception category from the Exceptions section
+3. Use `// eslint-disable-next-line` with explanation
+
+---
+
 ## Exceptions
 
 The following are acceptable exceptions to the token rules:
@@ -408,6 +643,10 @@ The following are acceptable exceptions to the token rules:
 3. **Pixel-Perfect Requirements**
    - When matching exact external designs
    - Document the source requirement
+
+4. **Fixed-Width Inputs**
+   - Search fields and filters may use `w-[Npx]` for consistent layouts
+   - Must be documented with purpose
 
 ---
 
@@ -447,6 +686,8 @@ Before submitting new code, verify:
 - [ ] Works correctly in both Light and Dark modes
 - [ ] Uses appropriate z-index tokens for overlays
 - [ ] Has proper hover/focus states with transitions
+- [ ] Declares density level if applicable
+- [ ] Status values use centralized config
 
 ---
 
@@ -490,6 +731,16 @@ Before submitting new code, verify:
 
 // ✅ GOOD - Using heading token
 <h2 className="text-heading-md font-semibold">
+```
+
+### 5. Mixing Density Levels
+
+```tsx
+// ❌ BAD - Compact table with comfortable spacing
+<TableCell className="text-metadata p-lg">
+
+// ✅ GOOD - Consistent compact density
+<TableCell className="text-metadata p-sm">
 ```
 
 ---
@@ -548,5 +799,96 @@ When generating code for this project:
 
 ---
 
+## AI Compliance Contract
+
+This section defines MANDATORY behavior for AI-generated code in this project.
+
+### Absolute Requirements
+
+1. **Refuse Non-Compliant Output**: If a requested output would violate this style guide, the AI MUST:
+   - Refuse to generate the non-compliant code
+   - Explain which rule(s) would be violated
+   - Provide a compliant alternative
+
+2. **No Token Invention**: The AI MUST NOT:
+   - Invent new semantic tokens
+   - Guess at token names
+   - Use tokens not documented in this guide
+   - If uncertain, ASK for clarification
+
+3. **Clarification Over Assumption**: When uncertain about:
+   - Which density level applies
+   - Which status color to use
+   - Whether an exception is valid
+   - The AI MUST ask a clarification question before proceeding
+
+4. **Internal Validation**: Before returning any code, the AI MUST internally verify against the checklist below
+
+### Pre-Response Validation Checklist
+
+Before generating ANY component or style code, the AI MUST verify:
+
+```
+□ COLORS
+  - No text-white, text-black, bg-white, bg-black
+  - No text-gray-*, bg-gray-*, border-gray-*
+  - No hex values (#fff, #333, etc.)
+  - All colors use semantic tokens
+
+□ TYPOGRAPHY  
+  - No text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl
+  - All text uses text-metadata, text-body-sm, text-body, text-heading-*
+  
+□ SPACING
+  - No gap-1 through gap-12
+  - No p-1 through p-12
+  - No px-*, py-*, pt-*, pb-*, pl-*, pr-*
+  - No mt-*, mb-* (except semantic mt-section, mb-card, etc.)
+  - All spacing uses gap-xs/sm/md/lg/xl or p-xs/sm/md/lg/xl/card
+
+□ STATUS VALUES
+  - Status styling comes from centralized config
+  - No inline status color logic
+
+□ DENSITY
+  - Single density level per surface
+  - No mixing compact and comfortable tokens
+
+□ THEME
+  - Works in both Light and Dark modes
+  - No hardcoded dark: prefixes for colors
+```
+
+### Violation Response Template
+
+If the AI cannot fulfill a request without violating the style guide:
+
+```
+I cannot generate that code as requested because it would violate the Prisma Style Guide:
+
+**Violation**: [Specific rule being violated]
+**Requested**: [What was asked for]
+**Problem**: [Why it violates the guide]
+
+**Compliant Alternative**:
+[Code that follows the style guide]
+
+Would you like me to proceed with the compliant version?
+```
+
+### Exception Handling
+
+If the user requests a documented exception:
+1. Confirm it matches an exception category
+2. Include the required documentation comment
+3. Add the ESLint disable comment with explanation
+
+If the user requests an undocumented exception:
+1. Explain that it's not in the approved exceptions list
+2. Ask if they want to add it to the Exceptions section first
+3. Do NOT proceed without explicit approval
+
+---
+
 *Last Updated: December 2024*
-*Version: 1.1 - Added ESLint enforcement*
+*Version: 2.0 - Added HARD/SOFT classification, Density enforcement, Status semantics, Accessibility rules, Banned utility matrix, AI Compliance Contract*
