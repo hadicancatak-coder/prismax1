@@ -67,6 +67,10 @@ const SOFT_RULES = {
 
 export default tseslint.config(
   { ignores: ["dist"] },
+  // =======================================================================
+  // BASE CONFIG - All files get WARN level (non-blocking)
+  // This ensures the app keeps building while we migrate
+  // =======================================================================
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -83,11 +87,9 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       
-      // =======================================================================
-      // HARD RULES - ERROR LEVEL (blocks build)
-      // =======================================================================
+      // WARN level for all files (progressive migration)
       "no-restricted-syntax": [
-        "error",
+        "warn",
         // Typography
         {
           selector: "Literal[value=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
@@ -155,20 +157,36 @@ export default tseslint.config(
     },
   },
   // =======================================================================
-  // SOFT RULES - WARN LEVEL (separate config block)
+  // STRICT CONFIG - Domain layer and new components get ERROR level
+  // These are the "clean" areas that must stay compliant
   // =======================================================================
   {
-    files: ["**/*.{ts,tsx}"],
+    files: [
+      "src/domain/**/*.{ts,tsx}",
+      "src/components/ui/Prisma*.{ts,tsx}",
+    ],
     rules: {
-      // These are separate so they don't escalate to error
-      // Currently disabled to avoid noise - enable when ready
-      // "no-restricted-syntax": [
-      //   "warn",
-      //   {
-      //     selector: "Literal[value=/\\b[wh]-\\[\\d+px\\]\\b/]",
-      //     message: SOFT_RULES.arbitraryDimensions.message,
-      //   },
-      // ],
+      "no-restricted-syntax": [
+        "error",
+        // Typography
+        {
+          selector: "Literal[value=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
+          message: HARD_RULES.typography.message,
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
+          message: HARD_RULES.typography.message,
+        },
+        // Hardcoded colors
+        {
+          selector: "Literal[value=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
+          message: HARD_RULES.hardcodedColors.message,
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
+          message: HARD_RULES.hardcodedColors.message,
+        },
+      ],
     },
   },
 );

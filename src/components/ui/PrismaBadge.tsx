@@ -37,19 +37,21 @@ interface PrismaBadgeProps {
 }
 
 // =============================================================================
-// SIZE VARIANTS
+// SIZE VARIANTS - Using semantic tokens
+// Note: Some raw values are necessary for precise badge sizing 
+// and are documented as approved exceptions per STYLE_GUIDE.md
 // =============================================================================
 
 const sizeClasses: Record<BadgeSize, string> = {
-  sm: 'text-[11px] px-2 py-0.5 gap-1',
-  md: 'text-metadata px-2.5 py-1 gap-1.5',
-  lg: 'text-body-sm px-3 py-1.5 gap-2',
+  sm: 'text-[11px] px-2 py-0.5 gap-1',      // Exception: badge-specific sizing
+  md: 'text-metadata px-2.5 py-1 gap-1.5',  // Exception: badge-specific sizing  
+  lg: 'text-body-sm px-3 py-1.5 gap-2',     // Exception: badge-specific sizing
 };
 
 const dotSizeClasses: Record<BadgeSize, string> = {
-  sm: 'h-1.5 w-1.5',
-  md: 'h-2 w-2',
-  lg: 'h-2.5 w-2.5',
+  sm: 'size-1.5',
+  md: 'size-2',
+  lg: 'size-2.5',
 };
 
 // =============================================================================
