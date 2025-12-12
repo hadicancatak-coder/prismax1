@@ -435,7 +435,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
       <DialogContent 
         hideCloseButton
         className={cn(
-          "max-h-[90vh] flex flex-col p-0 transition-smooth",
+          "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-hidden",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-2xl"
         )}
       >
@@ -936,49 +936,66 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-6">
-                {/* Activity Log */}
-                <div className="space-y-3">
-                  <h4 className="text-body-sm font-medium text-muted-foreground">Activity</h4>
-                  {changeLogsLoading ? (
-                    <p className="text-body-sm text-muted-foreground">Loading...</p>
-                  ) : changeLogs.length > 0 ? (
-                    <div className="space-y-2">
-                      {changeLogs.slice(0, 10).map((log) => (
-                        <ActivityLogEntry 
-                          key={log.id}
-                          field_name={log.field_name}
-                          old_value={log.old_value}
-                          new_value={log.new_value}
-                          description={log.description}
-                          changed_at={log.changed_at}
-                          profiles={log.profiles}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-body-sm text-muted-foreground">No activity yet</p>
-                  )}
-                </div>
-
-                {/* Comments */}
-                <div className="space-y-3">
-                  <h4 className="text-body-sm font-medium text-muted-foreground">
-                    Comments {comments.length > 0 && `(${comments.length})`}
-                  </h4>
-                  {comments.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-body-sm">No comments yet</p>
-                      <p className="text-metadata">Be the first to comment</p>
-                    </div>
-                  ) : (
+              <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3">
+                {/* Unified Timeline - merge comments and activity */}
+                <h4 className="text-body-sm font-medium text-muted-foreground">Timeline</h4>
+                {(() => {
+                  // Combine comments and activity logs into a single timeline
+                  const timelineItems: Array<{ type: 'comment' | 'activity'; data: any; timestamp: Date }> = [];
+                  
+                  comments.forEach(comment => {
+                    timelineItems.push({
+                      type: 'comment',
+                      data: comment,
+                      timestamp: new Date(comment.created_at)
+                    });
+                  });
+                  
+                  changeLogs.forEach(log => {
+                    timelineItems.push({
+                      type: 'activity',
+                      data: log,
+                      timestamp: new Date(log.changed_at)
+                    });
+                  });
+                  
+                  // Sort by timestamp ascending
+                  timelineItems.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+                  
+                  if (timelineItems.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-body-sm">No activity yet</p>
+                        <p className="text-metadata">Be the first to comment</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
                     <div className="space-y-3">
-                      {comments.map((comment) => {
+                      {timelineItems.map((item, idx) => {
+                        if (item.type === 'activity') {
+                          return (
+                            <div key={`activity-${item.data.id}`} className="py-1">
+                              <ActivityLogEntry 
+                                field_name={item.data.field_name}
+                                old_value={item.data.old_value}
+                                new_value={item.data.new_value}
+                                description={item.data.description}
+                                changed_at={item.data.changed_at}
+                                profiles={item.data.profiles}
+                              />
+                            </div>
+                          );
+                        }
+                        
+                        // Comment
+                        const comment = item.data;
                         const isCurrentUser = comment.author?.user_id === user?.id;
                         return (
                           <div 
-                            key={comment.id} 
+                            key={`comment-${comment.id}`} 
                             className={cn(
                               "flex gap-3",
                               isCurrentUser && "flex-row-reverse"
@@ -994,7 +1011,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                               isCurrentUser && "flex flex-col items-end"
                             )}>
                               <div className={cn(
-                                "rounded-lg px-3 py-2 max-w-full overflow-hidden",
+                                "rounded-lg px-3 py-2 max-w-full break-words overflow-hidden",
                                 isCurrentUser 
                                   ? "bg-primary text-primary-foreground rounded-tr-none" 
                                   : "bg-muted/50 rounded-tl-none"
@@ -1007,7 +1024,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                                 <CommentText 
                                   text={comment.body} 
                                   className={cn(
-                                    "text-body-sm break-all overflow-wrap-anywhere",
+                                    "text-body-sm break-words",
                                     isCurrentUser && "text-primary-foreground"
                                   )}
                                   linkClassName={isCurrentUser ? "text-primary-foreground underline break-all" : "text-primary underline break-all"}
@@ -1023,9 +1040,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                         );
                       })}
                     </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
+                  );
+                })()}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Comment Input */}
