@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { TASK_STATUSES } from "@/lib/constants";
+import { TASK_STATUS_OPTIONS } from "@/domain";
 
 interface TaskBulkActionsBarProps {
   selectedCount: number;
@@ -118,7 +118,7 @@ export function TaskBulkActionsBar({
                   <SelectValue placeholder="Change status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TASK_STATUSES.map((status) => (
+                  {TASK_STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
                       {status.label}
                     </SelectItem>

@@ -327,3 +327,6 @@ export const getAllUIStatuses = (): TaskStatusUIType[] => {
 export const getAllDBStatuses = (): TaskStatusDBType[] => {
   return Object.values(TaskStatusDB);
 };
+
+// Re-export all actions
+export * from './actions';

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { mapStatusToDb } from '@/lib/taskStatusMapper';
-
+import { completeTask as completeTaskAction, setTaskStatus } from '@/domain';
 // Task mutation hooks with optimistic updates for instant UI feedback
 
 interface UpdateTaskParams {
@@ -78,18 +78,14 @@ export const useTaskMutations = () => {
     }
   });
 
-  // Helper mutation for completing tasks
+  // Helper mutation for completing tasks - uses shared action
   const completeTask = useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update({ status: 'Completed' })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const result = await completeTaskAction(id);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to complete task');
+      }
+      return result.data;
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
