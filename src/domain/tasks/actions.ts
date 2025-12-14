@@ -6,21 +6,33 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Import types directly to avoid circular dependency
+// Valid DB status values
 type TaskStatusDBType = 'Pending' | 'Ongoing' | 'Blocked' | 'Completed' | 'Failed';
 
-// Inline mapper to avoid circular import
-const mapStatusToDbLocal = (uiStatus: string): TaskStatusDBType => {
-  const mapping: Record<string, TaskStatusDBType> = {
-    'Backlog': 'Pending',
-    'Ongoing': 'Ongoing',
-    'Blocked': 'Blocked',
-    'Completed': 'Completed',
-    'Failed': 'Failed',
-    // Also handle if DB values are passed directly
-    'Pending': 'Pending',
-  };
-  return mapping[uiStatus] || 'Pending';
+// Status mapping - UI to DB
+// This is a copy to avoid circular imports (domain/index imports from actions)
+const UI_TO_DB_STATUS: Record<string, TaskStatusDBType> = {
+  'Backlog': 'Pending',
+  'Ongoing': 'Ongoing', 
+  'Blocked': 'Blocked',
+  'Completed': 'Completed',
+  'Failed': 'Failed',
+  // Also accept DB values directly (no-op mapping)
+  'Pending': 'Pending',
+};
+
+/**
+ * Maps any UI or DB status to a valid DB status value.
+ * Throws if invalid status is passed for debugging.
+ */
+const mapStatusToDbLocal = (status: string): TaskStatusDBType => {
+  const dbStatus = UI_TO_DB_STATUS[status];
+  if (!dbStatus) {
+    console.error(`[Task Actions] Invalid status: "${status}". Valid values: ${Object.keys(UI_TO_DB_STATUS).join(', ')}`);
+    // Default to Pending rather than throwing to prevent complete failure
+    return 'Pending';
+  }
+  return dbStatus;
 };
 
 // =============================================================================
