@@ -59,6 +59,8 @@ export interface SetStatusOptions {
  * Sets status to 'Completed' in the database
  */
 export async function completeTask(taskId: string): Promise<TaskActionResult> {
+  console.log('[Task Actions] completeTask called with:', taskId);
+  
   try {
     const { data, error } = await supabase
       .from('tasks')
@@ -68,11 +70,14 @@ export async function completeTask(taskId: string): Promise<TaskActionResult> {
       .single();
 
     if (error) {
+      console.error('[Task Actions] completeTask error:', error);
       return { success: false, error: error.message };
     }
 
+    console.log('[Task Actions] completeTask success:', data);
     return { success: true, data };
   } catch (err: any) {
+    console.error('[Task Actions] completeTask exception:', err);
     return { success: false, error: err.message || 'Failed to complete task' };
   }
 }
