@@ -322,20 +322,36 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
 
         // Assign users
         if (selectedAssignees.length > 0) {
-          const { data: creatorProfile } = await supabase
+          console.log('[Task Create] Adding assignees:', selectedAssignees);
+          
+          const { data: creatorProfile, error: profileError } = await supabase
             .from("profiles")
             .select("id")
             .eq("user_id", user!.id)
             .single();
 
-          if (creatorProfile) {
+          if (profileError) {
+            console.error('[Task Create] Failed to get creator profile:', profileError);
+          } else if (creatorProfile) {
             const assigneeInserts = selectedAssignees.map(profileId => ({
               task_id: createdTask.id,
               user_id: profileId,
               assigned_by: creatorProfile.id,
             }));
 
-            await supabase.from("task_assignees").insert(assigneeInserts);
+            console.log('[Task Create] Inserting assignees:', assigneeInserts);
+            const { error: assigneeError } = await supabase.from("task_assignees").insert(assigneeInserts);
+            
+            if (assigneeError) {
+              console.error('[Task Create] Failed to add assignees:', assigneeError);
+              toast({
+                title: "Warning",
+                description: "Task created but failed to add assignees: " + assigneeError.message,
+                variant: "destructive",
+              });
+            } else {
+              console.log('[Task Create] Assignees added successfully');
+            }
           }
         }
         
