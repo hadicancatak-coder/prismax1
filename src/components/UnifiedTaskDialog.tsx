@@ -35,18 +35,51 @@ import { MentionAutocomplete } from "./MentionAutocomplete";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskAssigneeSelector } from "@/components/tasks/TaskAssigneeSelector";
 import { TagsMultiSelect } from "@/components/tasks/TagsMultiSelect";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Loading skeleton component for the dialog
+const TaskDialogSkeleton = () => (
+  <div className="px-6 py-4 space-y-5">
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    </div>
+    <div className="space-y-4">
+      <Skeleton className="h-4 w-16" />
+      <div className="grid grid-cols-3 gap-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  </div>
+);
 
 interface UnifiedTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'view' | 'edit';
   taskId?: string;
+  task?: any; // Optional cached task data from parent
 }
 
-export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedTaskDialogProps) {
+export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cachedTask }: UnifiedTaskDialogProps) {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Track if initial data has been loaded to prevent refetching
+  const initialLoadRef = useRef<string | null>(null);
   
   // Internal mode state to allow switching from view to edit
   const [internalMode, setInternalMode] = useState<'create' | 'view' | 'edit'>(mode);
@@ -112,21 +145,86 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const isReadOnly = internalMode === 'view';
   const isCreate = internalMode === 'create';
 
-  // Fetch task data for view/edit modes
+  // Reset state immediately when taskId changes to prevent stale data
+  useEffect(() => {
+    if (open && taskId && taskId !== initialLoadRef.current) {
+      // Reset all state immediately before loading
+      setTask(null);
+      setLoading(true);
+      setComments([]);
+      setBlocker(null);
+      setTitle("");
+      setDescription("");
+      setPriority("Medium");
+      setStatus("Backlog");
+      setDueDate(undefined);
+      setEntities([]);
+      setTags([]);
+      setRecurrence("none");
+      setRecurrenceDaysOfWeek([]);
+      setRecurrenceDayOfMonth(null);
+      
+      initialLoadRef.current = taskId;
+    }
+  }, [open, taskId]);
+
+  // Populate from cached task immediately if available
+  useEffect(() => {
+    if (open && !isCreate && cachedTask && taskId) {
+      populateFromTask(cachedTask);
+    }
+  }, [open, cachedTask, taskId, isCreate]);
+
+  // Fetch task data for view/edit modes - parallelized
   useEffect(() => {
     if (open && !isCreate && taskId) {
-      fetchTask();
-      fetchComments();
-      fetchBlocker();
+      // If we have cached task, only fetch comments/blocker/users in parallel
+      if (cachedTask) {
+        Promise.all([
+          fetchComments(),
+          fetchBlocker(),
+          fetchUsers()
+        ]);
+      } else {
+        // No cached task, fetch everything in parallel
+        Promise.all([
+          fetchTask(),
+          fetchComments(),
+          fetchBlocker(),
+          fetchUsers()
+        ]);
+      }
+    } else if (open && isCreate) {
+      fetchUsers();
     }
   }, [open, taskId, isCreate]);
 
-  // Fetch users for assignee selection
-  useEffect(() => {
-    if (open) {
-      fetchUsers();
+  // Helper to populate form from task data
+  const populateFromTask = (data: any) => {
+    setTask(data);
+    setTitle(data.title || "");
+    setDescription(data.description || "");
+    setPriority(data.priority || "Medium");
+    setStatus(mapStatusToUi(data.status));
+    setDueDate(data.due_at ? new Date(data.due_at) : undefined);
+    setEntities(Array.isArray(data.entity) ? data.entity.map(String) : []);
+    setTags(Array.isArray(data.labels) ? data.labels : []);
+    
+    // Parse recurrence
+    if (data.recurrence_rrule) {
+      if (data.recurrence_rrule.includes('DAILY')) setRecurrence('daily');
+      else if (data.recurrence_rrule.includes('WEEKLY')) setRecurrence('weekly');
+      else if (data.recurrence_rrule.includes('MONTHLY')) setRecurrence('monthly');
+      
+      if (data.recurrence_days_of_week) {
+        setRecurrenceDaysOfWeek(data.recurrence_days_of_week);
+      }
+      if (data.recurrence_day_of_month) {
+        setRecurrenceDayOfMonth(data.recurrence_day_of_month);
+      }
     }
-  }, [open]);
+    setLoading(false);
+  };
 
   // Working days validation
   useEffect(() => {
@@ -160,7 +258,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
   const fetchTask = async () => {
     if (!taskId) return;
     
-    setLoading(true);
     const { data, error } = await supabase
       .from("tasks")
       .select(`*`)
@@ -174,31 +271,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
         description: "Failed to load task details",
         variant: "destructive",
       });
+      setLoading(false);
     } else if (data) {
-      setTask(data);
-      setTitle(data.title);
-      setDescription(data.description || "");
-      setPriority(data.priority);
-      setStatus(mapStatusToUi(data.status));
-      setDueDate(data.due_at ? new Date(data.due_at) : undefined);
-      setEntities(Array.isArray(data.entity) ? data.entity.map(String) : []);
-      setTags(Array.isArray(data.labels) ? data.labels : []);
-      
-      // Parse recurrence
-      if (data.recurrence_rrule) {
-        if (data.recurrence_rrule.includes('DAILY')) setRecurrence('daily');
-        else if (data.recurrence_rrule.includes('WEEKLY')) setRecurrence('weekly');
-        else if (data.recurrence_rrule.includes('MONTHLY')) setRecurrence('monthly');
-        
-        if (data.recurrence_days_of_week) {
-          setRecurrenceDaysOfWeek(data.recurrence_days_of_week);
-        }
-        if (data.recurrence_day_of_month) {
-          setRecurrenceDayOfMonth(data.recurrence_day_of_month);
-        }
-      }
+      populateFromTask(data);
     }
-    setLoading(false);
   };
 
   const fetchComments = async () => {
@@ -531,7 +607,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
               )}
             </div>
 
-            {/* MAIN FORM */}
+            {/* MAIN FORM - Show skeleton while loading in view/edit mode */}
+            {loading && !isCreate ? (
+              <TaskDialogSkeleton />
+            ) : (
             <div className="px-6 max-h-[60vh] overflow-y-auto hide-scrollbar">
               <form onSubmit={handleSubmit} className="space-y-5 py-4">
                 
@@ -936,6 +1015,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId }: UnifiedT
                 </Collapsible>
               </form>
             </div>
+            )}
 
             {/* FOOTER */}
             <div className="px-6 py-4 border-t border-border flex-shrink-0">

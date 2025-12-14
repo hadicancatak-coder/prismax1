@@ -44,6 +44,7 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
   const queryClient = useQueryClient();
   const { updateStatus, updatePriority, completeTask } = useTaskMutations();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState<{id: string; value: string} | null>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -140,8 +141,9 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
     Low: "bg-success/15 text-success border-success/30",
   };
 
-  const handleRowClick = (taskId: string) => {
+  const handleRowClick = (taskId: string, task: any) => {
     setSelectedTaskId(taskId);
+    setSelectedTask(task);
     setDialogOpen(true);
   };
 
@@ -231,7 +233,7 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
           isDueToday(task.due_at) && 'border-l-4 border-l-warning',
           isDueTomorrow(task.due_at) && 'border-l-4 border-l-accent'
         )}
-        onClick={() => handleRowClick(task.id)}
+        onClick={() => handleRowClick(task.id, task)}
       >
         {/* Task Title */}
         <div
@@ -407,6 +409,7 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
       {/* Dialogs */}
       <UnifiedTaskDialog
         taskId={selectedTaskId}
+        task={selectedTask}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode="view"

@@ -48,6 +48,7 @@ export default function Tasks() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban-status' | 'kanban-date' | 'kanban-tags'>('table');
   const [boardGroupBy, setBoardGroupBy] = useState<'status' | 'date' | 'tags'>('status');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -67,8 +68,9 @@ export default function Tasks() {
     localStorage.setItem('tasksItemsPerPage', String(itemsPerPage));
   }, [itemsPerPage]);
 
-  const handleTaskClick = (taskId: string) => {
+  const handleTaskClick = (taskId: string, task?: any) => {
     setSelectedTaskId(taskId);
+    setSelectedTask(task || null);
     setTaskDialogOpen(true);
   };
 
@@ -423,7 +425,7 @@ export default function Tasks() {
         )}
 
         <UnifiedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} mode="create" />
-        {selectedTaskId && <UnifiedTaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} mode="view" taskId={selectedTaskId} />}
+        {selectedTaskId && <UnifiedTaskDialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen} mode="view" taskId={selectedTaskId} task={selectedTask} />}
         <FilteredTasksDialog
           open={filteredDialogOpen}
           onOpenChange={setFilteredDialogOpen}
