@@ -58,8 +58,7 @@ export function OverdueTasks() {
         .select("*")
         .in("id", taskIds)
         .lt("due_at", today.toISOString())
-        .neq("status", "Completed" as any)
-        .neq("status", "Backlog" as any)
+        .not("status", "in", "(Completed,Backlog)")
         .order("due_at", { ascending: true })
         .limit(5);
 
