@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Plus, ListTodo, AlertCircle, Clock, Shield, TrendingUp, List, Columns3, X, CheckCircle2, RefreshCw, Tag, User, Layers } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TasksTable } from "@/components/TasksTable";
 import { TasksTableVirtualized } from "@/components/TasksTableVirtualized";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
@@ -281,30 +283,59 @@ export default function Tasks() {
           <AssigneeFilterBar selectedAssignees={selectedAssignees} onAssigneesChange={setSelectedAssignees} />
           <TaskDateFilterBar value={dateFilter ? { from: dateFilter.startDate, to: dateFilter.endDate } : null} onFilterChange={setDateFilter} onStatusChange={() => {}} selectedStatus="all" />
 
-          <Button 
-            variant={!hideRecurring ? "default" : "outline"} 
-            onClick={() => setHideRecurring(!hideRecurring)} 
-            title={hideRecurring ? "Show recurring tasks" : "Hide recurring tasks"}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {hideRecurring ? "Show Recurring" : "Hide Recurring"}
-          </Button>
+          {/* Recurring Tasks Toggle - Icon Only */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={!hideRecurring ? "default" : "outline"} 
+                size="icon"
+                onClick={() => setHideRecurring(!hideRecurring)} 
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{hideRecurring ? "Show Recurring Tasks" : "Hide Recurring Tasks"}</TooltipContent>
+          </Tooltip>
 
-          {/* Table Grouping - only show in table view */}
+          {/* Table Grouping - Icon Only with Popover */}
           {viewMode === 'table' && (
-            <Select value={tableGroupBy} onValueChange={(v: any) => setTableGroupBy(v)}>
-              <SelectTrigger className="w-[130px]">
-                <Layers className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Group by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Grouping</SelectItem>
-                <SelectItem value="dueDate">Due Date</SelectItem>
-                <SelectItem value="priority">Priority</SelectItem>
-                <SelectItem value="assignee">Assignee</SelectItem>
-                <SelectItem value="tags">Tags</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant={tableGroupBy !== 'none' ? "default" : "outline"} 
+                      size="icon"
+                    >
+                      <Layers className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Group By</TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-40 p-1" align="end">
+                {[
+                  { value: 'none', label: 'No Grouping' },
+                  { value: 'dueDate', label: 'Due Date' },
+                  { value: 'priority', label: 'Priority' },
+                  { value: 'assignee', label: 'Assignee' },
+                  { value: 'tags', label: 'Tags' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTableGroupBy(option.value as any)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md text-body-sm transition-smooth",
+                      tableGroupBy === option.value 
+                        ? "bg-primary text-primary-foreground" 
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           )}
 
           <div className="ml-auto flex gap-1 flex-shrink-0 bg-card p-1 rounded-lg border border-border">
