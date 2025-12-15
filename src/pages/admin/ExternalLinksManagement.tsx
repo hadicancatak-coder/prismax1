@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getProductionUrl } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,7 +211,7 @@ export default function ExternalLinksManagement() {
   };
 
   const copyKnowledgeLink = (token: string) => {
-    const url = `${window.location.origin}/knowledge/public/${token}`;
+    const url = `${getProductionUrl()}/knowledge/public/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard");
   };

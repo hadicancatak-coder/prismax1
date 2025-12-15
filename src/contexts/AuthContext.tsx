@@ -64,9 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
   const lastActivityTime = useRef<number>(Date.now());
   
-  // Check for external pages - must be after hooks
-  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
-                                 location.pathname.startsWith('/campaigns-log/external/');
+  // Check for public access pages - must be after hooks
+  const isPublicAccessPage = location.pathname.startsWith('/campaigns-log/review/') || 
+                             location.pathname.startsWith('/campaigns-log/external/') ||
+                             location.pathname.startsWith('/knowledge/public/');
 
   // Validate MFA session with server - Phase 1: Fix closure race condition
   const validateMfaSession = async (currentUser?: User): Promise<boolean> => {
@@ -295,9 +296,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     navigate("/auth");
   };
 
-  // For external pages, provide a simplified context without auth
-  if (isExternalReviewPage) {
-    console.log('🌐 External review page detected, bypassing auth:', location.pathname);
+  // For public access pages, provide a simplified context without auth
+  if (isPublicAccessPage) {
+    console.log('🌐 Public access page detected, bypassing auth:', location.pathname);
     return (
       <AuthContext.Provider value={{
         user: null,
