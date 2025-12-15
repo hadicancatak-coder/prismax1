@@ -114,12 +114,9 @@ export default function KnowledgePublic() {
 
       {/* Footer */}
       <footer className="border-t border-border mt-12 bg-muted/30">
-        <div className="max-w-4xl mx-auto px-6 py-6 text-center space-y-1">
-          <p className="text-body-sm text-foreground font-medium">
-            Proudly presented by the Performance Marketing Team at CFI Group
-          </p>
-          <p className="text-metadata text-muted-foreground">
-            This tool was made with AI for internal purposes. Do not share this link with third parties. Internal use only.
+        <div className="max-w-4xl mx-auto px-6 py-6 text-center">
+          <p className="text-body-sm text-muted-foreground">
+            Proudly presented by the Performance Marketing Team at CFI Group. This page was built internally with AI. Do not share with third parties; internal use only.
           </p>
         </div>
       </footer>
