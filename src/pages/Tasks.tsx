@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +40,7 @@ export default function Tasks() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -60,6 +62,42 @@ export default function Tasks() {
   const [showMyTasks, setShowMyTasks] = useState(false);
   const [tableGroupBy, setTableGroupBy] = useState<'none' | 'dueDate' | 'priority' | 'assignee' | 'tags'>('none');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  // Handle URL filter parameters from MyTasks dashboard
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (!filter) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    // Enable My Tasks filter for all dashboard filters
+    setShowMyTasks(true);
+
+    switch (filter) {
+      case 'today':
+        setDateFilter({ startDate: today, endDate: tomorrow, label: 'Today' });
+        setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
+        break;
+      case 'overdue':
+        setActiveQuickFilter('Overdue');
+        break;
+      case 'week':
+        setDateFilter({ startDate: today, endDate: weekEnd, label: 'This Week' });
+        setStatusFilters(['Pending', 'Ongoing', 'Blocked', 'Failed']);
+        break;
+      case 'in-progress':
+        setStatusFilters(['Ongoing']);
+        break;
+    }
+
+    // Clear URL param after applying filter
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const saved = localStorage.getItem('tasksItemsPerPage');
