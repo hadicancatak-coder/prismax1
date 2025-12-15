@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 import { format, isToday, isTomorrow, isPast, differenceInDays, isThisWeek, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { 
@@ -648,34 +648,30 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
             {groupBy !== 'none' && groupedTasks ? (
-              // Grouped view
+              // Grouped view - render groups with manual expand/collapse
               groupedTasks.map((group) => (
-                <Collapsible key={group.key} open={!collapsedGroups.has(group.key)} onOpenChange={() => toggleGroup(group.key)} asChild>
-                  <>
-                    <CollapsibleTrigger asChild>
-                      <TableRow className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-y border-border">
-                        <TableCell colSpan={8} className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            {collapsedGroups.has(group.key) ? (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <span className="font-semibold text-body-sm">{group.label}</span>
-                            <Badge variant="secondary" className="text-metadata">
-                              {group.tasks.length}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent asChild>
-                      <>
-                        {group.tasks.map((task) => renderTaskRow(task))}
-                      </>
-                    </CollapsibleContent>
-                  </>
-                </Collapsible>
+                <>
+                  <TableRow 
+                    key={`group-header-${group.key}`}
+                    className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-y border-border"
+                    onClick={() => toggleGroup(group.key)}
+                  >
+                    <TableCell colSpan={8} className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        {collapsedGroups.has(group.key) ? (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+                        )}
+                        <span className="font-semibold text-body-sm">{group.label}</span>
+                        <Badge variant="secondary" className="text-metadata">
+                          {group.tasks.length}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {!collapsedGroups.has(group.key) && group.tasks.map((task) => renderTaskRow(task))}
+                </>
               ))
             ) : (
               // Flat view
