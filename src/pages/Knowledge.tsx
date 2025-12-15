@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { BookOpen, Plus, Search, FileText, ChevronRight } from "lucide-react";
+import { BookOpen, Plus, Search, FileText, ChevronRight, Home } from "lucide-react";
 import { PageContainer, PageHeader, DataCard, EmptyState } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { KnowledgeTree } from "@/components/knowledge/KnowledgeTree";
 import { KnowledgePageEditor } from "@/components/knowledge/KnowledgePageEditor";
 import { KnowledgePageContent } from "@/components/knowledge/KnowledgePageContent";
@@ -114,27 +115,29 @@ export default function Knowledge() {
     }
   };
 
-  const handleNavigate = (page: KnowledgePage) => {
-    if (page.id) {
-      // Find the full page object from pages array to ensure we have children
-      const fullPage = pages?.find(p => p.id === page.id);
-      if (fullPage) {
-        // Also attach children from pageTree
-        const findWithChildren = (tree: KnowledgePage[]): KnowledgePage | undefined => {
-          for (const node of tree) {
-            if (node.id === page.id) return node;
-            if (node.children) {
-              const found = findWithChildren(node.children);
-              if (found) return found;
-            }
-          }
-          return undefined;
-        };
-        const pageWithChildren = findWithChildren(pageTree);
-        setSelectedPage(pageWithChildren || fullPage);
-      }
-    } else {
+  const handleNavigate = (page: KnowledgePage | null) => {
+    // Handle navigating to home (no selection)
+    if (!page || !page.id) {
       setSelectedPage(null);
+      return;
+    }
+    
+    // Find the full page object from pages array to ensure we have children
+    const fullPage = pages?.find(p => p.id === page.id);
+    if (fullPage) {
+      // Also attach children from pageTree
+      const findWithChildren = (tree: KnowledgePage[]): KnowledgePage | undefined => {
+        for (const node of tree) {
+          if (node.id === page.id) return node;
+          if (node.children) {
+            const found = findWithChildren(node.children);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+      const pageWithChildren = findWithChildren(pageTree);
+      setSelectedPage(pageWithChildren || fullPage);
     }
   };
 

@@ -25,10 +25,20 @@ export function TopHeader() {
     if (path === "/tasks") return "Tasks";
     if (path === "/calendar") return "Agenda";
     if (path === "/utm-planner") return "UTM Planner";
+    if (path === "/knowledge") return "Knowledge";
+    if (path === "/profile") return "Profile";
+    if (path === "/security") return "Security";
+    if (path === "/notifications") return "Notifications";
+    if (path.startsWith("/ads/captions")) return "Captions";
     if (path.includes("/ads")) return "Ads";
     if (path.includes("/operations")) return "Operations";
-    return "Prisma";
+    if (path.startsWith("/admin")) return "Admin";
+    if (path === "/how-to") return "How To";
+    if (path === "/about") return "About";
+    return null; // Return null if no match to avoid showing "Prisma / Prisma"
   };
+
+  const pageName = getPageName();
 
   return (
     <header 
@@ -47,8 +57,12 @@ export function TopHeader() {
           <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all h-9 w-9" />
           <div className="hidden sm:flex items-center gap-2 text-sm">
             <span className="font-semibold text-foreground">Prisma</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{getPageName()}</span>
+            {pageName && (
+              <>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{pageName}</span>
+              </>
+            )}
           </div>
         </div>
 

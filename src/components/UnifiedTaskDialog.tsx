@@ -175,27 +175,30 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
     }
   }, [open, cachedTask, taskId, isCreate]);
 
+  // Fetch users immediately when dialog opens (needed for @ mentions)
+  useEffect(() => {
+    if (open) {
+      fetchUsers();
+    }
+  }, [open]);
+
   // Fetch task data for view/edit modes - parallelized
   useEffect(() => {
     if (open && !isCreate && taskId) {
-      // If we have cached task, only fetch comments/blocker/users in parallel
+      // If we have cached task, only fetch comments/blocker in parallel
       if (cachedTask) {
         Promise.all([
           fetchComments(),
-          fetchBlocker(),
-          fetchUsers()
+          fetchBlocker()
         ]);
       } else {
         // No cached task, fetch everything in parallel
         Promise.all([
           fetchTask(),
           fetchComments(),
-          fetchBlocker(),
-          fetchUsers()
+          fetchBlocker()
         ]);
       }
-    } else if (open && isCreate) {
-      fetchUsers();
     }
   }, [open, taskId, isCreate]);
 
