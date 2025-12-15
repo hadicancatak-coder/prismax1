@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, KeyRound } from "lucide-react";
+import { Loader2, Shield, KeyRound, AlertTriangle } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
+import { MfaSetupGuide } from "@/components/MfaSetupGuide";
 
 export default function MfaVerify() {
   const [otp, setOtp] = useState("");
@@ -123,6 +125,13 @@ export default function MfaVerify() {
           </p>
         </div>
 
+        <Alert className="mb-6 border-primary/50 bg-primary/10">
+          <Shield className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm text-muted-foreground ml-2">
+            Your session is secured. You'll stay logged in until you sign out, your IP changes, or 24 hours pass.
+          </AlertDescription>
+        </Alert>
+
         <div className="space-y-4">
           {useBackupCode ? (
             <div>
@@ -176,18 +185,21 @@ export default function MfaVerify() {
             )}
           </Button>
 
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setUseBackupCode(!useBackupCode);
-              setOtp("");
-              setBackupCode("");
-            }}
-            className="w-full"
-          >
-            <KeyRound className="h-4 w-4 mr-2" />
-            {useBackupCode ? "Use authenticator app instead" : "Use backup code instead"}
-          </Button>
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setUseBackupCode(!useBackupCode);
+                setOtp("");
+                setBackupCode("");
+              }}
+              className="flex-1"
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              {useBackupCode ? "Use app instead" : "Use backup code"}
+            </Button>
+            <MfaSetupGuide />
+          </div>
 
           <Button
             variant="outline"

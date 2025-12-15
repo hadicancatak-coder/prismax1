@@ -73,24 +73,19 @@ export default function Auth() {
           .eq('user_id', signInData.user.id)
           .single();
 
-        // If MFA enrollment is required but not yet enabled, force setup
-        if (profile?.mfa_enrollment_required && !profile?.mfa_enabled) {
+        // SECURITY: MFA is mandatory for ALL users
+        // If MFA is not enabled, always force setup regardless of mfa_enrollment_required
+        if (!profile?.mfa_enabled) {
           toast({
             title: "2FA Setup Required",
-            description: "Please set up two-factor authentication to continue",
+            description: "Two-factor authentication is mandatory for all accounts",
           });
           navigate("/mfa-setup");
           return;
         }
 
         // If MFA is enabled, require verification
-        if (profile?.mfa_enabled) {
-          navigate("/mfa-verify");
-          return;
-        }
-
-        // If no MFA requirement, redirect to home
-        navigate("/");
+        navigate("/mfa-verify");
       } else {
         const { error } = await supabase.auth.signUp({
           email,

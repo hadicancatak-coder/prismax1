@@ -142,7 +142,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error || !data?.valid) {
-        console.log('❌ Validation failed:', data?.reason || error?.message);
+        const reason = data?.reason || error?.message;
+        console.log('❌ Validation failed:', reason);
+        
+        // SECURITY: If IP mismatch, clear token and require re-verification
+        if (reason === 'ip_mismatch') {
+          console.log('🔒 IP address changed - requiring re-verification');
+        }
         setMfaSessionToken(null);
         setMfaVerified(false);
         return false;
