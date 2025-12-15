@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -54,38 +54,35 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   const { data: systemEntities = [] } = useSystemEntities();
   const isEditing = !!caption;
 
-  const [type, setType] = useState("headline");
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
-  const [status, setStatus] = useState("pending");
+  // Compute initial values synchronously to avoid race conditions
+  const initialContent = useMemo(() => {
+    if (caption) {
+      return parseContentForEditing(caption.content);
+    }
+    return { en: "", ar: "" };
+  }, [caption?.id, caption?.content]);
+
+  const initialType = caption?.element_type || "headline";
+  const initialEntities = caption?.entity || [];
+  const initialStatus = caption?.google_status || "pending";
+
+  const [type, setType] = useState(initialType);
+  const [selectedEntities, setSelectedEntities] = useState<string[]>(initialEntities);
+  const [status, setStatus] = useState(initialStatus);
   const [activeLanguage, setActiveLanguage] = useState("en");
-  const [content, setContent] = useState<{ en: string; ar: string }>({
-    en: "",
-    ar: "",
-  });
+  const [content, setContent] = useState<{ en: string; ar: string }>(initialContent);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form state when dialog opens - use caption.id to detect actual caption changes
+  // Synchronize state when dialog opens or caption changes
   useEffect(() => {
-    if (!open) return;
-    
-    if (caption) {
-      setType(caption.element_type || "headline");
-      setSelectedEntities(caption.entity || []);
-      setStatus(caption.google_status || "pending");
-      
-      // Parse content immediately when caption changes
-      const parsedContent = parseContentForEditing(caption.content);
-      setContent(parsedContent);
-      setActiveLanguage("en");
-    } else {
-      // Reset form for create mode
-      setType("headline");
-      setSelectedEntities([]);
-      setStatus("pending");
-      setContent({ en: "", ar: "" });
+    if (open) {
+      setType(initialType);
+      setSelectedEntities(initialEntities);
+      setStatus(initialStatus);
+      setContent(initialContent);
       setActiveLanguage("en");
     }
-  }, [open, caption?.id]); // Use caption.id instead of caption object to avoid reference issues
+  }, [open, caption?.id]); // Reset when dialog opens or caption ID changes
 
   const toggleEntity = (entity: string) => {
     setSelectedEntities((prev) =>
