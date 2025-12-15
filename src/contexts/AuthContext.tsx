@@ -51,33 +51,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
-  // Check for external pages FIRST, before any state initialization
-  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
-                                 location.pathname.startsWith('/campaigns-log/external/');
-  
-  // For external pages, render immediately without auth
-  if (isExternalReviewPage) {
-    console.log('🌐 External review page detected, bypassing all auth:', location.pathname);
-    return (
-      <AuthContext.Provider value={{
-        user: null,
-        session: null,
-        loading: false,
-        roleLoading: false,
-        userRole: null,
-        mfaVerified: false,
-        validateMfaSession: async () => false,
-        setMfaVerifiedStatus: () => {},
-        signOut: async () => {
-          console.log('Sign out called on external review page - ignoring');
-        },
-      }}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
-  
+  // ALL hooks must be called before any conditional returns
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,9 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<"admin" | "member" | null>(null);
   const [mfaVerified, setMfaVerified] = useState<boolean>(false);
   const [skipNextValidation, setSkipNextValidation] = useState(false);
-  const navigate = useNavigate();
   const roleCache = useRef<Map<string, "admin" | "member">>(new Map());
   const lastActivityTime = useRef<number>(Date.now());
+  
+  // Check for external pages - must be after hooks
+  const isExternalReviewPage = location.pathname.startsWith('/campaigns-log/review/') || 
+                                 location.pathname.startsWith('/campaigns-log/external/');
 
   // Validate MFA session with server - Phase 1: Fix closure race condition
   const validateMfaSession = async (currentUser?: User): Promise<boolean> => {
@@ -315,6 +294,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setMfaVerified(false);
     navigate("/auth");
   };
+
+  // For external pages, provide a simplified context without auth
+  if (isExternalReviewPage) {
+    console.log('🌐 External review page detected, bypassing auth:', location.pathname);
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        session: null,
+        loading: false,
+        roleLoading: false,
+        userRole: null,
+        mfaVerified: false,
+        validateMfaSession: async () => false,
+        setMfaVerifiedStatus: () => {},
+        signOut: async () => {
+          console.log('Sign out called on external review page - ignoring');
+        },
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider 
