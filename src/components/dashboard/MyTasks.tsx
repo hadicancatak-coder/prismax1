@@ -124,7 +124,7 @@ export function MyTasks() {
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
-    let query = supabase.from("tasks").select("id").in("id", taskIds);
+    let query = supabase.from("tasks").select("*").in("id", taskIds);
 
     switch (category) {
       case "Today":
@@ -149,7 +149,7 @@ export function MyTasks() {
         break;
     }
 
-    const { data: taskData } = await query.select("*").limit(1);
+    const { data: taskData } = await query.limit(1);
     if (taskData && taskData.length > 0) {
       setSelectedTask(taskData[0]);
       setSelectedTaskId(taskData[0].id);
