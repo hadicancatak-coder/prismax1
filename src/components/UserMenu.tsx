@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Shield, Info, LogOut, Activity, ShieldCheck, FolderKanban, Bell, Target } from "lucide-react";
+import { User, Shield, Info, LogOut, ShieldCheck, Bell, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,10 +79,6 @@ export const UserMenu = () => {
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Workspace</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/team-base")} className="cursor-pointer">
-          <FolderKanban className="mr-2 h-4 w-4" />
-          Base
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/notifications")} className="cursor-pointer">
           <Bell className="mr-2 h-4 w-4" />
           Notifications
@@ -93,10 +89,6 @@ export const UserMenu = () => {
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Admin</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/activity-log")} className="cursor-pointer">
-              <Activity className="mr-2 h-4 w-4" />
-              Activity Log
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/admin/overview")} className="cursor-pointer">
               <ShieldCheck className="mr-2 h-4 w-4" />
               Admin Dashboard
