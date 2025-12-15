@@ -140,14 +140,24 @@ export default function Knowledge() {
     const treeNode = findWithChildren(pageTree);
 
     if (fullPage) {
-      setSelectedPage({
+      const pageWithChildren = {
         ...fullPage,
         children: treeNode?.children || fullPage.children,
-      });
+      };
+      setSelectedPage(pageWithChildren);
       
       // Auto-generate public token if not present
       if (!fullPage.public_token) {
-        ensurePublicToken.mutate(fullPage.id);
+        ensurePublicToken.mutate(fullPage.id, {
+          onSuccess: (updatedPage) => {
+            if (updatedPage) {
+              setSelectedPage({
+                ...pageWithChildren,
+                ...updatedPage,
+              });
+            }
+          },
+        });
       }
       return;
     }
@@ -156,7 +166,13 @@ export default function Knowledge() {
     
     // Auto-generate public token for tree node
     if (treeNode && !treeNode.public_token) {
-      ensurePublicToken.mutate(treeNode.id);
+      ensurePublicToken.mutate(treeNode.id, {
+        onSuccess: (updatedPage) => {
+          if (updatedPage) {
+            setSelectedPage((prev) => prev ? { ...prev, ...updatedPage } : prev);
+          }
+        },
+      });
     }
   };
 
