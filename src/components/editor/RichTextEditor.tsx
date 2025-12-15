@@ -82,8 +82,14 @@ export function RichTextEditor({
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '');
+    if (!editor) return;
+    
+    const normalizedValue = value || '';
+    const currentContent = editor.getHTML();
+    
+    // Force content update when value prop changes externally
+    if (normalizedValue !== currentContent) {
+      editor.commands.setContent(normalizedValue);
     }
   }, [value, editor]);
 
