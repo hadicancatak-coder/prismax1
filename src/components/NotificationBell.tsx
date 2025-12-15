@@ -91,98 +91,54 @@ export function NotificationBell() {
   };
 
   const getNotificationMessage = (notification: any) => {
-    const payload = notification.payload_json;
-    const actorName = notification.actor?.full_name || "Someone";
+    const payload = notification.payload_json || {};
+    const taskTitle = payload.task_title || payload.campaign_title || "";
     
     switch (notification.type) {
       case "task_assigned":
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">{actorName} assigned you:</div>
-            <div className="text-muted-foreground">{payload.task_title}</div>
-          </div>
-        );
-      case "campaign_assigned":
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">{actorName} assigned you to campaign:</div>
-            <div className="text-muted-foreground">{payload.campaign_title}</div>
-          </div>
-        );
+        return <span className="font-medium">Assigned: {taskTitle}</span>;
       case "comment_mention":
         return (
-          <div className="space-y-1">
-            <div className="font-medium">{actorName} mentioned you in {payload.task_title}</div>
+          <div>
+            <span className="font-medium">Mentioned in: {taskTitle}</span>
             {notification.commentPreview && (
-              <div className="text-muted-foreground text-metadata italic">
-                "{notification.commentPreview}{notification.commentPreview.length >= 60 ? '...' : ''}"
-              </div>
+              <p className="text-muted-foreground text-metadata mt-1 italic">"{notification.commentPreview}..."</p>
             )}
           </div>
         );
-      case "mention":
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">{actorName} mentioned you:</div>
-            <div className="text-muted-foreground">{payload.task_title}</div>
-          </div>
-        );
-      case "task_updated":
-        return payload.message || `"${payload.task_title}" updated`;
-      case "deadline_reminder_3days":
-        return `Task "${payload.task_title}" due in 3 days`;
-      case "deadline_reminder_1day":
-        return `Task "${payload.task_title}" due tomorrow!`;
-      case "deadline_reminder_overdue":
-        return `Task "${payload.task_title}" is ${payload.days_overdue} days overdue`;
-      case "campaign_starting_soon":
-        return `Campaign "${payload.campaign_title}" launches in 3 days`;
-      case "task_status_changed":
-        return `Task "${payload.task_title}" moved to ${payload.new_status}`;
-      case "campaign_status_changed":
-        return `Campaign "${payload.campaign_title}" moved to ${payload.new_status}`;
-      case "blocker_resolved":
-        return `Blocker resolved for "${payload.task_title}"`;
-      case "approval_pending":
-        return `Approval pending for "${payload.task_title}" (${payload.days_pending} days)`;
-      case "ad_status_changed":
-        return `Ad "${payload.ad_name}" status changed to ${payload.new_status}`;
-      case "ad_pending_review":
-        return `New ad "${payload.ad_name}" pending review`;
       case "task_new_comment":
         return (
-          <div className="space-y-1">
-            <div className="font-medium">{payload.commenter_name || "Someone"} commented on:</div>
-            <div className="text-muted-foreground">{payload.task_title}</div>
+          <div>
+            <span className="font-medium">Comment on: {taskTitle}</span>
             {payload.comment_preview && (
-              <div className="text-muted-foreground text-metadata italic">
-                "{payload.comment_preview}{payload.comment_preview.length >= 100 ? '...' : ''}"
-              </div>
+              <p className="text-muted-foreground text-metadata mt-1 italic">"{payload.comment_preview}..."</p>
             )}
           </div>
         );
+      case "task_status_changed":
+        return <span className="font-medium">{taskTitle} → {payload.new_status}</span>;
       case "task_deadline_changed":
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">Due date changed:</div>
-            <div className="text-muted-foreground">{payload.task_title}</div>
-            <div className="text-metadata text-muted-foreground">
-              {payload.old_due_date ? new Date(payload.old_due_date).toLocaleDateString() : 'None'} → {payload.new_due_date ? new Date(payload.new_due_date).toLocaleDateString() : 'Removed'}
-            </div>
-          </div>
-        );
+        return <span className="font-medium">Due date: {taskTitle}</span>;
       case "task_priority_changed":
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">Priority changed:</div>
-            <div className="text-muted-foreground">{payload.task_title}</div>
-            <div className="text-metadata text-muted-foreground">
-              {payload.old_priority} → {payload.new_priority}
-            </div>
-          </div>
-        );
+        return <span className="font-medium">Priority: {taskTitle} → {payload.new_priority}</span>;
+      case "deadline_reminder_3days":
+        return <span className="font-medium">Due in 3 days: {taskTitle}</span>;
+      case "deadline_reminder_1day":
+        return <span className="font-medium text-warning">Due tomorrow: {taskTitle}</span>;
+      case "deadline_reminder_overdue":
+        return <span className="font-medium text-destructive">Overdue: {taskTitle}</span>;
+      case "blocker_resolved":
+        return <span className="font-medium text-success">Unblocked: {taskTitle}</span>;
+      case "campaign_assigned":
+        return <span className="font-medium">Campaign: {taskTitle}</span>;
+      case "campaign_status_changed":
+        return <span className="font-medium">{taskTitle} → {payload.new_status}</span>;
+      case "ad_status_changed":
+        return <span className="font-medium">Ad: {payload.ad_name} → {payload.new_status}</span>;
+      case "ad_pending_review":
+        return <span className="font-medium">Review: {payload.ad_name}</span>;
       default:
-        return "New notification";
+        return <span>{taskTitle || "New notification"}</span>;
     }
   };
 

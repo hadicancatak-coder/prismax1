@@ -228,75 +228,85 @@ export default function Notifications() {
     );
   };
 
+  // Combine title + context into one concise action-oriented message
   const getNotificationTitle = (notification: any) => {
-    const payload = notification.payload_json;
+    const payload = notification.payload_json || {};
+    const data = enrichedData.get(notification.id) || {};
+    const taskTitle = payload.task_title || payload.campaign_title || "";
+    
     switch (notification.type) {
       case "task_assigned":
-        return "Task Assigned";
+        return `Assigned: ${taskTitle}`;
       case "comment_mention":
-        return "Mentioned in Comment";
+        return `Mentioned in: ${taskTitle}`;
+      case "task_new_comment":
+        return `New comment on: ${taskTitle}`;
       case "task_updated":
-        return "Task Updated";
+        return `Updated: ${taskTitle}`;
+      case "task_status_changed":
+        return `${taskTitle} → ${payload.new_status}`;
+      case "task_deadline_changed":
+        return `Due date changed: ${taskTitle}`;
+      case "task_priority_changed":
+        return `Priority changed: ${taskTitle}`;
+      case "deadline_reminder_3days":
+        return `Due in 3 days: ${taskTitle}`;
+      case "deadline_reminder_1day":
+        return `Due tomorrow: ${taskTitle}`;
+      case "deadline_reminder_overdue":
+        return `Overdue: ${taskTitle}`;
+      case "task_overdue":
+        return `Overdue: ${taskTitle}`;
+      case "blocker_resolved":
+        return `Blocker resolved: ${taskTitle}`;
+      case "blocker_created":
+        return `Blocked: ${taskTitle}`;
+      case "campaign_assigned":
+        return `Campaign assigned: ${taskTitle}`;
+      case "campaign_status_changed":
+        return `${taskTitle} → ${payload.new_status}`;
+      case "campaign_starting_soon":
+        return `Launching soon: ${taskTitle}`;
+      case "approval_pending":
+        return `Needs approval: ${taskTitle}`;
+      case "ad_status_changed":
+        return `Ad ${payload.ad_name} → ${payload.new_status}`;
+      case "ad_pending_review":
+        return `Review needed: ${payload.ad_name}`;
       case "announcement":
         return payload.title || "Announcement";
-      case "campaign_converted_to_task":
-        return "Campaign Converted";
-      case "deadline_reminder_3days":
-        return "Deadline Reminder";
-      case "deadline_reminder_1day":
-        return "Due Tomorrow";
-      case "deadline_reminder_overdue":
-        return "Task Overdue";
-      case "campaign_starting_soon":
-        return "Campaign Launch";
-      case "task_status_changed":
-        return "Status Changed";
-      case "campaign_status_changed":
-        return "Campaign Status Changed";
-      case "blocker_resolved":
-        return "Blocker Resolved";
-      case "approval_pending":
-        return "Approval Pending";
       default:
-        return "Notification";
+        return taskTitle || "Notification";
     }
   };
 
   const getNotificationMessage = (notification: any) => {
-    const payload = notification.payload_json;
+    const payload = notification.payload_json || {};
     const data = enrichedData.get(notification.id) || {};
     
     switch (notification.type) {
       case "task_assigned":
-        const assignedBy = data.assignedByName || "Someone";
-        return `${assignedBy} assigned you to a task`;
+        return data.assignedByName ? `by ${data.assignedByName}` : "";
       case "comment_mention":
-        const mentionedBy = data.mentionedByName || "Someone";
-        return `${mentionedBy} mentioned you in a comment`;
-      case "task_updated":
-        return payload.message || "Task was updated";
-      case "announcement":
-        return payload.message;
-      case "campaign_converted_to_task":
-        return payload.message || "Campaign converted to task";
-      case "deadline_reminder_3days":
-        return "Due in 3 days";
-      case "deadline_reminder_1day":
-        return "Due tomorrow";
-      case "deadline_reminder_overdue":
-        return `${payload.days_overdue} days overdue`;
-      case "campaign_starting_soon":
-        return "Launches in 3 days";
+        return data.mentionedByName ? `by ${data.mentionedByName}` : "";
+      case "task_new_comment":
+        return payload.commenter_name ? `by ${payload.commenter_name}` : "";
       case "task_status_changed":
-        return `Moved to ${payload.new_status}`;
-      case "campaign_status_changed":
-        return `Moved to ${payload.new_status}`;
-      case "blocker_resolved":
-        return "Blocker has been resolved";
+        return payload.old_status ? `was ${payload.old_status}` : "";
+      case "task_deadline_changed":
+        const oldDate = payload.old_due_date ? new Date(payload.old_due_date).toLocaleDateString() : "None";
+        const newDate = payload.new_due_date ? new Date(payload.new_due_date).toLocaleDateString() : "Removed";
+        return `${oldDate} → ${newDate}`;
+      case "task_priority_changed":
+        return `${payload.old_priority} → ${payload.new_priority}`;
+      case "deadline_reminder_overdue":
+        return `${payload.days_overdue || 1} days overdue`;
       case "approval_pending":
-        return `Pending approval for ${payload.days_pending} days`;
+        return `${payload.days_pending || 1} days waiting`;
+      case "announcement":
+        return payload.message || "";
       default:
-        return "You have a new notification";
+        return "";
     }
   };
 
