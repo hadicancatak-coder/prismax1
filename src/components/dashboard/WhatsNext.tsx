@@ -9,6 +9,7 @@ export function WhatsNext() {
   const { user } = useAuth();
   const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -31,8 +32,9 @@ export function WhatsNext() {
     return format(d, "MMM d");
   };
 
-  const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+    setSelectedTaskId(task.id);
     setTaskDialogOpen(true);
   };
 
@@ -45,7 +47,7 @@ export function WhatsNext() {
             upcomingTasks.map((task) => (
               <div
                 key={task.id}
-                onClick={() => handleTaskClick(task.id)}
+                onClick={() => handleTaskClick(task)}
                 className="flex items-center justify-between py-sm border-b border-border hover:bg-muted/30 transition-smooth cursor-pointer"
               >
                 <div className="flex-1">
@@ -76,6 +78,7 @@ export function WhatsNext() {
         open={taskDialogOpen}
         onOpenChange={setTaskDialogOpen}
         taskId={selectedTaskId}
+        task={selectedTask}
         mode="view"
       />
     </>

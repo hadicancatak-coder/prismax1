@@ -224,6 +224,7 @@ export default function CalendarView() {
   const [dateView, setDateView] = useState<"today" | "tomorrow" | "week" | "custom">("today");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -547,6 +548,8 @@ export default function CalendarView() {
 
   const openTaskDialog = (id: string) => {
     const originalId = id.includes('::') ? id.split('::')[0] : id;
+    const task = tasks?.find(t => t.id === originalId);
+    setSelectedTask(task || null);
     setSelectedTaskId(originalId);
     setTaskDialogOpen(true);
   };
@@ -1024,6 +1027,7 @@ export default function CalendarView() {
         open={taskDialogOpen}
         onOpenChange={setTaskDialogOpen}
         taskId={selectedTaskId}
+        task={selectedTask}
         mode="view"
       />
       

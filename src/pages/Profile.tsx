@@ -47,6 +47,7 @@ export default function Profile() {
   });
   const [uploading, setUploading] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   const { kpis } = useKPIs();
@@ -513,6 +514,7 @@ export default function Profile() {
                         recurrence: task.recurrence_rrule ? (task.recurrence_rrule.includes('DAILY') ? 'daily' : task.recurrence_rrule.includes('WEEKLY') ? 'weekly' : task.recurrence_rrule.includes('MONTHLY') ? 'monthly' : 'none') : 'none',
                       }}
                       onClick={() => {
+                        setSelectedTask(task);
                         setSelectedTaskId(task.id);
                         setTaskDialogOpen(true);
                       }}
@@ -534,6 +536,7 @@ export default function Profile() {
             onOpenChange={setTaskDialogOpen}
             mode="view"
             taskId={selectedTaskId}
+            task={selectedTask}
           />
         )}
       </div>

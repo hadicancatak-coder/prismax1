@@ -20,6 +20,7 @@ export default function Notifications() {
   const [filteredNotifications, setFilteredNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -217,7 +218,10 @@ export default function Notifications() {
     }
   };
 
-  const openTaskDialog = (taskId: string) => {
+  const openTaskDialog = async (taskId: string) => {
+    // Fetch task data for cache-first pattern
+    const { data } = await supabase.from("tasks").select("*").eq("id", taskId).single();
+    setSelectedTask(data);
     setSelectedTaskId(taskId);
     setTaskDialogOpen(true);
   };
