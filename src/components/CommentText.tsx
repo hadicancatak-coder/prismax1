@@ -35,26 +35,20 @@ export function CommentText({
           );
         }
         
-        // Handle mentions if enabled
-        if (enableMentions) {
-          return segment.content.split(/(@\w+)/g).map((part, i) => {
-            if (part.startsWith('@')) {
-              const username = part.substring(1);
-              const mentioned = profiles.find(
-                p => p.name?.toLowerCase() === username.toLowerCase() ||
-                     p.username?.toLowerCase() === username.toLowerCase()
-              );
-              return mentioned ? (
-                <span key={`${index}-${i}`} className="font-semibold cursor-pointer hover:underline">
-                  {part}
-                </span>
-              ) : part;
-            }
-            return part;
-          });
-        }
-        
-        return segment.content;
+        // Handle mentions - always parse them for visual styling
+        return segment.content.split(/(@\w+)/g).map((part, i) => {
+          if (part.startsWith('@')) {
+            return (
+              <span 
+                key={`${index}-${i}`} 
+                className="bg-primary/15 text-primary px-1.5 py-0.5 rounded-md font-medium text-body-sm inline-block"
+              >
+                {part}
+              </span>
+            );
+          }
+          return part;
+        });
       })}
     </p>
   );
