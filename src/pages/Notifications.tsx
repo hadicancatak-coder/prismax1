@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +7,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Bell, Check, Trash2, Search, CheckCheck } from "lucide-react";
+import { Bell, Check, Trash2, Search, CheckCheck, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns";
 import { AnnouncementsSection } from "@/components/AnnouncementsSection";
-import { NotificationDetailDialog } from "@/components/NotificationDetailDialog";
-import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 
 export default function Notifications() {
   const { user, userRole } = useAuth();
@@ -24,8 +21,6 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -209,17 +204,22 @@ export default function Notifications() {
     }
   };
 
-  const handleNotificationClick = async (notification: any) => {
-    setSelectedNotification(notification);
-    setDetailDialogOpen(true);
-    
-    const payload = notification.payload_json;
-    
-    // Open task dialog if task_id exists
-    if (payload.task_id) {
-      setSelectedTaskId(payload.task_id);
-      setTaskDialogOpen(true);
+  const markSelectedAsRead = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", selectedIds);
+
+    if (!error) {
+      toast({ title: `${selectedIds.length} notifications marked as read` });
+      setSelectedIds([]);
+      fetchNotifications();
     }
+  };
+
+  const openTaskDialog = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setTaskDialogOpen(true);
   };
 
   const toggleSelect = (id: string) => {
@@ -432,12 +432,16 @@ export default function Notifications() {
         {selectedIds.length > 0 && (
           <div className="mt-md flex items-center gap-sm p-sm bg-muted rounded">
             <span className="text-body">{selectedIds.length} selected</span>
+            <Button onClick={markSelectedAsRead} variant="outline" size="sm">
+              <Check className="h-4 w-4 mr-2" />
+              Mark Read
+            </Button>
             <Button onClick={deleteSelected} variant="destructive" size="sm">
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete Selected
+              Delete
             </Button>
             <Button onClick={() => setSelectedIds([])} variant="ghost" size="sm">
-              Clear Selection
+              Clear
             </Button>
           </div>
         )}
@@ -457,10 +461,9 @@ export default function Notifications() {
                   return (
                     <div
                       key={notification.id}
-                      className={`p-md border border-border rounded transition-smooth hover:border-primary cursor-pointer ${
+                      className={`p-md border border-border rounded transition-smooth ${
                         notification.read_at ? "bg-background" : "bg-muted/30 border-l-4 border-l-primary"
                       } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
-                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start justify-between gap-md">
                         <div className="flex items-start gap-sm flex-1 min-w-0">
@@ -511,7 +514,18 @@ export default function Notifications() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2 flex-shrink-0">
+                          {notification.payload_json?.task_id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openTaskDialog(notification.payload_json.task_id)}
+                              title="View task"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          )}
                           {!notification.read_at && (
                             <Button
                               size="sm"
@@ -561,16 +575,6 @@ export default function Notifications() {
           onOpenChange={setTaskDialogOpen}
           mode="view"
           taskId={selectedTaskId}
-        />
-      )}
-
-      {selectedNotification && (
-        <NotificationDetailDialog
-          open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-          notification={selectedNotification}
-          onDelete={fetchNotifications}
-          onMarkRead={fetchNotifications}
         />
       )}
     </div>
