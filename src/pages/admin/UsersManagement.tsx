@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Search, Target, Activity } from "lucide-react";
+import { Trash2, Search, Target, Activity, Shield, ShieldOff, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { adminService } from "@/lib/adminService";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -27,6 +27,7 @@ interface User {
   teams: string[] | null;
   role?: string;
   kpisAssigned?: number;
+  mfa_enabled?: boolean;
   lastActivity?: {
     action: string;
     time: string;
@@ -39,6 +40,8 @@ export default function UsersManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [mfaResetDialogOpen, setMfaResetDialogOpen] = useState(false);
+  const [mfaResetUser, setMfaResetUser] = useState<User | null>(null);
   const [bulkAction, setBulkAction] = useState<string>("");
 
   useEffect(() => {
@@ -48,10 +51,10 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles
+      // Fetch profiles with MFA status
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, mfa_enabled')
         .order('name');
 
       if (profilesError) throw profilesError;
@@ -86,6 +89,7 @@ export default function UsersManagement() {
         ...profile,
         role: roleMap.get(profile.user_id) || 'member',
         kpisAssigned: 0, // KPIs feature simplified
+        mfa_enabled: profile.mfa_enabled || false,
         lastActivity: activityMap.get(profile.user_id) || null,
       })) || [];
 
@@ -180,6 +184,25 @@ export default function UsersManagement() {
       fetchUsers();
     } catch (error: any) {
       toast.error('Failed to delete user: ' + error.message);
+    }
+  };
+
+  const handleResetMfa = async () => {
+    if (!mfaResetUser) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-mfa', {
+        body: { targetUserId: mfaResetUser.user_id },
+      });
+
+      if (error) throw error;
+
+      toast.success(`MFA reset for ${mfaResetUser.name}. They will need to set up MFA again.`);
+      setMfaResetDialogOpen(false);
+      setMfaResetUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error('Failed to reset MFA: ' + error.message);
     }
   };
 
@@ -308,6 +331,12 @@ export default function UsersManagement() {
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5" />
+                      MFA
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
                       <Activity className="h-3.5 w-3.5" />
                       Last Activity
                     </div>
@@ -318,7 +347,7 @@ export default function UsersManagement() {
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center">No users found</TableCell>
+                    <TableCell colSpan={11} className="text-center">No users found</TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
@@ -382,6 +411,27 @@ export default function UsersManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge 
+                              variant={user.mfa_enabled ? "default" : "secondary"}
+                              className={user.mfa_enabled ? "bg-success/15 text-success border-success/30" : "bg-warning/15 text-warning border-warning/30"}
+                            >
+                              {user.mfa_enabled ? (
+                                <><Shield className="h-3 w-3 mr-1" /> Enabled</>
+                              ) : (
+                                <><ShieldOff className="h-3 w-3 mr-1" /> Not Set</>
+                              )}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {user.mfa_enabled 
+                              ? "Two-factor authentication is enabled" 
+                              : "User has not set up MFA yet"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
                         {user.lastActivity ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -404,13 +454,37 @@ export default function UsersManagement() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteUser(user.user_id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {user.mfa_enabled && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setMfaResetUser(user);
+                                    setMfaResetDialogOpen(true);
+                                  }}
+                                >
+                                  <RotateCcw className="h-4 w-4 text-warning" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reset MFA</TooltipContent>
+                            </Tooltip>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteUser(user.user_id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete User</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -432,6 +506,34 @@ export default function UsersManagement() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={confirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={mfaResetDialogOpen} onOpenChange={setMfaResetDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-warning" />
+                Reset MFA for {mfaResetUser?.name}?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>This will:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Delete all MFA secrets and backup codes</li>
+                  <li>End all active MFA sessions</li>
+                  <li>Require the user to set up MFA again on next login</li>
+                </ul>
+                <p className="mt-3 font-medium">
+                  Use this if the user lost access to their authenticator app and cannot use backup codes.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleResetMfa} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+                Reset MFA
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
