@@ -45,28 +45,43 @@ export function NotificationBell() {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    // Enrich notifications with comment text for comment_mention type
-    const enrichedNotifications = await Promise.all(
-      (data || []).map(async (notification) => {
-        const payload = notification.payload_json as any;
-        if (notification.type === "comment_mention" && payload?.comment_id) {
-          const { data: comment } = await supabase
-            .from("comments")
-            .select("body")
-            .eq("id", payload.comment_id)
-            .single();
-          
-          return {
-            ...notification,
-            commentPreview: comment?.body?.substring(0, 60) || ""
-          };
-        }
-        return notification;
-      })
-    );
+    // Fast path: set notifications immediately, enrich async for comment types only
+    const notifications = data || [];
+    setNotifications(notifications);
+    setUnreadCount(notifications.length);
 
-    setNotifications(enrichedNotifications);
-    setUnreadCount(enrichedNotifications.length);
+    // Only enrich comment_mention types (batched)
+    const commentIds = notifications
+      .filter(n => n.type === "comment_mention" && (n.payload_json as any)?.comment_id)
+      .map(n => (n.payload_json as any).comment_id);
+
+    if (commentIds.length > 0) {
+      const { data: comments } = await supabase
+        .from("comments")
+        .select("id, body")
+        .in("id", commentIds);
+
+      if (comments) {
+        const commentMap = new Map(comments.map(c => [c.id, c.body?.substring(0, 60) || ""]));
+        setNotifications(prev => prev.map(n => {
+          const commentId = (n.payload_json as any)?.comment_id;
+          if (n.type === "comment_mention" && commentId && commentMap.has(commentId)) {
+            return { ...n, commentPreview: commentMap.get(commentId) };
+          }
+          return n;
+        }));
+      }
+    }
+  };
+
+  const markAllRead = async () => {
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", user?.id)
+      .is("read_at", null);
+    setNotifications([]);
+    setUnreadCount(0);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -157,9 +172,16 @@ export function NotificationBell() {
       <PopoverContent className="w-96 p-0" align="end">
         <div className="flex items-center justify-between p-md border-b border-border">
           <h3 className="text-heading-sm font-semibold">Notifications</h3>
-          {unreadCount > 0 && (
-            <Badge variant="secondary">{unreadCount} new</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <>
+                <Button variant="ghost" size="sm" onClick={markAllRead} className="text-metadata h-7 px-2">
+                  Clear All
+                </Button>
+                <Badge variant="secondary">{unreadCount}</Badge>
+              </>
+            )}
+          </div>
         </div>
         
         <ScrollArea className="h-[400px]">

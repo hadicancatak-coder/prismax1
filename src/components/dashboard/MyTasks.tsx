@@ -15,6 +15,7 @@ export function MyTasks() {
     inProgress: 0,
   });
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -148,9 +149,10 @@ export function MyTasks() {
         break;
     }
 
-    const { data: tasks } = await query.limit(1);
-    if (tasks && tasks.length > 0) {
-      setSelectedTaskId(tasks[0].id);
+    const { data: taskData } = await query.select("*").limit(1);
+    if (taskData && taskData.length > 0) {
+      setSelectedTask(taskData[0]);
+      setSelectedTaskId(taskData[0].id);
       setTaskDialogOpen(true);
     }
   };
@@ -210,6 +212,7 @@ export function MyTasks() {
         open={taskDialogOpen}
         onOpenChange={setTaskDialogOpen}
         taskId={selectedTaskId}
+        task={selectedTask}
         mode="view"
       />
     </>
