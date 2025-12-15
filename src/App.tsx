@@ -24,11 +24,9 @@ import ErrorLogs from "./pages/admin/ErrorLogs";
 import SecurityScans from "./pages/admin/SecurityScans";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
-import TeamBase from "./pages/TeamBase";
 import SearchPlanner from "./pages/SearchPlanner";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import ActivityLog from "./pages/ActivityLog";
 import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 import Security from "./pages/Security";
@@ -76,14 +74,12 @@ const App = () => (
                     <Route path="errors" element={<ErrorLogs />} />
                     <Route path="security-scans" element={<SecurityScans />} />
                   </Route>
-                  <Route path="/team-base" element={<TeamBase />} />
                   <Route path="/ads" element={<Navigate to="/ads/search" replace />} />
                   <Route path="/ads/search" element={<SearchPlanner adType="search" key="search" />} />
                   <Route path="/ads/library" element={<Navigate to="/ads/captions" replace />} />
                   <Route path="/ads/captions" element={<CaptionLibrary />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/profile/:userId?" element={<Profile />} />
-                  <Route path="/activity-log" element={<ActivityLog />} />
                   <Route path="/utm-planner" element={<UtmPlanner />} />
                   <Route path="/copywriter" element={<CopyWriter />} />
                   <Route path="/security" element={<Security />} />

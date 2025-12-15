@@ -72,19 +72,24 @@ export function CaptionDialog({
   const [content, setContent] = useState<{ en: string; ar: string }>({ en: "", ar: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [contentLoaded, setContentLoaded] = useState(0); // Counter to force editor re-mount
+  const [editorReady, setEditorReady] = useState(false); // Ensures content is ready before editor renders
 
   const isDirtyRef = useRef(false);
+  const contentRef = useRef<{ en: string; ar: string }>({ en: "", ar: "" });
 
   // Single effect: reset state and fetch from database when dialog opens
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset editor ready state when dialog closes
+      setEditorReady(false);
+      return;
+    }
 
     // Reset all state to defaults
     isDirtyRef.current = false;
     setActiveLanguage("en");
     setIsLoading(true);
-    setContentLoaded(0);
+    setEditorReady(false);
 
     const captionId = caption?.id;
 
@@ -93,8 +98,12 @@ export function CaptionDialog({
       setType("headline");
       setSelectedEntities([]);
       setStatus("pending");
-      setContent({ en: "", ar: "" });
+      const newContent = { en: "", ar: "" };
+      setContent(newContent);
+      contentRef.current = newContent;
       setIsLoading(false);
+      // Delay editor render to ensure state is committed
+      setTimeout(() => setEditorReady(true), 50);
       return;
     }
 
@@ -113,6 +122,7 @@ export function CaptionDialog({
       if (error || !data) {
         console.error("Failed to fetch caption:", error);
         setIsLoading(false);
+        setTimeout(() => setEditorReady(true), 50);
         return;
       }
 
@@ -123,10 +133,12 @@ export function CaptionDialog({
         setStatus(data.google_status || "pending");
         const parsed = parseContentForEditing(data.content);
         setContent(parsed);
-        setContentLoaded(prev => prev + 1); // Force editor re-mount
+        contentRef.current = parsed;
       }
 
       setIsLoading(false);
+      // Critical: delay editor render until AFTER state is fully committed
+      setTimeout(() => setEditorReady(true), 50);
     })();
 
     return () => {
@@ -315,36 +327,44 @@ export function CaptionDialog({
               </TabsList>
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
-                 <RichTextEditor
-                    key={`en-${caption?.id || "new"}-${contentLoaded}`}
-                    value={content.en}
-                    onChange={(value) => {
-                      isDirtyRef.current = true;
-                      setContent((prev) => ({ ...prev, en: value }));
-                    }}
-                    placeholder="Enter English content..."
-                    minHeight="100px"
-                 />
-                 <div className="flex justify-between text-metadata text-muted-foreground">
-                   <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
-                   <span className={content.en.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
-                     Max: {maxLength}
-                   </span>
-                 </div>
-               </div>
-             </TabsContent>
-             <TabsContent value="ar" className="mt-sm">
-               <div className="space-y-sm">
-                  <RichTextEditor
-                     key={`ar-${caption?.id || "new"}-${contentLoaded}`}
-                     value={content.ar}
-                     onChange={(value) => {
-                       isDirtyRef.current = true;
-                       setContent((prev) => ({ ...prev, ar: value }));
-                     }}
-                     placeholder="أدخل المحتوى بالعربية..."
-                     minHeight="100px"
-                  />
+                  {editorReady ? (
+                    <RichTextEditor
+                      key={`en-${caption?.id || "new"}`}
+                      value={content.en}
+                      onChange={(value) => {
+                        isDirtyRef.current = true;
+                        setContent((prev) => ({ ...prev, en: value }));
+                      }}
+                      placeholder="Enter English content..."
+                      minHeight="100px"
+                    />
+                  ) : (
+                    <Skeleton className="h-24 w-full" />
+                  )}
+                  <div className="flex justify-between text-metadata text-muted-foreground">
+                    <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
+                    <span className={content.en.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
+                      Max: {maxLength}
+                    </span>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="ar" className="mt-sm">
+                <div className="space-y-sm">
+                  {editorReady ? (
+                    <RichTextEditor
+                      key={`ar-${caption?.id || "new"}`}
+                      value={content.ar}
+                      onChange={(value) => {
+                        isDirtyRef.current = true;
+                        setContent((prev) => ({ ...prev, ar: value }));
+                      }}
+                      placeholder="أدخل المحتوى بالعربية..."
+                      minHeight="100px"
+                    />
+                  ) : (
+                    <Skeleton className="h-24 w-full" />
+                  )}
                   <div className="flex justify-between text-metadata text-muted-foreground">
                     <span>Characters: {content.ar.replace(/<[^>]*>/g, '').length}</span>
                     <span className={content.ar.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
