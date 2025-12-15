@@ -39,10 +39,7 @@ export function NotificationBell() {
   const fetchNotifications = async () => {
     const { data } = await supabase
       .from("notifications")
-      .select(`
-        *,
-        actor:profiles!notifications_actor_id_fkey(id, full_name, avatar_url)
-      `)
+      .select("*")
       .eq("user_id", user?.id)
       .is("read_at", null)
       .order("created_at", { ascending: false })
