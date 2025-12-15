@@ -2775,7 +2775,7 @@ export type Database = {
           mfa_backup_codes_generated_at: string | null
           mfa_enabled: boolean | null
           mfa_enrolled: boolean | null
-          mfa_enrollment_required: boolean | null
+          mfa_enrollment_required: boolean
           mfa_temp_bypass_until: string | null
           name: string
           password_last_changed_at: string | null
@@ -2800,7 +2800,7 @@ export type Database = {
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled?: boolean | null
-          mfa_enrollment_required?: boolean | null
+          mfa_enrollment_required?: boolean
           mfa_temp_bypass_until?: string | null
           name: string
           password_last_changed_at?: string | null
@@ -2825,7 +2825,7 @@ export type Database = {
           mfa_backup_codes_generated_at?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled?: boolean | null
-          mfa_enrollment_required?: boolean | null
+          mfa_enrollment_required?: boolean
           mfa_temp_bypass_until?: string | null
           name?: string
           password_last_changed_at?: string | null

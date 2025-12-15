@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, Copy, Check } from "lucide-react";
+import { Loader2, Shield, Copy, Check, AlertTriangle } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import QRCode from "qrcode";
 import { useAuth } from "@/hooks/useAuth";
+import { MfaSetupGuide } from "@/components/MfaSetupGuide";
 
 export default function MfaSetup() {
   const [loading, setLoading] = useState(true);
@@ -180,9 +182,17 @@ export default function MfaSetup() {
           <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground mb-2">Set Up Two-Factor Authentication</h1>
           <p className="text-sm text-muted-foreground">
-            Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)
+            Two-factor authentication is required for all accounts
           </p>
         </div>
+
+        <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="text-sm text-muted-foreground ml-2">
+            <strong>Required:</strong> Scan the QR code with an authenticator app like 
+            Google Authenticator, Authy, or Microsoft Authenticator.
+          </AlertDescription>
+        </Alert>
 
         <div className="flex justify-center mb-6">
           <img src={qrCode} alt="QR Code" className="w-48 h-48" />
@@ -218,6 +228,10 @@ export default function MfaSetup() {
                 </InputOTPGroup>
               </InputOTP>
             </div>
+          </div>
+
+          <div className="flex justify-center mb-4">
+            <MfaSetupGuide />
           </div>
 
           <Button
