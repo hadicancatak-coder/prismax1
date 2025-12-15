@@ -242,6 +242,19 @@ return (
 
 ---
 
+## Authoritative Fetch for Edit Dialogs (Prevents Blank Editors)
+
+### ✅ Rule
+When opening an **Edit** dialog for an existing record, **never rely on the object from a list/tree/table** (it may be partially-loaded). Always **refetch by ID on open**, then hydrate form state.
+
+### ✅ Requirements
+- Fetch by `id` inside the dialog `useEffect` that runs on `open`
+- Use `.maybeSingle()` (avoid hard crashes on “0 rows”)
+- If fetch fails or returns null: show a toast (don’t silently render empty editors)
+- Reset form state to defaults before hydrating (prevents stale/ghost values)
+
+---
+
 ## Checklist for Dialog Components
 
 - [ ] Dialog only closes via ESC, X button, or outside click

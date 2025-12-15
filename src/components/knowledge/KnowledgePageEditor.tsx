@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { KnowledgePage } from "@/hooks/useKnowledgePages";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { FileText, Book, Lightbulb, Link, Settings, Users, Folder, HelpCircle, CheckCircle } from "lucide-react";
 
 const ICON_OPTIONS = [
@@ -45,20 +47,49 @@ export function KnowledgePageEditor({
   const [icon, setIcon] = useState("file-text");
 
   useEffect(() => {
-    if (open) {
-      if (page) {
-        setTitle(page.title);
-        setContent(page.content || "");
-        setSelectedParentId(page.parent_id);
-        setIcon(page.icon || "file-text");
-      } else {
+    if (!open) return;
+
+    let cancelled = false;
+
+    (async () => {
+      // Create mode
+      if (!page?.id) {
         setTitle("");
         setContent("");
         setSelectedParentId(parentId || null);
         setIcon("file-text");
+        return;
       }
-    }
-  }, [open, page, parentId]);
+
+      // Edit mode: always fetch authoritative data by id (prevents blank/stale editors)
+      const { data, error } = await supabase
+        .from("knowledge_pages")
+        .select("title, content, parent_id, icon")
+        .eq("id", page.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        toast.error("Failed to load page content");
+        // Fall back to whatever we have locally (better than showing empty)
+        setTitle(page.title || "");
+        setContent(page.content || "");
+        setSelectedParentId(page.parent_id || null);
+        setIcon(page.icon || "file-text");
+        return;
+      }
+
+      setTitle(data.title || "");
+      setContent(data.content || "");
+      setSelectedParentId(data.parent_id || null);
+      setIcon(data.icon || "file-text");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, page?.id, parentId]);
 
   const handleSubmit = () => {
     if (!title.trim()) return;

@@ -85,22 +85,24 @@ export function CaptionDialog({
       return;
     }
 
-    // Reset all state to defaults
+    // Reset all state to defaults (prevents blank/stale editors)
     isDirtyRef.current = false;
     setActiveLanguage("en");
     setIsLoading(true);
     setEditorReady(false);
 
+    // Always reset form fields as well (edit mode will hydrate from DB)
+    setType("headline");
+    setSelectedEntities([]);
+    setStatus("pending");
+    const emptyContent = { en: "", ar: "" };
+    setContent(emptyContent);
+    contentRef.current = emptyContent;
+
     const captionId = caption?.id;
 
     if (!captionId) {
       // Creating new caption - use defaults
-      setType("headline");
-      setSelectedEntities([]);
-      setStatus("pending");
-      const newContent = { en: "", ar: "" };
-      setContent(newContent);
-      contentRef.current = newContent;
       setIsLoading(false);
       // Delay editor render to ensure state is committed
       setTimeout(() => setEditorReady(true), 50);
@@ -115,12 +117,13 @@ export function CaptionDialog({
         .from("ad_elements")
         .select("id, element_type, entity, google_status, content")
         .eq("id", captionId)
-        .single();
+        .maybeSingle();
 
       if (cancelled) return;
 
       if (error || !data) {
         console.error("Failed to fetch caption:", error);
+        toast.error("Failed to load caption content");
         setIsLoading(false);
         setTimeout(() => setEditorReady(true), 50);
         return;

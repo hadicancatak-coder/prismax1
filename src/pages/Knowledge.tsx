@@ -121,24 +121,33 @@ export default function Knowledge() {
       setSelectedPage(null);
       return;
     }
-    
-    // Find the full page object from pages array to ensure we have children
-    const fullPage = pages?.find(p => p.id === page.id);
-    if (fullPage) {
-      // Also attach children from pageTree
-      const findWithChildren = (tree: KnowledgePage[]): KnowledgePage | undefined => {
-        for (const node of tree) {
-          if (node.id === page.id) return node;
-          if (node.children) {
-            const found = findWithChildren(node.children);
-            if (found) return found;
-          }
+
+    // Find the full page object from pages array to ensure we have full content
+    const fullPage = pages?.find((p) => p.id === page.id);
+
+    // Also attach children from pageTree
+    const findWithChildren = (tree: KnowledgePage[]): KnowledgePage | undefined => {
+      for (const node of tree) {
+        if (node.id === page.id) return node;
+        if (node.children) {
+          const found = findWithChildren(node.children);
+          if (found) return found;
         }
-        return undefined;
-      };
-      const pageWithChildren = findWithChildren(pageTree);
-      setSelectedPage(pageWithChildren || fullPage);
+      }
+      return undefined;
+    };
+
+    const treeNode = findWithChildren(pageTree);
+
+    if (fullPage) {
+      setSelectedPage({
+        ...fullPage,
+        children: treeNode?.children || fullPage.children,
+      });
+      return;
     }
+
+    setSelectedPage(treeNode || page);
   };
 
   if (isLoading) {
