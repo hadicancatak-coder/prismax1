@@ -98,18 +98,19 @@ export function KnowledgePageContent({
           </div>
         </div>
 
-        {isAdmin && (
-          <div className="flex items-center gap-2">
-            {/* Share Button */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80">
-                <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          {/* Share Button - available to all users */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80">
+              <div className="space-y-4">
+                {/* Admin can toggle public/private */}
+                {isAdmin && (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {page.is_public ? (
@@ -127,46 +128,55 @@ export function KnowledgePageContent({
                       onCheckedChange={(checked) => onTogglePublic?.(checked)}
                     />
                   </div>
-                  
-                  <p className="text-metadata text-muted-foreground">
-                    {page.is_public 
-                      ? "Anyone with the link can view this page without signing in."
-                      : "Only authenticated users can view this page."}
-                  </p>
-
-                  {page.is_public && publicUrl && (
-                    <div className="space-y-2">
-                      <Label className="text-metadata">Share link</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          readOnly
-                          value={publicUrl}
-                          className="text-body-sm"
-                        />
-                        <Button size="icon" variant="outline" onClick={handleCopyLink}>
-                          {copied ? (
-                            <Check className="h-4 w-4 text-success" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                )}
+                
+                {/* Show link if public */}
+                {page.is_public && publicUrl ? (
+                  <div className="space-y-2">
+                    <p className="text-metadata text-muted-foreground">
+                      Anyone with the link can view this page without signing in.
+                    </p>
+                    <Label className="text-metadata">Share link</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        readOnly
+                        value={publicUrl}
+                        className="text-body-sm"
+                      />
+                      <Button size="icon" variant="outline" onClick={handleCopyLink}>
+                        {copied ? (
+                          <Check className="h-4 w-4 text-success" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
+                  </div>
+                ) : (
+                  <p className="text-metadata text-muted-foreground">
+                    {isAdmin 
+                      ? "Toggle the switch above to make this page public and generate a share link."
+                      : "This page is private. Ask an admin to make it public for sharing."}
+                  </p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
-        )}
+          {/* Admin-only edit/delete buttons */}
+          {isAdmin && (
+            <>
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Content */}
