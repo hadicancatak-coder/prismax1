@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { CheckSquare, Search, Link2, FileText, MapPin } from "lucide-react";
+import { CheckSquare, Search, Link2, FileText } from "lucide-react";
 
 const links = [
   {
@@ -30,13 +30,6 @@ const links = [
     icon: Link2,
     url: "/utm-planner",
     color: "text-orange-600",
-  },
-  {
-    title: "Location Intel",
-    description: "Location insights",
-    icon: MapPin,
-    url: "/location-intelligence",
-    color: "text-teal-600",
   },
 ];
 

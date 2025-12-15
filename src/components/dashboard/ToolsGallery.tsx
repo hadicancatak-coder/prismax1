@@ -20,22 +20,6 @@ const MOST_USED_TOOLS = [
     colorKey: "purple" as const,
   },
   {
-    id: "status-log",
-    name: "Status Log",
-    description: "Team status updates and activity tracking",
-    route: "/operations/status-log",
-    icon: "Activity",
-    colorKey: "amber" as const,
-  },
-  {
-    id: "location-intel",
-    name: "Location Intel",
-    description: "Geographic location intelligence and mapping",
-    route: "/location-intelligence",
-    icon: "MapPin",
-    colorKey: "cyan" as const,
-  },
-  {
     id: "captions",
     name: "Caption Library",
     description: "Manage and reuse ad copy across campaigns",
