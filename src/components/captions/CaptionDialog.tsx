@@ -259,6 +259,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
                   <RichTextEditor
+                    key={`en-${caption?.id || 'new'}`}
                     value={content.en}
                     onChange={(value) => setContent({ ...content, en: value })}
                     placeholder="Enter English content..."
@@ -275,6 +276,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               <TabsContent value="ar" className="mt-sm">
                 <div className="space-y-sm">
                   <RichTextEditor
+                    key={`ar-${caption?.id || 'new'}`}
                     value={content.ar}
                     onChange={(value) => setContent({ ...content, ar: value })}
                     placeholder="أدخل المحتوى بالعربية..."
