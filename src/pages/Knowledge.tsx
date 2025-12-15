@@ -202,7 +202,7 @@ export default function Knowledge() {
               onEdit={isAdmin ? handleEditPage : undefined}
               onDelete={isAdmin ? handleDeletePage : undefined}
               onNavigate={handleNavigate}
-              onTogglePublic={isAdmin ? (isPublic) => togglePublic.mutate({ id: selectedPage.id, is_public: isPublic }) : undefined}
+              onTogglePublic={(isPublic) => togglePublic.mutate({ id: selectedPage.id, is_public: isPublic })}
               isAdmin={isAdmin}
             />
           ) : pages && pages.length > 0 ? (
