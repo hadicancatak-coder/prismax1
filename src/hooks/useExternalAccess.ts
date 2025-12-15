@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getProductionUrl } from "@/lib/utils";
 
 export interface ExternalAccess {
   id: string;
@@ -58,7 +59,7 @@ export const useExternalAccess = () => {
       
       return {
         ...data,
-        url: `${window.location.origin}/campaigns-log/review/${token}`,
+        url: `${getProductionUrl()}/campaigns-log/review/${token}`,
       };
     },
     onSuccess: () => {
@@ -76,7 +77,7 @@ export const useExternalAccess = () => {
       .select("*")
       .eq("access_token", token)
       .eq("is_active", true)
-      .maybeSingle(); // Use maybeSingle() instead of single() to avoid PGRST116 error
+      .maybeSingle();
     
     if (error) {
       throw new Error(`Token verification failed: ${error.message}`);
@@ -90,6 +91,15 @@ export const useExternalAccess = () => {
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
       throw new Error("This review link has expired");
     }
+
+    // Track click count and last accessed
+    await supabase
+      .from("campaign_external_access")
+      .update({
+        click_count: (data.click_count || 0) + 1,
+        last_accessed_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
     
     return data as ExternalAccess;
   };

@@ -32,35 +32,49 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { 
-  Link2, 
   MoreVertical, 
   Copy, 
   Power, 
   PowerOff, 
   Calendar, 
   Trash2, 
-  RefreshCw,
-  Clock,
   CheckCircle2,
   XCircle,
   AlertCircle,
   BookOpen,
   Globe,
-  Lock
+  Eye,
+  MousePointerClick
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, formatDistanceToNow } from "date-fns";
 import { Label } from "@/components/ui/label";
+
+interface UnifiedLink {
+  id: string;
+  type: 'campaign' | 'knowledge';
+  title: string;
+  entity?: string;
+  reviewer_name?: string;
+  reviewer_email?: string;
+  is_active: boolean;
+  is_verified?: boolean;
+  created_at: string;
+  expires_at?: string;
+  click_count: number;
+  last_accessed_at?: string;
+  access_token?: string;
+  public_token?: string;
+}
 
 export default function ExternalLinksManagement() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [extendLinkId, setExtendLinkId] = useState<string | null>(null);
   const [newExpiration, setNewExpiration] = useState("");
-  const [deleteLinkId, setDeleteLinkId] = useState<string | null>(null);
+  const [deleteLink, setDeleteLink] = useState<{ id: string; type: 'campaign' | 'knowledge' } | null>(null);
 
   // Fetch all external access links
-  const { data: links = [], isLoading } = useQuery({
+  const { data: campaignLinks = [] } = useQuery({
     queryKey: ["external-access-links"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -93,6 +107,69 @@ export default function ExternalLinksManagement() {
     },
   });
 
+  // Unify all links into single list
+  const unifiedLinks: UnifiedLink[] = [
+    ...campaignLinks.map((link): UnifiedLink => ({
+      id: link.id,
+      type: 'campaign',
+      title: link.utm_campaigns?.name || 'All Campaigns',
+      entity: link.entity,
+      reviewer_name: link.reviewer_name,
+      reviewer_email: link.reviewer_email,
+      is_active: link.is_active,
+      is_verified: link.email_verified,
+      created_at: link.created_at,
+      expires_at: link.expires_at,
+      click_count: link.click_count || 0,
+      last_accessed_at: link.last_accessed_at,
+      access_token: link.access_token,
+    })),
+    ...knowledgePages.map((page): UnifiedLink => ({
+      id: page.id,
+      type: 'knowledge',
+      title: page.title,
+      reviewer_name: page.reviewer_name,
+      reviewer_email: page.reviewer_email,
+      is_active: page.is_public,
+      created_at: page.created_at,
+      click_count: page.click_count || 0,
+      last_accessed_at: page.last_accessed_at,
+      public_token: page.public_token,
+    })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Deactivate campaign link
+  const deactivateCampaignMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("campaign_external_access")
+        .update({ is_active: false })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["external-access-links"] });
+      toast.success("Link deactivated");
+    },
+    onError: () => toast.error("Failed to deactivate link"),
+  });
+
+  // Reactivate campaign link
+  const reactivateCampaignMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("campaign_external_access")
+        .update({ is_active: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["external-access-links"] });
+      toast.success("Link reactivated");
+    },
+    onError: () => toast.error("Failed to reactivate link"),
+  });
+
   // Toggle knowledge page public status
   const toggleKnowledgePublicMutation = useMutation({
     mutationFn: async ({ id, isPublic }: { id: string; isPublic: boolean }) => {
@@ -109,39 +186,7 @@ export default function ExternalLinksManagement() {
     onError: () => toast.error("Failed to update knowledge page"),
   });
 
-  // Deactivate link
-  const deactivateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("campaign_external_access")
-        .update({ is_active: false })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-access-links"] });
-      toast.success("Link deactivated");
-    },
-    onError: () => toast.error("Failed to deactivate link"),
-  });
-
-  // Reactivate link
-  const reactivateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("campaign_external_access")
-        .update({ is_active: true })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-access-links"] });
-      toast.success("Link reactivated");
-    },
-    onError: () => toast.error("Failed to reactivate link"),
-  });
-
-  // Extend expiration
+  // Extend expiration (campaign only)
   const extendMutation = useMutation({
     mutationFn: async ({ id, expiresAt }: { id: string; expiresAt: string }) => {
       const { error } = await supabase
@@ -159,8 +204,8 @@ export default function ExternalLinksManagement() {
     onError: () => toast.error("Failed to update expiration"),
   });
 
-  // Delete link
-  const deleteMutation = useMutation({
+  // Delete campaign link
+  const deleteCampaignMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("campaign_external_access")
@@ -171,31 +216,93 @@ export default function ExternalLinksManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["external-access-links"] });
       toast.success("Link deleted");
-      setDeleteLinkId(null);
+      setDeleteLink(null);
     },
     onError: () => toast.error("Failed to delete link"),
   });
 
-  const copyToClipboard = (token: string) => {
-    const url = `${window.location.origin}/campaigns-log/review/${token}`;
+  // Delete knowledge page public access (make private + clear tracking)
+  const deleteKnowledgeLinkMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("knowledge_pages")
+        .update({ 
+          is_public: false, 
+          public_token: null,
+          click_count: 0,
+          last_accessed_at: null,
+          reviewer_name: null,
+          reviewer_email: null
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-knowledge-pages"] });
+      toast.success("Public access removed");
+      setDeleteLink(null);
+    },
+    onError: () => toast.error("Failed to remove public access"),
+  });
+
+  const copyToClipboard = (link: UnifiedLink) => {
+    let url: string;
+    if (link.type === 'campaign') {
+      url = `${getProductionUrl()}/campaigns-log/review/${link.access_token}`;
+    } else {
+      url = `${getProductionUrl()}/knowledge/public/${link.public_token}`;
+    }
     navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard");
   };
 
-  const getStatusBadge = (link: any) => {
+  const handleDeactivate = (link: UnifiedLink) => {
+    if (link.type === 'campaign') {
+      deactivateCampaignMutation.mutate(link.id);
+    } else {
+      toggleKnowledgePublicMutation.mutate({ id: link.id, isPublic: false });
+    }
+  };
+
+  const handleReactivate = (link: UnifiedLink) => {
+    if (link.type === 'campaign') {
+      reactivateCampaignMutation.mutate(link.id);
+    } else {
+      toggleKnowledgePublicMutation.mutate({ id: link.id, isPublic: true });
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteLink) return;
+    if (deleteLink.type === 'campaign') {
+      deleteCampaignMutation.mutate(deleteLink.id);
+    } else {
+      deleteKnowledgeLinkMutation.mutate(deleteLink.id);
+    }
+  };
+
+  const getStatusBadge = (link: UnifiedLink) => {
     if (!link.is_active) {
       return <Badge variant="outline"><PowerOff className="h-3 w-3 mr-1" />Inactive</Badge>;
     }
     if (link.expires_at && new Date(link.expires_at) < new Date()) {
       return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
     }
-    if (link.email_verified) {
+    if (link.is_verified) {
       return <Badge variant="default"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>;
     }
-    return <Badge variant="secondary"><AlertCircle className="h-3 w-3 mr-1" />Pending</Badge>;
+    return <Badge className="bg-success/15 text-success border-0"><Globe className="h-3 w-3 mr-1" />Active</Badge>;
   };
 
-  const filteredLinks = links.filter((link) =>
+  const getTypeBadge = (link: UnifiedLink) => {
+    if (link.type === 'campaign') {
+      return <Badge variant="secondary"><Eye className="h-3 w-3 mr-1" />Campaign</Badge>;
+    }
+    return <Badge variant="outline"><BookOpen className="h-3 w-3 mr-1" />Knowledge</Badge>;
+  };
+
+  const filteredLinks = unifiedLinks.filter((link) =>
+    link.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     link.entity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     link.reviewer_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     link.reviewer_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -203,17 +310,11 @@ export default function ExternalLinksManagement() {
 
   // Calculate stats
   const stats = {
-    total: links.length,
-    active: links.filter((l) => l.is_active).length,
-    verified: links.filter((l) => l.email_verified).length,
-    expired: links.filter((l) => l.expires_at && new Date(l.expires_at) < new Date()).length,
-    totalClicks: links.reduce((sum, l) => sum + (l.click_count || 0), 0),
-  };
-
-  const copyKnowledgeLink = (token: string) => {
-    const url = `${getProductionUrl()}/knowledge/public/${token}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
+    total: unifiedLinks.length,
+    campaigns: campaignLinks.length,
+    knowledge: knowledgePages.length,
+    active: unifiedLinks.filter((l) => l.is_active).length,
+    totalClicks: unifiedLinks.reduce((sum, l) => sum + (l.click_count || 0), 0),
   };
 
   return (
@@ -221,255 +322,180 @@ export default function ExternalLinksManagement() {
       <div>
         <h2 className="text-heading-lg">External Access Links</h2>
         <p className="text-body-sm text-muted-foreground">
-          Manage external review links for campaigns and knowledge pages
+          Manage all external review links for campaigns and knowledge pages
         </p>
       </div>
 
-      <Tabs defaultValue="campaigns" className="space-y-lg">
-        <TabsList>
-          <TabsTrigger value="campaigns">Campaign Links</TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge Pages</TabsTrigger>
-        </TabsList>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-md">
+        <Card>
+          <CardHeader className="pb-sm">
+            <CardTitle className="text-body-sm text-muted-foreground">Total Links</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-heading-lg font-semibold">{stats.total}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-sm">
+            <CardTitle className="text-body-sm text-muted-foreground">Campaign Links</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-heading-lg font-semibold text-primary">{stats.campaigns}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-sm">
+            <CardTitle className="text-body-sm text-muted-foreground">Knowledge Pages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-heading-lg font-semibold text-primary">{stats.knowledge}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-sm">
+            <CardTitle className="text-body-sm text-muted-foreground">Active</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-heading-lg font-semibold text-success">{stats.active}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-sm">
+            <CardTitle className="text-body-sm text-muted-foreground flex items-center gap-1">
+              <MousePointerClick className="h-4 w-4" /> Total Clicks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-heading-lg font-semibold">{stats.totalClicks}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="campaigns" className="space-y-lg">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-md">
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Total Links</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold">{stats.total}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Active</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold text-success">{stats.active}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Verified</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold text-primary">{stats.verified}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Expired</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold text-destructive">{stats.expired}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Total Clicks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold">{stats.totalClicks}</p>
-              </CardContent>
-            </Card>
-          </div>
+      {/* Search */}
+      <div className="flex gap-md">
+        <Input
+          placeholder="Search by title, entity, email, or name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
 
-          {/* Search */}
-          <div className="flex gap-md">
-            <Input
-              placeholder="Search by entity, email, or name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-
-          {/* Links Table */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Reviewer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Expires</TableHead>
-                    <TableHead>Clicks</TableHead>
-                    <TableHead>Last Accessed</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLinks.map((link) => (
-                    <TableRow key={link.id}>
-                      <TableCell className="font-medium">{link.entity}</TableCell>
-                      <TableCell className="text-body-sm">
-                        {link.utm_campaigns?.name || "All Campaigns"}
-                      </TableCell>
-                      <TableCell>
+      {/* Unified Links Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Title / Entity</TableHead>
+                <TableHead>Reviewer</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Expires</TableHead>
+                <TableHead>Clicks</TableHead>
+                <TableHead>Last Viewed</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLinks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    No external links found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredLinks.map((link) => (
+                  <TableRow key={`${link.type}-${link.id}`}>
+                    <TableCell>{getTypeBadge(link)}</TableCell>
+                    <TableCell>
+                      <div className="space-y-xs">
+                        <p className="text-body-sm font-medium">{link.title}</p>
+                        {link.entity && (
+                          <p className="text-metadata text-muted-foreground">{link.entity}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {link.reviewer_name || link.reviewer_email ? (
                         <div className="space-y-xs">
                           <p className="text-body-sm font-medium">
-                            {link.reviewer_name || "Not set"}
+                            {link.reviewer_name || "—"}
                           </p>
                           <p className="text-metadata text-muted-foreground">
-                            {link.reviewer_email}
+                            {link.reviewer_email || "—"}
                           </p>
                         </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(link)}</TableCell>
-                      <TableCell className="text-body-sm">
-                        {format(new Date(link.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell className="text-body-sm">
-                        {link.expires_at
-                          ? formatDistanceToNow(new Date(link.expires_at), {
-                              addSuffix: true,
-                            })
-                          : "Never"}
-                      </TableCell>
-                      <TableCell className="text-body-sm">{link.click_count || 0}</TableCell>
-                      <TableCell className="text-body-sm">
-                        {link.last_accessed_at
-                          ? formatDistanceToNow(new Date(link.last_accessed_at), {
-                              addSuffix: true,
-                            })
-                          : "Never"}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => copyToClipboard(link.access_token)}
-                            >
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copy Link
+                      ) : (
+                        <span className="text-muted-foreground text-body-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(link)}</TableCell>
+                    <TableCell className="text-body-sm">
+                      {format(new Date(link.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell className="text-body-sm">
+                      {link.expires_at
+                        ? formatDistanceToNow(new Date(link.expires_at), { addSuffix: true })
+                        : "Never"}
+                    </TableCell>
+                    <TableCell className="text-body-sm font-medium">{link.click_count}</TableCell>
+                    <TableCell className="text-body-sm">
+                      {link.last_accessed_at
+                        ? formatDistanceToNow(new Date(link.last_accessed_at), { addSuffix: true })
+                        : "Never"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => copyToClipboard(link)}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Link
+                          </DropdownMenuItem>
+                          {link.is_active ? (
+                            <DropdownMenuItem onClick={() => handleDeactivate(link)}>
+                              <PowerOff className="h-4 w-4 mr-2" />
+                              Deactivate
                             </DropdownMenuItem>
-                            {link.is_active ? (
-                              <DropdownMenuItem
-                                onClick={() => deactivateMutation.mutate(link.id)}
-                              >
-                                <PowerOff className="h-4 w-4 mr-2" />
-                                Deactivate
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                onClick={() => reactivateMutation.mutate(link.id)}
-                              >
-                                <Power className="h-4 w-4 mr-2" />
-                                Reactivate
-                              </DropdownMenuItem>
-                            )}
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleReactivate(link)}>
+                              <Power className="h-4 w-4 mr-2" />
+                              Reactivate
+                            </DropdownMenuItem>
+                          )}
+                          {link.type === 'campaign' && (
                             <DropdownMenuItem onClick={() => setExtendLinkId(link.id)}>
                               <Calendar className="h-4 w-4 mr-2" />
                               Extend Expiration
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => setDeleteLinkId(link.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="knowledge" className="space-y-lg">
-          {/* Knowledge Pages Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-body-sm text-muted-foreground">Public Pages</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-heading-lg font-semibold">{knowledgePages.length}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Knowledge Pages Table */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Page Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead className="w-[150px]">Actions</TableHead>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeleteLink({ id: link.id, type: link.type })}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {knowledgePages.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        No public knowledge pages yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    knowledgePages.map((page) => (
-                      <TableRow key={page.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-muted-foreground" />
-                            {page.title}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="default" className="bg-success/15 text-success border-0">
-                            <Globe className="h-3 w-3 mr-1" />
-                            Public
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-body-sm">
-                          {format(new Date(page.updated_at), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyKnowledgeLink(page.public_token)}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleKnowledgePublicMutation.mutate({ id: page.id, isPublic: false })}
-                            >
-                              <Lock className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Extend Expiration Dialog */}
       <Dialog open={!!extendLinkId} onOpenChange={() => setExtendLinkId(null)}>
@@ -509,22 +535,21 @@ export default function ExternalLinksManagement() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteLinkId} onOpenChange={() => setDeleteLinkId(null)}>
+      <Dialog open={!!deleteLink} onOpenChange={() => setDeleteLink(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete External Link</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this review link? This action cannot be undone.
+              {deleteLink?.type === 'campaign' 
+                ? "Are you sure you want to delete this review link? This action cannot be undone."
+                : "Are you sure you want to remove public access from this knowledge page? The page will become private and all tracking data will be cleared."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteLinkId(null)}>
+            <Button variant="outline" onClick={() => setDeleteLink(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteLinkId && deleteMutation.mutate(deleteLinkId)}
-            >
+            <Button variant="destructive" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>
