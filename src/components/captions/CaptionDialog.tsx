@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ENTITIES } from "@/lib/constants";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { parseContentForEditing, serializeContent } from "@/lib/captionHelpers";
 import type { Caption } from "@/pages/CaptionLibrary";
 
 const CAPTION_TYPES = [
@@ -56,34 +57,31 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [status, setStatus] = useState("pending");
   const [activeLanguage, setActiveLanguage] = useState("en");
-  const [content, setContent] = useState<Record<string, string>>({
+  const [content, setContent] = useState<{ en: string; ar: string }>({
     en: "",
     ar: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (caption) {
-      setType(caption.element_type || "headline");
-      setSelectedEntities(caption.entity || []);
-      setStatus(caption.google_status || "pending");
-      
-      // Parse content
-      const contentText = typeof caption.content === "string"
-        ? caption.content
-        : caption.content?.text || "";
-      
-      setContent({
-        en: contentText,
-        ar: caption.content?.ar || "",
-      });
-    } else {
-      // Reset form
-      setType("headline");
-      setSelectedEntities([]);
-      setStatus("pending");
-      setContent({ en: "", ar: "" });
-      setActiveLanguage("en");
+    if (open) {
+      if (caption) {
+        setType(caption.element_type || "headline");
+        setSelectedEntities(caption.entity || []);
+        setStatus(caption.google_status || "pending");
+        
+        // Use shared helper to parse content correctly
+        const parsedContent = parseContentForEditing(caption.content);
+        setContent(parsedContent);
+        setActiveLanguage("en");
+      } else {
+        // Reset form for create mode
+        setType("headline");
+        setSelectedEntities([]);
+        setStatus("pending");
+        setContent({ en: "", ar: "" });
+        setActiveLanguage("en");
+      }
     }
   }, [caption, open]);
 
@@ -104,8 +102,8 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
       return;
     }
 
-    if (!content.en.trim()) {
-      toast.error("Please enter content");
+    if (!content.en.trim() && !content.ar.trim()) {
+      toast.error("Please enter content in at least one language");
       return;
     }
 
@@ -117,12 +115,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
     setIsSubmitting(true);
 
     try {
+      // Serialize content as proper JSON object for both languages
+      const serializedContent = serializeContent(content);
+      
       const data = {
         element_type: type,
-        content: content.en, // Store primary content as string
+        content: serializedContent, // Store as JSONB object with en/ar keys
         entity: selectedEntities,
         google_status: status,
-        language: activeLanguage.toUpperCase(),
+        language: content.ar.trim() ? "MULTI" : "EN", // Mark as multi if AR exists
         updated_at: new Date().toISOString(),
       };
 
@@ -174,12 +175,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   const handleDuplicate = async () => {
     if (!caption || !user) return;
 
+    // Serialize content with both languages for duplicate
+    const serializedContent = serializeContent(content);
+
     const { error } = await supabase.from("ad_elements").insert({
       element_type: type,
-      content: content.en,
+      content: serializedContent,
       entity: selectedEntities,
       google_status: "pending",
-      language: activeLanguage.toUpperCase(),
+      language: content.ar.trim() ? "MULTI" : "EN",
       created_by: user.id,
       use_count: 0,
       is_favorite: false,
