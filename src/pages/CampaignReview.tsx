@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, Heart, MessageSquare, Loader2 } from "lucide-react";
+import { Eye, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -483,10 +483,13 @@ export default function CampaignReview() {
       </div>
 
       {/* Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-primary/5 to-accent/5 border-t border-border py-md backdrop-blur-sm">
-        <div className="container mx-auto px-md">
-          <p className="text-body text-center text-foreground flex items-center justify-center gap-xs font-medium">
-            PerMar loves <Heart className="h-5 w-5 text-destructive fill-destructive animate-pulse" /> {accessData?.entity} - Sales Team
+      <div className="fixed bottom-0 left-0 right-0 bg-muted/50 border-t border-border py-md backdrop-blur-sm">
+        <div className="container mx-auto px-md text-center space-y-1">
+          <p className="text-body-sm text-foreground font-medium">
+            Proudly presented by the Performance Marketing Team at CFI Group
+          </p>
+          <p className="text-metadata text-muted-foreground">
+            This tool was made with AI for internal purposes. Do not share this link with third parties. Internal use only.
           </p>
         </div>
       </div>

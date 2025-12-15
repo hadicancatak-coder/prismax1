@@ -241,6 +241,18 @@ export default function CampaignsLogExternal() {
           externalReviewerEmail={email}
         />
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/30 mt-8">
+        <div className="container mx-auto px-6 py-6 text-center space-y-1">
+          <p className="text-body-sm text-foreground font-medium">
+            Proudly presented by the Performance Marketing Team at CFI Group
+          </p>
+          <p className="text-metadata text-muted-foreground">
+            This tool was made with AI for internal purposes. Do not share this link with third parties. Internal use only.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
