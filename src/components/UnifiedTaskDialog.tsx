@@ -505,11 +505,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   const handleAddComment = async () => {
     if (!newComment.trim() || !taskId) return;
 
-    const { error } = await supabase.from("comments").insert({
-      task_id: taskId,
-      author_id: user!.id,
-      body: newComment.trim(),
-    });
+    const { data: newCommentData, error } = await supabase
+      .from("comments")
+      .insert({
+        task_id: taskId,
+        author_id: user!.id,
+        body: newComment.trim(),
+      })
+      .select('id')
+      .single();
 
     if (error) {
       toast({
@@ -518,6 +522,30 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
         variant: "destructive",
       });
     } else {
+      // Parse @mentions and insert into comment_mentions table for notifications
+      const mentionRegex = /@(\w+)/g;
+      const mentions = [...newComment.matchAll(mentionRegex)];
+      
+      if (mentions.length > 0 && newCommentData?.id) {
+        const mentionInserts = mentions
+          .map(match => {
+            const username = match[1].toLowerCase();
+            const mentionedUser = users.find(u => 
+              u.name?.toLowerCase().replace(/\s+/g, '') === username ||
+              u.username?.toLowerCase() === username
+            );
+            return mentionedUser ? { 
+              comment_id: newCommentData.id, 
+              mentioned_user_id: mentionedUser.user_id 
+            } : null;
+          })
+          .filter(Boolean);
+
+        if (mentionInserts.length > 0) {
+          await supabase.from("comment_mentions").insert(mentionInserts);
+        }
+      }
+
       setNewComment("");
       fetchComments();
       // Auto-scroll to bottom

@@ -170,6 +170,9 @@ export function MentionAutocomplete({
         zIndex: 99999,
       }}
       className="w-64 bg-popover border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto hide-scrollbar"
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="p-1">
         <div className="px-2 py-1.5 text-metadata text-muted-foreground">
@@ -182,7 +185,11 @@ export function MentionAutocomplete({
               "flex items-center gap-3 px-2 py-2 cursor-pointer rounded-md transition-smooth",
               index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
             )}
-            onClick={() => insertMention(user)}
+            onClick={(e) => {
+              e.stopPropagation();
+              insertMention(user);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
             onMouseEnter={() => setSelectedIndex(index)}
           >
             <Avatar className="h-7 w-7">
