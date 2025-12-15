@@ -5,6 +5,7 @@ import { BookOpen, FileText } from "lucide-react";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 import * as LucideIcons from "lucide-react";
+import { useEffect } from "react";
 
 export default function KnowledgePublic() {
   const { token } = useParams<{ token: string }>();
@@ -27,6 +28,22 @@ export default function KnowledgePublic() {
     },
     enabled: !!token,
   });
+
+  // Track page view (click count and last accessed)
+  useEffect(() => {
+    if (page?.id) {
+      supabase
+        .from("knowledge_pages")
+        .update({
+          click_count: (page.click_count || 0) + 1,
+          last_accessed_at: new Date().toISOString(),
+        })
+        .eq("id", page.id)
+        .then(() => {
+          // Silent update, no need to handle response
+        });
+    }
+  }, [page?.id]);
 
   if (isLoading) {
     return (

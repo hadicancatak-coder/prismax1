@@ -1933,45 +1933,57 @@ export type Database = {
       }
       knowledge_pages: {
         Row: {
+          click_count: number | null
           content: string | null
           created_at: string | null
           created_by: string | null
           icon: string | null
           id: string
           is_public: boolean | null
+          last_accessed_at: string | null
           order_index: number | null
           parent_id: string | null
           public_token: string | null
+          reviewer_email: string | null
+          reviewer_name: string | null
           slug: string
           title: string
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          click_count?: number | null
           content?: string | null
           created_at?: string | null
           created_by?: string | null
           icon?: string | null
           id?: string
           is_public?: boolean | null
+          last_accessed_at?: string | null
           order_index?: number | null
           parent_id?: string | null
           public_token?: string | null
+          reviewer_email?: string | null
+          reviewer_name?: string | null
           slug: string
           title: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          click_count?: number | null
           content?: string | null
           created_at?: string | null
           created_by?: string | null
           icon?: string | null
           id?: string
           is_public?: boolean | null
+          last_accessed_at?: string | null
           order_index?: number | null
           parent_id?: string | null
           public_token?: string | null
+          reviewer_email?: string | null
+          reviewer_name?: string | null
           slug?: string
           title?: string
           updated_at?: string | null
