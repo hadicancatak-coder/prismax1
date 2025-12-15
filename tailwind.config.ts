@@ -14,6 +14,10 @@ export default {
     },
     extend: {
       colors: {
+        // Semantic surface aliases
+        elevated: "hsl(var(--card))",
+        subtle: "hsl(var(--muted))",
+        "subtle-foreground": "hsl(var(--muted-foreground))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -210,6 +214,11 @@ export default {
         'xl': 'var(--space-xl)',      /* 32px */
         '2xl': 'var(--space-2xl)',    /* 48px */
         'card': 'var(--space-card)',  /* 20px */
+        'section': 'var(--space-2xl)', /* 48px - mt-section, mb-section */
+      },
+      margin: {
+        'section': 'var(--space-2xl)', /* 48px - mt-section, mb-section */
+        'card': 'var(--space-lg)',     /* 24px - mt-card, mb-card */
       },
       gap: {
         'xs': 'var(--space-xs)',      /* 8px */
