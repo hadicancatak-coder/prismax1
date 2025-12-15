@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { KnowledgePage } from "@/hooks/useKnowledgePages";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ChevronRight, Share2, Copy, Check, Globe, Lock } from "lucide-react";
+import { Edit, Trash2, ChevronRight, Share2, Copy, Check, Globe } from "lucide-react";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 import * as LucideIcons from "lucide-react";
 import { FileText } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getProductionUrl } from "@/lib/utils";
@@ -19,7 +17,6 @@ interface KnowledgePageContentProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onNavigate?: (page: KnowledgePage) => void;
-  onTogglePublic?: (isPublic: boolean) => void;
   isAdmin?: boolean;
 }
 
@@ -29,7 +26,6 @@ export function KnowledgePageContent({
   onEdit,
   onDelete,
   onNavigate,
-  onTogglePublic,
   isAdmin,
 }: KnowledgePageContentProps) {
   const { toast } = useToast();
@@ -83,24 +79,16 @@ export function KnowledgePageContent({
           <div className="p-2 bg-primary/10 rounded-lg">
             <IconComponent className="h-6 w-6 text-primary" />
           </div>
-          <div className="flex items-center gap-2">
-            <div>
-              <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
-              <p className="text-metadata text-muted-foreground mt-1">
-                Last updated {format(new Date(page.updated_at), "MMM d, yyyy")}
-              </p>
-            </div>
-            {page.is_public && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-success/15 text-success text-metadata">
-                <Globe className="h-3 w-3" />
-                Public
-              </span>
-            )}
+          <div>
+            <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
+            <p className="text-metadata text-muted-foreground mt-1">
+              Last updated {format(new Date(page.updated_at), "MMM d, yyyy")}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Share Button - available to all users */}
+          {/* Share Button - shows link directly */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
@@ -108,58 +96,34 @@ export function KnowledgePageContent({
                 Share
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80">
-              <div className="space-y-4">
-                {/* Admin can toggle public/private */}
-                {isAdmin && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {page.is_public ? (
-                        <Globe className="h-4 w-4 text-success" />
-                      ) : (
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <Label htmlFor="public-toggle" className="font-medium">
-                        {page.is_public ? "Public" : "Private"}
-                      </Label>
-                    </div>
-                    <Switch
-                      id="public-toggle"
-                      checked={page.is_public || false}
-                      onCheckedChange={(checked) => onTogglePublic?.(checked)}
-                    />
-                  </div>
-                )}
-                
-                {/* Show link if public */}
-                {page.is_public && publicUrl ? (
-                  <div className="space-y-2">
-                    <p className="text-metadata text-muted-foreground">
-                      Anyone with the link can view this page without signing in.
-                    </p>
-                    <Label className="text-metadata">Share link</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        readOnly
-                        value={publicUrl}
-                        className="text-body-sm"
-                      />
-                      <Button size="icon" variant="outline" onClick={handleCopyLink}>
-                        {copied ? (
-                          <Check className="h-4 w-4 text-success" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-metadata text-muted-foreground">
-                    {isAdmin 
-                      ? "Toggle the switch above to make this page public and generate a share link."
-                      : "This page is private. Ask an admin to make it public for sharing."}
-                  </p>
-                )}
+            <PopoverContent align="end" className="w-96">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-body-sm">Share this page</span>
+                </div>
+                <p className="text-metadata text-muted-foreground">
+                  Anyone with the link can view this page without signing in.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={publicUrl || 'Generating link...'}
+                    className="text-body-sm font-mono"
+                  />
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
+                    onClick={handleCopyLink}
+                    disabled={!publicUrl}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-success" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
