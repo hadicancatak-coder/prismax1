@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Get the production URL for public links.
- * Uses VITE_PUBLIC_URL if set, otherwise derives from project ID.
+ * Uses VITE_PUBLIC_URL if set, otherwise uses the known production URL.
  * Falls back to current origin for local development.
  */
 export function getProductionUrl(): string {
@@ -15,11 +15,6 @@ export function getProductionUrl(): string {
   if (import.meta.env.VITE_PUBLIC_URL) {
     return import.meta.env.VITE_PUBLIC_URL;
   }
-  // Derive from Supabase project ID for Lovable production URL
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  if (projectId) {
-    return `https://${projectId}.lovable.app`;
-  }
-  // Fallback for local development
-  return window.location.origin;
+  // Known production URL for this project
+  return 'https://prismax1.lovable.app';
 }
