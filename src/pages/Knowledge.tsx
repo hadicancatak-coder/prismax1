@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { BookOpen, Plus, Search } from "lucide-react";
+import { BookOpen, Plus, Search, FileText, ChevronRight } from "lucide-react";
 import { PageContainer, PageHeader, DataCard, EmptyState } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { KnowledgeTree } from "@/components/knowledge/KnowledgeTree";
 import { KnowledgePageEditor } from "@/components/knowledge/KnowledgePageEditor";
 import { KnowledgePageContent } from "@/components/knowledge/KnowledgePageContent";
@@ -200,17 +201,51 @@ export default function Knowledge() {
               onNavigate={handleNavigate}
               isAdmin={isAdmin}
             />
+          ) : pages && pages.length > 0 ? (
+            <div className="p-6">
+              <h2 className="text-heading-lg font-semibold text-foreground mb-2">
+                Welcome to Knowledge Base
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Browse documentation, processes, and guides. Select a page to get started.
+              </p>
+              
+              <div className="space-y-2">
+                {pageTree.map((page) => (
+                  <button
+                    key={page.id}
+                    onClick={() => handleNavigate(page)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-4 rounded-xl",
+                      "bg-card hover:bg-card-hover border border-border",
+                      "text-left transition-smooth hover-lift"
+                    )}
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-body font-medium text-foreground truncate">
+                        {page.title}
+                      </h3>
+                      {page.children && page.children.length > 0 && (
+                        <p className="text-metadata text-muted-foreground">
+                          {page.children.length} sub-page{page.children.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : (
             <EmptyState
               icon={BookOpen}
               title="Welcome to Knowledge Base"
-              description={
-                pages && pages.length > 0
-                  ? "Select a page from the sidebar to view its content."
-                  : "Get started by creating your first page."
-              }
+              description="Get started by creating your first page."
               action={
-                isAdmin && (!pages || pages.length === 0)
+                isAdmin
                   ? { label: "Create First Page", onClick: () => handleCreatePage(null) }
                   : undefined
               }
