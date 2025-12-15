@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function Knowledge() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin";
-  const { pages, pageTree, isLoading, createPage, updatePage, deletePage } = useKnowledgePages();
+  const { pages, pageTree, isLoading, createPage, updatePage, deletePage, togglePublic } = useKnowledgePages();
 
   const [selectedPage, setSelectedPage] = useState<KnowledgePage | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -202,6 +202,7 @@ export default function Knowledge() {
               onEdit={isAdmin ? handleEditPage : undefined}
               onDelete={isAdmin ? handleDeletePage : undefined}
               onNavigate={handleNavigate}
+              onTogglePublic={isAdmin ? (isPublic) => togglePublic.mutate({ id: selectedPage.id, is_public: isPublic }) : undefined}
               isAdmin={isAdmin}
             />
           ) : pages && pages.length > 0 ? (

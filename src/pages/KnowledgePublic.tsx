@@ -1,0 +1,106 @@
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { BookOpen, FileText } from "lucide-react";
+import { format } from "date-fns";
+import DOMPurify from "dompurify";
+import * as LucideIcons from "lucide-react";
+
+export default function KnowledgePublic() {
+  const { token } = useParams<{ token: string }>();
+
+  const { data: page, isLoading, error } = useQuery({
+    queryKey: ["knowledge-public", token],
+    queryFn: async () => {
+      if (!token) throw new Error("No token provided");
+      
+      const { data, error } = await supabase
+        .from("knowledge_pages")
+        .select("*")
+        .eq("public_token", token)
+        .eq("is_public", true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      if (!data) throw new Error("Page not found or not public");
+      return data;
+    },
+    enabled: !!token,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (error || !page) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-heading-lg font-semibold text-foreground mb-2">Page Not Found</h1>
+          <p className="text-muted-foreground">
+            This page doesn't exist or is no longer shared.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const iconName = page.icon || 'file-text';
+  const IconComponent = (LucideIcons as any)[iconName.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('')] || FileText;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-card">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-2 text-muted-foreground text-body-sm">
+            <BookOpen className="h-4 w-4" />
+            <span>Knowledge Base</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <div className="flex items-start gap-4 mb-8">
+          <div className="p-3 bg-primary/10 rounded-xl">
+            <IconComponent className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
+            <p className="text-metadata text-muted-foreground mt-1">
+              Last updated {format(new Date(page.updated_at), "MMMM d, yyyy")}
+            </p>
+          </div>
+        </div>
+
+        {page.content ? (
+          <div
+            className="prose prose-sm max-w-none dark:prose-invert 
+              prose-headings:text-foreground prose-p:text-foreground 
+              prose-strong:text-foreground prose-a:text-primary
+              prose-li:text-foreground prose-code:text-primary
+              prose-pre:bg-muted prose-pre:border prose-pre:border-border"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.content) }}
+          />
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>This page has no content yet.</p>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border mt-12">
+        <div className="max-w-4xl mx-auto px-6 py-6 text-center text-metadata text-muted-foreground">
+          Shared from Knowledge Base
+        </div>
+      </footer>
+    </div>
+  );
+}
