@@ -43,6 +43,7 @@ import KPIs from "./pages/KPIs";
 import CampaignsLog from "./pages/CampaignsLog";
 import CampaignReview from "./pages/CampaignReview";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
+import Knowledge from "./pages/Knowledge";
 
 
 const App = () => (
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/web-intel" element={<WebIntel />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/how-to" element={<HowTo />} />
+                  <Route path="/knowledge" element={<Knowledge />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

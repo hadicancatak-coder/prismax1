@@ -11,7 +11,8 @@ import {
   Link2, 
   PenTool, 
   MapPin,
-  Tv
+  Tv,
+  BookOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,10 @@ const mediaItems = [
 
 const operationsItems = [
   { title: "Campaigns Log", url: "/campaigns-log", icon: Target },
+];
+
+const resourcesItems = [
+  { title: "Knowledge", url: "/knowledge", icon: BookOpen },
 ];
 
 export function AppSidebar() {
@@ -176,6 +181,29 @@ export function AppSidebar() {
             {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Operations</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {operationsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    {!open ? (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                      </NavLink>
+                    ) : (
+                      <NavLink to={item.url} className={getNavLinkClass}>
+                        <item.icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+                        <span className="text-body">{item.title}</span>
+                      </NavLink>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {/* Resources */}
+          <SidebarGroup>
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Resources</SidebarGroupLabel>}
+            <SidebarMenu className="space-y-1">
+              {resourcesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     {!open ? (
