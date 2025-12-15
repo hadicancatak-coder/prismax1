@@ -154,6 +154,46 @@ export function useKnowledgePages() {
     },
   });
 
+  // Ensures a page has a public token (generates one if missing)
+  const ensurePublicToken = useMutation({
+    mutationFn: async (id: string) => {
+      // First check if page already has a token
+      const { data: existingPage, error: fetchError } = await supabase
+        .from("knowledge_pages")
+        .select("public_token, is_public")
+        .eq("id", id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // If already has token, return the page data
+      if (existingPage?.public_token) {
+        return existingPage;
+      }
+      
+      // Generate new token and mark as public
+      const newToken = crypto.randomUUID();
+      const { data, error } = await supabase
+        .from("knowledge_pages")
+        .update({ 
+          public_token: newToken,
+          is_public: true 
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["knowledge-pages"] });
+    },
+    onError: (error: any) => {
+      console.error("Failed to generate public token:", error);
+    },
+  });
+
   return {
     pages,
     pageTree,
@@ -162,5 +202,6 @@ export function useKnowledgePages() {
     updatePage,
     deletePage,
     togglePublic,
+    ensurePublicToken,
   };
 }
