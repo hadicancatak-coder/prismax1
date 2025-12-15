@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getProductionUrl } from "@/lib/utils";
 
 interface KnowledgePageContentProps {
   page: KnowledgePage;
@@ -39,7 +40,7 @@ export function KnowledgePageContent({
   const IconComponent = (LucideIcons as any)[iconName.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('')] || FileText;
 
   const publicUrl = page.public_token 
-    ? `${window.location.origin}/knowledge/public/${page.public_token}`
+    ? `${getProductionUrl()}/knowledge/public/${page.public_token}`
     : '';
 
   const handleCopyLink = async () => {
