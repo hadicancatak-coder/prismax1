@@ -1,16 +1,16 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -18,15 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X, Copy, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
+import { toast } from "sonner";
 import { parseContentForEditing, serializeContent } from "@/lib/captionHelpers";
-import type { Caption } from "@/pages/CaptionLibrary";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Copy, Trash2, X } from "lucide-react";
 
 const CAPTION_TYPES = [
   { value: "headline", label: "Headline", maxLength: 30 },
@@ -45,52 +44,61 @@ const STATUS_OPTIONS = [
 interface CaptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  caption: Caption | null;
-  onSuccess: () => void;
+  caption?: {
+    id: string;
+    element_type: string;
+    entity: string[] | null;
+    google_status: string | null;
+    content: unknown;
+  } | null;
+  onSuccess?: () => void;
 }
 
-export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: CaptionDialogProps) {
+export function CaptionDialog({
+  open,
+  onOpenChange,
+  caption,
+  onSuccess,
+}: CaptionDialogProps) {
   const { user } = useAuth();
   const { data: systemEntities = [] } = useSystemEntities();
   const isEditing = !!caption;
 
+  // Single source of truth: all state initialized to defaults
+  const [type, setType] = useState<string>("headline");
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [status, setStatus] = useState<string>("pending");
+  const [activeLanguage, setActiveLanguage] = useState<"en" | "ar">("en");
+  const [content, setContent] = useState<{ en: string; ar: string }>({ en: "", ar: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(0); // Counter to force editor re-mount
+
   const isDirtyRef = useRef(false);
 
-  // Compute initial values synchronously to avoid race conditions
-  const initialContent = useMemo(() => {
-    if (caption) {
-      return parseContentForEditing(caption.content);
-    }
-    return { en: "", ar: "" };
-  }, [caption?.id, caption?.content]);
-
-  const initialType = caption?.element_type || "headline";
-  const initialEntities = caption?.entity || [];
-  const initialStatus = caption?.google_status || "pending";
-
-  const [type, setType] = useState(initialType);
-  const [selectedEntities, setSelectedEntities] = useState<string[]>(initialEntities);
-  const [status, setStatus] = useState(initialStatus);
-  const [activeLanguage, setActiveLanguage] = useState("en");
-  const [content, setContent] = useState<{ en: string; ar: string }>(initialContent);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Hydrate state on open, then ensure we have the latest row from the backend
+  // Single effect: reset state and fetch from database when dialog opens
   useEffect(() => {
     if (!open) return;
 
+    // Reset all state to defaults
     isDirtyRef.current = false;
-
-    setType(initialType);
-    setSelectedEntities(initialEntities);
-    setStatus(initialStatus);
-    setContent(initialContent);
     setActiveLanguage("en");
+    setIsLoading(true);
+    setContentLoaded(0);
 
-    // If the list view ever provides partial rows, this guarantees the editor has content.
     const captionId = caption?.id;
-    if (!captionId) return;
 
+    if (!captionId) {
+      // Creating new caption - use defaults
+      setType("headline");
+      setSelectedEntities([]);
+      setStatus("pending");
+      setContent({ en: "", ar: "" });
+      setIsLoading(false);
+      return;
+    }
+
+    // Fetch the authoritative data from database
     let cancelled = false;
 
     (async () => {
@@ -101,13 +109,24 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
         .single();
 
       if (cancelled) return;
-      if (error || !data) return;
-      if (isDirtyRef.current) return;
 
-      setType(data.element_type || "headline");
-      setSelectedEntities((data.entity as string[]) || []);
-      setStatus(data.google_status || "pending");
-      setContent(parseContentForEditing(data.content));
+      if (error || !data) {
+        console.error("Failed to fetch caption:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Only update if user hasn't started editing
+      if (!isDirtyRef.current) {
+        setType(data.element_type || "headline");
+        setSelectedEntities((data.entity as string[]) || []);
+        setStatus(data.google_status || "pending");
+        const parsed = parseContentForEditing(data.content);
+        setContent(parsed);
+        setContentLoaded(prev => prev + 1); // Force editor re-mount
+      }
+
+      setIsLoading(false);
     })();
 
     return () => {
@@ -240,6 +259,14 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           </DialogDescription>
         </DialogHeader>
 
+        {isLoading ? (
+          <div className="space-y-lg py-md">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
         <div className="space-y-lg py-md">
           {/* Type */}
           <div className="space-y-sm">
@@ -281,7 +308,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           {/* Content with Language Tabs */}
           <div className="space-y-sm">
             <Label>Content</Label>
-            <Tabs value={activeLanguage} onValueChange={setActiveLanguage}>
+            <Tabs value={activeLanguage} onValueChange={(val) => setActiveLanguage(val as "en" | "ar")}>
               <TabsList>
                 <TabsTrigger value="en">English</TabsTrigger>
                 <TabsTrigger value="ar">Arabic</TabsTrigger>
@@ -289,7 +316,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
                  <RichTextEditor
-                    key={`en-${caption?.id || "new"}-${open}`}
+                    key={`en-${caption?.id || "new"}-${contentLoaded}`}
                     value={content.en}
                     onChange={(value) => {
                       isDirtyRef.current = true;
@@ -309,7 +336,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
              <TabsContent value="ar" className="mt-sm">
                <div className="space-y-sm">
                   <RichTextEditor
-                     key={`ar-${caption?.id || "new"}-${open}`}
+                     key={`ar-${caption?.id || "new"}-${contentLoaded}`}
                      value={content.ar}
                      onChange={(value) => {
                        isDirtyRef.current = true;
@@ -346,6 +373,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
             </Select>
           </div>
         </div>
+        )}
 
         <DialogFooter className="flex justify-between">
           <div className="flex gap-sm">
