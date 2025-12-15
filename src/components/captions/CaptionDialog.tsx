@@ -259,30 +259,30 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               </TabsList>
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
-                  <RichTextEditor
-                    key={`en-${caption?.id || 'new'}`}
-                    value={content.en}
-                    onChange={(value) => setContent({ ...content, en: value })}
-                    placeholder="Enter English content..."
-                    minHeight="100px"
-                  />
-                  <div className="flex justify-between text-metadata text-muted-foreground">
-                    <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
-                    <span className={content.en.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
-                      Max: {maxLength}
-                    </span>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="ar" className="mt-sm">
-                <div className="space-y-sm">
-                  <RichTextEditor
-                    key={`ar-${caption?.id || 'new'}`}
-                    value={content.ar}
-                    onChange={(value) => setContent({ ...content, ar: value })}
-                    placeholder="أدخل المحتوى بالعربية..."
-                    minHeight="100px"
-                  />
+                 <RichTextEditor
+                   key={`en-${caption?.id || "new"}`}
+                   value={content.en}
+                   onChange={(value) => setContent((prev) => ({ ...prev, en: value }))}
+                   placeholder="Enter English content..."
+                   minHeight="100px"
+                 />
+                 <div className="flex justify-between text-metadata text-muted-foreground">
+                   <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
+                   <span className={content.en.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
+                     Max: {maxLength}
+                   </span>
+                 </div>
+               </div>
+             </TabsContent>
+             <TabsContent value="ar" className="mt-sm">
+               <div className="space-y-sm">
+                 <RichTextEditor
+                   key={`ar-${caption?.id || "new"}`}
+                   value={content.ar}
+                   onChange={(value) => setContent((prev) => ({ ...prev, ar: value }))}
+                   placeholder="أدخل المحتوى بالعربية..."
+                   minHeight="100px"
+                 />
                   <div className="flex justify-between text-metadata text-muted-foreground">
                     <span>Characters: {content.ar.replace(/<[^>]*>/g, '').length}</span>
                     <span className={content.ar.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
