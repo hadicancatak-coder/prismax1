@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { ENTITIES } from "@/lib/constants";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 
 interface EntitiesMultiSelectProps {
   value: string[];
@@ -25,6 +25,7 @@ interface EntitiesMultiSelectProps {
 
 export function EntitiesMultiSelect({ value, onChange, disabled }: EntitiesMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const { data: systemEntities = [] } = useSystemEntities();
 
   const handleSelect = (entity: string) => {
     if (value.includes(entity)) {
@@ -92,19 +93,19 @@ export function EntitiesMultiSelect({ value, onChange, disabled }: EntitiesMulti
           <CommandInput placeholder="Search entities..." />
           <CommandEmpty>No entity found.</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-auto">
-            {ENTITIES.map((entity) => (
+            {systemEntities.map((entity) => (
               <CommandItem
-                key={entity}
-                value={entity}
-                onSelect={() => handleSelect(entity)}
+                key={entity.id}
+                value={entity.name}
+                onSelect={() => handleSelect(entity.name)}
               >
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    value.includes(entity) ? "opacity-100" : "opacity-0"
+                    value.includes(entity.name) ? "opacity-100" : "opacity-0"
                   )}
                 />
-                {entity}
+                {entity.emoji} {entity.name}
               </CommandItem>
             ))}
           </CommandGroup>

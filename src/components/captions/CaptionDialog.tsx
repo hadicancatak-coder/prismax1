@@ -23,7 +23,7 @@ import { X, Copy, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { ENTITIES } from "@/lib/constants";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { parseContentForEditing, serializeContent } from "@/lib/captionHelpers";
 import type { Caption } from "@/pages/CaptionLibrary";
@@ -51,6 +51,7 @@ interface CaptionDialogProps {
 
 export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: CaptionDialogProps) {
   const { user } = useAuth();
+  const { data: systemEntities = [] } = useSystemEntities();
   const isEditing = !!caption;
 
   const [type, setType] = useState("headline");
@@ -232,15 +233,15 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
           <div className="space-y-sm">
             <Label>Entities</Label>
             <div className="flex flex-wrap gap-sm">
-              {ENTITIES.map((entity) => (
+              {systemEntities.map((entity) => (
                 <Badge
-                  key={entity}
-                  variant={selectedEntities.includes(entity) ? "default" : "outline"}
+                  key={entity.id}
+                  variant={selectedEntities.includes(entity.name) ? "default" : "outline"}
                   className="cursor-pointer transition-smooth hover:bg-primary/80"
-                  onClick={() => toggleEntity(entity)}
+                  onClick={() => toggleEntity(entity.name)}
                 >
-                  {entity}
-                  {selectedEntities.includes(entity) && (
+                  {entity.emoji} {entity.name}
+                  {selectedEntities.includes(entity.name) && (
                     <X className="h-3 w-3 ml-1" />
                   )}
                 </Badge>

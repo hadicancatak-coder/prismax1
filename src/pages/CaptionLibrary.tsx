@@ -6,7 +6,7 @@ import { Plus, Grid, Table as TableIcon, Upload, Download } from "lucide-react";
 import { PageContainer, PageHeader, FilterBar, DataCard } from "@/components/layout";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ENTITIES } from "@/lib/constants";
+import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { CaptionGridView } from "@/components/captions/CaptionGridView";
@@ -53,6 +53,7 @@ export type Caption = {
 
 export default function CaptionLibrary() {
   const queryClient = useQueryClient();
+  const { data: systemEntities = [] } = useSystemEntities();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
@@ -203,9 +204,9 @@ export default function CaptionLibrary() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Entities</SelectItem>
-            {ENTITIES.map((entity) => (
-              <SelectItem key={entity} value={entity}>
-                {entity}
+            {systemEntities.map((entity) => (
+              <SelectItem key={entity.id} value={entity.name}>
+                {entity.emoji} {entity.name}
               </SelectItem>
             ))}
           </SelectContent>
