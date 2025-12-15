@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Grid, Table as TableIcon, Upload, Download } from "lucide-react";
 import { PageContainer, PageHeader, FilterBar, DataCard } from "@/components/layout";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { CaptionGridView } from "@/components/captions/CaptionGridView";
 import { CaptionTableView } from "@/components/captions/CaptionTableView";
 import { CaptionDialog } from "@/components/captions/CaptionDialog";
+import { CaptionImportDialog } from "@/components/captions/CaptionImportDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -61,6 +62,7 @@ export default function CaptionLibrary() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingCaption, setEditingCaption] = useState<Caption | null>(null);
 
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -165,6 +167,10 @@ export default function CaptionLibrary() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
             <Button variant="outline" size="sm" onClick={exportToCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -289,6 +295,14 @@ export default function CaptionLibrary() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["captions"] });
           setDialogOpen(false);
+        }}
+      />
+
+      <CaptionImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["captions"] });
         }}
       />
     </PageContainer>
