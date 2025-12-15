@@ -33,7 +33,12 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // We configure these here and provide our own instances below
+        // to avoid duplicate extension warnings and flaky behavior.
+        link: false,
+        underline: false,
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -83,13 +88,15 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!editor) return;
-    
-    const normalizedValue = value || '';
-    const currentContent = editor.getHTML();
-    
-    // Force content update when value prop changes externally
-    if (normalizedValue !== currentContent) {
-      editor.commands.setContent(normalizedValue);
+
+    // TipTap normalizes empty HTML to <p></p>, so normalize too to avoid
+    // repeatedly resetting content (which can appear as “blank” in dialogs).
+    const desiredHtml = (value || '').trim() ? value : '<p></p>';
+    const currentHtml = editor.getHTML();
+
+    if (desiredHtml !== currentHtml) {
+      // emitUpdate=false so we don't bounce state through onUpdate unnecessarily.
+      editor.commands.setContent(desiredHtml, false);
     }
   }, [value, editor]);
 
