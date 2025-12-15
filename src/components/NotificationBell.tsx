@@ -181,18 +181,9 @@ export function NotificationBell() {
                   }}
                   className="w-full p-sm hover:bg-card-hover transition-colors text-left flex gap-sm items-start"
                 >
-                  {notification.actor ? (
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarImage src={notification.actor.avatar_url} />
-                      <AvatarFallback className="text-metadata">
-                        {notification.actor.full_name?.[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className="text-xl flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                  )}
+                  <div className="text-xl flex-shrink-0">
+                    {getNotificationIcon(notification.type)}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-body-sm">
                       {getNotificationMessage(notification)}
