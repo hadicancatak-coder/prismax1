@@ -86,16 +86,20 @@ export function RichTextEditor({
       },
   });
 
+  // Sync editor content when value prop changes
   useEffect(() => {
     if (!editor) return;
 
-    // TipTap normalizes empty HTML to <p></p>, so normalize too to avoid
-    // repeatedly resetting content (which can appear as “blank” in dialogs).
-    const desiredHtml = (value || '').trim() ? value : '<p></p>';
-    const currentHtml = editor.getHTML();
+    // Helper to strip HTML normalization differences for comparison
+    const stripNormalization = (html: string) => 
+      (html || '').replace(/<p><\/p>/g, '').replace(/<br\s*\/?>/g, '').trim();
 
-    if (desiredHtml !== currentHtml) {
-      // emitUpdate=false so we don't bounce state through onUpdate unnecessarily.
+    const currentStripped = stripNormalization(editor.getHTML());
+    const valueStripped = stripNormalization(value || '');
+
+    // Only update if actual content differs (ignoring empty tags)
+    if (currentStripped !== valueStripped) {
+      const desiredHtml = (value || '').trim() ? value : '<p></p>';
       editor.commands.setContent(desiredHtml, { emitUpdate: false });
     }
   }, [value, editor]);

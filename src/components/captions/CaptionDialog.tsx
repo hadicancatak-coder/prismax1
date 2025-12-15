@@ -64,27 +64,28 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form state when dialog opens - use caption.id to detect actual caption changes
   useEffect(() => {
-    if (open) {
-      if (caption) {
-        setType(caption.element_type || "headline");
-        setSelectedEntities(caption.entity || []);
-        setStatus(caption.google_status || "pending");
-        
-        // Use shared helper to parse content correctly
-        const parsedContent = parseContentForEditing(caption.content);
-        setContent(parsedContent);
-        setActiveLanguage("en");
-      } else {
-        // Reset form for create mode
-        setType("headline");
-        setSelectedEntities([]);
-        setStatus("pending");
-        setContent({ en: "", ar: "" });
-        setActiveLanguage("en");
-      }
+    if (!open) return;
+    
+    if (caption) {
+      setType(caption.element_type || "headline");
+      setSelectedEntities(caption.entity || []);
+      setStatus(caption.google_status || "pending");
+      
+      // Parse content immediately when caption changes
+      const parsedContent = parseContentForEditing(caption.content);
+      setContent(parsedContent);
+      setActiveLanguage("en");
+    } else {
+      // Reset form for create mode
+      setType("headline");
+      setSelectedEntities([]);
+      setStatus("pending");
+      setContent({ en: "", ar: "" });
+      setActiveLanguage("en");
     }
-  }, [caption, open]);
+  }, [open, caption?.id]); // Use caption.id instead of caption object to avoid reference issues
 
   const toggleEntity = (entity: string) => {
     setSelectedEntities((prev) =>
@@ -260,7 +261,7 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
                  <RichTextEditor
-                   key={`en-${caption?.id || "new"}`}
+                   key={`en-${caption?.id || "new"}-${open}`}
                    value={content.en}
                    onChange={(value) => setContent((prev) => ({ ...prev, en: value }))}
                    placeholder="Enter English content..."
@@ -276,13 +277,13 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
              </TabsContent>
              <TabsContent value="ar" className="mt-sm">
                <div className="space-y-sm">
-                 <RichTextEditor
-                   key={`ar-${caption?.id || "new"}`}
-                   value={content.ar}
-                   onChange={(value) => setContent((prev) => ({ ...prev, ar: value }))}
-                   placeholder="أدخل المحتوى بالعربية..."
-                   minHeight="100px"
-                 />
+                  <RichTextEditor
+                    key={`ar-${caption?.id || "new"}-${open}`}
+                    value={content.ar}
+                    onChange={(value) => setContent((prev) => ({ ...prev, ar: value }))}
+                    placeholder="أدخل المحتوى بالعربية..."
+                    minHeight="100px"
+                  />
                   <div className="flex justify-between text-metadata text-muted-foreground">
                     <span>Characters: {content.ar.replace(/<[^>]*>/g, '').length}</span>
                     <span className={content.ar.replace(/<[^>]*>/g, '').length > maxLength ? "text-destructive" : ""}>
