@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getStatusColor } from "@/lib/constants";
+import { getContentForDisplay, getContentForCopy } from "@/lib/captionHelpers";
 
 interface CaptionGridViewProps {
   captions: Caption[];
@@ -22,18 +23,8 @@ interface CaptionGridViewProps {
 export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
   const queryClient = useQueryClient();
 
-  const getContentForLanguage = (content: unknown, lang: "en" | "ar"): string => {
-    if (!content) return "";
-    if (typeof content === "string") return lang === "en" ? content : "";
-    if (typeof content === "object" && content !== null) {
-      const obj = content as Record<string, unknown>;
-      if (obj[lang] && typeof obj[lang] === "string") return obj[lang] as string;
-      if (obj.text && typeof obj.text === "string") return lang === "en" ? obj.text as string : "";
-    }
-    return "";
-  };
-
-  const handleCopyContent = (text: string, lang: string) => {
+  const handleCopyContent = (content: unknown, lang: "en" | "ar") => {
+    const text = getContentForCopy(content, lang);
     if (!text) {
       toast.error(`No ${lang.toUpperCase()} content to copy`);
       return;
@@ -88,8 +79,8 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
     <TooltipProvider>
       <div className="grid gap-md p-md md:grid-cols-2 lg:grid-cols-3">
         {captions.map((caption) => {
-          const enContent = getContentForLanguage(caption.content, "en");
-          const arContent = getContentForLanguage(caption.content, "ar");
+          const enContent = getContentForDisplay(caption.content, "en");
+          const arContent = getContentForDisplay(caption.content, "ar");
 
           return (
             <Card 
@@ -121,7 +112,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => handleCopyContent(enContent, "en")}
+                        onClick={() => handleCopyContent(caption.content, "en")}
                         className="w-full text-left p-sm rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
                       >
                         <p className="text-body-sm line-clamp-2">
@@ -141,7 +132,7 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => handleCopyContent(arContent, "ar")}
+                        onClick={() => handleCopyContent(caption.content, "ar")}
                         className="w-full text-right p-sm rounded-md bg-muted/50 hover:bg-muted transition-smooth cursor-pointer"
                         dir="rtl"
                       >

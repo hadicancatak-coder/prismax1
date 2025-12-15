@@ -14,7 +14,6 @@ import { Copy, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import type { Caption } from "@/pages/CaptionLibrary";
 import { cn } from "@/lib/utils";
 import { getStatusColor } from "@/lib/constants";
@@ -24,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getContentForDisplay, getContentForCopy } from "@/lib/captionHelpers";
 
 interface CaptionTableViewProps {
   captions: Caption[];
@@ -52,31 +52,8 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
     }
   };
 
-  // Extract content for a specific language
-  const getContentForLanguage = (caption: Caption, lang: "en" | "ar"): string => {
-    const content = caption.content;
-    
-    // If content is a string, it's the default (usually EN)
-    if (typeof content === "string") {
-      return lang === "en" ? content : "";
-    }
-    
-    // If content is an object, check for language keys
-    if (content && typeof content === "object") {
-      // Check for direct language keys
-      if ((content as any)[lang]) {
-        return (content as any)[lang];
-      }
-      // Check for text property (legacy format)
-      if ((content as any).text) {
-        return lang === "en" ? (content as any).text : "";
-      }
-    }
-    
-    return "";
-  };
-
-  const handleCopyContent = (text: string, lang: string) => {
+  const handleCopyContent = (content: unknown, lang: "en" | "ar") => {
+    const text = getContentForCopy(content, lang);
     if (!text) {
       toast.error(`No ${lang.toUpperCase()} content to copy`);
       return;
@@ -154,8 +131,8 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
           </TableHeader>
           <TableBody>
             {captions.map((caption) => {
-              const enContent = getContentForLanguage(caption, "en");
-              const arContent = getContentForLanguage(caption, "ar");
+              const enContent = getContentForDisplay(caption.content, "en");
+              const arContent = getContentForDisplay(caption.content, "ar");
 
               return (
                 <TableRow
@@ -179,7 +156,7 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          onClick={() => handleCopyContent(enContent, "en")}
+                          onClick={() => handleCopyContent(caption.content, "en")}
                           className={cn(
                             "text-left text-body-sm truncate w-full px-2 py-1 rounded transition-smooth",
                             enContent 
@@ -204,7 +181,7 @@ export function CaptionTableView({ captions, onEdit }: CaptionTableViewProps) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          onClick={() => handleCopyContent(arContent, "ar")}
+                          onClick={() => handleCopyContent(caption.content, "ar")}
                           dir="rtl"
                           className={cn(
                             "text-right text-body-sm truncate w-full px-2 py-1 rounded transition-smooth",
