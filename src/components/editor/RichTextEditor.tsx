@@ -96,7 +96,7 @@ export function RichTextEditor({
 
     if (desiredHtml !== currentHtml) {
       // emitUpdate=false so we don't bounce state through onUpdate unnecessarily.
-      editor.commands.setContent(desiredHtml, false);
+      editor.commands.setContent(desiredHtml, { emitUpdate: false });
     }
   }, [value, editor]);
 
