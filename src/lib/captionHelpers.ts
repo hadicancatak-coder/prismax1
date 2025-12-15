@@ -49,9 +49,18 @@ export function getContentForCopy(content: unknown, lang: "en" | "ar"): string {
 
 /**
  * Parse stored content into {en, ar} object for editing
+ * Wraps plain text in <p> tags for RichTextEditor compatibility
  */
 export function parseContentForEditing(content: unknown): { en: string; ar: string } {
   if (!content) return { en: "", ar: "" };
+  
+  const wrapInParagraph = (text: string): string => {
+    if (!text) return "";
+    // If already has HTML tags, return as-is
+    if (text.includes("<") && text.includes(">")) return text;
+    // Wrap plain text in paragraph tag for TipTap
+    return `<p>${text}</p>`;
+  };
 
   // Handle string content
   if (typeof content === "string") {
@@ -59,13 +68,13 @@ export function parseContentForEditing(content: unknown): { en: string; ar: stri
       const parsed = JSON.parse(content);
       if (typeof parsed === "object" && parsed !== null) {
         return {
-          en: String(parsed.en || parsed.text || ""),
-          ar: String(parsed.ar || ""),
+          en: wrapInParagraph(String(parsed.en || parsed.text || "")),
+          ar: wrapInParagraph(String(parsed.ar || "")),
         };
       }
     } catch {
       // Plain string - treat as EN content
-      return { en: content, ar: "" };
+      return { en: wrapInParagraph(content), ar: "" };
     }
   }
 
@@ -73,8 +82,8 @@ export function parseContentForEditing(content: unknown): { en: string; ar: stri
   if (typeof content === "object" && content !== null) {
     const obj = content as Record<string, unknown>;
     return {
-      en: String(obj.en || obj.text || ""),
-      ar: String(obj.ar || ""),
+      en: wrapInParagraph(String(obj.en || obj.text || "")),
+      ar: wrapInParagraph(String(obj.ar || "")),
     };
   }
 
