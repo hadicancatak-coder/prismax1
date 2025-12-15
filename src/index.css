@@ -295,6 +295,7 @@ All colors MUST be HSL.
     --space-xl: 2rem;              /* 32px */
     --space-2xl: 3rem;             /* 48px */
     --space-card: 1.25rem;         /* 20px - card padding */
+    --space-section: 3rem;         /* 48px - section margins */
     
     /* Legacy spacing vars */
     --spacing-1: 0.25rem;

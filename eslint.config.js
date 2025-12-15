@@ -5,10 +5,22 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 // =============================================================================
+// ⚠️ AI INSTRUCTION: ALL STYLE VIOLATIONS ARE BUILD ERRORS ⚠️
+// =============================================================================
+// The AI assistant MUST:
+// - NEVER generate code with raw typography (text-sm, text-lg, text-xs, etc.)
+// - NEVER generate code with raw spacing (gap-4, p-6, mt-8, etc.)
+// - NEVER generate code with raw colors (text-white, bg-gray-*, bg-black, etc.)
+// - ALWAYS use semantic tokens from STYLE_GUIDE.md:
+//   Typography: text-metadata, text-body-sm, text-body, text-heading-sm, etc.
+//   Spacing: gap-xs, gap-sm, gap-md, p-sm, p-md, p-card, mt-section, etc.
+//   Colors: text-foreground, text-muted-foreground, bg-background, bg-card, etc.
+//
+// If you generate violating code, the build WILL FAIL.
+// =============================================================================
 // PRISMA DESIGN SYSTEM - ESLint Token Enforcement
 // =============================================================================
-// HARD RULES = "error" (blocks build)
-// SOFT RULES = "warn" (review-level guidance)
+// ALL RULES = "error" (blocks build for all files)
 // See STYLE_GUIDE.md for the complete token reference.
 // =============================================================================
 
@@ -87,9 +99,9 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       
-      // WARN level for all files (progressive migration)
+      // ERROR level for all files - violations block build
       "no-restricted-syntax": [
-        "warn",
+        "error",
         // Typography
         {
           selector: "Literal[value=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
@@ -157,36 +169,6 @@ export default tseslint.config(
     },
   },
   // =======================================================================
-  // STRICT CONFIG - Domain layer and new components get ERROR level
-  // These are the "clean" areas that must stay compliant
+  // NOTE: Strict config removed - all files now use ERROR level by default
   // =======================================================================
-  {
-    files: [
-      "src/domain/**/*.{ts,tsx}",
-      "src/components/ui/Prisma*.{ts,tsx}",
-    ],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        // Typography
-        {
-          selector: "Literal[value=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
-          message: HARD_RULES.typography.message,
-        },
-        {
-          selector: "TemplateElement[value.raw=/\\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\\b/]",
-          message: HARD_RULES.typography.message,
-        },
-        // Hardcoded colors
-        {
-          selector: "Literal[value=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
-          message: HARD_RULES.hardcodedColors.message,
-        },
-        {
-          selector: "TemplateElement[value.raw=/\\b(text|bg|border)-(white|black|gray-\\d+|slate-\\d+|zinc-\\d+)\\b/]",
-          message: HARD_RULES.hardcodedColors.message,
-        },
-      ],
-    },
-  },
 );
