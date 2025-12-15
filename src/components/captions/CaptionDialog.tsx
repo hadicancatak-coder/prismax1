@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +54,8 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   const { data: systemEntities = [] } = useSystemEntities();
   const isEditing = !!caption;
 
+  const isDirtyRef = useRef(false);
+
   // Compute initial values synchronously to avoid race conditions
   const initialContent = useMemo(() => {
     if (caption) {
@@ -73,16 +75,45 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
   const [content, setContent] = useState<{ en: string; ar: string }>(initialContent);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Synchronize state when dialog opens or caption changes
+  // Hydrate state on open, then ensure we have the latest row from the backend
   useEffect(() => {
-    if (open) {
-      setType(initialType);
-      setSelectedEntities(initialEntities);
-      setStatus(initialStatus);
-      setContent(initialContent);
-      setActiveLanguage("en");
-    }
-  }, [open, caption?.id]); // Reset when dialog opens or caption ID changes
+    if (!open) return;
+
+    isDirtyRef.current = false;
+
+    setType(initialType);
+    setSelectedEntities(initialEntities);
+    setStatus(initialStatus);
+    setContent(initialContent);
+    setActiveLanguage("en");
+
+    // If the list view ever provides partial rows, this guarantees the editor has content.
+    const captionId = caption?.id;
+    if (!captionId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("ad_elements")
+        .select("id, element_type, entity, google_status, content")
+        .eq("id", captionId)
+        .single();
+
+      if (cancelled) return;
+      if (error || !data) return;
+      if (isDirtyRef.current) return;
+
+      setType(data.element_type || "headline");
+      setSelectedEntities((data.entity as string[]) || []);
+      setStatus(data.google_status || "pending");
+      setContent(parseContentForEditing(data.content));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, caption?.id]);
 
   const toggleEntity = (entity: string) => {
     setSelectedEntities((prev) =>
@@ -258,11 +289,14 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
               <TabsContent value="en" className="mt-sm">
                 <div className="space-y-sm">
                  <RichTextEditor
-                   key={`en-${caption?.id || "new"}-${open}`}
-                   value={content.en}
-                   onChange={(value) => setContent((prev) => ({ ...prev, en: value }))}
-                   placeholder="Enter English content..."
-                   minHeight="100px"
+                    key={`en-${caption?.id || "new"}-${open}`}
+                    value={content.en}
+                    onChange={(value) => {
+                      isDirtyRef.current = true;
+                      setContent((prev) => ({ ...prev, en: value }));
+                    }}
+                    placeholder="Enter English content..."
+                    minHeight="100px"
                  />
                  <div className="flex justify-between text-metadata text-muted-foreground">
                    <span>Characters: {content.en.replace(/<[^>]*>/g, '').length}</span>
@@ -275,11 +309,14 @@ export function CaptionDialog({ open, onOpenChange, caption, onSuccess }: Captio
              <TabsContent value="ar" className="mt-sm">
                <div className="space-y-sm">
                   <RichTextEditor
-                    key={`ar-${caption?.id || "new"}-${open}`}
-                    value={content.ar}
-                    onChange={(value) => setContent((prev) => ({ ...prev, ar: value }))}
-                    placeholder="أدخل المحتوى بالعربية..."
-                    minHeight="100px"
+                     key={`ar-${caption?.id || "new"}-${open}`}
+                     value={content.ar}
+                     onChange={(value) => {
+                       isDirtyRef.current = true;
+                       setContent((prev) => ({ ...prev, ar: value }));
+                     }}
+                     placeholder="أدخل المحتوى بالعربية..."
+                     minHeight="100px"
                   />
                   <div className="flex justify-between text-metadata text-muted-foreground">
                     <span>Characters: {content.ar.replace(/<[^>]*>/g, '').length}</span>
