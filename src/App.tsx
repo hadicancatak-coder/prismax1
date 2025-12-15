@@ -42,6 +42,7 @@ import CampaignsLog from "./pages/CampaignsLog";
 import CampaignReview from "./pages/CampaignReview";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
 import Knowledge from "./pages/Knowledge";
+import KnowledgePublic from "./pages/KnowledgePublic";
 
 
 const App = () => (
@@ -58,6 +59,7 @@ const App = () => (
                 <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
             <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
             <Route path="/campaigns-log/external/:token" element={<CampaignsLogExternal />} />
+            <Route path="/knowledge/public/:token" element={<KnowledgePublic />} />
                 <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/tasks" element={<Tasks />} />

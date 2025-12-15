@@ -1938,8 +1938,10 @@ export type Database = {
           created_by: string | null
           icon: string | null
           id: string
+          is_public: boolean | null
           order_index: number | null
           parent_id: string | null
+          public_token: string | null
           slug: string
           title: string
           updated_at: string | null
@@ -1951,8 +1953,10 @@ export type Database = {
           created_by?: string | null
           icon?: string | null
           id?: string
+          is_public?: boolean | null
           order_index?: number | null
           parent_id?: string | null
+          public_token?: string | null
           slug: string
           title: string
           updated_at?: string | null
@@ -1964,8 +1968,10 @@ export type Database = {
           created_by?: string | null
           icon?: string | null
           id?: string
+          is_public?: boolean | null
           order_index?: number | null
           parent_id?: string | null
+          public_token?: string | null
           slug?: string
           title?: string
           updated_at?: string | null

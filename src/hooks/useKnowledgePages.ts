@@ -14,6 +14,8 @@ export interface KnowledgePage {
   created_at: string;
   updated_at: string;
   updated_by: string | null;
+  is_public?: boolean;
+  public_token?: string;
   children?: KnowledgePage[];
 }
 
@@ -128,6 +130,30 @@ export function useKnowledgePages() {
     },
   });
 
+  const togglePublic = useMutation({
+    mutationFn: async ({ id, is_public }: { id: string; is_public: boolean }) => {
+      const { data, error } = await supabase
+        .from("knowledge_pages")
+        .update({ is_public })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["knowledge-pages"] });
+      toast({ 
+        title: data.is_public ? "Page is now public" : "Page is now private",
+        description: data.is_public ? "Anyone with the link can view this page" : "Only authenticated users can view this page"
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to update sharing", description: error.message, variant: "destructive" });
+    },
+  });
+
   return {
     pages,
     pageTree,
@@ -135,5 +161,6 @@ export function useKnowledgePages() {
     createPage,
     updatePage,
     deletePage,
+    togglePublic,
   };
 }
