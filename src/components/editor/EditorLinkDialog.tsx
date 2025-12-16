@@ -38,8 +38,8 @@ export function EditorLinkDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent className="sm:max-w-[425px] z-[60]">
         <DialogHeader>
           <DialogTitle>Insert Link</DialogTitle>
           <DialogDescription>
