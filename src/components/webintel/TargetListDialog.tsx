@@ -253,12 +253,12 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
 
   const renderAdsTxtStatus = (item: LocalItem) => {
     if (checkingIds.has(item.id)) {
-      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+      return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
     }
     if (item.ads_txt_error) {
       return (
         <div className="flex items-center gap-1 text-warning">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <span className="text-xs">{item.ads_txt_error}</span>
         </div>
       );
@@ -266,7 +266,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
     if (item.ads_txt_has_google === true) {
       return (
         <Badge variant="outline" className="bg-success/10 text-success border-success/30">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
+          <CheckCircle2 className="size-3 mr-1" />
           Google
         </Badge>
       );
@@ -274,7 +274,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
     if (item.ads_txt_has_google === false) {
       return (
         <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
-          <XCircle className="h-3 w-3 mr-1" />
+          <XCircle className="size-3 mr-1" />
           No Google
         </Badge>
       );
@@ -283,7 +283,6 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 px-2 text-xs"
         onClick={() => handleCheckAdsTxt(item)}
       >
         Check
@@ -316,11 +315,11 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                 <TableCell>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    size="icon-xs"
+                    className="text-destructive hover:text-destructive"
                     onClick={() => handleDeleteItem(item.id)}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -376,15 +375,15 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Badge variant="secondary">
-                <Globe className="h-3 w-3 mr-1" />
+                <Globe className="size-3 mr-1" />
                 {websiteItems.length} Websites
               </Badge>
               <Badge variant="secondary">
-                <Youtube className="h-3 w-3 mr-1" />
+                <Youtube className="size-3 mr-1" />
                 {youtubeItems.length} YouTube
               </Badge>
               <Badge variant="secondary">
-                <Smartphone className="h-3 w-3 mr-1" />
+                <Smartphone className="size-3 mr-1" />
                 {appItems.length} Apps
               </Badge>
             </div>
@@ -397,11 +396,11 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                 className="hidden"
               />
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-1" />
+                <Upload className="mr-1" />
                 Import CSV
               </Button>
               <Button variant="outline" size="sm" onClick={handleExport} disabled={localItems.length === 0}>
-                <Download className="h-4 w-4 mr-1" />
+                <Download className="mr-1" />
                 Export CSV
               </Button>
             </div>
@@ -411,15 +410,15 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="websites" className="gap-2">
-                <Globe className="h-4 w-4" />
+                <Globe className="size-4" />
                 Websites
               </TabsTrigger>
               <TabsTrigger value="youtube" className="gap-2">
-                <Youtube className="h-4 w-4" />
+                <Youtube className="size-4" />
                 YouTube
               </TabsTrigger>
               <TabsTrigger value="apps" className="gap-2">
-                <Smartphone className="h-4 w-4" />
+                <Smartphone className="size-4" />
                 Mobile Apps
               </TabsTrigger>
             </TabsList>
@@ -431,7 +430,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                 </p>
                 {websiteItems.length > 0 && (
                   <Button variant="outline" size="sm" onClick={handleCheckAllAdsTxt}>
-                    <Globe className="h-4 w-4 mr-1" />
+                    <Globe className="mr-1" />
                     Check All ads.txt
                   </Button>
                 )}
@@ -445,7 +444,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                   rows={3}
                 />
                 <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="mr-1" />
                   Add Websites
                 </Button>
               </div>
@@ -466,7 +465,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                   rows={3}
                 />
                 <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="mr-1" />
                   Add Channels
                 </Button>
               </div>
@@ -487,7 +486,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                   rows={3}
                 />
                 <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="mr-1" />
                   Add Apps
                 </Button>
               </div>
