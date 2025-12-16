@@ -75,10 +75,10 @@ export function SearchPlannerStructurePanel({
 
   // Fetch campaigns for selected entity
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['campaigns-hierarchy', selectedEntity, adType],
+    queryKey: ['search-campaigns-hierarchy', selectedEntity, adType],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .select('*')
         .eq('entity', selectedEntity)
         .order('name');

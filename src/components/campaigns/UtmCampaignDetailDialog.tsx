@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,22 +11,21 @@ import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useUpdateUtmCampaign } from "@/hooks/useUtmCampaigns";
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
-import { VersionComments } from "./VersionComments";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { CampaignComments } from "./CampaignComments";
-import { ExternalReviewComments } from "./ExternalReviewComments";
-import { Loader2, FileImage, ExternalLink, Save, X, MessageCircle, Plus, Edit, Trash2, Activity, File, Calendar, User } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, ExternalLink, Save, Edit, MessageCircle, Plus, Trash2, FileImage, Link2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface UtmCampaignDetailDialogProps {
   open: boolean;
@@ -50,14 +49,11 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const [name, setName] = useState("");
   const [landingPage, setLandingPage] = useState("");
   const [description, setDescription] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [versionNotes, setVersionNotes] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [isAddingVersion, setIsAddingVersion] = useState(false);
-  const [editingInlineVersionId, setEditingInlineVersionId] = useState<string | null>(null);
-  const [editVersionNotes, setEditVersionNotes] = useState("");
-  const [editVersionImage, setEditVersionImage] = useState<File | null>(null);
-  const [editVersionAssetLink, setEditVersionAssetLink] = useState("");
+  const [versionNotes, setVersionNotes] = useState("");
+  const [versionAssetLink, setVersionAssetLink] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
 
   const { data: campaign, isLoading } = useQuery({
@@ -65,15 +61,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
     queryFn: async () => {
       const { data, error } = await supabase
         .from("utm_campaigns")
-        .select(`
-          *,
-          campaign_metadata (
-            image_url,
-            image_file_size,
-            version_code,
-            asset_link
-          )
-        `)
+        .select(`*, campaign_metadata (image_url, asset_link, version_code)`)
         .eq("id", campaignId)
         .single();
 
@@ -89,50 +77,12 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   });
 
   const updateMutation = useUpdateUtmCampaign();
-  const { upsertMetadata, uploadImage } = useCampaignMetadata();
+  const { uploadImage } = useCampaignMetadata();
   const { getEntitiesForCampaign } = useCampaignEntityTracking();
-  const { useVersions, createVersion, updateVersion, deleteVersion } = useCampaignVersions();
+  const { useVersions, createVersion, deleteVersion } = useCampaignVersions();
   const { data: versions = [], isLoading: versionsLoading } = useVersions(campaignId);
   
   const entities = getEntitiesForCampaign(campaignId);
-
-  // Reset form when campaign data changes or when toggling edit mode
-  const resetFormFields = () => {
-    if (campaign) {
-      setName(campaign.name || "");
-      setLandingPage(campaign.landing_page || "");
-      setDescription(campaign.description || "");
-      setImageFile(null);
-    }
-  };
-
-  const handleToggleEdit = () => {
-    if (!isEditing) {
-      // When entering edit mode, reset fields with current data
-      resetFormFields();
-    }
-    setIsEditing(!isEditing);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const maxSize = 2 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error("File too large. Please provide an external link for files over 2MB.");
-      e.target.value = "";
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      e.target.value = "";
-      return;
-    }
-
-    setImageFile(file);
-  };
 
   const handleSave = async () => {
     try {
@@ -141,10 +91,9 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         name,
         landing_page: landingPage || null,
       });
-
       setIsEditing(false);
-      toast.success("Campaign updated successfully");
-    } catch (error) {
+      toast.success("Campaign updated");
+    } catch {
       toast.error("Failed to update campaign");
     }
   };
@@ -156,14 +105,11 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
     }
 
     try {
-      let imageUrl = campaign?.campaign_metadata?.image_url;
-      let imageFileSize = campaign?.campaign_metadata?.image_file_size;
+      let imageUrl: string | undefined;
+      let imageFileSize: number | undefined;
 
       if (imageFile) {
-        const result = await uploadImage.mutateAsync({ 
-          campaignId, 
-          file: imageFile 
-        });
+        const result = await uploadImage.mutateAsync({ campaignId, file: imageFile });
         imageUrl = result.publicUrl;
         imageFileSize = result.fileSize;
       }
@@ -175,15 +121,16 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
         description: description || undefined,
         imageUrl,
         imageFileSize,
-        assetLink: "",
+        assetLink: versionAssetLink || undefined,
         versionNotes,
       });
 
       setVersionNotes("");
-      setIsAddingVersion(false);
+      setVersionAssetLink("");
       setImageFile(null);
-      toast.success("Version saved successfully");
-    } catch (error) {
+      setIsAddingVersion(false);
+      toast.success("Version saved");
+    } catch {
       toast.error("Failed to save version");
     }
   };
@@ -192,7 +139,8 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
     try {
       await deleteVersion.mutateAsync(versionId);
       toast.success("Version deleted");
-    } catch (error) {
+      setDeletingVersionId(null);
+    } catch {
       toast.error("Failed to delete version");
     }
   };
@@ -200,7 +148,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   if (isLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-3xl">
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -209,66 +157,72 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
     );
   }
 
-  if (!campaign) {
-    return null;
-  }
+  if (!campaign) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className={cn(
-          "max-h-[90vh] p-0 gap-0 transition-all duration-300",
-          showComments ? "max-w-[1400px]" : "max-w-4xl"
-        )}
-      >
+      <DialogContent className={cn(
+        "max-h-[90vh] p-0 gap-0 transition-all duration-300",
+        showComments ? "max-w-[1200px]" : "max-w-3xl"
+      )}>
         <div className="flex h-full max-h-[90vh]">
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DialogHeader className="px-6 pt-6 pb-2 border-b-0 shrink-0">
-              <DialogTitle className="text-xl">
-                {isEditing ? (
-                  <Input value={name} onChange={(e) => setName(e.target.value)} className="font-semibold" />
-                ) : (
-                  campaign.name
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                View and manage campaign details, versions, and comments
-              </DialogDescription>
+            <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  {isEditing ? (
+                    <Input 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)} 
+                      className="text-xl font-semibold mb-2" 
+                    />
+                  ) : (
+                    <DialogTitle className="text-xl">{campaign.name}</DialogTitle>
+                  )}
+                  {isEditing ? (
+                    <Input 
+                      value={description} 
+                      onChange={(e) => setDescription(e.target.value)} 
+                      placeholder="Short description..."
+                      className="text-sm text-muted-foreground"
+                    />
+                  ) : (
+                    <DialogDescription className="mt-1">
+                      {campaign.description || "No description"}
+                    </DialogDescription>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant={showComments ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowComments(!showComments)}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Comments
+                  </Button>
+                  {isEditing ? (
+                    <Button size="sm" onClick={handleSave}>
+                      <Save className="h-4 w-4 mr-1" />
+                      Save
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </div>
             </DialogHeader>
-            
-            <div className="px-lg pb-sm border-b flex items-center justify-end gap-sm shrink-0">
-              <Button
-                variant={showComments ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowComments(!showComments)}
-              >
-                <MessageCircle className="h-4 w-4 mr-sm" />
-                Comments
-              </Button>
-            </div>
 
-            <ScrollArea className="flex-1 px-lg py-md">
-              <div className="space-y-md">
+            <ScrollArea className="flex-1 px-6 pb-6">
+              <div className="space-y-6">
                 {/* Campaign Info */}
-                <Card className="p-md space-y-sm">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Campaign Information</h3>
-                    {isEditing ? (
-                      <Button onClick={handleSave} size="sm">
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </Button>
-                    ) : (
-                      <Button onClick={handleToggleEdit} size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    )}
-                  </div>
-
+                <div className="space-y-4">
                   <div>
-                    <Label>Landing Page</Label>
+                    <Label className="text-muted-foreground text-sm">Landing Page</Label>
                     {isEditing ? (
                       <Input
                         value={landingPage}
@@ -276,92 +230,88 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                         placeholder="https://example.com"
                         className="mt-1"
                       />
+                    ) : campaign.landing_page ? (
+                      <a 
+                        href={campaign.landing_page} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-primary hover:underline flex items-center gap-1 mt-1 break-all"
+                      >
+                        {campaign.landing_page}
+                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
                     ) : (
-                      <p className="mt-xs text-body-sm break-all">
-                        {campaign.landing_page ? (
-                          <a href={campaign.landing_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-xs">
-                            {campaign.landing_page}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">Not set</span>
-                        )}
-                      </p>
+                      <p className="text-muted-foreground text-sm mt-1">Not set</p>
                     )}
                   </div>
 
                   <div>
-                    <Label>Active Entities</Label>
-                    <div className="flex flex-wrap gap-xs mt-sm">
+                    <Label className="text-muted-foreground text-sm">Active Entities</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {entities.length === 0 ? (
-                        <p className="text-body-sm text-muted-foreground">Not live on any entity yet</p>
+                        <p className="text-muted-foreground text-sm">Not live on any entity</p>
                       ) : (
-                        entities.map((entityTracking) => (
-                          <Badge key={entityTracking.id} variant="secondary">
-                            {entityTracking.entity}
-                          </Badge>
+                        entities.map((e) => (
+                          <Badge key={e.id} variant="secondary">{e.entity}</Badge>
                         ))
                       )}
                     </div>
                   </div>
+                </div>
 
-                  {isEditing && (
-                    <>
-                    </>
-                  )}
+                <Separator />
 
-                </Card>
-
-                {/* Versions Log */}
-                <Card className="p-card">
-                  <div className="flex items-center justify-between mb-md">
-                    <div className="flex items-center gap-sm">
-                      <Activity className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold text-heading-md">Version History</h3>
-                    </div>
-                    <Button onClick={() => setIsAddingVersion(!isAddingVersion)} size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
+                {/* Version History */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Version History</h3>
+                    <Button size="sm" variant="outline" onClick={() => setIsAddingVersion(true)}>
+                      <Plus className="h-4 w-4 mr-1" />
                       Add Version
                     </Button>
                   </div>
 
                   {isAddingVersion && (
-                    <Card className="p-md mb-md border-2 border-primary/20 bg-card">
-                      <div className="space-y-sm">
+                    <Card className="p-4 mb-4 border-primary/20">
+                      <div className="space-y-3">
                         <div>
                           <Label>Version Notes *</Label>
                           <Textarea
                             value={versionNotes}
                             onChange={(e) => setVersionNotes(e.target.value)}
-                            placeholder="Describe what changed in this version..."
+                            placeholder="Describe what changed..."
+                            rows={2}
                             className="mt-1"
-                            rows={3}
                           />
                         </div>
                         <div>
-                          <Label htmlFor="version-image">Attach Asset (Image up to 2MB or Link)</Label>
+                          <Label>Asset Link</Label>
                           <Input
-                            id="version-image"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="mt-1 cursor-pointer"
+                            value={versionAssetLink}
+                            onChange={(e) => setVersionAssetLink(e.target.value)}
+                            placeholder="https://..."
+                            className="mt-1"
                           />
                         </div>
-                        <div className="flex gap-sm justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setIsAddingVersion(false);
-                              setVersionNotes("");
-                              setImageFile(null);
-                            }}
-                          >
+                        <div>
+                          <Label>Image (max 2MB)</Label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => {
+                            setIsAddingVersion(false);
+                            setVersionNotes("");
+                            setVersionAssetLink("");
+                            setImageFile(null);
+                          }}>
                             Cancel
                           </Button>
                           <Button size="sm" onClick={handleAddVersion} disabled={!versionNotes.trim()}>
-                            <Save className="h-4 w-4 mr-2" />
                             Save Version
                           </Button>
                         </div>
@@ -370,233 +320,77 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                   )}
 
                   {versionsLoading ? (
-                    <div className="flex items-center justify-center py-8">
+                    <div className="flex justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : versions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-body-sm">
-                      No versions yet. Create your first version to track changes.
-                    </div>
+                    <p className="text-muted-foreground text-sm text-center py-8">
+                      No versions yet
+                    </p>
                   ) : (
-                    <Accordion type="single" collapsible className="space-y-sm">
-                      {versions.map((version) => {
-                        const createdDate = version.created_at ? new Date(version.created_at) : null;
-                        const isValidDate = createdDate && !isNaN(createdDate.getTime());
-                        const isEditing = editingInlineVersionId === version.id;
-
-                        return (
-                          <AccordionItem
-                            key={version.id}
-                            value={version.id}
-                            className="border rounded-lg bg-card hover:bg-card-hover transition-smooth"
-                          >
-                            <AccordionTrigger className="px-md py-sm hover:no-underline">
-                              <div className="flex items-center gap-sm flex-1">
-                                <Badge variant="outline" className="flex-shrink-0">
-                                  v{version.version_number}
-                                </Badge>
-                                <div className="flex-1 text-left">
-                                  <div className="font-medium text-body">{version.name}</div>
-                                  {version.version_notes && (
-                                    <p className="text-body-sm text-muted-foreground mt-xs line-clamp-1">
-                                      {version.version_notes}
-                                    </p>
-                                  )}
-                                </div>
-                                <span className="text-body-sm text-muted-foreground whitespace-nowrap">
-                                  {isValidDate
-                                    ? format(createdDate, 'MMM d, yyyy')
-                                    : 'Date unavailable'}
-                                </span>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Version</TableHead>
+                          <TableHead className="w-28">Date</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead className="w-20">Asset</TableHead>
+                          <TableHead className="w-16"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {versions.map((version) => (
+                          <TableRow key={version.id}>
+                            <TableCell>
+                              <Badge variant="outline">v{version.version_number}</Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {version.created_at ? format(new Date(version.created_at), 'MMM d, yyyy') : '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {version.version_notes || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {version.image_url && (
+                                  <a href={version.image_url} target="_blank" rel="noopener noreferrer">
+                                    <FileImage className="h-4 w-4 text-primary hover:text-primary/80" />
+                                  </a>
+                                )}
+                                {version.asset_link && (
+                                  <a href={version.asset_link} target="_blank" rel="noopener noreferrer">
+                                    <Link2 className="h-4 w-4 text-primary hover:text-primary/80" />
+                                  </a>
+                                )}
                               </div>
-                            </AccordionTrigger>
-
-                            <AccordionContent className="px-md pb-md pt-0">
-                              {isEditing ? (
-                                // Edit Mode
-                                <div className="space-y-sm pt-sm border-t">
-                                  <div>
-                                    <Label>Version Notes</Label>
-                                    <Textarea
-                                      value={editVersionNotes}
-                                      onChange={(e) => setEditVersionNotes(e.target.value)}
-                                      placeholder="Version notes..."
-                                      rows={3}
-                                      className="mt-1"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label>Asset (Image or Link)</Label>
-                                    <Input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => setEditVersionImage(e.target.files?.[0] || null)}
-                                      className="mt-1"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label>Asset Link</Label>
-                                    <Input
-                                      value={editVersionAssetLink}
-                                      onChange={(e) => setEditVersionAssetLink(e.target.value)}
-                                      placeholder="https://..."
-                                      className="mt-1"
-                                    />
-                                  </div>
-
-                                  <div className="flex gap-sm justify-end pt-sm">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setEditingInlineVersionId(null);
-                                        setEditVersionNotes("");
-                                        setEditVersionImage(null);
-                                        setEditVersionAssetLink("");
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      onClick={async () => {
-                                        try {
-                                          let imageUrl = version.image_url;
-                                          let imageFileSize = version.image_file_size;
-
-                                          if (editVersionImage) {
-                                            const uploadResult = await uploadImage.mutateAsync({
-                                              file: editVersionImage,
-                                              campaignId,
-                                            });
-                                            imageUrl = uploadResult.publicUrl;
-                                            imageFileSize = editVersionImage.size;
-                                          }
-
-                                          await updateVersion.mutateAsync({
-                                            versionId: version.id,
-                                            versionNotes: editVersionNotes || version.version_notes,
-                                            imageUrl,
-                                            imageFileSize,
-                                            assetLink: editVersionAssetLink || version.asset_link,
-                                          });
-
-                                          setEditingInlineVersionId(null);
-                                          setEditVersionNotes("");
-                                          setEditVersionImage(null);
-                                          setEditVersionAssetLink("");
-                                        } catch (error) {
-                                          toast.error("Failed to update version");
-                                        }
-                                      }}
-                                    >
-                                      <Save className="h-4 w-4 mr-2" />
-                                      Save Changes
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                // View Mode
-                                <div className="space-y-sm pt-sm border-t">
-                                  {version.version_notes && (
-                                    <div>
-                                      <Label className="text-muted-foreground">Notes</Label>
-                                      <p className="text-body-sm mt-xs">{version.version_notes}</p>
-                                    </div>
-                                  )}
-
-                                  {version.image_url && (
-                                    <div>
-                                      <Label className="text-muted-foreground">Asset</Label>
-                                      <img
-                                        src={version.image_url}
-                                        alt={`Version ${version.version_number}`}
-                                        className="mt-xs w-full max-w-md rounded-lg border border-border"
-                                      />
-                                      {version.image_file_size && (
-                                        <p className="text-metadata text-muted-foreground mt-xs">
-                                          Size: {(version.image_file_size / 1024 / 1024).toFixed(2)} MB
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {version.asset_link && (
-                                    <div>
-                                      <Label className="text-muted-foreground">Asset Link</Label>
-                                      <a
-                                        href={version.asset_link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary hover:underline flex items-center gap-xs text-body-sm mt-xs"
-                                      >
-                                        {version.asset_link}
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    </div>
-                                  )}
-
-                                  <div className="flex gap-sm justify-end pt-sm border-t">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setEditingInlineVersionId(version.id);
-                                        setEditVersionNotes(version.version_notes || "");
-                                        setEditVersionAssetLink(version.asset_link || "");
-                                      }}
-                                    >
-                                      <Edit className="h-4 w-4 mr-2" />
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setDeletingVersionId(version.id)}
-                                      className="text-destructive hover:text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </Button>
-                                  </div>
-                      </div>
-                    )}
-                    
-                    {/* Version Comments */}
-                    <div className="border-t border-border pt-md space-y-md">
-                      <div>
-                        <h4 className="font-semibold text-body-sm mb-sm">Internal Comments</h4>
-                        <VersionComments
-                          versionId={version.id}
-                          campaignId={campaign.id}
-                        />
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-semibold text-body-sm mb-sm">External Feedback</h4>
-                        <ExternalReviewComments versionId={version.id} />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={() => setDeletingVersionId(version.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   )}
-                </Card>
+                </div>
               </div>
             </ScrollArea>
           </div>
 
-          {/* Expandable Comments Section */}
+          {/* Comments Panel */}
           {showComments && (
             <>
               <Separator orientation="vertical" className="h-full" />
-              <div className="w-[500px] flex flex-col">
+              <div className="w-[400px] flex flex-col">
                 <div className="px-4 py-3 border-b shrink-0">
-                  <h3 className="font-semibold text-sm">Comments & Activity</h3>
+                  <h3 className="font-semibold text-sm">Comments</h3>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <CampaignComments campaignId={campaignId} />
@@ -613,23 +407,17 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Version</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this version? This action cannot be undone.
+              Are you sure? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (deletingVersionId) {
-                handleDeleteVersion(deletingVersionId);
-                setDeletingVersionId(null);
-              }
-            }}>
+            <AlertDialogAction onClick={() => deletingVersionId && handleDeleteVersion(deletingVersionId)}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </Dialog>
   );
 }

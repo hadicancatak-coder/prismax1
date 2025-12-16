@@ -53,10 +53,10 @@ export function AccountStructureTree({
 
   // Fetch campaigns with entity info
   const { data: campaigns } = useQuery({
-    queryKey: ['ad-campaigns-tree'],
+    queryKey: ['search-campaigns-tree'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .select('*')
         .order('name');
       if (error) throw error;

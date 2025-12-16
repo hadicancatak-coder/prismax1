@@ -43,9 +43,9 @@ test.describe('Supabase API Health Checks', () => {
     expect(error).toBeNull();
   });
 
-  test('should query launch_pad_campaigns table', async () => {
+  test('should query utm_campaigns table', async () => {
     const { error } = await supabase
-      .from('launch_pad_campaigns')
+      .from('utm_campaigns')
       .select('id')
       .limit(1);
     
