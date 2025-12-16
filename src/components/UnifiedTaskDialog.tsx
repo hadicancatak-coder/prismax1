@@ -565,6 +565,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         hideCloseButton
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-hidden",
           "left-[50%] translate-x-[-50%]", // Centered on viewport
