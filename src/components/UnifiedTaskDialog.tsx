@@ -567,7 +567,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
         hideCloseButton
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-hidden",
-          "left-[calc(50%+8rem)] translate-x-[-50%]", // Offset for sidebar (16rem / 2 = 8rem)
+          "left-[50%] translate-x-[-50%]", // Centered on viewport
           sidePanelOpen ? "max-w-[1200px]" : "max-w-2xl"
         )}
       >
