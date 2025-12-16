@@ -465,9 +465,18 @@ export default function Notifications() {
                   return (
                     <div
                       key={notification.id}
+                      onClick={() => {
+                        const taskId = notification.payload_json?.task_id;
+                        if (taskId) {
+                          markAsRead(notification.id);
+                          openTaskDialog(taskId);
+                        }
+                      }}
                       className={`p-md border border-border rounded transition-smooth ${
                         notification.read_at ? "bg-background" : "bg-muted/30 border-l-4 border-l-primary"
-                      } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""}`}
+                      } ${selectedIds.includes(notification.id) ? "ring-2 ring-primary" : ""} ${
+                        notification.payload_json?.task_id ? "cursor-pointer hover:border-primary/50" : ""
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-md">
                         <div className="flex items-start gap-sm flex-1 min-w-0">
@@ -518,18 +527,7 @@ export default function Notifications() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          {notification.payload_json?.task_id && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openTaskDialog(notification.payload_json.task_id)}
-                              title="View task"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                          )}
+                        <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           {!notification.read_at && (
                             <Button
                               size="sm"
