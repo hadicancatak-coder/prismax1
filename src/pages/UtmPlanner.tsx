@@ -3,19 +3,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtmBuilder } from "@/components/utm/UtmBuilder";
 import { UtmTableGroupedView } from "@/components/utm/UtmTableGroupedView";
 import { UtmInlineFilters } from "@/components/utm/UtmInlineFilters";
-import { ReadyLinksBuilder } from "@/components/utm/ReadyLinksBuilder";
 import { UtmConfigurationTab } from "@/components/utm/UtmConfigurationTab";
-import { UtmAutomationTab } from "@/components/utm/UtmAutomationTab";
 import { PageContainer, PageHeader, AlertBanner, DataCard } from "@/components/layout";
 import { useUtmLinks, UtmLinkFilters } from "@/hooks/useUtmLinks";
-import { Link2, Plus, List, Sparkles, Settings, Zap, ExternalLink } from "lucide-react";
+import { Link2, Sparkles, FolderOpen, Archive, Settings, ExternalLink } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const UtmPlanner = () => {
   const [activeTab, setActiveTab] = useState("builder");
   const [filters, setFilters] = useState<UtmLinkFilters>({});
+  const [archiveFilters, setArchiveFilters] = useState<UtmLinkFilters>({ status: 'archived' });
   
   const { data: utmLinks = [], isLoading } = useUtmLinks(filters);
+  const { data: archivedLinks = [], isLoading: isLoadingArchive } = useUtmLinks(archiveFilters);
 
   return (
     <PageContainer>
@@ -40,26 +40,22 @@ const UtmPlanner = () => {
       </AlertBanner>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full lg:w-auto bg-muted/50">
+        <TabsList className="grid grid-cols-4 w-full lg:w-auto bg-muted/50">
           <TabsTrigger value="builder" className="gap-2">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Builder</span>
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Smart Builder</span>
           </TabsTrigger>
           <TabsTrigger value="links" className="gap-2">
-            <List className="h-4 w-4" />
-            <span className="hidden sm:inline">Links</span>
+            <FolderOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Link Bucket</span>
           </TabsTrigger>
-          <TabsTrigger value="ready" className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Ready</span>
+          <TabsTrigger value="archive" className="gap-2">
+            <Archive className="h-4 w-4" />
+            <span className="hidden sm:inline">Archive</span>
           </TabsTrigger>
           <TabsTrigger value="config" className="gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Config</span>
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="gap-2">
-            <Zap className="h-4 w-4" />
-            <span className="hidden sm:inline">Automation</span>
           </TabsTrigger>
         </TabsList>
 
@@ -80,16 +76,34 @@ const UtmPlanner = () => {
           </DataCard>
         </TabsContent>
 
-        <TabsContent value="ready" forceMount hidden={activeTab !== "ready"} className="mt-lg">
-          <ReadyLinksBuilder />
+        <TabsContent value="archive" forceMount hidden={activeTab !== "archive"} className="mt-lg space-y-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Archived Links</h3>
+              <p className="text-sm text-muted-foreground">
+                Links that have been archived and are no longer active
+              </p>
+            </div>
+          </div>
+          <DataCard noPadding>
+            {isLoadingArchive ? (
+              <div className="p-md">
+                <TableSkeleton columns={5} rows={8} />
+              </div>
+            ) : archivedLinks.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Archive className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No archived links yet</p>
+                <p className="text-sm">Archived links will appear here</p>
+              </div>
+            ) : (
+              <UtmTableGroupedView links={archivedLinks} />
+            )}
+          </DataCard>
         </TabsContent>
 
         <TabsContent value="config" forceMount hidden={activeTab !== "config"} className="mt-lg">
           <UtmConfigurationTab />
-        </TabsContent>
-
-        <TabsContent value="automation" forceMount hidden={activeTab !== "automation"} className="mt-lg">
-          <UtmAutomationTab />
         </TabsContent>
       </Tabs>
     </PageContainer>
