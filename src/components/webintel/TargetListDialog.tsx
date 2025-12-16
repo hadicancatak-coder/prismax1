@@ -112,8 +112,9 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
             })),
           });
         }
-        onSave({ name, entity, description });
+        toast.success("Target list created successfully");
       }
+      onSave({ name, entity, description });
       onOpenChange(false);
     } catch (err) {
       toast.error("Failed to save list");
