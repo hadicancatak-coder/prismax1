@@ -97,15 +97,13 @@ export default function WebIntel() {
   const handleSaveList = async (data: any) => {
     try {
       if (editingList) {
+        // Update existing list metadata only - dialog handles item creation
         await updateList.mutateAsync({ id: editingList.id, ...data });
-        // Keep dialog open to allow adding items
-      } else {
-        const newList = await createList.mutateAsync(data);
-        setEditingList(newList);
-        // Keep dialog open to allow adding items
-        toast.info("List created! Now add your target items.");
-        return;
       }
+      // For new lists, the dialog already creates the list with items
+      // This callback is just a notification that save completed
+      setEditingList(null);
+      setTargetListDialogOpen(false);
     } catch (error) {
       console.error("Error saving list:", error);
       toast.error("Failed to save list");
