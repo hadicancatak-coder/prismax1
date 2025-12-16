@@ -13,7 +13,8 @@ import {
   MapPin,
   Tv,
   BookOpen,
-  Server
+  Server,
+  BarChart3
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +49,7 @@ const mediaItems = [
 
 const operationsItems = [
   { title: "Campaigns Log", url: "/campaigns-log", icon: Target },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
 ];
 
 const resourcesItems = [
