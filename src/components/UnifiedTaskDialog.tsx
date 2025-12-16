@@ -123,6 +123,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   const [newComment, setNewComment] = useState("");
   const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
   const [blocker, setBlocker] = useState<any>(null);
+  const [loadedFailureReason, setLoadedFailureReason] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { assignees: realtimeAssignees, refetch: refetchAssignees } = useRealtimeAssignees(
@@ -153,6 +154,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
       setLoading(true);
       setComments([]);
       setBlocker(null);
+      setLoadedFailureReason(null);
       setTitle("");
       setDescription("");
       setPriority("Medium");
@@ -212,6 +214,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
     setDueDate(data.due_at ? new Date(data.due_at) : undefined);
     setEntities(Array.isArray(data.entity) ? data.entity.map(String) : []);
     setTags(Array.isArray(data.labels) ? data.labels : []);
+    setLoadedFailureReason(data.failure_reason || null);
     
     // Parse recurrence
     if (data.recurrence_rrule) {
@@ -712,6 +715,13 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                           ))}
                         </SelectContent>
                       </Select>
+                      {/* Show failure reason if status is Failed */}
+                      {status === "Failed" && loadedFailureReason && (
+                        <div className="mt-2 p-2 rounded-md bg-destructive/10 border border-destructive/30">
+                          <p className="text-xs text-destructive font-medium">Failure Reason:</p>
+                          <p className="text-sm text-destructive/80">{loadedFailureReason}</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Priority */}
