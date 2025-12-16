@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { NewsTicker } from "@/components/NewsTicker";
-import { ToolsGallery } from "@/components/dashboard/ToolsGallery";
+import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { TeamPerformance } from "@/components/dashboard/TeamPerformance";
 import { MyTasks } from "@/components/dashboard/MyTasks";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -26,7 +27,9 @@ export default function Dashboard() {
 
       <NewsTicker />
 
-      <ToolsGallery />
+      <PerformanceMetrics />
+
+      <TeamPerformance />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
         <MyTasks />
