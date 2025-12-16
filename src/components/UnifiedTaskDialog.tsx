@@ -1098,6 +1098,19 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
               </div>
               
               <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-3">
+                {/* Show failure reason banner if task has one */}
+                {loadedFailureReason && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-destructive text-lg">❌</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-metadata font-medium text-destructive">Task Failed</p>
+                        <p className="text-body-sm text-foreground mt-1">{loadedFailureReason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Unified Timeline - merge comments and activity */}
                 <h4 className="text-body-sm font-medium text-muted-foreground">Timeline</h4>
                 {(() => {
@@ -1307,20 +1320,40 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                   if (taskId && !isCreate) {
                     if (reasonType === 'blocked') {
                       // Add blocked reason as comment
-                      await supabase.from("comments").insert({
+                      const { error: commentError } = await supabase.from("comments").insert({
                         task_id: taskId,
                         author_id: user!.id,
                         body: `🚫 **Blocked:** ${reasonText.trim()}`,
                       });
+                      
+                      if (commentError) {
+                        console.error("Failed to insert blocked comment:", commentError);
+                        toast({
+                          title: "Error",
+                          description: "Failed to save blocked reason",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      // Update task status to Blocked
+                      await supabase.from("tasks").update({ status: "Blocked" }).eq("id", taskId);
+                      
                       fetchComments();
+                      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+                      toast({
+                        title: "Task Updated",
+                        description: "Task marked as blocked",
+                      });
                     } else if (reasonType === 'failed') {
                       // Store failure_reason AND status in the task
-                      const { error } = await supabase.from("tasks").update({
+                      const { error: taskError } = await supabase.from("tasks").update({
                         failure_reason: reasonText.trim(),
                         status: "Failed",
                       }).eq("id", taskId);
                       
-                      if (error) {
+                      if (taskError) {
+                        console.error("Failed to update task:", taskError);
                         toast({
                           title: "Error",
                           description: "Failed to save failure reason",
@@ -1330,12 +1363,19 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                       }
                       
                       // Add failure reason as comment so it appears in Timeline
-                      await supabase.from("comments").insert({
+                      const { error: commentError } = await supabase.from("comments").insert({
                         task_id: taskId,
                         author_id: user!.id,
                         body: `❌ **Task Failed:** ${reasonText.trim()}`,
                       });
+                      
+                      if (commentError) {
+                        console.error("Failed to insert failure comment:", commentError);
+                        // Don't return - the task was already updated, just log the error
+                      }
+                      
                       fetchComments();
+                      queryClient.invalidateQueries({ queryKey: ["tasks"] });
                       
                       setLoadedFailureReason(reasonText.trim());
                       setStatus("Failed");
