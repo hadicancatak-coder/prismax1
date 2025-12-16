@@ -70,9 +70,9 @@ test.describe('Supabase API Health Checks', () => {
     expect(error).toBeNull();
   });
 
-  test('should query operation_audit_logs table', async () => {
+  test('should query ads table', async () => {
     const { error } = await supabase
-      .from('operation_audit_logs')
+      .from('ads')
       .select('id')
       .limit(1);
     
