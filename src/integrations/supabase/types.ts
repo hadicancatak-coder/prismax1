@@ -1767,6 +1767,80 @@ export type Database = {
           },
         ]
       }
+      gdn_target_items: {
+        Row: {
+          ads_txt_checked_at: string | null
+          ads_txt_error: string | null
+          ads_txt_has_google: boolean | null
+          created_at: string
+          id: string
+          item_type: string
+          list_id: string
+          name: string | null
+          url: string
+        }
+        Insert: {
+          ads_txt_checked_at?: string | null
+          ads_txt_error?: string | null
+          ads_txt_has_google?: boolean | null
+          created_at?: string
+          id?: string
+          item_type: string
+          list_id: string
+          name?: string | null
+          url: string
+        }
+        Update: {
+          ads_txt_checked_at?: string | null
+          ads_txt_error?: string | null
+          ads_txt_has_google?: boolean | null
+          created_at?: string
+          id?: string
+          item_type?: string
+          list_id?: string
+          name?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gdn_target_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "gdn_target_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gdn_target_lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          entity: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          entity: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       google_sheets_reports: {
         Row: {
           created_at: string
