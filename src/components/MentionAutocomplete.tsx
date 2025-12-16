@@ -57,8 +57,8 @@ export function MentionAutocomplete({
     if (textareaRef.current) {
       const rect = textareaRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + 4,
+        left: rect.left,
       });
     }
   }, []);
@@ -163,6 +163,7 @@ export function MentionAutocomplete({
   const dropdown = showDropdown && filteredUsers.length > 0 && createPortal(
     <div 
       ref={dropdownRef}
+      data-mention-dropdown
       style={{
         position: 'fixed',
         top: dropdownPosition.top,
