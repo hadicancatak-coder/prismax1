@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Search, Target, Activity, Shield, ShieldOff, RotateCcw } from "lucide-react";
+import { Trash2, Search, Target, Activity, Shield, ShieldOff, RotateCcw, KeyRound, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { adminService } from "@/lib/adminService";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -42,6 +42,10 @@ export default function UsersManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [mfaResetDialogOpen, setMfaResetDialogOpen] = useState(false);
   const [mfaResetUser, setMfaResetUser] = useState<User | null>(null);
+  const [passwordResetDialogOpen, setPasswordResetDialogOpen] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [resetLink, setResetLink] = useState<string | null>(null);
+  const [resetLinkCopied, setResetLinkCopied] = useState(false);
   const [bulkAction, setBulkAction] = useState<string>("");
 
   useEffect(() => {
@@ -203,6 +207,41 @@ export default function UsersManagement() {
       fetchUsers();
     } catch (error: any) {
       toast.error('Failed to reset MFA: ' + error.message);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!passwordResetUser) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { 
+          targetUserId: passwordResetUser.user_id,
+          targetEmail: passwordResetUser.email 
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.resetLink) {
+        setResetLink(data.resetLink);
+        toast.success(`Password reset link generated for ${passwordResetUser.name}`);
+      } else {
+        toast.success(`Password reset email sent to ${passwordResetUser.email}`);
+        setPasswordResetDialogOpen(false);
+        setPasswordResetUser(null);
+      }
+    } catch (error: any) {
+      toast.error('Failed to reset password: ' + error.message);
+    }
+  };
+
+  const copyResetLink = async () => {
+    if (resetLink) {
+      await navigator.clipboard.writeText(resetLink);
+      setResetLinkCopied(true);
+      toast.success('Reset link copied to clipboard');
+      setTimeout(() => setResetLinkCopied(false), 2000);
     }
   };
 
@@ -455,6 +494,22 @@ export default function UsersManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setPasswordResetUser(user);
+                                  setResetLink(null);
+                                  setPasswordResetDialogOpen(true);
+                                }}
+                              >
+                                <KeyRound className="h-4 w-4 text-primary" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reset Password</TooltipContent>
+                          </Tooltip>
                           {user.mfa_enabled && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -535,6 +590,66 @@ export default function UsersManagement() {
               <AlertDialogAction onClick={handleResetMfa} className="bg-warning hover:bg-warning/90 text-warning-foreground">
                 Reset MFA
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={passwordResetDialogOpen} onOpenChange={(open) => {
+          setPasswordResetDialogOpen(open);
+          if (!open) {
+            setResetLink(null);
+            setPasswordResetUser(null);
+          }
+        }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-primary" />
+                Reset Password for {passwordResetUser?.name}?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                {resetLink ? (
+                  <div className="space-y-3">
+                    <p className="text-success font-medium">Password reset link generated!</p>
+                    <p className="text-sm">Share this link with the user. It will expire in 24 hours.</p>
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <code className="flex-1 text-xs break-all">{resetLink}</code>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={copyResetLink}
+                      >
+                        {resetLinkCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p>This will generate a password reset link for <strong>{passwordResetUser?.email}</strong>.</p>
+                    <p className="text-sm text-muted-foreground">
+                      You can then share this link with the user to allow them to set a new password.
+                    </p>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              {resetLink ? (
+                <AlertDialogAction onClick={() => {
+                  setPasswordResetDialogOpen(false);
+                  setResetLink(null);
+                  setPasswordResetUser(null);
+                }}>
+                  Done
+                </AlertDialogAction>
+              ) : (
+                <>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetPassword}>
+                    Generate Reset Link
+                  </AlertDialogAction>
+                </>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

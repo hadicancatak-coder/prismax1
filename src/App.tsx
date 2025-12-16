@@ -45,7 +45,8 @@ import Knowledge from "./pages/Knowledge";
 import KnowledgePublic from "./pages/KnowledgePublic";
 import TechStack from "./pages/TechStack";
 import Performance from "./pages/Performance";
-
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const App = () => (
   <ErrorBoundary>
@@ -57,6 +58,8 @@ const App = () => (
             <GlobalBubbleMenu />
             <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/mfa-setup" element={<ProtectedRoute><MfaSetup /></ProtectedRoute>} />
                 <Route path="/mfa-verify" element={<ProtectedRoute><MfaVerify /></ProtectedRoute>} />
             <Route path="/campaigns-log/review/:token" element={<CampaignReview />} />
@@ -67,6 +70,7 @@ const App = () => (
                   <Route path="/tasks" element={<Tasks />} />
                   <Route path="/calendar" element={<CalendarView />} />
                   <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                    <Route index element={<Navigate to="overview" replace />} />
                     <Route path="overview" element={<Overview />} />
                     <Route path="users" element={<UsersManagement />} />
                     <Route path="kpis" element={<KPIsManagement />} />
