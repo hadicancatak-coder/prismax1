@@ -137,6 +137,7 @@ export function NotificationBell() {
       case "task_priority_changed": return "⚡";
       case "ad_status_changed": return "📢";
       case "ad_pending_review": return "👀";
+      case "announcement": return "📢";
       default: return "🔔";
     }
   };
@@ -188,6 +189,15 @@ export function NotificationBell() {
         return <span className="font-medium">Ad: {payload.ad_name} → {payload.new_status}</span>;
       case "ad_pending_review":
         return <span className="font-medium">Review: {payload.ad_name}</span>;
+      case "announcement":
+        return (
+          <div>
+            <span className="font-medium">📢 {payload.title || "Announcement"}</span>
+            {payload.message && (
+              <p className="text-muted-foreground text-metadata mt-1 line-clamp-2">{payload.message}</p>
+            )}
+          </div>
+        );
       default:
         return <span>{taskTitle || "New notification"}</span>;
     }
