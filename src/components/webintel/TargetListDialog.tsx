@@ -436,18 +436,18 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
                 )}
               </div>
               
-              <div className="space-y-2">
-                <Textarea
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  placeholder="Paste URLs here (one per line)&#10;example.com&#10;another-site.com"
-                  rows={3}
-                />
-                <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="mr-1" />
-                  Add Websites
-                </Button>
-              </div>
+              <Textarea
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && bulkInput.trim()) {
+                    e.preventDefault();
+                    handleAddItems();
+                  }
+                }}
+                placeholder="Paste URLs here (one per line), press Enter to add&#10;example.com&#10;another-site.com"
+                rows={3}
+              />
 
               {renderItemsTable(websiteItems, true)}
             </TabsContent>
