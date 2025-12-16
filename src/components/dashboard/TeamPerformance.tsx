@@ -8,8 +8,8 @@ interface UserPerformance {
   userId: string;
   name: string;
   avatar?: string;
-  tasksThisWeek: number;
-  completedThisWeek: number;
+  totalTasks: number;
+  completedTasks: number;
   score: number;
 }
 
@@ -19,70 +19,66 @@ export function TeamPerformance() {
 
   useEffect(() => {
     async function fetchTeamPerformance() {
-      const startOfWeek = new Date();
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
-
       // Get all profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url");
+        .select("id, user_id, name, avatar_url");
 
       if (!profiles) {
         setLoading(false);
         return;
       }
 
-      // Get task assignees for this week
-      const { data: assignees } = await supabase
+      // Get ALL task assignees (no date filter)
+      const { data: allAssignees } = await supabase
         .from("task_assignees")
-        .select("user_id, task_id, tasks!inner(id, status, created_at, updated_at)")
-        .gte("tasks.created_at", startOfWeek.toISOString());
+        .select("user_id, task_id");
 
-      // Get completed tasks by user this week
+      // Get ALL completed task assignees
       const { data: completedAssignees } = await supabase
         .from("task_assignees")
-        .select("user_id, task_id, tasks!inner(id, status, updated_at)")
-        .eq("tasks.status", "Completed")
-        .gte("tasks.updated_at", startOfWeek.toISOString());
+        .select("user_id, task_id, tasks!inner(id, status)")
+        .eq("tasks.status", "Completed");
 
-      const userStats: Record<string, { assigned: number; completed: number }> = {};
+      const userStats: Record<string, { total: number; completed: number }> = {};
 
-      // Count assigned tasks per user this week
-      assignees?.forEach((a) => {
-        if (!userStats[a.user_id]) {
-          userStats[a.user_id] = { assigned: 0, completed: 0 };
-        }
-        userStats[a.user_id].assigned++;
+      // Initialize all users with 0 stats
+      profiles.forEach((p) => {
+        userStats[p.id] = { total: 0, completed: 0 };
       });
 
-      // Count completed tasks per user this week
+      // Count total tasks per user (using profile.id which matches task_assignees.user_id)
+      allAssignees?.forEach((a) => {
+        if (userStats[a.user_id]) {
+          userStats[a.user_id].total++;
+        }
+      });
+
+      // Count completed tasks per user
       completedAssignees?.forEach((a) => {
-        if (!userStats[a.user_id]) {
-          userStats[a.user_id] = { assigned: 0, completed: 0 };
+        if (userStats[a.user_id]) {
+          userStats[a.user_id].completed++;
         }
-        userStats[a.user_id].completed++;
       });
 
-      // Build user performance list
+      // Build user performance list - show ALL users
       const performance: UserPerformance[] = profiles
-        .filter((p) => userStats[p.user_id]) // Only users with tasks
         .map((p) => {
-          const stats = userStats[p.user_id] || { assigned: 0, completed: 0 };
-          const score = stats.assigned > 0
-            ? Math.min(10, Math.round((stats.completed / stats.assigned) * 10))
-            : 5; // Neutral score if no tasks
+          const stats = userStats[p.id] || { total: 0, completed: 0 };
+          const score = stats.total > 0
+            ? Math.min(10, Math.round((stats.completed / stats.total) * 10 * 10) / 10)
+            : 0;
 
           return {
             userId: p.user_id,
             name: p.name || "Unknown",
             avatar: p.avatar_url || undefined,
-            tasksThisWeek: stats.assigned,
-            completedThisWeek: stats.completed,
+            totalTasks: stats.total,
+            completedTasks: stats.completed,
             score,
           };
         })
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score || b.totalTasks - a.totalTasks);
 
       setUsers(performance);
       setLoading(false);
@@ -92,8 +88,8 @@ export function TeamPerformance() {
   }, []);
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return "bg-success/15 text-success";
-    if (score >= 5) return "bg-warning/15 text-warning";
+    if (score >= 7) return "bg-success/15 text-success";
+    if (score >= 4) return "bg-warning/15 text-warning";
     return "bg-destructive/15 text-destructive";
   };
 
@@ -122,24 +118,23 @@ export function TeamPerformance() {
     );
   }
 
-  if (users.length === 0) {
-    return (
-      <Card className="p-card">
-        <div className="flex items-center gap-sm text-muted-foreground">
-          <Users className="h-5 w-5" />
-          <span className="text-body-sm">No team activity this week</span>
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <Card className="p-card">
       <h2 className="text-heading-sm font-semibold text-foreground mb-md flex items-center gap-sm">
         <Users className="h-5 w-5 text-muted-foreground" />
-        Team Performance This Week
+        Team Performance
       </h2>
-      <div className="space-y-sm">
+      
+      {/* Header Row */}
+      <div className="flex items-center gap-md px-sm py-xs text-metadata text-muted-foreground border-b border-border mb-sm">
+        <div className="w-9" /> {/* Avatar space */}
+        <div className="flex-1">Name</div>
+        <div className="w-16 text-center">Total</div>
+        <div className="w-16 text-center">Done</div>
+        <div className="w-20 text-center">Score</div>
+      </div>
+      
+      <div className="space-y-xs max-h-[400px] overflow-y-auto hide-scrollbar">
         {users.map((user) => (
           <div
             key={user.userId}
@@ -151,12 +146,15 @@ export function TeamPerformance() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-body-sm font-medium text-foreground truncate">{user.name}</p>
-              <p className="text-metadata text-muted-foreground">
-                {user.completedThisWeek}/{user.tasksThisWeek} tasks completed
-              </p>
+            </div>
+            <div className="w-16 text-center text-body-sm text-muted-foreground">
+              {user.totalTasks}
+            </div>
+            <div className="w-16 text-center text-body-sm text-foreground font-medium">
+              {user.completedTasks}
             </div>
             <div
-              className={`px-sm py-xs rounded-full text-metadata font-semibold ${getScoreColor(user.score)}`}
+              className={`w-20 px-sm py-xs rounded-full text-metadata font-semibold text-center ${getScoreColor(user.score)}`}
             >
               {user.score}/10
             </div>

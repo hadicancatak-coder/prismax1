@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { NewsTicker } from "@/components/NewsTicker";
 import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
 import { TeamPerformance } from "@/components/dashboard/TeamPerformance";
+import { RecentlyCompletedTicker } from "@/components/dashboard/RecentlyCompletedTicker";
 import { MyTasks } from "@/components/dashboard/MyTasks";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -28,6 +29,8 @@ export default function Dashboard() {
       <NewsTicker />
 
       <PerformanceMetrics />
+
+      <RecentlyCompletedTicker />
 
       <TeamPerformance />
 
