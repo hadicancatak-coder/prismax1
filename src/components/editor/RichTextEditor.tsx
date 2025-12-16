@@ -74,13 +74,14 @@ export function RichTextEditor({
             'prose-ul:list-disc prose-ul:pl-4 prose-ul:text-foreground',
             'prose-ol:list-decimal prose-ol:pl-4 prose-ol:text-foreground',
             'prose-li:text-foreground prose-li:break-words',
-            'prose-a:text-primary prose-a:underline prose-a:cursor-pointer hover:prose-a:text-primary/80 prose-a:break-all',
+            'prose-a:text-primary prose-a:underline prose-a:cursor-pointer hover:prose-a:text-primary/80',
+            '[&_a]:break-all [&_a]:[word-break:break-all] [&_a]:[overflow-wrap:anywhere]',
             '[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]',
             '[&_p.is-editor-empty:first-child]:before:text-muted-foreground',
             '[&_p.is-editor-empty:first-child]:before:float-left',
             '[&_p.is-editor-empty:first-child]:before:pointer-events-none',
             '[&_p.is-editor-empty:first-child]:before:h-0',
-            'break-words overflow-wrap-anywhere',
+            'break-words [word-break:break-word] [overflow-wrap:break-word]',
           ),
         },
       },
@@ -175,14 +176,14 @@ export function RichTextEditor({
 
   return (
     <div 
-      className={cn('border border-input rounded-md bg-background', className)}
+      className={cn('border border-input rounded-md bg-background overflow-hidden', className)}
       onMouseUp={handleMouseUp}
     >
       <div
-        className="px-3 py-2"
+        className="px-3 py-2 overflow-hidden"
         style={{ minHeight }}
       >
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} className="overflow-hidden" />
       </div>
     </div>
   );
