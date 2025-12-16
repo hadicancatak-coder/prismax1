@@ -19,6 +19,7 @@ interface MentionAutocompleteProps {
   onBlur?: () => void;
   minRows?: number;
   maxRows?: number;
+  noPortal?: boolean; // When true, renders dropdown inline (for use inside dialogs)
 }
 
 export function MentionAutocomplete({
@@ -31,6 +32,7 @@ export function MentionAutocomplete({
   onBlur,
   minRows = 2,
   maxRows = 6,
+  noPortal = false,
 }: MentionAutocompleteProps) {
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [filteredUsers, setFilteredUsers] = React.useState<User[]>([]);
@@ -39,6 +41,7 @@ export function MentionAutocomplete({
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Auto-resize textarea
   React.useEffect(() => {
@@ -54,14 +57,23 @@ export function MentionAutocomplete({
 
   // Calculate dropdown position
   const updateDropdownPosition = React.useCallback(() => {
-    if (textareaRef.current) {
-      const rect = textareaRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      });
+    if (textareaRef.current && containerRef.current) {
+      if (noPortal) {
+        // Position relative to container for inline rendering
+        setDropdownPosition({
+          top: textareaRef.current.offsetHeight + 4,
+          left: 0,
+        });
+      } else {
+        // Fixed position for document.body portal
+        const rect = textareaRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        });
+      }
     }
-  }, []);
+  }, [noPortal]);
 
   // Detect @ and filter users
   React.useEffect(() => {
@@ -160,20 +172,22 @@ export function MentionAutocomplete({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const dropdown = showDropdown && filteredUsers.length > 0 && createPortal(
+  const dropdownContent = showDropdown && filteredUsers.length > 0 && (
     <div 
       ref={dropdownRef}
-      data-mention-dropdown
-      style={{
+      style={noPortal ? {
+        position: 'absolute',
+        top: dropdownPosition.top,
+        left: 0,
+        right: 0,
+        zIndex: 99999,
+      } : {
         position: 'fixed',
         top: dropdownPosition.top,
         left: dropdownPosition.left,
         zIndex: 99999,
       }}
       className="w-64 bg-popover border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto hide-scrollbar"
-      onMouseDown={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
     >
       <div className="p-1">
         <div className="px-2 py-1.5 text-metadata text-muted-foreground">
@@ -186,11 +200,7 @@ export function MentionAutocomplete({
               "flex items-center gap-3 px-2 py-2 cursor-pointer rounded-md transition-smooth",
               index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
             )}
-            onClick={(e) => {
-              e.stopPropagation();
-              insertMention(user);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => insertMention(user)}
             onMouseEnter={() => setSelectedIndex(index)}
           >
             <Avatar className="h-7 w-7">
@@ -207,12 +217,11 @@ export function MentionAutocomplete({
           </div>
         ))}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <textarea
         ref={textareaRef}
         value={value}
@@ -229,7 +238,10 @@ export function MentionAutocomplete({
         )}
         rows={minRows}
       />
-      {dropdown}
+      {noPortal 
+        ? dropdownContent 
+        : (dropdownContent && createPortal(dropdownContent, document.body))
+      }
     </div>
   );
 }

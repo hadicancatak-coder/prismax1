@@ -1216,6 +1216,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     placeholder="Write a comment... Use @ to mention"
                     minRows={2}
                     maxRows={4}
+                    noPortal
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
@@ -1313,11 +1314,26 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                       });
                       fetchComments();
                     } else if (reasonType === 'failed') {
-                      // Store failure_reason in the task
-                      await supabase.from("tasks").update({
+                      // Store failure_reason AND status in the task
+                      const { error } = await supabase.from("tasks").update({
                         failure_reason: reasonText.trim(),
+                        status: "Failed",
                       }).eq("id", taskId);
+                      
+                      if (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to save failure reason",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
                       setLoadedFailureReason(reasonText.trim());
+                      setStatus("Failed");
+                      toast({
+                        title: "Task Updated",
+                        description: "Task marked as failed",
+                      });
                     }
                     setReasonText("");
                     setReasonType(null);
