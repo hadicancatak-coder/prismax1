@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { ExternalLink, MessageCircle, FileImage, Link2, Loader2, Edit, Save, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, MessageCircle, FileImage, Link2, Loader2, Edit, Save, Plus, Trash2, ChevronDown, ChevronRight, User, Calendar } from "lucide-react";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useCampaignVersions } from "@/hooks/useCampaignVersions";
 import { useCampaignMetadata } from "@/hooks/useCampaignMetadata";
@@ -41,6 +41,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
   const [versionAssetLink, setVersionAssetLink] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -185,21 +186,21 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                       size="sm"
                       onClick={() => setShowComments(!showComments)}
                     >
-                      <MessageCircle className="h-4 w-4 mr-1" />
+                      <MessageCircle />
                       Comments
                     </Button>
                     {isEditing ? (
                       <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending}>
                         {updateMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          <Loader2 className="animate-spin" />
                         ) : (
-                          <Save className="h-4 w-4 mr-1" />
+                          <Save />
                         )}
                         Save
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                        <Edit className="h-4 w-4 mr-1" />
+                        <Edit />
                         Edit
                       </Button>
                     )}
@@ -255,7 +256,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-foreground">Version History</h3>
                       <Button size="sm" variant="outline" onClick={() => setIsAddingVersion(true)}>
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus />
                         Add Version
                       </Button>
                     </div>
@@ -302,9 +303,7 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                               Cancel
                             </Button>
                             <Button size="sm" onClick={handleAddVersion} disabled={!versionNotes.trim() || createVersion.isPending}>
-                              {createVersion.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                              ) : null}
+                              {createVersion.isPending && <Loader2 className="animate-spin" />}
                               Save Version
                             </Button>
                           </div>
@@ -326,39 +325,116 @@ export function UtmCampaignDetailDialog({ open, onOpenChange, campaignId }: UtmC
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {versions.map((v) => (
-                            <TableRow key={v.id} className="border-border">
-                              <TableCell><Badge variant="outline">v{v.version_number}</Badge></TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {v.created_at ? format(new Date(v.created_at), 'MMM d') : '-'}
-                              </TableCell>
-                              <TableCell className="text-sm text-foreground">{v.version_notes || '-'}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  {v.image_url && (
-                                    <a href={v.image_url} target="_blank" rel="noopener noreferrer">
-                                      <FileImage className="h-4 w-4 text-primary hover:text-primary/80" />
-                                    </a>
-                                  )}
-                                  {v.asset_link && (
-                                    <a href={v.asset_link} target="_blank" rel="noopener noreferrer">
-                                      <Link2 className="h-4 w-4 text-primary hover:text-primary/80" />
-                                    </a>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  onClick={() => setDeletingVersionId(v.id)}
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          {versions.map((v) => {
+                            const isExpanded = selectedVersionId === v.id;
+                            return (
+                              <>
+                                <TableRow 
+                                  key={v.id} 
+                                  className="border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => setSelectedVersionId(isExpanded ? null : v.id)}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                                  <TableCell>
+                                    <div className="flex items-center gap-1">
+                                      {isExpanded ? (
+                                        <ChevronDown className="size-3 text-muted-foreground" />
+                                      ) : (
+                                        <ChevronRight className="size-3 text-muted-foreground" />
+                                      )}
+                                      <Badge variant="outline">v{v.version_number}</Badge>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {v.created_at ? format(new Date(v.created_at), 'MMM d') : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-foreground">{v.version_notes || '-'}</TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-2">
+                                      {v.image_url && (
+                                        <a href={v.image_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                          <FileImage className="size-4 text-primary hover:text-primary/80" />
+                                        </a>
+                                      )}
+                                      {v.asset_link && (
+                                        <a href={v.asset_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                          <Link2 className="size-4 text-primary hover:text-primary/80" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeletingVersionId(v.id);
+                                      }}
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                                {isExpanded && (
+                                  <TableRow key={`${v.id}-details`} className="border-border bg-muted/30">
+                                    <TableCell colSpan={5} className="p-4">
+                                      <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                          <div className="flex items-center gap-2">
+                                            <Calendar className="size-4 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Created:</span>
+                                            <span className="text-foreground">
+                                              {v.created_at ? format(new Date(v.created_at), 'MMM d, yyyy • HH:mm') : '-'}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <User className="size-4 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Created by:</span>
+                                            <span className="text-foreground">{v.created_by || 'Unknown'}</span>
+                                          </div>
+                                        </div>
+                                        
+                                        {v.version_notes && (
+                                          <div>
+                                            <span className="text-sm text-muted-foreground">Notes:</span>
+                                            <p className="mt-1 text-sm text-foreground bg-background rounded-md p-2 border border-border">
+                                              {v.version_notes}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        <div className="flex gap-4">
+                                          {v.image_url && (
+                                            <a 
+                                              href={v.image_url} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 text-sm text-primary hover:underline"
+                                            >
+                                              <FileImage className="size-4" />
+                                              View Image
+                                            </a>
+                                          )}
+                                          {v.asset_link && (
+                                            <a 
+                                              href={v.asset_link} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 text-sm text-primary hover:underline"
+                                            >
+                                              <Link2 className="size-4" />
+                                              Open Asset Link
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     )}
