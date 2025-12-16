@@ -405,21 +405,19 @@ export function AccountStructureTree({
           <div className="flex gap-1">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              size="icon-xs"
               onClick={expandAll}
               title="Expand All"
             >
-              <ChevronsDown className="h-3.5 w-3.5" />
+              <ChevronsDown />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              size="icon-xs"
               onClick={collapseAll}
               title="Collapse All"
             >
-              <ChevronsRight className="h-3.5 w-3.5" />
+              <ChevronsRight />
             </Button>
           </div>
         </div>

@@ -284,11 +284,11 @@ export function SearchPlannerStructurePanel({
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-smooth"
+                          size="icon-xs"
+                          className="opacity-0 group-hover:opacity-100 transition-smooth"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          <MoreHorizontal className="text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-card border-border shadow-lg">

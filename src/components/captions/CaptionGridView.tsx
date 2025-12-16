@@ -95,12 +95,11 @@ export function CaptionGridView({ captions, onEdit }: CaptionGridViewProps) {
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
+                      size="icon-xs"
                       onClick={() => handleToggleFavorite(caption)}
                     >
                       <Star 
-                        className={`h-4 w-4 ${caption.is_favorite ? "fill-amber text-amber" : ""}`} 
+                        className={caption.is_favorite ? "fill-amber text-amber" : ""} 
                       />
                     </Button>
                   </div>

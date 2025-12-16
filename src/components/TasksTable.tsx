@@ -505,8 +505,8 @@ export const TasksTable = ({ tasks, onTaskUpdate, selectedIds = [], onSelectionC
         <TableCell className="py-5 px-2" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu open={openDropdownId === task.id} onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="ghost" size="icon-sm">
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">

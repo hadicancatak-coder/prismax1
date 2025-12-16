@@ -255,17 +255,16 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                 />
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0"
+                                  size="icon-xs"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggleLink(link.id);
                                   }}
                                 >
                                   {isLinkExpanded ? (
-                                    <ChevronDown className="h-4 w-4" />
+                                    <ChevronDown />
                                   ) : (
-                                    <ChevronRight className="h-4 w-4" />
+                                    <ChevronRight />
                                   )}
                                 </Button>
                               </div>

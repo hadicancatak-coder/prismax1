@@ -346,8 +346,8 @@ export const TasksTableVirtualized = ({ tasks, onTaskUpdate }: TasksTableVirtual
         <div className="w-[50px] px-2" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu open={openDropdownId === task.id} onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="ghost" size="icon-sm">
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

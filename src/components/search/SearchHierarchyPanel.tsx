@@ -210,31 +210,31 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
             
             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1" onClick={(e) => e.stopPropagation()}>
               <Button 
-                size="icon" 
+                size="icon-xs" 
                 variant="ghost" 
-                className="h-7 w-7 hover:bg-background"
+                className="hover:bg-background"
                 onClick={() => onEditAd(ad)}
                 title="Edit"
               >
-                <Edit className="h-3.5 w-3.5" />
+                <Edit />
               </Button>
               <Button 
-                size="icon" 
+                size="icon-xs" 
                 variant="ghost" 
-                className="h-7 w-7 hover:bg-background"
+                className="hover:bg-background"
                 onClick={() => onDuplicateAd(ad)}
                 title="Duplicate"
               >
-                <Copy className="h-3.5 w-3.5" />
+                <Copy />
               </Button>
               <Button 
-                size="icon" 
+                size="icon-xs" 
                 variant="ghost" 
-                className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                className="hover:bg-destructive/10 text-destructive"
                 onClick={() => onDeleteAd(ad)}
                 title="Delete"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 />
               </Button>
             </div>
           </div>
@@ -341,21 +341,21 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                     
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                       <Button 
-                        size="icon" 
+                        size="icon-xs" 
                         variant="ghost" 
-                        className="h-7 w-7 hover:bg-background"
+                        className="hover:bg-background"
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowCreateAdGroup({ campaignId: campaign.id, campaignName: campaign.name });
                         }}
                         title="Create ad group"
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus />
                       </Button>
                       <Button 
-                        size="icon" 
+                        size="icon-xs" 
                         variant="ghost" 
-                        className="h-7 w-7 hover:bg-background"
+                        className="hover:bg-background"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDuplicateCampaignDialog({ 
@@ -366,12 +366,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         }}
                         title="Duplicate"
                       >
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy />
                       </Button>
                       <Button 
-                        size="icon" 
+                        size="icon-xs" 
                         variant="ghost" 
-                        className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                        className="hover:bg-destructive/10 text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteCampaignDialog({ 
@@ -382,7 +382,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                         }}
                         title="Delete"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 />
                       </Button>
                     </div>
                   </div>
@@ -416,9 +416,9 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                   
                                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 flex-shrink-0">
                                     <Button 
-                                      size="icon" 
+                                      size="icon-xs" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background"
+                                      className="hover:bg-background"
                                       onMouseDown={(e) => {
                                         e.stopPropagation();
                                       }}
@@ -428,12 +428,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       }}
                                       title="Create ad"
                                     >
-                                      <Plus className="h-3.5 w-3.5" />
+                                      <Plus />
                                     </Button>
                                     <Button 
-                                      size="icon" 
+                                      size="icon-xs" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-background"
+                                      className="hover:bg-background"
                                       onMouseDown={(e) => {
                                         e.stopPropagation();
                                       }}
@@ -443,12 +443,12 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       }}
                                       title="Duplicate"
                                     >
-                                      <Copy className="h-3.5 w-3.5" />
+                                      <Copy />
                                     </Button>
                                     <Button 
-                                      size="icon" 
+                                      size="icon-xs" 
                                       variant="ghost" 
-                                      className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                                      className="hover:bg-destructive/10 text-destructive"
                                       onMouseDown={(e) => {
                                         e.stopPropagation();
                                       }}
@@ -458,7 +458,7 @@ export function SearchHierarchyPanel({ onEditAd, onCreateAd, onCampaignClick, ad
                                       }}
                                       title="Delete"
                                     >
-                                      <Trash2 className="h-3.5 w-3.5" />
+                                      <Trash2 />
                                     </Button>
                                   </div>
                                 </div>

@@ -98,19 +98,19 @@ export function SearchPlannerVersionToolbar({
             />
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-success hover:bg-success/10"
+              size="icon-sm"
+              className="text-success hover:bg-success/10"
               onClick={handleNameSave}
             >
-              <Check className="h-4 w-4" />
+              <Check />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:bg-muted"
+              size="icon-sm"
+              className="text-muted-foreground hover:bg-muted"
               onClick={handleNameCancel}
             >
-              <X className="h-4 w-4" />
+              <X />
             </Button>
           </div>
         ) : (
@@ -120,14 +120,14 @@ export function SearchPlannerVersionToolbar({
             </h2>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-smooth"
+              size="icon-xs"
+              className="opacity-0 group-hover:opacity-100 transition-smooth"
               onClick={() => {
                 setTempName(adName);
                 setIsEditingName(true);
               }}
             >
-              <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <Edit2 className="text-muted-foreground" />
             </Button>
           </div>
         )}

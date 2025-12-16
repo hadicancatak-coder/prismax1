@@ -92,22 +92,20 @@ export const UtmCompactList = ({ links }: UtmCompactListProps) => {
                   <td className="px-sm py-1.5">
                     <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => handleCopy(link.full_url)}
-                        className="h-7 w-7 p-0"
                         title="Copy URL"
                       >
-                        <Copy className="h-3 w-3" />
+                        <Copy />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => window.open(link.full_url, "_blank")}
-                        className="h-7 w-7 p-0"
                         title="Open link"
                       >
-                        <ExternalLink className="h-3 w-3" />
+                        <ExternalLink />
                       </Button>
                     </div>
                   </td>

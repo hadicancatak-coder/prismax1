@@ -99,11 +99,11 @@ export function UtmRuleTestPanel({ rule }: UtmRuleTestPanelProps) {
                 <span className="truncate">{result}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-xs"
                   onClick={handleCopy}
-                  className="ml-2 h-6 w-6 p-0"
+                  className="ml-2"
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy />
                 </Button>
               </Badge>
             </div>

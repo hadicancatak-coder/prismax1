@@ -87,11 +87,10 @@ export function VersionComments({ versionId, campaignId, entity }: VersionCommen
                 {user?.id === comment.author_id && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon-xs"
                     onClick={() => deleteComment.mutate(comment.id)}
-                    className="h-6 w-6 p-0"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 />
                   </Button>
                 )}
               </div>

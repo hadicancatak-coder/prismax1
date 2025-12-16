@@ -510,13 +510,13 @@ export function SavedCopiesTableView({
                       <AlertDialog open={showDeleteConfirm === copy.id} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
                         <AlertDialogTrigger asChild>
                           <Button
-                            size="sm"
+                            size="icon-xs"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive"
                             disabled={isGuest}
                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(copy.id); }}
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="z-overlay" onClick={(e) => e.stopPropagation()}>
