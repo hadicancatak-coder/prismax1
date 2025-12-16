@@ -2,19 +2,12 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
-import { Plus, Sun, Moon } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Sun, Moon } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export function TopHeader() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 
@@ -31,11 +24,10 @@ export function TopHeader() {
     if (path === "/notifications") return "Notifications";
     if (path.startsWith("/ads/captions")) return "Captions";
     if (path.includes("/ads")) return "Ads";
-    if (path.includes("/operations")) return "Operations";
     if (path.startsWith("/admin")) return "Admin";
     if (path === "/how-to") return "How To";
     if (path === "/about") return "About";
-    return null; // Return null if no match to avoid showing "Prisma / Prisma"
+    return null;
   };
 
   const pageName = getPageName();
@@ -91,54 +83,6 @@ export function TopHeader() {
 
           {/* Notifications */}
           <NotificationBell />
-
-          {/* Create Button with Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                className={cn(
-                  "gap-1.5 rounded-full px-4 h-9",
-                  "bg-primary hover:bg-primary-hover text-primary-foreground",
-                  "shadow-sm transition-all"
-                )}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline text-sm font-medium">Create</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              className={cn(
-                "w-48 rounded-xl border-border",
-                "bg-popover shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
-              )}
-            >
-              <DropdownMenuItem 
-                onClick={() => navigate("/tasks")}
-                className="gap-2 rounded-lg"
-              >
-                📋 New Task
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => navigate("/operations/status-log")}
-                className="gap-2 rounded-lg"
-              >
-                📝 Status Log
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => navigate("/ads/search")}
-                className="gap-2 rounded-lg"
-              >
-                📢 Search Campaign
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => navigate("/utm-planner")}
-                className="gap-2 rounded-lg"
-              >
-                🔗 UTM Link
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           {/* User Avatar */}
           <UserMenu />
