@@ -3411,9 +3411,12 @@ export type Database = {
           created_by: string | null
           icon: string | null
           id: string
+          integrated_at: string | null
           order_index: number | null
+          owner_id: string | null
           parent_id: string | null
           slug: string
+          status: string | null
           title: string
           updated_at: string | null
           updated_by: string | null
@@ -3424,9 +3427,12 @@ export type Database = {
           created_by?: string | null
           icon?: string | null
           id?: string
+          integrated_at?: string | null
           order_index?: number | null
+          owner_id?: string | null
           parent_id?: string | null
           slug: string
+          status?: string | null
           title: string
           updated_at?: string | null
           updated_by?: string | null
@@ -3437,14 +3443,24 @@ export type Database = {
           created_by?: string | null
           icon?: string | null
           id?: string
+          integrated_at?: string | null
           order_index?: number | null
+          owner_id?: string | null
           parent_id?: string | null
           slug?: string
+          status?: string | null
           title?: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tech_stack_pages_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tech_stack_pages_parent_id_fkey"
             columns: ["parent_id"]

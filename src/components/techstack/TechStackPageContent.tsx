@@ -1,9 +1,13 @@
 import { TechStackPage } from "@/hooks/useTechStackPages";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ChevronRight, Server } from "lucide-react";
+import { Edit, Trash2, ChevronRight, Server, Calendar, User, Circle } from "lucide-react";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 import * as LucideIcons from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface TechStackPageContentProps {
   page: TechStackPage;
@@ -14,6 +18,13 @@ interface TechStackPageContentProps {
   isAdmin?: boolean;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  active: { label: "Active", className: "bg-success/15 text-success border-success/30" },
+  planned: { label: "Planned", className: "bg-primary/15 text-primary border-primary/30" },
+  under_review: { label: "Under Review", className: "bg-warning/15 text-warning border-warning/30" },
+  deprecated: { label: "Deprecated", className: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
 export function TechStackPageContent({
   page,
   breadcrumbs,
@@ -22,9 +33,27 @@ export function TechStackPageContent({
   onNavigate,
   isAdmin,
 }: TechStackPageContentProps) {
+  // Fetch owner profile if exists
+  const { data: owner } = useQuery({
+    queryKey: ["profile", page.owner_id],
+    queryFn: async () => {
+      if (!page.owner_id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .eq("id", page.owner_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!page.owner_id,
+  });
+
   // Get icon component
   const iconName = page.icon || 'server';
   const IconComponent = (LucideIcons as any)[iconName.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('')] || Server;
+
+  const statusConfig = page.status ? STATUS_CONFIG[page.status] : null;
 
   return (
     <div className="h-full flex flex-col">
@@ -50,13 +79,20 @@ export function TechStackPageContent({
       </div>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
             <IconComponent className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
+              {statusConfig && (
+                <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
+                  {statusConfig.label}
+                </Badge>
+              )}
+            </div>
             <p className="text-metadata text-muted-foreground mt-1">
               Last updated {format(new Date(page.updated_at), "MMM d, yyyy")}
             </p>
@@ -78,6 +114,24 @@ export function TechStackPageContent({
           )}
         </div>
       </div>
+
+      {/* Metadata Row */}
+      {(page.integrated_at || owner) && (
+        <div className="flex items-center gap-4 mb-6 text-body-sm text-muted-foreground">
+          {page.integrated_at && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              <span>Integrated: {format(new Date(page.integrated_at), "MMM d, yyyy")}</span>
+            </div>
+          )}
+          {owner && (
+            <div className="flex items-center gap-1.5">
+              <User className="h-4 w-4" />
+              <span>Owner: {owner.name || owner.email}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto hide-scrollbar">
