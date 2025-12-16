@@ -175,13 +175,14 @@ export function MentionAutocomplete({
   const dropdownContent = showDropdown && filteredUsers.length > 0 && (
     <div 
       ref={dropdownRef}
-      style={noPortal ? {
-        position: 'absolute',
-        top: dropdownPosition.top,
-        left: 0,
-        right: 0,
-        zIndex: 99999,
-      } : {
+        style={noPortal ? {
+          position: 'absolute',
+          bottom: '100%',
+          marginBottom: '4px',
+          left: 0,
+          right: 0,
+          zIndex: 99999,
+        } : {
         position: 'fixed',
         top: dropdownPosition.top,
         left: dropdownPosition.left,

@@ -1328,6 +1328,15 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                         });
                         return;
                       }
+                      
+                      // Add failure reason as comment so it appears in Timeline
+                      await supabase.from("comments").insert({
+                        task_id: taskId,
+                        author_id: user!.id,
+                        body: `❌ **Task Failed:** ${reasonText.trim()}`,
+                      });
+                      fetchComments();
+                      
                       setLoadedFailureReason(reasonText.trim());
                       setStatus("Failed");
                       toast({
