@@ -64,16 +64,15 @@ export function CampaignBulkActionsBar({
               variant="ghost"
               size="sm"
               onClick={onClearSelection}
-              className="h-8"
             >
-              <X className="h-4 w-4 mr-1" />
+              <X />
               Clear
             </Button>
 
             {onAssignToEntity && (
               <Select onValueChange={onAssignToEntity}>
-                <SelectTrigger className="h-8 w-[160px]">
-                  <Building2 className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-[160px]">
+                  <Building2 className="size-4 mr-2" />
                   <SelectValue placeholder="Assign to Entity" />
                 </SelectTrigger>
                 <SelectContent>
@@ -91,9 +90,8 @@ export function CampaignBulkActionsBar({
                 variant="outline"
                 size="sm"
                 onClick={onExport}
-                className="h-8"
               >
-                <Download className="h-4 w-4 mr-1" />
+                <Download />
                 Export
               </Button>
             )}
@@ -103,9 +101,8 @@ export function CampaignBulkActionsBar({
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                className="h-8"
               >
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 />
                 Delete
               </Button>
             )}

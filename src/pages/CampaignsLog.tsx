@@ -232,12 +232,12 @@ export default function CampaignsLog() {
               >
                 {generatingLink ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink />
                     Review Link
                   </>
                 )}
@@ -254,7 +254,7 @@ export default function CampaignsLog() {
         )}
         
         {/* Campaign Library */}
-        <div className="border-t border-border bg-card rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <div className="border-t border-border bg-card rounded-2xl shadow-soft">
           <Collapsible 
             open={expandedCampaigns.has('library')} 
             onOpenChange={(open) => { 
@@ -274,7 +274,7 @@ export default function CampaignsLog() {
                 )} />
               </CollapsibleTrigger>
               <Button onClick={() => setCreateCampaignDialogOpen(true)} size="sm">
-                <Plus className="h-4 w-4 mr-sm" />
+                <Plus />
                 Add Campaign
               </Button>
             </div>
@@ -282,7 +282,7 @@ export default function CampaignsLog() {
             <CollapsibleContent className="px-md pb-md space-y-md">
               <div className="flex items-center gap-sm">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                   <Input 
                     placeholder="Search campaigns..." 
                     value={searchTerm} 
