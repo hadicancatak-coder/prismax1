@@ -457,42 +457,36 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
               <p className="text-sm text-muted-foreground">
                 Add YouTube channel URLs or IDs for your GDN targeting.
               </p>
-              
-              <div className="space-y-2">
-                <Textarea
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  placeholder="Paste YouTube channel URLs (one per line)&#10;https://youtube.com/@channel&#10;UCxxxxx"
-                  rows={3}
-                />
-                <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="mr-1" />
-                  Add Channels
-                </Button>
-              </div>
-
-              {renderItemsTable(youtubeItems, false)}
+              <Textarea
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && bulkInput.trim()) {
+                    e.preventDefault();
+                    handleAddItems();
+                  }
+                }}
+                placeholder="Paste YouTube channel URLs (one per line)&#10;https://youtube.com/@channel&#10;UCxxxxx"
+                rows={4}
+              />
             </TabsContent>
 
             <TabsContent value="apps" className="space-y-4 mt-4">
               <p className="text-sm text-muted-foreground">
                 Add mobile app store URLs or bundle IDs for your GDN targeting.
               </p>
-              
-              <div className="space-y-2">
-                <Textarea
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  placeholder="Paste app store URLs or bundle IDs (one per line)&#10;com.example.app&#10;https://play.google.com/store/apps/details?id=..."
-                  rows={3}
-                />
-                <Button onClick={handleAddItems} disabled={!bulkInput.trim()} size="sm">
-                  <Plus className="mr-1" />
-                  Add Apps
-                </Button>
-              </div>
-
-              {renderItemsTable(appItems, false)}
+              <Textarea
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && bulkInput.trim()) {
+                    e.preventDefault();
+                    handleAddItems();
+                  }
+                }}
+                placeholder="Paste app store URLs or bundle IDs (one per line)&#10;com.example.app&#10;https://play.google.com/store/apps/details?id=..."
+                rows={4}
+              />
             </TabsContent>
           </Tabs>
         </div>
