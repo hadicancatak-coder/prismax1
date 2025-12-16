@@ -3,7 +3,7 @@ import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragOv
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, ExternalLink, Search, ChevronDown, Plus, Trash2, Check, Loader2, BookOpen } from "lucide-react";
+import { GripVertical, ExternalLink, Search, ChevronDown, Plus, Trash2, Loader2, BookOpen } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ import { EntityCampaignTable } from "@/components/campaigns/EntityCampaignTable"
 import { DraggableCampaignCard } from "@/components/campaigns/DraggableCampaignCard";
 import { UtmCampaignDetailDialog } from "@/components/campaigns/UtmCampaignDetailDialog";
 import { CreateUtmCampaignDialog } from "@/components/campaigns/CreateUtmCampaignDialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useUtmCampaigns } from "@/hooks/useUtmCampaigns";
+import { CampaignBulkActionsBar } from "@/components/campaigns/CampaignBulkActionsBar";
+import { useUtmCampaigns, useDeleteUtmCampaign } from "@/hooks/useUtmCampaigns";
 import { useCampaignEntityTracking } from "@/hooks/useCampaignEntityTracking";
 import { useSystemEntities } from "@/hooks/useSystemEntities";
 import { useExternalAccess } from "@/hooks/useExternalAccess";
@@ -55,14 +55,13 @@ export default function CampaignsLog() {
   const [libraryEntityFilter, setLibraryEntityFilter] = useState<string>("all");
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
-  const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
-  const [bulkTargetEntity, setBulkTargetEntity] = useState<string>("");
   const [generatingLink, setGeneratingLink] = useState(false);
 
   const { data: entities = [] } = useSystemEntities();
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useUtmCampaigns();
   const { createTracking, getEntitiesForCampaign, deleteTracking } = useCampaignEntityTracking();
   const { generateLink } = useExternalAccess();
+  const deleteCampaignMutation = useDeleteUtmCampaign();
   
   useEffect(() => {
     if (entities.length > 0 && !selectedEntity) setSelectedEntity(entities[0].name);
@@ -133,7 +132,15 @@ export default function CampaignsLog() {
     }
   };
 
-  const transformedCampaigns = campaigns.map((c) => ({ id: c.id, name: c.name, campaign_type: c.campaign_type, description: c.description, landing_page: c.landing_page, is_active: c.is_active, notes: null }));
+  const transformedCampaigns = campaigns.map((c) => ({ 
+    id: c.id, 
+    name: c.name, 
+    campaign_type: c.campaign_type, 
+    description: c.description, 
+    landing_page: c.landing_page, 
+    is_active: c.is_active, 
+    notes: null 
+  }));
 
   const filteredCampaigns = transformedCampaigns.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -142,16 +149,26 @@ export default function CampaignsLog() {
     return getEntitiesForCampaign(c.id).some(t => t.entity === libraryEntityFilter);
   });
 
-  const handleBulkAssign = async () => {
-    if (!bulkTargetEntity || selectedCampaigns.length === 0) return;
+  const handleBulkAssign = async (entityName: string) => {
+    if (!entityName || selectedCampaigns.length === 0) return;
     try {
-      await Promise.all(selectedCampaigns.map(id => createTracking.mutateAsync({ campaign_id: id, entity: bulkTargetEntity, status: "Draft" })));
-      toast.success(`${selectedCampaigns.length} campaigns added to ${bulkTargetEntity}`);
+      await Promise.all(selectedCampaigns.map(id => 
+        createTracking.mutateAsync({ campaign_id: id, entity: entityName, status: "Draft" })
+      ));
+      toast.success(`${selectedCampaigns.length} campaigns added to ${entityName}`);
       setSelectedCampaigns([]);
-      setBulkAssignDialogOpen(false);
-      setBulkTargetEntity("");
     } catch {
       toast.error("Failed to assign campaigns");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedCampaigns.map(id => deleteCampaignMutation.mutateAsync(id)));
+      toast.success(`${selectedCampaigns.length} campaigns deleted`);
+      setSelectedCampaigns([]);
+    } catch {
+      toast.error("Failed to delete campaigns");
     }
   };
 
@@ -256,18 +273,10 @@ export default function CampaignsLog() {
                   expandedCampaigns.has('library') && "rotate-180"
                 )} />
               </CollapsibleTrigger>
-              <div className="flex items-center gap-sm">
-                {selectedCampaigns.length > 0 && (
-                  <Button onClick={() => setBulkAssignDialogOpen(true)} size="sm" variant="secondary">
-                    <Check className="h-4 w-4 mr-sm" />
-                    Assign {selectedCampaigns.length}
-                  </Button>
-                )}
-                <Button onClick={() => setCreateCampaignDialogOpen(true)} size="sm">
-                  <Plus className="h-4 w-4 mr-sm" />
-                  Add Campaign
-                </Button>
-              </div>
+              <Button onClick={() => setCreateCampaignDialogOpen(true)} size="sm">
+                <Plus className="h-4 w-4 mr-sm" />
+                Add Campaign
+              </Button>
             </div>
             
             <CollapsibleContent className="px-md pb-md space-y-md">
@@ -317,6 +326,14 @@ export default function CampaignsLog() {
         </div>
         
         <TrashZone isActive={activeDragId !== null} />
+
+        {/* Bulk Actions Bar */}
+        <CampaignBulkActionsBar
+          selectedCount={selectedCampaigns.length}
+          onClearSelection={() => setSelectedCampaigns([])}
+          onAssignToEntity={handleBulkAssign}
+          onDelete={handleBulkDelete}
+        />
       </PageContainer>
 
       <DragOverlay>
@@ -333,29 +350,6 @@ export default function CampaignsLog() {
 
       <CreateUtmCampaignDialog open={createCampaignDialogOpen} onOpenChange={setCreateCampaignDialogOpen} />
       {selectedCampaignId && <UtmCampaignDetailDialog open={!!selectedCampaignId} onOpenChange={(o) => !o && setSelectedCampaignId(null)} campaignId={selectedCampaignId} />}
-      
-      <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Campaigns to Entity</DialogTitle>
-            <DialogDescription>Select an entity to assign {selectedCampaigns.length} campaign(s)</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-md py-md">
-            <Select value={bulkTargetEntity} onValueChange={setBulkTargetEntity}>
-              <SelectTrigger><SelectValue placeholder="Select entity" /></SelectTrigger>
-              <SelectContent>
-                {entities.map((e) => (
-                  <SelectItem key={e.name} value={e.name}>{e.emoji} {e.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkAssignDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleBulkAssign} disabled={!bulkTargetEntity}>Assign</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DndContext>
   );
 }
