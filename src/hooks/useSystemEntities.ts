@@ -110,6 +110,7 @@ export const useUpdateEntity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
+      queryClient.invalidateQueries({ queryKey: ['all-system-entities'] });
       toast({ title: 'Entity updated successfully' });
     },
     onError: (error: any) => {
@@ -136,6 +137,7 @@ export const useDeleteEntity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-entities'] });
+      queryClient.invalidateQueries({ queryKey: ['all-system-entities'] });
       toast({ title: 'Entity deleted successfully' });
     },
     onError: (error: any) => {
