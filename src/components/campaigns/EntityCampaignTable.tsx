@@ -72,7 +72,7 @@ function CampaignTrackingCard({
                   className="cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1 transition-colors flex-shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  <GripVertical className="size-4 text-muted-foreground" />
                 </div>
               )}
               {/* Campaign Name */}
@@ -159,9 +159,8 @@ export function EntityCampaignTable({
             variant="ghost"
             size="sm"
             onClick={() => setCommentsOpen(true)}
-            className="h-8 gap-2"
           >
-            <MessageSquare className="h-4 w-4" />
+            <MessageSquare />
             Comments
           </Button>
         </CardHeader>
