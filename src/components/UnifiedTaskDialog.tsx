@@ -569,13 +569,11 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
       <DialogContent 
         hideCloseButton
         onPointerDownOutside={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('[data-mention-dropdown]')) return;
+          // Always prevent dialog close - we only close via X button or Cancel
           e.preventDefault();
         }}
         onInteractOutside={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('[data-mention-dropdown]')) return;
+          // Always prevent dialog close
           e.preventDefault();
         }}
         className={cn(
