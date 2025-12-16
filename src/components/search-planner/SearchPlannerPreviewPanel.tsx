@@ -123,19 +123,17 @@ export function SearchPlannerPreviewPanel({
               <div className="flex items-center gap-xs">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
+                  size="icon-xs"
                   onClick={handlePrevious}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
+                  size="icon-xs"
                   onClick={handleNext}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight />
                 </Button>
               </div>
             </div>

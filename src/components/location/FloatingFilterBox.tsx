@@ -73,14 +73,13 @@ export function FloatingFilterBox({
           </div>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon-xs"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-7 w-7 p-0"
           >
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp />
             ) : (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown />
             )}
           </Button>
         </div>

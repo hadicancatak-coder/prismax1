@@ -194,8 +194,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         {/* Color Picker */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" title="Text Color">
-              <Palette className="h-4 w-4" />
+            <Button type="button" variant="ghost" size="icon-sm" title="Text Color">
+              <Palette />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-sm">

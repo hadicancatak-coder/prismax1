@@ -172,11 +172,10 @@ export function SavedElementsTableView({ elements, onRefresh }: SavedElementsTab
                 <TableCell>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
+                    size="icon-xs"
                     onClick={() => handleToggleFavorite(element)}
                   >
-                    <Star className={`h-4 w-4 ${element.is_favorite ? 'fill-amber text-amber' : ''}`} />
+                    <Star className={element.is_favorite ? 'fill-amber text-amber' : ''} />
                   </Button>
                 </TableCell>
                 <TableCell className="max-w-md">
