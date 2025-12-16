@@ -43,6 +43,7 @@ import CampaignReview from "./pages/CampaignReview";
 import CampaignsLogExternal from "./pages/CampaignsLogExternal";
 import Knowledge from "./pages/Knowledge";
 import KnowledgePublic from "./pages/KnowledgePublic";
+import TechStack from "./pages/TechStack";
 
 
 const App = () => (
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/how-to" element={<HowTo />} />
                   <Route path="/knowledge" element={<Knowledge />} />
+                  <Route path="/tech-stack" element={<TechStack />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

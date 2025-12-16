@@ -12,7 +12,8 @@ import {
   PenTool, 
   MapPin,
   Tv,
-  BookOpen
+  BookOpen,
+  Server
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ const operationsItems = [
 
 const resourcesItems = [
   { title: "Knowledge", url: "/knowledge", icon: BookOpen },
+  { title: "Tech Stack", url: "/tech-stack", icon: Server },
 ];
 
 export function AppSidebar() {
