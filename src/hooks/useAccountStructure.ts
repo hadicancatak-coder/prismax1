@@ -26,10 +26,10 @@ export function useAccountStructure() {
   });
 
   const campaigns = useQuery({
-    queryKey: ['ad-campaigns-structure'],
+    queryKey: ['search-campaigns-structure'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .select('*')
         .order('name');
       if (error) throw error;

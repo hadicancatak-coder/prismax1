@@ -53,57 +53,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ad_campaigns: {
-        Row: {
-          budget_monthly: number | null
-          created_at: string | null
-          created_by: string | null
-          entity: string | null
-          google_campaign_id: string | null
-          google_campaign_url: string | null
-          id: string
-          is_template: boolean | null
-          languages: string[] | null
-          name: string
-          objective: string | null
-          status: string | null
-          template_name: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          budget_monthly?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          entity?: string | null
-          google_campaign_id?: string | null
-          google_campaign_url?: string | null
-          id?: string
-          is_template?: boolean | null
-          languages?: string[] | null
-          name: string
-          objective?: string | null
-          status?: string | null
-          template_name?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          budget_monthly?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          entity?: string | null
-          google_campaign_id?: string | null
-          google_campaign_url?: string | null
-          id?: string
-          is_template?: boolean | null
-          languages?: string[] | null
-          name?: string
-          objective?: string | null
-          status?: string | null
-          template_name?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       ad_comments: {
         Row: {
           ad_id: string
@@ -279,7 +228,7 @@ export type Database = {
             foreignKeyName: "ad_groups_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "ad_campaigns"
+            referencedRelation: "search_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -878,13 +827,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "campaign_assignees_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "campaign_assignees_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1195,61 +1137,10 @@ export type Database = {
             foreignKeyName: "campaign_versions_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "ad_campaigns"
+            referencedRelation: "search_campaigns"
             referencedColumns: ["id"]
           },
         ]
-      }
-      campaigns: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          end_date: string
-          entity: string[] | null
-          id: string
-          image_url: string | null
-          lp_link: string | null
-          notes: string | null
-          start_date: string
-          target: string
-          title: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          end_date: string
-          entity?: string[] | null
-          id?: string
-          image_url?: string | null
-          lp_link?: string | null
-          notes?: string | null
-          start_date: string
-          target: string
-          title: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          end_date?: string
-          entity?: string[] | null
-          id?: string
-          image_url?: string | null
-          lp_link?: string | null
-          notes?: string | null
-          start_date?: string
-          target?: string
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
       }
       cms_pages: {
         Row: {
@@ -1573,7 +1464,7 @@ export type Database = {
             foreignKeyName: "entity_campaigns_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "ad_campaigns"
+            referencedRelation: "search_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -2115,133 +2006,6 @@ export type Database = {
             columns: ["lp_type_id"]
             isOneToOne: false
             referencedRelation: "utm_lp_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      launch_campaign_assignees: {
-        Row: {
-          assigned_at: string
-          assigned_by: string | null
-          campaign_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string
-          assigned_by?: string | null
-          campaign_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string
-          assigned_by?: string | null
-          campaign_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "launch_campaign_assignees_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "launch_campaigns_with_assignees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "launch_campaign_assignees_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "launch_pad_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "launch_campaign_assignees_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      launch_pad_campaigns: {
-        Row: {
-          captions: string | null
-          converted_to_task: boolean | null
-          created_at: string
-          created_by: string
-          creatives_link: string | null
-          description: string | null
-          entity: string[] | null
-          id: string
-          jira_links: Json | null
-          launch_date: string | null
-          launch_month: string | null
-          launched_at: string | null
-          lp_url: string | null
-          status: string | null
-          task_id: string | null
-          teams: string[]
-          title: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          captions?: string | null
-          converted_to_task?: boolean | null
-          created_at?: string
-          created_by: string
-          creatives_link?: string | null
-          description?: string | null
-          entity?: string[] | null
-          id?: string
-          jira_links?: Json | null
-          launch_date?: string | null
-          launch_month?: string | null
-          launched_at?: string | null
-          lp_url?: string | null
-          status?: string | null
-          task_id?: string | null
-          teams?: string[]
-          title: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          captions?: string | null
-          converted_to_task?: boolean | null
-          created_at?: string
-          created_by?: string
-          creatives_link?: string | null
-          description?: string | null
-          entity?: string[] | null
-          id?: string
-          jira_links?: Json | null
-          launch_date?: string | null
-          launch_month?: string | null
-          launched_at?: string | null
-          lp_url?: string | null
-          status?: string | null
-          task_id?: string | null
-          teams?: string[]
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "launch_pad_campaigns_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -2929,10 +2693,61 @@ export type Database = {
             foreignKeyName: "saved_ads_library_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "ad_campaigns"
+            referencedRelation: "search_campaigns"
             referencedColumns: ["id"]
           },
         ]
+      }
+      search_campaigns: {
+        Row: {
+          budget_monthly: number | null
+          created_at: string | null
+          created_by: string | null
+          entity: string | null
+          google_campaign_id: string | null
+          google_campaign_url: string | null
+          id: string
+          is_template: boolean | null
+          languages: string[] | null
+          name: string
+          objective: string | null
+          status: string | null
+          template_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_monthly?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          entity?: string | null
+          google_campaign_id?: string | null
+          google_campaign_url?: string | null
+          id?: string
+          is_template?: boolean | null
+          languages?: string[] | null
+          name: string
+          objective?: string | null
+          status?: string | null
+          template_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_monthly?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          entity?: string | null
+          google_campaign_id?: string | null
+          google_campaign_url?: string | null
+          id?: string
+          is_template?: boolean | null
+          languages?: string[] | null
+          name?: string
+          objective?: string | null
+          status?: string | null
+          template_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       search_index: {
         Row: {
@@ -3578,20 +3393,6 @@ export type Database = {
             columns: ["blocker_id"]
             isOneToOne: false
             referencedRelation: "blockers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "launch_campaigns_with_assignees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "launch_pad_campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -4691,25 +4492,6 @@ export type Database = {
       }
     }
     Views: {
-      launch_campaigns_with_assignees: {
-        Row: {
-          assignees: Json | null
-          captions: string | null
-          created_at: string | null
-          created_by: string | null
-          creatives_link: string | null
-          id: string | null
-          launch_month: string | null
-          launched_at: string | null
-          lp_url: string | null
-          status: string | null
-          teams: string[] | null
-          title: string | null
-          updated_at: string | null
-          updated_by: string | null
-        }
-        Relationships: []
-      }
       public_profiles: {
         Row: {
           avatar_url: string | null

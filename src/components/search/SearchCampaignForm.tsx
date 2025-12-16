@@ -28,10 +28,10 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
 
   // Fetch existing campaigns for this entity
   const { data: existingCampaigns = [], refetch } = useQuery({
-    queryKey: ["campaigns", entity],
+    queryKey: ["search-campaigns", entity],
     queryFn: async () => {
       const { data } = await supabase
-        .from("ad_campaigns")
+        .from("search_campaigns")
         .select("*")
         .eq("entity", entity)
         .order("created_at", { ascending: false });
@@ -62,7 +62,7 @@ export function SearchCampaignForm({ entity, onCampaignCreated }: SearchCampaign
 
     try {
       const { data, error } = await supabase
-        .from("ad_campaigns")
+        .from("search_campaigns")
         .insert({
           name: name.trim(),
           entity,

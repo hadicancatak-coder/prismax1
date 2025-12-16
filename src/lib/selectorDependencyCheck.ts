@@ -22,11 +22,11 @@ export async function checkEntityDependencies(entityCode: string): Promise<Depen
     .select('*', { count: 'exact', head: true })
     .contains('entity', [entityCode]);
   
-  // Campaigns where entity array contains this code
+  // Campaigns - check utm_campaigns via entity tracking
   const { count: campaignCount } = await supabase
-    .from('launch_pad_campaigns')
+    .from('campaign_entity_tracking')
     .select('*', { count: 'exact', head: true })
-    .contains('entity', [entityCode]);
+    .eq('entity', entityCode);
   
   const tasks = taskCount || 0;
   const utms = utmCount || 0;
@@ -55,11 +55,8 @@ export async function checkCityDependencies(cityName: string): Promise<Dependenc
     .select('*', { count: 'exact', head: true })
     .contains('city', [cityName]);
   
-  // Campaigns where city array contains this name
-  const { count: campaignCount } = await supabase
-    .from('launch_pad_campaigns')
-    .select('*', { count: 'exact', head: true })
-    .contains('city', [cityName]);
+  // Campaigns - no city dependency tracking now
+  const campaignCount = 0;
   
   const tasks = taskCount || 0;
   const utms = utmCount || 0;

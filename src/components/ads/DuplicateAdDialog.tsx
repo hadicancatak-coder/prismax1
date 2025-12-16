@@ -55,10 +55,10 @@ export function DuplicateAdDialog({
   });
 
   const { data: campaigns } = useQuery({
-    queryKey: ['ad-campaigns-for-duplicate'],
+    queryKey: ['search-campaigns-for-duplicate'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .select('*')
         .order('name');
       if (error) throw error;

@@ -37,7 +37,7 @@ export function DuplicateCampaignDialog({ open, onOpenChange, campaign, adGroups
       // Create the new campaign
       setStatusText("Creating campaign...");
       const { data: newCampaign, error: campaignError } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .insert({
           name: name.trim(),
           entity: campaign.entity,

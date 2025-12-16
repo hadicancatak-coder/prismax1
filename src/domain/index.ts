@@ -6,3 +6,6 @@
 
 // Task Domain
 export * from './tasks';
+
+// Campaign Domain
+export * from './campaigns';

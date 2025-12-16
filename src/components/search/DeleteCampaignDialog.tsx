@@ -56,7 +56,7 @@ export function DeleteCampaignDialog({ open, onOpenChange, campaign, adGroupsCou
 
       // Finally delete the campaign
       const { error } = await supabase
-        .from('ad_campaigns')
+        .from('search_campaigns')
         .delete()
         .eq('id', campaign.id);
 

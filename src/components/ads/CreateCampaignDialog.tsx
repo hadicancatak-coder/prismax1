@@ -53,7 +53,7 @@ export function CreateCampaignDialog({ open, onOpenChange, defaultEntity, defaul
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
-        .from("ad_campaigns")
+        .from("search_campaigns")
         .insert({
           name: name.trim(),
           entity: entity.trim(),
