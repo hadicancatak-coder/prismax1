@@ -14,6 +14,9 @@ export interface TechStackPage {
   created_at: string;
   updated_at: string;
   updated_by: string | null;
+  integrated_at: string | null;
+  status: 'active' | 'deprecated' | 'planned' | 'under_review' | null;
+  owner_id: string | null;
   children?: TechStackPage[];
 }
 
@@ -58,7 +61,15 @@ export function useTechStackPages() {
   const pageTree = pages ? buildTree(pages) : [];
 
   const createPage = useMutation({
-    mutationFn: async (data: { title: string; content?: string; parent_id?: string | null; icon?: string }) => {
+    mutationFn: async (data: { 
+      title: string; 
+      content?: string; 
+      parent_id?: string | null; 
+      icon?: string;
+      integrated_at?: string | null;
+      status?: string | null;
+      owner_id?: string | null;
+    }) => {
       const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const { data: newPage, error } = await supabase
         .from("tech_stack_pages")
@@ -68,6 +79,9 @@ export function useTechStackPages() {
           content: data.content || '',
           parent_id: data.parent_id || null,
           icon: data.icon || 'server',
+          integrated_at: data.integrated_at || null,
+          status: data.status || 'active',
+          owner_id: data.owner_id || null,
         })
         .select()
         .single();
@@ -85,7 +99,16 @@ export function useTechStackPages() {
   });
 
   const updatePage = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; content?: string; parent_id?: string | null; icon?: string }) => {
+    mutationFn: async ({ id, ...data }: { 
+      id: string; 
+      title?: string; 
+      content?: string; 
+      parent_id?: string | null; 
+      icon?: string;
+      integrated_at?: string | null;
+      status?: string | null;
+      owner_id?: string | null;
+    }) => {
       const updateData: any = { ...data };
       if (data.title) {
         updateData.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');

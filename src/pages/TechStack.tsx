@@ -97,7 +97,15 @@ export default function TechStack() {
     }
   };
 
-  const handleSave = (data: { title: string; content: string; parent_id: string | null; icon: string }) => {
+  const handleSave = (data: { 
+    title: string; 
+    content: string; 
+    parent_id: string | null; 
+    icon: string;
+    integrated_at: string | null;
+    status: string | null;
+    owner_id: string | null;
+  }) => {
     if (editingPage) {
       updatePage.mutate({ id: editingPage.id, ...data }, {
         onSuccess: (updatedPage) => {

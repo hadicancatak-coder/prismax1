@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,13 +24,28 @@ const ICON_OPTIONS = [
   { value: "hard-drive", label: "Storage", icon: HardDrive },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "planned", label: "Planned" },
+  { value: "under_review", label: "Under Review" },
+  { value: "deprecated", label: "Deprecated" },
+];
+
 interface TechStackPageEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   page?: TechStackPage | null;
   parentId?: string | null;
   allPages: TechStackPage[];
-  onSave: (data: { title: string; content: string; parent_id: string | null; icon: string }) => void;
+  onSave: (data: { 
+    title: string; 
+    content: string; 
+    parent_id: string | null; 
+    icon: string;
+    integrated_at: string | null;
+    status: string | null;
+    owner_id: string | null;
+  }) => void;
   isLoading?: boolean;
 }
 
@@ -46,6 +62,22 @@ export function TechStackPageEditor({
   const [content, setContent] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [icon, setIcon] = useState("server");
+  const [integratedAt, setIntegratedAt] = useState<string>("");
+  const [status, setStatus] = useState<string>("active");
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+
+  // Fetch profiles for owner dropdown
+  const { data: profiles } = useQuery({
+    queryKey: ["profiles-for-owner"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -59,13 +91,16 @@ export function TechStackPageEditor({
         setContent("");
         setSelectedParentId(parentId || null);
         setIcon("server");
+        setIntegratedAt("");
+        setStatus("active");
+        setOwnerId(null);
         return;
       }
 
       // Edit mode: always fetch authoritative data by id
       const { data, error } = await supabase
         .from("tech_stack_pages")
-        .select("title, content, parent_id, icon")
+        .select("title, content, parent_id, icon, integrated_at, status, owner_id")
         .eq("id", page.id)
         .maybeSingle();
 
@@ -77,6 +112,9 @@ export function TechStackPageEditor({
         setContent(page.content || "");
         setSelectedParentId(page.parent_id || null);
         setIcon(page.icon || "server");
+        setIntegratedAt(page.integrated_at || "");
+        setStatus(page.status || "active");
+        setOwnerId(page.owner_id || null);
         return;
       }
 
@@ -84,6 +122,9 @@ export function TechStackPageEditor({
       setContent(data.content || "");
       setSelectedParentId(data.parent_id || null);
       setIcon(data.icon || "server");
+      setIntegratedAt(data.integrated_at || "");
+      setStatus(data.status || "active");
+      setOwnerId(data.owner_id || null);
     })();
 
     return () => {
@@ -98,6 +139,9 @@ export function TechStackPageEditor({
       content,
       parent_id: selectedParentId,
       icon,
+      integrated_at: integratedAt || null,
+      status: status || null,
+      owner_id: ownerId,
     });
   };
 
@@ -148,6 +192,50 @@ export function TechStackPageEditor({
                         <opt.icon className="h-4 w-4" />
                         <span>{opt.label}</span>
                       </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>When Integrated</Label>
+              <Input
+                type="date"
+                value={integratedAt}
+                onChange={(e) => setIntegratedAt(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Owner</Label>
+              <Select value={ownerId || "none"} onValueChange={(v) => setOwnerId(v === "none" ? null : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No owner</SelectItem>
+                  {profiles?.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.name || profile.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
