@@ -3404,6 +3404,56 @@ export type Database = {
           },
         ]
       }
+      tech_stack_pages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          icon: string | null
+          id: string
+          order_index: number | null
+          parent_id: string | null
+          slug: string
+          title: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number | null
+          parent_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number | null
+          parent_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_stack_pages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "tech_stack_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           category: string

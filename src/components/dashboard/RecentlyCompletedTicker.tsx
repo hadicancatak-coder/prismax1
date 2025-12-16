@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface CompletedTask {
   id: string;
@@ -12,8 +13,7 @@ interface CompletedTask {
 }
 
 export function RecentlyCompletedTicker() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const [isPaused, setIsPaused] = useState(false);
 
   const { data: tasks } = useQuery({
@@ -51,6 +51,10 @@ export function RecentlyCompletedTicker() {
     return title.length > maxLength ? title.slice(0, maxLength) + "..." : title;
   };
 
+  const handleClick = () => {
+    navigate("/tasks?filter=completed");
+  };
+
   if (!tasks || tasks.length === 0) {
     return null;
   }
@@ -59,20 +63,21 @@ export function RecentlyCompletedTicker() {
   const items = [...tasks, ...tasks];
 
   return (
-    <div className="bg-elevated rounded-lg border border-border overflow-hidden">
+    <div 
+      className="bg-elevated rounded-lg border border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-smooth"
+      onClick={handleClick}
+    >
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/30">
         <CheckCircle2 className="h-4 w-4 text-success" />
         <span className="text-xs font-medium text-muted-foreground">Recently Completed</span>
       </div>
       
       <div
-        ref={containerRef}
         className="relative overflow-hidden"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
         <div
-          ref={contentRef}
           className={`flex gap-6 py-3 px-4 ${isPaused ? "" : "animate-ticker"}`}
           style={{
             width: "max-content",
@@ -81,7 +86,7 @@ export function RecentlyCompletedTicker() {
           {items.map((task, index) => (
             <div
               key={`${task.id}-${index}`}
-              className="flex items-center gap-2 text-sm whitespace-nowrap"
+              className="flex items-center gap-2 text-sm whitespace-nowrap hover:text-primary transition-colors"
             >
               <span className="text-foreground font-medium">
                 {truncateTitle(task.title)}
