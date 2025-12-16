@@ -44,7 +44,7 @@ import CampaignsLogExternal from "./pages/CampaignsLogExternal";
 import Knowledge from "./pages/Knowledge";
 import KnowledgePublic from "./pages/KnowledgePublic";
 import TechStack from "./pages/TechStack";
-import ReportsEmbed from "./pages/ReportsEmbed";
+import Performance from "./pages/Performance";
 
 
 const App = () => (
@@ -95,7 +95,7 @@ const App = () => (
                   <Route path="/how-to" element={<HowTo />} />
                   <Route path="/knowledge" element={<Knowledge />} />
                   <Route path="/tech-stack" element={<TechStack />} />
-                  <Route path="/reports-embed" element={<ReportsEmbed />} />
+                  <Route path="/performance" element={<Performance />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

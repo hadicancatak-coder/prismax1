@@ -1,11 +1,11 @@
 import { PageContainer, PageHeader } from "@/components/layout";
 
-const ReportsEmbed = () => {
+const Performance = () => {
   return (
     <PageContainer>
       <PageHeader
-        title="Reports"
-        description="Embedded Looker Studio reports"
+        title="Performance"
+        description="Performance reports and analytics"
       />
       
       <div className="mt-6 bg-elevated rounded-xl border border-border overflow-hidden">
@@ -23,4 +23,4 @@ const ReportsEmbed = () => {
   );
 };
 
-export default ReportsEmbed;
+export default Performance;
