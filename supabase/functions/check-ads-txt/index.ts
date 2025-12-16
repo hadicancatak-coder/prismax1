@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper to check if string is a valid UUID
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -14,17 +20,20 @@ Deno.serve(async (req) => {
   try {
     const { url, itemId } = await req.json();
 
-    if (!url || !itemId) {
+    if (!url) {
       return new Response(
-        JSON.stringify({ error: "URL and itemId are required" }),
+        JSON.stringify({ error: "URL is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Checking ads.txt for URL: ${url}`);
+    // Clean URL - remove trailing commas, spaces, etc.
+    let cleanUrl = url.trim().replace(/,+$/, "").replace(/\s+/g, "");
+    
+    console.log(`Checking ads.txt for URL: ${cleanUrl}`);
 
     // Normalize URL
-    let normalizedUrl = url.trim().toLowerCase();
+    let normalizedUrl = cleanUrl.toLowerCase();
     if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
       normalizedUrl = "https://" + normalizedUrl;
     }
@@ -36,8 +45,8 @@ Deno.serve(async (req) => {
       domain = urlObj.origin;
     } catch {
       return new Response(
-        JSON.stringify({ error: "Invalid URL format" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Invalid URL format", hasGoogle: false }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -56,9 +65,9 @@ Deno.serve(async (req) => {
 
       if (!response.ok) {
         if (response.status === 404) {
-          errorMessage = "No ads.txt file found";
+          errorMessage = "No ads.txt found";
         } else {
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          errorMessage = `HTTP ${response.status}`;
         }
       } else {
         const content = await response.text();
@@ -68,27 +77,30 @@ Deno.serve(async (req) => {
       }
     } catch (fetchError: unknown) {
       console.error("Fetch error:", fetchError);
-      const errMsg = fetchError instanceof Error ? fetchError.message : "Unknown error";
-      errorMessage = `Failed to fetch: ${errMsg}`;
+      errorMessage = "Connection failed";
     }
 
-    // Update the database record
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Only update database if itemId is a valid UUID (not a temp ID)
+    if (itemId && isValidUUID(itemId)) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { error: updateError } = await supabase
-      .from("gdn_target_items")
-      .update({
-        ads_txt_has_google: errorMessage ? null : hasGoogle,
-        ads_txt_checked_at: new Date().toISOString(),
-        ads_txt_error: errorMessage,
-      })
-      .eq("id", itemId);
+      const { error: updateError } = await supabase
+        .from("gdn_target_items")
+        .update({
+          ads_txt_has_google: errorMessage ? null : hasGoogle,
+          ads_txt_checked_at: new Date().toISOString(),
+          ads_txt_error: errorMessage,
+        })
+        .eq("id", itemId);
 
-    if (updateError) {
-      console.error("Database update error:", updateError);
-      throw updateError;
+      if (updateError) {
+        console.error("Database update error:", updateError);
+        // Don't throw - still return result to client
+      }
+    } else {
+      console.log("Skipping DB update - itemId is temp or invalid:", itemId);
     }
 
     return new Response(
@@ -103,7 +115,7 @@ Deno.serve(async (req) => {
     console.error("Error in check-ads-txt:", error);
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: errMsg }),
+      JSON.stringify({ error: errMsg, hasGoogle: false }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
