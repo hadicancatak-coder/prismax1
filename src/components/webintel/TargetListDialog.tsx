@@ -87,7 +87,7 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
       if (list) {
         // Update existing list
         onSave({ name, entity, description });
-        // Add new items (those with temp- prefix)
+        // Add new items (those with temp- prefix) - include ads.txt check results
         const newItems = localItems.filter(item => item.id.startsWith("temp-"));
         if (newItems.length > 0) {
           await addItems.mutateAsync({
@@ -96,11 +96,14 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
               item_type: item.item_type,
               url: item.url,
               name: item.name,
+              ads_txt_has_google: item.ads_txt_has_google,
+              ads_txt_checked_at: item.ads_txt_checked_at,
+              ads_txt_error: item.ads_txt_error,
             })),
           });
         }
       } else {
-        // Create new list with items
+        // Create new list with items - include ads.txt check results
         const newList = await createList.mutateAsync({ name, entity, description });
         if (newList && localItems.length > 0) {
           await addItems.mutateAsync({
@@ -109,6 +112,9 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
               item_type: item.item_type,
               url: item.url,
               name: item.name,
+              ads_txt_has_google: item.ads_txt_has_google,
+              ads_txt_checked_at: item.ads_txt_checked_at,
+              ads_txt_error: item.ads_txt_error,
             })),
           });
         }

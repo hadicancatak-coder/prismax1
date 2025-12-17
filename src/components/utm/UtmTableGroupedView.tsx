@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2, Monitor, Smartphone } from "lucide-react";
+import { ChevronRight, ChevronDown, Copy, ExternalLink, Trash2, Monitor, Smartphone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -374,11 +375,25 @@ export function UtmTableGroupedView({ links }: UtmTableGroupedViewProps) {
                                     Open
                                   </Button>
                                 </div>
-                                {link.notes && (
-                                  <div className="mt-sm text-metadata text-muted-foreground">
-                                    <span className="font-medium">Notes:</span> {link.notes}
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-md mt-sm text-metadata text-muted-foreground">
+                                  {link.creator && (
+                                    <div className="flex items-center gap-xs">
+                                      <span className="font-medium">By:</span>
+                                      <Avatar className="h-5 w-5">
+                                        <AvatarImage src={link.creator.avatar_url || undefined} />
+                                        <AvatarFallback className="text-[10px]">
+                                          {link.creator.name?.charAt(0) || <User className="h-3 w-3" />}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span>{link.creator.name?.split(' ')[0] || 'Unknown'}</span>
+                                    </div>
+                                  )}
+                                  {link.notes && (
+                                    <div>
+                                      <span className="font-medium">Notes:</span> {link.notes}
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           )}

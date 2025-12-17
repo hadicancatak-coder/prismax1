@@ -125,12 +125,25 @@ export function useGdnTargetLists() {
 
   // Add items to list
   const addItems = useMutation({
-    mutationFn: async (data: { listId: string; items: Array<{ item_type: string; url: string; name?: string }> }) => {
+    mutationFn: async (data: { 
+      listId: string; 
+      items: Array<{ 
+        item_type: string; 
+        url: string; 
+        name?: string;
+        ads_txt_has_google?: boolean | null;
+        ads_txt_checked_at?: string | null;
+        ads_txt_error?: string | null;
+      }> 
+    }) => {
       const itemsToInsert = data.items.map((item) => ({
         list_id: data.listId,
         item_type: item.item_type,
         url: item.url,
         name: item.name || null,
+        ads_txt_has_google: item.ads_txt_has_google ?? null,
+        ads_txt_checked_at: item.ads_txt_checked_at ?? null,
+        ads_txt_error: item.ads_txt_error ?? null,
       }));
 
       const { error } = await supabase

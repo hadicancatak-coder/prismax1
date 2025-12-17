@@ -7,7 +7,14 @@ type UtmLinkRow = Database["public"]["Tables"]["utm_links"]["Row"];
 type UtmLinkInsert = Database["public"]["Tables"]["utm_links"]["Insert"];
 type UtmLinkUpdate = Database["public"]["Tables"]["utm_links"]["Update"];
 
-export type UtmLink = UtmLinkRow;
+export type UtmLinkCreator = {
+  name: string | null;
+  avatar_url: string | null;
+};
+
+export type UtmLink = UtmLinkRow & {
+  creator?: UtmLinkCreator | null;
+};
 
 export interface UtmLinkFilters {
   entity?: string[];
@@ -66,7 +73,30 @@ export const useUtmLinks = (filters?: UtmLinkFilters) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as UtmLink[];
+      
+      // Fetch creator profiles separately
+      const creatorIds = [...new Set(data?.map(link => link.created_by).filter(Boolean))];
+      let profilesMap: Record<string, UtmLinkCreator> = {};
+      
+      if (creatorIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, name, avatar_url")
+          .in("user_id", creatorIds);
+        
+        if (profiles) {
+          profilesMap = profiles.reduce((acc, p) => {
+            acc[p.user_id] = { name: p.name, avatar_url: p.avatar_url };
+            return acc;
+          }, {} as Record<string, UtmLinkCreator>);
+        }
+      }
+      
+      // Merge creator data with links
+      return (data || []).map(link => ({
+        ...link,
+        creator: link.created_by ? profilesMap[link.created_by] || null : null,
+      })) as UtmLink[];
     },
   });
 };
