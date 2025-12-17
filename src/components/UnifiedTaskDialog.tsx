@@ -1265,14 +1265,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     <Button 
                       type="button" 
                       size="sm" 
+                      variant="default"
                       onClick={handleAddComment}
                       disabled={!newComment.trim()}
-                      className={cn(
-                        "gap-2 transition-all duration-200",
-                        newComment.trim() 
-                          ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" 
-                          : "bg-muted text-muted-foreground opacity-50"
-                      )}
                     >
                       <Send className="h-3.5 w-3.5" />
                       Send
