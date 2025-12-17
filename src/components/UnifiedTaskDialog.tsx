@@ -814,21 +814,22 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                   </div>
                 </div>
 
-                {/* === ADVANCED SETTINGS (Collapsed) - Show in all modes === */}
+                {/* === ADVANCED SETTINGS (Collapsed) - Show in Create and Edit modes === */}
+                {!isReadOnly && (
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                   <CollapsibleTrigger asChild>
                     <Button 
                       type="button" 
-                      variant="ghost" 
-                      className="w-full justify-between px-0 hover:bg-transparent"
+                      variant="outline" 
+                      className="w-full justify-between"
                     >
-                      <span className="text-body-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      <span className="text-body-sm font-medium">
                         Advanced Settings
                       </span>
                       {advancedOpen ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <ChevronDown className="h-4 w-4" />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <ChevronRight className="h-4 w-4" />
                       )}
                     </Button>
                   </CollapsibleTrigger>
@@ -1063,6 +1064,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
+                )}
               </form>
             </div>
             )}
