@@ -1,4 +1,5 @@
 import { parseMarkdownLinks } from "@/lib/markdownParser";
+import { cn } from "@/lib/utils";
 
 interface CommentTextProps {
   text: string;
@@ -6,6 +7,8 @@ interface CommentTextProps {
   linkClassName?: string;
   enableMentions?: boolean;
   profiles?: any[];
+  /** Use inverted styling when rendered on primary/colored backgrounds */
+  inverted?: boolean;
 }
 
 export function CommentText({ 
@@ -13,12 +16,18 @@ export function CommentText({
   className = "", 
   linkClassName = "text-primary underline hover:text-primary/80",
   enableMentions = false,
-  profiles = []
+  profiles = [],
+  inverted = false
 }: CommentTextProps) {
   const segments = parseMarkdownLinks(text);
   
+  // Mention styling based on context
+  const mentionClassName = inverted
+    ? "bg-white/25 text-inherit px-1.5 py-0.5 rounded-md font-semibold text-body-sm inline-block"
+    : "bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-md font-semibold text-body-sm inline-block";
+  
   return (
-    <p className={`whitespace-pre-wrap break-words ${className}`}>
+    <p className={cn("whitespace-pre-wrap break-words", className)}>
       {segments.map((segment, index) => {
         if (segment.type === 'link') {
           return (
@@ -27,7 +36,7 @@ export function CommentText({
               href={segment.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${linkClassName} transition-colors`}
+              className={cn(linkClassName, "transition-colors")}
               onClick={(e) => e.stopPropagation()}
             >
               {segment.content}
@@ -41,7 +50,7 @@ export function CommentText({
             return (
               <span 
                 key={`${index}-${i}`} 
-                className="bg-primary/15 text-primary px-1.5 py-0.5 rounded-md font-medium text-body-sm inline-block"
+                className={mentionClassName}
               >
                 {part}
               </span>
