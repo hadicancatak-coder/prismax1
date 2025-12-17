@@ -234,7 +234,7 @@ export function MentionAutocomplete({
         className={cn(
           "flex w-full rounded-lg border border-input bg-card px-3 py-2 text-body-sm text-card-foreground placeholder:text-muted-foreground",
           "hover:bg-card-hover hover:border-input focus-visible:outline-none focus-visible:bg-card-hover focus-visible:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/10",
-          "disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden transition-smooth",
+          "disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden transition-smooth break-words [word-break:break-word] [overflow-wrap:break-word]",
           className
         )}
         rows={minRows}

@@ -27,7 +27,7 @@ export function CommentText({
     : "bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-md font-semibold text-body-sm inline-block";
   
   return (
-    <p className={cn("whitespace-pre-wrap break-words", className)}>
+    <p className={cn("whitespace-pre-wrap break-words [word-break:break-word] [overflow-wrap:break-word]", className)}>
       {segments.map((segment, index) => {
         if (segment.type === 'link') {
           return (
