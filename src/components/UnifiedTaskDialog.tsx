@@ -1204,6 +1204,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                                   linkClassName={isCurrentUser ? "text-primary-foreground underline break-all" : "text-primary underline break-all"}
                                   enableMentions
                                   profiles={users}
+                                  inverted={isCurrentUser}
                                 />
                               </div>
                               <span className="text-metadata text-muted-foreground mt-1">
