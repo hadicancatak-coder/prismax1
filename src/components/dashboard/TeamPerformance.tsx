@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Users } from "lucide-react";
+import { subDays } from "date-fns";
 
 interface UserPerformance {
   userId: string;
@@ -10,6 +11,9 @@ interface UserPerformance {
   avatar?: string;
   totalTasks: number;
   completedTasks: number;
+  visitsLast30Days: number;
+  taskScore: number;
+  engagementScore: number;
   score: number;
 }
 
@@ -40,11 +44,18 @@ export function TeamPerformance() {
         .select("user_id, task_id, tasks!inner(id, status)")
         .eq("tasks.status", "Completed");
 
-      const userStats: Record<string, { total: number; completed: number }> = {};
+      // Get MFA sessions from last 30 days for engagement score
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const { data: mfaSessions } = await supabase
+        .from("mfa_sessions")
+        .select("user_id, created_at")
+        .gte("created_at", thirtyDaysAgo);
+
+      const userStats: Record<string, { total: number; completed: number; visits: number }> = {};
 
       // Initialize all users with 0 stats
       profiles.forEach((p) => {
-        userStats[p.id] = { total: 0, completed: 0 };
+        userStats[p.id] = { total: 0, completed: 0, visits: 0 };
       });
 
       // Count total tasks per user (using profile.id which matches task_assignees.user_id)
@@ -61,13 +72,35 @@ export function TeamPerformance() {
         }
       });
 
+      // Count visits per user (mfa_sessions.user_id is auth.users id, need to match via profiles.user_id)
+      const profileUserIdMap = new Map(profiles.map(p => [p.user_id, p.id]));
+      mfaSessions?.forEach((s) => {
+        const profileId = profileUserIdMap.get(s.user_id);
+        if (profileId && userStats[profileId]) {
+          userStats[profileId].visits++;
+        }
+      });
+
+      // Calculate engagement score based on visits
+      const getEngagementScore = (visits: number): number => {
+        if (visits >= 20) return 10; // Daily user
+        if (visits >= 12) return 8;  // Regular user
+        if (visits >= 8) return 6;   // Weekly user
+        if (visits >= 4) return 4;   // Occasional user
+        if (visits >= 1) return 2;   // Rare user
+        return 0;
+      };
+
       // Build user performance list - show ALL users
       const performance: UserPerformance[] = profiles
         .map((p) => {
-          const stats = userStats[p.id] || { total: 0, completed: 0 };
-          const score = stats.total > 0
+          const stats = userStats[p.id] || { total: 0, completed: 0, visits: 0 };
+          const taskScore = stats.total > 0
             ? Math.min(10, Math.round((stats.completed / stats.total) * 10 * 10) / 10)
             : 0;
+          const engagementScore = getEngagementScore(stats.visits);
+          // Weighted score: 70% task performance, 30% engagement
+          const score = Math.round((taskScore * 0.7 + engagementScore * 0.3) * 10) / 10;
 
           return {
             userId: p.user_id,
@@ -75,6 +108,9 @@ export function TeamPerformance() {
             avatar: p.avatar_url || undefined,
             totalTasks: stats.total,
             completedTasks: stats.completed,
+            visitsLast30Days: stats.visits,
+            taskScore,
+            engagementScore,
             score,
           };
         })
@@ -129,9 +165,10 @@ export function TeamPerformance() {
       <div className="flex items-center gap-md px-sm py-xs text-metadata text-muted-foreground border-b border-border mb-sm">
         <div className="w-9" /> {/* Avatar space */}
         <div className="flex-1">Name</div>
-        <div className="w-16 text-center">Total</div>
-        <div className="w-16 text-center">Done</div>
-        <div className="w-20 text-center">Score</div>
+        <div className="w-14 text-center">Total</div>
+        <div className="w-14 text-center">Done</div>
+        <div className="w-14 text-center">Visits</div>
+        <div className="w-16 text-center">Score</div>
       </div>
       
       <div className="space-y-xs max-h-[400px] overflow-y-auto hide-scrollbar">
@@ -139,6 +176,7 @@ export function TeamPerformance() {
           <div
             key={user.userId}
             className="flex items-center gap-md p-sm rounded-lg hover:bg-muted/50 transition-smooth"
+            title={`Task Score: ${user.taskScore}/10 (70%) + Engagement: ${user.engagementScore}/10 (30%)`}
           >
             <Avatar className="h-9 w-9">
               <AvatarImage src={user.avatar} />
@@ -147,14 +185,17 @@ export function TeamPerformance() {
             <div className="flex-1 min-w-0">
               <p className="text-body-sm font-medium text-foreground truncate">{user.name}</p>
             </div>
-            <div className="w-16 text-center text-body-sm text-muted-foreground">
+            <div className="w-14 text-center text-body-sm text-muted-foreground">
               {user.totalTasks}
             </div>
-            <div className="w-16 text-center text-body-sm text-foreground font-medium">
+            <div className="w-14 text-center text-body-sm text-foreground font-medium">
               {user.completedTasks}
             </div>
+            <div className="w-14 text-center text-body-sm text-muted-foreground">
+              {user.visitsLast30Days}
+            </div>
             <div
-              className={`w-20 px-sm py-xs rounded-full text-metadata font-semibold text-center ${getScoreColor(user.score)}`}
+              className={`w-16 px-sm py-xs rounded-full text-metadata font-semibold text-center ${getScoreColor(user.score)}`}
             >
               {user.score}/10
             </div>
