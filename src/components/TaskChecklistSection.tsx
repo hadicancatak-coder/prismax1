@@ -144,15 +144,14 @@ export function TaskChecklistSection({ taskId, onUpdate, readOnly = false }: Tas
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
+                size="icon-xs"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   removeItem(item.id);
                 }}
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 />
               </Button>
             )}
           </div>

@@ -814,7 +814,54 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                   </div>
                 </div>
 
-                {/* === ADVANCED SETTINGS (Collapsed) - Show in Create and Edit modes === */}
+                {/* === ADVANCED SETTINGS - View Mode: Show directly if data exists === */}
+                {isReadOnly && taskId && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    {/* Dependencies - show if task has any */}
+                    <div className="space-y-2">
+                      <Label>Dependencies</Label>
+                      <TaskDependenciesSection taskId={taskId} currentStatus={status} />
+                    </div>
+
+                    {/* Checklist - show if task has any */}
+                    <div className="space-y-2">
+                      <Label>Checklist</Label>
+                      <TaskChecklistSection taskId={taskId} readOnly={true} />
+                    </div>
+
+                    {/* Blocker - show if exists */}
+                    {blocker && (
+                      <div className="space-y-2">
+                        <Label>Blocker</Label>
+                        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-destructive">
+                              {blocker.title || "Blocked"}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setBlockerDialogOpen(true)}
+                            >
+                              View
+                            </Button>
+                          </div>
+                          {blocker.description && (
+                            <p className="text-sm text-muted-foreground">{blocker.description}</p>
+                          )}
+                          {blocker.stuck_reason && (
+                            <p className="text-xs text-muted-foreground">
+                              <strong>Reason:</strong> {blocker.stuck_reason}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* === ADVANCED SETTINGS (Collapsed) - Create and Edit modes only === */}
                 {!isReadOnly && (
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                   <CollapsibleTrigger asChild>
@@ -838,103 +885,81 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     {/* Countries/Entity */}
                     <div className="space-y-2">
                       <Label>Countries (Entity)</Label>
-                      {isReadOnly ? (
-                        entities.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {entities.map((ent) => (
-                              <Badge key={ent} variant="secondary" className="text-metadata">
-                                {ent}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-body-sm text-muted-foreground">No countries selected</p>
-                        )
-                      ) : (
-                        <>
-                          <Popover modal={true}>
-                            <PopoverTrigger asChild>
-                              <Button variant="outline" className="w-full justify-start">
-                                {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-0" align="start">
-                              <ScrollArea className="h-[200px]">
-                                <div className="p-2 space-y-1">
-                                  {ENTITIES.map((ent) => (
-                                    <div 
-                                      key={ent} 
-                                      className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-smooth cursor-pointer"
-                                      onClick={() => {
-                                        if (entities.includes(ent)) {
-                                          setEntities(entities.filter(c => c !== ent));
-                                        } else {
-                                          setEntities([...entities, ent]);
-                                        }
-                                      }}
-                                    >
-                                      <Checkbox
-                                        id={`entity-${ent}`}
-                                        checked={entities.includes(ent)}
-                                        onCheckedChange={() => {}}
-                                      />
-                                      <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer flex-1">
-                                        {ent}
-                                      </Label>
-                                    </div>
-                                  ))}
+                      <Popover modal={true}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            {entities.length > 0 ? `${entities.length} selected` : "Select countries"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0" align="start">
+                          <ScrollArea className="h-[200px]">
+                            <div className="p-2 space-y-1">
+                              {ENTITIES.map((ent) => (
+                                <div 
+                                  key={ent} 
+                                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-smooth cursor-pointer"
+                                  onClick={() => {
+                                    if (entities.includes(ent)) {
+                                      setEntities(entities.filter(c => c !== ent));
+                                    } else {
+                                      setEntities([...entities, ent]);
+                                    }
+                                  }}
+                                >
+                                  <Checkbox
+                                    id={`entity-${ent}`}
+                                    checked={entities.includes(ent)}
+                                    onCheckedChange={() => {}}
+                                  />
+                                  <Label htmlFor={`entity-${ent}`} className="text-sm cursor-pointer flex-1">
+                                    {ent}
+                                  </Label>
                                 </div>
-                              </ScrollArea>
-                            </PopoverContent>
-                          </Popover>
-                          {entities.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {entities.map((ent) => (
-                                <Badge key={ent} variant="secondary" className="text-metadata">
-                                  {ent}
-                                  <button
-                                    type="button"
-                                    onClick={() => setEntities(entities.filter(c => c !== ent))}
-                                    className="ml-1 hover:text-destructive"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </Badge>
                               ))}
                             </div>
-                          )}
-                        </>
+                          </ScrollArea>
+                        </PopoverContent>
+                      </Popover>
+                      {entities.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {entities.map((ent) => (
+                            <Badge key={ent} variant="secondary" className="text-metadata">
+                              {ent}
+                              <button
+                                type="button"
+                                onClick={() => setEntities(entities.filter(c => c !== ent))}
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
                       )}
                     </div>
 
                     {/* Recurrence */}
                     <div className="space-y-2">
                       <Label>Recurring Task</Label>
-                      {isReadOnly ? (
-                        <p className="text-body-sm text-muted-foreground">
-                          {recurrence === 'none' ? 'No Recurrence' : recurrence === 'daily' ? 'Daily' : recurrence === 'weekly' ? 'Weekly' : 'Monthly'}
-                        </p>
-                      ) : (
-                        <Select 
-                          value={recurrence} 
-                          onValueChange={(value) => {
-                            setRecurrence(value);
-                            if (value !== "none") setDueDate(undefined);
-                            if (value !== "weekly") setRecurrenceDaysOfWeek([]);
-                            if (value !== "monthly") setRecurrenceDayOfMonth(null);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No Recurrence</SelectItem>
-                            <SelectItem value="daily">Daily</SelectItem>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Select 
+                        value={recurrence} 
+                        onValueChange={(value) => {
+                          setRecurrence(value);
+                          if (value !== "none") setDueDate(undefined);
+                          if (value !== "weekly") setRecurrenceDaysOfWeek([]);
+                          if (value !== "monthly") setRecurrenceDayOfMonth(null);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Recurrence</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Weekly Recurrence Days */}
@@ -954,7 +979,6 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                             <button
                               key={day.value}
                               type="button"
-                              disabled={isReadOnly}
                               onClick={() => {
                                 if (recurrenceDaysOfWeek.includes(day.value)) {
                                   setRecurrenceDaysOfWeek(recurrenceDaysOfWeek.filter(d => d !== day.value));
@@ -963,8 +987,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                                 }
                               }}
                               className={cn(
-                                "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border-2 transition-smooth",
-                                isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50 active:scale-95',
+                                "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border-2 transition-smooth cursor-pointer hover:border-primary/50 active:scale-95",
                                 recurrenceDaysOfWeek.includes(day.value) 
                                   ? 'border-primary bg-primary/10 text-primary' 
                                   : 'border-border'
@@ -984,18 +1007,14 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     {recurrence === "monthly" && (
                       <div className="space-y-2">
                         <Label>Day of Month</Label>
-                        {isReadOnly ? (
-                          <p className="text-body-sm text-muted-foreground">{recurrenceDayOfMonth || 'Not set'}</p>
-                        ) : (
-                          <Input
-                            type="number"
-                            min="1"
-                            max="31"
-                            value={recurrenceDayOfMonth || ""}
-                            onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || null)}
-                            placeholder="Day of month (1-31)"
-                          />
-                        )}
+                        <Input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={recurrenceDayOfMonth || ""}
+                          onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || null)}
+                          placeholder="Day of month (1-31)"
+                        />
                       </div>
                     )}
 
@@ -1013,7 +1032,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                     <div className="space-y-2">
                       <Label>Checklist</Label>
                       {taskId ? (
-                        <TaskChecklistSection taskId={taskId} readOnly={isReadOnly} />
+                        <TaskChecklistSection taskId={taskId} readOnly={false} />
                       ) : (
                         <p className="text-sm text-muted-foreground italic">Save task first to add checklist items</p>
                       )}
@@ -1034,9 +1053,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setBlockerDialogOpen(true)}
-                                className="h-7 text-xs"
                               >
-                                {isReadOnly ? "View" : "Edit"}
+                                Edit
                               </Button>
                             </div>
                             {blocker.description && (
