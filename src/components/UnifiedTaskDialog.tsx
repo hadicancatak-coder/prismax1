@@ -568,17 +568,9 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         hideCloseButton
-        onPointerDownOutside={(e) => {
-          // Always prevent dialog close - we only close via X button or Cancel
-          e.preventDefault();
-        }}
-        onInteractOutside={(e) => {
-          // Always prevent dialog close
-          e.preventDefault();
-        }}
         className={cn(
           "max-h-[90vh] flex flex-col p-0 transition-smooth overflow-hidden",
-          "left-[50%] translate-x-[-50%]", // Centered on viewport
+          "left-[50%] translate-x-[-50%]",
           sidePanelOpen ? "max-w-[1200px]" : "max-w-2xl"
         )}
       >
