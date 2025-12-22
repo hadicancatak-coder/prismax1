@@ -180,6 +180,29 @@ export function useGdnTargetLists() {
     },
   });
 
+  // Update item (for saving ads.txt results)
+  const updateItem = useMutation({
+    mutationFn: async (data: { 
+      id: string; 
+      ads_txt_has_google?: boolean | null;
+      ads_txt_checked_at?: string | null;
+      ads_txt_error?: string | null;
+    }) => {
+      const { id, ...updates } = data;
+      const { error } = await supabase
+        .from("gdn_target_items")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gdn-target-items"] });
+    },
+    onError: (error) => {
+      console.error("Failed to update item:", error);
+    },
+  });
+
   // Check ads.txt for a website
   const checkAdsTxt = useMutation({
     mutationFn: async (itemId: string) => {
@@ -227,6 +250,7 @@ export function useGdnTargetLists() {
     deleteList,
     addItems,
     deleteItem,
+    updateItem,
     checkAdsTxt,
     getItemsByList,
     getItemCounts,

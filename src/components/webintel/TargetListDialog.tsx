@@ -33,7 +33,7 @@ interface LocalItem {
 
 export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetListDialogProps) {
   const { data: entities = [] } = useSystemEntities();
-  const { createList, addItems, deleteItem, getItemsByList } = useGdnTargetLists();
+  const { createList, addItems, deleteItem, updateItem, getItemsByList } = useGdnTargetLists();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -163,17 +163,25 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
       
       if (error) throw error;
       
+      const checkedAt = new Date().toISOString();
+      const adsTxtResult = {
+        ads_txt_has_google: data.hasGoogle,
+        ads_txt_checked_at: checkedAt,
+        ads_txt_error: data.error || null,
+      };
+      
       // Update local state with result
       setLocalItems(prev => prev.map(i => 
-        i.id === item.id 
-          ? { 
-              ...i, 
-              ads_txt_has_google: data.hasGoogle,
-              ads_txt_checked_at: new Date().toISOString(),
-              ads_txt_error: data.error || null,
-            }
-          : i
+        i.id === item.id ? { ...i, ...adsTxtResult } : i
       ));
+      
+      // For existing DB items (not temp), also save to database directly
+      if (!item.id.startsWith("temp-")) {
+        updateItem.mutate({
+          id: item.id,
+          ...adsTxtResult,
+        });
+      }
       
       if (data.hasGoogle) {
         toast.success("Google found in ads.txt!");
@@ -258,32 +266,58 @@ export function TargetListDialog({ open, onOpenChange, list, onSave }: TargetLis
     e.target.value = "";
   };
 
+  const formatLastChecked = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "today";
+    if (diffDays === 1) return "yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString();
+  };
+
   const renderAdsTxtStatus = (item: LocalItem) => {
     if (checkingIds.has(item.id)) {
       return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
     }
     if (item.ads_txt_error) {
       return (
-        <div className="flex items-center gap-1 text-warning">
-          <AlertCircle className="size-4" />
-          <span className="text-xs">{item.ads_txt_error}</span>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1 text-warning">
+            <AlertCircle className="size-4" />
+            <span className="text-xs">{item.ads_txt_error}</span>
+          </div>
+          {item.ads_txt_checked_at && (
+            <span className="text-[10px] text-muted-foreground">{formatLastChecked(item.ads_txt_checked_at)}</span>
+          )}
         </div>
       );
     }
     if (item.ads_txt_has_google === true) {
       return (
-        <Badge variant="outline" className="bg-success/10 text-success border-success/30">
-          <CheckCircle2 className="size-3 mr-1" />
-          Google
-        </Badge>
+        <div className="flex flex-col gap-0.5">
+          <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+            <CheckCircle2 className="size-3 mr-1" />
+            Google
+          </Badge>
+          {item.ads_txt_checked_at && (
+            <span className="text-[10px] text-muted-foreground">{formatLastChecked(item.ads_txt_checked_at)}</span>
+          )}
+        </div>
       );
     }
     if (item.ads_txt_has_google === false) {
       return (
-        <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
-          <XCircle className="size-3 mr-1" />
-          No Google
-        </Badge>
+        <div className="flex flex-col gap-0.5">
+          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+            <XCircle className="size-3 mr-1" />
+            No Google
+          </Badge>
+          {item.ads_txt_checked_at && (
+            <span className="text-[10px] text-muted-foreground">{formatLastChecked(item.ads_txt_checked_at)}</span>
+          )}
+        </div>
       );
     }
     return (
