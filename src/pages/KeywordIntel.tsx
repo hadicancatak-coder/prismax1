@@ -19,6 +19,7 @@ import { useKeywordLists } from "@/hooks/useKeywordLists";
 import { useKeywordDictionaries, useLeakageSuggestions, type LeakageSuggestionWithId } from "@/hooks/useKeywordDictionaries";
 import { SaveKeywordListDialog } from "@/components/keyword-intel/SaveKeywordListDialog";
 import { SavedKeywordListsTab } from "@/components/keyword-intel/SavedKeywordListsTab";
+import { SuggestionCard } from "@/components/keyword-intel/SuggestionCard";
 import { 
   processKeywords, 
   type ProcessedKeyword, 
@@ -425,41 +426,60 @@ export default function KeywordIntel() {
     setSaveDialogOpen(false);
   };
 
-  // Handle suggestion actions - Simplified!
-  const handleAcceptSuggestion = async (suggestion: LeakageSuggestionWithId) => {
-    // Auto-detect best option
-    const isCompetitor = suggestion.suggestion_type === 'alias_candidate' || 
-                         suggestion.extracted_phrase.includes('.com') ||
-                         suggestion.extracted_phrase.includes('capital');
+  // Handle suggestion actions - With cluster override support
+  const handleAcceptSuggestion = async (suggestion: LeakageSuggestionWithId, overrideCluster?: string) => {
+    // Determine classification method based on cluster selection
+    const cluster = overrideCluster || 'Other';
+    const isCompetitor = cluster === 'Competitors';
+    const isBrand = cluster === 'Brand - CFI';
     
-    await acceptSuggestion.mutateAsync({
-      id: suggestion.id,
-      accept_as: isCompetitor ? 'competitors' : 'brand_terms',
-      chosen_canonical: suggestion.proposed_canonical || suggestion.extracted_phrase,
-      chosen_alias: suggestion.proposed_alias || suggestion.extracted_phrase,
-      chosen_cluster_primary: null,
-      chosen_rule_pattern: null,
-    });
+    // If it's a standard cluster (Competitors/Brand), use dictionary
+    // Otherwise, use custom_rules for custom clusters
+    if (isCompetitor || isBrand) {
+      await acceptSuggestion.mutateAsync({
+        id: suggestion.id,
+        accept_as: isCompetitor ? 'competitors' : 'brand_terms',
+        chosen_canonical: suggestion.proposed_canonical || suggestion.extracted_phrase,
+        chosen_alias: suggestion.proposed_alias || suggestion.extracted_phrase,
+        chosen_cluster_primary: null,
+        chosen_rule_pattern: null,
+      });
+    } else {
+      // Use custom_rules for other clusters - engine will learn from this
+      await acceptSuggestion.mutateAsync({
+        id: suggestion.id,
+        accept_as: 'custom_rules',
+        chosen_canonical: null,
+        chosen_alias: null,
+        chosen_cluster_primary: cluster,
+        chosen_rule_pattern: suggestion.extracted_phrase.toLowerCase(),
+      });
+    }
     
     // Reclassify affected rows in memory
-    const canonical = suggestion.proposed_canonical || suggestion.extracted_phrase;
     const alias = suggestion.proposed_alias || suggestion.extracted_phrase;
+    const canonical = suggestion.proposed_canonical || suggestion.extracted_phrase;
     
     setProcessedData(prev => prev.map(row => {
       const aliasLower = alias.toLowerCase();
       if (row.cluster_primary.startsWith('Other') && row.keyword.toLowerCase().includes(aliasLower)) {
         return {
           ...row,
-          cluster_primary: isCompetitor ? 'Competitors' : 'Brand - CFI',
+          cluster_primary: cluster,
           cluster_secondary: isCompetitor ? canonical : null,
-          matched_rule: `DICT:${isCompetitor ? 'competitors' : 'brand_terms'}:${canonical}`,
+          matched_rule: isCompetitor || isBrand 
+            ? `DICT:${isCompetitor ? 'competitors' : 'brand_terms'}:${canonical}`
+            : `CUSTOM_RULE:${suggestion.extracted_phrase}`,
           confidence: 1.0,
         };
       }
       return row;
     }));
     
-    toast({ title: "Suggestion accepted", description: `"${suggestion.extracted_phrase}" added to ${isCompetitor ? 'competitors' : 'brand terms'}` });
+    toast({ 
+      title: "Classification learned", 
+      description: `"${suggestion.extracted_phrase}" → ${cluster}. Engine will apply this in future analyses.` 
+    });
   };
 
   const handleRejectSuggestion = async (id: string) => {
@@ -928,58 +948,14 @@ export default function KeywordIntel() {
             ) : (
               <div className="space-y-md">
                 {pendingSuggestions.map((suggestion) => (
-                  <div 
-                    key={suggestion.id} 
-                    className="p-md bg-elevated rounded-lg border border-border"
-                  >
-                    <div className="flex items-start justify-between gap-md">
-                      <div className="flex-1">
-                        <p className="text-heading-sm font-semibold">"{suggestion.extracted_phrase}"</p>
-                        <p className="text-body-sm text-muted-foreground mt-xs">
-                          Found in {suggestion.evidence_terms.length} keywords spending 
-                          <span className="text-foreground font-medium mx-xs">${suggestion.evidence_cost.toFixed(0)}</span>
-                          with {suggestion.evidence_clicks} clicks
-                        </p>
-                        <div className="mt-sm p-sm bg-subtle rounded border border-border">
-                          <p className="text-body-sm">
-                            <strong>Recommendation:</strong> Add as 
-                            {suggestion.extracted_phrase.includes('.com') || suggestion.extracted_phrase.includes('capital') 
-                              ? ' competitor alias' 
-                              : ' brand term'
-                            } for "{suggestion.proposed_canonical || suggestion.extracted_phrase}"
-                          </p>
-                        </div>
-                        <div className="mt-sm">
-                          <p className="text-metadata text-muted-foreground">Example terms:</p>
-                          <div className="flex flex-wrap gap-xs mt-xs">
-                            {suggestion.evidence_terms.slice(0, 5).map((term, i) => (
-                              <Badge key={i} variant="outline" className="text-metadata">{term}</Badge>
-                            ))}
-                            {suggestion.evidence_terms.length > 5 && (
-                              <Badge variant="secondary" className="text-metadata">+{suggestion.evidence_terms.length - 5} more</Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-xs">
-                        <Button 
-                          size="sm"
-                          onClick={() => handleAcceptSuggestion(suggestion)}
-                          disabled={acceptSuggestion.isPending}
-                        >
-                          <Check className="h-4 w-4 mr-xs" /> Accept
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => handleRejectSuggestion(suggestion.id)}
-                          disabled={rejectSuggestion.isPending}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  <SuggestionCard 
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    onAccept={handleAcceptSuggestion}
+                    onReject={handleRejectSuggestion}
+                    isAccepting={acceptSuggestion.isPending}
+                    isRejecting={rejectSuggestion.isPending}
+                  />
                 ))}
               </div>
             )}
