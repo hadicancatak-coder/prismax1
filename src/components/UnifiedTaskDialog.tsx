@@ -95,7 +95,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
-  const [status, setStatus] = useState<string>("Backlog");
+  const [status, setStatus] = useState<string>("Ongoing");
   const [dueDate, setDueDate] = useState<Date>();
   const [entities, setEntities] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -164,7 +164,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
       setTitle("");
       setDescription("");
       setPriority("Medium");
-      setStatus("Backlog");
+      setStatus("Ongoing");
       setDueDate(undefined);
       setEntities([]);
       setTags([]);
@@ -488,7 +488,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
     setTitle("");
     setDescription("");
     setPriority("Medium");
-    setStatus("Backlog");
+    setStatus("Ongoing");
     setDueDate(undefined);
     setEntities([]);
     setTags([]);
