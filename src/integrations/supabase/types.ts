@@ -1765,6 +1765,135 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_custom_rules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          match_type: string
+          pattern: string
+          rule_name: string
+          target_cluster_primary: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          pattern: string
+          rule_name: string
+          target_cluster_primary: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          pattern?: string
+          rule_name?: string
+          target_cluster_primary?: string
+        }
+        Relationships: []
+      }
+      keyword_dictionaries: {
+        Row: {
+          alias: string
+          canonical: string
+          created_at: string
+          created_by: string | null
+          dict_name: string
+          enabled: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          alias: string
+          canonical: string
+          created_at?: string
+          created_by?: string | null
+          dict_name: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          alias?: string
+          canonical?: string
+          created_at?: string
+          created_by?: string | null
+          dict_name?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      keyword_leakage_suggestions: {
+        Row: {
+          accept_as: string | null
+          chosen_alias: string | null
+          chosen_canonical: string | null
+          chosen_cluster_primary: string | null
+          chosen_rule_pattern: string | null
+          created_at: string
+          created_by: string | null
+          evidence_clicks: number | null
+          evidence_cost: number | null
+          evidence_terms: Json | null
+          extracted_phrase: string
+          id: string
+          proposed_alias: string | null
+          proposed_canonical: string | null
+          proposed_dict_name: string | null
+          run_id: string
+          status: string
+          suggestion_type: string
+        }
+        Insert: {
+          accept_as?: string | null
+          chosen_alias?: string | null
+          chosen_canonical?: string | null
+          chosen_cluster_primary?: string | null
+          chosen_rule_pattern?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence_clicks?: number | null
+          evidence_cost?: number | null
+          evidence_terms?: Json | null
+          extracted_phrase: string
+          id?: string
+          proposed_alias?: string | null
+          proposed_canonical?: string | null
+          proposed_dict_name?: string | null
+          run_id: string
+          status?: string
+          suggestion_type: string
+        }
+        Update: {
+          accept_as?: string | null
+          chosen_alias?: string | null
+          chosen_canonical?: string | null
+          chosen_cluster_primary?: string | null
+          chosen_rule_pattern?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence_clicks?: number | null
+          evidence_cost?: number | null
+          evidence_terms?: Json | null
+          extracted_phrase?: string
+          id?: string
+          proposed_alias?: string | null
+          proposed_canonical?: string | null
+          proposed_dict_name?: string | null
+          run_id?: string
+          status?: string
+          suggestion_type?: string
+        }
+        Relationships: []
+      }
       keyword_list_items: {
         Row: {
           action_taken: string | null
