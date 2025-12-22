@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save, Settings2, RotateCcw, ChevronRight, Sparkles, Check, X, Zap, BarChart3, Target, AlertTriangle, ArrowRight } from "lucide-react";
+import { Search, Upload, TrendingUp, Layers, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save, ChevronRight, Sparkles, Check, X, Zap, Target, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, CircleCheck, CircleAlert, Circle } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataCard, DataCardHeader } from "@/components/layout/DataCard";
@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useKeywordLists } from "@/hooks/useKeywordLists";
@@ -28,23 +27,16 @@ import {
   CLUSTER_TAXONOMY,
 } from "@/lib/keywordEngine";
 import {
-  computeAdGroupStats,
-  generateNegativeRecommendations,
-  generateStructuralLeakageNegatives,
-  generateMoveRecommendations,
-  proposeNewAdGroups,
-  generateExecutiveBrief,
+  computeUnifiedActions,
+  generateExecutiveSummary,
   computeClusterKPIs,
-  computeIntentKPIs,
-  exportNegativesSuggestionsCSV,
-  exportProposedChangesCSV,
-  exportNewAdGroupsPlanCSV,
-  DEFAULT_INSIGHTS_CONFIG,
-  type InsightsConfig,
-  type AdGroupStats,
-  type NegativeRecommendation,
-  type MoveRecommendation,
-  type ProposedAdGroup,
+  computeConfidenceStats,
+  exportUnifiedActionsCSV,
+  exportNegativesOnlyCSV,
+  exportMovesOnlyCSV,
+  INSIGHTS_PRESETS,
+  type InsightsPreset,
+  type UnifiedAction,
 } from "@/lib/keywordInsights";
 
 // Types for UI state
@@ -60,18 +52,9 @@ interface ClusterSummary {
   avgScore: number;
 }
 
-const MODIFIERS = [
-  '{keyword} for beginners',
-  '{keyword} app',
-  '{keyword} vs alternatives',
-  'how does {keyword} work',
-  'is {keyword} safe',
-  'best {keyword}',
-  '{keyword} near me',
-  '{keyword} price',
-  '{keyword} review',
-  '{keyword} tutorial',
-];
+// Sortable column type
+type SortColumn = 'keyword' | 'cluster' | 'intent' | 'score' | 'confidence' | 'clicks' | 'impressions' | 'ctr' | 'cost' | 'conversions' | 'cpa' | 'campaign' | 'ad_group';
+type SortDirection = 'asc' | 'desc';
 
 export default function KeywordIntel() {
   const { toast } = useToast();
@@ -104,21 +87,37 @@ export default function KeywordIntel() {
   const [intentFilter, setIntentFilter] = useState<string>("all");
   const [minScore, setMinScore] = useState<number>(0);
 
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<SortColumn>('cost');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
   // Suggestion editing state
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null);
-  const [suggestionAcceptAs, setSuggestionAcceptAs] = useState<'competitors' | 'brand_terms' | 'custom_rules'>('competitors');
   const [suggestionCanonical, setSuggestionCanonical] = useState('');
   const [suggestionAlias, setSuggestionAlias] = useState('');
-  const [suggestionCluster, setSuggestionCluster] = useState('');
-  const [suggestionPattern, setSuggestionPattern] = useState('');
 
-  // Insights config state
-  const [insightsConfig, setInsightsConfig] = useState<InsightsConfig>(DEFAULT_INSIGHTS_CONFIG);
-  const [kpiView, setKpiView] = useState<'cluster' | 'intent'>('cluster');
+  // Insights config state - now using presets
+  const [insightsPreset, setInsightsPreset] = useState<InsightsPreset>('balanced');
+  const insightsConfig = INSIGHTS_PRESETS[insightsPreset];
 
-  // Filter data
+  // Pending suggestions from DB
+  const pendingSuggestions = useMemo(() => {
+    return dbSuggestions.filter(s => s.status === 'pending');
+  }, [dbSuggestions]);
+
+  // Handle column sort
+  const handleSort = useCallback((column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  }, [sortColumn]);
+
+  // Sorted and filtered data
   const filteredData = useMemo(() => {
-    return processedData.filter(kw => {
+    let data = processedData.filter(kw => {
       if (campaignFilter !== "all" && kw.campaign !== campaignFilter) return false;
       if (adGroupFilter !== "all" && kw.ad_group !== adGroupFilter) return false;
       if (matchTypeFilter !== "all" && kw.match_type !== matchTypeFilter) return false;
@@ -126,8 +125,39 @@ export default function KeywordIntel() {
       if (intentFilter !== "all" && kw.intent !== intentFilter) return false;
       if (kw.opportunity_score !== null && kw.opportunity_score < minScore / 100) return false;
       return true;
-    }).sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0));
-  }, [processedData, campaignFilter, adGroupFilter, matchTypeFilter, clusterFilter, intentFilter, minScore]);
+    });
+
+    // Sort
+    data.sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sortColumn) {
+        case 'keyword': aVal = a.keyword; bVal = b.keyword; break;
+        case 'cluster': aVal = a.cluster_primary; bVal = b.cluster_primary; break;
+        case 'intent': aVal = a.intent; bVal = b.intent; break;
+        case 'score': aVal = a.opportunity_score || 0; bVal = b.opportunity_score || 0; break;
+        case 'confidence': aVal = a.confidence; bVal = b.confidence; break;
+        case 'clicks': aVal = a.clicks; bVal = b.clicks; break;
+        case 'impressions': aVal = a.impressions; bVal = b.impressions; break;
+        case 'ctr': aVal = a.ctr || 0; bVal = b.ctr || 0; break;
+        case 'cost': aVal = a.cost || 0; bVal = b.cost || 0; break;
+        case 'conversions': aVal = a.conversions || 0; bVal = b.conversions || 0; break;
+        case 'cpa': 
+          aVal = a.conversions ? (a.cost || 0) / a.conversions : Infinity;
+          bVal = b.conversions ? (b.cost || 0) / b.conversions : Infinity;
+          break;
+        case 'campaign': aVal = a.campaign || ''; bVal = b.campaign || ''; break;
+        case 'ad_group': aVal = a.ad_group || ''; bVal = b.ad_group || ''; break;
+        default: aVal = 0; bVal = 0;
+      }
+      
+      if (typeof aVal === 'string') {
+        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    return data;
+  }, [processedData, campaignFilter, adGroupFilter, matchTypeFilter, clusterFilter, intentFilter, minScore, sortColumn, sortDirection]);
 
   // Get unique values for filters
   const uniqueCampaigns = useMemo(() => 
@@ -183,72 +213,26 @@ export default function KeywordIntel() {
           avgScore,
         };
       })
-      .sort((a, b) => b.totalImpressions - a.totalImpressions);
+      .sort((a, b) => b.totalCost - a.totalCost);
   }, [filteredData]);
 
-  // Generate keyword ideas
-  const generatedIdeas = useMemo(() => {
-    const ideas = new Set<string>();
-    const topKeywords = processedData
-      .sort((a, b) => b.impressions - a.impressions)
-      .slice(0, 50);
-
-    topKeywords.forEach(kw => {
-      MODIFIERS.forEach(template => {
-        ideas.add(template.replace('{keyword}', kw.keyword));
-      });
-    });
-
-    return Array.from(ideas);
-  }, [processedData]);
-
   // =====================================================
-  // INSIGHTS COMPUTATIONS
+  // INSIGHTS COMPUTATIONS (Simplified)
   // =====================================================
   
-  const adGroupStats = useMemo(() => 
-    computeAdGroupStats(processedData), 
-    [processedData]
-  );
-  
-  const negativeRecommendations = useMemo(() => {
-    const baseNegatives = generateNegativeRecommendations(processedData, insightsConfig);
-    const structuralNegatives = generateStructuralLeakageNegatives(processedData, adGroupStats, insightsConfig);
-    // Merge and dedupe by negative_text
-    const seen = new Set<string>();
-    const combined: NegativeRecommendation[] = [];
-    for (const n of [...baseNegatives, ...structuralNegatives]) {
-      if (!seen.has(n.negative_text)) {
-        seen.add(n.negative_text);
-        combined.push(n);
-      }
-    }
-    return combined.sort((a, b) => b.evidence_cost - a.evidence_cost);
-  }, [processedData, adGroupStats, insightsConfig]);
-  
-  const moveRecommendations = useMemo(() => 
-    generateMoveRecommendations(processedData, adGroupStats, insightsConfig), 
-    [processedData, adGroupStats, insightsConfig]
-  );
-  
-  const proposedAdGroups = useMemo(() => 
-    proposeNewAdGroups(processedData, insightsConfig), 
+  const unifiedActions = useMemo(() => 
+    computeUnifiedActions(processedData, insightsConfig), 
     [processedData, insightsConfig]
   );
   
-  const executiveBrief = useMemo(() => 
-    generateExecutiveBrief(processedData, negativeRecommendations, moveRecommendations, proposedAdGroups), 
-    [processedData, negativeRecommendations, moveRecommendations, proposedAdGroups]
+  const executiveSummary = useMemo(() => 
+    generateExecutiveSummary(processedData, unifiedActions), 
+    [processedData, unifiedActions]
   );
   
   const clusterKPIs = useMemo(() => computeClusterKPIs(processedData), [processedData]);
-  const intentKPIs = useMemo(() => computeIntentKPIs(processedData), [processedData]);
   
-  // Ad groups needing restructure
-  const adGroupsNeedingWork = useMemo(() => 
-    adGroupStats.filter(ag => ag.status !== 'OK'), 
-    [adGroupStats]
-  );
+  const confidenceStats = useMemo(() => computeConfidenceStats(processedData), [processedData]);
 
   // Export handlers for insights
   const downloadCSV = (content: string, filename: string) => {
@@ -261,9 +245,9 @@ export default function KeywordIntel() {
     URL.revokeObjectURL(url);
   };
 
-  const exportNegatives = () => downloadCSV(exportNegativesSuggestionsCSV(negativeRecommendations), 'negative_suggestions.csv');
-  const exportMoves = () => downloadCSV(exportProposedChangesCSV(moveRecommendations), 'proposed_ad_group_changes.csv');
-  const exportNewAdGroups = () => downloadCSV(exportNewAdGroupsPlanCSV(proposedAdGroups), 'new_ad_groups_plan.csv');
+  const exportAllActions = () => downloadCSV(exportUnifiedActionsCSV(unifiedActions), 'all_actions.csv');
+  const exportNegatives = () => downloadCSV(exportNegativesOnlyCSV(unifiedActions), 'negatives_for_editor.csv');
+  const exportMoves = () => downloadCSV(exportMovesOnlyCSV(unifiedActions), 'move_recommendations.csv');
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,24 +298,28 @@ export default function KeywordIntel() {
 
   // Export to CSV
   const exportCSV = () => {
-    const headers = ['Keyword', 'Cluster', 'Secondary', 'Intent', 'Confidence', 'Matched Rule', 'Score', 'Language', 'Campaign', 'Ad Group', 'Clicks', 'Impr', 'CTR', 'Cost', 'Conv'];
-    const rows = filteredData.map(k => [
-      `"${k.keyword}"`,
-      k.cluster_primary,
-      k.cluster_secondary || '',
-      k.intent,
-      k.confidence.toFixed(2),
-      k.matched_rule,
-      k.opportunity_score?.toFixed(2) || '0',
-      k.tags.language || 'en',
-      `"${k.campaign || ''}"`,
-      `"${k.ad_group || ''}"`,
-      k.clicks,
-      k.impressions,
-      k.ctr ? (k.ctr * 100).toFixed(2) + '%' : '',
-      k.cost?.toFixed(2) || '',
-      k.conversions || ''
-    ].join(','));
+    const headers = ['Keyword', 'Cluster', 'Secondary', 'Intent', 'Confidence', 'Matched Rule', 'Score', 'Language', 'Campaign', 'Ad Group', 'Clicks', 'Impr', 'CTR', 'Cost', 'Conv', 'Cost/Conv'];
+    const rows = filteredData.map(k => {
+      const cpa = k.conversions ? (k.cost || 0) / k.conversions : null;
+      return [
+        `"${k.keyword}"`,
+        k.cluster_primary,
+        k.cluster_secondary || '',
+        k.intent,
+        k.confidence.toFixed(2),
+        k.matched_rule,
+        k.opportunity_score?.toFixed(2) || '0',
+        k.tags.language || 'en',
+        `"${k.campaign || ''}"`,
+        `"${k.ad_group || ''}"`,
+        k.clicks,
+        k.impressions,
+        k.ctr ? (k.ctr * 100).toFixed(2) + '%' : '',
+        k.cost?.toFixed(2) || '',
+        k.conversions || '',
+        cpa !== null ? cpa.toFixed(2) : ''
+      ].join(',');
+    });
 
     const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -344,18 +332,22 @@ export default function KeywordIntel() {
   };
 
   const copyTable = () => {
-    const headers = ['Keyword', 'Cluster', 'Intent', 'Score', 'Clicks', 'Impr', 'CTR', 'Cost', 'Conv'];
-    const rows = filteredData.map(k => [
-      k.keyword,
-      k.cluster_primary,
-      k.intent,
-      k.opportunity_score?.toFixed(2) || '0',
-      k.clicks,
-      k.impressions,
-      k.ctr ? (k.ctr * 100).toFixed(2) + '%' : '',
-      k.cost?.toFixed(2) || '',
-      k.conversions || ''
-    ].join('\t'));
+    const headers = ['Keyword', 'Cluster', 'Intent', 'Score', 'Clicks', 'Impr', 'CTR', 'Cost', 'Conv', 'Cost/Conv'];
+    const rows = filteredData.map(k => {
+      const cpa = k.conversions ? (k.cost || 0) / k.conversions : null;
+      return [
+        k.keyword,
+        k.cluster_primary,
+        k.intent,
+        k.opportunity_score?.toFixed(2) || '0',
+        k.clicks,
+        k.impressions,
+        k.ctr ? (k.ctr * 100).toFixed(2) + '%' : '',
+        k.cost?.toFixed(2) || '',
+        k.conversions || '',
+        cpa !== null ? '$' + cpa.toFixed(2) : '-'
+      ].join('\t');
+    });
 
     navigator.clipboard.writeText([headers.join('\t'), ...rows].join('\n'));
     toast({ title: "Copied to clipboard" });
@@ -388,6 +380,23 @@ export default function KeywordIntel() {
     return <Badge className={colors[intent] || ''} variant={colors[intent] ? undefined : 'secondary'}>{intent}</Badge>;
   };
 
+  // Sortable header component
+  const SortableHeader = ({ column, label }: { column: SortColumn; label: string }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-subtle transition-smooth select-none"
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-xs">
+        {label}
+        {sortColumn === column ? (
+          sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />
+        )}
+      </div>
+    </TableHead>
+  );
+
   // Handle save analysis
   const handleSaveAnalysis = async (data: { name: string; entity: string; description?: string }) => {
     const items = filteredData.map(kw => ({
@@ -416,106 +425,74 @@ export default function KeywordIntel() {
     setSaveDialogOpen(false);
   };
 
-  // Handle suggestion actions
-  const handleStartEditSuggestion = (suggestion: LeakageSuggestionWithId) => {
-    setEditingSuggestion(suggestion.id);
+  // Handle suggestion actions - Simplified!
+  const handleAcceptSuggestion = async (suggestion: LeakageSuggestionWithId) => {
+    // Auto-detect best option
+    const isCompetitor = suggestion.suggestion_type === 'alias_candidate' || 
+                         suggestion.extracted_phrase.includes('.com') ||
+                         suggestion.extracted_phrase.includes('capital');
     
-    // Set defaults based on suggestion type
-    if (suggestion.suggestion_type === 'alias_candidate' || suggestion.suggestion_type === 'dictionary_candidate') {
-      setSuggestionAcceptAs(suggestion.proposed_dict_name as 'competitors' | 'brand_terms' || 'competitors');
-      setSuggestionCanonical(suggestion.proposed_canonical || suggestion.extracted_phrase);
-      setSuggestionAlias(suggestion.proposed_alias || suggestion.extracted_phrase);
-    } else {
-      setSuggestionAcceptAs('custom_rules');
-      setSuggestionPattern(suggestion.extracted_phrase);
-      setSuggestionCluster('Trading - Generic');
-    }
-  };
-
-  const handleAcceptSuggestion = async (id: string) => {
     await acceptSuggestion.mutateAsync({
-      id,
-      accept_as: suggestionAcceptAs,
-      chosen_canonical: suggestionCanonical,
-      chosen_alias: suggestionAlias,
-      chosen_cluster_primary: suggestionCluster,
-      chosen_rule_pattern: suggestionPattern,
+      id: suggestion.id,
+      accept_as: isCompetitor ? 'competitors' : 'brand_terms',
+      chosen_canonical: suggestion.proposed_canonical || suggestion.extracted_phrase,
+      chosen_alias: suggestion.proposed_alias || suggestion.extracted_phrase,
+      chosen_cluster_primary: null,
+      chosen_rule_pattern: null,
     });
     
-    setEditingSuggestion(null);
-    
     // Reclassify affected rows in memory
-    if (suggestionAcceptAs === 'competitors' || suggestionAcceptAs === 'brand_terms') {
-      setProcessedData(prev => prev.map(row => {
-        const aliasLower = suggestionAlias.toLowerCase();
-        if (row.cluster_primary.startsWith('Other') && row.keyword.toLowerCase().includes(aliasLower)) {
-          return {
-            ...row,
-            cluster_primary: suggestionAcceptAs === 'competitors' ? 'Competitors' : 'Brand - CFI',
-            cluster_secondary: suggestionAcceptAs === 'competitors' ? suggestionCanonical : null,
-            matched_rule: `DICT:${suggestionAcceptAs}:${suggestionCanonical}`,
-            confidence: 1.0,
-          };
-        }
-        return row;
-      }));
-    } else if (suggestionAcceptAs === 'custom_rules' && suggestionCluster && suggestionPattern) {
-      setProcessedData(prev => prev.map(row => {
-        const patternLower = suggestionPattern.toLowerCase();
-        if (row.cluster_primary.startsWith('Other') && row.keyword.toLowerCase().includes(patternLower)) {
-          return {
-            ...row,
-            cluster_primary: suggestionCluster,
-            matched_rule: `CUSTOM_RULE:${suggestionPattern}`,
-            confidence: 0.85,
-          };
-        }
-        return row;
-      }));
-    }
+    const canonical = suggestion.proposed_canonical || suggestion.extracted_phrase;
+    const alias = suggestion.proposed_alias || suggestion.extracted_phrase;
+    
+    setProcessedData(prev => prev.map(row => {
+      const aliasLower = alias.toLowerCase();
+      if (row.cluster_primary.startsWith('Other') && row.keyword.toLowerCase().includes(aliasLower)) {
+        return {
+          ...row,
+          cluster_primary: isCompetitor ? 'Competitors' : 'Brand - CFI',
+          cluster_secondary: isCompetitor ? canonical : null,
+          matched_rule: `DICT:${isCompetitor ? 'competitors' : 'brand_terms'}:${canonical}`,
+          confidence: 1.0,
+        };
+      }
+      return row;
+    }));
+    
+    toast({ title: "Suggestion accepted", description: `"${suggestion.extracted_phrase}" added to ${isCompetitor ? 'competitors' : 'brand terms'}` });
   };
 
   const handleRejectSuggestion = async (id: string) => {
     await rejectSuggestion.mutateAsync(id);
-    setEditingSuggestion(null);
   };
-
-  // Pending suggestions
-  const pendingSuggestions = useMemo(() => 
-    dbSuggestions.filter(s => s.status === 'pending'),
-    [dbSuggestions]
-  );
 
   return (
     <PageContainer>
       <PageHeader
-        icon={Search}
         title="Keyword Intel"
-        description="Analyze search term performance with AI-powered clustering and intent detection"
+        description="Analyze search term reports to find opportunities and structure improvements"
+        icon={Search}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-lg">
           <TabsTrigger value="upload" className="gap-xs">
             <Upload className="h-4 w-4" /> Upload
           </TabsTrigger>
           <TabsTrigger value="opportunities" className="gap-xs" disabled={!isUploaded}>
-            <TrendingUp className="h-4 w-4" /> Opportunities
+            <TrendingUp className="h-4 w-4" /> Keyword List
           </TabsTrigger>
           <TabsTrigger value="clusters" className="gap-xs" disabled={!isUploaded}>
             <Layers className="h-4 w-4" /> Clusters
           </TabsTrigger>
-          <TabsTrigger value="suggestions" className="gap-xs" disabled={!isUploaded || pendingSuggestions.length === 0}>
+          <TabsTrigger value="suggestions" className="gap-xs" disabled={!isUploaded}>
             <Sparkles className="h-4 w-4" /> Suggestions
             {pendingSuggestions.length > 0 && (
-              <Badge variant="secondary" className="ml-xs">{pendingSuggestions.length}</Badge>
+              <Badge variant="secondary" className="ml-xs text-metadata">{pendingSuggestions.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="ideas" className="gap-xs" disabled={!isUploaded}>
-            <Lightbulb className="h-4 w-4" /> Ideas
-          </TabsTrigger>
           <TabsTrigger value="insights" className="gap-xs" disabled={!isUploaded}>
-            <Zap className="h-4 w-4" /> Insights & Actions
+            <Zap className="h-4 w-4" /> Actions
           </TabsTrigger>
           <TabsTrigger value="saved" className="gap-xs">
             <FolderOpen className="h-4 w-4" /> Saved Lists
@@ -525,27 +502,26 @@ export default function KeywordIntel() {
         <TabsContent value="upload" className="mt-lg">
           <DataCard>
             <DataCardHeader 
-              title="Upload Google Ads Search Terms Report" 
-              description="Upload a CSV file with search term performance data. Supports English and Arabic."
+              title="Upload Search Term Report" 
+              description="Upload a CSV export from Google Ads Search Term Report. The engine will auto-classify keywords."
             />
+            
             <div className="space-y-md">
-              <div className="flex items-center gap-md">
-                <Input
+              <div className="border-2 border-dashed border-border rounded-lg p-lg text-center hover:border-primary/50 transition-smooth">
+                <input
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.tsv,.txt"
                   onChange={handleFileUpload}
-                  className="max-w-sm"
-                  disabled={dictionariesLoading}
+                  className="hidden"
+                  id="csv-upload"
                 />
-                {dictionariesLoading && (
-                  <span className="text-body-sm text-muted-foreground">Loading dictionaries...</span>
-                )}
-              </div>
-
-              <div className="text-body-sm text-muted-foreground">
-                <p className="font-medium mb-xs">Required columns:</p>
-                <p>Search term (or مصطلح البحث), Clicks, Impressions, CTR</p>
-                <p className="mt-xs text-metadata">Optional: Campaign, Ad group, Match type, Cost, Conversions</p>
+                <label htmlFor="csv-upload" className="cursor-pointer">
+                  <Upload className="h-8 w-8 mx-auto mb-md text-muted-foreground" />
+                  <p className="text-body font-medium">Click to upload CSV file</p>
+                  <p className="text-body-sm text-muted-foreground mt-xs">
+                    Supports Google Ads Search Term Report format (English & Arabic)
+                  </p>
+                </label>
               </div>
 
               {parseError && (
@@ -555,7 +531,7 @@ export default function KeywordIntel() {
                 </Alert>
               )}
 
-              {parseResult && processedData.length > 0 && !parseError && (
+              {parseResult && processedData.length > 0 && (
                 <div className="space-y-md">
                   <Alert>
                     <CheckCircle2 className="h-4 w-4 text-success" />
@@ -565,23 +541,32 @@ export default function KeywordIntel() {
                     </AlertDescription>
                   </Alert>
 
-                  {/* Stats Summary */}
+                  {/* Confidence Summary */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
                     <div className="p-md bg-elevated rounded-lg border border-border">
                       <p className="text-metadata text-muted-foreground">Total Keywords</p>
                       <p className="text-heading-md font-semibold">{processedData.length}</p>
                     </div>
                     <div className="p-md bg-elevated rounded-lg border border-border">
-                      <p className="text-metadata text-muted-foreground">Clusters Identified</p>
-                      <p className="text-heading-md font-semibold">{uniqueClusters.length}</p>
+                      <p className="text-metadata text-muted-foreground">High Confidence (Dict)</p>
+                      <p className="text-heading-md font-semibold text-success">
+                        {confidenceStats.dictionaryPercent.toFixed(0)}%
+                        <span className="text-metadata text-muted-foreground ml-xs">({confidenceStats.dictionaryMatched})</span>
+                      </p>
                     </div>
                     <div className="p-md bg-elevated rounded-lg border border-border">
-                      <p className="text-metadata text-muted-foreground">Intents Detected</p>
-                      <p className="text-heading-md font-semibold">{uniqueIntents.length}</p>
+                      <p className="text-metadata text-muted-foreground">Medium Confidence (Regex)</p>
+                      <p className="text-heading-md font-semibold text-warning">
+                        {confidenceStats.regexPercent.toFixed(0)}%
+                        <span className="text-metadata text-muted-foreground ml-xs">({confidenceStats.regexMatched})</span>
+                      </p>
                     </div>
                     <div className="p-md bg-elevated rounded-lg border border-border">
-                      <p className="text-metadata text-muted-foreground">Leakage Suggestions</p>
-                      <p className="text-heading-md font-semibold">{leakageSuggestions.length}</p>
+                      <p className="text-metadata text-muted-foreground">Low Confidence (Other)</p>
+                      <p className="text-heading-md font-semibold">
+                        {confidenceStats.otherPercent.toFixed(0)}%
+                        <span className="text-metadata text-muted-foreground ml-xs">({confidenceStats.otherMatched})</span>
+                      </p>
                     </div>
                   </div>
 
@@ -726,64 +711,71 @@ export default function KeywordIntel() {
                 <Download className="h-4 w-4 mr-xs" /> Export CSV
               </Button>
               <Button size="sm" onClick={() => setSaveDialogOpen(true)}>
-                <Save className="h-4 w-4 mr-xs" /> Save Analysis
+                <Save className="h-4 w-4 mr-xs" /> Save as List
               </Button>
             </div>
           </div>
 
           <DataCard>
-            <DataCardHeader title={`Search Term Opportunities (${filteredData.length})`} />
+            <DataCardHeader title={`Keyword List (${filteredData.length})`} />
             <ScrollArea className="h-[500px]">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Search Term</TableHead>
-                    <TableHead>Cluster</TableHead>
-                    <TableHead>Secondary</TableHead>
-                    <TableHead>Intent</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Conf.</TableHead>
-                    <TableHead>Clicks</TableHead>
-                    <TableHead>Impr.</TableHead>
-                    <TableHead>CTR</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Conv.</TableHead>
+                    <SortableHeader column="keyword" label="Search Term" />
+                    <SortableHeader column="campaign" label="Campaign" />
+                    <SortableHeader column="ad_group" label="Ad Group" />
+                    <SortableHeader column="cluster" label="Cluster" />
+                    <SortableHeader column="intent" label="Intent" />
+                    <SortableHeader column="score" label="Score" />
+                    <SortableHeader column="confidence" label="Conf." />
+                    <SortableHeader column="clicks" label="Clicks" />
+                    <SortableHeader column="cost" label="Cost" />
+                    <SortableHeader column="conversions" label="Conv." />
+                    <SortableHeader column="cpa" label="Cost/Conv" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredData.map((row, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        <Tooltip>
-                          <TooltipTrigger className="text-left truncate block max-w-[200px]">
-                            {row.keyword}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{row.keyword}</p>
-                            <p className="text-metadata text-muted-foreground mt-xs">
-                              Rule: {row.matched_rule}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-metadata">
-                          {row.cluster_primary}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-metadata">
-                        {row.cluster_secondary || '-'}
-                      </TableCell>
-                      <TableCell>{getIntentBadge(row.intent)}</TableCell>
-                      <TableCell>{row.opportunity_score !== null ? getScoreBadge(row.opportunity_score) : '-'}</TableCell>
-                      <TableCell>{getConfidenceBadge(row.confidence)}</TableCell>
-                      <TableCell>{row.clicks.toLocaleString()}</TableCell>
-                      <TableCell>{row.impressions.toLocaleString()}</TableCell>
-                      <TableCell>{row.ctr ? (row.ctr * 100).toFixed(2) + '%' : '-'}</TableCell>
-                      <TableCell>{row.cost ? '$' + row.cost.toFixed(2) : '-'}</TableCell>
-                      <TableCell>{row.conversions || '-'}</TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredData.map((row, i) => {
+                    const cpa = row.conversions ? (row.cost || 0) / row.conversions : null;
+                    return (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium max-w-[200px] truncate">
+                          <Tooltip>
+                            <TooltipTrigger className="text-left truncate block max-w-[200px]">
+                              {row.keyword}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{row.keyword}</p>
+                              <p className="text-metadata text-muted-foreground mt-xs">
+                                Rule: {row.matched_rule}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
+                          {row.campaign || '-'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
+                          {row.ad_group || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-metadata">
+                            {row.cluster_primary}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{getIntentBadge(row.intent)}</TableCell>
+                        <TableCell>{row.opportunity_score !== null ? getScoreBadge(row.opportunity_score) : '-'}</TableCell>
+                        <TableCell>{getConfidenceBadge(row.confidence)}</TableCell>
+                        <TableCell>{row.clicks.toLocaleString()}</TableCell>
+                        <TableCell>{row.cost ? '$' + row.cost.toFixed(2) : '-'}</TableCell>
+                        <TableCell>{row.conversions || '-'}</TableCell>
+                        <TableCell className={cpa !== null && cpa > 500 ? 'text-destructive font-medium' : ''}>
+                          {cpa !== null ? '$' + cpa.toFixed(2) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -804,7 +796,7 @@ export default function KeywordIntel() {
                 description="Upload keyword data to see clusters"
               />
             ) : (
-              <ScrollArea className="h-auto max-h-[400px]">
+              <ScrollArea className="h-[400px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -815,7 +807,7 @@ export default function KeywordIntel() {
                       <TableHead className="text-right">CTR</TableHead>
                       <TableHead className="text-right">Cost</TableHead>
                       <TableHead className="text-right">Conv.</TableHead>
-                      <TableHead className="text-right">Avg CPA</TableHead>
+                      <TableHead className="text-right">Cost/Conv</TableHead>
                       <TableHead className="text-right">Avg Score</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -867,8 +859,8 @@ export default function KeywordIntel() {
                           </span>
                         </div>
                         <div className="flex items-center gap-md text-body-sm text-muted-foreground">
-                          <span>{summary.totalImpressions.toLocaleString()} impr.</span>
-                          <span>{summary.totalClicks.toLocaleString()} clicks</span>
+                          <span>${summary.totalCost.toFixed(0)}</span>
+                          <span>{summary.totalConversions} conv</span>
                           {getScoreBadge(summary.avgScore)}
                         </div>
                       </div>
@@ -879,35 +871,37 @@ export default function KeywordIntel() {
                           <TableHeader>
                             <TableRow className="bg-subtle">
                               <TableHead>Keyword</TableHead>
+                              <TableHead>Campaign</TableHead>
+                              <TableHead>Ad Group</TableHead>
                               <TableHead>Intent</TableHead>
-                              <TableHead>Matched Rule</TableHead>
-                              <TableHead>Score</TableHead>
-                              <TableHead className="text-right">Clicks</TableHead>
-                              <TableHead className="text-right">Impr.</TableHead>
+                              <TableHead className="text-right">Cost</TableHead>
                               <TableHead className="text-right">Conv.</TableHead>
+                              <TableHead className="text-right">Cost/Conv</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {summary.keywords.slice(0, 20).map((kw, i) => (
-                              <TableRow key={i}>
-                                <TableCell className="font-medium max-w-[200px] truncate">{kw.keyword}</TableCell>
-                                <TableCell>{getIntentBadge(kw.intent)}</TableCell>
-                                <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
-                                  {kw.matched_rule}
-                                </TableCell>
-                                <TableCell>{kw.opportunity_score !== null ? getScoreBadge(kw.opportunity_score) : '-'}</TableCell>
-                                <TableCell className="text-right">{kw.clicks}</TableCell>
-                                <TableCell className="text-right">{kw.impressions.toLocaleString()}</TableCell>
-                                <TableCell className="text-right">{kw.conversions || '-'}</TableCell>
-                              </TableRow>
-                            ))}
+                            {summary.keywords.slice(0, 20).map((kw, i) => {
+                              const cpa = kw.conversions ? (kw.cost || 0) / kw.conversions : null;
+                              return (
+                                <TableRow key={i}>
+                                  <TableCell className="font-medium max-w-[200px] truncate">{kw.keyword}</TableCell>
+                                  <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
+                                    {kw.campaign || '-'}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
+                                    {kw.ad_group || '-'}
+                                  </TableCell>
+                                  <TableCell>{getIntentBadge(kw.intent)}</TableCell>
+                                  <TableCell className="text-right">${(kw.cost || 0).toFixed(0)}</TableCell>
+                                  <TableCell className="text-right">{kw.conversions || '-'}</TableCell>
+                                  <TableCell className="text-right">
+                                    {cpa !== null ? `$${cpa.toFixed(0)}` : '-'}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
-                        {summary.keywords.length > 20 && (
-                          <div className="p-sm text-center text-metadata text-muted-foreground border-t border-border">
-                            +{summary.keywords.length - 20} more keywords
-                          </div>
-                        )}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -917,229 +911,110 @@ export default function KeywordIntel() {
           </DataCard>
         </TabsContent>
 
+        {/* SIMPLIFIED SUGGESTIONS TAB */}
         <TabsContent value="suggestions" className="mt-lg">
           <DataCard>
             <DataCardHeader 
-              title={`Leakage Suggestions (${pendingSuggestions.length})`}
-              description="High-cost keywords in 'Other' that may belong to known clusters. Accept to add to dictionaries."
+              title={`Classification Suggestions (${pendingSuggestions.length})`}
+              description="High-cost terms in 'Other' that likely belong to known clusters. Accept to improve classification."
             />
             
             {pendingSuggestions.length === 0 ? (
               <EmptyState
                 icon={Sparkles}
                 title="No pending suggestions"
-                description="All suggestions have been processed"
+                description="All classification suggestions have been processed"
               />
             ) : (
-              <ScrollArea className="h-[500px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Phrase</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Evidence (Cost)</TableHead>
-                      <TableHead>Accept As</TableHead>
-                      <TableHead>Details</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingSuggestions.map((suggestion) => (
-                      <TableRow key={suggestion.id}>
-                        <TableCell className="font-medium">{suggestion.extracted_phrase}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-metadata">
-                            {suggestion.suggestion_type.replace('_', ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <span className="text-muted-foreground">
-                                ${suggestion.evidence_cost.toFixed(2)} / {suggestion.evidence_clicks} clicks
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="max-w-xs">
-                                <p className="font-medium mb-xs">Evidence terms:</p>
-                                <ul className="text-metadata space-y-xs">
-                                  {suggestion.evidence_terms.slice(0, 5).map((t, i) => (
-                                    <li key={i} className="truncate">{t}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          {editingSuggestion === suggestion.id ? (
-                            <Select value={suggestionAcceptAs} onValueChange={(v: 'competitors' | 'brand_terms' | 'custom_rules') => setSuggestionAcceptAs(v)}>
-                              <SelectTrigger className="w-[140px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="competitors">Competitor</SelectItem>
-                                <SelectItem value="brand_terms">Brand</SelectItem>
-                                <SelectItem value="custom_rules">Custom Rule</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingSuggestion === suggestion.id ? (
-                            <div className="space-y-xs">
-                              {suggestionAcceptAs !== 'custom_rules' ? (
-                                <>
-                                  <Input
-                                    placeholder="Canonical"
-                                    value={suggestionCanonical}
-                                    onChange={(e) => setSuggestionCanonical(e.target.value)}
-                                    className="h-8 text-sm"
-                                  />
-                                  <Input
-                                    placeholder="Alias"
-                                    value={suggestionAlias}
-                                    onChange={(e) => setSuggestionAlias(e.target.value)}
-                                    className="h-8 text-sm"
-                                  />
-                                </>
-                              ) : (
-                                <>
-                                  <Select value={suggestionCluster} onValueChange={setSuggestionCluster}>
-                                    <SelectTrigger className="h-8 text-sm">
-                                      <SelectValue placeholder="Target cluster" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {CLUSTER_TAXONOMY.filter(c => !c.startsWith('Other') && c !== 'Junk / Noise').map(c => (
-                                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <Input
-                                    placeholder="Pattern"
-                                    value={suggestionPattern}
-                                    onChange={(e) => setSuggestionPattern(e.target.value)}
-                                    className="h-8 text-sm"
-                                  />
-                                </>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-metadata">
-                              {suggestion.proposed_canonical || suggestion.extracted_phrase}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingSuggestion === suggestion.id ? (
-                            <div className="flex gap-xs">
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleAcceptSuggestion(suggestion.id)}
-                                disabled={acceptSuggestion.isPending}
-                              >
-                                <Check className="h-3 w-3" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => setEditingSuggestion(null)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-xs">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => handleStartEditSuggestion(suggestion)}
-                              >
-                                Accept
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => handleRejectSuggestion(suggestion.id)}
-                                disabled={rejectSuggestion.isPending}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </DataCard>
-        </TabsContent>
-
-        <TabsContent value="ideas" className="mt-lg">
-          <DataCard>
-            <DataCardHeader 
-              title={`Generated Keyword Ideas (${generatedIdeas.length})`} 
-              description="Template-based expansions from your top-performing search terms"
-              action={
-                <Button variant="outline" size="sm" onClick={() => {
-                  navigator.clipboard.writeText(generatedIdeas.join('\n'));
-                  toast({ title: "Copied all ideas to clipboard" });
-                }}>
-                  <Copy className="h-4 w-4 mr-xs" /> Copy All
-                </Button>
-              }
-            />
-            
-            {generatedIdeas.length === 0 ? (
-              <EmptyState
-                icon={Lightbulb}
-                title="No ideas generated"
-                description="Upload search term data to generate expansion ideas"
-              />
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-xs">
-                  {generatedIdeas.map((idea, i) => (
-                    <div 
-                      key={i} 
-                      className="p-sm bg-elevated rounded border border-border text-body-sm hover:bg-card-hover transition-smooth cursor-pointer"
-                      onClick={() => {
-                        navigator.clipboard.writeText(idea);
-                        toast({ title: "Copied", description: idea });
-                      }}
-                    >
-                      {idea}
+              <div className="space-y-md">
+                {pendingSuggestions.map((suggestion) => (
+                  <div 
+                    key={suggestion.id} 
+                    className="p-md bg-elevated rounded-lg border border-border"
+                  >
+                    <div className="flex items-start justify-between gap-md">
+                      <div className="flex-1">
+                        <p className="text-heading-sm font-semibold">"{suggestion.extracted_phrase}"</p>
+                        <p className="text-body-sm text-muted-foreground mt-xs">
+                          Found in {suggestion.evidence_terms.length} keywords spending 
+                          <span className="text-foreground font-medium mx-xs">${suggestion.evidence_cost.toFixed(0)}</span>
+                          with {suggestion.evidence_clicks} clicks
+                        </p>
+                        <div className="mt-sm p-sm bg-subtle rounded border border-border">
+                          <p className="text-body-sm">
+                            <strong>Recommendation:</strong> Add as 
+                            {suggestion.extracted_phrase.includes('.com') || suggestion.extracted_phrase.includes('capital') 
+                              ? ' competitor alias' 
+                              : ' brand term'
+                            } for "{suggestion.proposed_canonical || suggestion.extracted_phrase}"
+                          </p>
+                        </div>
+                        <div className="mt-sm">
+                          <p className="text-metadata text-muted-foreground">Example terms:</p>
+                          <div className="flex flex-wrap gap-xs mt-xs">
+                            {suggestion.evidence_terms.slice(0, 5).map((term, i) => (
+                              <Badge key={i} variant="outline" className="text-metadata">{term}</Badge>
+                            ))}
+                            {suggestion.evidence_terms.length > 5 && (
+                              <Badge variant="secondary" className="text-metadata">+{suggestion.evidence_terms.length - 5} more</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-xs">
+                        <Button 
+                          size="sm"
+                          onClick={() => handleAcceptSuggestion(suggestion)}
+                          disabled={acceptSuggestion.isPending}
+                        >
+                          <Check className="h-4 w-4 mr-xs" /> Accept
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleRejectSuggestion(suggestion.id)}
+                          disabled={rejectSuggestion.isPending}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </div>
+                ))}
+              </div>
             )}
           </DataCard>
         </TabsContent>
 
-        {/* =====================================================
-            INSIGHTS & ACTIONS TAB
-        ===================================================== */}
+        {/* SIMPLIFIED INSIGHTS & ACTIONS TAB */}
         <TabsContent value="insights" className="mt-lg space-y-lg">
-          {/* SECTION 1: EXECUTIVE BRIEF */}
+          {/* WHAT'S WRONG - Executive Summary */}
           <DataCard>
             <DataCardHeader 
-              title="Executive Brief" 
-              description="Auto-generated summary based on your search term data"
+              title="What's Wrong" 
+              description="Issues identified in your account structure"
               action={
                 <div className="flex gap-xs">
-                  <Button variant="outline" size="sm" onClick={exportNegatives}>
-                    <Download className="h-4 w-4 mr-xs" /> Negatives CSV
+                  <Button 
+                    variant={insightsPreset === 'conservative' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setInsightsPreset('conservative')}
+                  >
+                    Conservative
                   </Button>
-                  <Button variant="outline" size="sm" onClick={exportMoves}>
-                    <Download className="h-4 w-4 mr-xs" /> Moves CSV
+                  <Button 
+                    variant={insightsPreset === 'balanced' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setInsightsPreset('balanced')}
+                  >
+                    Balanced
                   </Button>
-                  <Button variant="outline" size="sm" onClick={exportNewAdGroups}>
-                    <Download className="h-4 w-4 mr-xs" /> New AGs CSV
+                  <Button 
+                    variant={insightsPreset === 'aggressive' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setInsightsPreset('aggressive')}
+                  >
+                    Aggressive
                   </Button>
                 </div>
               }
@@ -1151,393 +1026,96 @@ export default function KeywordIntel() {
                 description="Upload search term data to generate insights"
               />
             ) : (
-              <div className="space-y-md">
-                {/* Brief Text */}
-                <div className="p-md bg-elevated rounded-lg border border-border">
-                  <p className="text-body leading-relaxed">
-                    <strong>Top 3 clusters by spend:</strong>{' '}
-                    {executiveBrief.topClustersBySpend.map((c, i) => (
-                      <span key={c.name}>
-                        {c.name} (${c.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })})
-                        {i < 2 ? ', ' : ''}
-                      </span>
-                    ))}
-                    .{' '}
-                    <strong>Top by conversions:</strong>{' '}
-                    {executiveBrief.topClustersByConversions.map((c, i) => (
-                      <span key={c.name}>
-                        {c.name} ({c.conversions})
-                        {i < 2 ? ', ' : ''}
-                      </span>
-                    ))}
-                    .
-                  </p>
-                  <p className="text-body leading-relaxed mt-sm">
-                    {executiveBrief.worstCPACluster && (
-                      <>
-                        <strong>Worst CPA cluster:</strong>{' '}
-                        {executiveBrief.worstCPACluster.name}{' '}
-                        (CPA: ${executiveBrief.worstCPACluster.cpa === Infinity ? '∞' : executiveBrief.worstCPACluster.cpa.toFixed(0)}, 
-                        spend: ${executiveBrief.worstCPACluster.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}).{' '}
-                      </>
-                    )}
-                    <strong>Largest leakage source:</strong> {executiveBrief.largestLeakageSource}.
-                  </p>
-                  <p className="text-body leading-relaxed mt-sm">
-                    Identified <Badge className="bg-destructive/15 text-destructive border-destructive/30 mx-xs">{executiveBrief.negativeRecommendationsCount}</Badge> negatives,{' '}
-                    <Badge className="bg-warning/15 text-warning border-warning/30 mx-xs">{executiveBrief.moveRecommendationsCount}</Badge> moves,{' '}
-                    <Badge className="bg-success/15 text-success border-success/30 mx-xs">{executiveBrief.proposedNewAdGroupsCount}</Badge> new ad groups.{' '}
-                    <strong>Estimated wasted spend:</strong>{' '}
-                    <span className="text-destructive font-semibold">${executiveBrief.estimatedWastedSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                    {' '}of ${executiveBrief.totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })} total.
-                  </p>
+              <div className="space-y-sm">
+                {executiveSummary.bullets.map((bullet, i) => (
+                  <div key={i} className="flex items-start gap-md p-md bg-elevated rounded-lg border border-border">
+                    {bullet.icon === 'red' && <CircleAlert className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />}
+                    {bullet.icon === 'yellow' && <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />}
+                    {bullet.icon === 'green' && <CircleCheck className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />}
+                    <p className="text-body">{bullet.text}</p>
+                  </div>
+                ))}
+                
+                <div className="flex items-center gap-lg pt-md text-body-sm text-muted-foreground">
+                  <span>Total Spend: <strong className="text-foreground">${executiveSummary.totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></span>
+                  <span>Wasted: <strong className="text-destructive">${executiveSummary.totalWasted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></span>
+                  <span>Actions: <strong className="text-foreground">{executiveSummary.totalActions}</strong></span>
                 </div>
               </div>
             )}
           </DataCard>
 
-          {/* SECTION 2: KPI SNAPSHOT CARDS */}
+          {/* ACTIONS TO TAKE - Unified Table */}
           <DataCard>
             <DataCardHeader 
-              title="KPI Snapshot" 
-              description="Performance metrics by cluster or intent"
+              title={`Actions to Take (${unifiedActions.length})`}
+              description="All recommended changes in one place"
               action={
-                <div className="flex items-center gap-sm">
-                  <Button 
-                    variant={kpiView === 'cluster' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setKpiView('cluster')}
-                  >
-                    <Layers className="h-4 w-4 mr-xs" /> By Cluster
+                <div className="flex gap-xs">
+                  <Button variant="outline" size="sm" onClick={exportNegatives}>
+                    <Download className="h-4 w-4 mr-xs" /> Negatives CSV
                   </Button>
-                  <Button 
-                    variant={kpiView === 'intent' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setKpiView('intent')}
-                  >
-                    <Target className="h-4 w-4 mr-xs" /> By Intent
+                  <Button variant="outline" size="sm" onClick={exportMoves}>
+                    <Download className="h-4 w-4 mr-xs" /> Moves CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportAllActions}>
+                    <Download className="h-4 w-4 mr-xs" /> All Actions
                   </Button>
                 </div>
               }
             />
-            <ScrollArea className="pb-md">
-              <div className="flex gap-md overflow-x-auto pb-sm">
-                {(kpiView === 'cluster' ? clusterKPIs : intentKPIs).slice(0, 10).map(kpi => (
-                  <div 
-                    key={kpi.name} 
-                    className="min-w-[180px] p-md bg-elevated rounded-lg border border-border flex-shrink-0"
-                  >
-                    <Badge variant="secondary" className="text-metadata mb-sm truncate max-w-full">
-                      {kpi.name}
-                    </Badge>
-                    <div className="space-y-xs">
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">Spend</span>
-                        <span className="font-medium">${kpi.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                      </div>
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">Clicks</span>
-                        <span>{kpi.clicks.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">Conv.</span>
-                        <span>{kpi.conversions}</span>
-                      </div>
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">CPA</span>
-                        <span className={kpi.cpa && kpi.cpa > insightsConfig.maxCPA ? 'text-destructive font-medium' : ''}>
-                          {kpi.cpa !== null ? `$${kpi.cpa.toFixed(0)}` : '-'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">CTR</span>
-                        <span>{(kpi.ctr * 100).toFixed(2)}%</span>
-                      </div>
-                      <div className="flex justify-between text-body-sm">
-                        <span className="text-muted-foreground">% Spend</span>
-                        <span>{kpi.percentOfSpend.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </DataCard>
-
-          {/* SECTION 3: CONFIGURATION */}
-          <DataCard>
-            <DataCardHeader 
-              title="Configuration" 
-              description="Adjust thresholds for recommendations"
-            />
-            <div className="flex flex-wrap items-center gap-md">
-              <div className="flex items-center gap-xs">
-                <span className="text-body-sm text-muted-foreground">Min Cost for New AG:</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={insightsConfig.minCostForNewAdGroup}
-                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, minCostForNewAdGroup: parseInt(e.target.value) || 0 }))}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center gap-xs">
-                <span className="text-body-sm text-muted-foreground">Min Clicks:</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={insightsConfig.minClicksForNewAdGroup}
-                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, minClicksForNewAdGroup: parseInt(e.target.value) || 0 }))}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center gap-xs">
-                <span className="text-body-sm text-muted-foreground">Purity Threshold:</span>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={insightsConfig.purityThreshold}
-                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, purityThreshold: parseFloat(e.target.value) || 0.7 }))}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center gap-xs">
-                <span className="text-body-sm text-muted-foreground">Max CPA:</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={insightsConfig.maxCPA}
-                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, maxCPA: parseInt(e.target.value) || 500 }))}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center gap-xs">
-                <span className="text-body-sm text-muted-foreground">Low-Intent Handling:</span>
-                <Select 
-                  value={insightsConfig.lowIntentHandling} 
-                  onValueChange={(v: 'exclude' | 'isolate') => setInsightsConfig(prev => ({ ...prev, lowIntentHandling: v }))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="exclude">Exclude</SelectItem>
-                    <SelectItem value="isolate">Isolate</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </DataCard>
-
-          {/* SECTION 4: AD GROUPS NEEDING RESTRUCTURE */}
-          <DataCard>
-            <DataCardHeader 
-              title={`Ad Groups Needing Work (${adGroupsNeedingWork.length})`}
-              description="Ad groups with low purity scores need restructuring or negatives"
-            />
-            {adGroupsNeedingWork.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title="All ad groups look good"
-                description="No ad groups need restructuring based on current thresholds"
-              />
-            ) : (
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ad Group</TableHead>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead>Dominant Cluster</TableHead>
-                      <TableHead className="text-right">Purity</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Cost</TableHead>
-                      <TableHead className="text-right">Conv.</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {adGroupsNeedingWork.slice(0, 50).map((ag) => (
-                      <TableRow key={ag.ad_group_name}>
-                        <TableCell className="font-medium max-w-[180px] truncate">{ag.ad_group_name}</TableCell>
-                        <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
-                          {ag.campaign_name || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-metadata">{ag.dominant_cluster}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className={ag.purity_score < 0.7 ? 'text-destructive font-medium' : 'text-warning'}>
-                            {(ag.purity_score * 100).toFixed(0)}%
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={ag.status === 'Needs restructure' 
-                              ? 'bg-destructive/15 text-destructive border-destructive/30' 
-                              : 'bg-warning/15 text-warning border-warning/30'
-                            }
-                          >
-                            {ag.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">${ag.total_cost.toFixed(0)}</TableCell>
-                        <TableCell className="text-right">{ag.total_conversions}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </DataCard>
-
-          {/* SECTION 5: PROPOSED NEW AD GROUPS */}
-          <DataCard>
-            <DataCardHeader 
-              title={`Proposed New Ad Groups (${proposedAdGroups.length})`}
-              description="Suggested new ad groups based on cluster + intent patterns"
-            />
-            {proposedAdGroups.length === 0 ? (
+            {unifiedActions.length === 0 ? (
               <EmptyState
                 icon={Target}
-                title="No new ad groups proposed"
-                description="Current structure is efficient or no patterns meet thresholds"
+                title="No actions recommended"
+                description="Your account structure looks healthy based on current thresholds"
               />
             ) : (
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Proposed Name</TableHead>
-                      <TableHead>Cluster</TableHead>
-                      <TableHead>Intent</TableHead>
-                      <TableHead className="text-right">Est. Cost</TableHead>
-                      <TableHead className="text-right">Est. Clicks</TableHead>
-                      <TableHead>Source AGs</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {proposedAdGroups.slice(0, 30).map((p, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{p.proposed_ad_group_name}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-metadata">{p.cluster_primary}</Badge>
-                        </TableCell>
-                        <TableCell>{getIntentBadge(p.intent)}</TableCell>
-                        <TableCell className="text-right">${p.estimated_cost.toFixed(0)}</TableCell>
-                        <TableCell className="text-right">{p.estimated_clicks.toLocaleString()}</TableCell>
-                        <TableCell className="text-muted-foreground text-metadata max-w-[200px] truncate">
-                          {p.source_ad_groups.slice(0, 2).join(', ')}{p.source_ad_groups.length > 2 ? ` +${p.source_ad_groups.length - 2}` : ''}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </DataCard>
-
-          {/* SECTION 6: MOVE RECOMMENDATIONS */}
-          <DataCard>
-            <DataCardHeader 
-              title={`Move Recommendations (${moveRecommendations.length})`}
-              description="Terms that should be moved to different ad groups based on cluster mismatch"
-            />
-            {moveRecommendations.length === 0 ? (
-              <EmptyState
-                icon={ArrowRight}
-                title="No moves recommended"
-                description="Terms are correctly placed in their ad groups"
-              />
-            ) : (
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[500px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Search Term</TableHead>
-                      <TableHead>Current AG</TableHead>
-                      <TableHead>Proposed AG</TableHead>
-                      <TableHead>Cluster</TableHead>
+                      <TableHead>Current Location</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Target</TableHead>
+                      <TableHead>Reason</TableHead>
                       <TableHead className="text-right">Cost</TableHead>
                       <TableHead className="text-right">Conv.</TableHead>
+                      <TableHead className="text-right">Savings</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {moveRecommendations.slice(0, 50).map((m, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium max-w-[180px] truncate">{m.search_term}</TableCell>
-                        <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
-                          {m.current_ad_group || '-'}
+                    {unifiedActions.slice(0, 100).map((action) => (
+                      <TableRow key={action.id}>
+                        <TableCell className="font-medium max-w-[180px] truncate">{action.search_term}</TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
+                          {action.current_campaign ? `${action.current_campaign}` : '-'}
+                          {action.current_ad_group ? ` / ${action.current_ad_group}` : ''}
                         </TableCell>
-                        <TableCell className="text-primary font-medium max-w-[180px] truncate">
-                          {m.proposed_ad_group}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-metadata">{m.cluster_primary}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">${m.cost.toFixed(0)}</TableCell>
-                        <TableCell className="text-right">{m.conversions}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </DataCard>
-
-          {/* SECTION 7: NEGATIVE SUGGESTIONS */}
-          <DataCard>
-            <DataCardHeader 
-              title={`Negative Suggestions (${negativeRecommendations.length})`}
-              description="Terms to add as negatives based on intent, performance, or structure"
-            />
-            {negativeRecommendations.length === 0 ? (
-              <EmptyState
-                icon={AlertTriangle}
-                title="No negatives recommended"
-                description="No problematic terms identified at current thresholds"
-              />
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Negative Text</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Scope</TableHead>
-                      <TableHead>Campaign / AG</TableHead>
-                      <TableHead>Rationale</TableHead>
-                      <TableHead className="text-right">Cost</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {negativeRecommendations.slice(0, 100).map((n, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium max-w-[180px] truncate">{n.negative_text}</TableCell>
                         <TableCell>
                           <Badge 
                             className={
-                              n.negative_type === 'no_money_intent' ? 'bg-destructive/15 text-destructive border-destructive/30' :
-                              n.negative_type === 'login_intent' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
-                              n.negative_type === 'performance' ? 'bg-warning/15 text-warning border-warning/30' :
-                              n.negative_type === 'structural_leakage' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
-                              'bg-muted text-muted-foreground'
+                              action.action_type === 'add_negative' ? 'bg-destructive/15 text-destructive border-destructive/30' :
+                              action.action_type === 'move_term' ? 'bg-warning/15 text-warning border-warning/30' :
+                              'bg-success/15 text-success border-success/30'
                             }
                           >
-                            {n.negative_type.replace(/_/g, ' ')}
+                            {action.action_type === 'add_negative' ? 'Add Negative' : 
+                             action.action_type === 'move_term' ? 'Move' : 'Create AG'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-metadata">{n.scope}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
-                          {n.target_campaign || '-'}{n.target_ad_group ? ` / ${n.target_ad_group}` : ''}
+                        <TableCell className="text-primary font-medium max-w-[150px] truncate">
+                          {action.target}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-metadata max-w-[200px] truncate">
-                          {n.rationale}
+                          {action.reason}
                         </TableCell>
-                        <TableCell className="text-right">${n.evidence_cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">${action.cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{action.conversions}</TableCell>
+                        <TableCell className="text-right text-success font-medium">
+                          {action.estimated_savings > 0 ? `$${action.estimated_savings.toFixed(0)}` : '-'}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

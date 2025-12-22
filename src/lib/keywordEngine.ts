@@ -239,10 +239,17 @@ const HEADER_VARIANTS = {
 };
 
 const TOTAL_ROW_PATTERNS = [
-  /^total:?$/i,
+  /^total:?\s*$/i,
   /^total$/i,
   /^الإجمالي/,
   /^المجموع/,
+  /^الاجمالي/,
+  /^اجمالي/,
+  /^مجموع/,
+  /^\s*$/,
+  /^--/,
+  /^grand total/i,
+  /^subtotal/i,
 ];
 
 function parseCSVLine(line: string): string[] {
