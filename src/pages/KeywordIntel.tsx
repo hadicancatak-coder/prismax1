@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save } from "lucide-react";
+import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save, Settings2, RotateCcw, ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataCard, DataCardHeader } from "@/components/layout/DataCard";
@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useKeywordLists } from "@/hooks/useKeywordLists";
 import { SaveKeywordListDialog } from "@/components/keyword-intel/SaveKeywordListDialog";
@@ -37,19 +40,42 @@ interface KeywordRow {
   conversions: number;
   cost_per_conv: number;
   opportunity_score?: number;
+  theme_cluster?: string;
+  score_components?: {
+    ctr_score: number;
+    conv_score: number;
+    cpa_score: number;
+  };
 }
 
-interface KeywordCluster {
-  id: string;
+interface ThemeRule {
   name: string;
-  campaign: string;
-  adGroup: string;
+  tokens: string[];
+  priority: number;
+}
+
+interface ThemeCluster {
+  name: string;
   keywords: KeywordRow[];
   totalImpressions: number;
   totalClicks: number;
   totalCost: number;
+  totalConversions: number;
+  avgCTR: number;
+  avgCPA: number;
   avgScore: number;
 }
+
+// Default theme rules for trading company
+const DEFAULT_THEME_RULES: ThemeRule[] = [
+  { name: 'Gold', tokens: ['gold', 'xau', 'xauusd', 'bullion'], priority: 100 },
+  { name: 'Oil', tokens: ['oil', 'wti', 'brent', 'crude'], priority: 90 },
+  { name: 'Forex', tokens: ['forex', 'fx', 'currency', 'eurusd', 'gbpusd', 'usdjpy', 'eur/usd', 'gbp/usd', 'usd/jpy'], priority: 80 },
+  { name: 'Crypto', tokens: ['crypto', 'bitcoin', 'btc', 'ethereum', 'eth', 'cryptocurrency'], priority: 70 },
+  { name: 'Stocks', tokens: ['stocks', 'shares', 'equities', 'nasdaq', 'sp500', 's&p500', 'stock'], priority: 60 },
+  { name: 'Indices', tokens: ['index', 'indices', 'dow', 'ftse', 'dax', 'nikkei'], priority: 50 },
+  { name: 'Trading', tokens: ['trading', 'trade', 'broker', 'platform', 'cfd', 'spread'], priority: 40 },
+];
 
 // Column mappings for flexible header matching
 const COLUMN_MAPPINGS: Record<string, string[]> = {
@@ -134,7 +160,12 @@ export default function KeywordIntel() {
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [adGroupFilter, setAdGroupFilter] = useState<string>("all");
   const [matchTypeFilter, setMatchTypeFilter] = useState<string>("all");
+  const [themeFilter, setThemeFilter] = useState<string>("all");
   const [minScore, setMinScore] = useState<number>(0);
+  
+  // Theme rules state (local, editable)
+  const [themeRules, setThemeRules] = useState<ThemeRule[]>(DEFAULT_THEME_RULES);
+  const [editingThemeRules, setEditingThemeRules] = useState<string>('');
 
   // Parse CSV line handling quoted values
   const parseCSVLine = (line: string): string[] => {
@@ -235,42 +266,123 @@ export default function KeywordIntel() {
     return { data, error: null };
   }, []);
 
-  // Calculate opportunity score - Updated for Google Ads data
-  const calculateOpportunityScore = useCallback((keyword: KeywordRow, avgCTR: number): number => {
-    let score = 0;
-
-    // 1. Impression Volume (0-40 points)
-    const impressionScore = Math.min(40, Math.log10(keyword.impressions + 1) * 10);
-    score += impressionScore;
-
-    // 2. CTR Gap Bonus (0-25 points)
-    if (keyword.ctr < avgCTR && avgCTR > 0) {
-      const ctrGap = (avgCTR - keyword.ctr) / avgCTR;
-      score += Math.min(25, ctrGap * 50);
-    }
-
-    // 3. Top Impression Potential (0-25 points) - lower top impr % = more room to improve
-    if (keyword.impr_top_pct < 0.5) {
-      score += Math.min(25, (0.5 - keyword.impr_top_pct) * 50);
-    }
-
-    // 4. Conversion Performance (0-10 points)
-    if (keyword.conversions > 0) {
-      score += Math.min(10, keyword.conversions * 2);
-    }
-
-    return Math.round(Math.min(100, score));
+  // Normalize keyword for theme matching
+  const normalizeKeyword = useCallback((keyword: string): string[] => {
+    return keyword
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s/]/g, ' ') // Keep slashes for pairs like eur/usd
+      .split(/\s+/)
+      .filter(Boolean);
   }, []);
 
-  // Score all keywords
+  // Get theme cluster for a keyword
+  const getThemeCluster = useCallback((keyword: string): string => {
+    const tokens = normalizeKeyword(keyword);
+    let matchedTheme: { name: string; priority: number } | null = null;
+
+    for (const rule of themeRules) {
+      for (const ruleToken of rule.tokens) {
+        // Check if any keyword token matches (contains) the rule token
+        const found = tokens.some(t => t.includes(ruleToken) || ruleToken.includes(t));
+        if (found) {
+          if (!matchedTheme || rule.priority > matchedTheme.priority) {
+            matchedTheme = { name: rule.name, priority: rule.priority };
+          }
+        }
+      }
+    }
+
+    return matchedTheme?.name || 'Other';
+  }, [themeRules, normalizeKeyword]);
+
+  // Calculate opportunity score - NEW: weighted CTR + Conv + CPA
+  const calculateOpportunityScore = useCallback((
+    keyword: KeywordRow, 
+    stats: { minCTR: number; maxCTR: number; minConv: number; maxConv: number; minCPA: number; maxCPA: number }
+  ): { score: number; components: { ctr_score: number; conv_score: number; cpa_score: number } } => {
+    
+    // Normalize CTR (higher is better) 0-100
+    let ctr_score = 50; // neutral if can't compute
+    if (stats.maxCTR > stats.minCTR) {
+      ctr_score = ((keyword.ctr - stats.minCTR) / (stats.maxCTR - stats.minCTR)) * 100;
+    } else if (keyword.ctr > 0) {
+      ctr_score = 75; // some CTR is good
+    }
+
+    // Normalize Conversions (higher is better) 0-100
+    let conv_score = 50; // neutral if missing
+    if (stats.maxConv > stats.minConv) {
+      conv_score = ((keyword.conversions - stats.minConv) / (stats.maxConv - stats.minConv)) * 100;
+    } else if (keyword.conversions > 0) {
+      conv_score = 75;
+    }
+
+    // Compute CPA if possible
+    let cpa = keyword.cost_per_conv;
+    if (!cpa && keyword.cost > 0 && keyword.conversions > 0) {
+      cpa = keyword.cost / keyword.conversions;
+    }
+
+    // Normalize CPA (lower is better, so invert) 0-100
+    let cpa_score = 50; // neutral if missing
+    if (cpa !== undefined && cpa > 0 && stats.maxCPA > stats.minCPA) {
+      // Invert: lower CPA = higher score
+      cpa_score = 100 - ((cpa - stats.minCPA) / (stats.maxCPA - stats.minCPA)) * 100;
+    } else if (cpa === 0 || (keyword.conversions > 0 && keyword.cost === 0)) {
+      cpa_score = 100; // free conversions!
+    }
+
+    // Clamp scores to 0-100
+    ctr_score = Math.max(0, Math.min(100, ctr_score));
+    conv_score = Math.max(0, Math.min(100, conv_score));
+    cpa_score = Math.max(0, Math.min(100, cpa_score));
+
+    // Weighted final score
+    const score = Math.round(0.35 * ctr_score + 0.35 * conv_score + 0.30 * cpa_score);
+
+    return {
+      score,
+      components: {
+        ctr_score: Math.round(ctr_score),
+        conv_score: Math.round(conv_score),
+        cpa_score: Math.round(cpa_score),
+      }
+    };
+  }, []);
+
+  // Score all keywords with theme clustering
   const scoredData = useMemo(() => {
     if (parsedData.length === 0) return [];
-    const avgCTR = parsedData.reduce((sum, k) => sum + k.ctr, 0) / parsedData.length;
-    return parsedData.map(kw => ({
-      ...kw,
-      opportunity_score: calculateOpportunityScore(kw, avgCTR)
-    }));
-  }, [parsedData, calculateOpportunityScore]);
+
+    // Compute dataset statistics for normalization
+    const ctrs = parsedData.map(k => k.ctr).filter(v => v > 0);
+    const convs = parsedData.map(k => k.conversions).filter(v => v > 0);
+    const cpas = parsedData.map(k => {
+      if (k.cost_per_conv > 0) return k.cost_per_conv;
+      if (k.conversions > 0 && k.cost > 0) return k.cost / k.conversions;
+      return 0;
+    }).filter(v => v > 0);
+
+    const stats = {
+      minCTR: ctrs.length > 0 ? Math.min(...ctrs) : 0,
+      maxCTR: ctrs.length > 0 ? Math.max(...ctrs) : 0,
+      minConv: convs.length > 0 ? Math.min(...convs) : 0,
+      maxConv: convs.length > 0 ? Math.max(...convs) : 0,
+      minCPA: cpas.length > 0 ? Math.min(...cpas) : 0,
+      maxCPA: cpas.length > 0 ? Math.max(...cpas) : 0,
+    };
+
+    return parsedData.map(kw => {
+      const { score, components } = calculateOpportunityScore(kw, stats);
+      return {
+        ...kw,
+        opportunity_score: score,
+        score_components: components,
+        theme_cluster: getThemeCluster(kw.keyword),
+      };
+    });
+  }, [parsedData, calculateOpportunityScore, getThemeCluster]);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -278,10 +390,11 @@ export default function KeywordIntel() {
       if (campaignFilter !== "all" && kw.campaign !== campaignFilter) return false;
       if (adGroupFilter !== "all" && kw.ad_group !== adGroupFilter) return false;
       if (matchTypeFilter !== "all" && kw.match_type !== matchTypeFilter) return false;
+      if (themeFilter !== "all" && kw.theme_cluster !== themeFilter) return false;
       if (kw.opportunity_score !== undefined && kw.opportunity_score < minScore) return false;
       return true;
     }).sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0));
-  }, [scoredData, campaignFilter, adGroupFilter, matchTypeFilter, minScore]);
+  }, [scoredData, campaignFilter, adGroupFilter, matchTypeFilter, themeFilter, minScore]);
 
   // Get unique values for filters
   const uniqueCampaigns = useMemo(() => 
@@ -296,36 +409,85 @@ export default function KeywordIntel() {
     [...new Set(scoredData.map(k => k.match_type).filter(Boolean))].sort(), 
     [scoredData]
   );
+  const uniqueThemes = useMemo(() => 
+    [...new Set(scoredData.map(k => k.theme_cluster).filter(Boolean))].sort(), 
+    [scoredData]
+  );
 
-  // Cluster keywords - by Campaign + Ad Group + stem
-  const clusters = useMemo((): KeywordCluster[] => {
+  // Cluster keywords by theme
+  const themeClusters = useMemo((): ThemeCluster[] => {
     const clusterMap = new Map<string, KeywordRow[]>();
 
     filteredData.forEach(kw => {
-      const campaignKey = kw.campaign || 'no-campaign';
-      const adGroupKey = kw.ad_group || 'no-adgroup';
-      const stem = kw.keyword.split(' ').slice(0, 2).join(' ').toLowerCase();
-      const clusterKey = `${campaignKey}|${adGroupKey}|${stem}`;
-
-      if (!clusterMap.has(clusterKey)) clusterMap.set(clusterKey, []);
-      clusterMap.get(clusterKey)!.push(kw);
+      const theme = kw.theme_cluster || 'Other';
+      if (!clusterMap.has(theme)) clusterMap.set(theme, []);
+      clusterMap.get(theme)!.push(kw);
     });
 
     return Array.from(clusterMap.entries())
-      .map(([key, items]) => ({
-        id: key,
-        name: items[0].keyword.split(' ').slice(0, 2).join(' '),
-        campaign: items[0].campaign,
-        adGroup: items[0].ad_group,
-        keywords: items,
-        totalImpressions: items.reduce((sum, k) => sum + k.impressions, 0),
-        totalClicks: items.reduce((sum, k) => sum + k.clicks, 0),
-        totalCost: items.reduce((sum, k) => sum + k.cost, 0),
-        avgScore: items.reduce((sum, k) => sum + (k.opportunity_score || 0), 0) / items.length,
-      }))
-      .filter(c => c.keywords.length > 1)
-      .sort((a, b) => b.avgScore - a.avgScore);
+      .map(([name, items]) => {
+        const totalImpressions = items.reduce((sum, k) => sum + k.impressions, 0);
+        const totalClicks = items.reduce((sum, k) => sum + k.clicks, 0);
+        const totalCost = items.reduce((sum, k) => sum + k.cost, 0);
+        const totalConversions = items.reduce((sum, k) => sum + k.conversions, 0);
+        const avgCTR = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+        const avgCPA = totalConversions > 0 ? totalCost / totalConversions : 0;
+        const avgScore = items.reduce((sum, k) => sum + (k.opportunity_score || 0), 0) / items.length;
+
+        return {
+          name,
+          keywords: items.sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0)),
+          totalImpressions,
+          totalClicks,
+          totalCost,
+          totalConversions,
+          avgCTR,
+          avgCPA,
+          avgScore,
+        };
+      })
+      .sort((a, b) => b.totalImpressions - a.totalImpressions);
   }, [filteredData]);
+
+  // Theme rules editor helpers
+  const openThemeEditor = () => {
+    const rulesText = themeRules
+      .map(r => `${r.name}: ${r.tokens.join(', ')} [${r.priority}]`)
+      .join('\n');
+    setEditingThemeRules(rulesText);
+  };
+
+  const parseThemeRulesText = (text: string): ThemeRule[] => {
+    const rules: ThemeRule[] = [];
+    const lines = text.split('\n').filter(l => l.trim());
+    
+    for (const line of lines) {
+      // Format: "Theme Name: token1, token2, token3 [priority]"
+      const match = line.match(/^(.+?):\s*(.+?)\s*(?:\[(\d+)\])?$/);
+      if (match) {
+        const name = match[1].trim();
+        const tokens = match[2].split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+        const priority = match[3] ? parseInt(match[3]) : (rules.length + 1) * 10;
+        if (name && tokens.length > 0) {
+          rules.push({ name, tokens, priority });
+        }
+      }
+    }
+    
+    return rules.length > 0 ? rules : themeRules;
+  };
+
+  const saveThemeRules = () => {
+    const parsed = parseThemeRulesText(editingThemeRules);
+    setThemeRules(parsed);
+    toast({ title: "Theme rules updated", description: `${parsed.length} themes configured` });
+  };
+
+  const resetThemeRules = () => {
+    setThemeRules(DEFAULT_THEME_RULES);
+    setEditingThemeRules('');
+    toast({ title: "Theme rules reset to defaults" });
+  };
 
   // Generate keyword ideas
   const generatedIdeas = useMemo(() => {
@@ -376,17 +538,20 @@ export default function KeywordIntel() {
 
   // Export to CSV
   const exportCSV = () => {
-    const headers = ['Keyword', 'Opportunity Score', 'Campaign', 'Ad Group', 'Match Type', 'Clicks', 'Impressions', 'CTR', 'Top Impr %', 'Cost', 'Conversions'];
+    const headers = ['Keyword', 'Theme Cluster', 'Opportunity Score', 'CTR Score', 'Conv Score', 'CPA Score', 'Campaign', 'Ad Group', 'Match Type', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
     const rows = filteredData.map(k => [
       `"${k.keyword}"`,
+      k.theme_cluster || 'Other',
       k.opportunity_score || 0,
+      k.score_components?.ctr_score || 50,
+      k.score_components?.conv_score || 50,
+      k.score_components?.cpa_score || 50,
       `"${k.campaign}"`,
       `"${k.ad_group}"`,
       k.match_type,
       k.clicks,
       k.impressions,
       (k.ctr * 100).toFixed(2) + '%',
-      (k.impr_top_pct * 100).toFixed(1) + '%',
       k.cost.toFixed(2),
       k.conversions
     ].join(','));
@@ -402,9 +567,10 @@ export default function KeywordIntel() {
   };
 
   const copyTable = () => {
-    const headers = ['Keyword', 'Score', 'Campaign', 'Ad Group', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
+    const headers = ['Keyword', 'Theme', 'Score', 'Campaign', 'Ad Group', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
     const rows = filteredData.map(k => [
       k.keyword,
+      k.theme_cluster || 'Other',
       k.opportunity_score || 0,
       k.campaign,
       k.ad_group,
@@ -605,6 +771,20 @@ export default function KeywordIntel() {
               </Select>
             )}
 
+            {uniqueThemes.length > 0 && (
+              <Select value={themeFilter} onValueChange={setThemeFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Themes</SelectItem>
+                  {uniqueThemes.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <div className="flex items-center gap-xs">
               <span className="text-body-sm text-muted-foreground">Min Score:</span>
               <Input
@@ -637,12 +817,12 @@ export default function KeywordIntel() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Search Term</TableHead>
+                    <TableHead>Theme</TableHead>
                     <TableHead>Score</TableHead>
                     <TableHead>Campaign</TableHead>
                     <TableHead>Clicks</TableHead>
                     <TableHead>Impr.</TableHead>
                     <TableHead>CTR</TableHead>
-                    <TableHead>Top Impr %</TableHead>
                     <TableHead>Cost</TableHead>
                     <TableHead>Conv.</TableHead>
                   </TableRow>
@@ -651,12 +831,29 @@ export default function KeywordIntel() {
                   {filteredData.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium max-w-[200px] truncate">{row.keyword}</TableCell>
-                      <TableCell>{getScoreBadge(row.opportunity_score || 0)}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-metadata">
+                          {row.theme_cluster || 'Other'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            {getScoreBadge(row.opportunity_score || 0)}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="text-metadata space-y-xs">
+                              <p>CTR Score: {row.score_components?.ctr_score ?? 50}</p>
+                              <p>Conv Score: {row.score_components?.conv_score ?? 50}</p>
+                              <p>CPA Score: {row.score_components?.cpa_score ?? 50}</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell className="max-w-[150px] truncate text-muted-foreground">{row.campaign}</TableCell>
                       <TableCell>{row.clicks.toLocaleString()}</TableCell>
                       <TableCell>{row.impressions.toLocaleString()}</TableCell>
                       <TableCell>{(row.ctr * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{(row.impr_top_pct * 100).toFixed(1)}%</TableCell>
                       <TableCell>${row.cost.toFixed(2)}</TableCell>
                       <TableCell>{row.conversions}</TableCell>
                     </TableRow>
@@ -667,60 +864,202 @@ export default function KeywordIntel() {
           </DataCard>
         </TabsContent>
 
-        <TabsContent value="clusters" className="mt-lg">
+        <TabsContent value="clusters" className="mt-lg space-y-md">
+          {/* Theme Rules Editor */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-md">
+              <span className="text-body-sm text-muted-foreground">
+                {themeClusters.length} theme clusters from {filteredData.length} keywords
+              </span>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" onClick={openThemeEditor}>
+                  <Settings2 className="h-4 w-4 mr-xs" /> Theme Rules
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px]" align="end">
+                <div className="space-y-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-body-sm">Edit Theme Rules</span>
+                    <Button variant="ghost" size="sm" onClick={resetThemeRules}>
+                      <RotateCcw className="h-3 w-3 mr-xs" /> Reset
+                    </Button>
+                  </div>
+                  <p className="text-metadata text-muted-foreground">
+                    Format: Theme Name: token1, token2 [priority]
+                  </p>
+                  <Textarea
+                    value={editingThemeRules}
+                    onChange={(e) => setEditingThemeRules(e.target.value)}
+                    rows={10}
+                    className="font-mono text-metadata"
+                    placeholder="Gold: gold, xau, xauusd [100]&#10;Oil: oil, wti, brent [90]"
+                  />
+                  <Button size="sm" className="w-full" onClick={saveThemeRules}>
+                    Save Rules
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Cluster Summary Table */}
           <DataCard>
             <DataCardHeader 
-              title={`Search Term Clusters (${clusters.length})`} 
-              description="Search terms grouped by campaign, ad group, and shared stem"
+              title="Theme Clusters Summary" 
+              description="Keywords grouped by trading themes (Gold, Oil, Forex, etc.)"
             />
-            {clusters.length === 0 ? (
+            {themeClusters.length === 0 ? (
               <EmptyState
                 icon={Layers}
                 title="No clusters found"
-                description="Clusters require at least 2 search terms with shared characteristics"
+                description="Upload keyword data to see theme clusters"
               />
             ) : (
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-sm">
-                  {clusters.map(cluster => (
-                    <Collapsible key={cluster.id}>
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-md bg-elevated rounded-lg border border-border hover:bg-card-hover transition-smooth">
-                          <div className="flex items-center gap-md">
-                            <Layers className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{cluster.name}</span>
-                            <Badge variant="secondary">{cluster.keywords.length} terms</Badge>
-                          </div>
-                          <div className="flex items-center gap-md text-body-sm text-muted-foreground">
-                            <span>{cluster.totalImpressions.toLocaleString()} impr.</span>
-                            <span>{cluster.totalClicks.toLocaleString()} clicks</span>
-                            <span>${cluster.totalCost.toFixed(2)}</span>
-                            {getScoreBadge(Math.round(cluster.avgScore))}
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <div className="mt-xs ml-lg border-l-2 border-border pl-md">
-                          <p className="text-metadata text-muted-foreground py-xs">
-                            {cluster.campaign} / {cluster.adGroup}
-                          </p>
-                          {cluster.keywords.map((kw, i) => (
-                            <div key={i} className="py-xs flex items-center justify-between text-body-sm">
-                              <span>{kw.keyword}</span>
-                              <div className="flex items-center gap-md text-muted-foreground">
-                                <span>{kw.match_type}</span>
-                                <span>{kw.impressions.toLocaleString()}</span>
-                                {getScoreBadge(kw.opportunity_score || 0)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
+              <ScrollArea className="h-auto max-h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Theme</TableHead>
+                      <TableHead className="text-right"># Keywords</TableHead>
+                      <TableHead className="text-right">Impressions</TableHead>
+                      <TableHead className="text-right">Clicks</TableHead>
+                      <TableHead className="text-right">CTR</TableHead>
+                      <TableHead className="text-right">Cost</TableHead>
+                      <TableHead className="text-right">Conv.</TableHead>
+                      <TableHead className="text-right">Avg CPA</TableHead>
+                      <TableHead className="text-right">Avg Score</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {themeClusters.map((cluster) => (
+                      <TableRow key={cluster.name}>
+                        <TableCell>
+                          <Badge variant={cluster.name === 'Other' ? 'secondary' : 'default'} className={
+                            cluster.name === 'Gold' ? 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30' :
+                            cluster.name === 'Oil' ? 'bg-orange-500/15 text-orange-600 border-orange-500/30' :
+                            cluster.name === 'Forex' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
+                            cluster.name === 'Crypto' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
+                            cluster.name === 'Stocks' ? 'bg-green-500/15 text-green-600 border-green-500/30' :
+                            cluster.name === 'Indices' ? 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30' :
+                            cluster.name === 'Trading' ? 'bg-pink-500/15 text-pink-600 border-pink-500/30' :
+                            ''
+                          }>
+                            {cluster.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{cluster.keywords.length}</TableCell>
+                        <TableCell className="text-right">{cluster.totalImpressions.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{cluster.totalClicks.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{(cluster.avgCTR * 100).toFixed(2)}%</TableCell>
+                        <TableCell className="text-right">${cluster.totalCost.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{cluster.totalConversions}</TableCell>
+                        <TableCell className="text-right">
+                          {cluster.avgCPA > 0 ? `$${cluster.avgCPA.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">{getScoreBadge(Math.round(cluster.avgScore))}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </ScrollArea>
             )}
+          </DataCard>
+
+          {/* Cluster Drilldown */}
+          <DataCard>
+            <DataCardHeader 
+              title="Cluster Drilldown" 
+              description="Expand each theme to see member keywords"
+            />
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-sm">
+                {themeClusters.map(cluster => (
+                  <Collapsible key={cluster.name}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between p-md bg-elevated rounded-lg border border-border hover:bg-card-hover transition-smooth">
+                        <div className="flex items-center gap-md">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-90" />
+                          <Badge variant={cluster.name === 'Other' ? 'secondary' : 'default'} className={
+                            cluster.name === 'Gold' ? 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30' :
+                            cluster.name === 'Oil' ? 'bg-orange-500/15 text-orange-600 border-orange-500/30' :
+                            cluster.name === 'Forex' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
+                            cluster.name === 'Crypto' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
+                            cluster.name === 'Stocks' ? 'bg-green-500/15 text-green-600 border-green-500/30' :
+                            cluster.name === 'Indices' ? 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30' :
+                            cluster.name === 'Trading' ? 'bg-pink-500/15 text-pink-600 border-pink-500/30' :
+                            ''
+                          }>
+                            {cluster.name}
+                          </Badge>
+                          <span className="text-body-sm text-muted-foreground">
+                            {cluster.keywords.length} keywords
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-md text-body-sm text-muted-foreground">
+                          <span>{cluster.totalImpressions.toLocaleString()} impr.</span>
+                          <span>{cluster.totalClicks.toLocaleString()} clicks</span>
+                          <span>${cluster.totalCost.toFixed(2)}</span>
+                          {getScoreBadge(Math.round(cluster.avgScore))}
+                        </div>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="mt-xs border border-border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-subtle">
+                              <TableHead>Keyword</TableHead>
+                              <TableHead>Score</TableHead>
+                              <TableHead className="text-right">Clicks</TableHead>
+                              <TableHead className="text-right">Impr.</TableHead>
+                              <TableHead className="text-right">CTR</TableHead>
+                              <TableHead className="text-right">Conv.</TableHead>
+                              <TableHead className="text-right">CPA</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cluster.keywords.slice(0, 20).map((kw, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="font-medium max-w-[250px] truncate">{kw.keyword}</TableCell>
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      {getScoreBadge(kw.opportunity_score || 0)}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="text-metadata space-y-xs">
+                                        <p>CTR Score: {kw.score_components?.ctr_score ?? 50}</p>
+                                        <p>Conv Score: {kw.score_components?.conv_score ?? 50}</p>
+                                        <p>CPA Score: {kw.score_components?.cpa_score ?? 50}</p>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell className="text-right">{kw.clicks}</TableCell>
+                                <TableCell className="text-right">{kw.impressions.toLocaleString()}</TableCell>
+                                <TableCell className="text-right">{(kw.ctr * 100).toFixed(2)}%</TableCell>
+                                <TableCell className="text-right">{kw.conversions}</TableCell>
+                                <TableCell className="text-right">
+                                  {kw.cost_per_conv > 0 ? `$${kw.cost_per_conv.toFixed(2)}` : 
+                                   (kw.conversions > 0 && kw.cost > 0) ? `$${(kw.cost / kw.conversions).toFixed(2)}` : '-'}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        {cluster.keywords.length > 20 && (
+                          <div className="p-sm text-center text-metadata text-muted-foreground border-t border-border">
+                            +{cluster.keywords.length - 20} more keywords
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </ScrollArea>
           </DataCard>
         </TabsContent>
 
