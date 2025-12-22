@@ -194,6 +194,10 @@ export default function KeywordIntel() {
       if (!line) continue;
 
       const values = parseCSVLine(line);
+      
+      // Skip "Total" summary rows
+      const firstValue = values[0]?.toLowerCase().trim();
+      if (firstValue === 'total' || firstValue === 'totals') continue;
 
       const getValue = (field: string): string => {
         const idx = colMap[field];
