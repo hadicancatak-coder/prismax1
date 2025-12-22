@@ -952,12 +952,17 @@ export default function KeywordIntel() {
                       }`}
                       onClick={() => selectCluster(cluster.id)}
                     >
-                      <div className="flex items-center gap-sm">
+                      <div className="flex items-center gap-sm flex-1 min-w-0">
                         <span className="text-metadata text-muted-foreground w-4">{idx + 1}.</span>
-                        <span className="font-medium text-body-sm">{cluster.name}</span>
-                        <Badge variant="secondary" className="text-metadata">
-                          {cluster.words.length} words
-                        </Badge>
+                        <span className="font-medium text-body-sm truncate">{cluster.name}</span>
+                        <div className="flex items-center gap-xs">
+                          <Badge variant="outline" className="text-metadata" title="Match terms defined for this cluster">
+                            {cluster.words.length} tokens
+                          </Badge>
+                          <Badge variant="secondary" className="text-metadata" title="Keywords matched to this cluster">
+                            {parsedData.filter(k => k.cluster === cluster.name).length} matches
+                          </Badge>
+                        </div>
                       </div>
                       <div className="flex items-center gap-xs">
                         <Button 
@@ -1051,7 +1056,7 @@ export default function KeywordIntel() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cluster</TableHead>
-                      <TableHead className="text-right"># Keywords</TableHead>
+                      <TableHead className="text-right"># Matched</TableHead>
                       <TableHead className="text-right">Impressions</TableHead>
                       <TableHead className="text-right">Clicks</TableHead>
                       <TableHead className="text-right">CTR</TableHead>
