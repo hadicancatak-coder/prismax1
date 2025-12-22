@@ -121,6 +121,7 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   const [task, setTask] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [blockerDialogOpen, setBlockerDialogOpen] = useState(false);
   const [blocker, setBlocker] = useState<any>(null);
   const [loadedFailureReason, setLoadedFailureReason] = useState<string | null>(null);
@@ -506,28 +507,34 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !taskId) return;
+    if (!newComment.trim() || !taskId || isSubmittingComment) return;
 
-    const { data: newCommentData, error } = await supabase
-      .from("comments")
-      .insert({
-        task_id: taskId,
-        author_id: user!.id,
-        body: newComment.trim(),
-      })
-      .select('id')
-      .single();
+    setIsSubmittingComment(true);
+    const commentText = newComment.trim();
+    
+    try {
+      const { data: newCommentData, error } = await supabase
+        .from("comments")
+        .insert({
+          task_id: taskId,
+          author_id: user!.id,
+          body: commentText,
+        })
+        .select('id')
+        .single();
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add comment",
-        variant: "destructive",
-      });
-    } else {
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add comment",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Parse @mentions and insert into comment_mentions table for notifications
       const mentionRegex = /@(\w+)/g;
-      const mentions = [...newComment.matchAll(mentionRegex)];
+      const mentions = [...commentText.matchAll(mentionRegex)];
       
       if (mentions.length > 0 && newCommentData?.id) {
         const mentionInserts = mentions
@@ -555,6 +562,8 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -1259,10 +1268,10 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
                       size="sm" 
                       variant="default"
                       onClick={handleAddComment}
-                      disabled={!newComment.trim()}
+                      disabled={!newComment.trim() || isSubmittingComment}
                     >
                       <Send className="h-3.5 w-3.5" />
-                      Send
+                      {isSubmittingComment ? 'Sending...' : 'Send'}
                     </Button>
                   </div>
                 </div>
