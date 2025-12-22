@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save, Settings2, RotateCcw, ChevronRight, Sparkles, Check, X } from "lucide-react";
+import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save, Settings2, RotateCcw, ChevronRight, Sparkles, Check, X, Zap, BarChart3, Target, AlertTriangle, ArrowRight } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataCard, DataCardHeader } from "@/components/layout/DataCard";
@@ -27,6 +27,25 @@ import {
   type LeakageSuggestion,
   CLUSTER_TAXONOMY,
 } from "@/lib/keywordEngine";
+import {
+  computeAdGroupStats,
+  generateNegativeRecommendations,
+  generateStructuralLeakageNegatives,
+  generateMoveRecommendations,
+  proposeNewAdGroups,
+  generateExecutiveBrief,
+  computeClusterKPIs,
+  computeIntentKPIs,
+  exportNegativesSuggestionsCSV,
+  exportProposedChangesCSV,
+  exportNewAdGroupsPlanCSV,
+  DEFAULT_INSIGHTS_CONFIG,
+  type InsightsConfig,
+  type AdGroupStats,
+  type NegativeRecommendation,
+  type MoveRecommendation,
+  type ProposedAdGroup,
+} from "@/lib/keywordInsights";
 
 // Types for UI state
 interface ClusterSummary {
@@ -92,6 +111,10 @@ export default function KeywordIntel() {
   const [suggestionAlias, setSuggestionAlias] = useState('');
   const [suggestionCluster, setSuggestionCluster] = useState('');
   const [suggestionPattern, setSuggestionPattern] = useState('');
+
+  // Insights config state
+  const [insightsConfig, setInsightsConfig] = useState<InsightsConfig>(DEFAULT_INSIGHTS_CONFIG);
+  const [kpiView, setKpiView] = useState<'cluster' | 'intent'>('cluster');
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -178,6 +201,69 @@ export default function KeywordIntel() {
 
     return Array.from(ideas);
   }, [processedData]);
+
+  // =====================================================
+  // INSIGHTS COMPUTATIONS
+  // =====================================================
+  
+  const adGroupStats = useMemo(() => 
+    computeAdGroupStats(processedData), 
+    [processedData]
+  );
+  
+  const negativeRecommendations = useMemo(() => {
+    const baseNegatives = generateNegativeRecommendations(processedData, insightsConfig);
+    const structuralNegatives = generateStructuralLeakageNegatives(processedData, adGroupStats, insightsConfig);
+    // Merge and dedupe by negative_text
+    const seen = new Set<string>();
+    const combined: NegativeRecommendation[] = [];
+    for (const n of [...baseNegatives, ...structuralNegatives]) {
+      if (!seen.has(n.negative_text)) {
+        seen.add(n.negative_text);
+        combined.push(n);
+      }
+    }
+    return combined.sort((a, b) => b.evidence_cost - a.evidence_cost);
+  }, [processedData, adGroupStats, insightsConfig]);
+  
+  const moveRecommendations = useMemo(() => 
+    generateMoveRecommendations(processedData, adGroupStats, insightsConfig), 
+    [processedData, adGroupStats, insightsConfig]
+  );
+  
+  const proposedAdGroups = useMemo(() => 
+    proposeNewAdGroups(processedData, insightsConfig), 
+    [processedData, insightsConfig]
+  );
+  
+  const executiveBrief = useMemo(() => 
+    generateExecutiveBrief(processedData, negativeRecommendations, moveRecommendations, proposedAdGroups), 
+    [processedData, negativeRecommendations, moveRecommendations, proposedAdGroups]
+  );
+  
+  const clusterKPIs = useMemo(() => computeClusterKPIs(processedData), [processedData]);
+  const intentKPIs = useMemo(() => computeIntentKPIs(processedData), [processedData]);
+  
+  // Ad groups needing restructure
+  const adGroupsNeedingWork = useMemo(() => 
+    adGroupStats.filter(ag => ag.status !== 'OK'), 
+    [adGroupStats]
+  );
+
+  // Export handlers for insights
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportNegatives = () => downloadCSV(exportNegativesSuggestionsCSV(negativeRecommendations), 'negative_suggestions.csv');
+  const exportMoves = () => downloadCSV(exportProposedChangesCSV(moveRecommendations), 'proposed_ad_group_changes.csv');
+  const exportNewAdGroups = () => downloadCSV(exportNewAdGroupsPlanCSV(proposedAdGroups), 'new_ad_groups_plan.csv');
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -427,6 +513,9 @@ export default function KeywordIntel() {
           </TabsTrigger>
           <TabsTrigger value="ideas" className="gap-xs" disabled={!isUploaded}>
             <Lightbulb className="h-4 w-4" /> Ideas
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="gap-xs" disabled={!isUploaded}>
+            <Zap className="h-4 w-4" /> Insights & Actions
           </TabsTrigger>
           <TabsTrigger value="saved" className="gap-xs">
             <FolderOpen className="h-4 w-4" /> Saved Lists
@@ -1027,6 +1116,432 @@ export default function KeywordIntel() {
                     </div>
                   ))}
                 </div>
+              </ScrollArea>
+            )}
+          </DataCard>
+        </TabsContent>
+
+        {/* =====================================================
+            INSIGHTS & ACTIONS TAB
+        ===================================================== */}
+        <TabsContent value="insights" className="mt-lg space-y-lg">
+          {/* SECTION 1: EXECUTIVE BRIEF */}
+          <DataCard>
+            <DataCardHeader 
+              title="Executive Brief" 
+              description="Auto-generated summary based on your search term data"
+              action={
+                <div className="flex gap-xs">
+                  <Button variant="outline" size="sm" onClick={exportNegatives}>
+                    <Download className="h-4 w-4 mr-xs" /> Negatives CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportMoves}>
+                    <Download className="h-4 w-4 mr-xs" /> Moves CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportNewAdGroups}>
+                    <Download className="h-4 w-4 mr-xs" /> New AGs CSV
+                  </Button>
+                </div>
+              }
+            />
+            {processedData.length === 0 ? (
+              <EmptyState
+                icon={Zap}
+                title="No data to analyze"
+                description="Upload search term data to generate insights"
+              />
+            ) : (
+              <div className="space-y-md">
+                {/* Brief Text */}
+                <div className="p-md bg-elevated rounded-lg border border-border">
+                  <p className="text-body leading-relaxed">
+                    <strong>Top 3 clusters by spend:</strong>{' '}
+                    {executiveBrief.topClustersBySpend.map((c, i) => (
+                      <span key={c.name}>
+                        {c.name} (${c.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                        {i < 2 ? ', ' : ''}
+                      </span>
+                    ))}
+                    .{' '}
+                    <strong>Top by conversions:</strong>{' '}
+                    {executiveBrief.topClustersByConversions.map((c, i) => (
+                      <span key={c.name}>
+                        {c.name} ({c.conversions})
+                        {i < 2 ? ', ' : ''}
+                      </span>
+                    ))}
+                    .
+                  </p>
+                  <p className="text-body leading-relaxed mt-sm">
+                    {executiveBrief.worstCPACluster && (
+                      <>
+                        <strong>Worst CPA cluster:</strong>{' '}
+                        {executiveBrief.worstCPACluster.name}{' '}
+                        (CPA: ${executiveBrief.worstCPACluster.cpa === Infinity ? '∞' : executiveBrief.worstCPACluster.cpa.toFixed(0)}, 
+                        spend: ${executiveBrief.worstCPACluster.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}).{' '}
+                      </>
+                    )}
+                    <strong>Largest leakage source:</strong> {executiveBrief.largestLeakageSource}.
+                  </p>
+                  <p className="text-body leading-relaxed mt-sm">
+                    Identified <Badge className="bg-destructive/15 text-destructive border-destructive/30 mx-xs">{executiveBrief.negativeRecommendationsCount}</Badge> negatives,{' '}
+                    <Badge className="bg-warning/15 text-warning border-warning/30 mx-xs">{executiveBrief.moveRecommendationsCount}</Badge> moves,{' '}
+                    <Badge className="bg-success/15 text-success border-success/30 mx-xs">{executiveBrief.proposedNewAdGroupsCount}</Badge> new ad groups.{' '}
+                    <strong>Estimated wasted spend:</strong>{' '}
+                    <span className="text-destructive font-semibold">${executiveBrief.estimatedWastedSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    {' '}of ${executiveBrief.totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })} total.
+                  </p>
+                </div>
+              </div>
+            )}
+          </DataCard>
+
+          {/* SECTION 2: KPI SNAPSHOT CARDS */}
+          <DataCard>
+            <DataCardHeader 
+              title="KPI Snapshot" 
+              description="Performance metrics by cluster or intent"
+              action={
+                <div className="flex items-center gap-sm">
+                  <Button 
+                    variant={kpiView === 'cluster' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setKpiView('cluster')}
+                  >
+                    <Layers className="h-4 w-4 mr-xs" /> By Cluster
+                  </Button>
+                  <Button 
+                    variant={kpiView === 'intent' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setKpiView('intent')}
+                  >
+                    <Target className="h-4 w-4 mr-xs" /> By Intent
+                  </Button>
+                </div>
+              }
+            />
+            <ScrollArea className="pb-md">
+              <div className="flex gap-md overflow-x-auto pb-sm">
+                {(kpiView === 'cluster' ? clusterKPIs : intentKPIs).slice(0, 10).map(kpi => (
+                  <div 
+                    key={kpi.name} 
+                    className="min-w-[180px] p-md bg-elevated rounded-lg border border-border flex-shrink-0"
+                  >
+                    <Badge variant="secondary" className="text-metadata mb-sm truncate max-w-full">
+                      {kpi.name}
+                    </Badge>
+                    <div className="space-y-xs">
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">Spend</span>
+                        <span className="font-medium">${kpi.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      </div>
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">Clicks</span>
+                        <span>{kpi.clicks.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">Conv.</span>
+                        <span>{kpi.conversions}</span>
+                      </div>
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">CPA</span>
+                        <span className={kpi.cpa && kpi.cpa > insightsConfig.maxCPA ? 'text-destructive font-medium' : ''}>
+                          {kpi.cpa !== null ? `$${kpi.cpa.toFixed(0)}` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">CTR</span>
+                        <span>{(kpi.ctr * 100).toFixed(2)}%</span>
+                      </div>
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-muted-foreground">% Spend</span>
+                        <span>{kpi.percentOfSpend.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </DataCard>
+
+          {/* SECTION 3: CONFIGURATION */}
+          <DataCard>
+            <DataCardHeader 
+              title="Configuration" 
+              description="Adjust thresholds for recommendations"
+            />
+            <div className="flex flex-wrap items-center gap-md">
+              <div className="flex items-center gap-xs">
+                <span className="text-body-sm text-muted-foreground">Min Cost for New AG:</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={insightsConfig.minCostForNewAdGroup}
+                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, minCostForNewAdGroup: parseInt(e.target.value) || 0 }))}
+                  className="w-24"
+                />
+              </div>
+              <div className="flex items-center gap-xs">
+                <span className="text-body-sm text-muted-foreground">Min Clicks:</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={insightsConfig.minClicksForNewAdGroup}
+                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, minClicksForNewAdGroup: parseInt(e.target.value) || 0 }))}
+                  className="w-24"
+                />
+              </div>
+              <div className="flex items-center gap-xs">
+                <span className="text-body-sm text-muted-foreground">Purity Threshold:</span>
+                <Input
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={insightsConfig.purityThreshold}
+                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, purityThreshold: parseFloat(e.target.value) || 0.7 }))}
+                  className="w-24"
+                />
+              </div>
+              <div className="flex items-center gap-xs">
+                <span className="text-body-sm text-muted-foreground">Max CPA:</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={insightsConfig.maxCPA}
+                  onChange={(e) => setInsightsConfig(prev => ({ ...prev, maxCPA: parseInt(e.target.value) || 500 }))}
+                  className="w-24"
+                />
+              </div>
+              <div className="flex items-center gap-xs">
+                <span className="text-body-sm text-muted-foreground">Low-Intent Handling:</span>
+                <Select 
+                  value={insightsConfig.lowIntentHandling} 
+                  onValueChange={(v: 'exclude' | 'isolate') => setInsightsConfig(prev => ({ ...prev, lowIntentHandling: v }))}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="exclude">Exclude</SelectItem>
+                    <SelectItem value="isolate">Isolate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DataCard>
+
+          {/* SECTION 4: AD GROUPS NEEDING RESTRUCTURE */}
+          <DataCard>
+            <DataCardHeader 
+              title={`Ad Groups Needing Work (${adGroupsNeedingWork.length})`}
+              description="Ad groups with low purity scores need restructuring or negatives"
+            />
+            {adGroupsNeedingWork.length === 0 ? (
+              <EmptyState
+                icon={CheckCircle2}
+                title="All ad groups look good"
+                description="No ad groups need restructuring based on current thresholds"
+              />
+            ) : (
+              <ScrollArea className="h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ad Group</TableHead>
+                      <TableHead>Campaign</TableHead>
+                      <TableHead>Dominant Cluster</TableHead>
+                      <TableHead className="text-right">Purity</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Cost</TableHead>
+                      <TableHead className="text-right">Conv.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adGroupsNeedingWork.slice(0, 50).map((ag) => (
+                      <TableRow key={ag.ad_group_name}>
+                        <TableCell className="font-medium max-w-[180px] truncate">{ag.ad_group_name}</TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
+                          {ag.campaign_name || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-metadata">{ag.dominant_cluster}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className={ag.purity_score < 0.7 ? 'text-destructive font-medium' : 'text-warning'}>
+                            {(ag.purity_score * 100).toFixed(0)}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={ag.status === 'Needs restructure' 
+                              ? 'bg-destructive/15 text-destructive border-destructive/30' 
+                              : 'bg-warning/15 text-warning border-warning/30'
+                            }
+                          >
+                            {ag.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">${ag.total_cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{ag.total_conversions}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            )}
+          </DataCard>
+
+          {/* SECTION 5: PROPOSED NEW AD GROUPS */}
+          <DataCard>
+            <DataCardHeader 
+              title={`Proposed New Ad Groups (${proposedAdGroups.length})`}
+              description="Suggested new ad groups based on cluster + intent patterns"
+            />
+            {proposedAdGroups.length === 0 ? (
+              <EmptyState
+                icon={Target}
+                title="No new ad groups proposed"
+                description="Current structure is efficient or no patterns meet thresholds"
+              />
+            ) : (
+              <ScrollArea className="h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Proposed Name</TableHead>
+                      <TableHead>Cluster</TableHead>
+                      <TableHead>Intent</TableHead>
+                      <TableHead className="text-right">Est. Cost</TableHead>
+                      <TableHead className="text-right">Est. Clicks</TableHead>
+                      <TableHead>Source AGs</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {proposedAdGroups.slice(0, 30).map((p, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{p.proposed_ad_group_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-metadata">{p.cluster_primary}</Badge>
+                        </TableCell>
+                        <TableCell>{getIntentBadge(p.intent)}</TableCell>
+                        <TableCell className="text-right">${p.estimated_cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{p.estimated_clicks.toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[200px] truncate">
+                          {p.source_ad_groups.slice(0, 2).join(', ')}{p.source_ad_groups.length > 2 ? ` +${p.source_ad_groups.length - 2}` : ''}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            )}
+          </DataCard>
+
+          {/* SECTION 6: MOVE RECOMMENDATIONS */}
+          <DataCard>
+            <DataCardHeader 
+              title={`Move Recommendations (${moveRecommendations.length})`}
+              description="Terms that should be moved to different ad groups based on cluster mismatch"
+            />
+            {moveRecommendations.length === 0 ? (
+              <EmptyState
+                icon={ArrowRight}
+                title="No moves recommended"
+                description="Terms are correctly placed in their ad groups"
+              />
+            ) : (
+              <ScrollArea className="h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Search Term</TableHead>
+                      <TableHead>Current AG</TableHead>
+                      <TableHead>Proposed AG</TableHead>
+                      <TableHead>Cluster</TableHead>
+                      <TableHead className="text-right">Cost</TableHead>
+                      <TableHead className="text-right">Conv.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {moveRecommendations.slice(0, 50).map((m, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium max-w-[180px] truncate">{m.search_term}</TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[120px] truncate">
+                          {m.current_ad_group || '-'}
+                        </TableCell>
+                        <TableCell className="text-primary font-medium max-w-[180px] truncate">
+                          {m.proposed_ad_group}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-metadata">{m.cluster_primary}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">${m.cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{m.conversions}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            )}
+          </DataCard>
+
+          {/* SECTION 7: NEGATIVE SUGGESTIONS */}
+          <DataCard>
+            <DataCardHeader 
+              title={`Negative Suggestions (${negativeRecommendations.length})`}
+              description="Terms to add as negatives based on intent, performance, or structure"
+            />
+            {negativeRecommendations.length === 0 ? (
+              <EmptyState
+                icon={AlertTriangle}
+                title="No negatives recommended"
+                description="No problematic terms identified at current thresholds"
+              />
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Negative Text</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Scope</TableHead>
+                      <TableHead>Campaign / AG</TableHead>
+                      <TableHead>Rationale</TableHead>
+                      <TableHead className="text-right">Cost</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {negativeRecommendations.slice(0, 100).map((n, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium max-w-[180px] truncate">{n.negative_text}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={
+                              n.negative_type === 'no_money_intent' ? 'bg-destructive/15 text-destructive border-destructive/30' :
+                              n.negative_type === 'login_intent' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
+                              n.negative_type === 'performance' ? 'bg-warning/15 text-warning border-warning/30' :
+                              n.negative_type === 'structural_leakage' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
+                              'bg-muted text-muted-foreground'
+                            }
+                          >
+                            {n.negative_type.replace(/_/g, ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-metadata">{n.scope}</Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[150px] truncate">
+                          {n.target_campaign || '-'}{n.target_ad_group ? ` / ${n.target_ad_group}` : ''}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-metadata max-w-[200px] truncate">
+                          {n.rationale}
+                        </TableCell>
+                        <TableCell className="text-right">${n.evidence_cost.toFixed(0)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </ScrollArea>
             )}
           </DataCard>
