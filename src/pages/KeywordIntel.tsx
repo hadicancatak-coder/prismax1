@@ -1097,12 +1097,17 @@ export default function KeywordIntel() {
                           <Badge 
                             className={
                               action.action_type === 'add_negative' ? 'bg-destructive/15 text-destructive border-destructive/30' :
-                              action.action_type === 'move_term' ? 'bg-warning/15 text-warning border-warning/30' :
+                              action.action_type === 'move' ? 'bg-warning/15 text-warning border-warning/30' :
+                              action.action_type === 'isolate' ? 'bg-primary/15 text-primary border-primary/30' :
+                              action.action_type === 'review_manually' ? 'bg-muted text-muted-foreground' :
                               'bg-success/15 text-success border-success/30'
                             }
                           >
                             {action.action_type === 'add_negative' ? 'Add Negative' : 
-                             action.action_type === 'move_term' ? 'Move' : 'Create AG'}
+                             action.action_type === 'move' ? 'Move' :
+                             action.action_type === 'isolate' ? 'Isolate' :
+                             action.action_type === 'review_manually' ? 'Review' :
+                             action.action_type.replace(/_/g, ' ')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-primary font-medium max-w-[150px] truncate">
@@ -1111,10 +1116,10 @@ export default function KeywordIntel() {
                         <TableCell className="text-muted-foreground text-metadata max-w-[200px] truncate">
                           {action.reason}
                         </TableCell>
-                        <TableCell className="text-right">${action.cost.toFixed(0)}</TableCell>
-                        <TableCell className="text-right">{action.conversions}</TableCell>
+                        <TableCell className="text-right">${action.evidence_cost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{action.evidence_conversions}</TableCell>
                         <TableCell className="text-right text-success font-medium">
-                          {action.estimated_savings > 0 ? `$${action.estimated_savings.toFixed(0)}` : '-'}
+                          {action.evidence_cost > 0 ? `$${action.evidence_cost.toFixed(0)}` : '-'}
                         </TableCell>
                       </TableRow>
                     ))}
