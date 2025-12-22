@@ -159,9 +159,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroup>
 
-          {/* Media */}
+          {/* Intelligence */}
           <SidebarGroup>
-            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Media</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel className="text-metadata text-muted-foreground uppercase tracking-wider px-3 mb-3">Intelligence</SidebarGroupLabel>}
             <SidebarMenu className="space-y-1">
               {mediaItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
