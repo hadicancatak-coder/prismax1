@@ -40,7 +40,8 @@ interface KeywordRow {
   conversions: number;
   cost_per_conv: number;
   opportunity_score?: number;
-  theme_cluster?: string;
+  cluster?: string;
+  matched_word?: string;
   score_components?: {
     ctr_score: number;
     conv_score: number;
@@ -48,13 +49,13 @@ interface KeywordRow {
   };
 }
 
-interface ThemeRule {
+interface Cluster {
+  id: string;
   name: string;
-  tokens: string[];
-  priority: number;
+  words: string[]; // Each word/phrase can only belong to one cluster
 }
 
-interface ThemeCluster {
+interface ClusterSummary {
   name: string;
   keywords: KeywordRow[];
   totalImpressions: number;
@@ -66,15 +67,14 @@ interface ThemeCluster {
   avgScore: number;
 }
 
-// Default theme rules for trading company
-const DEFAULT_THEME_RULES: ThemeRule[] = [
-  { name: 'Gold', tokens: ['gold', 'xau', 'xauusd', 'bullion'], priority: 100 },
-  { name: 'Oil', tokens: ['oil', 'wti', 'brent', 'crude'], priority: 90 },
-  { name: 'Forex', tokens: ['forex', 'fx', 'currency', 'eurusd', 'gbpusd', 'usdjpy', 'eur/usd', 'gbp/usd', 'usd/jpy'], priority: 80 },
-  { name: 'Crypto', tokens: ['crypto', 'bitcoin', 'btc', 'ethereum', 'eth', 'cryptocurrency'], priority: 70 },
-  { name: 'Stocks', tokens: ['stocks', 'shares', 'equities', 'nasdaq', 'sp500', 's&p500', 'stock'], priority: 60 },
-  { name: 'Indices', tokens: ['index', 'indices', 'dow', 'ftse', 'dax', 'nikkei'], priority: 50 },
-  { name: 'Trading', tokens: ['trading', 'trade', 'broker', 'platform', 'cfd', 'spread'], priority: 40 },
+// Default clusters for trading company (order matters - first match wins)
+const DEFAULT_CLUSTERS: Cluster[] = [
+  { id: 'tradingview', name: 'TradingView', words: ['tradingview'] },
+  { id: 'trading', name: 'Trading', words: ['trading', 'trade'] },
+  { id: 'gold', name: 'Gold', words: ['gold', 'gold price', 'xau', 'xauusd'] },
+  { id: 'oil', name: 'Oil', words: ['oil', 'wti', 'brent', 'crude'] },
+  { id: 'crypto', name: 'Crypto', words: ['crypto', 'bitcoin', 'btc', 'ethereum', 'eth'] },
+  { id: 'indices', name: 'Indices', words: ['index', 'indices', 'nasdaq', 'sp500', 'dow', 'dax'] },
 ];
 
 // Column mappings for flexible header matching
@@ -156,16 +156,18 @@ export default function KeywordIntel() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [sourceFileName, setSourceFileName] = useState<string | null>(null);
 
-  // Filters - Updated for Google Ads data
+  // Filters
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [adGroupFilter, setAdGroupFilter] = useState<string>("all");
   const [matchTypeFilter, setMatchTypeFilter] = useState<string>("all");
-  const [themeFilter, setThemeFilter] = useState<string>("all");
+  const [clusterFilter, setClusterFilter] = useState<string>("all");
   const [minScore, setMinScore] = useState<number>(0);
   
-  // Theme rules state (local, editable)
-  const [themeRules, setThemeRules] = useState<ThemeRule[]>(DEFAULT_THEME_RULES);
-  const [editingThemeRules, setEditingThemeRules] = useState<string>('');
+  // Cluster state (local, editable) - order matters!
+  const [clusters, setClusters] = useState<Cluster[]>(DEFAULT_CLUSTERS);
+  const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null);
+  const [editingClusterName, setEditingClusterName] = useState<string>('');
+  const [editingClusterWords, setEditingClusterWords] = useState<string>('');
 
   // Parse CSV line handling quoted values
   const parseCSVLine = (line: string): string[] => {
@@ -266,35 +268,41 @@ export default function KeywordIntel() {
     return { data, error: null };
   }, []);
 
-  // Normalize keyword for theme matching
-  const normalizeKeyword = useCallback((keyword: string): string[] => {
-    return keyword
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s/]/g, ' ') // Keep slashes for pairs like eur/usd
-      .split(/\s+/)
-      .filter(Boolean);
+  // Normalize keyword for matching: lowercase, trim, remove punctuation except spaces
+  const normalizeForMatching = useCallback((text: string): string => {
+    return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
   }, []);
 
-  // Get theme cluster for a keyword
-  const getThemeCluster = useCallback((keyword: string): string => {
-    const tokens = normalizeKeyword(keyword);
-    let matchedTheme: { name: string; priority: number } | null = null;
-
-    for (const rule of themeRules) {
-      for (const ruleToken of rule.tokens) {
-        // Check if any keyword token matches (contains) the rule token
-        const found = tokens.some(t => t.includes(ruleToken) || ruleToken.includes(t));
-        if (found) {
-          if (!matchedTheme || rule.priority > matchedTheme.priority) {
-            matchedTheme = { name: rule.name, priority: rule.priority };
+  // Match cluster for a keyword using word-boundary matching
+  // Returns { cluster name, matched word } or { 'Other', null }
+  const matchCluster = useCallback((keyword: string): { cluster: string; matchedWord: string | null } => {
+    const normalized = normalizeForMatching(keyword);
+    
+    // Check clusters in order (first match wins)
+    for (const cluster of clusters) {
+      for (const word of cluster.words) {
+        const normalizedWord = normalizeForMatching(word);
+        if (!normalizedWord) continue;
+        
+        // Check if word contains space (phrase) or is single word
+        if (normalizedWord.includes(' ')) {
+          // Phrase match: exact phrase with word boundaries
+          const regex = new RegExp(`\\b${normalizedWord.replace(/\s+/g, '\\s+')}\\b`);
+          if (regex.test(normalized)) {
+            return { cluster: cluster.name, matchedWord: word };
+          }
+        } else {
+          // Single word match: must match full word boundary
+          const regex = new RegExp(`\\b${normalizedWord}\\b`);
+          if (regex.test(normalized)) {
+            return { cluster: cluster.name, matchedWord: word };
           }
         }
       }
     }
-
-    return matchedTheme?.name || 'Other';
-  }, [themeRules, normalizeKeyword]);
+    
+    return { cluster: 'Other', matchedWord: null };
+  }, [clusters, normalizeForMatching]);
 
   // Calculate opportunity score - NEW: weighted CTR + Conv + CPA
   const calculateOpportunityScore = useCallback((
@@ -375,14 +383,16 @@ export default function KeywordIntel() {
 
     return parsedData.map(kw => {
       const { score, components } = calculateOpportunityScore(kw, stats);
+      const { cluster, matchedWord } = matchCluster(kw.keyword);
       return {
         ...kw,
         opportunity_score: score,
         score_components: components,
-        theme_cluster: getThemeCluster(kw.keyword),
+        cluster,
+        matched_word: matchedWord,
       };
     });
-  }, [parsedData, calculateOpportunityScore, getThemeCluster]);
+  }, [parsedData, calculateOpportunityScore, matchCluster]);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -390,11 +400,11 @@ export default function KeywordIntel() {
       if (campaignFilter !== "all" && kw.campaign !== campaignFilter) return false;
       if (adGroupFilter !== "all" && kw.ad_group !== adGroupFilter) return false;
       if (matchTypeFilter !== "all" && kw.match_type !== matchTypeFilter) return false;
-      if (themeFilter !== "all" && kw.theme_cluster !== themeFilter) return false;
+      if (clusterFilter !== "all" && kw.cluster !== clusterFilter) return false;
       if (kw.opportunity_score !== undefined && kw.opportunity_score < minScore) return false;
       return true;
     }).sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0));
-  }, [scoredData, campaignFilter, adGroupFilter, matchTypeFilter, themeFilter, minScore]);
+  }, [scoredData, campaignFilter, adGroupFilter, matchTypeFilter, clusterFilter, minScore]);
 
   // Get unique values for filters
   const uniqueCampaigns = useMemo(() => 
@@ -409,19 +419,19 @@ export default function KeywordIntel() {
     [...new Set(scoredData.map(k => k.match_type).filter(Boolean))].sort(), 
     [scoredData]
   );
-  const uniqueThemes = useMemo(() => 
-    [...new Set(scoredData.map(k => k.theme_cluster).filter(Boolean))].sort(), 
+  const uniqueClusters = useMemo(() => 
+    [...new Set(scoredData.map(k => k.cluster).filter(Boolean))].sort(), 
     [scoredData]
   );
 
-  // Cluster keywords by theme
-  const themeClusters = useMemo((): ThemeCluster[] => {
+  // Group keywords by cluster for summary
+  const clusterSummaries = useMemo((): ClusterSummary[] => {
     const clusterMap = new Map<string, KeywordRow[]>();
 
     filteredData.forEach(kw => {
-      const theme = kw.theme_cluster || 'Other';
-      if (!clusterMap.has(theme)) clusterMap.set(theme, []);
-      clusterMap.get(theme)!.push(kw);
+      const clusterName = kw.cluster || 'Other';
+      if (!clusterMap.has(clusterName)) clusterMap.set(clusterName, []);
+      clusterMap.get(clusterName)!.push(kw);
     });
 
     return Array.from(clusterMap.entries())
@@ -449,44 +459,88 @@ export default function KeywordIntel() {
       .sort((a, b) => b.totalImpressions - a.totalImpressions);
   }, [filteredData]);
 
-  // Theme rules editor helpers
-  const openThemeEditor = () => {
-    const rulesText = themeRules
-      .map(r => `${r.name}: ${r.tokens.join(', ')} [${r.priority}]`)
-      .join('\n');
-    setEditingThemeRules(rulesText);
+  // Cluster management helpers
+  const selectCluster = (clusterId: string) => {
+    const cluster = clusters.find(c => c.id === clusterId);
+    if (cluster) {
+      setSelectedClusterId(clusterId);
+      setEditingClusterName(cluster.name);
+      setEditingClusterWords(cluster.words.join(', '));
+    }
   };
 
-  const parseThemeRulesText = (text: string): ThemeRule[] => {
-    const rules: ThemeRule[] = [];
-    const lines = text.split('\n').filter(l => l.trim());
+  const saveCluster = () => {
+    if (!selectedClusterId) return;
     
-    for (const line of lines) {
-      // Format: "Theme Name: token1, token2, token3 [priority]"
-      const match = line.match(/^(.+?):\s*(.+?)\s*(?:\[(\d+)\])?$/);
-      if (match) {
-        const name = match[1].trim();
-        const tokens = match[2].split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-        const priority = match[3] ? parseInt(match[3]) : (rules.length + 1) * 10;
-        if (name && tokens.length > 0) {
-          rules.push({ name, tokens, priority });
+    const newWords = editingClusterWords
+      .split(',')
+      .map(w => w.trim().toLowerCase())
+      .filter(Boolean);
+    
+    // Check for word ownership conflicts
+    const conflicts: { word: string; ownerName: string }[] = [];
+    for (const word of newWords) {
+      for (const cluster of clusters) {
+        if (cluster.id !== selectedClusterId && cluster.words.includes(word)) {
+          conflicts.push({ word, ownerName: cluster.name });
         }
       }
     }
     
-    return rules.length > 0 ? rules : themeRules;
+    if (conflicts.length > 0) {
+      const conflictMsg = conflicts.map(c => `"${c.word}" (owned by ${c.ownerName})`).join(', ');
+      toast({ 
+        title: "Word conflict detected", 
+        description: `These words belong to other clusters: ${conflictMsg}. Remove them first.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setClusters(prev => prev.map(c => 
+      c.id === selectedClusterId 
+        ? { ...c, name: editingClusterName, words: newWords }
+        : c
+    ));
+    toast({ title: "Cluster saved" });
   };
 
-  const saveThemeRules = () => {
-    const parsed = parseThemeRulesText(editingThemeRules);
-    setThemeRules(parsed);
-    toast({ title: "Theme rules updated", description: `${parsed.length} themes configured` });
+  const addCluster = () => {
+    const newId = `cluster_${Date.now()}`;
+    const newCluster: Cluster = { id: newId, name: 'New Cluster', words: [] };
+    setClusters(prev => [...prev, newCluster]);
+    selectCluster(newId);
   };
 
-  const resetThemeRules = () => {
-    setThemeRules(DEFAULT_THEME_RULES);
-    setEditingThemeRules('');
-    toast({ title: "Theme rules reset to defaults" });
+  const deleteCluster = (clusterId: string) => {
+    setClusters(prev => prev.filter(c => c.id !== clusterId));
+    if (selectedClusterId === clusterId) {
+      setSelectedClusterId(null);
+      setEditingClusterName('');
+      setEditingClusterWords('');
+    }
+  };
+
+  const moveCluster = (clusterId: string, direction: 'up' | 'down') => {
+    setClusters(prev => {
+      const idx = prev.findIndex(c => c.id === clusterId);
+      if (idx === -1) return prev;
+      if (direction === 'up' && idx === 0) return prev;
+      if (direction === 'down' && idx === prev.length - 1) return prev;
+      
+      const newClusters = [...prev];
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      [newClusters[idx], newClusters[swapIdx]] = [newClusters[swapIdx], newClusters[idx]];
+      return newClusters;
+    });
+  };
+
+  const resetClusters = () => {
+    setClusters(DEFAULT_CLUSTERS);
+    setSelectedClusterId(null);
+    setEditingClusterName('');
+    setEditingClusterWords('');
+    toast({ title: "Clusters reset to defaults" });
   };
 
   // Generate keyword ideas
@@ -538,10 +592,11 @@ export default function KeywordIntel() {
 
   // Export to CSV
   const exportCSV = () => {
-    const headers = ['Keyword', 'Theme Cluster', 'Opportunity Score', 'CTR Score', 'Conv Score', 'CPA Score', 'Campaign', 'Ad Group', 'Match Type', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
+    const headers = ['Keyword', 'Cluster', 'Matched Word', 'Opportunity Score', 'CTR Score', 'Conv Score', 'CPA Score', 'Campaign', 'Ad Group', 'Match Type', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
     const rows = filteredData.map(k => [
       `"${k.keyword}"`,
-      k.theme_cluster || 'Other',
+      k.cluster || 'Other',
+      k.matched_word || '',
       k.opportunity_score || 0,
       k.score_components?.ctr_score || 50,
       k.score_components?.conv_score || 50,
@@ -567,13 +622,13 @@ export default function KeywordIntel() {
   };
 
   const copyTable = () => {
-    const headers = ['Keyword', 'Theme', 'Score', 'Campaign', 'Ad Group', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
+    const headers = ['Keyword', 'Cluster', 'Matched Word', 'Score', 'Campaign', 'Clicks', 'Impr', 'CTR', 'Cost', 'Conv'];
     const rows = filteredData.map(k => [
       k.keyword,
-      k.theme_cluster || 'Other',
+      k.cluster || 'Other',
+      k.matched_word || '',
       k.opportunity_score || 0,
       k.campaign,
-      k.ad_group,
       k.clicks,
       k.impressions,
       (k.ctr * 100).toFixed(2) + '%',
@@ -771,15 +826,15 @@ export default function KeywordIntel() {
               </Select>
             )}
 
-            {uniqueThemes.length > 0 && (
-              <Select value={themeFilter} onValueChange={setThemeFilter}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Theme" />
+            {uniqueClusters.length > 0 && (
+              <Select value={clusterFilter} onValueChange={setClusterFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Cluster" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Themes</SelectItem>
-                  {uniqueThemes.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  <SelectItem value="all">All Clusters</SelectItem>
+                  {uniqueClusters.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -817,9 +872,9 @@ export default function KeywordIntel() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Search Term</TableHead>
-                    <TableHead>Theme</TableHead>
+                    <TableHead>Cluster</TableHead>
+                    <TableHead>Matched Word</TableHead>
                     <TableHead>Score</TableHead>
-                    <TableHead>Campaign</TableHead>
                     <TableHead>Clicks</TableHead>
                     <TableHead>Impr.</TableHead>
                     <TableHead>CTR</TableHead>
@@ -833,8 +888,11 @@ export default function KeywordIntel() {
                       <TableCell className="font-medium max-w-[200px] truncate">{row.keyword}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-metadata">
-                          {row.theme_cluster || 'Other'}
+                          {row.cluster || 'Other'}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-metadata">
+                        {row.matched_word || '-'}
                       </TableCell>
                       <TableCell>
                         <Tooltip>
@@ -850,7 +908,6 @@ export default function KeywordIntel() {
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="max-w-[150px] truncate text-muted-foreground">{row.campaign}</TableCell>
                       <TableCell>{row.clicks.toLocaleString()}</TableCell>
                       <TableCell>{row.impressions.toLocaleString()}</TableCell>
                       <TableCell>{(row.ctr * 100).toFixed(2)}%</TableCell>
@@ -865,63 +922,135 @@ export default function KeywordIntel() {
         </TabsContent>
 
         <TabsContent value="clusters" className="mt-lg space-y-md">
-          {/* Theme Rules Editor */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-md">
-              <span className="text-body-sm text-muted-foreground">
-                {themeClusters.length} theme clusters from {filteredData.length} keywords
-              </span>
-            </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" onClick={openThemeEditor}>
-                  <Settings2 className="h-4 w-4 mr-xs" /> Theme Rules
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px]" align="end">
-                <div className="space-y-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-body-sm">Edit Theme Rules</span>
-                    <Button variant="ghost" size="sm" onClick={resetThemeRules}>
-                      <RotateCcw className="h-3 w-3 mr-xs" /> Reset
+          {/* Cluster Manager - Two Panel Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-md">
+            {/* Left: Cluster List */}
+            <DataCard className="lg:col-span-1">
+              <DataCardHeader 
+                title="Clusters" 
+                description="Order determines priority (first match wins)"
+                action={
+                  <div className="flex gap-xs">
+                    <Button variant="ghost" size="sm" onClick={resetClusters}>
+                      <RotateCcw className="h-3 w-3" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={addCluster}>
+                      + Add
                     </Button>
                   </div>
-                  <p className="text-metadata text-muted-foreground">
-                    Format: Theme Name: token1, token2 [priority]
-                  </p>
-                  <Textarea
-                    value={editingThemeRules}
-                    onChange={(e) => setEditingThemeRules(e.target.value)}
-                    rows={10}
-                    className="font-mono text-metadata"
-                    placeholder="Gold: gold, xau, xauusd [100]&#10;Oil: oil, wti, brent [90]"
-                  />
-                  <Button size="sm" className="w-full" onClick={saveThemeRules}>
-                    Save Rules
-                  </Button>
+                }
+              />
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-xs">
+                  {clusters.map((cluster, idx) => (
+                    <div 
+                      key={cluster.id}
+                      className={`p-sm rounded border cursor-pointer transition-smooth flex items-center justify-between ${
+                        selectedClusterId === cluster.id 
+                          ? 'bg-primary/10 border-primary/30' 
+                          : 'bg-elevated border-border hover:bg-card-hover'
+                      }`}
+                      onClick={() => selectCluster(cluster.id)}
+                    >
+                      <div className="flex items-center gap-sm">
+                        <span className="text-metadata text-muted-foreground w-4">{idx + 1}.</span>
+                        <span className="font-medium text-body-sm">{cluster.name}</span>
+                        <Badge variant="secondary" className="text-metadata">
+                          {cluster.words.length} words
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-xs">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => { e.stopPropagation(); moveCluster(cluster.id, 'up'); }}
+                          disabled={idx === 0}
+                        >
+                          ↑
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => { e.stopPropagation(); moveCluster(cluster.id, 'down'); }}
+                          disabled={idx === clusters.length - 1}
+                        >
+                          ↓
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </PopoverContent>
-            </Popover>
+              </ScrollArea>
+            </DataCard>
+
+            {/* Right: Cluster Editor */}
+            <DataCard className="lg:col-span-2">
+              <DataCardHeader 
+                title={selectedClusterId ? "Edit Cluster" : "Select a Cluster"} 
+                description={selectedClusterId ? "Edit name and owned words" : "Click a cluster on the left to edit it"}
+              />
+              {selectedClusterId ? (
+                <div className="space-y-md">
+                  <div className="space-y-xs">
+                    <label className="text-body-sm font-medium">Cluster Name</label>
+                    <Input 
+                      value={editingClusterName}
+                      onChange={(e) => setEditingClusterName(e.target.value)}
+                      placeholder="e.g., Gold"
+                    />
+                  </div>
+                  <div className="space-y-xs">
+                    <label className="text-body-sm font-medium">Words in this cluster</label>
+                    <p className="text-metadata text-muted-foreground">
+                      Comma-separated. Each word can only belong to one cluster.
+                    </p>
+                    <Textarea
+                      value={editingClusterWords}
+                      onChange={(e) => setEditingClusterWords(e.target.value)}
+                      rows={4}
+                      placeholder="gold, gold price, xau, xauusd"
+                    />
+                  </div>
+                  <div className="flex gap-sm">
+                    <Button onClick={saveCluster}>Save Cluster</Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => deleteCluster(selectedClusterId)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Settings2}
+                  title="No cluster selected"
+                  description="Select a cluster from the list to edit it"
+                />
+              )}
+            </DataCard>
           </div>
 
           {/* Cluster Summary Table */}
           <DataCard>
             <DataCardHeader 
-              title="Theme Clusters Summary" 
-              description="Keywords grouped by trading themes (Gold, Oil, Forex, etc.)"
+              title="Cluster Summary" 
+              description="Keywords grouped by cluster. 'Matched Word' shows which word triggered the match."
             />
-            {themeClusters.length === 0 ? (
+            {clusterSummaries.length === 0 ? (
               <EmptyState
                 icon={Layers}
                 title="No clusters found"
-                description="Upload keyword data to see theme clusters"
+                description="Upload keyword data to see clusters"
               />
             ) : (
               <ScrollArea className="h-auto max-h-[300px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Theme</TableHead>
+                      <TableHead>Cluster</TableHead>
                       <TableHead className="text-right"># Keywords</TableHead>
                       <TableHead className="text-right">Impressions</TableHead>
                       <TableHead className="text-right">Clicks</TableHead>
@@ -933,32 +1062,23 @@ export default function KeywordIntel() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {themeClusters.map((cluster) => (
-                      <TableRow key={cluster.name}>
+                    {clusterSummaries.map((summary) => (
+                      <TableRow key={summary.name}>
                         <TableCell>
-                          <Badge variant={cluster.name === 'Other' ? 'secondary' : 'default'} className={
-                            cluster.name === 'Gold' ? 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30' :
-                            cluster.name === 'Oil' ? 'bg-orange-500/15 text-orange-600 border-orange-500/30' :
-                            cluster.name === 'Forex' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
-                            cluster.name === 'Crypto' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
-                            cluster.name === 'Stocks' ? 'bg-green-500/15 text-green-600 border-green-500/30' :
-                            cluster.name === 'Indices' ? 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30' :
-                            cluster.name === 'Trading' ? 'bg-pink-500/15 text-pink-600 border-pink-500/30' :
-                            ''
-                          }>
-                            {cluster.name}
+                          <Badge variant={summary.name === 'Other' ? 'secondary' : 'default'}>
+                            {summary.name}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">{cluster.keywords.length}</TableCell>
-                        <TableCell className="text-right">{cluster.totalImpressions.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{cluster.totalClicks.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{(cluster.avgCTR * 100).toFixed(2)}%</TableCell>
-                        <TableCell className="text-right">${cluster.totalCost.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">{cluster.totalConversions}</TableCell>
+                        <TableCell className="text-right">{summary.keywords.length}</TableCell>
+                        <TableCell className="text-right">{summary.totalImpressions.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{summary.totalClicks.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{(summary.avgCTR * 100).toFixed(2)}%</TableCell>
+                        <TableCell className="text-right">${summary.totalCost.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{summary.totalConversions}</TableCell>
                         <TableCell className="text-right">
-                          {cluster.avgCPA > 0 ? `$${cluster.avgCPA.toFixed(2)}` : '-'}
+                          {summary.avgCPA > 0 ? `$${summary.avgCPA.toFixed(2)}` : '-'}
                         </TableCell>
-                        <TableCell className="text-right">{getScoreBadge(Math.round(cluster.avgScore))}</TableCell>
+                        <TableCell className="text-right">{getScoreBadge(Math.round(summary.avgScore))}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -971,37 +1091,27 @@ export default function KeywordIntel() {
           <DataCard>
             <DataCardHeader 
               title="Cluster Drilldown" 
-              description="Expand each theme to see member keywords"
+              description="Expand to see member keywords with matched word"
             />
             <ScrollArea className="h-[400px]">
               <div className="space-y-sm">
-                {themeClusters.map(cluster => (
-                  <Collapsible key={cluster.name}>
+                {clusterSummaries.map(summary => (
+                  <Collapsible key={summary.name}>
                     <CollapsibleTrigger className="w-full">
                       <div className="flex items-center justify-between p-md bg-elevated rounded-lg border border-border hover:bg-card-hover transition-smooth">
                         <div className="flex items-center gap-md">
                           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-90" />
-                          <Badge variant={cluster.name === 'Other' ? 'secondary' : 'default'} className={
-                            cluster.name === 'Gold' ? 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30' :
-                            cluster.name === 'Oil' ? 'bg-orange-500/15 text-orange-600 border-orange-500/30' :
-                            cluster.name === 'Forex' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
-                            cluster.name === 'Crypto' ? 'bg-purple-500/15 text-purple-600 border-purple-500/30' :
-                            cluster.name === 'Stocks' ? 'bg-green-500/15 text-green-600 border-green-500/30' :
-                            cluster.name === 'Indices' ? 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30' :
-                            cluster.name === 'Trading' ? 'bg-pink-500/15 text-pink-600 border-pink-500/30' :
-                            ''
-                          }>
-                            {cluster.name}
+                          <Badge variant={summary.name === 'Other' ? 'secondary' : 'default'}>
+                            {summary.name}
                           </Badge>
                           <span className="text-body-sm text-muted-foreground">
-                            {cluster.keywords.length} keywords
+                            {summary.keywords.length} keywords
                           </span>
                         </div>
                         <div className="flex items-center gap-md text-body-sm text-muted-foreground">
-                          <span>{cluster.totalImpressions.toLocaleString()} impr.</span>
-                          <span>{cluster.totalClicks.toLocaleString()} clicks</span>
-                          <span>${cluster.totalCost.toFixed(2)}</span>
-                          {getScoreBadge(Math.round(cluster.avgScore))}
+                          <span>{summary.totalImpressions.toLocaleString()} impr.</span>
+                          <span>{summary.totalClicks.toLocaleString()} clicks</span>
+                          {getScoreBadge(Math.round(summary.avgScore))}
                         </div>
                       </div>
                     </CollapsibleTrigger>
@@ -1011,47 +1121,31 @@ export default function KeywordIntel() {
                           <TableHeader>
                             <TableRow className="bg-subtle">
                               <TableHead>Keyword</TableHead>
+                              <TableHead>Matched Word</TableHead>
                               <TableHead>Score</TableHead>
                               <TableHead className="text-right">Clicks</TableHead>
                               <TableHead className="text-right">Impr.</TableHead>
-                              <TableHead className="text-right">CTR</TableHead>
                               <TableHead className="text-right">Conv.</TableHead>
-                              <TableHead className="text-right">CPA</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {cluster.keywords.slice(0, 20).map((kw, i) => (
+                            {summary.keywords.slice(0, 20).map((kw, i) => (
                               <TableRow key={i}>
-                                <TableCell className="font-medium max-w-[250px] truncate">{kw.keyword}</TableCell>
-                                <TableCell>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      {getScoreBadge(kw.opportunity_score || 0)}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <div className="text-metadata space-y-xs">
-                                        <p>CTR Score: {kw.score_components?.ctr_score ?? 50}</p>
-                                        <p>Conv Score: {kw.score_components?.conv_score ?? 50}</p>
-                                        <p>CPA Score: {kw.score_components?.cpa_score ?? 50}</p>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                <TableCell className="font-medium max-w-[200px] truncate">{kw.keyword}</TableCell>
+                                <TableCell className="text-muted-foreground text-metadata">
+                                  {kw.matched_word || '-'}
                                 </TableCell>
+                                <TableCell>{getScoreBadge(kw.opportunity_score || 0)}</TableCell>
                                 <TableCell className="text-right">{kw.clicks}</TableCell>
                                 <TableCell className="text-right">{kw.impressions.toLocaleString()}</TableCell>
-                                <TableCell className="text-right">{(kw.ctr * 100).toFixed(2)}%</TableCell>
                                 <TableCell className="text-right">{kw.conversions}</TableCell>
-                                <TableCell className="text-right">
-                                  {kw.cost_per_conv > 0 ? `$${kw.cost_per_conv.toFixed(2)}` : 
-                                   (kw.conversions > 0 && kw.cost > 0) ? `$${(kw.cost / kw.conversions).toFixed(2)}` : '-'}
-                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
                         </Table>
-                        {cluster.keywords.length > 20 && (
+                        {summary.keywords.length > 20 && (
                           <div className="p-sm text-center text-metadata text-muted-foreground border-t border-border">
-                            +{cluster.keywords.length - 20} more keywords
+                            +{summary.keywords.length - 20} more keywords
                           </div>
                         )}
                       </div>
