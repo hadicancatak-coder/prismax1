@@ -14,7 +14,8 @@ import {
   Tv,
   BookOpen,
   Server,
-  BarChart3
+  BarChart3,
+  Search
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ const adsItems = [
 const mediaItems = [
   { title: "Location Intel", url: "/location-intelligence", icon: MapPin },
   { title: "Web Intel", url: "/web-intel", icon: Tv },
+  { title: "Keyword Intel", url: "/keyword-intel", icon: Search },
 ];
 
 const operationsItems = [

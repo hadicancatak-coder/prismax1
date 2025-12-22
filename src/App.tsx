@@ -45,6 +45,7 @@ import Knowledge from "./pages/Knowledge";
 import KnowledgePublic from "./pages/KnowledgePublic";
 import TechStack from "./pages/TechStack";
 import Performance from "./pages/Performance";
+import KeywordIntel from "./pages/KeywordIntel";
 
 const App = () => (
   <ErrorBoundary>
@@ -91,6 +92,7 @@ const App = () => (
                   <Route path="/campaigns-log" element={<CampaignsLog />} />
                   <Route path="/location-intelligence" element={<LocationIntelligence />} />
                   <Route path="/web-intel" element={<WebIntel />} />
+                  <Route path="/keyword-intel" element={<KeywordIntel />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/how-to" element={<HowTo />} />
                   <Route path="/knowledge" element={<Knowledge />} />
