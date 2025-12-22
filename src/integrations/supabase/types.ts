@@ -3254,8 +3254,10 @@ export type Database = {
           due_at: string | null
           entity: string[] | null
           estimated_hours: number | null
+          external_dependency_reason: string | null
           failure_reason: string | null
           id: string
+          is_external_dependency: boolean | null
           jira_key: string | null
           jira_link: string | null
           jira_links: Json | null
@@ -3300,8 +3302,10 @@ export type Database = {
           due_at?: string | null
           entity?: string[] | null
           estimated_hours?: number | null
+          external_dependency_reason?: string | null
           failure_reason?: string | null
           id?: string
+          is_external_dependency?: boolean | null
           jira_key?: string | null
           jira_link?: string | null
           jira_links?: Json | null
@@ -3346,8 +3350,10 @@ export type Database = {
           due_at?: string | null
           entity?: string[] | null
           estimated_hours?: number | null
+          external_dependency_reason?: string | null
           failure_reason?: string | null
           id?: string
+          is_external_dependency?: boolean | null
           jira_key?: string | null
           jira_link?: string | null
           jira_links?: Json | null

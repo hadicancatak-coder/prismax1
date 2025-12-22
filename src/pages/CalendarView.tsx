@@ -3,17 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { completeTask, setTaskStatus, completeTasksBulk } from "@/domain";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
-import { useUserAgenda } from "@/hooks/useUserAgenda";
 import { useQueryClient } from "@tanstack/react-query";
 import { UnifiedTaskDialog } from "@/components/UnifiedTaskDialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, addDays, addWeeks, subWeeks, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, addWeeks, startOfWeek, isSameDay } from "date-fns";
 import { isDateWorkingDay } from "@/lib/workingDaysHelper";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, ArrowRightFromLine, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, ChevronLeft, Users } from "lucide-react";
+import { CalendarIcon, GripVertical, RotateCcw, Plus, AlertTriangle, Check, Table, LayoutGrid, GanttChart, ChevronDown, ChevronRight, ChevronLeft, Users, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ListSkeleton } from "@/components/skeletons/ListSkeleton";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -27,10 +26,10 @@ import { isTaskOverdue } from "@/lib/overdueHelpers";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DayBrief } from "@/components/calendar/DayBrief";
 
-// Sortable Task Item Component - Clean single row with design system tokens
-// REMOVED selection checkbox - only completion checkbox remains
-function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgenda, isManualMode = false }: any) {
+// Sortable Task Item Component
+function SortableTaskItem({ task, onTaskClick, onTaskComplete, onMarkExternalDependency, isManualMode = false }: any) {
   const {
     attributes,
     listeners,
@@ -51,6 +50,7 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
 
   const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed';
   const isCompleted = task.status === 'Completed';
+  const isExternalDep = task.is_external_dependency;
 
   return (
     <div
@@ -60,7 +60,8 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
         "flex items-center gap-sm py-sm px-md transition-smooth cursor-pointer group border-b border-border last:border-0",
         "hover:bg-card-hover",
         isDragging && "z-overlay bg-card shadow-lg rounded-xl border-2 border-dashed border-primary",
-        isOverdue && !isCompleted && "border-l-4 border-l-destructive",
+        isOverdue && !isCompleted && !isExternalDep && "border-l-4 border-l-destructive",
+        isExternalDep && "border-l-4 border-l-warning bg-warning/5",
         isCompleted && "opacity-60"
       )}
       onClick={() => onTaskClick(task.id)}
@@ -108,72 +109,37 @@ function SortableTaskItem({ task, onTaskClick, onTaskComplete, onRemoveFromAgend
             {getRecurrenceLabel(task)}
           </Badge>
         )}
-        {task.isAutoAdded && (
-          <Badge variant="outline" className="text-metadata px-1.5 py-0 bg-muted border-border text-muted-foreground flex-shrink-0 rounded-full">
-            Auto
+        {isExternalDep && (
+          <Badge variant="outline" className="text-metadata px-1.5 py-0 bg-warning/15 border-warning/30 text-warning flex-shrink-0 rounded-full">
+            <ExternalLink className="h-2.5 w-2.5 mr-1" />
+            External
           </Badge>
         )}
         {task.due_at && (
           <span className={cn(
             "text-metadata flex-shrink-0",
-            isOverdue ? "text-destructive" : "text-muted-foreground"
+            isOverdue && !isExternalDep ? "text-destructive" : "text-muted-foreground"
           )}>
-            {isOverdue ? "Overdue: " : ""}{format(new Date(task.due_at), 'MMM d')}
+            {isOverdue && !isExternalDep ? "Overdue: " : ""}{format(new Date(task.due_at), 'MMM d')}
           </span>
         )}
       </div>
       
-      {onRemoveFromAgenda && !isCompleted && (
+      {/* Mark as External Dependency button for overdue non-completed tasks */}
+      {isOverdue && !isCompleted && !isExternalDep && onMarkExternalDependency && (
         <Button
           variant="ghost"
           size="icon-xs"
           onClick={(e) => {
             e.stopPropagation();
-            onRemoveFromAgenda([task.id]);
+            onMarkExternalDependency(task.id);
           }}
           className="opacity-0 group-hover:opacity-100"
-          title="Move to Pool"
+          title="Mark as External Dependency"
         >
-          <ArrowRightFromLine className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+          <ExternalLink className="h-3.5 w-3.5 text-warning hover:text-warning" />
         </Button>
       )}
-    </div>
-  );
-}
-
-// Task Pool Item Component
-function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
-  return (
-    <div
-      className={cn(
-        "group flex items-center gap-sm py-2.5 px-md cursor-pointer transition-smooth hover:bg-card-hover border-b border-border last:border-0",
-        isOverdue && "border-l-4 border-l-destructive"
-      )}
-      onClick={() => onTaskClick(task.id)}
-    >
-      <div className="flex-1 min-w-0">
-        <span className="text-body-sm font-medium text-foreground truncate block">{task.title}</span>
-        {task.due_at && (
-          <span className={cn(
-            "text-metadata",
-            isOverdue ? "text-destructive" : "text-muted-foreground"
-          )}>
-            Due: {format(new Date(task.due_at), 'MMM d')}
-          </span>
-        )}
-      </div>
-      <Button
-        variant="outline"
-        size="icon-xs"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAdd([task.id]);
-        }}
-        title="Add to Agenda"
-        className="opacity-60 group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
-      >
-        <Plus className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }
@@ -181,17 +147,19 @@ function TaskPoolItem({ task, isOverdue = false, onTaskClick, onAdd }: any) {
 // Kanban Card Component
 function KanbanCard({ task, onTaskClick }: any) {
   const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'Completed';
+  const isExternalDep = task.is_external_dependency;
   
   return (
     <Card 
       className={cn(
         "p-sm cursor-pointer transition-smooth hover:shadow-md hover:border-primary/30",
-        isOverdue && "border-l-4 border-l-destructive"
+        isOverdue && !isExternalDep && "border-l-4 border-l-destructive",
+        isExternalDep && "border-l-4 border-l-warning bg-warning/5"
       )}
       onClick={() => onTaskClick(task.id)}
     >
       <p className="text-body-sm font-medium text-foreground line-clamp-2">{task.title}</p>
-      <div className="flex items-center gap-sm mt-sm">
+      <div className="flex items-center gap-sm mt-sm flex-wrap">
         <Badge variant="outline" className={cn(
           "text-metadata px-1.5 py-0 rounded-full",
           task.priority === 'High' && 'border-destructive/50 text-destructive bg-destructive/10',
@@ -200,10 +168,16 @@ function KanbanCard({ task, onTaskClick }: any) {
         )}>
           {task.priority}
         </Badge>
+        {isExternalDep && (
+          <Badge variant="outline" className="text-metadata px-1.5 py-0 bg-warning/15 border-warning/30 text-warning rounded-full">
+            <ExternalLink className="h-2.5 w-2.5 mr-1" />
+            External
+          </Badge>
+        )}
         {task.due_at && (
           <span className={cn(
             "text-metadata",
-            isOverdue ? "text-destructive" : "text-muted-foreground"
+            isOverdue && !isExternalDep ? "text-destructive" : "text-muted-foreground"
           )}>
             {format(new Date(task.due_at), 'MMM d')}
           </span>
@@ -233,18 +207,17 @@ export default function CalendarView() {
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [sortOption, setSortOption] = useState<string>('priority');
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [weekOffset, setWeekOffset] = useState(0); // For week navigation
+  const [weekOffset, setWeekOffset] = useState(0);
   
   const currentDate = useMemo(() => new Date(), []);
   const targetUserId = selectedUserId || user?.id;
   
-  // Fetch all users for admin filter (includes working_days for filtering)
+  // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
       const { data } = await supabase.from('profiles').select('user_id, name, email, working_days');
       if (data) setAllUsers(data);
     };
-    // Fetch for all users (needed for working days filtering)
     fetchUsers();
   }, []);
   
@@ -254,45 +227,6 @@ export default function CalendarView() {
     if (dateView === 'custom' && dateRange?.from) return dateRange.from;
     return currentDate;
   }, [dateView, currentDate, dateRange]);
-  
-  // User Agenda Hook
-  const {
-    agendaItems,
-    agendaTasks,
-    availableTasks: hookAvailableTasks,
-    isLoading: agendaLoading,
-    addToAgenda: addToAgendaMutation,
-    removeFromAgenda: removeFromAgendaMutation,
-    isAdding: isAddingToAgenda,
-  } = useUserAgenda({
-    userId: targetUserId,
-    date: agendaDate,
-    allTasks: tasks,
-    completions: []
-  });
-
-  // Wrap agenda operations with toast feedback
-  const addToAgenda = (taskIds: string[]) => {
-    addToAgendaMutation(taskIds, {
-      onSuccess: () => {
-        toast({ title: `Added ${taskIds.length} task${taskIds.length > 1 ? 's' : ''} to agenda` });
-      },
-      onError: (error) => {
-        toast({ title: "Failed to add to agenda", description: String(error), variant: "destructive" });
-      }
-    });
-  };
-
-  const removeFromAgenda = (taskIds: string[]) => {
-    removeFromAgendaMutation(taskIds, {
-      onSuccess: () => {
-        toast({ title: `Moved ${taskIds.length} task${taskIds.length > 1 ? 's' : ''} to pool` });
-      },
-      onError: (error) => {
-        toast({ title: "Failed to remove from agenda", description: String(error), variant: "destructive" });
-      }
-    });
-  };
 
   // DnD sensors
   const sensors = useSensors(
@@ -318,53 +252,65 @@ export default function CalendarView() {
   // Helper function to check if a user is assigned to a task
   const isTaskAssignedToUser = useCallback((task: any, userId: string | undefined) => {
     if (!userId || !task.assignees || task.assignees.length === 0) return false;
-    
     return task.assignees.some((a: any) => {
-      // Check both user_id directly and nested profiles.user_id
       const assigneeUserId = a.user_id || a.profiles?.user_id;
       return assigneeUserId === userId;
     });
   }, []);
 
-  // Computed: Filter tasks for current view
-  const { activeTasks, completedTasks, overdueTasks, availableTasks } = useMemo(() => {
-    if (!tasks || !targetUserId) return { activeTasks: [], completedTasks: [], overdueTasks: [], availableTasks: [] };
+  // Computed: Filter tasks for current view - tasks due on agenda date
+  const { activeTasks, completedTasks, allDayTasks } = useMemo(() => {
+    if (!tasks || !targetUserId) return { activeTasks: [], completedTasks: [], allDayTasks: [] };
 
-    const agendaTaskIds = new Set(agendaItems.map(e => e.task_id));
+    // Filter tasks due on the agenda date or overdue (for admin, show all; for user, show assigned)
+    const relevantTasks = tasks.filter(t => {
+      const isAssigned = userRole === 'admin' || isTaskAssignedToUser(t, targetUserId);
+      if (!isAssigned) return false;
+      
+      // Include tasks due on agenda date
+      if (t.due_at && isSameDay(new Date(t.due_at), agendaDate)) return true;
+      
+      // Include overdue tasks (not completed, not backlog)
+      if (isTaskOverdue(t) && t.status !== 'Completed' && t.status !== 'Failed' && t.status !== 'Backlog') return true;
+      
+      // Include recurring tasks that occur on this date
+      if (t.recurrence_rrule) {
+        const dateStart = new Date(agendaDate);
+        dateStart.setHours(0, 0, 0, 0);
+        const dateEnd = new Date(agendaDate);
+        dateEnd.setHours(23, 59, 59, 999);
+        const occurrences = expandRecurringTask(t, dateStart, dateEnd, [], []);
+        if (occurrences.length > 0) return true;
+      }
+      
+      return false;
+    });
     
-    // Active (not completed) tasks on agenda
-    const active = agendaTasks
-      .filter(t => t.status !== 'Completed' && t.status !== 'Failed')
-      .sort((a, b) => {
-        const orderA = userTaskOrder.find((o: any) => o.task_id === a.id)?.order_index ?? 999;
-        const orderB = userTaskOrder.find((o: any) => o.task_id === b.id)?.order_index ?? 999;
-        return orderA - orderB;
-      });
+    // Sort by priority then by order
+    const sorted = relevantTasks.sort((a, b) => {
+      const orderA = userTaskOrder.find((o: any) => o.task_id === a.id)?.order_index ?? 999;
+      const orderB = userTaskOrder.find((o: any) => o.task_id === b.id)?.order_index ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      
+      const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+      return (priorityOrder[a.priority as keyof typeof priorityOrder] || 1) - 
+             (priorityOrder[b.priority as keyof typeof priorityOrder] || 1);
+    });
     
-    // Completed tasks on agenda
-    const completed = agendaTasks.filter(t => t.status === 'Completed');
-    
-    // Overdue tasks not on agenda (for task pool) - use consistent assignee check
-    const overdue = tasks.filter(t => 
-      !agendaTaskIds.has(t.id) &&
-      isTaskOverdue(t) &&
-      t.status !== 'Completed' &&
-      t.status !== 'Failed' &&
-      t.status !== 'Backlog' &&
-      (userRole === 'admin' || isTaskAssignedToUser(t, targetUserId))
-    );
+    const active = sorted.filter(t => t.status !== 'Completed' && t.status !== 'Failed');
+    const completed = sorted.filter(t => t.status === 'Completed');
 
-    return { activeTasks: active, completedTasks: completed, overdueTasks: overdue, availableTasks: hookAvailableTasks };
-  }, [tasks, agendaItems, agendaTasks, hookAvailableTasks, targetUserId, userTaskOrder, userRole, isTaskAssignedToUser]);
+    return { activeTasks: active, completedTasks: completed, allDayTasks: relevantTasks };
+  }, [tasks, targetUserId, agendaDate, userTaskOrder, userRole, isTaskAssignedToUser]);
 
-  // Get selected user's working days - always show for current user's agenda
+  // Get selected user's working days
   const selectedUserWorkingDays = useMemo(() => {
     if (!targetUserId) return null;
     const userProfile = allUsers.find(u => u.user_id === targetUserId);
     return userProfile?.working_days || null;
   }, [targetUserId, allUsers]);
 
-  // Kanban columns for weekly view with week navigation
+  // Kanban columns for weekly view
   const weeklyKanbanColumns = useMemo(() => {
     const baseDate = addWeeks(currentDate, weekOffset);
     const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
@@ -372,21 +318,16 @@ export default function CalendarView() {
     
     return days.map((day, i) => {
       const date = addDays(weekStart, i);
-      // Always check working day based on target user (current user or selected user by admin)
       const isWorkingDay = isDateWorkingDay(date, selectedUserWorkingDays);
       
-      // Filter tasks for this day - include both due_at tasks AND recurring occurrences
       const dayTasks: any[] = [];
       const addedTaskIds = new Set<string>();
       
       tasks?.forEach(t => {
         if (t.status === 'Completed' || t.status === 'Failed') return;
-        
-        // Check if task is assigned to target user
         const isAssigned = isTaskAssignedToUser(t, targetUserId);
         if (!isAssigned) return;
         
-        // Check for recurring task occurrences on this day
         if (t.recurrence_rrule) {
           const dateStart = new Date(date);
           dateStart.setHours(0, 0, 0, 0);
@@ -395,16 +336,10 @@ export default function CalendarView() {
           
           const occurrences = expandRecurringTask(t, dateStart, dateEnd, [], []);
           if (occurrences.length > 0 && !addedTaskIds.has(t.id)) {
-            dayTasks.push({
-              ...t,
-              isRecurringOccurrence: true,
-              occurrenceDate: date
-            });
+            dayTasks.push({ ...t, isRecurringOccurrence: true, occurrenceDate: date });
             addedTaskIds.add(t.id);
           }
-        }
-        // Check for regular due_at tasks
-        else if (t.due_at && isSameDay(new Date(t.due_at), date) && !addedTaskIds.has(t.id)) {
+        } else if (t.due_at && isSameDay(new Date(t.due_at), date) && !addedTaskIds.has(t.id)) {
           dayTasks.push(t);
           addedTaskIds.add(t.id);
         }
@@ -423,18 +358,15 @@ export default function CalendarView() {
     ];
   }, [activeTasks]);
 
-  // Check if manual reorder mode
   const isManualMode = userTaskOrder.length > 0;
 
   // Handle task completion toggle
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
-    // Handle recurring task occurrence
     if (taskId.includes('::')) {
       toast({ title: "Recurring task", description: "Individual occurrences cannot be marked complete" });
       return;
     }
 
-    // Use shared action
     const result = completed 
       ? await completeTask(taskId)
       : await setTaskStatus(taskId, 'Backlog');
@@ -447,14 +379,33 @@ export default function CalendarView() {
     }
   };
 
+  // Mark task as external dependency
+  const handleMarkExternalDependency = async (taskId: string) => {
+    const reason = prompt("Enter reason for external dependency (what/who are you waiting for?):");
+    if (!reason) return;
+    
+    const { error } = await supabase
+      .from('tasks')
+      .update({ 
+        is_external_dependency: true, 
+        external_dependency_reason: reason 
+      })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to mark as external dependency", variant: "destructive" });
+    } else {
+      toast({ title: "Marked as external dependency" });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
     if (!over || active.id === over.id || !targetUserId) return;
 
     const oldIndex = activeTasks.findIndex(t => t.id === active.id);
     const newIndex = activeTasks.findIndex(t => t.id === over.id);
-    
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reorderedTasks = [...activeTasks];
@@ -474,9 +425,7 @@ export default function CalendarView() {
           task_id: task.id,
           date_scope: dateScope,
           order_index: index,
-        }, {
-          onConflict: 'user_id,task_id,date_scope'
-        })
+        }, { onConflict: 'user_id,task_id,date_scope' })
     );
 
     try {
@@ -524,11 +473,6 @@ export default function CalendarView() {
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
   };
 
-  const handleBulkRemove = () => {
-    removeFromAgenda(Array.from(selectedIds));
-    setSelectedIds(new Set());
-  };
-
   // Get date label
   const getDateLabel = () => {
     switch (dateView) {
@@ -539,12 +483,6 @@ export default function CalendarView() {
       default: return format(currentDate, 'EEEE, MMMM d');
     }
   };
-
-  // Combined task pool (overdue + available)
-  const taskPoolCount = overdueTasks.length + availableTasks.length;
-
-  // Show Task Pool only for non-week views
-  const showTaskPool = dateView !== 'week';
 
   const openTaskDialog = (id: string) => {
     const originalId = id.includes('::') ? id.split('::')[0] : id;
@@ -558,7 +496,7 @@ export default function CalendarView() {
     <div className="min-h-screen bg-background">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-8 pt-8 pb-8">
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-[24px] font-semibold text-foreground tracking-tight">My Agenda</h1>
@@ -658,21 +596,21 @@ export default function CalendarView() {
           </div>
         </header>
 
+        {/* Day Brief - Only show for non-week views */}
+        {dateView !== 'week' && !tasksLoading && (
+          <DayBrief tasks={allDayTasks} allUsers={allUsers} targetDate={agendaDate} />
+        )}
+
         {/* Main Content */}
         {viewMode === 'kanban' ? (
           // Kanban View
           <div className="space-y-4">
           {dateView === 'week' ? (
-              // Weekly Kanban - Group by Days with Week Navigation
+              // Weekly Kanban
               <div className="space-y-4">
                 {/* Week Navigation Header */}
                 <div className="flex items-center justify-between">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setWeekOffset(w => w - 1)}
-                    className="h-8 w-8"
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w - 1)} className="h-8 w-8">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="text-center">
@@ -680,22 +618,12 @@ export default function CalendarView() {
                       {format(startOfWeek(addWeeks(currentDate, weekOffset), { weekStartsOn: 1 }), 'MMM d')} - {format(addDays(startOfWeek(addWeeks(currentDate, weekOffset), { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}
                     </span>
                     {weekOffset !== 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setWeekOffset(0)}
-                        className="ml-2 text-xs text-primary"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)} className="ml-2 text-xs text-primary">
                         Today
                       </Button>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setWeekOffset(w => w + 1)}
-                    className="h-8 w-8"
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w + 1)} className="h-8 w-8">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -703,13 +631,7 @@ export default function CalendarView() {
                 {/* Week Grid */}
                 <div className="grid grid-cols-7 gap-3">
                   {weeklyKanbanColumns.map(col => (
-                    <Card 
-                      key={col.day} 
-                      className={cn(
-                        "min-h-[500px]",
-                        !col.isWorkingDay && "opacity-50 bg-muted/30"
-                      )}
-                    >
+                    <Card key={col.day} className={cn("min-h-[500px]", !col.isWorkingDay && "opacity-50 bg-muted/30")}>
                       <div className={cn(
                         "p-3 border-b border-border",
                         isSameDay(col.date, currentDate) && "bg-primary/10",
@@ -717,9 +639,7 @@ export default function CalendarView() {
                       )}>
                         <h3 className="font-semibold text-body-sm">{col.day}</h3>
                         <p className="text-metadata text-muted-foreground">{format(col.date, 'MMM d')}</p>
-                        {!col.isWorkingDay && (
-                          <Badge variant="outline" className="text-[10px] mt-1 text-warning">Off</Badge>
-                        )}
+                        {!col.isWorkingDay && <Badge variant="outline" className="text-[10px] mt-1 text-warning">Off</Badge>}
                       </div>
                       <ScrollArea className="h-[420px] p-3">
                         <div className="space-y-2">
@@ -728,9 +648,7 @@ export default function CalendarView() {
                               {!col.isWorkingDay ? "Not working" : "No tasks"}
                             </p>
                           ) : (
-                            col.tasks.map(task => (
-                              <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />
-                            ))
+                            col.tasks.map(task => <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />)
                           )}
                         </div>
                       </ScrollArea>
@@ -739,79 +657,30 @@ export default function CalendarView() {
                 </div>
               </div>
             ) : (
-              // Daily Kanban - Group by Priority
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-3">
-                  <div className="grid grid-cols-3 gap-4">
-                    {dailyKanbanColumns.map(col => (
-                      <Card key={col.priority} className="min-h-[400px]">
-                        <div className={cn(
-                          "p-3 border-b border-border",
-                          col.priority === 'High' && "bg-destructive/10",
-                          col.priority === 'Medium' && "bg-primary/10",
-                          col.priority === 'Low' && "bg-muted/50"
-                        )}>
-                          <h3 className="font-semibold text-body-sm">{col.priority} Priority</h3>
-                          <p className="text-metadata text-muted-foreground">{col.tasks.length} tasks</p>
-                        </div>
-                        <ScrollArea className="h-[350px] p-3">
-                          <div className="space-y-2">
-                            {col.tasks.length === 0 ? (
-                              <p className="text-metadata text-muted-foreground text-center py-4">No tasks</p>
-                            ) : (
-                              col.tasks.map(task => (
-                                <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />
-                              ))
-                            )}
-                          </div>
-                        </ScrollArea>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Task Pool for Daily Kanban */}
-                {showTaskPool && (
-                  <div className="lg:col-span-1">
-                    <Card>
-                      <div className="p-3 border-b border-border">
-                        <h3 className="text-body-sm font-semibold flex items-center gap-2">
-                          Task Pool
-                          <Badge variant="secondary" className="text-xs">{taskPoolCount}</Badge>
-                        </h3>
+              // Daily Kanban
+              <div className="grid grid-cols-3 gap-4">
+                {dailyKanbanColumns.map(col => (
+                  <Card key={col.priority} className="min-h-[400px]">
+                    <div className={cn(
+                      "p-3 border-b border-border",
+                      col.priority === 'High' && "bg-destructive/10",
+                      col.priority === 'Medium' && "bg-primary/10",
+                      col.priority === 'Low' && "bg-muted/50"
+                    )}>
+                      <h3 className="font-semibold text-body-sm">{col.priority} Priority</h3>
+                      <p className="text-metadata text-muted-foreground">{col.tasks.length} tasks</p>
+                    </div>
+                    <ScrollArea className="h-[350px] p-3">
+                      <div className="space-y-2">
+                        {col.tasks.length === 0 ? (
+                          <p className="text-metadata text-muted-foreground text-center py-4">No tasks</p>
+                        ) : (
+                          col.tasks.map(task => <KanbanCard key={task.id} task={task} onTaskClick={openTaskDialog} />)
+                        )}
                       </div>
-                      <ScrollArea className="max-h-[450px]">
-                        {overdueTasks.length > 0 && (
-                          <div>
-                            <div className="px-3 py-2 bg-destructive/10 flex items-center gap-2">
-                              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                              <span className="text-metadata font-medium text-destructive">Overdue ({overdueTasks.length})</span>
-                            </div>
-                            {overdueTasks.map(task => (
-                              <TaskPoolItem key={task.id} task={task} isOverdue onTaskClick={openTaskDialog} onAdd={addToAgenda} />
-                            ))}
-                          </div>
-                        )}
-                        {availableTasks.length > 0 && (
-                          <div>
-                            <div className="px-3 py-2 bg-muted/50 flex items-center gap-2">
-                              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-metadata font-medium text-muted-foreground">Available ({availableTasks.length})</span>
-                            </div>
-                            {availableTasks.map(task => (
-                              <TaskPoolItem key={task.id} task={task} onTaskClick={openTaskDialog} onAdd={addToAgenda} />
-                            ))}
-                          </div>
-                        )}
-                        {taskPoolCount === 0 && (
-                          <div className="p-4 text-center">
-                            <p className="text-metadata text-muted-foreground">All caught up!</p>
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </Card>
-                  </div>
-                )}
+                    </ScrollArea>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
@@ -824,201 +693,108 @@ export default function CalendarView() {
           </Card>
         ) : (
           // Table View (Default)
-          <div className={cn("grid gap-6", showTaskPool ? "grid-cols-1 lg:grid-cols-[1fr_380px]" : "grid-cols-1")}>
-            {/* My Agenda - Main column */}
-            <div>
-              <Card className="bg-card border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
-                {/* Toolbar */}
-                <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-                  <div className="flex items-center gap-3">
-                    <Checkbox 
-                      checked={selectedIds.size === activeTasks.length && activeTasks.length > 0}
-                      onCheckedChange={selectAll}
-                      className="border-border"
-                    />
-                    <span className="text-[14px] text-muted-foreground">
-                      {selectedIds.size > 0 ? `${selectedIds.size} selected` : `${activeTasks.length} tasks`}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {selectedIds.size > 0 && (
-                      <>
-                        <Button variant="outline" size="sm" onClick={handleBulkComplete} className="rounded-lg h-8 text-[13px]">
-                          <Check className="h-4 w-4 mr-1.5" />
-                          Complete
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleBulkRemove} className="rounded-lg h-8 text-[13px]">
-                          <ArrowRightFromLine className="h-4 w-4 mr-1.5" />
-                          Move to Pool
-                        </Button>
-                      </>
-                    )}
-                    
-                    <select
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value)}
-                      className="h-8 px-3 text-[13px] bg-muted border-0 rounded-lg text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    >
-                      <option value="priority">Priority</option>
-                      <option value="due_time">Due Date</option>
-                      <option value="status">Status</option>
-                      <option value="alphabetical">A-Z</option>
-                      <option value="manual">Manual</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Task List */}
-                {tasksLoading || agendaLoading ? (
-                  <div className="p-4">
-                    <ListSkeleton items={5} />
-                  </div>
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={activeTasks.map(t => t.id)}
-                      strategy={verticalListSortingStrategy}
-                      disabled={sortOption !== "manual"}
-                    >
-                      <div>
-                        {activeTasks.length === 0 ? (
-                          <div className="p-12 text-center">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                              <CalendarIcon className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                            <p className="text-[16px] font-medium text-foreground mb-1">No tasks in your agenda</p>
-                            <p className="text-[14px] text-muted-foreground">
-                              {showTaskPool ? "Add tasks from the Task Pool →" : "Create a new task to get started"}
-                            </p>
-                          </div>
-                        ) : (
-                          activeTasks.map((task) => (
-                            <SortableTaskItem
-                              key={task.id}
-                              task={task}
-                              onTaskClick={openTaskDialog}
-                              onTaskComplete={handleTaskComplete}
-                              onRemoveFromAgenda={removeFromAgenda}
-                              isManualMode={sortOption === "manual"}
-                              isSelected={selectedIds.has(task.id)}
-                              onSelect={toggleSelection}
-                            />
-                          ))
-                        )}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
+          <Card className="bg-card border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+              <div className="flex items-center gap-3">
+                <Checkbox 
+                  checked={selectedIds.size === activeTasks.length && activeTasks.length > 0}
+                  onCheckedChange={selectAll}
+                  className="border-border"
+                />
+                <span className="text-[14px] text-muted-foreground">
+                  {selectedIds.size > 0 ? `${selectedIds.size} selected` : `${activeTasks.length} tasks`}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 && (
+                  <Button variant="outline" size="sm" onClick={handleBulkComplete} className="rounded-lg h-8 text-[13px]">
+                    <Check className="h-4 w-4 mr-1.5" />
+                    Complete
+                  </Button>
                 )}
-
-                {/* Completed Section - Collapsible */}
-                {completedTasks.length > 0 && (
-                  <Collapsible open={completedExpanded} onOpenChange={setCompletedExpanded}>
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-smooth">
-                        {completedExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="text-[14px] font-medium text-muted-foreground">
-                          Completed Today ({completedTasks.length})
-                        </span>
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="bg-muted/10">
-                        {completedTasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className="flex items-center gap-3 py-3 px-4 border-b border-border last:border-0 cursor-pointer hover:bg-muted/20 transition-smooth"
-                            onClick={() => openTaskDialog(task.id)}
-                          >
-                            <Checkbox checked disabled className="opacity-50 border-border" />
-                            <span className="text-[14px] text-muted-foreground line-through">{task.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
-              </Card>
+                
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="h-8 px-3 text-[13px] bg-muted border-0 rounded-lg text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="priority">Priority</option>
+                  <option value="due_time">Due Date</option>
+                  <option value="status">Status</option>
+                  <option value="alphabetical">A-Z</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
             </div>
 
-            {/* Task Pool - 25% - Only shown for non-week views */}
-            {showTaskPool && (
-              <div className="lg:col-span-1 min-w-[320px]">
-                <Card className="bg-card border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
-                  <div className="p-4 border-b border-border bg-card">
-                    <h3 className="text-[16px] font-semibold text-foreground flex items-center gap-2">
-                      Task Pool
-                      <Badge variant="secondary" className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        {taskPoolCount}
-                      </Badge>
-                    </h3>
-                    <p className="text-[12px] text-muted-foreground mt-1">Add tasks to your agenda</p>
-                  </div>
-                  
-                  <ScrollArea className="max-h-[calc(100vh-350px)]">
-                    {/* Overdue Section */}
-                    {overdueTasks.length > 0 && (
-                      <div>
-                        <div className="px-4 py-2.5 bg-destructive/5 flex items-center gap-2 border-b border-destructive/10">
-                          <AlertTriangle className="h-4 w-4 text-destructive" />
-                          <span className="text-[12px] font-semibold text-destructive uppercase tracking-wide">
-                            Overdue ({overdueTasks.length})
-                          </span>
-                        </div>
-                        {overdueTasks.map(task => (
-                          <TaskPoolItem 
-                            key={task.id}
-                            task={task}
-                            isOverdue
-                            onTaskClick={openTaskDialog}
-                            onAdd={addToAgenda}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Available Section */}
-                    {availableTasks.length > 0 && (
-                      <div>
-                        <div className="px-4 py-2.5 bg-muted/30 flex items-center gap-2 border-b border-border">
-                          <Plus className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide">
-                            Available ({availableTasks.length})
-                          </span>
-                        </div>
-                        {availableTasks.map(task => (
-                          <TaskPoolItem 
-                            key={task.id}
-                            task={task}
-                            onTaskClick={openTaskDialog}
-                            onAdd={addToAgenda}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {taskPoolCount === 0 && (
-                      <div className="p-8 text-center">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
-                          <Check className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <p className="text-[14px] font-medium text-foreground">All caught up!</p>
-                        <p className="text-[12px] text-muted-foreground mt-1">No pending tasks to add</p>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </Card>
+            {/* Task List */}
+            {tasksLoading ? (
+              <div className="p-4">
+                <ListSkeleton items={5} />
               </div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={activeTasks.map(t => t.id)} strategy={verticalListSortingStrategy} disabled={sortOption !== "manual"}>
+                  <div>
+                    {activeTasks.length === 0 ? (
+                      <div className="p-12 text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                          <CalendarIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-[16px] font-medium text-foreground mb-1">No tasks due</p>
+                        <p className="text-[14px] text-muted-foreground">
+                          Create a new task to get started
+                        </p>
+                      </div>
+                    ) : (
+                      activeTasks.map((task) => (
+                        <SortableTaskItem
+                          key={task.id}
+                          task={task}
+                          onTaskClick={openTaskDialog}
+                          onTaskComplete={handleTaskComplete}
+                          onMarkExternalDependency={handleMarkExternalDependency}
+                          isManualMode={sortOption === "manual"}
+                          isSelected={selectedIds.has(task.id)}
+                          onSelect={toggleSelection}
+                        />
+                      ))
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
-          </div>
+
+            {/* Completed Section */}
+            {completedTasks.length > 0 && (
+              <Collapsible open={completedExpanded} onOpenChange={setCompletedExpanded}>
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-smooth">
+                    {completedExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    <span className="text-[14px] font-medium text-muted-foreground">
+                      Completed ({completedTasks.length})
+                    </span>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="bg-muted/10">
+                    {completedTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-3 py-3 px-4 border-b border-border last:border-0 cursor-pointer hover:bg-muted/20 transition-smooth"
+                        onClick={() => openTaskDialog(task.id)}
+                      >
+                        <Checkbox checked disabled className="opacity-50 border-border" />
+                        <span className="text-[14px] text-muted-foreground line-through">{task.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </Card>
         )}
       </div>
 
