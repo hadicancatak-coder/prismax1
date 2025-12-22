@@ -239,17 +239,24 @@ const HEADER_VARIANTS = {
 };
 
 const TOTAL_ROW_PATTERNS = [
-  /^total:?\s*$/i,
-  /^total$/i,
-  /^الإجمالي/,
-  /^المجموع/,
-  /^الاجمالي/,
-  /^اجمالي/,
-  /^مجموع/,
-  /^\s*$/,
-  /^--/,
-  /^grand total/i,
-  /^subtotal/i,
+  // English variations - use word boundary \b so "Total:" and "Total -" match
+  /^total\b/i,                    // "total", "total:", "total -", "Total Rows"
+  /^grand\s*total\b/i,            // "grand total", "grandtotal"
+  /^subtotal\b/i,                 // "subtotal"
+  
+  // Arabic variations - match if contains these total-related words
+  /الإجمالي/,                      // with hamza
+  /الاجمالي/,                      // without hamza  
+  /اجمالي/,                        // without al-
+  /المجموع/,                       // "the total"
+  /مجموع/,                         // "sum"
+  /الكل/,                          // "all"
+  /إجمالي/,                        // with hamza, no al-
+  
+  // Empty/placeholder rows
+  /^\s*$/,                         // empty or whitespace only
+  /^--+$/,                         // dashes only (one or more)
+  /^-$/,                           // single dash
 ];
 
 function parseCSVLine(line: string): string[] {
