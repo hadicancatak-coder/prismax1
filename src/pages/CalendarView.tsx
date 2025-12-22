@@ -262,9 +262,12 @@ export default function CalendarView() {
   const { activeTasks, completedTasks, allDayTasks } = useMemo(() => {
     if (!tasks || !targetUserId) return { activeTasks: [], completedTasks: [], allDayTasks: [] };
 
-    // Filter tasks due on the agenda date or overdue (for admin, show all; for user, show assigned)
+    // Filter tasks due on the agenda date or overdue
+    // If admin has selected a specific user, filter by that user's assignments
     const relevantTasks = tasks.filter(t => {
-      const isAssigned = userRole === 'admin' || isTaskAssignedToUser(t, targetUserId);
+      const isAssigned = selectedUserId 
+        ? isTaskAssignedToUser(t, selectedUserId) 
+        : (userRole === 'admin' || isTaskAssignedToUser(t, targetUserId));
       if (!isAssigned) return false;
       
       // Include tasks due on agenda date
@@ -301,7 +304,7 @@ export default function CalendarView() {
     const completed = sorted.filter(t => t.status === 'Completed');
 
     return { activeTasks: active, completedTasks: completed, allDayTasks: relevantTasks };
-  }, [tasks, targetUserId, agendaDate, userTaskOrder, userRole, isTaskAssignedToUser]);
+  }, [tasks, targetUserId, selectedUserId, agendaDate, userTaskOrder, userRole, isTaskAssignedToUser]);
 
   // Get selected user's working days
   const selectedUserWorkingDays = useMemo(() => {
@@ -325,7 +328,10 @@ export default function CalendarView() {
       
       tasks?.forEach(t => {
         if (t.status === 'Completed' || t.status === 'Failed') return;
-        const isAssigned = isTaskAssignedToUser(t, targetUserId);
+        // If admin selected a specific user, filter by that user; otherwise use targetUserId
+        const isAssigned = selectedUserId 
+          ? isTaskAssignedToUser(t, selectedUserId)
+          : isTaskAssignedToUser(t, targetUserId);
         if (!isAssigned) return;
         
         if (t.recurrence_rrule) {
@@ -347,7 +353,7 @@ export default function CalendarView() {
       
       return { day, date, tasks: dayTasks, isWorkingDay };
     });
-  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, targetUserId, isTaskAssignedToUser]);
+  }, [tasks, currentDate, weekOffset, selectedUserWorkingDays, targetUserId, selectedUserId, isTaskAssignedToUser]);
 
   // Kanban columns for daily view (by priority)
   const dailyKanbanColumns = useMemo(() => {
