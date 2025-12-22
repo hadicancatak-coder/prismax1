@@ -424,6 +424,14 @@ const LOGIN_ACCESS_PATTERN = /\b(login|log\s*in|sign\s*in|signin|account|portal|
 // Junk patterns
 const JUNK_PATTERN = /^[0-9\s\-\.]+$|^\s*$/;
 
+// No-money intent patterns (users looking for free/earn money without investment)
+export const NO_MONEY_PATTERNS_EN = /\b(free|earn money|make money|money make|how to earn|free signals|free course|no deposit|without deposit|no investment|earn from home|work from home|passive income)\b/i;
+export const NO_MONEY_PATTERNS_AR = /ربح|ربح المال|كسب المال|فلوس|بدون رأس مال|بدون ايداع|بدون استثمار|مجانا|مجاني|اربح|كسب/;
+
+export function isNoMoneyIntent(norm: string, asciiNorm: string): boolean {
+  return NO_MONEY_PATTERNS_EN.test(asciiNorm) || NO_MONEY_PATTERNS_AR.test(norm);
+}
+
 // =====================================================
 // INTENT PATTERNS
 // =====================================================
