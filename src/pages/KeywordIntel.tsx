@@ -130,22 +130,47 @@ export default function KeywordIntel() {
   const [matchTypeFilter, setMatchTypeFilter] = useState<string>("all");
   const [minScore, setMinScore] = useState<number>(0);
 
+  // Parse CSV line handling quoted values
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim().replace(/^["']|["']$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim().replace(/^["']|["']$/g, ''));
+    return result;
+  };
+
   // Parse CSV with flexible column mapping
   const parseCSV = useCallback((text: string): { data: KeywordRow[]; error: string | null } => {
-    const lines = text.trim().split('\n');
+    const lines = text.trim().split('\n').filter(line => line.trim());
     if (lines.length < 2) return { data: [], error: "CSV file is empty or has no data rows" };
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/['"]/g, ''));
+    const headers = parseCSVLine(lines[0]);
+    console.log("Parsed headers:", headers);
     
     // Build column index map
     const colMap: Record<string, number> = {};
     for (const field of Object.keys(COLUMN_MAPPINGS)) {
       colMap[field] = findColumnIndex(headers, field);
     }
+    
+    console.log("Column mapping:", colMap);
 
     // Validate required columns
     const missingColumns = REQUIRED_COLUMNS.filter(col => colMap[col] === -1);
     if (missingColumns.length > 0) {
+      console.log("Missing columns:", missingColumns, "Headers found:", headers);
       return { data: [], error: `Missing required columns: ${missingColumns.join(', ')}` };
     }
 
@@ -155,26 +180,11 @@ export default function KeywordIntel() {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Handle CSV with quoted fields
-      const values: string[] = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (const char of line) {
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          values.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      values.push(current.trim());
+      const values = parseCSVLine(line);
 
       const getValue = (field: string): string => {
         const idx = colMap[field];
-        return idx !== -1 && values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+        return idx !== -1 && values[idx] ? values[idx] : '';
       };
 
       const row: KeywordRow = {
