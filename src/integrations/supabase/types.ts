@@ -1765,6 +1765,104 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_list_items: {
+        Row: {
+          action_taken: string | null
+          ad_group: string | null
+          campaign: string | null
+          clicks: number | null
+          conversions: number | null
+          cost: number | null
+          created_at: string
+          ctr: number | null
+          id: string
+          impressions: number | null
+          keyword: string
+          list_id: string
+          match_type: string | null
+          notes: string | null
+          opportunity_score: number | null
+        }
+        Insert: {
+          action_taken?: string | null
+          ad_group?: string | null
+          campaign?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keyword: string
+          list_id: string
+          match_type?: string | null
+          notes?: string | null
+          opportunity_score?: number | null
+        }
+        Update: {
+          action_taken?: string | null
+          ad_group?: string | null
+          campaign?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keyword?: string
+          list_id?: string
+          match_type?: string | null
+          notes?: string | null
+          opportunity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "keyword_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keyword_lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          entity: string
+          id: string
+          keyword_count: number
+          name: string
+          source_file: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          entity: string
+          id?: string
+          keyword_count?: number
+          name: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity?: string
+          id?: string
+          keyword_count?: number
+          name?: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       knowledge_pages: {
         Row: {
           click_count: number | null

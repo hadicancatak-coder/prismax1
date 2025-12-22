@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, Upload, TrendingUp, Layers, Lightbulb, Download, Copy, AlertCircle, CheckCircle2, FolderOpen, Save } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataCard, DataCardHeader } from "@/components/layout/DataCard";
@@ -14,6 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useKeywordLists } from "@/hooks/useKeywordLists";
+import { SaveKeywordListDialog } from "@/components/keyword-intel/SaveKeywordListDialog";
+import { SavedKeywordListsTab } from "@/components/keyword-intel/SavedKeywordListsTab";
 
 // Types - Updated for Google Ads Search Terms Report
 interface KeywordRow {
@@ -118,11 +121,14 @@ function findColumnIndex(headers: string[], fieldName: string): number {
 
 export default function KeywordIntel() {
   const { toast } = useToast();
+  const { createList } = useKeywordLists();
   const [activeTab, setActiveTab] = useState("upload");
   const [parsedData, setParsedData] = useState<KeywordRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [previewRows, setPreviewRows] = useState<KeywordRow[]>([]);
   const [isUploaded, setIsUploaded] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [sourceFileName, setSourceFileName] = useState<string | null>(null);
 
   // Filters - Updated for Google Ads data
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
@@ -341,6 +347,8 @@ export default function KeywordIntel() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    setSourceFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -417,6 +425,34 @@ export default function KeywordIntel() {
     return <Badge variant="secondary">{score}</Badge>;
   };
 
+  // Handle save analysis
+  const handleSaveAnalysis = async (data: { name: string; entity: string; description?: string }) => {
+    const items = filteredData.map(kw => ({
+      keyword: kw.keyword,
+      opportunity_score: kw.opportunity_score || null,
+      clicks: kw.clicks,
+      impressions: kw.impressions,
+      ctr: kw.ctr,
+      cost: kw.cost,
+      conversions: kw.conversions,
+      campaign: kw.campaign,
+      ad_group: kw.ad_group,
+      match_type: kw.match_type,
+      action_taken: 'pending',
+      notes: null,
+    }));
+
+    await createList.mutateAsync({
+      name: data.name,
+      entity: data.entity,
+      description: data.description,
+      source_file: sourceFileName || undefined,
+      items,
+    });
+
+    setSaveDialogOpen(false);
+  };
+
   return (
     <PageContainer>
       <PageHeader
@@ -438,6 +474,9 @@ export default function KeywordIntel() {
           </TabsTrigger>
           <TabsTrigger value="ideas" className="gap-xs" disabled={!isUploaded}>
             <Lightbulb className="h-4 w-4" /> Ideas
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="gap-xs">
+            <FolderOpen className="h-4 w-4" /> Saved Lists
           </TabsTrigger>
         </TabsList>
 
@@ -585,6 +624,9 @@ export default function KeywordIntel() {
               <Button variant="outline" size="sm" onClick={exportCSV}>
                 <Download className="h-4 w-4 mr-xs" /> Export CSV
               </Button>
+              <Button size="sm" onClick={() => setSaveDialogOpen(true)}>
+                <Save className="h-4 w-4 mr-xs" /> Save Analysis
+              </Button>
             </div>
           </div>
 
@@ -723,7 +765,19 @@ export default function KeywordIntel() {
             )}
           </DataCard>
         </TabsContent>
+
+        <TabsContent value="saved" className="mt-lg">
+          <SavedKeywordListsTab />
+        </TabsContent>
       </Tabs>
+
+      <SaveKeywordListDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        keywords={filteredData}
+        onSave={handleSaveAnalysis}
+        isSaving={createList.isPending}
+      />
     </PageContainer>
   );
 }
