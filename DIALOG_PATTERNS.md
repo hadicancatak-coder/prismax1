@@ -265,3 +265,54 @@ When opening an **Edit** dialog for an existing record, **never rely on the obje
 - [ ] Same layout in view/edit modes
 - [ ] Controlled form inputs
 - [ ] Error states handled gracefully
+- [ ] **Side panel auto-opens in view mode** (for dialogs with comments/activity)
+- [ ] **Always fetch fresh data** even when cached data is passed
+
+---
+
+## UnifiedTaskDialog Visibility Patterns
+
+The UnifiedTaskDialog is the standard dialog for viewing/editing tasks across the app. These patterns ensure content is always visible.
+
+### Critical Rules:
+
+1. **Always Fetch Fresh Data**: Even when cached task data is passed from list views, always fetch fresh task data from the database. List views may not include all fields (especially `description`).
+
+2. **Auto-Open Side Panel in View Mode**: When opening in `view` mode, automatically set `sidePanelOpen = true` so comments and activity are immediately visible.
+
+3. **Reset State on Dialog Close**: Clear `initialLoadRef` when dialog closes to ensure fresh data is fetched on next open.
+
+4. **Skeleton Loading**: Show a loading skeleton while fetching to prevent layout shifts.
+
+### Implementation Pattern:
+
+```tsx
+// In useEffect for dialog open/close
+useEffect(() => {
+  if (open) {
+    setInternalMode(mode);
+    // Auto-open side panel in view mode so comments visible
+    setSidePanelOpen(mode === 'view');
+  } else {
+    // Reset refs on close for fresh fetch next time
+    initialLoadRef.current = null;
+  }
+}, [open, mode]);
+
+// Always fetch fresh task data - don't skip even with cached data
+useEffect(() => {
+  if (open && !isCreate && taskId) {
+    Promise.all([
+      fetchTask(),      // Always fetch fresh
+      fetchComments(),
+      fetchBlocker()
+    ]);
+  }
+}, [open, taskId, isCreate]);
+```
+
+### Why This Matters:
+- Users clicking agenda/calendar items expect full task description visible
+- Cached task data from list views may lack rich text descriptions
+- Comments and activity are critical context that should be immediately visible
+- Prevents "blank description" or "missing comments" bugs sitewide
