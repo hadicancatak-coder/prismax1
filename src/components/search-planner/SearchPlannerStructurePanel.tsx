@@ -267,9 +267,9 @@ export function SearchPlannerStructurePanel({
                     </div>
 
                     {/* Campaign name */}
-                    <div className="flex items-center gap-xs flex-1">
+                    <div className="flex items-center gap-xs flex-1 min-w-0">
                       <Folder className="h-4 w-4 text-primary/70 flex-shrink-0" />
-                      <span className="flex-1 text-body-sm font-medium text-foreground truncate">
+                      <span className="flex-1 text-body-sm font-medium text-foreground break-words line-clamp-2">
                         {campaign.name}
                       </span>
                     </div>
@@ -358,9 +358,9 @@ export function SearchPlannerStructurePanel({
                                 </div>
 
                                 {/* Ad Group name */}
-                                <div className="flex items-center gap-xs flex-1">
+                                <div className="flex items-center gap-xs flex-1 min-w-0">
                                   <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="flex-1 text-body-sm text-foreground truncate">
+                                  <span className="flex-1 text-body-sm text-foreground break-words line-clamp-2">
                                     {adGroup.name}
                                   </span>
                                 </div>
@@ -429,7 +429,7 @@ export function SearchPlannerStructurePanel({
                                         onClick={() => onEditAd(ad, adGroup, campaign, selectedEntity)}
                                       >
                                         <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                        <span className="flex-1 text-body-sm text-foreground truncate">
+                                        <span className="flex-1 text-body-sm text-foreground break-words line-clamp-2 min-w-0">
                                           {ad.name}
                                         </span>
                                         <Badge variant="outline" className={cn("text-metadata", getAdStrengthColor(strength))}>
