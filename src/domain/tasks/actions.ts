@@ -325,3 +325,237 @@ export async function addTaskComment(
     return { success: false, error: err.message || 'Failed to add comment' };
   }
 }
+
+// =============================================================================
+// ADVANCED BULK ACTIONS (for Advanced Task Board)
+// =============================================================================
+
+interface BulkResult {
+  success: boolean;
+  successCount: number;
+  failedCount: number;
+  errors: string[];
+}
+
+/**
+ * Update labels/tags for multiple tasks in bulk
+ */
+export async function setLabelsBulk(
+  taskIds: string[],
+  labels: string[]
+): Promise<BulkResult> {
+  if (taskIds.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  const results = await Promise.allSettled(
+    taskIds.map(async (id) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ labels, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Add tags to existing labels for multiple tasks
+ */
+export async function addLabelsBulk(
+  taskIds: string[],
+  labelsToAdd: string[]
+): Promise<BulkResult> {
+  if (taskIds.length === 0 || labelsToAdd.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  // First fetch current labels for all tasks
+  const { data: tasks, error: fetchError } = await supabase
+    .from('tasks')
+    .select('id, labels')
+    .in('id', taskIds);
+
+  if (fetchError) {
+    return { success: false, successCount: 0, failedCount: taskIds.length, errors: [fetchError.message] };
+  }
+
+  const results = await Promise.allSettled(
+    (tasks || []).map(async (task) => {
+      const currentLabels: string[] = (task.labels as string[]) || [];
+      const newLabels = [...new Set([...currentLabels, ...labelsToAdd])];
+      const { error } = await supabase
+        .from('tasks')
+        .update({ labels: newLabels, updated_at: new Date().toISOString() })
+        .eq('id', task.id);
+      if (error) throw error;
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Remove tags from labels for multiple tasks
+ */
+export async function removeLabelsBulk(
+  taskIds: string[],
+  labelsToRemove: string[]
+): Promise<BulkResult> {
+  if (taskIds.length === 0 || labelsToRemove.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  // First fetch current labels for all tasks
+  const { data: tasks, error: fetchError } = await supabase
+    .from('tasks')
+    .select('id, labels')
+    .in('id', taskIds);
+
+  if (fetchError) {
+    return { success: false, successCount: 0, failedCount: taskIds.length, errors: [fetchError.message] };
+  }
+
+  const results = await Promise.allSettled(
+    (tasks || []).map(async (task) => {
+      const currentLabels: string[] = (task.labels as string[]) || [];
+      const newLabels = currentLabels.filter(l => !labelsToRemove.includes(l));
+      const { error } = await supabase
+        .from('tasks')
+        .update({ labels: newLabels, updated_at: new Date().toISOString() })
+        .eq('id', task.id);
+      if (error) throw error;
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Set due date for multiple tasks in bulk
+ */
+export async function setDueDateBulk(
+  taskIds: string[],
+  dueDate: string | null
+): Promise<BulkResult> {
+  if (taskIds.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  const results = await Promise.allSettled(
+    taskIds.map(async (id) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ due_at: dueDate, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Set sprint for multiple tasks in bulk
+ */
+export async function setSprintBulk(
+  taskIds: string[],
+  sprint: string | null
+): Promise<BulkResult> {
+  if (taskIds.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  const results = await Promise.allSettled(
+    taskIds.map(async (id) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ sprint, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Set assignees for multiple tasks in bulk
+ * Replaces all existing assignees with the new list
+ */
+export async function setAssigneesBulk(
+  taskIds: string[],
+  userIds: string[]
+): Promise<BulkResult> {
+  if (taskIds.length === 0) {
+    return { success: true, successCount: 0, failedCount: 0, errors: [] };
+  }
+
+  const results = await Promise.allSettled(
+    taskIds.map(async (taskId) => {
+      // Delete existing assignees
+      const { error: deleteError } = await supabase
+        .from('task_assignees')
+        .delete()
+        .eq('task_id', taskId);
+      
+      if (deleteError) throw deleteError;
+
+      // Insert new assignees
+      if (userIds.length > 0) {
+        const { error: insertError } = await supabase
+          .from('task_assignees')
+          .insert(userIds.map(userId => ({ task_id: taskId, user_id: userId })));
+        
+        if (insertError) throw insertError;
+      }
+
+      // Update task timestamp
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+      
+      if (updateError) throw updateError;
+      
+      return { success: true };
+    })
+  );
+
+  return processBulkResults(results, taskIds);
+}
+
+/**
+ * Helper to process bulk results consistently
+ */
+function processBulkResults(
+  results: PromiseSettledResult<{ success: boolean }>[],
+  taskIds: string[]
+): BulkResult {
+  const errors: string[] = [];
+  let successCount = 0;
+  let failedCount = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      successCount++;
+    } else {
+      failedCount++;
+      errors.push(`Task ${taskIds[index]}: ${result.reason?.message || 'Unknown error'}`);
+    }
+  });
+
+  return {
+    success: failedCount === 0,
+    successCount,
+    failedCount,
+    errors,
+  };
+}

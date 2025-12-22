@@ -46,6 +46,7 @@ import KnowledgePublic from "./pages/KnowledgePublic";
 import TechStack from "./pages/TechStack";
 import Performance from "./pages/Performance";
 import KeywordIntel from "./pages/KeywordIntel";
+import AdvancedTaskBoard from "./pages/AdvancedTaskBoard";
 
 const App = () => (
   <ErrorBoundary>
@@ -65,6 +66,7 @@ const App = () => (
                 <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/tasks/advanced" element={<AdvancedTaskBoard />} />
                   <Route path="/calendar" element={<CalendarView />} />
                   <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                     <Route index element={<Navigate to="overview" replace />} />
