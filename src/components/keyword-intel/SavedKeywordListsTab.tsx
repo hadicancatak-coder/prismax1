@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { FolderOpen, Trash2, Eye, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { FolderOpen, Trash2, Download, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { DataCard, DataCardHeader } from "@/components/layout/DataCard";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useKeywordLists, KeywordList, KeywordListItem } from "@/hooks/useKeywordLists";
 import { useToast } from "@/hooks/use-toast";
 
-export function SavedKeywordListsTab() {
+interface SavedKeywordListsTabProps {
+  onAnalyzeList?: (items: KeywordListItem[], listName: string) => void;
+}
+
+export function SavedKeywordListsTab({ onAnalyzeList }: SavedKeywordListsTabProps) {
   const { toast } = useToast();
   const { lists, isLoading, deleteList, getListItems } = useKeywordLists();
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
   const [listItems, setListItems] = useState<KeywordListItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [analyzingListId, setAnalyzingListId] = useState<string | null>(null);
 
   const handleToggleExpand = async (listId: string) => {
     if (expandedListId === listId) {
@@ -52,6 +57,28 @@ export function SavedKeywordListsTab() {
       toast({ title: "Error loading items", variant: "destructive" });
     } finally {
       setLoadingItems(false);
+    }
+  };
+
+  const handleAnalyzeList = async (list: KeywordList) => {
+    setAnalyzingListId(list.id);
+    try {
+      const items = await getListItems(list.id);
+      if (items.length === 0) {
+        toast({ title: "No keywords in this list", variant: "destructive" });
+        return;
+      }
+      
+      if (onAnalyzeList) {
+        onAnalyzeList(items, list.name);
+        toast({ title: "Keywords loaded for analysis", description: `${items.length} keywords ready to analyze` });
+      } else {
+        toast({ title: "Analysis not available", description: "Switch to the Upload tab to analyze keywords", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error loading list for analysis", variant: "destructive" });
+    } finally {
+      setAnalyzingListId(null);
     }
   };
 
@@ -77,7 +104,6 @@ export function SavedKeywordListsTab() {
       "CTR",
       "Cost",
       "Conversions",
-      "Action",
       "Notes",
     ];
     const rows = items.map((item) => [
@@ -91,7 +117,6 @@ export function SavedKeywordListsTab() {
       item.ctr ? (item.ctr * 100).toFixed(2) + "%" : "",
       item.cost?.toFixed(2) || "",
       item.conversions || 0,
-      item.action_taken,
       `"${item.notes || ""}"`,
     ].join(","));
 
@@ -110,19 +135,6 @@ export function SavedKeywordListsTab() {
     if (score >= 70) return <Badge className="bg-success/15 text-success border-success/30">{score}</Badge>;
     if (score >= 40) return <Badge className="bg-warning/15 text-warning border-warning/30">{score}</Badge>;
     return <Badge variant="secondary">{score}</Badge>;
-  };
-
-  const getActionBadge = (action: string) => {
-    switch (action) {
-      case "added_exact":
-        return <Badge className="bg-success/15 text-success">Added Exact</Badge>;
-      case "added_negative":
-        return <Badge className="bg-destructive/15 text-destructive">Negative</Badge>;
-      case "ignored":
-        return <Badge variant="secondary">Ignored</Badge>;
-      default:
-        return <Badge variant="outline">Pending</Badge>;
-    }
   };
 
   // Group lists by entity
@@ -193,6 +205,27 @@ export function SavedKeywordListsTab() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAnalyzeList(list);
+                                }}
+                                disabled={analyzingListId === list.id}
+                              >
+                                {analyzingListId === list.id ? (
+                                  <span className="flex items-center gap-1">
+                                    <span className="animate-spin">⏳</span>
+                                    Loading...
+                                  </span>
+                                ) : (
+                                  <>
+                                    <Sparkles className="h-4 w-4 mr-1" />
+                                    Analyze Now
+                                  </>
+                                )}
+                              </Button>
+                              <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => {
@@ -236,8 +269,8 @@ export function SavedKeywordListsTab() {
                                     <TableHead>Score</TableHead>
                                     <TableHead>Campaign</TableHead>
                                     <TableHead>Clicks</TableHead>
-                                    <TableHead>Impr.</TableHead>
-                                    <TableHead>Action</TableHead>
+                                    <TableHead>Cost</TableHead>
+                                    <TableHead>Conv.</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -251,8 +284,8 @@ export function SavedKeywordListsTab() {
                                         {item.campaign}
                                       </TableCell>
                                       <TableCell>{item.clicks}</TableCell>
-                                      <TableCell>{item.impressions}</TableCell>
-                                      <TableCell>{getActionBadge(item.action_taken)}</TableCell>
+                                      <TableCell>${item.cost?.toFixed(0) || 0}</TableCell>
+                                      <TableCell>{item.conversions || 0}</TableCell>
                                     </TableRow>
                                   ))}
                                 </TableBody>

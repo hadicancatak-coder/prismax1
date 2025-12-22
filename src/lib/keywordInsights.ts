@@ -1,12 +1,16 @@
 /**
- * Keyword Insights Engine
+ * Keyword Insights Engine v2
  * 
  * Deterministic computation of unified actions for Google Ads.
- * Focuses on detecting STRUCTURAL MISMATCHES (keywords in wrong ad groups)
- * and only adding negatives for truly irrelevant terms.
+ * 
+ * KEY CHANGES:
+ * - 7 distinct action types: move, isolate, adjust_ad_copy, adjust_landing_page, add_negative, review_manually, no_action
+ * - ABSOLUTE SAFEGUARDS: Competitors and Education keywords NEVER get auto-negatived
+ * - no_money_intent always gets Add Negative (highest priority)
+ * - Canonical action decision order
  */
 
-import { ProcessedKeyword, normalizeTerm } from './keywordEngine';
+import { ProcessedKeyword, normalizeTerm, isNoMoneyIntent } from './keywordEngine';
 
 // =====================================================
 // CONFIGURATION PRESETS
@@ -18,6 +22,8 @@ export interface InsightsConfig {
   minCostForReview: number;           // Min cost to even consider a term
   wastedSpendThreshold: number;       // Cost with 0 conversions = "wasted"
   minCostForNegative: number;         // Min cost before suggesting negative
+  highCostThreshold: number;          // High cost for performance-based negatives
+  cpaCap: number;                     // Max CPA before suggesting negative
 }
 
 export const INSIGHTS_PRESETS: Record<InsightsPreset, InsightsConfig> = {
@@ -25,39 +31,60 @@ export const INSIGHTS_PRESETS: Record<InsightsPreset, InsightsConfig> = {
     minCostForReview: 50,
     wastedSpendThreshold: 200,
     minCostForNegative: 100,
+    highCostThreshold: 500,
+    cpaCap: 500,
   },
   balanced: {
     minCostForReview: 20,
     wastedSpendThreshold: 100,
     minCostForNegative: 50,
+    highCostThreshold: 500,
+    cpaCap: 500,
   },
   aggressive: {
     minCostForReview: 10,
     wastedSpendThreshold: 50,
     minCostForNegative: 20,
+    highCostThreshold: 300,
+    cpaCap: 300,
   },
 };
 
 export const DEFAULT_INSIGHTS_CONFIG = INSIGHTS_PRESETS.balanced;
 
 // =====================================================
-// UNIFIED ACTION TYPE
+// ACTION TYPES (NEW - 7 DISTINCT TYPES)
 // =====================================================
+
+export type ActionType = 
+  | 'move' 
+  | 'isolate' 
+  | 'adjust_ad_copy' 
+  | 'adjust_landing_page' 
+  | 'add_negative' 
+  | 'review_manually' 
+  | 'no_action';
 
 export interface UnifiedAction {
   id: string;
   search_term: string;
   current_campaign: string | null;
   current_ad_group: string | null;
-  action_type: 'add_negative' | 'move_term' | 'create_ad_group';
-  target: string;              // Where to move / which AG to add negative
-  reason: string;              // Simple 1-line explanation
-  estimated_savings: number;
-  cost: number;
-  clicks: number;
-  conversions: number;
-  cpa: number | null;
-  cluster: string;             // Keyword's detected cluster
+  cluster: string;
+  intent: string;
+  
+  // Action decision
+  action_type: ActionType;
+  target: string;                    // AG to move to, or scope for negative (Campaign/Account)
+  reason: string;                    // Human readable
+  rule_triggered: string;            // Machine readable (e.g. "NO_MONEY_INTENT")
+  confidence: number;                // 0–1
+  
+  // Evidence
+  evidence_cost: number;
+  evidence_clicks: number;
+  evidence_conversions: number;
+  evidence_cpa: number | null;
 }
 
 // =====================================================
@@ -72,6 +99,8 @@ export interface ExecutiveSummary {
   totalActions: number;
   moveActions: number;
   negativeActions: number;
+  isolateActions: number;
+  reviewActions: number;
 }
 
 // =====================================================
@@ -126,7 +155,6 @@ interface AdGroupIntent {
 
 /**
  * Parse an ad group name to understand what cluster/topic it's meant to target.
- * This helps detect when keywords are in the WRONG ad group.
  */
 function parseAdGroupIntent(agName: string): AdGroupIntent | null {
   if (!agName) return null;
@@ -194,8 +222,13 @@ function parseAdGroupIntent(agName: string): AdGroupIntent | null {
   }
   
   // Brand
-  if (/\b(brand|branded)\b/i.test(norm)) {
-    return { expectedClusters: ['Brand', 'Branded'], label: 'Brand' };
+  if (/\b(brand|branded|cfi)\b/i.test(norm)) {
+    return { expectedClusters: ['Brand', 'Branded', 'Brand - CFI'], label: 'Brand' };
+  }
+  
+  // Education
+  if (/\b(education|how\s*to|learn|tutorial)\b/i.test(norm)) {
+    return { expectedClusters: ['Education / How-To', 'Education'], label: 'Education' };
   }
   
   return null; // No clear intent detected
@@ -234,28 +267,28 @@ function isClusterMatch(kwCluster: string, agIntent: AdGroupIntent): boolean {
 }
 
 // =====================================================
-// INTENT DETECTION HELPERS
+// ABSOLUTE SAFEGUARDS - NEVER ADD NEGATIVE FOR THESE
 // =====================================================
 
-const NO_MONEY_PATTERNS_EN = /\b(free\s+signals?|free\s+trading|free\s+forex|free\s+crypto|earn\s+money|make\s+money|money\s+make|how\s+to\s+earn|no\s+deposit\s+bonus|without\s+deposit|no\s+investment|earn\s+from\s+home|work\s+from\s+home|passive\s+income|get\s+rich\s+quick)\b/i;
-const NO_MONEY_PATTERNS_AR = /ربح|ربح المال|كسب المال|فلوس|بدون رأس مال|بدون ايداع|بدون استثمار|مجانا|مجاني|اربح|كسب/;
+const PROTECTED_INTENTS = ['how_to_education', 'price_today', 'charts_analysis'];
 
-/** Truly worthless "no-money" intent - should always be negative */
-export function isNoMoneyIntent(norm: string, asciiNorm: string): boolean {
-  return NO_MONEY_PATTERNS_EN.test(asciiNorm) || NO_MONEY_PATTERNS_AR.test(norm);
-}
-
-/** Competitor login/app - negative unless in competitor campaign */
-function isCompetitorLogin(searchTerm: string): boolean {
-  const norm = searchTerm.toLowerCase();
-  const competitors = ['etoro', 'plus500', 'xtb', 'ig markets', 'avatrade', 'pepperstone', 'fxcm', 'oanda', 'xm', 'fxpro'];
-  const loginPatterns = ['login', 'sign in', 'log in', 'signin', 'app download', 'download app', 'app'];
+/**
+ * Check if a keyword is FORBIDDEN from being auto-negatived.
+ * These require manual action: Move, Isolate, Adjust Ad Copy, etc.
+ */
+function isNegativeForbidden(kw: ProcessedKeyword): boolean {
+  // Competitors NEVER get auto-negatived
+  if (kw.cluster_primary === 'Competitors') return true;
   
-  return competitors.some(comp => norm.includes(comp)) && 
-         loginPatterns.some(login => norm.includes(login));
+  // Education/TOF intents NEVER get auto-negatived
+  if (PROTECTED_INTENTS.includes(kw.intent)) return true;
+  
+  return false;
 }
 
-/** Random junk/typos that shouldn't convert */
+/**
+ * Check if this is a junk/typo term that should be negatived
+ */
 function isJunkTerm(searchTerm: string): boolean {
   const norm = searchTerm.toLowerCase().replace(/\s+/g, '');
   
@@ -272,14 +305,8 @@ function isJunkTerm(searchTerm: string): boolean {
   return false;
 }
 
-const LOW_INTENT_INTENTS = ['login_access', 'news_calendar', 'how_to_education', 'informational', 'navigational_other'];
-
-export function isLowIntent(intent: string): boolean {
-  return LOW_INTENT_INTENTS.includes(intent?.toLowerCase() || '');
-}
-
 // =====================================================
-// COMPUTE UNIFIED ACTIONS - Fixed logic!
+// COMPUTE UNIFIED ACTIONS - CANONICAL DECISION ORDER
 // =====================================================
 
 export function computeUnifiedActions(
@@ -312,6 +339,7 @@ export function computeUnifiedActions(
     const conversions = kw.conversions || 0;
     const cpa = conversions > 0 ? cost / conversions : null;
     const cluster = kw.cluster_primary || 'Uncategorized';
+    const intent = kw.intent || 'generic';
     const campaign = kw.campaign || null;
     const adGroup = kw.ad_group || null;
     const searchTerm = kw.keyword;
@@ -319,138 +347,258 @@ export function computeUnifiedActions(
     // Skip low-cost terms (not worth optimizing)
     if (cost < config.minCostForReview) continue;
 
-    // ─────────────────────────────────────────────────────────────────
-    // Priority 1: Add Negative for TRULY bad terms
-    // ─────────────────────────────────────────────────────────────────
-
-    // 1a. No-money intent (free signals, earn money, etc.)
-    if (isNoMoneyIntent(norm.search_term_norm, norm.search_term_norm_ascii)) {
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 2: no_money_intent → ALWAYS Add Negative (HIGHEST PRIORITY)
+    // ═══════════════════════════════════════════════════════════════════
+    if (intent === 'no_money_intent' || isNoMoneyIntent(norm.search_term_norm, norm.search_term_norm_ascii)) {
       actions.push({
         id: `neg-nomoney-${actions.length}`,
         search_term: searchTerm,
         current_campaign: campaign,
         current_ad_group: adGroup,
+        cluster,
+        intent,
         action_type: 'add_negative',
         target: campaign || 'Account',
-        reason: 'No-money intent (free/earn patterns)',
-        estimated_savings: cost,
-        cost,
-        clicks,
-        conversions,
-        cpa,
-        cluster,
+        reason: 'No-money intent (free/earn patterns) - always negative',
+        rule_triggered: 'NO_MONEY_INTENT',
+        confidence: 1.0,
+        evidence_cost: cost,
+        evidence_clicks: clicks,
+        evidence_conversions: conversions,
+        evidence_cpa: cpa,
       });
       continue;
     }
 
-    // 1b. Competitor login/app (unless in competitor campaign)
-    if (isCompetitorLogin(searchTerm)) {
-      const isCompetitorCampaign = campaign?.toLowerCase().includes('competitor') || 
-                                    adGroup?.toLowerCase().includes('competitor') ||
-                                    cluster.toLowerCase().includes('competitor');
-      if (!isCompetitorCampaign) {
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 3: Competitors → NEVER Add Negative
+    // ═══════════════════════════════════════════════════════════════════
+    if (cluster === 'Competitors') {
+      if (intent === 'login_access') {
+        // Competitor login conquest → Isolate
         actions.push({
-          id: `neg-complogin-${actions.length}`,
+          id: `isolate-complogin-${actions.length}`,
           search_term: searchTerm,
           current_campaign: campaign,
           current_ad_group: adGroup,
-          action_type: 'add_negative',
-          target: campaign || 'Account',
-          reason: 'Competitor login/app (not in competitor campaign)',
-          estimated_savings: cost * 0.9,
-          cost,
-          clicks,
-          conversions,
-          cpa,
           cluster,
+          intent,
+          action_type: 'isolate',
+          target: 'Competitors - Login AG',
+          reason: 'Competitor login → isolate for conquest',
+          rule_triggered: 'COMPETITOR_LOGIN_ISOLATE',
+          confidence: 0.9,
+          evidence_cost: cost,
+          evidence_clicks: clicks,
+          evidence_conversions: conversions,
+          evidence_cpa: cpa,
         });
-        continue;
+      } else {
+        // Move to Competitors AG
+        actions.push({
+          id: `move-competitor-${actions.length}`,
+          search_term: searchTerm,
+          current_campaign: campaign,
+          current_ad_group: adGroup,
+          cluster,
+          intent,
+          action_type: 'move',
+          target: 'Competitors AG',
+          reason: 'Competitor keyword → move to Competitors AG',
+          rule_triggered: 'COMPETITOR_MOVE',
+          confidence: 0.85,
+          evidence_cost: cost,
+          evidence_clicks: clicks,
+          evidence_conversions: conversions,
+          evidence_cpa: cpa,
+        });
       }
+      continue;
     }
 
-    // 1c. Junk/typo terms
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 4: Brand login → Add Negative (existing users)
+    // ═══════════════════════════════════════════════════════════════════
+    if (intent === 'login_access' && cluster === 'Brand - CFI') {
+      actions.push({
+        id: `neg-brandlogin-${actions.length}`,
+        search_term: searchTerm,
+        current_campaign: campaign,
+        current_ad_group: adGroup,
+        cluster,
+        intent,
+        action_type: 'add_negative',
+        target: campaign || 'Account',
+        reason: 'Existing users / support traffic',
+        rule_triggered: 'BRAND_LOGIN_NEGATIVE',
+        confidence: 0.9,
+        evidence_cost: cost,
+        evidence_clicks: clicks,
+        evidence_conversions: conversions,
+        evidence_cpa: cpa,
+      });
+      continue;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 5: Education/TOF → NEVER Negative, Isolate or Adjust
+    // ═══════════════════════════════════════════════════════════════════
+    if (PROTECTED_INTENTS.includes(intent)) {
+      actions.push({
+        id: `isolate-edu-${actions.length}`,
+        search_term: searchTerm,
+        current_campaign: campaign,
+        current_ad_group: adGroup,
+        cluster,
+        intent,
+        action_type: 'isolate',
+        target: 'Education / TOF AG',
+        reason: `${intent.replace(/_/g, ' ')} keyword → isolate or adjust ad copy`,
+        rule_triggered: 'EDUCATION_TOF_ISOLATE',
+        confidence: 0.8,
+        evidence_cost: cost,
+        evidence_clicks: clicks,
+        evidence_conversions: conversions,
+        evidence_cpa: cpa,
+      });
+      continue;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 5b: Junk/typo terms → Add Negative
+    // ═══════════════════════════════════════════════════════════════════
     if (isJunkTerm(searchTerm)) {
       actions.push({
         id: `neg-junk-${actions.length}`,
         search_term: searchTerm,
         current_campaign: campaign,
         current_ad_group: adGroup,
+        cluster,
+        intent,
         action_type: 'add_negative',
         target: campaign || 'Account',
         reason: 'Junk/typo term',
-        estimated_savings: cost,
-        cost,
-        clicks,
-        conversions,
-        cpa,
-        cluster,
+        rule_triggered: 'JUNK_TERM',
+        confidence: 0.9,
+        evidence_cost: cost,
+        evidence_clicks: clicks,
+        evidence_conversions: conversions,
+        evidence_cpa: cpa,
       });
       continue;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Priority 2: Move Term if keyword cluster doesn't match ad group intent
-    // This is the KEY improvement - detect structural mismatches!
-    // ─────────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 6: Performance-based negatives (STRICT - only for eligible intents)
+    // ═══════════════════════════════════════════════════════════════════
+    if (['transactional_open_account', 'generic'].includes(intent) && !isNegativeForbidden(kw)) {
+      // High cost + 0 conversions → Add Negative
+      if (cost >= config.highCostThreshold && conversions === 0) {
+        actions.push({
+          id: `neg-perf-highcost-${actions.length}`,
+          search_term: searchTerm,
+          current_campaign: campaign,
+          current_ad_group: adGroup,
+          cluster,
+          intent,
+          action_type: 'add_negative',
+          target: adGroup || campaign || 'Account',
+          reason: `High cost ($${cost.toFixed(0)}) + 0 conversions`,
+          rule_triggered: 'PERF_HIGH_COST_ZERO_CONV',
+          confidence: 0.95,
+          evidence_cost: cost,
+          evidence_clicks: clicks,
+          evidence_conversions: conversions,
+          evidence_cpa: cpa,
+        });
+        continue;
+      }
 
+      // CPA exceeds threshold → Add Negative
+      if (cpa && cpa > config.cpaCap) {
+        actions.push({
+          id: `neg-perf-cpa-${actions.length}`,
+          search_term: searchTerm,
+          current_campaign: campaign,
+          current_ad_group: adGroup,
+          cluster,
+          intent,
+          action_type: 'add_negative',
+          target: adGroup || campaign || 'Account',
+          reason: `CPA $${cpa.toFixed(0)} exceeds threshold ($${config.cpaCap})`,
+          rule_triggered: 'PERF_CPA_EXCEEDED',
+          confidence: 0.9,
+          evidence_cost: cost,
+          evidence_clicks: clicks,
+          evidence_conversions: conversions,
+          evidence_cpa: cpa,
+        });
+        continue;
+      }
+
+      // Moderate cost + 0 conversions → Review Manually
+      if (cost >= 300 && conversions === 0) {
+        actions.push({
+          id: `review-perf-${actions.length}`,
+          search_term: searchTerm,
+          current_campaign: campaign,
+          current_ad_group: adGroup,
+          cluster,
+          intent,
+          action_type: 'review_manually',
+          target: '—',
+          reason: `Moderate cost ($${cost.toFixed(0)}) + 0 conversions → review`,
+          rule_triggered: 'PERF_REVIEW_MODERATE_COST',
+          confidence: 0.6,
+          evidence_cost: cost,
+          evidence_clicks: clicks,
+          evidence_conversions: conversions,
+          evidence_cpa: cpa,
+        });
+        continue;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 7: Structural mismatch → Move
+    // ═══════════════════════════════════════════════════════════════════
     const agIntent = adGroupIntents.get(adGroup || '');
     
     if (agIntent && !isClusterMatch(cluster, agIntent)) {
-      // This is a structural mismatch - keyword is in wrong ad group!
       actions.push({
         id: `move-mismatch-${actions.length}`,
         search_term: searchTerm,
         current_campaign: campaign,
         current_ad_group: adGroup,
-        action_type: 'move_term',
+        cluster,
+        intent,
+        action_type: 'move',
         target: `${cluster} AG`,
         reason: `"${cluster}" keyword in "${agIntent.label}" ad group`,
-        estimated_savings: 0, // Not wasted, just misplaced
-        cost,
-        clicks,
-        conversions,
-        cpa,
-        cluster,
+        rule_triggered: 'STRUCTURAL_MISMATCH',
+        confidence: 0.85,
+        evidence_cost: cost,
+        evidence_clicks: clicks,
+        evidence_conversions: conversions,
+        evidence_cpa: cpa,
       });
       continue;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Priority 3: High wasted spend with zero conversions + low intent
-    // Only flag as negative if it's truly informational AND high cost
-    // ─────────────────────────────────────────────────────────────────
-
-    if (cost >= config.wastedSpendThreshold && conversions === 0) {
-      const intent = kw.intent || '';
-      
-      // Only add negative if it's low-intent (informational, login, etc.)
-      if (isLowIntent(intent)) {
-        actions.push({
-          id: `neg-wasted-${actions.length}`,
-          search_term: searchTerm,
-          current_campaign: campaign,
-          current_ad_group: adGroup,
-          action_type: 'add_negative',
-          target: adGroup || campaign || 'Account',
-          reason: `High cost ($${cost.toFixed(0)}) + 0 conversions + low intent`,
-          estimated_savings: cost * 0.8,
-          cost,
-          clicks,
-          conversions,
-          cpa,
-          cluster,
-        });
-      }
-      // If high intent but no conversions, don't auto-negative - could be landing page issue
-    }
+    // ═══════════════════════════════════════════════════════════════════
+    // STEP 8: Default → No Action (keyword is correctly placed)
+    // ═══════════════════════════════════════════════════════════════════
+    // We don't add "no_action" to the actions list to keep it clean
+    // Only actionable items are returned
   }
 
-  // Sort by cost descending (biggest opportunities first)
-  return actions.sort((a, b) => b.cost - a.cost);
+  // Sort by evidence_cost descending (biggest opportunities first)
+  return actions.sort((a, b) => b.evidence_cost - a.evidence_cost);
 }
 
 // =====================================================
-// EXECUTIVE SUMMARY - Plain bullets
+// EXECUTIVE SUMMARY - Updated for new action types
 // =====================================================
 
 export function generateExecutiveSummary(
@@ -460,14 +608,17 @@ export function generateExecutiveSummary(
   const totalSpend = keywords.reduce((s, k) => s + (k.cost || 0), 0);
   
   const negatives = actions.filter(a => a.action_type === 'add_negative');
-  const moves = actions.filter(a => a.action_type === 'move_term');
+  const moves = actions.filter(a => a.action_type === 'move');
+  const isolates = actions.filter(a => a.action_type === 'isolate');
+  const reviews = actions.filter(a => a.action_type === 'review_manually');
   
-  const totalWasted = negatives.reduce((s, a) => s + a.estimated_savings, 0);
-  const totalMisplacedSpend = moves.reduce((s, a) => s + a.cost, 0);
+  const totalWasted = negatives.reduce((s, a) => s + a.evidence_cost, 0);
+  const totalMisplacedSpend = moves.reduce((s, a) => s + a.evidence_cost, 0);
+  const totalIsolateSpend = isolates.reduce((s, a) => s + a.evidence_cost, 0);
   
   const bullets: ExecutiveSummary['bullets'] = [];
 
-  // Misplaced keywords are the MOST important finding
+  // Structural issues (moves + isolates)
   if (moves.length > 0) {
     const topMismatches = moves.slice(0, 3);
     bullets.push({
@@ -477,19 +628,33 @@ export function generateExecutiveSummary(
     });
   }
 
+  if (isolates.length > 0) {
+    // Group by reason type
+    const eduIsolates = isolates.filter(i => i.rule_triggered.includes('EDUCATION') || i.rule_triggered.includes('TOF'));
+    const compIsolates = isolates.filter(i => i.rule_triggered.includes('COMPETITOR'));
+    
+    let reasonParts: string[] = [];
+    if (eduIsolates.length > 0) reasonParts.push(`${eduIsolates.length} education/TOF`);
+    if (compIsolates.length > 0) reasonParts.push(`${compIsolates.length} competitor conquest`);
+    
+    bullets.push({
+      icon: 'yellow',
+      text: `🎯 ${isolates.length} keywords to isolate ($${totalIsolateSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}) — ${reasonParts.join(', ')}`,
+    });
+  }
+
   // Negative candidates
   if (totalWasted > 0) {
-    // Group by reason type
-    const noMoney = negatives.filter(n => n.reason.includes('No-money'));
-    const competitor = negatives.filter(n => n.reason.includes('Competitor'));
-    const junk = negatives.filter(n => n.reason.includes('Junk'));
-    const wasted = negatives.filter(n => n.reason.includes('High cost'));
+    const noMoney = negatives.filter(n => n.rule_triggered === 'NO_MONEY_INTENT');
+    const brandLogin = negatives.filter(n => n.rule_triggered === 'BRAND_LOGIN_NEGATIVE');
+    const junk = negatives.filter(n => n.rule_triggered === 'JUNK_TERM');
+    const perf = negatives.filter(n => n.rule_triggered.startsWith('PERF_'));
     
     let reasonParts: string[] = [];
     if (noMoney.length > 0) reasonParts.push(`${noMoney.length} no-money`);
-    if (competitor.length > 0) reasonParts.push(`${competitor.length} competitor login`);
+    if (brandLogin.length > 0) reasonParts.push(`${brandLogin.length} brand login`);
     if (junk.length > 0) reasonParts.push(`${junk.length} junk`);
-    if (wasted.length > 0) reasonParts.push(`${wasted.length} high-cost-zero-conv`);
+    if (perf.length > 0) reasonParts.push(`${perf.length} high-cost-zero-conv`);
     
     bullets.push({
       icon: 'red',
@@ -497,21 +662,11 @@ export function generateExecutiveSummary(
     });
   }
 
-  // Cluster breakdown for misplaced keywords
-  if (moves.length > 0) {
-    const clusterCounts = moves.reduce((acc, m) => {
-      acc[m.cluster] = (acc[m.cluster] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const topClusters = Object.entries(clusterCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([cluster, count]) => `${cluster} (${count})`);
-    
+  // Review items
+  if (reviews.length > 0) {
     bullets.push({
       icon: 'yellow',
-      text: `📊 Most misplaced clusters: ${topClusters.join(', ')}`,
+      text: `🔍 ${reviews.length} keywords need manual review (moderate spend, 0 conversions)`,
     });
   }
 
@@ -542,11 +697,13 @@ export function generateExecutiveSummary(
     totalActions: actions.length,
     moveActions: moves.length,
     negativeActions: negatives.length,
+    isolateActions: isolates.length,
+    reviewActions: reviews.length,
   };
 }
 
 // =====================================================
-// CSV EXPORTS
+// CSV EXPORTS (UPDATED WITH NEW FIELDS)
 // =====================================================
 
 export function exportUnifiedActionsCSV(actions: UnifiedAction[]): string {
@@ -557,27 +714,44 @@ export function exportUnifiedActionsCSV(actions: UnifiedAction[]): string {
     'current_ad_group',
     'target',
     'cluster',
+    'intent',
     'reason',
-    'cost',
-    'clicks',
-    'conversions',
-    'cpa',
-    'estimated_savings',
+    'rule_triggered',
+    'confidence',
+    'evidence_cost',
+    'evidence_clicks',
+    'evidence_conversions',
+    'evidence_cpa',
   ];
 
+  const actionTypeDisplay = (type: ActionType): string => {
+    switch (type) {
+      case 'move': return 'Move';
+      case 'isolate': return 'Isolate';
+      case 'adjust_ad_copy': return 'Adjust Ad Copy';
+      case 'adjust_landing_page': return 'Adjust Landing Page';
+      case 'add_negative': return 'Add Negative';
+      case 'review_manually': return 'Review Manually';
+      case 'no_action': return 'No Action';
+      default: return type;
+    }
+  };
+
   const rows = actions.map(a => [
-    a.action_type === 'move_term' ? 'Move' : 'Add Negative',
+    actionTypeDisplay(a.action_type),
     `"${a.search_term.replace(/"/g, '""')}"`,
     `"${(a.current_campaign || '').replace(/"/g, '""')}"`,
     `"${(a.current_ad_group || '').replace(/"/g, '""')}"`,
     `"${a.target.replace(/"/g, '""')}"`,
     `"${(a.cluster || '').replace(/"/g, '""')}"`,
+    `"${(a.intent || '').replace(/"/g, '""')}"`,
     `"${a.reason.replace(/"/g, '""')}"`,
-    a.cost.toFixed(2),
-    a.clicks.toString(),
-    a.conversions.toString(),
-    a.cpa !== null ? a.cpa.toFixed(2) : '',
-    a.estimated_savings.toFixed(2),
+    a.rule_triggered,
+    a.confidence.toFixed(2),
+    a.evidence_cost.toFixed(2),
+    a.evidence_clicks.toString(),
+    a.evidence_conversions.toString(),
+    a.evidence_cpa !== null ? a.evidence_cpa.toFixed(2) : '',
   ].join(','));
 
   return [headers.join(','), ...rows].join('\n');
@@ -592,6 +766,7 @@ export function exportNegativesOnlyCSV(actions: UnifiedAction[]): string {
     'ad_group',
     'match_type',
     'reason',
+    'rule_triggered',
     'cost',
   ];
 
@@ -601,14 +776,15 @@ export function exportNegativesOnlyCSV(actions: UnifiedAction[]): string {
     `"${(n.current_ad_group || '').replace(/"/g, '""')}"`,
     'Exact',
     `"${n.reason.replace(/"/g, '""')}"`,
-    n.cost.toFixed(2),
+    n.rule_triggered,
+    n.evidence_cost.toFixed(2),
   ].join(','));
 
   return [headers.join(','), ...rows].join('\n');
 }
 
 export function exportMovesOnlyCSV(actions: UnifiedAction[]): string {
-  const moves = actions.filter(a => a.action_type === 'move_term');
+  const moves = actions.filter(a => a.action_type === 'move');
   
   const headers = [
     'search_term',
@@ -616,7 +792,9 @@ export function exportMovesOnlyCSV(actions: UnifiedAction[]): string {
     'current_ad_group',
     'move_to',
     'cluster',
+    'intent',
     'reason',
+    'rule_triggered',
     'cost',
     'conversions',
   ];
@@ -627,9 +805,43 @@ export function exportMovesOnlyCSV(actions: UnifiedAction[]): string {
     `"${(m.current_ad_group || '').replace(/"/g, '""')}"`,
     `"${m.target.replace(/"/g, '""')}"`,
     `"${(m.cluster || '').replace(/"/g, '""')}"`,
+    `"${(m.intent || '').replace(/"/g, '""')}"`,
     `"${m.reason.replace(/"/g, '""')}"`,
-    m.cost.toFixed(2),
-    m.conversions.toString(),
+    m.rule_triggered,
+    m.evidence_cost.toFixed(2),
+    m.evidence_conversions.toString(),
+  ].join(','));
+
+  return [headers.join(','), ...rows].join('\n');
+}
+
+export function exportIsolatesOnlyCSV(actions: UnifiedAction[]): string {
+  const isolates = actions.filter(a => a.action_type === 'isolate');
+  
+  const headers = [
+    'search_term',
+    'current_campaign',
+    'current_ad_group',
+    'isolate_to',
+    'cluster',
+    'intent',
+    'reason',
+    'rule_triggered',
+    'cost',
+    'conversions',
+  ];
+
+  const rows = isolates.map(i => [
+    `"${i.search_term.replace(/"/g, '""')}"`,
+    `"${(i.current_campaign || '').replace(/"/g, '""')}"`,
+    `"${(i.current_ad_group || '').replace(/"/g, '""')}"`,
+    `"${i.target.replace(/"/g, '""')}"`,
+    `"${(i.cluster || '').replace(/"/g, '""')}"`,
+    `"${(i.intent || '').replace(/"/g, '""')}"`,
+    `"${i.reason.replace(/"/g, '""')}"`,
+    i.rule_triggered,
+    i.evidence_cost.toFixed(2),
+    i.evidence_conversions.toString(),
   ].join(','));
 
   return [headers.join(','), ...rows].join('\n');

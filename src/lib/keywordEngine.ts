@@ -133,10 +133,11 @@ export const CLUSTER_TAXONOMY = [
 export type ClusterPrimary = typeof CLUSTER_TAXONOMY[number];
 
 // =====================================================
-// INTENT TAXONOMY
+// INTENT TAXONOMY (UPDATED - no_money_intent FIRST)
 // =====================================================
 
 export const INTENT_TAXONOMY = [
+  'no_money_intent',           // NEW - Top priority
   'login_access',
   'transactional_open_account',
   'app_download',
@@ -223,7 +224,7 @@ export function normalizeTerm(term: string): NormalizedTerm {
 }
 
 // =====================================================
-// CSV PARSING & CLEANING
+// CSV PARSING & CLEANING (EXPANDED IGNORED ROW PATTERNS)
 // =====================================================
 
 const HEADER_VARIANTS = {
@@ -238,26 +239,57 @@ const HEADER_VARIANTS = {
   match_type: ['match type', 'match_type', 'نوع المطابقة'],
 };
 
-const TOTAL_ROW_PATTERNS = [
-  // English variations - use word boundary \b so "Total:" and "Total -" match
+// EXPANDED: Comprehensive patterns for Total/Header/Noise rows
+const IGNORED_ROW_PATTERNS = [
+  // Headers (EN + AR)
+  /^search\s*term$/i,
+  /^مصطلح\s*البحث$/,
+  /^search\s*terms?$/i,
+  
+  // Total rows - English (more comprehensive)
   /^total\b/i,                    // "total", "total:", "total -", "Total Rows"
+  /^total[:\s\-]/i,               // "total:", "total -", "total  "
   /^grand\s*total\b/i,            // "grand total", "grandtotal"
   /^subtotal\b/i,                 // "subtotal"
+  /^total\s*[:\-–—]\s*/i,         // "total: ", "total - ", "total – "
+  /total:\s*search\s*terms?/i,    // "Total: Search terms"
+  /^overall\s*total/i,            // "overall total"
+  /^sum\b/i,                      // "sum", "sum:"
   
-  // Arabic variations - match if contains these total-related words
+  // Total rows - Arabic (comprehensive)
   /الإجمالي/,                      // with hamza
   /الاجمالي/,                      // without hamza  
   /اجمالي/,                        // without al-
+  /إجمالي/,                        // with hamza, no al-
   /المجموع/,                       // "the total"
   /مجموع/,                         // "sum"
   /الكل/,                          // "all"
-  /إجمالي/,                        // with hamza, no al-
+  /الإجمالي:/,                     // with colon
+  /المجموع:/,                      // with colon
+  /اجمالى/,                        // alternate spelling
   
   // Empty/placeholder rows
   /^\s*$/,                         // empty or whitespace only
   /^--+$/,                         // dashes only (one or more)
   /^-$/,                           // single dash
+  /^\.+$/,                         // dots only
+  /^_+$/,                          // underscores only
 ];
+
+/**
+ * Check if a row should be ignored (headers, totals, noise)
+ */
+export function shouldIgnoreRow(searchTerm: string): boolean {
+  if (!searchTerm || typeof searchTerm !== 'string') return true;
+  
+  const trimmed = searchTerm.trim();
+  
+  // Empty check
+  if (!trimmed || trimmed.length === 0) return true;
+  
+  // Check against all ignored patterns
+  return IGNORED_ROW_PATTERNS.some(pattern => pattern.test(trimmed));
+}
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -347,12 +379,8 @@ export function parseAndCleanCsv(text: string): CsvParseResult {
     // Get search term
     const searchTerm = colMap.search_term !== -1 ? cells[colMap.search_term]?.trim() : '';
     
-    // Skip empty search terms
-    if (!searchTerm) continue;
-    
-    // Skip total rows
-    const isTotalRow = TOTAL_ROW_PATTERNS.some(pattern => pattern.test(searchTerm));
-    if (isTotalRow) continue;
+    // CRITICAL: Skip using expanded ignore patterns
+    if (shouldIgnoreRow(searchTerm)) continue;
     
     // Build row object
     const row: Record<string, string> = {
@@ -438,19 +466,24 @@ const LOGIN_ACCESS_PATTERN = /\b(login|log\s*in|sign\s*in|signin|account|portal|
 // Junk patterns
 const JUNK_PATTERN = /^[0-9\s\-\.]+$|^\s*$/;
 
-// No-money intent patterns (users looking for free/earn money without investment)
-export const NO_MONEY_PATTERNS_EN = /\b(free|earn money|make money|money make|how to earn|free signals|free course|no deposit|without deposit|no investment|earn from home|work from home|passive income)\b/i;
-export const NO_MONEY_PATTERNS_AR = /ربح|ربح المال|كسب المال|فلوس|بدون رأس مال|بدون ايداع|بدون استثمار|مجانا|مجاني|اربح|كسب/;
+// =====================================================
+// NO-MONEY INTENT PATTERNS (EXPANDED - TOP PRIORITY)
+// =====================================================
+
+export const NO_MONEY_PATTERNS_EN = /\b(free|free\s+signals?|free\s+trading|free\s+forex|free\s+crypto|free\s+course|earn\s*money|make\s*money|money\s*make|make\s*money\s*online|earn\s*money\s*online|how\s+to\s+earn|no\s+deposit\s+bonus?|without\s+deposit|no\s+investment|earn\s+from\s+home|work\s+from\s+home|passive\s+income|get\s+rich\s+quick|easy\s+money|fast\s+money)\b/i;
+
+export const NO_MONEY_PATTERNS_AR = /ربح|ربح\s*المال|كسب\s*المال|فلوس|بدون\s*رأس\s*مال|بدون\s*ايداع|بدون\s*إيداع|بدون\s*استثمار|مجانا|مجاني|اربح|كسب|فلوس\s*مجاني/;
 
 export function isNoMoneyIntent(norm: string, asciiNorm: string): boolean {
   return NO_MONEY_PATTERNS_EN.test(asciiNorm) || NO_MONEY_PATTERNS_AR.test(norm);
 }
 
 // =====================================================
-// INTENT PATTERNS
+// INTENT PATTERNS (with no_money_intent FIRST)
 // =====================================================
 
 const INTENT_PATTERNS: Array<{ intent: Intent; pattern: RegExp }> = [
+  // no_money_intent is handled separately via isNoMoneyIntent for highest priority
   { intent: 'login_access', pattern: LOGIN_ACCESS_PATTERN },
   { intent: 'transactional_open_account', pattern: /\b(open\s*account|create\s*account|sign\s*up|register|registration|minimum\s*deposit|bonus)\b|فتح\s*حساب|انشاء\s*حساب|تسجيل|سجل|حد\s*ادنى\s*للايداع|بونص|مكافأة/i },
   { intent: 'app_download', pattern: APP_PATTERN },
@@ -700,45 +733,56 @@ export function classifyPrimary(
   return {
     cluster_primary: 'Other - General Longtail',
     cluster_secondary: null,
-    matched_rule: 'OTHER:general_longtail',
-    confidence: 0.4,
+    matched_rule: 'DEFAULT:longtail',
+    confidence: 0.3,
   };
 }
 
 // =====================================================
-// INTENT CLASSIFICATION
+// INTENT CLASSIFICATION (with no_money_intent FIRST)
 // =====================================================
 
-export function classifyIntent(norm: string, asciiNorm: string): IntentResult {
+export function classifyIntent(norm: string, asciiNorm: string): { intent: Intent; matched_pattern: string } {
+  // HIGHEST PRIORITY: no_money_intent
+  if (isNoMoneyIntent(norm, asciiNorm)) {
+    return { intent: 'no_money_intent', matched_pattern: 'NO_MONEY_PATTERNS' };
+  }
+  
+  // Check other intents in order
   for (const { intent, pattern } of INTENT_PATTERNS) {
     if (pattern.test(norm) || pattern.test(asciiNorm)) {
-      return { intent, matched_pattern: intent };
+      return { intent, matched_pattern: pattern.source };
     }
   }
   
-  return { intent: 'generic', matched_pattern: 'generic' };
+  return { intent: 'generic', matched_pattern: 'DEFAULT' };
 }
 
 // =====================================================
 // TAG COMPUTATION
 // =====================================================
 
-export function computeTags(norm: string, asciiNorm: string, language: 'ar' | 'en' | 'mixed'): Tags {
+function computeTags(norm: string, asciiNorm: string, language: 'ar' | 'en' | 'mixed'): Tags {
   const tags: Tags = { language };
   
-  // Detect asset tags
-  if (GOLD_PATTERN.test(norm)) tags.asset_tag = 'gold';
-  else if (SILVER_PATTERN.test(norm)) tags.asset_tag = 'silver';
-  else if (BITCOIN_PATTERN.test(norm)) tags.asset_tag = 'bitcoin';
-  else if (ETHEREUM_PATTERN.test(norm)) tags.asset_tag = 'ethereum';
-  else if (ENERGY_PATTERN.test(norm)) tags.asset_tag = 'energy';
-  else if (FX_PAIRS_PATTERN.test(norm) || FX_GENERIC_PATTERN.test(norm)) tags.asset_tag = 'fx';
-  else if (INDICES_PATTERN.test(norm)) tags.asset_tag = 'indices';
-  else if (CRYPTO_GENERIC_PATTERN.test(norm) || ALTCOINS_PATTERN.test(norm) || STABLECOINS_PATTERN.test(norm)) tags.asset_tag = 'crypto';
+  // Asset tags
+  if (BITCOIN_PATTERN.test(norm) || BITCOIN_PATTERN.test(asciiNorm)) {
+    tags.asset_tag = 'BTC';
+  } else if (ETHEREUM_PATTERN.test(norm) || ETHEREUM_PATTERN.test(asciiNorm)) {
+    tags.asset_tag = 'ETH';
+  } else if (GOLD_PATTERN.test(norm) || GOLD_PATTERN.test(asciiNorm)) {
+    tags.asset_tag = 'XAU';
+  } else if (FX_PAIRS_PATTERN.test(norm) || FX_PAIRS_PATTERN.test(asciiNorm)) {
+    const match = (norm + ' ' + asciiNorm).match(FX_PAIRS_PATTERN);
+    if (match) tags.asset_tag = match[0].toUpperCase();
+  }
   
-  // Detect platform tags
-  if (METATRADER_PATTERN.test(norm)) tags.platform_tag = 'metatrader';
-  else if (TRADINGVIEW_PATTERN.test(norm)) tags.platform_tag = 'tradingview';
+  // Platform tags
+  if (TRADINGVIEW_PATTERN.test(norm) || TRADINGVIEW_PATTERN.test(asciiNorm)) {
+    tags.platform_tag = 'TradingView';
+  } else if (METATRADER_PATTERN.test(norm) || METATRADER_PATTERN.test(asciiNorm)) {
+    tags.platform_tag = 'MetaTrader';
+  }
   
   return tags;
 }
@@ -748,111 +792,77 @@ export function computeTags(norm: string, asciiNorm: string, language: 'ar' | 'e
 // =====================================================
 
 function parseNumeric(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) return 0;
   if (typeof value === 'number') return value;
+  if (!value) return 0;
   
-  // Remove currency symbols, commas, percentage signs
-  const cleaned = value.replace(/[$€£¥,٪%]/g, '').trim();
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? 0 : num;
+  // Remove currency symbols and commas
+  const cleaned = String(value).replace(/[$€£,\s]/g, '').replace(/%$/, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
 }
 
-export function computeScores(rows: ProcessedKeyword[]): ProcessedKeyword[] {
-  // Group by cluster_primary for within-cluster normalization
-  const clusterGroups = new Map<string, ProcessedKeyword[]>();
+function computeScores(rows: ProcessedKeyword[]): void {
+  // Group by cluster for normalization
+  const clusterMap = new Map<string, ProcessedKeyword[]>();
   
   for (const row of rows) {
-    const group = clusterGroups.get(row.cluster_primary) || [];
-    group.push(row);
-    clusterGroups.set(row.cluster_primary, group);
+    const cluster = row.cluster_primary;
+    if (!clusterMap.has(cluster)) clusterMap.set(cluster, []);
+    clusterMap.get(cluster)!.push(row);
   }
   
   // Compute scores within each cluster
-  for (const [, group] of clusterGroups) {
-    // Calculate metrics
-    const metrics = group.map(row => {
-      const clicks = row.clicks || 0;
-      const impressions = row.impressions || 0;
-      const cost = row.cost || 0;
-      const conversions = row.conversions || 0;
+  for (const [, kwList] of clusterMap) {
+    // Get min/max for normalization
+    let maxCtr = 0;
+    let maxCvr = 0;
+    let minCpa = Infinity;
+    
+    for (const kw of kwList) {
+      const ctr = kw.ctr || 0;
+      const cvr = kw.cost && kw.cost > 0 && kw.conversions ? kw.conversions / kw.cost : 0;
+      const cpa = kw.conversions && kw.conversions > 0 && kw.cost ? kw.cost / kw.conversions : Infinity;
       
-      const ctr = impressions > 0 ? clicks / impressions : 0;
-      const cvr = clicks > 0 ? conversions / clicks : 0;
-      const cpa = conversions > 0 ? cost / conversions : Infinity;
+      if (ctr > maxCtr) maxCtr = ctr;
+      if (cvr > maxCvr) maxCvr = cvr;
+      if (cpa < minCpa && cpa > 0) minCpa = cpa;
+    }
+    
+    // Compute normalized score
+    for (const kw of kwList) {
+      const ctr = kw.ctr || 0;
+      const cvr = kw.cost && kw.cost > 0 && kw.conversions ? kw.conversions / kw.cost : 0;
+      const cpa = kw.conversions && kw.conversions > 0 && kw.cost ? kw.cost / kw.conversions : Infinity;
       
-      return { row, ctr, cvr, cpa, cost };
-    });
-    
-    // Find min/max for normalization
-    const ctrs = metrics.map(m => m.ctr);
-    const cvrs = metrics.map(m => m.cvr);
-    const cpas = metrics.filter(m => m.cpa !== Infinity).map(m => m.cpa);
-    
-    const minCtr = Math.min(...ctrs);
-    const maxCtr = Math.max(...ctrs);
-    const minCvr = Math.min(...cvrs);
-    const maxCvr = Math.max(...cvrs);
-    const minCpa = cpas.length > 0 ? Math.min(...cpas) : 0;
-    const maxCpa = cpas.length > 0 ? Math.max(...cpas) : 1;
-    
-    const hasConversions = metrics.some(m => (m.row.conversions || 0) > 0);
-    
-    // Compute normalized scores
-    for (const m of metrics) {
-      const normCtr = maxCtr > minCtr ? (m.ctr - minCtr) / (maxCtr - minCtr) : 0.5;
-      const normCvr = maxCvr > minCvr ? (m.cvr - minCvr) / (maxCvr - minCvr) : 0.5;
-      const normInvCpa = m.cpa !== Infinity && maxCpa > minCpa 
-        ? 1 - (m.cpa - minCpa) / (maxCpa - minCpa) 
-        : 0.5;
+      const ctrScore = maxCtr > 0 ? (ctr / maxCtr) * 33 : 0;
+      const cvrScore = maxCvr > 0 ? (cvr / maxCvr) * 33 : 0;
+      const cpaScore = minCpa < Infinity && cpa < Infinity ? (minCpa / cpa) * 34 : 0;
       
-      if (hasConversions) {
-        // Full formula: 0.40*CTR + 0.40*CVR + 0.20*(1/CPA)
-        m.row.opportunity_score = Math.round((0.4 * normCtr + 0.4 * normCvr + 0.2 * normInvCpa) * 100) / 100;
-      } else {
-        // CTR-heavy fallback: 0.80*CTR + 0.20*0.5
-        m.row.opportunity_score = Math.round((0.8 * normCtr + 0.2 * 0.5) * 100) / 100;
-      }
+      kw.opportunity_score = Math.round(ctrScore + cvrScore + cpaScore);
     }
   }
-  
-  return rows;
 }
 
 // =====================================================
 // LEAKAGE SUGGESTION BUILDER
 // =====================================================
 
-// English stopwords
-const EN_STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
-  'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does',
-  'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need',
-  'this', 'that', 'these', 'those', 'what', 'which', 'who', 'whom', 'whose', 'when', 'where',
-  'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
-  'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'also',
-]);
-
-// Arabic function words
-const AR_STOPWORDS = new Set([
-  'في', 'من', 'على', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك', 'التي', 'الذي', 'التى',
-  'ما', 'هو', 'هي', 'هم', 'هن', 'أنا', 'أنت', 'نحن', 'أنتم', 'كل', 'بعض', 'أي', 'كيف',
-  'لماذا', 'متى', 'أين', 'كان', 'كانت', 'يكون', 'تكون', 'و', 'أو', 'ثم', 'لكن', 'بل',
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'are', 'was', 'were',
+  'what', 'how', 'why', 'when', 'where', 'which', 'who', 'whom', 'whose', 'that', 'this', 'these', 'those',
+  'with', 'from', 'by', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
+  'between', 'under', 'over', 'up', 'down', 'out', 'off', 'away', 'back', 'again', 'further', 'then',
+  'once', 'here', 'there', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
+  'no', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'can', 'will', 'should', 'now',
+  // Arabic stopwords
+  'في', 'على', 'من', 'إلى', 'عن', 'مع', 'هل', 'ما', 'كيف', 'لماذا', 'متى', 'أين', 'ان', 'كان', 'هذا', 'هذه',
+  'ذلك', 'تلك', 'هؤلاء', 'اولئك', 'الذي', 'التي', 'الذين', 'اللاتي', 'اللواتي', 'او', 'و', 'ثم', 'لكن', 'بل',
 ]);
 
 function extractTokens(text: string, language: 'ar' | 'en' | 'mixed'): string[] {
-  const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-  
-  return words.filter(word => {
-    if (language === 'ar' || language === 'mixed') {
-      if (containsArabic(word)) {
-        return word.length >= 3 && !AR_STOPWORDS.has(word);
-      }
-    }
-    if (language === 'en' || language === 'mixed') {
-      return word.length >= 4 && !EN_STOPWORDS.has(word);
-    }
-    return word.length >= 4;
-  });
+  const norm = text.toLowerCase().replace(/[.,\/;:_\-\(\)\[\]\{\}\"'`!@#$%^&*+=<>?\\|~]/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = norm.split(' ').filter(t => t.length > 1 && !STOPWORDS.has(t));
+  return tokens;
 }
 
 function extractBigrams(tokens: string[]): string[] {
@@ -867,121 +877,90 @@ export function buildLeakageSuggestions(
   rows: ProcessedKeyword[],
   dictionaries: DictionaryEntry[]
 ): LeakageSuggestion[] {
-  // Filter "Other - General Longtail" rows
-  const longtailRows = rows.filter(r => r.cluster_primary === 'Other - General Longtail');
+  // Only analyze "Other - General Longtail" with meaningful spend
+  const longtailRows = rows.filter(
+    r => r.cluster_primary === 'Other - General Longtail' && (r.cost || 0) >= 10
+  );
   
-  // Sort by cost desc, then clicks desc
-  longtailRows.sort((a, b) => {
-    const costDiff = (b.cost || 0) - (a.cost || 0);
-    if (costDiff !== 0) return costDiff;
-    return (b.clicks || 0) - (a.clicks || 0);
-  });
+  if (longtailRows.length === 0) return [];
   
-  // Take top 200
-  const topRows = longtailRows.slice(0, 200);
+  // Count token and bigram frequency
+  const tokenCounts = new Map<string, { count: number; cost: number; clicks: number; terms: string[] }>();
+  const bigramCounts = new Map<string, { count: number; cost: number; clicks: number; terms: string[] }>();
   
-  if (topRows.length === 0) return [];
+  // Get existing dictionary aliases to avoid duplicates
+  const existingAliases = new Set(dictionaries.map(d => d.alias.toLowerCase().trim()));
   
-  // Extract tokens and bigrams
-  const tokenCounts = new Map<string, { count: number; totalCost: number; totalClicks: number; terms: string[] }>();
-  const bigramCounts = new Map<string, { count: number; totalCost: number; totalClicks: number; terms: string[] }>();
-  
-  for (const row of topRows) {
-    const { search_term_norm, language } = normalizeTerm(row.keyword);
-    const tokens = extractTokens(search_term_norm, language);
+  for (const row of longtailRows) {
+    const norm = normalizeTerm(row.keyword);
+    const tokens = extractTokens(norm.search_term_norm, norm.language);
     const bigrams = extractBigrams(tokens);
     
     for (const token of tokens) {
-      const existing = tokenCounts.get(token) || { count: 0, totalCost: 0, totalClicks: 0, terms: [] };
-      existing.count++;
-      existing.totalCost += row.cost || 0;
-      existing.totalClicks += row.clicks || 0;
-      if (existing.terms.length < 5) existing.terms.push(row.keyword);
-      tokenCounts.set(token, existing);
+      if (existingAliases.has(token)) continue;
+      if (!tokenCounts.has(token)) {
+        tokenCounts.set(token, { count: 0, cost: 0, clicks: 0, terms: [] });
+      }
+      const entry = tokenCounts.get(token)!;
+      entry.count++;
+      entry.cost += row.cost || 0;
+      entry.clicks += row.clicks;
+      if (entry.terms.length < 5) entry.terms.push(row.keyword);
     }
     
     for (const bigram of bigrams) {
-      const existing = bigramCounts.get(bigram) || { count: 0, totalCost: 0, totalClicks: 0, terms: [] };
-      existing.count++;
-      existing.totalCost += row.cost || 0;
-      existing.totalClicks += row.clicks || 0;
-      if (existing.terms.length < 5) existing.terms.push(row.keyword);
-      bigramCounts.set(bigram, existing);
+      if (existingAliases.has(bigram)) continue;
+      if (!bigramCounts.has(bigram)) {
+        bigramCounts.set(bigram, { count: 0, cost: 0, clicks: 0, terms: [] });
+      }
+      const entry = bigramCounts.get(bigram)!;
+      entry.count++;
+      entry.cost += row.cost || 0;
+      entry.clicks += row.clicks;
+      if (entry.terms.length < 5) entry.terms.push(row.keyword);
     }
   }
   
   const suggestions: LeakageSuggestion[] = [];
   
-  // Get existing aliases for comparison
-  const existingAliases = new Set(dictionaries.map(d => d.alias.toLowerCase()));
-  const existingCanonicals = new Set(dictionaries.map(d => d.canonical.toLowerCase()));
+  // Suggest bigrams that appear frequently
+  for (const [phrase, data] of bigramCounts) {
+    if (data.count >= 3 && data.cost >= 50) {
+      suggestions.push({
+        suggestion_type: 'dictionary_candidate',
+        extracted_phrase: phrase,
+        evidence_terms: data.terms,
+        evidence_cost: data.cost,
+        evidence_clicks: data.clicks,
+        proposed_dict_name: 'brand_terms',
+        proposed_canonical: phrase.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        proposed_alias: phrase,
+      });
+    }
+  }
   
-  // Analyze tokens
+  // Suggest single tokens that appear very frequently
   for (const [token, data] of tokenCounts) {
-    if (data.count < 3) continue; // Must appear in at least 3 terms
-    
-    // Check if it looks like a competitor (domain-like or brand-like)
-    const looksLikeDomain = /\.(com|net|org|io|co)$/i.test(token) || token.includes('.');
-    const looksLikeBrand = token.length >= 4 && !EN_STOPWORDS.has(token) && /^[a-z]+$/i.test(token);
-    
-    // Check for near-matches to existing entries
-    for (const canonical of existingCanonicals) {
-      const similarity = token.includes(canonical) || canonical.includes(token);
-      if (similarity && !existingAliases.has(token)) {
+    if (data.count >= 5 && data.cost >= 100 && token.length >= 4) {
+      // Check if this looks like a potential brand/competitor name
+      const isProperNoun = /^[A-Z]/.test(token) || token.length >= 5;
+      if (isProperNoun) {
         suggestions.push({
           suggestion_type: 'alias_candidate',
           extracted_phrase: token,
           evidence_terms: data.terms,
-          evidence_cost: data.totalCost,
-          evidence_clicks: data.totalClicks,
+          evidence_cost: data.cost,
+          evidence_clicks: data.clicks,
           proposed_dict_name: 'competitors',
-          proposed_canonical: canonical,
+          proposed_canonical: token.charAt(0).toUpperCase() + token.slice(1),
           proposed_alias: token,
         });
-        break;
       }
     }
-    
-    // New dictionary candidate
-    if ((looksLikeDomain || looksLikeBrand) && !existingAliases.has(token) && data.count >= 5) {
-      suggestions.push({
-        suggestion_type: 'dictionary_candidate',
-        extracted_phrase: token,
-        evidence_terms: data.terms,
-        evidence_cost: data.totalCost,
-        evidence_clicks: data.totalClicks,
-        proposed_dict_name: 'competitors',
-        proposed_canonical: token,
-        proposed_alias: token,
-      });
-    }
   }
   
-  // Analyze bigrams for rule candidates
-  for (const [bigram, data] of bigramCounts) {
-    if (data.count < 3) continue;
-    
-    // Check if bigram maps to a known cluster pattern
-    const { search_term_norm } = normalizeTerm(bigram);
-    
-    // See if this bigram would match a cluster if processed standalone
-    if (GOLD_PATTERN.test(search_term_norm) || BITCOIN_PATTERN.test(search_term_norm) || 
-        FX_GENERIC_PATTERN.test(search_term_norm) || CRYPTO_GENERIC_PATTERN.test(search_term_norm)) {
-      suggestions.push({
-        suggestion_type: 'new_rule_candidate',
-        extracted_phrase: bigram,
-        evidence_terms: data.terms,
-        evidence_cost: data.totalCost,
-        evidence_clicks: data.totalClicks,
-      });
-    }
-  }
-  
-  // Sort by evidence cost (highest first)
-  suggestions.sort((a, b) => b.evidence_cost - a.evidence_cost);
-  
-  // Limit to top 50 suggestions
-  return suggestions.slice(0, 50);
+  // Sort by evidence cost descending
+  return suggestions.sort((a, b) => b.evidence_cost - a.evidence_cost).slice(0, 20);
 }
 
 // =====================================================
@@ -992,65 +971,55 @@ export function processKeywords(
   csvText: string,
   dictionaries: DictionaryEntry[],
   customRules: CustomRule[] = []
-): {
-  rows: ProcessedKeyword[];
-  parseResult: CsvParseResult;
-  leakageSuggestions: LeakageSuggestion[];
-} {
-  // Parse and clean CSV
+): { rows: ProcessedKeyword[]; parseResult: CsvParseResult; leakageSuggestions: LeakageSuggestion[] } {
+  // Parse and clean CSV (now with expanded ignore patterns)
   const parseResult = parseAndCleanCsv(csvText);
   
-  if (parseResult.cleanRows.length === 0) {
-    return { rows: [], parseResult, leakageSuggestions: [] };
-  }
+  const rows: ProcessedKeyword[] = [];
   
-  // Process each row
-  const rows: ProcessedKeyword[] = parseResult.cleanRows.map(rawRow => {
+  for (const rawRow of parseResult.cleanRows) {
+    // Double-check: skip any row that slipped through
+    if (shouldIgnoreRow(rawRow.search_term)) continue;
+    
     const keyword = rawRow.search_term;
-    const { search_term_norm, search_term_norm_ascii, language } = normalizeTerm(keyword);
+    const norm = normalizeTerm(keyword);
     
-    // Classify primary cluster
-    const classification = classifyPrimary(search_term_norm, search_term_norm_ascii, dictionaries, customRules);
+    // Classify
+    const classification = classifyPrimary(norm.search_term_norm, norm.search_term_norm_ascii, dictionaries, customRules);
+    const intentResult = classifyIntent(norm.search_term_norm, norm.search_term_norm_ascii);
+    const tags = computeTags(norm.search_term_norm, norm.search_term_norm_ascii, norm.language);
     
-    // Classify intent
-    const { intent } = classifyIntent(search_term_norm, search_term_norm_ascii);
-    
-    // Compute tags
-    const tags = computeTags(search_term_norm, search_term_norm_ascii, language);
-    
-    return {
+    const row: ProcessedKeyword = {
       keyword,
       clicks: parseNumeric(rawRow.clicks),
       impressions: parseNumeric(rawRow.impressions),
-      ctr: parseNumeric(rawRow.ctr) || null,
-      cost: parseNumeric(rawRow.cost) || null,
-      conversions: parseNumeric(rawRow.conversions) || null,
+      ctr: rawRow.ctr ? parseNumeric(rawRow.ctr) / 100 : null,
+      cost: rawRow.cost ? parseNumeric(rawRow.cost) : null,
+      conversions: rawRow.conversions ? parseNumeric(rawRow.conversions) : null,
       campaign: rawRow.campaign || null,
       ad_group: rawRow.ad_group || null,
       match_type: rawRow.match_type || null,
       
       cluster_primary: classification.cluster_primary,
       cluster_secondary: classification.cluster_secondary,
-      intent,
+      intent: intentResult.intent,
       matched_rule: classification.matched_rule,
       confidence: classification.confidence,
       tags,
-      opportunity_score: null, // Will be computed next
+      opportunity_score: null,
       
-      search_term_norm,
-      search_term_norm_ascii,
+      search_term_norm: norm.search_term_norm,
+      search_term_norm_ascii: norm.search_term_norm_ascii,
     };
-  });
+    
+    rows.push(row);
+  }
   
   // Compute opportunity scores
-  const scoredRows = computeScores(rows);
+  computeScores(rows);
   
   // Build leakage suggestions
-  const leakageSuggestions = buildLeakageSuggestions(scoredRows, dictionaries);
+  const leakageSuggestions = buildLeakageSuggestions(rows, dictionaries);
   
-  return {
-    rows: scoredRows,
-    parseResult,
-    leakageSuggestions,
-  };
+  return { rows, parseResult, leakageSuggestions };
 }
