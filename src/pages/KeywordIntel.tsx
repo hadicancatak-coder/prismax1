@@ -156,8 +156,20 @@ export default function KeywordIntel() {
     const lines = text.trim().split('\n').filter(line => line.trim());
     if (lines.length < 2) return { data: [], error: "CSV file is empty or has no data rows" };
 
-    const headers = parseCSVLine(lines[0]);
-    console.log("Parsed headers:", headers);
+    // Auto-detect header row - Google Ads exports have metadata rows before headers
+    let headerRowIndex = 0;
+    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+      const line = lines[i].toLowerCase();
+      // Look for known column names that indicate this is the header row
+      if ((line.includes('search term') || line.includes('keyword')) && 
+          (line.includes('clicks') || line.includes('impr') || line.includes('match type'))) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+    
+    const headers = parseCSVLine(lines[headerRowIndex]);
+    console.log("Detected header row index:", headerRowIndex, "Headers:", headers);
     
     // Build column index map
     const colMap: Record<string, number> = {};
@@ -174,9 +186,10 @@ export default function KeywordIntel() {
       return { data: [], error: `Missing required columns: ${missingColumns.join(', ')}` };
     }
 
+    // Parse data rows (start after header row)
     const data: KeywordRow[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = headerRowIndex + 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
