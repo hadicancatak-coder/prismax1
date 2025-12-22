@@ -136,11 +136,16 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   );
 
   // Reset internal mode when dialog opens/closes or mode prop changes
+  // IMPORTANT: In view mode, auto-open side panel so comments are visible
   useEffect(() => {
     if (open) {
       setInternalMode(mode);
-      setSidePanelOpen(false);
+      // Auto-open side panel in view mode so comments are immediately visible
+      setSidePanelOpen(mode === 'view');
       setAdvancedOpen(false);
+    } else {
+      // Reset the load ref when dialog closes to ensure fresh fetch on next open
+      initialLoadRef.current = null;
     }
   }, [open, mode]);
 
@@ -186,22 +191,16 @@ export function UnifiedTaskDialog({ open, onOpenChange, mode, taskId, task: cach
   }, [open]);
 
   // Fetch task data for view/edit modes - parallelized
+  // CRITICAL: Always fetch fresh task data to ensure description and all fields are populated
+  // The cached task from list views may not include all fields (e.g., description)
   useEffect(() => {
     if (open && !isCreate && taskId) {
-      // If we have cached task, only fetch comments/blocker in parallel
-      if (cachedTask) {
-        Promise.all([
-          fetchComments(),
-          fetchBlocker()
-        ]);
-      } else {
-        // No cached task, fetch everything in parallel
-        Promise.all([
-          fetchTask(),
-          fetchComments(),
-          fetchBlocker()
-        ]);
-      }
+      // Always fetch task, comments, and blocker in parallel for complete data
+      Promise.all([
+        fetchTask(),
+        fetchComments(),
+        fetchBlocker()
+      ]);
     }
   }, [open, taskId, isCreate]);
 
