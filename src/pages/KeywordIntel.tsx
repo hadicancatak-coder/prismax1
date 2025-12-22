@@ -14,36 +14,61 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
-// Types
+// Types - Updated for Google Ads Search Terms Report
 interface KeywordRow {
   keyword: string;
   clicks: number;
   impressions: number;
   ctr: number;
-  avg_position: number;
-  page_url: string;
-  country: string;
-  device: string;
-  date_range: string;
-  conversion_rate?: number;
-  revenue?: number;
-  intent_label?: string;
+  match_type: string;
+  added_excluded: string;
+  campaign: string;
+  ad_group: string;
+  currency_code: string;
+  cost: number;
+  impr_top_pct: number;
+  interaction_rate: number;
+  engagement_rate: number;
+  conv_rate: number;
+  conversions: number;
+  cost_per_conv: number;
   opportunity_score?: number;
 }
 
 interface KeywordCluster {
   id: string;
   name: string;
-  pageUrl: string;
+  campaign: string;
+  adGroup: string;
   keywords: KeywordRow[];
   totalImpressions: number;
-  avgPosition: number;
+  totalClicks: number;
+  totalCost: number;
   avgScore: number;
 }
 
-const REQUIRED_COLUMNS = ['keyword', 'clicks', 'impressions', 'ctr', 'avg_position', 'page_url', 'country', 'device', 'date_range'];
+// Column mappings for flexible header matching
+const COLUMN_MAPPINGS: Record<string, string[]> = {
+  keyword: ['search term', 'keyword', 'query', 'search_term'],
+  clicks: ['clicks'],
+  impressions: ['impr.', 'impressions', 'impr'],
+  ctr: ['ctr', 'click-through rate'],
+  match_type: ['match type', 'match_type'],
+  added_excluded: ['added/excluded', 'status', 'added_excluded'],
+  campaign: ['campaign'],
+  ad_group: ['ad group', 'adgroup', 'ad_group'],
+  currency_code: ['currency code', 'currency', 'currency_code'],
+  cost: ['cost'],
+  impr_top_pct: ['impr. (top) %', 'top impression rate', 'impr_top_pct', 'top impr %'],
+  interaction_rate: ['interaction rate', 'interaction_rate'],
+  engagement_rate: ['engagement rate', 'engagement_rate'],
+  conv_rate: ['conv. rate', 'conversion rate', 'conv_rate'],
+  conversions: ['conversions', 'conv.'],
+  cost_per_conv: ['cost / conv.', 'cost per conversion', 'cpa', 'cost_per_conv'],
+};
+
+const REQUIRED_COLUMNS = ['keyword', 'clicks', 'impressions', 'ctr'];
 
 const MODIFIERS = [
   '{keyword} for beginners',
@@ -58,6 +83,39 @@ const MODIFIERS = [
   '{keyword} tutorial',
 ];
 
+// Parsing helpers
+function parsePercentage(value: string): number {
+  if (!value || value === '--' || value === '') return 0;
+  const cleaned = value.toString().replace('%', '').replace(/,/g, '').trim();
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed / 100;
+}
+
+function parseCurrency(value: string): number {
+  if (!value || value === '--' || value === '') return 0;
+  const cleaned = value.toString().replace(/[$€£¥₹,\s]/g, '').trim();
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function parseNumber(value: string): number {
+  if (!value || value === '--' || value === '') return 0;
+  const cleaned = value.toString().replace(/,/g, '').trim();
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function findColumnIndex(headers: string[], fieldName: string): number {
+  const aliases = COLUMN_MAPPINGS[fieldName] || [fieldName];
+  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+  
+  for (const alias of aliases) {
+    const index = normalizedHeaders.indexOf(alias.toLowerCase());
+    if (index !== -1) return index;
+  }
+  return -1;
+}
+
 export default function KeywordIntel() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("upload");
@@ -66,68 +124,85 @@ export default function KeywordIntel() {
   const [previewRows, setPreviewRows] = useState<KeywordRow[]>([]);
   const [isUploaded, setIsUploaded] = useState(false);
 
-  // Filters
-  const [countryFilter, setCountryFilter] = useState<string>("all");
+  // Filters - Updated for Google Ads data
+  const [campaignFilter, setCampaignFilter] = useState<string>("all");
+  const [adGroupFilter, setAdGroupFilter] = useState<string>("all");
+  const [matchTypeFilter, setMatchTypeFilter] = useState<string>("all");
   const [minScore, setMinScore] = useState<number>(0);
-  const [intentFilter, setIntentFilter] = useState<string>("all");
 
-  // Parse CSV
+  // Parse CSV with flexible column mapping
   const parseCSV = useCallback((text: string): { data: KeywordRow[]; error: string | null } => {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return { data: [], error: "CSV file is empty or has no data rows" };
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
-    const missingColumns = REQUIRED_COLUMNS.filter(col => !headers.includes(col));
+    const headers = lines[0].split(',').map(h => h.trim().replace(/['"]/g, ''));
+    
+    // Build column index map
+    const colMap: Record<string, number> = {};
+    for (const field of Object.keys(COLUMN_MAPPINGS)) {
+      colMap[field] = findColumnIndex(headers, field);
+    }
 
+    // Validate required columns
+    const missingColumns = REQUIRED_COLUMNS.filter(col => colMap[col] === -1);
     if (missingColumns.length > 0) {
       return { data: [], error: `Missing required columns: ${missingColumns.join(', ')}` };
     }
 
     const data: KeywordRow[] = [];
-    const errors: string[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/['"]/g, ''));
-      if (values.length < headers.length) continue;
+      const line = lines[i].trim();
+      if (!line) continue;
 
-      try {
-        const row: KeywordRow = {
-          keyword: values[headers.indexOf('keyword')] || '',
-          clicks: parseInt(values[headers.indexOf('clicks')]) || 0,
-          impressions: parseInt(values[headers.indexOf('impressions')]) || 0,
-          ctr: parseFloat(values[headers.indexOf('ctr')]) || 0,
-          avg_position: parseFloat(values[headers.indexOf('avg_position')]) || 0,
-          page_url: values[headers.indexOf('page_url')] || '',
-          country: values[headers.indexOf('country')] || '',
-          device: values[headers.indexOf('device')] || '',
-          date_range: values[headers.indexOf('date_range')] || '',
-        };
+      // Handle CSV with quoted fields
+      const values: string[] = [];
+      let current = '';
+      let inQuotes = false;
 
-        // Optional columns
-        if (headers.includes('conversion_rate')) {
-          row.conversion_rate = parseFloat(values[headers.indexOf('conversion_rate')]) || undefined;
+      for (const char of line) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
         }
-        if (headers.includes('revenue')) {
-          row.revenue = parseFloat(values[headers.indexOf('revenue')]) || undefined;
-        }
-        if (headers.includes('intent_label')) {
-          row.intent_label = values[headers.indexOf('intent_label')] || undefined;
-        }
-
-        if (row.keyword) data.push(row);
-      } catch {
-        errors.push(`Row ${i + 1}: Invalid data format`);
       }
-    }
+      values.push(current.trim());
 
-    if (errors.length > 0 && data.length === 0) {
-      return { data: [], error: errors.slice(0, 3).join('; ') };
+      const getValue = (field: string): string => {
+        const idx = colMap[field];
+        return idx !== -1 && values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+      };
+
+      const row: KeywordRow = {
+        keyword: getValue('keyword'),
+        clicks: parseNumber(getValue('clicks')),
+        impressions: parseNumber(getValue('impressions')),
+        ctr: parsePercentage(getValue('ctr')),
+        match_type: getValue('match_type'),
+        added_excluded: getValue('added_excluded'),
+        campaign: getValue('campaign'),
+        ad_group: getValue('ad_group'),
+        currency_code: getValue('currency_code') || 'USD',
+        cost: parseCurrency(getValue('cost')),
+        impr_top_pct: parsePercentage(getValue('impr_top_pct')),
+        interaction_rate: parsePercentage(getValue('interaction_rate')),
+        engagement_rate: parsePercentage(getValue('engagement_rate')),
+        conv_rate: parsePercentage(getValue('conv_rate')),
+        conversions: parseNumber(getValue('conversions')),
+        cost_per_conv: parseCurrency(getValue('cost_per_conv')),
+      };
+
+      if (row.keyword) data.push(row);
     }
 
     return { data, error: null };
   }, []);
 
-  // Calculate opportunity score
+  // Calculate opportunity score - Updated for Google Ads data
   const calculateOpportunityScore = useCallback((keyword: KeywordRow, avgCTR: number): number => {
     let score = 0;
 
@@ -136,26 +211,19 @@ export default function KeywordIntel() {
     score += impressionScore;
 
     // 2. CTR Gap Bonus (0-25 points)
-    if (keyword.ctr < avgCTR) {
+    if (keyword.ctr < avgCTR && avgCTR > 0) {
       const ctrGap = (avgCTR - keyword.ctr) / avgCTR;
       score += Math.min(25, ctrGap * 50);
     }
 
-    // 3. Position Sweet Spot (0-25 points) - positions 4-15
-    if (keyword.avg_position >= 4 && keyword.avg_position <= 15) {
-      const positionScore = 25 - Math.abs(keyword.avg_position - 8) * 2;
-      score += Math.max(0, positionScore);
+    // 3. Top Impression Potential (0-25 points) - lower top impr % = more room to improve
+    if (keyword.impr_top_pct < 0.5) {
+      score += Math.min(25, (0.5 - keyword.impr_top_pct) * 50);
     }
 
-    // 4. Intent Multiplier (0-10 points)
-    if (keyword.intent_label) {
-      const intentBonus: Record<string, number> = { 
-        'transactional': 10, 
-        'commercial': 8, 
-        'informational': 4, 
-        'navigational': 2 
-      };
-      score += intentBonus[keyword.intent_label.toLowerCase()] || 0;
+    // 4. Conversion Performance (0-10 points)
+    if (keyword.conversions > 0) {
+      score += Math.min(10, keyword.conversions * 2);
     }
 
     return Math.round(Math.min(100, score));
@@ -174,32 +242,37 @@ export default function KeywordIntel() {
   // Filter data
   const filteredData = useMemo(() => {
     return scoredData.filter(kw => {
-      if (countryFilter !== "all" && kw.country !== countryFilter) return false;
+      if (campaignFilter !== "all" && kw.campaign !== campaignFilter) return false;
+      if (adGroupFilter !== "all" && kw.ad_group !== adGroupFilter) return false;
+      if (matchTypeFilter !== "all" && kw.match_type !== matchTypeFilter) return false;
       if (kw.opportunity_score !== undefined && kw.opportunity_score < minScore) return false;
-      if (intentFilter !== "all" && kw.intent_label !== intentFilter) return false;
       return true;
     }).sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0));
-  }, [scoredData, countryFilter, minScore, intentFilter]);
+  }, [scoredData, campaignFilter, adGroupFilter, matchTypeFilter, minScore]);
 
   // Get unique values for filters
-  const uniqueCountries = useMemo(() => 
-    [...new Set(scoredData.map(k => k.country).filter(Boolean))], 
+  const uniqueCampaigns = useMemo(() => 
+    [...new Set(scoredData.map(k => k.campaign).filter(Boolean))].sort(), 
     [scoredData]
   );
-  const uniqueIntents = useMemo(() => 
-    [...new Set(scoredData.map(k => k.intent_label).filter(Boolean))], 
+  const uniqueAdGroups = useMemo(() => 
+    [...new Set(scoredData.map(k => k.ad_group).filter(Boolean))].sort(), 
     [scoredData]
   );
-  const hasIntentColumn = uniqueIntents.length > 0;
+  const uniqueMatchTypes = useMemo(() => 
+    [...new Set(scoredData.map(k => k.match_type).filter(Boolean))].sort(), 
+    [scoredData]
+  );
 
-  // Cluster keywords
+  // Cluster keywords - by Campaign + Ad Group + stem
   const clusters = useMemo((): KeywordCluster[] => {
     const clusterMap = new Map<string, KeywordRow[]>();
 
     filteredData.forEach(kw => {
+      const campaignKey = kw.campaign || 'no-campaign';
+      const adGroupKey = kw.ad_group || 'no-adgroup';
       const stem = kw.keyword.split(' ').slice(0, 2).join(' ').toLowerCase();
-      const pageKey = kw.page_url || 'no-page';
-      const clusterKey = `${pageKey}|${stem}`;
+      const clusterKey = `${campaignKey}|${adGroupKey}|${stem}`;
 
       if (!clusterMap.has(clusterKey)) clusterMap.set(clusterKey, []);
       clusterMap.get(clusterKey)!.push(kw);
@@ -209,10 +282,12 @@ export default function KeywordIntel() {
       .map(([key, items]) => ({
         id: key,
         name: items[0].keyword.split(' ').slice(0, 2).join(' '),
-        pageUrl: items[0].page_url,
+        campaign: items[0].campaign,
+        adGroup: items[0].ad_group,
         keywords: items,
         totalImpressions: items.reduce((sum, k) => sum + k.impressions, 0),
-        avgPosition: items.reduce((sum, k) => sum + k.avg_position, 0) / items.length,
+        totalClicks: items.reduce((sum, k) => sum + k.clicks, 0),
+        totalCost: items.reduce((sum, k) => sum + k.cost, 0),
         avgScore: items.reduce((sum, k) => sum + (k.opportunity_score || 0), 0) / items.length,
       }))
       .filter(c => c.keywords.length > 1)
@@ -266,16 +341,19 @@ export default function KeywordIntel() {
 
   // Export to CSV
   const exportCSV = () => {
-    const headers = ['keyword', 'opportunity_score', 'clicks', 'impressions', 'ctr', 'avg_position', 'page_url', 'country'];
+    const headers = ['Keyword', 'Opportunity Score', 'Campaign', 'Ad Group', 'Match Type', 'Clicks', 'Impressions', 'CTR', 'Top Impr %', 'Cost', 'Conversions'];
     const rows = filteredData.map(k => [
-      k.keyword,
-      k.opportunity_score,
+      `"${k.keyword}"`,
+      k.opportunity_score || 0,
+      `"${k.campaign}"`,
+      `"${k.ad_group}"`,
+      k.match_type,
       k.clicks,
       k.impressions,
-      k.ctr,
-      k.avg_position,
-      k.page_url,
-      k.country
+      (k.ctr * 100).toFixed(2) + '%',
+      (k.impr_top_pct * 100).toFixed(1) + '%',
+      k.cost.toFixed(2),
+      k.conversions
     ].join(','));
 
     const csv = [headers.join(','), ...rows].join('\n');
@@ -289,10 +367,20 @@ export default function KeywordIntel() {
   };
 
   const copyTable = () => {
-    const text = filteredData.map(k => 
-      `${k.keyword}\t${k.opportunity_score}\t${k.clicks}\t${k.impressions}\t${k.ctr}\t${k.avg_position}`
-    ).join('\n');
-    navigator.clipboard.writeText(text);
+    const headers = ['Keyword', 'Score', 'Campaign', 'Ad Group', 'Clicks', 'Impressions', 'CTR', 'Cost', 'Conversions'];
+    const rows = filteredData.map(k => [
+      k.keyword,
+      k.opportunity_score || 0,
+      k.campaign,
+      k.ad_group,
+      k.clicks,
+      k.impressions,
+      (k.ctr * 100).toFixed(2) + '%',
+      k.cost.toFixed(2),
+      k.conversions
+    ].join('\t'));
+
+    navigator.clipboard.writeText([headers.join('\t'), ...rows].join('\n'));
     toast({ title: "Copied to clipboard" });
   };
 
@@ -307,7 +395,7 @@ export default function KeywordIntel() {
       <PageHeader
         icon={Search}
         title="Keyword Intel"
-        description="Analyze keyword performance and discover optimization opportunities"
+        description="Analyze search term performance and discover optimization opportunities"
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -329,8 +417,8 @@ export default function KeywordIntel() {
         <TabsContent value="upload" className="mt-lg">
           <DataCard>
             <DataCardHeader 
-              title="Upload Search Console Export" 
-              description="Upload a CSV file with keyword performance data"
+              title="Upload Google Ads Search Terms Report" 
+              description="Upload a CSV file with search term performance data"
             />
             <div className="space-y-md">
               <div className="flex items-center gap-md">
@@ -344,8 +432,8 @@ export default function KeywordIntel() {
 
               <div className="text-body-sm text-muted-foreground">
                 <p className="font-medium mb-xs">Required columns:</p>
-                <p>{REQUIRED_COLUMNS.join(', ')}</p>
-                <p className="mt-xs text-metadata">Optional: conversion_rate, revenue, intent_label</p>
+                <p>Search term, Clicks, Impr., CTR</p>
+                <p className="mt-xs text-metadata">Optional: Campaign, Ad group, Match type, Cost, Conversions, Impr. (Top) %, etc.</p>
               </div>
 
               {parseError && (
@@ -360,7 +448,7 @@ export default function KeywordIntel() {
                   <Alert>
                     <CheckCircle2 className="h-4 w-4 text-success" />
                     <AlertDescription>
-                      Found {parsedData.length} keywords. Preview below (first 20 rows).
+                      Found {parsedData.length} search terms. Preview below (first 20 rows).
                     </AlertDescription>
                   </Alert>
 
@@ -368,23 +456,25 @@ export default function KeywordIntel() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Keyword</TableHead>
+                          <TableHead>Search Term</TableHead>
+                          <TableHead>Campaign</TableHead>
+                          <TableHead>Ad Group</TableHead>
                           <TableHead>Clicks</TableHead>
-                          <TableHead>Impressions</TableHead>
+                          <TableHead>Impr.</TableHead>
                           <TableHead>CTR</TableHead>
-                          <TableHead>Position</TableHead>
-                          <TableHead>Country</TableHead>
+                          <TableHead>Cost</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {previewRows.map((row, i) => (
                           <TableRow key={i}>
-                            <TableCell className="font-medium">{row.keyword}</TableCell>
-                            <TableCell>{row.clicks}</TableCell>
-                            <TableCell>{row.impressions}</TableCell>
+                            <TableCell className="font-medium max-w-[200px] truncate">{row.keyword}</TableCell>
+                            <TableCell className="max-w-[150px] truncate">{row.campaign}</TableCell>
+                            <TableCell className="max-w-[120px] truncate">{row.ad_group}</TableCell>
+                            <TableCell>{row.clicks.toLocaleString()}</TableCell>
+                            <TableCell>{row.impressions.toLocaleString()}</TableCell>
                             <TableCell>{(row.ctr * 100).toFixed(2)}%</TableCell>
-                            <TableCell>{row.avg_position.toFixed(1)}</TableCell>
-                            <TableCell>{row.country}</TableCell>
+                            <TableCell>${row.cost.toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -392,7 +482,7 @@ export default function KeywordIntel() {
                   </ScrollArea>
 
                   <Button onClick={confirmUpload}>
-                    Confirm & Analyze {parsedData.length} Keywords
+                    Confirm & Analyze {parsedData.length} Search Terms
                   </Button>
                 </div>
               )}
@@ -401,7 +491,7 @@ export default function KeywordIntel() {
                 <EmptyState
                   icon={Upload}
                   title="No file uploaded"
-                  description="Upload a CSV export from Google Search Console to get started"
+                  description="Upload a CSV export from Google Ads to get started"
                 />
               )}
             </div>
@@ -411,17 +501,43 @@ export default function KeywordIntel() {
         <TabsContent value="opportunities" className="mt-lg space-y-md">
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-md">
-            <Select value={countryFilter} onValueChange={setCountryFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Country" />
+            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Campaign" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Countries</SelectItem>
-                {uniqueCountries.map(c => (
+                <SelectItem value="all">All Campaigns</SelectItem>
+                {uniqueCampaigns.map(c => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={adGroupFilter} onValueChange={setAdGroupFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Ad Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ad Groups</SelectItem>
+                {uniqueAdGroups.map(ag => (
+                  <SelectItem key={ag} value={ag}>{ag}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {uniqueMatchTypes.length > 0 && (
+              <Select value={matchTypeFilter} onValueChange={setMatchTypeFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Match Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {uniqueMatchTypes.map(mt => (
+                    <SelectItem key={mt} value={mt}>{mt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <div className="flex items-center gap-xs">
               <span className="text-body-sm text-muted-foreground">Min Score:</span>
@@ -435,20 +551,6 @@ export default function KeywordIntel() {
               />
             </div>
 
-            {hasIntentColumn && (
-              <Select value={intentFilter} onValueChange={setIntentFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Intent" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Intents</SelectItem>
-                  {uniqueIntents.map(i => (
-                    <SelectItem key={i} value={i!}>{i}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
             <div className="ml-auto flex gap-xs">
               <Button variant="outline" size="sm" onClick={copyTable}>
                 <Copy className="h-4 w-4 mr-xs" /> Copy
@@ -460,18 +562,20 @@ export default function KeywordIntel() {
           </div>
 
           <DataCard>
-            <DataCardHeader title={`Keyword Opportunities (${filteredData.length})`} />
+            <DataCardHeader title={`Search Term Opportunities (${filteredData.length})`} />
             <ScrollArea className="h-[500px]">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Keyword</TableHead>
+                    <TableHead>Search Term</TableHead>
                     <TableHead>Score</TableHead>
+                    <TableHead>Campaign</TableHead>
                     <TableHead>Clicks</TableHead>
-                    <TableHead>Impressions</TableHead>
+                    <TableHead>Impr.</TableHead>
                     <TableHead>CTR</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Page URL</TableHead>
+                    <TableHead>Top Impr %</TableHead>
+                    <TableHead>Cost</TableHead>
+                    <TableHead>Conv.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -479,11 +583,13 @@ export default function KeywordIntel() {
                     <TableRow key={i}>
                       <TableCell className="font-medium max-w-[200px] truncate">{row.keyword}</TableCell>
                       <TableCell>{getScoreBadge(row.opportunity_score || 0)}</TableCell>
+                      <TableCell className="max-w-[150px] truncate text-muted-foreground">{row.campaign}</TableCell>
                       <TableCell>{row.clicks.toLocaleString()}</TableCell>
                       <TableCell>{row.impressions.toLocaleString()}</TableCell>
                       <TableCell>{(row.ctr * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{row.avg_position.toFixed(1)}</TableCell>
-                      <TableCell className="max-w-[200px] truncate text-muted-foreground">{row.page_url}</TableCell>
+                      <TableCell>{(row.impr_top_pct * 100).toFixed(1)}%</TableCell>
+                      <TableCell>${row.cost.toFixed(2)}</TableCell>
+                      <TableCell>{row.conversions}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -495,14 +601,14 @@ export default function KeywordIntel() {
         <TabsContent value="clusters" className="mt-lg">
           <DataCard>
             <DataCardHeader 
-              title={`Keyword Clusters (${clusters.length})`} 
-              description="Keywords grouped by shared stem and ranking page"
+              title={`Search Term Clusters (${clusters.length})`} 
+              description="Search terms grouped by campaign, ad group, and shared stem"
             />
             {clusters.length === 0 ? (
               <EmptyState
                 icon={Layers}
                 title="No clusters found"
-                description="Clusters require at least 2 keywords with shared characteristics"
+                description="Clusters require at least 2 search terms with shared characteristics"
               />
             ) : (
               <ScrollArea className="h-[500px]">
@@ -514,21 +620,26 @@ export default function KeywordIntel() {
                           <div className="flex items-center gap-md">
                             <Layers className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">{cluster.name}</span>
-                            <Badge variant="secondary">{cluster.keywords.length} keywords</Badge>
+                            <Badge variant="secondary">{cluster.keywords.length} terms</Badge>
                           </div>
                           <div className="flex items-center gap-md text-body-sm text-muted-foreground">
                             <span>{cluster.totalImpressions.toLocaleString()} impr.</span>
-                            <span>Pos: {cluster.avgPosition.toFixed(1)}</span>
+                            <span>{cluster.totalClicks.toLocaleString()} clicks</span>
+                            <span>${cluster.totalCost.toFixed(2)}</span>
                             {getScoreBadge(Math.round(cluster.avgScore))}
                           </div>
                         </div>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="mt-xs ml-lg border-l-2 border-border pl-md">
+                          <p className="text-metadata text-muted-foreground py-xs">
+                            {cluster.campaign} / {cluster.adGroup}
+                          </p>
                           {cluster.keywords.map((kw, i) => (
                             <div key={i} className="py-xs flex items-center justify-between text-body-sm">
                               <span>{kw.keyword}</span>
                               <div className="flex items-center gap-md text-muted-foreground">
+                                <span>{kw.match_type}</span>
                                 <span>{kw.impressions.toLocaleString()}</span>
                                 {getScoreBadge(kw.opportunity_score || 0)}
                               </div>
@@ -548,7 +659,7 @@ export default function KeywordIntel() {
           <DataCard>
             <DataCardHeader 
               title={`Generated Keyword Ideas (${generatedIdeas.length})`} 
-              description="Template-based expansions from your top-performing keywords"
+              description="Template-based expansions from your top-performing search terms"
               action={
                 <Button variant="outline" size="sm" onClick={() => {
                   navigator.clipboard.writeText(generatedIdeas.join('\n'));
@@ -563,7 +674,7 @@ export default function KeywordIntel() {
               <EmptyState
                 icon={Lightbulb}
                 title="No ideas generated"
-                description="Upload keyword data to generate expansion ideas"
+                description="Upload search term data to generate expansion ideas"
               />
             ) : (
               <ScrollArea className="h-[400px]">
