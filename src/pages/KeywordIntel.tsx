@@ -201,9 +201,9 @@ export default function KeywordIntel() {
 
       const values = parseCSVLine(line);
       
-      // Skip "Total" summary rows
+      // Skip "Total" summary rows (e.g., "Total", "Totals", "Total:", "Total: --")
       const firstValue = values[0]?.toLowerCase().trim();
-      if (firstValue === 'total' || firstValue === 'totals') continue;
+      if (firstValue.startsWith('total')) continue;
 
       const getValue = (field: string): string => {
         const idx = colMap[field];
