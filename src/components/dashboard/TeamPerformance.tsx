@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Users } from "lucide-react";
-import { subDays } from "date-fns";
+import { subDays, format } from "date-fns";
 
 interface UserPerformance {
   userId: string;
@@ -44,12 +44,12 @@ export function TeamPerformance() {
         .select("user_id, task_id, tasks!inner(id, status)")
         .eq("tasks.status", "Completed");
 
-      // Get MFA sessions from last 30 days for engagement score
+      // Get user visits from last 30 days for engagement score
       const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
-      const { data: mfaSessions } = await supabase
-        .from("mfa_sessions")
-        .select("user_id, created_at")
-        .gte("created_at", thirtyDaysAgo);
+      const { data: userVisits } = await supabase
+        .from("user_visits")
+        .select("user_id, visited_at")
+        .gte("visited_at", thirtyDaysAgo);
 
       const userStats: Record<string, { total: number; completed: number; visits: number }> = {};
 
@@ -72,10 +72,10 @@ export function TeamPerformance() {
         }
       });
 
-      // Count visits per user (mfa_sessions.user_id is auth.users id, need to match via profiles.user_id)
+      // Count visits per user (user_visits.user_id is auth.users id, need to match via profiles.user_id)
       const profileUserIdMap = new Map(profiles.map(p => [p.user_id, p.id]));
-      mfaSessions?.forEach((s) => {
-        const profileId = profileUserIdMap.get(s.user_id);
+      userVisits?.forEach((v) => {
+        const profileId = profileUserIdMap.get(v.user_id);
         if (profileId && userStats[profileId]) {
           userStats[profileId].visits++;
         }

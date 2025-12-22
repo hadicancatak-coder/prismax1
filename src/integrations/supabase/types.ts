@@ -3933,6 +3933,33 @@ export type Database = {
           },
         ]
       }
+      user_visits: {
+        Row: {
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+          visit_hour: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+          visit_hour?: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+          visit_hour?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       utm_campaign_comments: {
         Row: {
           author_email: string | null
