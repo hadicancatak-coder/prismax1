@@ -53,12 +53,13 @@ export function OverdueTasks() {
         return;
       }
 
+      // Note: "Pending" in DB maps to "Backlog" in UI
       const { data: tasks } = await supabase
         .from("tasks")
         .select("*")
         .in("id", taskIds)
         .lt("due_at", today.toISOString())
-        .not("status", "in", "(Completed,Backlog)")
+        .not("status", "in", "(Completed,Pending)")
         .order("due_at", { ascending: true })
         .limit(5);
 
