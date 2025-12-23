@@ -193,12 +193,10 @@ export default function Knowledge() {
         title="Knowledge Base"
         description="Documentation, processes, and guides"
         actions={
-          isAdmin && (
-            <Button onClick={() => handleCreatePage(null)} className="rounded-full px-6 h-10 gap-2">
-              <Plus className="h-4 w-4" />
-              New Page
-            </Button>
-          )
+          <Button onClick={() => handleCreatePage(null)} className="rounded-full px-6 h-10 gap-2">
+            <Plus className="h-4 w-4" />
+            New Page
+          </Button>
         }
       />
 
@@ -222,7 +220,7 @@ export default function Knowledge() {
               pages={filteredTree}
               selectedPageId={selectedPage?.id || null}
               onSelectPage={handleNavigate}
-              onCreatePage={isAdmin ? handleCreatePage : undefined}
+              onCreatePage={handleCreatePage}
               isAdmin={isAdmin}
             />
           </div>
@@ -234,7 +232,7 @@ export default function Knowledge() {
             <KnowledgePageContent
               page={selectedPage}
               breadcrumbs={breadcrumbs.slice(0, -1)}
-              onEdit={isAdmin ? handleEditPage : undefined}
+              onEdit={handleEditPage}
               onDelete={isAdmin ? handleDeletePage : undefined}
               onNavigate={handleNavigate}
               isAdmin={isAdmin}
@@ -283,9 +281,7 @@ export default function Knowledge() {
               title="Welcome to Knowledge Base"
               description="Get started by creating your first page."
               action={
-                isAdmin
-                  ? { label: "Create First Page", onClick: () => handleCreatePage(null) }
-                  : undefined
+                { label: "Create First Page", onClick: () => handleCreatePage(null) }
               }
             />
           )}

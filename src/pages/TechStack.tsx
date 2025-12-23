@@ -173,12 +173,10 @@ export default function TechStack() {
         title="Tech Stack"
         description="Services, tools, and technologies we use"
         actions={
-          isAdmin && (
-            <Button onClick={() => handleCreatePage(null)} className="rounded-full px-6 h-10 gap-2">
-              <Plus className="h-4 w-4" />
-              Add Tech
-            </Button>
-          )
+          <Button onClick={() => handleCreatePage(null)} className="rounded-full px-6 h-10 gap-2">
+            <Plus className="h-4 w-4" />
+            Add Tech
+          </Button>
         }
       />
 
@@ -202,7 +200,7 @@ export default function TechStack() {
               pages={filteredTree}
               selectedPageId={selectedPage?.id || null}
               onSelectPage={handleNavigate}
-              onCreatePage={isAdmin ? handleCreatePage : undefined}
+              onCreatePage={handleCreatePage}
               isAdmin={isAdmin}
             />
           </div>
@@ -214,7 +212,7 @@ export default function TechStack() {
             <TechStackPageContent
               page={selectedPage}
               breadcrumbs={breadcrumbs.slice(0, -1)}
-              onEdit={isAdmin ? handleEditPage : undefined}
+              onEdit={handleEditPage}
               onDelete={isAdmin ? handleDeletePage : undefined}
               onNavigate={handleNavigate}
               isAdmin={isAdmin}
@@ -269,9 +267,7 @@ export default function TechStack() {
               title="No Tech Stack Items"
               description="Add technologies and services you use to document your tech stack."
               action={
-                isAdmin
-                  ? { label: "Add First Item", onClick: () => handleCreatePage(null) }
-                  : undefined
+                { label: "Add First Item", onClick: () => handleCreatePage(null) }
               }
             />
           )}

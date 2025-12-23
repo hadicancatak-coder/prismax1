@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getProductionUrl } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface KnowledgePageContentProps {
   page: KnowledgePage;
@@ -30,6 +32,22 @@ export function KnowledgePageContent({
 }: KnowledgePageContentProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  
+  // Fetch updated_by profile
+  const { data: updatedByUser } = useQuery({
+    queryKey: ["profile", page.updated_by],
+    queryFn: async () => {
+      if (!page.updated_by) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .eq("id", page.updated_by)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!page.updated_by,
+  });
   
   // Get icon component
   const iconName = page.icon || 'file-text';
@@ -83,6 +101,9 @@ export function KnowledgePageContent({
             <h1 className="text-heading-lg font-semibold text-foreground">{page.title}</h1>
             <p className="text-metadata text-muted-foreground mt-1">
               Last updated {format(new Date(page.updated_at), "MMM d, yyyy")}
+              {updatedByUser && (
+                <span> by {updatedByUser.name || updatedByUser.email}</span>
+              )}
             </p>
           </div>
         </div>
@@ -128,18 +149,19 @@ export function KnowledgePageContent({
             </PopoverContent>
           </Popover>
 
-          {/* Admin-only edit/delete buttons */}
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </>
+          {/* Edit button - for all authenticated users */}
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
+          {/* Delete button - admin only */}
+          {isAdmin && onDelete && (
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
           )}
         </div>
       </div>
