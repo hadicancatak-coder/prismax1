@@ -68,7 +68,8 @@ export function MyTasks() {
       .select("*", { count: "exact", head: true })
       .in("id", taskIds)
       .lt("due_at", today.toISOString())
-      .not("status", "in", "(Completed,Backlog)");
+      // Note: "Pending" in DB maps to "Backlog" in UI
+      .not("status", "in", "(Completed,Pending)");
 
     // This week's tasks
     const { count: weekCount } = await supabase
