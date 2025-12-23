@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface KnowledgePage {
   id: string;
@@ -21,6 +22,7 @@ export interface KnowledgePage {
 
 export function useKnowledgePages() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: pages, isLoading } = useQuery({
@@ -91,6 +93,10 @@ export function useKnowledgePages() {
       const updateData: any = { ...data };
       if (data.title) {
         updateData.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+      // Set updated_by to current user
+      if (user?.id) {
+        updateData.updated_by = user.id;
       }
       
       const { data: updated, error } = await supabase

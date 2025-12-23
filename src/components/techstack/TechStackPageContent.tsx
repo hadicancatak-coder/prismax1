@@ -49,6 +49,22 @@ export function TechStackPageContent({
     enabled: !!page.owner_id,
   });
 
+  // Fetch updated_by profile
+  const { data: updatedByUser } = useQuery({
+    queryKey: ["profile", page.updated_by],
+    queryFn: async () => {
+      if (!page.updated_by) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .eq("id", page.updated_by)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!page.updated_by,
+  });
+
   // Get icon component
   const iconName = page.icon || 'server';
   const IconComponent = (LucideIcons as any)[iconName.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('')] || Server;
@@ -95,22 +111,27 @@ export function TechStackPageContent({
             </div>
             <p className="text-metadata text-muted-foreground mt-1">
               Last updated {format(new Date(page.updated_at), "MMM d, yyyy")}
+              {updatedByUser && (
+                <span> by {updatedByUser.name || updatedByUser.email}</span>
+              )}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </>
+          {/* Edit button - for all authenticated users */}
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
+          {/* Delete button - admin only */}
+          {isAdmin && onDelete && (
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
           )}
         </div>
       </div>
